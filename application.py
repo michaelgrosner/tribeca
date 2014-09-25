@@ -1,3 +1,4 @@
+import functools
 import gevent
 import logbook
 import time
@@ -56,7 +57,7 @@ class Coinsetter(object):
 
 
 def _px(x):
-    return float(x[1])
+    return float(x[0])
 
 
 def _sz(x):
@@ -94,10 +95,13 @@ class Coalescer(object):
 log = logbook.Logger(__name__)
 
 if __name__ == "__main__":
-    cs_coalescer = Coalescer(lambda x: log.info("CS {}", x))
+    def _handle(ex, mu):
+        log.info("{} dt={} {}", ex, time.time() - mu.time, mu)
+
+    cs_coalescer = Coalescer(functools.partial(_handle, "CS"))
     coinsetter_market_data = Coinsetter(cs_coalescer.combine)
 
-    hb_coalescer = Coalescer(lambda x: log.info("HB {}", x))
+    hb_coalescer = Coalescer(functools.partial(_handle, "HB"))
     hitbtc_market_data = HitBtc(hb_coalescer.combine)
 
     tasks = [coinsetter_market_data, hitbtc_market_data]
