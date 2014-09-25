@@ -37,8 +37,8 @@ class Coinsetter(object):
         self._socket = SocketIO('https://plug.coinsetter.com', 3000,
                                 wait_for_connection=True,
                                 transports=('websocket', ))
-        self._socket.on('connect', lambda: gevent.spawn(self._handle_connect))
-        self._socket.on('ticker', lambda x: gevent.spawn(lambda: self._handle_depth(x)))
+        self._socket.on('connect', self._handle_connect)
+        self._socket.on('depth', self._handle_depth)
         self._is_alive = True
 
     def start(self):
@@ -48,8 +48,11 @@ class Coinsetter(object):
         self._is_alive = False
 
     def _handle_depth(self, depth):
-        self._callback(MarketUpdate(depth[u'bid'][u'size'], depth[u'bid'][u'price'],
-                                    depth[u'ask'][u'price'], depth[u'ask'][u'size'], time.time()))
+        def _level(l):
+            return MarketUpdate(depth[l][u'bid'][u'size'], depth[l][u'bid'][u'price'],
+                                depth[l][u'ask'][u'price'], depth[l][u'ask'][u'size'], time.time())
+
+        self._callback((_level(0), _level(1)))
 
     def _handle_connect(self):
         log.info("Connected")
@@ -71,10 +74,12 @@ class HitBtc(object):
 
     def start(self):
         while self._is_started:
+            def _level(l):
+                return MarketUpdate(_sz(orderbook['bids'][l]), _px(orderbook['bids'][l]),
+                                    _px(orderbook['asks'][l]), _sz(orderbook['asks'][l]), time.time())
+
             orderbook = requests.get("http://api.hitbtc.com/api/1/public/BTCUSD/orderbook").json()
-            self._callback(MarketUpdate(_sz(orderbook['bids'][0]), _px(orderbook['bids'][0]),
-                                        _px(orderbook['asks'][0]), _sz(orderbook['asks'][0]),
-                                        time.time()))
+            self._callback((_level(0), _level(1)))
             gevent.sleep(10)
 
     def stop(self):
@@ -96,7 +101,7 @@ log = logbook.Logger(__name__)
 
 if __name__ == "__main__":
     def _handle(ex, mu):
-        log.info("{} dt={} {}", ex, time.time() - mu.time, mu)
+        log.info("{} dt={} 1={} 2={}", ex, time.time() - mu[0].time, mu[0], mu[1])
 
     cs_coalescer = Coalescer(functools.partial(_handle, "CS"))
     coinsetter_market_data = Coinsetter(cs_coalescer.combine)
