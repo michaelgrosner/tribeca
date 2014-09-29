@@ -140,6 +140,6 @@ class HitBtc {
 }
 
 new Coinsetter();
-//new HitBtc();
+new HitBtc();
 
 
