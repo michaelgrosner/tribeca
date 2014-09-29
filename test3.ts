@@ -3,13 +3,15 @@
 var crypto = require('crypto');
 var ws = require('ws');
 var io = require('socket.io-client');
-var log = require('debug')("app:log");
+var log = require('debug');
+
+interface Logger { (arg : any) : void; }
 
 var apikey = '004ee1065d6c7a6ac556bea221cd6338';
 var secretkey = "aa14d615df5d47cb19a13ffe4ea638eb";
 
 interface NoncePayload<T> {
-    nonce: Number;
+    nonce: number;
     payload: T;
 }
 
@@ -27,9 +29,9 @@ interface NewOrder extends HitBtcPayload {
     clientOrderId : string;
     symbol : string;
     side : string;
-    quantity : Number;
+    quantity : number;
     type : string;
-    price : Number;
+    price : number;
     timeInForce : string;
 }
 
@@ -45,20 +47,75 @@ function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
     return {apikey: apikey, signature: signMsg(msg), message: msg};
 }
 
+interface CoinsetterDepthSide {
+    price : number;
+    size : number;
+    exchangeId : string;
+    timeStamp : number;
+}
+
+interface CoinsetterDepth {
+    bid : CoinsetterDepthSide;
+    ask : CoinsetterDepthSide;
+}
+
+interface MarketUpdate {
+    bidPrice : number;
+    bidSize : number;
+    askPrice : number;
+    askSize : number;
+    time : Date;
+}
+
+enum Exchange { Coinsetter, HitBtc }
+
+interface MarketBook {
+    top : MarketUpdate;
+    second : MarketUpdate;
+    exchangeName : Exchange;
+}
+
+class Coinsetter {
+    _socket : any;
+    _log : Logger = log("Coinsetter");
+
+    private onConnect = () => {
+        this._log("Connected to Coinsetter");
+        this._socket.emit("depth room", "");
+    };
+
+    private onDepth = (msg : Array<CoinsetterDepth>) => {
+        function getLevel(n: number) : MarketUpdate {
+            return {bidPrice: msg[n].bid.price, bidSize: msg[n].bid.size,
+                    askPrice: msg[n].ask.price, askSize: msg[n].ask.size,
+                    time: new Date(msg[n].bid.timeStamp)};
+        }
+        var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.Coinsetter};
+        this._log(book);
+    };
+
+    constructor() {
+        this._socket = io.connect('https://plug.coinsetter.com:3000');
+        this._socket.on("connect", this.onConnect);
+        this._socket.on("depth", this.onDepth);
+    }
+}
+
 class HitBtc {
     _ws : any;
+    _log : Logger = log("HitBtc");
 
     private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
         var v = {}; v[msgType] = msg;
         var readyMsg = authMsg(v);
-        log(readyMsg);
+        this._log(readyMsg);
         this._ws.send(JSON.stringify(readyMsg));
     };
 
     private onOpen = () => {
         this.sendAuth("Login", {});
 
-        var order = {
+        var order: NewOrder = {
             clientOrderId: new Date().getTime().toString(32),
             symbol: "BTCUSD",
             side: "sell",
@@ -72,7 +129,7 @@ class HitBtc {
     };
 
     private onMessage = (msg : any) => {
-        log(JSON.parse(msg));
+        this._log(JSON.parse(msg));
     };
 
     constructor() {
@@ -82,6 +139,7 @@ class HitBtc {
     }
 }
 
-new HitBtc();
+new Coinsetter();
+//new HitBtc();
 
 
