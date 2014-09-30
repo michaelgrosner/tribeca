@@ -13,6 +13,9 @@
     },
     "node/node.d.ts": {
       "commit": "eef872b96a458fde22571def5a368a867de9901b"
+    },
+    "fibers/fibers.d.ts": {
+      "commit": "e9ddb4f840fed7165c7c66efb74d0026bdca51f2"
     }
   }
 }

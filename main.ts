@@ -1,5 +1,5 @@
 /// <reference path="coinsetter.ts" />
 /// <reference path="hitbtc.ts" />
 
-new Coinsetter();
+//new Coinsetter();
 new HitBtc();

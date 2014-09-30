@@ -2,4 +2,4 @@
 
 var log = require('debug');
 
-interface Logger { (arg : any) : void; }
+interface Logger { (...arg : any[]) : void; }

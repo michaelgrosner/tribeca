@@ -4,6 +4,8 @@
 
 var crypto = require('crypto');
 var ws = require('ws');
+var https = require('https');
+var Future = require('fibers/future');
 
 var apikey = '004ee1065d6c7a6ac556bea221cd6338';
 var secretkey = "aa14d615df5d47cb19a13ffe4ea638eb";
@@ -31,6 +33,11 @@ interface NewOrder extends HitBtcPayload {
     type : string;
     price : number;
     timeInForce : string;
+}
+
+interface HitBtcOrderBook {
+    asks : Array<Array<string>>;
+    bids : Array<Array<string>>;
 }
 
 function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
@@ -76,9 +83,28 @@ class HitBtc {
         this._log(JSON.parse(msg));
     };
 
+    private getMarketData = () => {
+        function getLevel(raw : HitBtcOrderBook, n : number) : MarketUpdate {
+            return {bidPrice: parseFloat(raw.bids[n][0]),
+                bidSize: parseFloat(raw.bids[n][1]),
+                askPrice: parseFloat(raw.asks[n][0]),
+                askSize: parseFloat(raw.asks[n][1]),
+                time: new Date()};
+        }
+
+        https.get("https://api.hitbtc.com/api/1/public/BTCUSD/orderbook",
+            e => e.on("data", bytes => {
+                var raw : HitBtcOrderBook = JSON.parse(bytes);
+                this._log({top: getLevel(raw, 0), second: getLevel(raw, 1), exchangeName: Exchange.HitBtc});
+        }));
+    }
+
     constructor() {
         this._ws = new ws('ws://demo-api.hitbtc.com:8080');
         this._ws.on('open', this.onOpen);
         this._ws.on('message', this.onMessage);
+
+        this.getMarketData();
+        setInterval(this.getMarketData, 5000);
     }
 }
