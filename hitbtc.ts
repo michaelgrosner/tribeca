@@ -66,7 +66,7 @@ class HitBtc {
     private onOpen = () => {
         this.sendAuth("Login", {});
 
-        var order: NewOrder = {
+        /*var order: NewOrder = {
             clientOrderId: new Date().getTime().toString(32),
             symbol: "BTCUSD",
             side: "sell",
@@ -76,7 +76,7 @@ class HitBtc {
             timeInForce: "IOC"
         };
 
-        this.sendAuth("NewOrder", order);
+        this.sendAuth("NewOrder", order);*/
     };
 
     private onMessage = (msg : any) => {
@@ -97,14 +97,15 @@ class HitBtc {
                 var raw : HitBtcOrderBook = JSON.parse(bytes);
                 this._log({top: getLevel(raw, 0), second: getLevel(raw, 1), exchangeName: Exchange.HitBtc});
         }));
-    }
+    };
 
     constructor() {
         this._ws = new ws('ws://demo-api.hitbtc.com:8080');
         this._ws.on('open', this.onOpen);
         this._ws.on('message', this.onMessage);
+        this._ws.on("error", this.onMessage);
 
-        this.getMarketData();
-        setInterval(this.getMarketData, 5000);
+        //this.getMarketData();
+        //setInterval(this.getMarketData, 5000);
     }
 }

@@ -6,7 +6,7 @@ interface MarketUpdate {
     time : Date;
 }
 
-enum Exchange { Coinsetter, HitBtc }
+enum Exchange { Coinsetter, HitBtc, OkCoin }
 
 interface MarketBook {
     top : MarketUpdate;
