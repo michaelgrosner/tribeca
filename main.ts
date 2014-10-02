@@ -2,6 +2,9 @@
 /// <reference path="hitbtc.ts" />
 /// <reference path="okcoin.ts" />
 
-//new Coinsetter();
+var coinsetterBroker = new MarketDataBroker();
+new Coinsetter(coinsetterBroker);
 //new HitBtc();
-new OkCoin();
+
+var okCoinBroker = new MarketDataBroker();
+new OkCoin(okCoinBroker);

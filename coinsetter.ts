@@ -19,6 +19,7 @@ interface CoinsetterDepth {
 class Coinsetter {
     _socket : any;
     _log : Logger = log("Coinsetter");
+    _broker : MarketDataBroker;
 
     private onConnect = () => {
         this._log("Connected to Coinsetter");
@@ -32,10 +33,11 @@ class Coinsetter {
                     time: new Date(msg[n].bid.timeStamp)};
         }
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.Coinsetter};
-        this._log(book);
+        this._broker.addBook(book);
     };
 
-    constructor() {
+    constructor(broker : MarketDataBroker) {
+        this._broker = broker;
         this._socket = io.connect('https://plug.coinsetter.com:3000');
         this._socket.on("connect", this.onConnect);
         this._socket.on("depth", this.onDepth);

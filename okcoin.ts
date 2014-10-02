@@ -13,6 +13,7 @@ interface OkCoinDepthMessage {
 class OkCoin {
     _ws : any;
     _log : Logger = log("OkCoin");
+    _broker : MarketDataBroker;
 
     private onConnect = () => {
         this._ws.send(JSON.stringify({event: 'addChannel',channel: 'ok_btcusd_depth'}));
@@ -35,10 +36,11 @@ class OkCoin {
                     time: new Date(parseInt(msg.timestamp))};
         }
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.OkCoin};
-        this._log(book);
-    }
+        this._broker.addBook(book);
+    };
 
-    constructor() {
+    constructor(broker : MarketDataBroker) {
+        this._broker = broker;
         this._ws = new ws("wss://real.okcoin.com:10440/websocket/okcoinapi");
         this._ws.on("open", this.onConnect);
         this._ws.on("message", this.onMessage);
