@@ -55,6 +55,7 @@ function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
 class HitBtc {
     _ws : any;
     _log : Logger = log("HitBtc");
+    _broker : ExchangeBroker;
 
     private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
         var v = {}; v[msgType] = msg;
@@ -99,8 +100,9 @@ class HitBtc {
         }));
     };
 
-    constructor() {
-        this._ws = new ws('ws://demo-api.hitbtc.com:8080');
+    constructor(broker : ExchangeBroker) {
+        this._broker = broker;
+        this._ws = new ws('ws://api.hitbtc.com:80');
         this._ws.on('open', this.onOpen);
         this._ws.on('message', this.onMessage);
         this._ws.on("error", this.onMessage);

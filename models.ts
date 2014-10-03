@@ -14,9 +14,9 @@ interface MarketBook {
     exchangeName : Exchange;
 }
 
-class MarketDataBroker {
+class ExchangeBroker {
     _currentBook : MarketBook = null;
-    _log : Logger = log("MarketDataBroker");
+    _log : Logger = log("ExchangeBroker");
 
     private marketUpdatesEqual = (update1 : MarketUpdate, update2 : MarketUpdate) : boolean => {
         return update1.askPrice == update2.askPrice &&

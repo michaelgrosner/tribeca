@@ -2,9 +2,21 @@
 /// <reference path="hitbtc.ts" />
 /// <reference path="okcoin.ts" />
 
-var coinsetterBroker = new MarketDataBroker();
+var coinsetterBroker = new ExchangeBroker();
 new Coinsetter(coinsetterBroker);
-//new HitBtc();
 
-var okCoinBroker = new MarketDataBroker();
+var hitbtcBroker = new ExchangeBroker();
+new HitBtc(hitbtcBroker);
+
+var okCoinBroker = new ExchangeBroker();
 new OkCoin(okCoinBroker);
+
+class CombinedBroker {
+    _brokers : Array<ExchangeBroker>;
+
+    constructor(brokers : Array<ExchangeBroker>) {
+        this._brokers = brokers;
+    }
+}
+
+new CombinedBroker([coinsetterBroker, hitbtcBroker]);
