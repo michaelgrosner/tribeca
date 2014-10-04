@@ -10,10 +10,18 @@ interface OkCoinDepthMessage {
     timestamp : string;
 }
 
-class OkCoin {
+class OkCoin implements IGateway {
+    name() : string {
+        return "OkCoin";
+    }
+
+    public getSnapshot = () : MarketBook => {
+        return undefined;
+    };
+
+    MarketData : Evt<MarketBook> = new Evt();
     _ws : any;
     _log : Logger = log("OkCoin");
-    _broker : ExchangeBroker;
 
     private onConnect = () => {
         this._ws.send(JSON.stringify({event: 'addChannel',channel: 'ok_btcusd_depth'}));
@@ -36,11 +44,10 @@ class OkCoin {
                     time: new Date(parseInt(msg.timestamp))};
         }
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.OkCoin};
-        this._broker.addBook(book);
+        this.MarketData.trigger(book);
     };
 
-    constructor(broker : ExchangeBroker) {
-        this._broker = broker;
+    constructor() {
         this._ws = new ws("wss://real.okcoin.com:10440/websocket/okcoinapi");
         this._ws.on("open", this.onConnect);
         this._ws.on("message", this.onMessage);

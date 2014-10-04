@@ -16,6 +16,12 @@
     },
     "fibers/fibers.d.ts": {
       "commit": "e9ddb4f840fed7165c7c66efb74d0026bdca51f2"
+    },
+    "q/Q.d.ts": {
+      "commit": "4598e7d76b2b8e0470d5dea6035de2d218b17c77"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "4598e7d76b2b8e0470d5dea6035de2d218b17c77"
     }
   }
 }

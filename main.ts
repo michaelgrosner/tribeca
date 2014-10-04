@@ -1,22 +1,9 @@
 /// <reference path="coinsetter.ts" />
 /// <reference path="hitbtc.ts" />
 /// <reference path="okcoin.ts" />
+/// <reference path="models.ts" />
 
-var coinsetterBroker = new ExchangeBroker();
-new Coinsetter(coinsetterBroker);
-
-var hitbtcBroker = new ExchangeBroker();
-new HitBtc(hitbtcBroker);
-
-var okCoinBroker = new ExchangeBroker();
-new OkCoin(okCoinBroker);
-
-class CombinedBroker {
-    _brokers : Array<ExchangeBroker>;
-
-    constructor(brokers : Array<ExchangeBroker>) {
-        this._brokers = brokers;
-    }
-}
-
-new CombinedBroker([coinsetterBroker, hitbtcBroker]);
+var gateways : Array<IGateway> = [new Coinsetter(), new HitBtc(), new OkCoin()];
+var brokers  = gateways.map(g => {
+    return new ExchangeBroker(g);
+});

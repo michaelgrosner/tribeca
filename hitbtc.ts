@@ -5,7 +5,7 @@
 var crypto = require('crypto');
 var ws = require('ws');
 var https = require('https');
-var Future = require('fibers/future');
+var Q_lib = require('q');
 
 var apikey = '004ee1065d6c7a6ac556bea221cd6338';
 var secretkey = "aa14d615df5d47cb19a13ffe4ea638eb";
@@ -52,10 +52,60 @@ function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
     return {apikey: apikey, signature: signMsg(msg), message: msg};
 }
 
-class HitBtc {
+interface Update {
+    price : number;
+    size : number;
+    timestamp : number;
+}
+
+interface MarketDataSnapshotFullRefresh {
+    snapshotSeqNo : number;
+    symbol : string;
+    exchangeStatus : string;
+    ask : Array<Update>;
+    bid : Array<Update>
+}
+
+interface MarketDataIncrementalRefresh {
+    seqNo : number;
+    timestamp : number;
+    symbol : string;
+    exchangeStatus : string;
+    ask : Array<Update>;
+    bid : Array<Update>
+    trade : Array<Update>
+}
+
+interface ExecutionReport {
+    orderId : string;
+    clientOrderId : string;
+    execReportType : string;
+    orderStatus : string;
+    symbol : string;
+    side : string;
+    timestamp : string;
+    price : number;
+    quantity : number;
+    type : string;
+    timeInForce : string;
+}
+
+interface CancelReject {
+    clientOrderId : string;
+    cancelRequestClientOrderId : string;
+    rejectReasonCode : string;
+    rejectReasonText : string;
+    timestamp : number;
+}
+
+class HitBtc implements IGateway {
+    name() : string {
+        return "HitBtc";
+    }
+
+    MarketData : Evt<MarketBook> = new Evt();
     _ws : any;
     _log : Logger = log("HitBtc");
-    _broker : ExchangeBroker;
 
     private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
         var v = {}; v[msgType] = msg;
@@ -66,8 +116,47 @@ class HitBtc {
 
     private onOpen = () => {
         this.sendAuth("Login", {});
+    };
 
-        /*var order: NewOrder = {
+    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh) => {
+        if (msg.symbol != "BTCUSD") return;
+        this._log("onMarketDataIncrementalRefresh", msg);
+    };
+
+    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
+        if (msg.symbol != "BTCUSD") return;
+        this._log("onMarketDataSnapshotFullRefresh", msg);
+    };
+
+    private onExecutionReport = (msg : ExecutionReport) => {
+        this._log("onExecutionReport", msg);
+    };
+
+    private onCancelReject = (msg : CancelReject) => {
+        this._log("onCancelReject", msg);
+    };
+
+    private onMessage = (raw : string) => {
+        var msg = JSON.parse(raw);
+        if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
+            this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh);
+        }
+        else if (msg.hasOwnProperty("MarketDataSnapshotFullRefresh")) {
+            this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh);
+        }
+        else if (msg.hasOwnProperty("ExecutionReport")) {
+            this.onExecutionReport(msg.ExecutionReport);
+        }
+        else if (msg.hasOwnProperty("CancelReject")) {
+            this.onCancelReject(msg.CancelReject);
+        }
+        else {
+            this._log("unhandled message", msg);
+        }
+    };
+
+    sendOrder = () => {
+        var order: NewOrder = {
             clientOrderId: new Date().getTime().toString(32),
             symbol: "BTCUSD",
             side: "sell",
@@ -77,14 +166,10 @@ class HitBtc {
             timeInForce: "IOC"
         };
 
-        this.sendAuth("NewOrder", order);*/
+        this.sendAuth("NewOrder", order);
     };
 
-    private onMessage = (msg : any) => {
-        this._log(JSON.parse(msg));
-    };
-
-    private getMarketData = () => {
+    getSnapshot = () : MarketBook => {
         function getLevel(raw : HitBtcOrderBook, n : number) : MarketUpdate {
             return {bidPrice: parseFloat(raw.bids[n][0]),
                 bidSize: parseFloat(raw.bids[n][1]),
@@ -93,21 +178,21 @@ class HitBtc {
                 time: new Date()};
         }
 
+        var deferred = Q_lib.defer();
         https.get("https://api.hitbtc.com/api/1/public/BTCUSD/orderbook",
             e => e.on("data", bytes => {
                 var raw : HitBtcOrderBook = JSON.parse(bytes);
-                this._log({top: getLevel(raw, 0), second: getLevel(raw, 1), exchangeName: Exchange.HitBtc});
+                var val = {top: getLevel(raw, 0), second: getLevel(raw, 1), exchangeName: Exchange.HitBtc};
+                deferred.resolve(val);
         }));
+
+        return deferred.promise;
     };
 
-    constructor(broker : ExchangeBroker) {
-        this._broker = broker;
+    constructor() {
         this._ws = new ws('ws://api.hitbtc.com:80');
         this._ws.on('open', this.onOpen);
         this._ws.on('message', this.onMessage);
         this._ws.on("error", this.onMessage);
-
-        //this.getMarketData();
-        //setInterval(this.getMarketData, 5000);
     }
 }

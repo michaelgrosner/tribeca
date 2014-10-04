@@ -16,10 +16,18 @@ interface CoinsetterDepth {
     ask : CoinsetterDepthSide;
 }
 
-class Coinsetter {
+class Coinsetter implements IGateway {
+    name() : string {
+        return "Coinsetter";
+    }
+
+    getSnapshot() : MarketBook {
+        return undefined;
+    }
+
+    MarketData : Evt<MarketBook> = new Evt();
     _socket : any;
     _log : Logger = log("Coinsetter");
-    _broker : ExchangeBroker;
 
     private onConnect = () => {
         this._log("Connected to Coinsetter");
@@ -33,11 +41,10 @@ class Coinsetter {
                     time: new Date(msg[n].bid.timeStamp)};
         }
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.Coinsetter};
-        this._broker.addBook(book);
+        this.MarketData.trigger(book);
     };
 
-    constructor(broker : ExchangeBroker) {
-        this._broker = broker;
+    constructor() {
         this._socket = io.connect('https://plug.coinsetter.com:3000');
         this._socket.on("connect", this.onConnect);
         this._socket.on("depth", this.onDepth);
