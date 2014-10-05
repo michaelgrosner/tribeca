@@ -24,10 +24,26 @@ interface IGateway {
     name() : string;
 }
 
-class ExchangeBroker {
+interface IBroker {
+    MarketData : Evt<MarketBook>;
+    name() : string;
+    currentBook() : MarketBook;
+}
+
+class ExchangeBroker implements IBroker {
+    MarketData : Evt<MarketBook> = new Evt();
+
+    name() : string {
+        return this._gateway.name();
+    }
+
     _currentBook : MarketBook = null;
     _gateway : IGateway;
     _log : Logger;
+
+    public currentBook = () : MarketBook => {
+        return this._currentBook;
+    };
 
     private marketUpdatesEqual = (update1 : MarketUpdate, update2 : MarketUpdate) : boolean => {
         return update1.askPrice == update2.askPrice &&
@@ -36,11 +52,12 @@ class ExchangeBroker {
                update1.askPrice == update2.askPrice;
     };
 
-    public handleMarketData = (book : MarketBook) => {
+    private handleMarketData = (book : MarketBook) => {
         if (!this._currentBook !== null ||
             !this.marketUpdatesEqual(book.top, this._currentBook.top) ||
             !this.marketUpdatesEqual(book.second, this._currentBook.second)) {
             this._currentBook = book;
+            this.MarketData.trigger(book);
             this._log(book);
         }
     };
@@ -55,4 +72,27 @@ class ExchangeBroker {
         this._gateway.MarketData.on(this.handleMarketData);
         this._gateway.ConnectChanged.on(this.onConnect);
     }
+}
+
+class Agent {
+    _brokers : Array<IBroker>;
+
+    constructor(brokers : Array<IBroker>) {
+        this._brokers = brokers;
+        this._brokers.forEach(b => { b.MarketData.on(this.onNewMarketData) });
+    }
+
+    private onNewMarketData = () => {
+        var books : Array<MarketBook> = [];
+
+        for (var i = 0; i < this._brokers.length; i++) {
+            var b = this._brokers[i];
+            var bk = b.currentBook();
+            if (bk == null) return;
+            books.push(bk);
+        }
+
+        
+
+    };
 }

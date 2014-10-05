@@ -21,8 +21,8 @@ class Coinsetter implements IGateway {
         return "Coinsetter";
     }
 
-    ConnectChanged : Evt<ConnectivityStatus> = new Evt();
-    MarketData : Evt<MarketBook> = new Evt();
+    ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
+    MarketData : Evt<MarketBook> = new Evt<MarketBook>();
     _socket : any;
     _log : Logger = log("Coinsetter");
 
