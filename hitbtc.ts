@@ -83,13 +83,20 @@ interface ExecutionReport {
     clientOrderId : string;
     execReportType : string;
     orderStatus : string;
+    orderRejectReason? : string;
     symbol : string;
     side : string;
-    timestamp : string;
+    timestamp : number;
     price : number;
     quantity : number;
     type : string;
     timeInForce : string;
+    tradeId? : string;
+    lastQuantity? : number;
+    lastPrice? : number;
+    leavesQuantity? : number;
+    cumQuantity? : number;
+    averagePrice? : number;
 }
 
 interface CancelReject {
@@ -137,23 +144,45 @@ class HitBtc implements IGateway {
         //this._log("onMarketDataIncrementalRefresh", msg);
     };
 
+    private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
+        return {bidPrice: msg.bid[n].price,
+            bidSize: msg.bid[n].size / 100.0,
+            askPrice: msg.ask[n].price,
+            askSize: msg.ask[n].size / 100.0,
+            time: new Date()};
+    }
+
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
         if (msg.symbol != "BTCUSD") return;
 
-        function getLevel(n : number) : MarketUpdate {
-            return {bidPrice: msg.bid[n].price,
-                bidSize: msg.bid[n].size / 100.0,
-                askPrice: msg.ask[n].price,
-                askSize: msg.ask[n].size / 100.0,
-                time: new Date()};
-        }
-
         this._lastBook = {bids: msg.bid.slice(0, 2), asks: msg.ask.slice(0, 2)};
-        this.MarketData.trigger({top: getLevel(0), second: getLevel(1), exchangeName: Exchange.HitBtc});
+        this.MarketData.trigger({top: HitBtc.getLevel(msg, 0),
+                                 second: HitBtc.getLevel(msg, 1),
+                                 exchangeName: Exchange.HitBtc});
     };
 
+    private static getStatus(m : ExecutionReport) : OrderStatus {
+        if (m.execReportType == "new") return OrderStatus.Working;
+        if (m.execReportType == "canceled") return OrderStatus.Cancelled;
+        if (m.execReportType == "rejected") return OrderStatus.Rejected;
+        if (m.execReportType == "expired") return OrderStatus.Cancelled;
+        if (m.orderStatus == "partiallyFilled") return OrderStatus.PartialFill;
+        if (m.orderStatus == "filled") return OrderStatus.Filled;
+        return OrderStatus.Other;
+    }
+
     private onExecutionReport = (msg : ExecutionReport) => {
-        this._log("onExecutionReport", msg);
+        var status : OrderStatusReport = {
+            exchOrderId: msg.orderId,
+            orderId: msg.clientOrderId,
+            orderStatus: HitBtc.getStatus(msg),
+            time: new Date(msg.timestamp / 1000.0)
+        };
+
+        if (msg.execReportType == 'rejected')
+            status.rejectMessage = msg.orderRejectReason;
+
+        this._log("ExecutionReport", status, msg);
     };
 
     private onCancelReject = (msg : CancelReject) => {
@@ -179,57 +208,57 @@ class HitBtc implements IGateway {
         }
     };
 
+    private static getTif(tif : TimeInForce) {
+        switch (tif) {
+            case TimeInForce.FOK:
+                return "FOK";
+            case TimeInForce.GTC:
+                return "GTC";
+            case TimeInForce.IOC:
+                return "IOC";
+            default:
+                throw new Error("TIF " + TimeInForce[tif] + " not supported in HitBtc");
+        }
+    }
+
+    private static getSide (side : Side) {
+        switch (side) {
+            case Side.Bid:
+                return "buy";
+            case Side.Ask:
+                return "sell";
+            default:
+                throw new Error("Side " + Side[side] + " not supported in HitBtc");
+        }
+    }
+
+    private static getType (t : OrderType) {
+        switch (t) {
+            case OrderType.Limit:
+                return "limit";
+            case OrderType.Market:
+                return "market";
+            default:
+                throw new Error("OrderType " + OrderType[t] + " not supported in HitBtc");
+        }
+    }
+
     sendOrder = (order : BrokeredOrder) => {
-        var getTif = (tif : TimeInForce) => {
-            switch (tif) {
-                case TimeInForce.FOK:
-                    return "FOK";
-                case TimeInForce.GTC:
-                    return "GTC";
-                case TimeInForce.IOC:
-                    return "IOC";
-                default:
-                    throw new Error("TIF " + TimeInForce[tif] + " not supported in HitBtc");
-            }
-        };
-
-        var getSide = (side : Side) => {
-            switch (side) {
-                case Side.Bid:
-                    return "buy";
-                case Side.Ask:
-                    return "sell";
-                default:
-                    throw new Error("Side " + Side[side] + " not supported in HitBtc");
-            }
-        };
-
-        var getType = (t : OrderType) => {
-            switch (t) {
-                case OrderType.Limit:
-                    return "limit";
-                case OrderType.Market:
-                    return "market";
-                default:
-                    throw new Error("OrderType " + OrderType[t] + " not supported in HitBtc");
-            }
-        };
-
         var hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
             symbol: "BTCUSD",
-            side: getSide(order.side),
+            side: HitBtc.getSide(order.side),
             quantity: order.quantity,
-            type: getType(order.type),
+            type: HitBtc.getType(order.type),
             price: order.price,
-            timeInForce: getTif(order.timeInForce)
+            timeInForce: HitBtc.getTif(order.timeInForce)
         };
 
         this.sendAuth("NewOrder", hitBtcOrder);
     };
 
     constructor() {
-        this._ws = new ws('ws://api.hitbtc.com:80');
+        this._ws = new ws('ws://demo-api.hitbtc.com:80');
         this._ws.on('open', this.onOpen);
         this._ws.on('message', this.onMessage);
         this._ws.on("error", this.onMessage);

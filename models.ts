@@ -14,6 +14,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
+enum OrderStatus { New, Pending, Working, PartialFill, Filled, Cancelled, Rejected, Other }
 
 interface MarketBook {
     top : MarketUpdate;
@@ -31,6 +32,15 @@ interface Order {
 
 interface BrokeredOrder extends Order {
     orderId : string;
+    status: OrderStatus
+}
+
+interface OrderStatusReport {
+    exchOrderId : string;
+    orderId : string;
+    orderStatus : OrderStatus;
+    rejectMessage? : string;
+    time : Date;
 }
 
 interface IGateway {
@@ -49,9 +59,11 @@ interface IBroker {
     makeFee() : number;
     takeFee() : number;
     sendOrder(order : Order);
+    OrderUpdate : Evt<BrokeredOrder>;
 }
 
 class ExchangeBroker implements IBroker {
+    OrderUpdate : Evt<BrokeredOrder> = new Evt<BrokeredOrder>();
     _activeOrders : { [orderId: string]: BrokeredOrder } = {};
     sendOrder(order : Order) {
         var brokeredOrder : BrokeredOrder = {
@@ -60,9 +72,11 @@ class ExchangeBroker implements IBroker {
             quantity: order.quantity,
             type: order.type,
             price: order.price,
-            timeInForce: order.timeInForce};
+            timeInForce: order.timeInForce,
+            status: OrderStatus.New};
         this._activeOrders[brokeredOrder.orderId] = brokeredOrder;
         this._gateway.sendOrder(brokeredOrder);
+        this.OrderUpdate.trigger(brokeredOrder);
     }
 
     makeFee() : number {
@@ -116,6 +130,7 @@ class ExchangeBroker implements IBroker {
 
 class Agent {
     _brokers : Array<IBroker>;
+    _log : Logger = log("Agent");
 
     constructor(brokers : Array<IBroker>) {
         this._brokers = brokers;
@@ -131,24 +146,36 @@ class Agent {
             return;
 
         var results = [];
-        activeBrokers.forEach(b1 => {
-            activeBrokers.forEach(b2 => {
-                // dont even bother if makeFee > 0
-                if (b1.makeFee() > 0) return;
+        activeBrokers.filter(b => b.makeFee() < 0)
+                     .forEach(restBroker => {
+            activeBrokers.forEach(hideBroker => {
+                // optimize?
+                if (restBroker.name() == hideBroker.name()) return;
 
-                var b1Top = b1.currentBook().top;
-                var b2Top = b2.currentBook().top;
+                // need to determine whether or not I'm already on the market
+                var restTop = restBroker.currentBook().top;
+                var hideTop = hideBroker.currentBook().top;
 
                 // TODO: verify formulae
-                var pBid = - (1 + b1.makeFee()) * b1Top.bidPrice + (1 - b2.takeFee()) * b2Top.bidPrice;
-                var pAsk = (1 + b1.makeFee()) * b1Top.askPrice + (1 - b2.takeFee()) * b2Top.askPrice;
+                var pBid = - (1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
+                var pAsk = + (1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
 
-                if (pBid > 0)
-                    results.push({restSide: Side.Bid, restBroker: b1, hideBroker: b2});
+                if (pBid > 0) {
+                    var p = Math.min(restTop.bidSize, hideTop.bidSize);
+                    results.push({restSide: Side.Bid, restBroker: restBroker, hideBroker: hideBroker, profit: pBid * p});
+                }
 
-                if (pAsk > 0)
-                    results.push({restSide: Side.Ask, restBroker: b1, hideBroker: b2});
+                if (pAsk > 0) {
+                    var p = Math.min(restTop.askSize, hideTop.askSize);
+                    results.push({restSide: Side.Ask, restBroker: restBroker, hideBroker: hideBroker, profit: pAsk * p});
+                }
             })
+        });
+
+        results.forEach(r => {
+            this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", r.profit,
+                Side[r.restSide], r.restBroker.name(), r.restBroker.currentBook().top,
+                r.hideBroker.name(), r.hideBroker.currentBook().top);
         });
     };
 }
