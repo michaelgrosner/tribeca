@@ -11,6 +11,14 @@ interface OkCoinDepthMessage {
 }
 
 class OkCoin implements IGateway {
+    makeFee() : number {
+        return -0.0005;
+    }
+
+    takeFee() : number {
+        return 0.002;
+    }
+
     name() : string {
         return "OkCoin";
     }
@@ -27,7 +35,7 @@ class OkCoin implements IGateway {
         this.ConnectChanged.trigger(ConnectivityStatus.Connected);
     };
 
-    private onMessage = (m: any) => {
+    private onMessage = (m : any) => {
         var msg = JSON.parse(m)[0];
         if (msg.channel == "ok_btcusd_depth") {
             this.onDepth(msg.data);
@@ -38,11 +46,12 @@ class OkCoin implements IGateway {
     };
 
     private onDepth = (msg : OkCoinDepthMessage) => {
-        function getLevel(n: number) : MarketUpdate {
+        function getLevel(n : number) : MarketUpdate {
             return {bidPrice: msg.bids[n][0], bidSize: msg.bids[n][1],
-                    askPrice: msg.asks[n][0], askSize: msg.asks[n][1],
-                    time: new Date(parseInt(msg.timestamp))};
+                askPrice: msg.asks[n][0], askSize: msg.asks[n][1],
+                time: new Date(parseInt(msg.timestamp))};
         }
+
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.OkCoin};
         this.MarketData.trigger(book);
     };

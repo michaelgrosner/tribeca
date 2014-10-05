@@ -17,6 +17,14 @@ interface CoinsetterDepth {
 }
 
 class Coinsetter implements IGateway {
+    makeFee() : number {
+        return 0.0025;
+    }
+
+    takeFee() : number {
+        return 0.0025;
+    }
+
     name() : string {
         return "Coinsetter";
     }
@@ -33,11 +41,12 @@ class Coinsetter implements IGateway {
     };
 
     private onDepth = (msg : Array<CoinsetterDepth>) => {
-        function getLevel(n: number) : MarketUpdate {
+        function getLevel(n : number) : MarketUpdate {
             return {bidPrice: msg[n].bid.price, bidSize: msg[n].bid.size,
-                    askPrice: msg[n].ask.price, askSize: msg[n].ask.size,
-                    time: new Date(msg[n].bid.timeStamp)};
+                askPrice: msg[n].ask.price, askSize: msg[n].ask.size,
+                time: new Date(msg[n].bid.timeStamp)};
         }
+
         var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.Coinsetter};
         this.MarketData.trigger(book);
     };

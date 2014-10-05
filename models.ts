@@ -22,15 +22,27 @@ interface IGateway {
     MarketData : Evt<MarketBook>;
     ConnectChanged : Evt<ConnectivityStatus>;
     name() : string;
+    makeFee() : number;
+    takeFee() : number;
 }
 
 interface IBroker {
     MarketData : Evt<MarketBook>;
     name() : string;
     currentBook() : MarketBook;
+    makeFee() : number;
+    takeFee() : number;
 }
 
 class ExchangeBroker implements IBroker {
+    makeFee() : number {
+        return this._gateway.makeFee();
+    }
+
+    takeFee() : number {
+        return this._gateway.takeFee();
+    }
+
     MarketData : Evt<MarketBook> = new Evt();
 
     name() : string {
@@ -47,15 +59,13 @@ class ExchangeBroker implements IBroker {
 
     private marketUpdatesEqual = (update1 : MarketUpdate, update2 : MarketUpdate) : boolean => {
         return update1.askPrice == update2.askPrice &&
-               update1.bidPrice == update2.bidPrice &&
-               update1.askSize == update2.askSize &&
-               update1.askPrice == update2.askPrice;
+            update1.bidPrice == update2.bidPrice &&
+            update1.askSize == update2.askSize &&
+            update1.askPrice == update2.askPrice;
     };
 
     private handleMarketData = (book : MarketBook) => {
-        if (!this._currentBook !== null ||
-            !this.marketUpdatesEqual(book.top, this._currentBook.top) ||
-            !this.marketUpdatesEqual(book.second, this._currentBook.second)) {
+        if (!this._currentBook !== null || !this.marketUpdatesEqual(book.top, this._currentBook.top) || !this.marketUpdatesEqual(book.second, this._currentBook.second)) {
             this._currentBook = book;
             this.MarketData.trigger(book);
             this._log(book);
@@ -79,7 +89,9 @@ class Agent {
 
     constructor(brokers : Array<IBroker>) {
         this._brokers = brokers;
-        this._brokers.forEach(b => { b.MarketData.on(this.onNewMarketData) });
+        this._brokers.forEach(b => {
+            b.MarketData.on(this.onNewMarketData)
+        });
     }
 
     private onNewMarketData = () => {
@@ -91,8 +103,6 @@ class Agent {
             if (bk == null) return;
             books.push(bk);
         }
-
-        
 
     };
 }

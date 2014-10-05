@@ -21,9 +21,11 @@ interface AuthorizedHitBtcMessage<T> {
     message : NoncePayload<T>;
 }
 
-interface HitBtcPayload {}
+interface HitBtcPayload {
+}
 
-interface Login extends HitBtcPayload {}
+interface Login extends HitBtcPayload {
+}
 
 interface NewOrder extends HitBtcPayload {
     clientOrderId : string;
@@ -43,7 +45,7 @@ interface HitBtcOrderBook {
 function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
     var msg = {nonce: new Date().getTime(), payload: payload};
 
-    var signMsg = function(m) : string {
+    var signMsg = function (m) : string {
         return crypto.createHmac('sha512', secretkey)
             .update(JSON.stringify(m))
             .digest('base64');
@@ -99,6 +101,14 @@ interface CancelReject {
 }
 
 class HitBtc implements IGateway {
+    makeFee() : number {
+        return -0.0001;
+    }
+
+    takeFee() : number {
+        return 0.001;
+    }
+
     name() : string {
         return "HitBtc";
     }
@@ -109,7 +119,8 @@ class HitBtc implements IGateway {
     _log : Logger = log("HitBtc");
 
     private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
-        var v = {}; v[msgType] = msg;
+        var v = {};
+        v[msgType] = msg;
         var readyMsg = authMsg(v);
         this._log(readyMsg);
         this._ws.send(JSON.stringify(readyMsg));
@@ -129,12 +140,12 @@ class HitBtc implements IGateway {
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
         if (msg.symbol != "BTCUSD") return;
 
-        function getLevel(n: number) : MarketUpdate {
+        function getLevel(n : number) : MarketUpdate {
             return {bidPrice: msg.bid[n].price,
-                    bidSize: msg.bid[n].size/100.0,
-                    askPrice: msg.ask[n].price,
-                    askSize: msg.ask[n].size/100.0,
-                    time: new Date()};
+                bidSize: msg.bid[n].size / 100.0,
+                askPrice: msg.ask[n].price,
+                askSize: msg.ask[n].size / 100.0,
+                time: new Date()};
         }
 
         this._lastBook = {bids: msg.bid.slice(0, 2), asks: msg.ask.slice(0, 2)};
@@ -169,7 +180,7 @@ class HitBtc implements IGateway {
     };
 
     sendOrder = () => {
-        var order: NewOrder = {
+        var order : NewOrder = {
             clientOrderId: new Date().getTime().toString(32),
             symbol: "BTCUSD",
             side: "sell",

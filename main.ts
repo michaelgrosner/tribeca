@@ -4,5 +4,7 @@
 /// <reference path="models.ts" />
 
 var gateways : Array<IGateway> = [new Coinsetter(), new HitBtc(), new OkCoin()];
-var brokers : Array<IBroker> = gateways.map(g => { return new ExchangeBroker(g); });
+var brokers : Array<IBroker> = gateways.map(g => {
+    return new ExchangeBroker(g);
+});
 var agent : Agent = new Agent(brokers);
