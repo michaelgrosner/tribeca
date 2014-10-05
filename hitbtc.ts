@@ -120,12 +120,21 @@ class HitBtc implements IGateway {
 
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh) => {
         if (msg.symbol != "BTCUSD") return;
-        this._log("onMarketDataIncrementalRefresh", msg);
+        //this._log("onMarketDataIncrementalRefresh", msg);
     };
 
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
         if (msg.symbol != "BTCUSD") return;
-        this._log("onMarketDataSnapshotFullRefresh", msg);
+
+        function getLevel(n: number) : MarketUpdate {
+            return {bidPrice: msg.bid[n].price,
+                    bidSize: msg.bid[n].size/100.0,
+                    askPrice: msg.ask[n].price,
+                    askSize: msg.ask[n].size/100.0,
+                    time: new Date()};
+        }
+
+        this.MarketData.trigger({top: getLevel(0), second: getLevel(1), exchangeName: Exchange.HitBtc});
     };
 
     private onExecutionReport = (msg : ExecutionReport) => {
@@ -167,26 +176,6 @@ class HitBtc implements IGateway {
         };
 
         this.sendAuth("NewOrder", order);
-    };
-
-    getSnapshot = () : MarketBook => {
-        function getLevel(raw : HitBtcOrderBook, n : number) : MarketUpdate {
-            return {bidPrice: parseFloat(raw.bids[n][0]),
-                bidSize: parseFloat(raw.bids[n][1]),
-                askPrice: parseFloat(raw.asks[n][0]),
-                askSize: parseFloat(raw.asks[n][1]),
-                time: new Date()};
-        }
-
-        var deferred = Q_lib.defer();
-        https.get("https://api.hitbtc.com/api/1/public/BTCUSD/orderbook",
-            e => e.on("data", bytes => {
-                var raw : HitBtcOrderBook = JSON.parse(bytes);
-                var val = {top: getLevel(raw, 0), second: getLevel(raw, 1), exchangeName: Exchange.HitBtc};
-                deferred.resolve(val);
-        }));
-
-        return deferred.promise;
     };
 
     constructor() {

@@ -19,7 +19,6 @@ interface MarketBook {
 
 interface IGateway {
     MarketData : Evt<MarketBook>;
-    getSnapshot() : MarketBook;
     name() : string;
 }
 
@@ -48,7 +47,5 @@ class ExchangeBroker {
         this._log = log("ExchangeBroker:" + gateway.name());
         this._gateway = gateway;
         this._gateway.MarketData.on(this.addBook);
-
-        this._log(this._gateway.getSnapshot());
     }
 }

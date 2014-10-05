@@ -21,10 +21,6 @@ class Coinsetter implements IGateway {
         return "Coinsetter";
     }
 
-    getSnapshot() : MarketBook {
-        return undefined;
-    }
-
     MarketData : Evt<MarketBook> = new Evt();
     _socket : any;
     _log : Logger = log("Coinsetter");

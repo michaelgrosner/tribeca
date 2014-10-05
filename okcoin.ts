@@ -15,16 +15,14 @@ class OkCoin implements IGateway {
         return "OkCoin";
     }
 
-    public getSnapshot = () : MarketBook => {
-        return undefined;
-    };
-
     MarketData : Evt<MarketBook> = new Evt();
     _ws : any;
     _log : Logger = log("OkCoin");
 
     private onConnect = () => {
-        this._ws.send(JSON.stringify({event: 'addChannel',channel: 'ok_btcusd_depth'}));
+        this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_btcusd_depth'}));
+        //this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_usd_realtrades',
+        //    parameters: {partner: "partner", secretkey: "secretkey"}}));
     };
 
     private onMessage = (m: any) => {
