@@ -15,6 +15,7 @@ class OkCoin implements IGateway {
         return "OkCoin";
     }
 
+    ConnectChanged : Evt<ConnectivityStatus> = new Evt();
     MarketData : Evt<MarketBook> = new Evt();
     _ws : any;
     _log : Logger = log("OkCoin");
@@ -23,6 +24,7 @@ class OkCoin implements IGateway {
         this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_btcusd_depth'}));
         //this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_usd_realtrades',
         //    parameters: {partner: "partner", secretkey: "secretkey"}}));
+        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
     };
 
     private onMessage = (m: any) => {

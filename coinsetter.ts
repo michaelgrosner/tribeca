@@ -21,6 +21,7 @@ class Coinsetter implements IGateway {
         return "Coinsetter";
     }
 
+    ConnectChanged : Evt<ConnectivityStatus> = new Evt();
     MarketData : Evt<MarketBook> = new Evt();
     _socket : any;
     _log : Logger = log("Coinsetter");
@@ -28,6 +29,7 @@ class Coinsetter implements IGateway {
     private onConnect = () => {
         this._log("Connected to Coinsetter");
         this._socket.emit("depth room", "");
+        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
     };
 
     private onDepth = (msg : Array<CoinsetterDepth>) => {

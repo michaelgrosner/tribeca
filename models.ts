@@ -9,6 +9,7 @@ interface MarketUpdate {
     time : Date;
 }
 
+enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin }
 
 interface MarketBook {
@@ -19,6 +20,7 @@ interface MarketBook {
 
 interface IGateway {
     MarketData : Evt<MarketBook>;
+    ConnectChanged : Evt<ConnectivityStatus>;
     name() : string;
 }
 
@@ -34,7 +36,7 @@ class ExchangeBroker {
                update1.askPrice == update2.askPrice;
     };
 
-    public addBook = (book : MarketBook) => {
+    public handleMarketData = (book : MarketBook) => {
         if (!this._currentBook !== null ||
             !this.marketUpdatesEqual(book.top, this._currentBook.top) ||
             !this.marketUpdatesEqual(book.second, this._currentBook.second)) {
@@ -43,9 +45,14 @@ class ExchangeBroker {
         }
     };
 
+    public onConnect = (cs : ConnectivityStatus) => {
+        this._log("Connection status changed ", ConnectivityStatus[cs]);
+    };
+
     constructor(gateway : IGateway) {
         this._log = log("ExchangeBroker:" + gateway.name());
         this._gateway = gateway;
-        this._gateway.MarketData.on(this.addBook);
+        this._gateway.MarketData.on(this.handleMarketData);
+        this._gateway.ConnectChanged.on(this.onConnect);
     }
 }

@@ -103,6 +103,7 @@ class HitBtc implements IGateway {
         return "HitBtc";
     }
 
+    ConnectChanged : Evt<ConnectivityStatus> = new Evt();
     MarketData : Evt<MarketBook> = new Evt();
     _ws : any;
     _log : Logger = log("HitBtc");
@@ -116,10 +117,12 @@ class HitBtc implements IGateway {
 
     private onOpen = () => {
         this.sendAuth("Login", {});
+        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
     };
 
+    _lastBook = null;
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh) => {
-        if (msg.symbol != "BTCUSD") return;
+        if (msg.symbol != "BTCUSD" || this._lastBook == null) return;
         //this._log("onMarketDataIncrementalRefresh", msg);
     };
 
@@ -134,6 +137,7 @@ class HitBtc implements IGateway {
                     time: new Date()};
         }
 
+        this._lastBook = {bids: msg.bid.slice(0, 2), asks: msg.ask.slice(0, 2)};
         this.MarketData.trigger({top: getLevel(0), second: getLevel(1), exchangeName: Exchange.HitBtc});
     };
 
