@@ -11,6 +11,10 @@ interface OkCoinDepthMessage {
 }
 
 class OkCoin implements IGateway {
+    sendOrder = (order : BrokeredOrder) => {
+        // not yet implemented
+    };
+
     makeFee() : number {
         return -0.0005;
     }

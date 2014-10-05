@@ -11,11 +11,26 @@ interface MarketUpdate {
 
 enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin }
+enum Side { Bid, Ask }
+enum OrderType { Limit, Market }
+enum TimeInForce { IOC, FOK, GTC }
 
 interface MarketBook {
     top : MarketUpdate;
     second : MarketUpdate;
     exchangeName : Exchange;
+}
+
+interface Order {
+    side : Side;
+    quantity : number;
+    type : OrderType;
+    price : number;
+    timeInForce : TimeInForce;
+}
+
+interface BrokeredOrder extends Order {
+    orderId : string;
 }
 
 interface IGateway {
@@ -24,6 +39,7 @@ interface IGateway {
     name() : string;
     makeFee() : number;
     takeFee() : number;
+    sendOrder(order : BrokeredOrder);
 }
 
 interface IBroker {
@@ -32,9 +48,23 @@ interface IBroker {
     currentBook() : MarketBook;
     makeFee() : number;
     takeFee() : number;
+    sendOrder(order : Order);
 }
 
 class ExchangeBroker implements IBroker {
+    _activeOrders : { [orderId: string]: BrokeredOrder } = {};
+    sendOrder(order : Order) {
+        var brokeredOrder : BrokeredOrder = {
+            orderId: new Date().getTime().toString(32),
+            side: order.side,
+            quantity: order.quantity,
+            type: order.type,
+            price: order.price,
+            timeInForce: order.timeInForce};
+        this._activeOrders[brokeredOrder.orderId] = brokeredOrder;
+        this._gateway.sendOrder(brokeredOrder);
+    }
+
     makeFee() : number {
         return this._gateway.makeFee();
     }
@@ -95,14 +125,30 @@ class Agent {
     }
 
     private onNewMarketData = () => {
-        var books : Array<MarketBook> = [];
+        var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
-        for (var i = 0; i < this._brokers.length; i++) {
-            var b = this._brokers[i];
-            var bk = b.currentBook();
-            if (bk == null) return;
-            books.push(bk);
-        }
+        if (activeBrokers.length <= 1)
+            return;
 
+        var results = [];
+        activeBrokers.forEach(b1 => {
+            activeBrokers.forEach(b2 => {
+                // dont even bother if makeFee > 0
+                if (b1.makeFee() > 0) return;
+
+                var b1Top = b1.currentBook().top;
+                var b2Top = b2.currentBook().top;
+
+                // TODO: verify formulae
+                var pBid = - (1 + b1.makeFee()) * b1Top.bidPrice + (1 - b2.takeFee()) * b2Top.bidPrice;
+                var pAsk = (1 + b1.makeFee()) * b1Top.askPrice + (1 - b2.takeFee()) * b2Top.askPrice;
+
+                if (pBid > 0)
+                    results.push({restSide: Side.Bid, restBroker: b1, hideBroker: b2});
+
+                if (pAsk > 0)
+                    results.push({restSide: Side.Ask, restBroker: b1, hideBroker: b2});
+            })
+        });
     };
 }

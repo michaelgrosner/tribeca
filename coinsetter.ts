@@ -17,6 +17,10 @@ interface CoinsetterDepth {
 }
 
 class Coinsetter implements IGateway {
+    sendOrder = (order : BrokeredOrder) => {
+        // not yet implemented
+    };
+
     makeFee() : number {
         return 0.0025;
     }

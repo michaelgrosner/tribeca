@@ -179,18 +179,53 @@ class HitBtc implements IGateway {
         }
     };
 
-    sendOrder = () => {
-        var order : NewOrder = {
-            clientOrderId: new Date().getTime().toString(32),
-            symbol: "BTCUSD",
-            side: "sell",
-            quantity: 10,
-            type: "limit",
-            price: 888.12,
-            timeInForce: "IOC"
+    sendOrder = (order : BrokeredOrder) => {
+        var getTif = (tif : TimeInForce) => {
+            switch (tif) {
+                case TimeInForce.FOK:
+                    return "FOK";
+                case TimeInForce.GTC:
+                    return "GTC";
+                case TimeInForce.IOC:
+                    return "IOC";
+                default:
+                    throw new Error("TIF " + TimeInForce[tif] + " not supported in HitBtc");
+            }
         };
 
-        this.sendAuth("NewOrder", order);
+        var getSide = (side : Side) => {
+            switch (side) {
+                case Side.Bid:
+                    return "buy";
+                case Side.Ask:
+                    return "sell";
+                default:
+                    throw new Error("Side " + Side[side] + " not supported in HitBtc");
+            }
+        };
+
+        var getType = (t : OrderType) => {
+            switch (t) {
+                case OrderType.Limit:
+                    return "limit";
+                case OrderType.Market:
+                    return "market";
+                default:
+                    throw new Error("OrderType " + OrderType[t] + " not supported in HitBtc");
+            }
+        };
+
+        var hitBtcOrder : NewOrder = {
+            clientOrderId: order.orderId,
+            symbol: "BTCUSD",
+            side: getSide(order.side),
+            quantity: order.quantity,
+            type: getType(order.type),
+            price: order.price,
+            timeInForce: getTif(order.timeInForce)
+        };
+
+        this.sendAuth("NewOrder", hitBtcOrder);
     };
 
     constructor() {
