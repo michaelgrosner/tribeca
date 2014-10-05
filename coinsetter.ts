@@ -2,6 +2,7 @@
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
 
+var request = require("request");
 var io = require('socket.io-client');
 
 interface CoinsetterDepthSide {
@@ -16,9 +17,63 @@ interface CoinsetterDepth {
     ask : CoinsetterDepthSide;
 }
 
+interface CoinsetterNewOrder {
+    customerUuid : string;
+    accountUuid : string;
+    symbol : string;
+    side : string;
+    orderType : string;
+    requestedQuantity : number;
+    routingMethod : number;
+    requestedPrice : number;
+    clientOrderId : string;
+}
+
 class Coinsetter implements IGateway {
+    _customerUuid : string;
+    _accountUuid : string;
+    _clientSessionId : string;
+
     sendOrder = (order : BrokeredOrder) => {
-        // not yet implemented
+        var getSide = (side : Side) => {
+            switch (side) {
+                case Side.Bid:
+                    return "BUY";
+                case Side.Ask:
+                    return "SELL";
+                default:
+                    throw new Error("Side " + Side[side] + " not supported in Coinsetter");
+            }
+        };
+
+        var getType = (t : OrderType) => {
+            switch (t) {
+                case OrderType.Limit:
+                    return "LIMIT";
+                case OrderType.Market:
+                    return "MARKET";
+                default:
+                    throw new Error("OrderType " + OrderType[t] + " not supported in Coinsetter");
+            }
+        };
+
+        var csOrder : CoinsetterNewOrder = {
+            customerUuid: this._customerUuid,
+            accountUuid: this._accountUuid,
+            symbol: "BTCUSD",
+            side: getSide(order.side),
+            orderType: getType(order.type),
+            requestedQuantity: order.quantity,
+            routingMethod: 1,
+            requestedPrice: order.price,
+            clientOrderId: order.orderId
+        };
+
+        var options = {uri: "https://api.coinsetter.com/v1/order",
+                       headers: "coinsetter-client-session-id:" + this._clientSessionId,
+                       method: "POST",
+                       json: csOrder};
+        request(options, (err, resp, body) => null);
     };
 
     makeFee() : number {
