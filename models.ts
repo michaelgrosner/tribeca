@@ -43,6 +43,15 @@ interface OrderStatusReport {
     time : Date;
 }
 
+interface OrderCancel {
+    side : Side;
+}
+
+interface BrokeredCancel extends OrderCancel {
+    clientOrderId : string;
+    requestId : string;
+}
+
 interface IGateway {
     MarketData : Evt<MarketBook>;
     ConnectChanged : Evt<ConnectivityStatus>;
@@ -50,6 +59,7 @@ interface IGateway {
     makeFee() : number;
     takeFee() : number;
     sendOrder(order : BrokeredOrder);
+    cancelOrder(cancel : BrokeredCancel);
 }
 
 interface IBroker {
@@ -59,10 +69,15 @@ interface IBroker {
     makeFee() : number;
     takeFee() : number;
     sendOrder(order : Order);
+    cancelOrder(cancel : OrderCancel);
     OrderUpdate : Evt<BrokeredOrder>;
 }
 
 class ExchangeBroker implements IBroker {
+    cancelOrder(cancel : OrderCancel) {
+        //this._gateway.cancelOrder();
+    }
+
     OrderUpdate : Evt<BrokeredOrder> = new Evt<BrokeredOrder>();
     _activeOrders : { [orderId: string]: BrokeredOrder } = {};
     sendOrder(order : Order) {

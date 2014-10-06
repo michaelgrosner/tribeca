@@ -3,7 +3,7 @@
 /// <reference path="okcoin.ts" />
 /// <reference path="models.ts" />
 
-var gateways : Array<IGateway> = [new Coinsetter(), new HitBtc(), new OkCoin()];
+var gateways : Array<IGateway> = [new Coinsetter.Coinsetter(), new HitBtc.HitBtc(), new OkCoin.OkCoin()];
 var brokers : Array<IBroker> = gateways.map(g => {
     return new ExchangeBroker(g);
 });
