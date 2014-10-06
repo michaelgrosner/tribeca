@@ -272,6 +272,13 @@ module HitBtc {
             };
 
             this.sendAuth("NewOrder", hitBtcOrder);
+
+            var rpt : GatewayOrderStatusReport = {
+                orderId : order.orderId,
+                orderStatus : OrderStatus.New,
+                time : new Date()
+            };
+            this.OrderUpdate.trigger(rpt);
         };
 
         constructor() {

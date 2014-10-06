@@ -31,6 +31,13 @@ module Coinsetter {
         clientOrderId : string;
     }
 
+    interface AddOrderResponse {
+        uuid : string;
+        message : string;
+        requestStatus : string;
+        orderNumber : string;
+    }
+
     export class Coinsetter implements IGateway {
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
         cancelOrder(cancel : BrokeredCancel) {
@@ -79,7 +86,15 @@ module Coinsetter {
                 headers: "coinsetter-client-session-id:" + this._clientSessionId,
                 method: "POST",
                 json: csOrder};
-            request(options, (err, resp, body) => null);
+            request(options, (err, resp, body : AddOrderResponse) => {
+                // TODO: what is the clOrdId?
+                var ou : GatewayOrderStatusReport = {
+                    orderId: body.uuid,
+                    orderStatus: OrderStatus.New,
+                    time: new Date()
+                };
+                this.OrderUpdate.trigger(ou);
+            });
         };
 
         makeFee() : number {
