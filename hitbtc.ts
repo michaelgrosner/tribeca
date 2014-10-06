@@ -117,6 +117,7 @@ module HitBtc {
     }
 
     export class HitBtc implements IGateway {
+        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
         cancelOrder(cancel : BrokeredCancel) {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
                 cancelRequestClientOrderId: cancel.requestId,
@@ -188,7 +189,7 @@ module HitBtc {
         }
 
         private onExecutionReport = (msg : ExecutionReport) => {
-            var status : OrderStatusReport = {
+            var status : GatewayOrderStatusReport = {
                 exchOrderId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtc.getStatus(msg),
@@ -198,7 +199,7 @@ module HitBtc {
             if (msg.execReportType == 'rejected')
                 status.rejectMessage = msg.orderRejectReason;
 
-            this._log("ExecutionReport", status, msg);
+            this.OrderUpdate.trigger(status);
         };
 
         private onCancelReject = (msg : CancelReject) => {

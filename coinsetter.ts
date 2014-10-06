@@ -32,6 +32,7 @@ module Coinsetter {
     }
 
     export class Coinsetter implements IGateway {
+        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
         cancelOrder(cancel : BrokeredCancel) {
         }
 

@@ -35,12 +35,19 @@ interface BrokeredOrder extends Order {
     status: OrderStatus
 }
 
-interface OrderStatusReport {
-    exchOrderId : string;
+interface GatewayOrderStatusReport {
     orderId : string;
     orderStatus : OrderStatus;
     rejectMessage? : string;
     time : Date;
+    lastQuantity? : number;
+    lastPrice? : number;
+    leavesQuantity? : number;
+    cumQuantity? : number;
+    averagePrice? : number;
+}
+
+interface OrderStatusReport extends Order, GatewayOrderStatusReport {
 }
 
 interface OrderCancel {
@@ -60,6 +67,7 @@ interface IGateway {
     takeFee() : number;
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
+    OrderUpdate : Evt<GatewayOrderStatusReport>;
 }
 
 interface IBroker {
@@ -69,18 +77,15 @@ interface IBroker {
     makeFee() : number;
     takeFee() : number;
     sendOrder(order : Order);
-    cancelOrder(cancel : OrderCancel);
-    OrderUpdate : Evt<BrokeredOrder>;
+    OrderUpdate : Evt<OrderStatusReport>;
 }
 
 class ExchangeBroker implements IBroker {
-    cancelOrder(cancel : OrderCancel) {
-        //this._gateway.cancelOrder();
-    }
+    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
+    _allOrders : { [orderId: string]: BrokeredOrder } = {};
+    _activeOrder : BrokeredOrder;
 
-    OrderUpdate : Evt<BrokeredOrder> = new Evt<BrokeredOrder>();
-    _activeOrders : { [orderId: string]: BrokeredOrder } = {};
-    sendOrder(order : Order) {
+    sendOrder = (order : Order) => {
         var brokeredOrder : BrokeredOrder = {
             orderId: new Date().getTime().toString(32),
             side: order.side,
@@ -89,10 +94,30 @@ class ExchangeBroker implements IBroker {
             price: order.price,
             timeInForce: order.timeInForce,
             status: OrderStatus.New};
-        this._activeOrders[brokeredOrder.orderId] = brokeredOrder;
+        this._allOrders[brokeredOrder.orderId] = brokeredOrder;
         this._gateway.sendOrder(brokeredOrder);
-        this.OrderUpdate.trigger(brokeredOrder);
-    }
+    };
+
+    public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
+        var orig : Order = this._allOrders[osr.orderId];
+        var o : OrderStatusReport = {
+            orderId: osr.orderId,
+            orderStatus: osr.orderStatus,
+            rejectMessage: osr.rejectMessage,
+            time: osr.time,
+            lastQuantity: osr.lastQuantity,
+            lastPrice: osr.lastPrice,
+            leavesQuantity: osr.leavesQuantity,
+            cumQuantity: osr.cumQuantity,
+            averagePrice: osr.averagePrice,
+            side: orig.side,
+            quantity: orig.quantity,
+            type: orig.type,
+            price: orig.price,
+            timeInForce: orig.timeInForce
+        };
+        this.OrderUpdate.trigger(o);
+    };
 
     makeFee() : number {
         return this._gateway.makeFee();
@@ -140,6 +165,7 @@ class ExchangeBroker implements IBroker {
         this._gateway = gateway;
         this._gateway.MarketData.on(this.handleMarketData);
         this._gateway.ConnectChanged.on(this.onConnect);
+        this._gateway.OrderUpdate.on(this.onOrderUpdate);
     }
 }
 
@@ -162,30 +188,30 @@ class Agent {
 
         var results = [];
         activeBrokers.filter(b => b.makeFee() < 0)
-                     .forEach(restBroker => {
-            activeBrokers.forEach(hideBroker => {
-                // optimize?
-                if (restBroker.name() == hideBroker.name()) return;
+            .forEach(restBroker => {
+                activeBrokers.forEach(hideBroker => {
+                    // optimize?
+                    if (restBroker.name() == hideBroker.name()) return;
 
-                // need to determine whether or not I'm already on the market
-                var restTop = restBroker.currentBook().top;
-                var hideTop = hideBroker.currentBook().top;
+                    // need to determine whether or not I'm already on the market
+                    var restTop = restBroker.currentBook().top;
+                    var hideTop = hideBroker.currentBook().top;
 
-                // TODO: verify formulae
-                var pBid = - (1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
-                var pAsk = + (1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
+                    // TODO: verify formulae
+                    var pBid = -(1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
+                    var pAsk = +(1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
 
-                if (pBid > 0) {
-                    var p = Math.min(restTop.bidSize, hideTop.bidSize);
-                    results.push({restSide: Side.Bid, restBroker: restBroker, hideBroker: hideBroker, profit: pBid * p});
-                }
+                    if (pBid > 0) {
+                        var p = Math.min(restTop.bidSize, hideTop.bidSize);
+                        results.push({restSide: Side.Bid, restBroker: restBroker, hideBroker: hideBroker, profit: pBid * p});
+                    }
 
-                if (pAsk > 0) {
-                    var p = Math.min(restTop.askSize, hideTop.askSize);
-                    results.push({restSide: Side.Ask, restBroker: restBroker, hideBroker: hideBroker, profit: pAsk * p});
-                }
-            })
-        });
+                    if (pAsk > 0) {
+                        var p = Math.min(restTop.askSize, hideTop.askSize);
+                        results.push({restSide: Side.Ask, restBroker: restBroker, hideBroker: hideBroker, profit: pAsk * p});
+                    }
+                })
+            });
 
         results.forEach(r => {
             this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", r.profit,
