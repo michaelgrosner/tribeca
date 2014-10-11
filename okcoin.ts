@@ -53,7 +53,7 @@ module OkCoin {
         sendOrder = (order : BrokeredOrder) => {
             // https://www.okcoin.com/api/trade.do
             var o = {partner: this._partner, symbol: "btc_usd", type: order.side == Side.Bid ? "buy" : "sell",
-                     rate: order.price, amount: order.quantity, sign: null};
+                rate: order.price, amount: order.quantity, sign: null};
 
             this.sendSigned(o);
 
@@ -87,7 +87,7 @@ module OkCoin {
         private onConnect = () => {
             this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_btcusd_depth'}));
             this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_usd_realtrades',
-                    parameters: {partner: this._partner.toString(), secretkey: this._secretKey}}));
+                parameters: {partner: this._partner.toString(), secretkey: this._secretKey}}));
             this.ConnectChanged.trigger(ConnectivityStatus.Connected);
         };
 

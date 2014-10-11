@@ -42,7 +42,9 @@ module Coinsetter {
         exchange() : Exchange {
             return Exchange.Coinsetter;
         }
+
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+
         cancelOrder(cancel : BrokeredCancel) {
         }
 

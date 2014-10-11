@@ -110,6 +110,7 @@ module HitBtc {
         }
 
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+
         cancelOrder(cancel : BrokeredCancel) {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
                 cancelRequestClientOrderId: cancel.requestId,
@@ -203,11 +204,11 @@ module HitBtc {
                 orderStatus: HitBtc.getStatus(msg),
                 time: new Date(msg.timestamp),
                 rejectMessage: msg.orderRejectReason,
-                lastQuantity : msg.lastQuantity / this._lotMultiplier,
-                lastPrice : msg.lastPrice,
-                leavesQuantity : msg.leavesQuantity / this._lotMultiplier,
-                cumQuantity : msg.cumQuantity / this._lotMultiplier,
-                averagePrice : msg.averagePrice
+                lastQuantity: msg.lastQuantity / this._lotMultiplier,
+                lastPrice: msg.lastPrice,
+                leavesQuantity: msg.leavesQuantity / this._lotMultiplier,
+                cumQuantity: msg.cumQuantity / this._lotMultiplier,
+                averagePrice: msg.averagePrice
             };
 
             this.OrderUpdate.trigger(status);
@@ -287,9 +288,9 @@ module HitBtc {
             this.sendAuth("NewOrder", hitBtcOrder);
 
             var rpt : GatewayOrderStatusReport = {
-                orderId : order.orderId,
-                orderStatus : OrderStatus.New,
-                time : new Date()
+                orderId: order.orderId,
+                orderStatus: OrderStatus.New,
+                time: new Date()
             };
             this.OrderUpdate.trigger(rpt);
         };
