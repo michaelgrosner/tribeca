@@ -52,6 +52,7 @@ interface GatewayOrderStatusReport {
 }
 
 interface OrderStatusReport extends Order, GatewayOrderStatusReport {
+    exchange : Exchange
 }
 
 interface OrderCancel {
@@ -120,7 +121,8 @@ class ExchangeBroker implements IBroker {
             quantity: orig.quantity,
             type: orig.type,
             price: orig.price,
-            timeInForce: orig.timeInForce
+            timeInForce: orig.timeInForce,
+            exchange: this.exchange()
         };
         this.OrderUpdate.trigger(o);
     };

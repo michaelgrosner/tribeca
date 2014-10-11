@@ -51,18 +51,6 @@ module HitBtc {
         bids : Array<Array<string>>;
     }
 
-    function authMsg<T>(payload : T) : AuthorizedHitBtcMessage<T> {
-        var msg = {nonce: new Date().getTime(), payload: payload};
-
-        var signMsg = function (m) : string {
-            return crypto.createHmac('sha512', secretkey)
-                .update(JSON.stringify(m))
-                .digest('base64');
-        };
-
-        return {apikey: apikey, signature: signMsg(msg), message: msg};
-    }
-
     interface Update {
         price : number;
         size : number;
@@ -143,19 +131,35 @@ module HitBtc {
 
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
-        _ws : any;
+        _marketDataWs : any;
+        _orderEntryWs : any;
         _log : Logger = log("Hudson:Gateway:HitBtc");
+        _nonce = 1;
+        _lotMultiplier = 100.0;
+
+        private authMsg = <T>(payload : T) : AuthorizedHitBtcMessage<T> => {
+            var msg = {nonce: this._nonce, payload: payload};
+            this._nonce += 1;
+
+            var signMsg = function (m) : string {
+                return crypto.createHmac('sha512', secretkey)
+                    .update(JSON.stringify(m))
+                    .digest('base64');
+            };
+
+            return {apikey: apikey, signature: signMsg(msg), message: msg};
+        };
 
         private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
             var v = {};
             v[msgType] = msg;
-            var readyMsg = authMsg(v);
+            var readyMsg = this.authMsg(v);
             this._log("sending authorized message <%s> %j", msgType, readyMsg);
-            this._ws.send(JSON.stringify(readyMsg));
+            this._orderEntryWs.send(JSON.stringify(readyMsg));
         };
 
-        private onOpen = () => {
-            this.sendAuth("Login", {});
+        private onOpen = (needsLogin : boolean) => {
+            if (needsLogin) this.sendAuth("Login", {});
             this.ConnectChanged.trigger(ConnectivityStatus.Connected);
         };
 
@@ -165,11 +169,11 @@ module HitBtc {
             //this._log("onMarketDataIncrementalRefresh", msg);
         };
 
-        private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
+        private getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
             return {bidPrice: msg.bid[n].price,
-                bidSize: msg.bid[n].size / 100.0,
+                bidSize: msg.bid[n].size / this._lotMultiplier,
                 askPrice: msg.ask[n].price,
-                askSize: msg.ask[n].size / 100.0,
+                askSize: msg.ask[n].size / this._lotMultiplier,
                 time: new Date()};
         }
 
@@ -177,8 +181,8 @@ module HitBtc {
             if (msg.symbol != "BTCUSD") return;
 
             this._lastBook = {bids: msg.bid.slice(0, 2), asks: msg.ask.slice(0, 2)};
-            this.MarketData.trigger({top: HitBtc.getLevel(msg, 0),
-                second: HitBtc.getLevel(msg, 1),
+            this.MarketData.trigger({top: this.getLevel(msg, 0),
+                second: this.getLevel(msg, 1),
                 exchangeName: Exchange.HitBtc});
         };
 
@@ -197,8 +201,13 @@ module HitBtc {
                 exchOrderId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtc.getStatus(msg),
-                time: new Date(msg.timestamp / 1000.0),
-                rejectMessage: msg.orderRejectReason
+                time: new Date(msg.timestamp),
+                rejectMessage: msg.orderRejectReason,
+                lastQuantity : msg.lastQuantity / this._lotMultiplier,
+                lastPrice : msg.lastPrice,
+                leavesQuantity : msg.leavesQuantity / this._lotMultiplier,
+                cumQuantity : msg.cumQuantity / this._lotMultiplier,
+                averagePrice : msg.averagePrice
             };
 
             this.OrderUpdate.trigger(status);
@@ -217,9 +226,11 @@ module HitBtc {
                 this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh);
             }
             else if (msg.hasOwnProperty("ExecutionReport")) {
+                this._log(msg);
                 this.onExecutionReport(msg.ExecutionReport);
             }
             else if (msg.hasOwnProperty("CancelReject")) {
+                this._log(msg);
                 this.onCancelReject(msg.CancelReject);
             }
             else {
@@ -267,7 +278,7 @@ module HitBtc {
                 clientOrderId: order.orderId,
                 symbol: "BTCUSD",
                 side: HitBtc.getSide(order.side),
-                quantity: order.quantity,
+                quantity: order.quantity * this._lotMultiplier,
                 type: HitBtc.getType(order.type),
                 price: order.price,
                 timeInForce: HitBtc.getTif(order.timeInForce)
@@ -284,10 +295,15 @@ module HitBtc {
         };
 
         constructor() {
-            this._ws = new ws('ws://demo-api.hitbtc.com:80');
-            this._ws.on('open', this.onOpen);
-            this._ws.on('message', this.onMessage);
-            this._ws.on("error", this.onMessage);
+            this._marketDataWs = new ws('ws://demo-api.hitbtc.com:80');
+            this._marketDataWs.on('open', () => this.onOpen(false));
+            this._marketDataWs.on('message', this.onMessage);
+            this._marketDataWs.on("error", this.onMessage);
+
+            this._orderEntryWs = new ws("ws://demo-api.hitbtc.com:8080");
+            this._orderEntryWs.on('open', () => this.onOpen(true));
+            this._orderEntryWs.on('message', this.onMessage);
+            this._orderEntryWs.on("error", this.onMessage);
         }
     }
 }
