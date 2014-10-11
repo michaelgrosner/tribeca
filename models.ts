@@ -172,15 +172,17 @@ class ExchangeBroker implements IBroker {
 class Agent {
     _brokers : Array<IBroker>;
     _log : Logger = log("Agent");
+    _ui : UI;
 
-    constructor(brokers : Array<IBroker>) {
+    constructor(brokers : Array<IBroker>, ui : UI) {
         this._brokers = brokers;
         this._brokers.forEach(b => {
             b.MarketData.on(this.onNewMarketData)
         });
+        this._ui = ui;
     }
 
-    private onNewMarketData = () => {
+    private onNewMarketData = (book : MarketBook) => {
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
         if (activeBrokers.length <= 1)
@@ -220,5 +222,7 @@ class Agent {
                 Side[r.restSide], r.restBroker.name(), top2,
                 r.hideBroker.name(), top3);
         });
+
+        this._ui.sendUpdatedMarket(book);
     };
 }
