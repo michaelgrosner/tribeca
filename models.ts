@@ -161,7 +161,7 @@ class ExchangeBroker implements IBroker {
     };
 
     private handleMarketData = (book : MarketBook) => {
-        if (!this._currentBook !== null || !this.marketUpdatesEqual(book.top, this._currentBook.top) || !this.marketUpdatesEqual(book.second, this._currentBook.second)) {
+        if (this._currentBook == null || (!this.marketUpdatesEqual(book.top, this._currentBook.top) || !this.marketUpdatesEqual(book.second, this._currentBook.second))) {
             this._currentBook = book;
             this.MarketData.trigger(book);
             this._log(book);
