@@ -30,6 +30,10 @@ interface Order {
     timeInForce : TimeInForce;
 }
 
+interface SubmitNewOrder extends Order {
+    exchange : Exchange;
+}
+
 interface BrokeredOrder extends Order {
     orderId : string;
     status: OrderStatus
@@ -65,6 +69,7 @@ interface IGateway {
     name() : string;
     makeFee() : number;
     takeFee() : number;
+    exchange() : Exchange;
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
     OrderUpdate : Evt<GatewayOrderStatusReport>;
@@ -76,6 +81,7 @@ interface IBroker {
     currentBook() : MarketBook;
     makeFee() : number;
     takeFee() : number;
+    exchange() : Exchange;
     sendOrder(order : Order);
     OrderUpdate : Evt<OrderStatusReport>;
 }
@@ -133,6 +139,10 @@ class ExchangeBroker implements IBroker {
         return this._gateway.name();
     }
 
+    exchange() : Exchange {
+        return this._gateway.exchange();
+    }
+
     _currentBook : MarketBook = null;
     _gateway : IGateway;
     _log : Logger;
@@ -161,68 +171,10 @@ class ExchangeBroker implements IBroker {
     };
 
     constructor(gateway : IGateway) {
-        this._log = log("ExchangeBroker:" + gateway.name());
+        this._log = log("Hudson:ExchangeBroker:" + gateway.name());
         this._gateway = gateway;
         this._gateway.MarketData.on(this.handleMarketData);
         this._gateway.ConnectChanged.on(this.onConnect);
         this._gateway.OrderUpdate.on(this.onOrderUpdate);
     }
-}
-
-class Agent {
-    _brokers : Array<IBroker>;
-    _log : Logger = log("Agent");
-    _ui : UI;
-
-    constructor(brokers : Array<IBroker>, ui : UI) {
-        this._brokers = brokers;
-        this._brokers.forEach(b => {
-            b.MarketData.on(this.onNewMarketData)
-        });
-        this._ui = ui;
-    }
-
-    private onNewMarketData = (book : MarketBook) => {
-        var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
-
-        if (activeBrokers.length <= 1)
-            return;
-
-        var results = [];
-        activeBrokers.filter(b => b.makeFee() < 0)
-            .forEach(restBroker => {
-                activeBrokers.forEach(hideBroker => {
-                    // optimize?
-                    if (restBroker.name() == hideBroker.name()) return;
-
-                    // need to determine whether or not I'm already on the market
-                    var restTop = restBroker.currentBook().top;
-                    var hideTop = hideBroker.currentBook().top;
-
-                    // TODO: verify formulae
-                    var pBid = -(1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
-                    var pAsk = +(1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
-
-                    if (pBid > 0) {
-                        var p = Math.min(restTop.bidSize, hideTop.bidSize);
-                        results.push({restSide: Side.Bid, restBroker: restBroker, hideBroker: hideBroker, profit: pBid * p});
-                    }
-
-                    if (pAsk > 0) {
-                        var p = Math.min(restTop.askSize, hideTop.askSize);
-                        results.push({restSide: Side.Ask, restBroker: restBroker, hideBroker: hideBroker, profit: pAsk * p});
-                    }
-                })
-            });
-
-        results.forEach(r => {
-            var top2 = r.restBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
-            var top3 = r.hideBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
-            this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", r.profit,
-                Side[r.restSide], r.restBroker.name(), top2,
-                r.hideBroker.name(), top3);
-        });
-
-        this._ui.sendUpdatedMarket(book);
-    };
 }

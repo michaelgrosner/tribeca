@@ -14,6 +14,10 @@ module OkCoin {
     }
 
     export class OkCoin implements IGateway {
+        exchange() : Exchange {
+            return Exchange.OkCoin;
+        }
+
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
 
         private signMsg = m => {
@@ -23,16 +27,19 @@ module OkCoin {
                     els.push(key + "=" + m[key]);
             }
 
-            return crypto.createHmac('md5', this._secretKey).update(els.join("&"));
+            var sig = els.join("&") + this._secretKey;
+            return crypto.createHmac('md5', this._secretKey).update(sig).digest("hex").toString().toUpperCase();
         };
 
         private sendSigned = msg => {
             msg.sign = this.signMsg(msg);
-            this._ws.send(JSON.stringify(msg));
+            var signed = JSON.stringify(msg);
+            this._log("sending signed %s", signed);
+            this._ws.send(signed);
         };
 
         cancelOrder(cancel : BrokeredCancel) {
-            var c = {partner: this._partner, order_id: cancel.requestId, symbol: "btc_usd", sign: null};
+            var c = {partner: this._partner, order_id: cancel.requestId, symbol: "btc_usd", sign: ""};
             this.sendSigned(c);
 
             var rpt : GatewayOrderStatusReport = {
@@ -73,7 +80,7 @@ module OkCoin {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
         _ws : any;
-        _log : Logger = log("OkCoin");
+        _log : Logger = log("Hudson:Gateway:OkCoin");
 
         _partner : number = 2013015;
         _secretKey : string = "75AB165AD31EB279A6EBEE709734A6C1";

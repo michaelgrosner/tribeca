@@ -117,6 +117,10 @@ module HitBtc {
     }
 
     export class HitBtc implements IGateway {
+        exchange() : Exchange {
+            return Exchange.HitBtc;
+        }
+
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
         cancelOrder(cancel : BrokeredCancel) {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
@@ -140,13 +144,13 @@ module HitBtc {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
         _ws : any;
-        _log : Logger = log("HitBtc");
+        _log : Logger = log("Hudson:Gateway:HitBtc");
 
         private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
             var v = {};
             v[msgType] = msg;
             var readyMsg = authMsg(v);
-            this._log(readyMsg);
+            this._log("sending authorized message <%s> %j", msgType, readyMsg);
             this._ws.send(JSON.stringify(readyMsg));
         };
 
@@ -193,11 +197,9 @@ module HitBtc {
                 exchOrderId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtc.getStatus(msg),
-                time: new Date(msg.timestamp / 1000.0)
+                time: new Date(msg.timestamp / 1000.0),
+                rejectMessage: msg.orderRejectReason
             };
-
-            if (msg.execReportType == 'rejected')
-                status.rejectMessage = msg.orderRejectReason;
 
             this.OrderUpdate.trigger(status);
         };

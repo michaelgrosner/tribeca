@@ -39,6 +39,9 @@ module Coinsetter {
     }
 
     export class Coinsetter implements IGateway {
+        exchange() : Exchange {
+            return Exchange.Coinsetter;
+        }
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
         cancelOrder(cancel : BrokeredCancel) {
         }
@@ -112,7 +115,7 @@ module Coinsetter {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
         _socket : any;
-        _log : Logger = log("Coinsetter");
+        _log : Logger = log("Hudson:Gateway:Coinsetter");
 
         private onConnect = () => {
             this._log("Connected to Coinsetter");
