@@ -10,7 +10,7 @@ interface MarketUpdate {
 }
 
 enum ConnectivityStatus { Connected, Disconnected }
-enum Exchange { Coinsetter, HitBtc, OkCoin }
+enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
@@ -52,7 +52,8 @@ interface GatewayOrderStatusReport {
 }
 
 interface OrderStatusReport extends Order, GatewayOrderStatusReport {
-    exchange : Exchange
+    exchange : Exchange;
+    message? : string;
 }
 
 interface OrderCancel {

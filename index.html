@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html ng-app="projectApp">
+<body ng-controller="uiCtrl">
+
+<p>
+    Connection: {{ connected }}
+</p>
+
+<p ng-repeat="(exch, book) in books">
+    <b>{{ exch }}</b>: {{ book.bidSize|number:2 }} {{ book.bidPrice|number:2 }} X {{ book.askPrice|number:2 }} {{ book.askSize|number:2 }}
+</p>
+
+<table>
+    <tr>
+        <th>orderId</th>
+        <th>time</th>
+        <th>exchange</th>
+        <th>orderStatus</th>
+        <th>price</th>
+        <th>quantity</th>
+        <th>side</th>
+        <th>type</th>
+        <th>tif</th>
+        <th>lastQuantity</th>
+        <th>lastPrice</th>
+        <th>leavesQuantity</th>
+        <th>cumQuantity</th>
+        <th>averagePrice</th>
+    </tr>
+    <tr ng-repeat="order in orders_statuses">
+        <td>{{ order.orderId }}</td>
+        <td>{{ order.time|date:'M/d/yy h:mm:ss,sss' }}</td>
+        <td>{{ availableExchanges[order.exchange] }}</td>
+        <td>{{ availableOrderStatuses[order.orderStatus] }}</td>
+        <td>{{ order.price|number:2 }}</td>
+        <td>{{ order.quantity|number:2 }}</td>
+        <td>{{ availableSides[order.side] }}</td>
+        <td>{{ availableOrderTypes[order.type] }}</td>
+        <td>{{ availableTifs[order.tif] }}</td>
+        <td>{{ order.lastQuantity|number:2 }}</td>
+        <td>{{ order.lastPrice|number:2 }}</td>
+        <td>{{ order.leavesQuantity|number:2 }}</td>
+        <td>{{ order.cumQuantity|number:2 }}</td>
+        <td>{{ order.averagePrice|number:2 }}</td>
+    </tr>
+</table>
+
+<form novalidate>
+    Exchange: <select ng-model="order.exchange" ng-options="v for (k,v) in availableExchanges"></select><br>
+    Side: <select ng-model="order.side" ng-options="v for (k,v) in availableSides"></select><br>
+    Price: <input type="number" ng-model="order.price" /><br>
+    Size: <input type="number" ng-model="order.quantity" /><br>
+    TIF: <select ng-model="order.timeInForce" ng-options="v for (k,v) in availableTifs"></select><br>
+    Type: <select ng-model="order.orderType" ng-options="v for (k,v) in availableOrderTypes"></select><br>
+    <button ng-click="submitOrder()">Submit</button>
+</form>
+
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script>
+<script src="//cdn.socket.io/socket.io-1.1.0.js"></script>
+<script>
+    angular.module('projectApp', []);
+
+    var uiCtrl = function($scope, $timeout, $log) {
+        $scope.connected = false;
+        $scope.books = {};
+        $scope.orders_statuses = [];
+
+        var refresh_timer = function () {
+            $timeout(refresh_timer, 250);
+        };
+        $timeout(refresh_timer, 250);
+
+        var socket = io();
+        socket.on("hello", function() {
+            $scope.connected = true;
+            $log.info("connected");
+        }).on("disconnect", function() {
+            $scope.connected = false;
+            $log.warn("disconnected");
+        }).on("market-book", function(b) {
+             $scope.books[b.exchangeName] = b;
+        }).on('order-options', function(o) {
+            angular.forEach(o, function(vals, key) {
+                $scope[key] = vals;
+            });
+        }).on('order-status-report', function(o) {
+            $scope.orders_statuses.push(o);
+        });
+
+        $scope.order = {};
+        $scope.submitOrder = function() {
+            socket.emit("submit-order", $scope.order);
+        };
+
+        $log.info("started");
+    };
+
+</script>
+
+</body>
+</html>

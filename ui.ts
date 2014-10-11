@@ -1,0 +1,64 @@
+/// <reference path="models.ts" />
+
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+var path = require("path");
+
+interface OrderRequestFromUI {
+    exchange : string;
+    side : string;
+    price : number;
+    quantity : number;
+    timeInForce : string;
+    orderType : string
+}
+
+class UI {
+    NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
+    _log : Logger = log("Hudson:UI");
+
+    constructor() {
+        app.get('/', (req, res) => {
+            res.sendFile(path.join(__dirname, "index.html"));
+        });
+
+        http.listen(3000, () => this._log('listening on *:3000'));
+
+        io.on('connection', sock => {
+            sock.emit("hello");
+            sock.emit("order-options", {
+                availableTifs: TimeInForce,
+                availableExchanges: Exchange,
+                availableSides: Side,
+                availableOrderTypes: OrderType,
+                availableOrderStatuses: OrderStatus
+            });
+
+            sock.on("submit-order", (o : OrderRequestFromUI) => {
+                this._log("got new order", o);
+                this.NewOrder.trigger({
+                    exchange: Exchange[o.exchange],
+                    side: Side[o.side],
+                    price: o.price,
+                    quantity: o.quantity,
+                    timeInForce: TimeInForce[o.timeInForce],
+                    type: OrderType[o.orderType]
+                });
+            });
+        });
+    }
+
+    sendOrderStatusUpdate = (msg : OrderStatusReport) => {
+        io.emit("order-status-report", msg);
+    };
+
+    sendUpdatedMarket = (book : MarketBook) => {
+        var b = {bidPrice: book.top.bidPrice,
+            bidSize: book.top.bidSize,
+            askPrice: book.top.askPrice,
+            askSize: book.top.askSize,
+            exchangeName: Exchange[book.exchangeName]};
+        io.emit("market-book", b);
+    };
+}
