@@ -3,6 +3,7 @@
 /// <reference path="models.ts" />
 
 var ws = require('ws');
+var crypto = require("crypto");
 
 module OkCoin {
 
@@ -15,11 +16,46 @@ module OkCoin {
     export class OkCoin implements IGateway {
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
 
+        private signMsg = m => {
+            var els : string[] = [];
+            for (var key in m) {
+                if (m.hasOwnProperty(key))
+                    els.push(key + "=" + m[key]);
+            }
+
+            return crypto.createHmac('md5', this._secretKey).update(els.join("&"));
+        };
+
+        private sendSigned = msg => {
+            msg.sign = this.signMsg(msg);
+            this._ws.send(JSON.stringify(msg));
+        };
+
         cancelOrder(cancel : BrokeredCancel) {
+            var c = {partner: this._partner, order_id: cancel.requestId, symbol: "btc_usd", sign: null};
+            this.sendSigned(c);
+
+            var rpt : GatewayOrderStatusReport = {
+                orderId: cancel.requestId,
+                orderStatus: OrderStatus.PendingCancel,
+                time: new Date()
+            };
+            this.OrderUpdate.trigger(rpt);
         }
 
         sendOrder = (order : BrokeredOrder) => {
-            // not yet implemented
+            // https://www.okcoin.com/api/trade.do
+            var o = {partner: this._partner, symbol: "btc_usd", type: order.side == Side.Bid ? "buy" : "sell",
+                     rate: order.price, amount: order.quantity, sign: null};
+
+            this.sendSigned(o);
+
+            var rpt : GatewayOrderStatusReport = {
+                orderId: order.orderId,
+                orderStatus: OrderStatus.New,
+                time: new Date()
+            };
+            this.OrderUpdate.trigger(rpt);
         };
 
         makeFee() : number {
@@ -39,10 +75,12 @@ module OkCoin {
         _ws : any;
         _log : Logger = log("OkCoin");
 
+        _partner : number = 2013015;
+        _secretKey : string = "75AB165AD31EB279A6EBEE709734A6C1";
         private onConnect = () => {
             this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_btcusd_depth'}));
-            //this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_usd_realtrades',
-            //    parameters: {partner: "partner", secretkey: "secretkey"}}));
+            this._ws.send(JSON.stringify({event: 'addChannel', channel: 'ok_usd_realtrades',
+                    parameters: {partner: this._partner.toString(), secretkey: this._secretKey}}));
             this.ConnectChanged.trigger(ConnectivityStatus.Connected);
         };
 
@@ -50,6 +88,9 @@ module OkCoin {
             var msg = JSON.parse(m)[0];
             if (msg.channel == "ok_btcusd_depth") {
                 this.onDepth(msg.data);
+            }
+            else if (msg.channel == "ok_usd_realtrades") {
+                this._log("ok_usd_realtrades", msg);
             }
             else {
                 this._log("UNKNOWN", msg);

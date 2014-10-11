@@ -14,7 +14,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, Pending, Working, PartialFill, Filled, Cancelled, Rejected, Other }
+enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other }
 
 interface MarketBook {
     top : MarketUpdate;
@@ -214,9 +214,11 @@ class Agent {
             });
 
         results.forEach(r => {
+            var top2 = r.restBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
+            var top3 = r.hideBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
             this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", r.profit,
-                Side[r.restSide], r.restBroker.name(), r.restBroker.currentBook().top,
-                r.hideBroker.name(), r.hideBroker.currentBook().top);
+                Side[r.restSide], r.restBroker.name(), top2,
+                r.hideBroker.name(), top3);
         });
     };
 }

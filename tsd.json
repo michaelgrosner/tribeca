@@ -25,6 +25,12 @@
     },
     "request/request.d.ts": {
       "commit": "28df2695065cc4dee39d8c126a6561e2afd62552"
+    },
+    "socket.io/socket.io.d.ts": {
+      "commit": "bba33bcb0b363ae41db8517a09d1a4d07828616b"
+    },
+    "express/express.d.ts": {
+      "commit": "bba33bcb0b363ae41db8517a09d1a4d07828616b"
     }
   }
 }
