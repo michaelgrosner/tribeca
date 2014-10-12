@@ -6,8 +6,7 @@ module HitBtc {
 
     var crypto = require('crypto');
     var ws = require('ws');
-    var https = require('https');
-    var Q_lib = require('q');
+    var request = require('request');
 
     var apikey = '004ee1065d6c7a6ac556bea221cd6338';
     var secretkey = "aa14d615df5d47cb19a13ffe4ea638eb";
@@ -305,6 +304,12 @@ module HitBtc {
             this._orderEntryWs.on('open', () => this.onOpen(true));
             this._orderEntryWs.on('message', this.onMessage);
             this._orderEntryWs.on("error", this.onMessage);
+
+            request.get(
+                {url: "https://api.hitbtc.com/api/1/public/BTCUSD/orderbook"},
+                (err, body, resp) => {
+                    this.onMarketDataSnapshotFullRefresh(resp);
+                });
         }
     }
 }
