@@ -36,7 +36,6 @@ interface SubmitNewOrder extends Order {
 
 interface BrokeredOrder extends Order {
     orderId : string;
-    status: OrderStatus
 }
 
 interface GatewayOrderStatusReport {
@@ -86,44 +85,54 @@ interface IBroker {
     exchange() : Exchange;
     sendOrder(order : Order);
     OrderUpdate : Evt<OrderStatusReport>;
+    allOrders() : Array<OrderStatusReport>;
 }
 
 class ExchangeBroker implements IBroker {
+    allOrders() : Array<OrderStatusReport> {
+        var os : Array<OrderStatusReport> = [];
+        for (var k in this._allOrders) {
+            os.push(this._allOrders[k]);
+        }
+        return os;
+    }
+
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-    _allOrders : { [orderId: string]: BrokeredOrder } = {};
-    _activeOrder : BrokeredOrder;
+    _allOrders : { [orderId: string]: OrderStatusReport } = {};
 
     sendOrder = (order : Order) => {
-        var brokeredOrder : BrokeredOrder = {
+        var rpt : OrderStatusReport = {
             orderId: new Date().getTime().toString(32),
             side: order.side,
             quantity: order.quantity,
             type: order.type,
+            time: new Date(),
             price: order.price,
             timeInForce: order.timeInForce,
-            status: OrderStatus.New};
-        this._allOrders[brokeredOrder.orderId] = brokeredOrder;
-        this._gateway.sendOrder(brokeredOrder);
+            orderStatus: OrderStatus.New,
+            exchange: this.exchange()};
+        this._allOrders[rpt.orderId] = rpt;
+        this._gateway.sendOrder(rpt);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
-        var orig : Order = this._allOrders[osr.orderId];
+        var orig : OrderStatusReport = this._allOrders[osr.orderId];
         var o : OrderStatusReport = {
-            orderId: osr.orderId,
-            orderStatus: osr.orderStatus,
-            rejectMessage: osr.rejectMessage,
-            time: osr.time,
-            lastQuantity: osr.lastQuantity,
-            lastPrice: osr.lastPrice,
-            leavesQuantity: osr.leavesQuantity,
-            cumQuantity: osr.cumQuantity,
-            averagePrice: osr.averagePrice,
+            orderId: osr.orderId || orig.orderId,
+            orderStatus: osr.orderStatus || orig.orderStatus,
+            rejectMessage: osr.rejectMessage || orig.rejectMessage,
+            time: osr.time || orig.time,
+            lastQuantity: osr.lastQuantity || orig.lastQuantity,
+            lastPrice: osr.lastPrice || orig.lastPrice,
+            leavesQuantity: osr.leavesQuantity || orig.leavesQuantity,
+            cumQuantity: osr.cumQuantity || orig.cumQuantity,
+            averagePrice: osr.averagePrice || orig.averagePrice,
             side: orig.side,
             quantity: orig.quantity,
             type: orig.type,
             price: orig.price,
             timeInForce: orig.timeInForce,
-            exchange: this.exchange()
+            exchange: orig.exchange
         };
         this.OrderUpdate.trigger(o);
     };

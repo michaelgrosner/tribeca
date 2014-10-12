@@ -5,6 +5,7 @@
 module AtlasAts {
 
     var Faye = require('faye');
+    var request = require("request");
 
     interface AtlasAtsQuote {
         id : string;
@@ -116,8 +117,32 @@ module AtlasAts {
         private onMarketData = (rawMsg : string) => {
             var msg : AtlasAtsMarketUpdate = JSON.parse(rawMsg);
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
-            var top : MarketUpdate = { bidPrice: msg.bid, bidSize: msg.bidsize, askPrice: msg.ask, askSize: msg.asksize, time: new Date() };
-            var b : MarketBook = {top: top, second: null, exchangeName: Exchange.AtlasAts };
+
+            var bids : AtlasAtsQuote[] = [];
+            var asks : AtlasAtsQuote[] = [];
+            for (var i = 0; i < msg.quotes.length; i++) {
+                var qt = msg.quotes[i];
+                if (bids.length > 2 && qt.side == "BUY") continue;
+                if (bids.length > 2 && asks.length > 2) break;
+                if (qt.side == "BUY") bids.push(qt);
+                if (qt.side == "SELL") asks.push(qt);
+            }
+
+            var getUpdate = (bid : AtlasAtsQuote, ask : AtlasAtsQuote) => {
+                return {
+                    bidPrice: bid.price,
+                    bidSize: bid.size,
+                    askPrice: ask.price,
+                    askSize: ask.size,
+                    time: new Date() };
+            };
+
+            var b : MarketBook = {
+                top: getUpdate(bids[0], asks[0]),
+                second: getUpdate(bids[1], asks[1]),
+                exchangeName: Exchange.AtlasAts
+            };
+
             this.MarketData.trigger(b);
         };
 
@@ -138,6 +163,11 @@ module AtlasAts {
             this._client.subscribe("/market", this.onMarketData);
             this._client.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
             this._client.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
+
+            request.get({
+                url: "https://atlasats.com/api/v1/market/book",
+                qs: {item: "BTC", currency: "USD"}
+            }, (er, resp, body) => this.onMarketData(body));
         }
     }
 }
