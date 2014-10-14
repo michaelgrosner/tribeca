@@ -2,7 +2,8 @@
 
 class Result {
     constructor(public restSide: Side, public restBroker: IBroker,
-                public hideBroker: IBroker, public profit: number) {}
+                public hideBroker: IBroker, public profit: number,
+                public rest: MarketSide, public hide: MarketSide) {}
 }
 
 class Agent {
@@ -61,12 +62,12 @@ class Agent {
 
                     if (pBid > 0) {
                         var p = Math.min(restTop.bid.size, hideTop.bid.size);
-                        results.push(new Result(Side.Bid, restBroker, hideBroker, pBid * p));
+                        results.push(new Result(Side.Bid, restBroker, hideBroker, pBid * p, restTop.bid, hideTop.bid));
                     }
 
                     if (pAsk > 0) {
                         var p = Math.min(restTop.ask.size, hideTop.ask.size);
-                        results.push(new Result(Side.Ask, restBroker, hideBroker, pAsk * p));
+                        results.push(new Result(Side.Ask, restBroker, hideBroker, pAsk * p, restTop.ask, hideTop.ask));
                     }
                 })
             });
@@ -86,8 +87,8 @@ class Agent {
         //bestResult.restBroker.ensureOrderAt(bestResult.rest);
         //bestResult.hideBroker.waitForPriceAt(bestResult.hide);
 
-        this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", bestResult.profit, Side[bestResult.restSide],
-            bestResult.restBroker.name(), bestResult.hideBroker.name());
+        this._log("Trigger p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
+            bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
 
 
     };
