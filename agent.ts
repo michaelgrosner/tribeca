@@ -1,5 +1,10 @@
 /// <reference path="models.ts" />
 
+class Result {
+    constructor(public restSide: Side, public restBroker: IBroker,
+                public hideBroker: IBroker, public profit: number) {}
+}
+
 class Agent {
     _brokers : Array<IBroker>;
     _log : Logger = log("Hudson:Agent");
@@ -31,12 +36,17 @@ class Agent {
     };
 
     private onNewMarketData = (book : MarketBook) => {
+        this.recalcMarkets(book);
+        this._ui.sendUpdatedMarket(book);
+    };
+
+    private recalcMarkets = (book : MarketBook) => {
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
         if (activeBrokers.length <= 1)
             return;
 
-        var results = [];
+        var results : Result[] = [];
         activeBrokers.filter(b => b.makeFee() < 0)
             .forEach(restBroker => {
                 activeBrokers.forEach(hideBroker => {
@@ -46,30 +56,39 @@ class Agent {
                     var restTop = restBroker.currentBook().top;
                     var hideTop = hideBroker.currentBook().top;
 
-                    // TODO: verify formulae
                     var pBid = -(1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
                     var pAsk = +(1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
 
                     if (pBid > 0) {
                         var p = Math.min(restTop.bidSize, hideTop.bidSize);
-                        results.push({restSide: Side.Bid, restBroker: restBroker, hideBroker: hideBroker, profit: pBid * p});
+                        results.push(new Result(Side.Bid, restBroker, hideBroker, pBid * p));
                     }
 
                     if (pAsk > 0) {
                         var p = Math.min(restTop.askSize, hideTop.askSize);
-                        results.push({restSide: Side.Ask, restBroker: restBroker, hideBroker: hideBroker, profit: pAsk * p});
+                        results.push(new Result(Side.Ask, restBroker, hideBroker, pAsk * p));
                     }
                 })
             });
 
-        results.forEach(r => {
-            var top2 = r.restBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
-            var top3 = r.hideBroker.currentBook().top[r.restSide == Side.Bid ? "bidPrice" : "askPrice"];
-            this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", r.profit,
-                Side[r.restSide], r.restBroker.name(), top2,
-                r.hideBroker.name(), top3);
-        });
+        if (results.length == 0) return;
 
-        this._ui.sendUpdatedMarket(book);
+        var bestResult : Result;
+        var bestProfit: number = Number.MIN_VALUE;
+        for (var i = 0; i < results.length; i++) {
+            var r = results[i];
+            if (bestProfit < r.profit) {
+                bestProfit = r.profit;
+                bestResult = r;
+            }
+        }
+
+        //bestResult.restBroker.ensureOrderAt(bestResult.rest);
+        //bestResult.hideBroker.waitForPriceAt(bestResult.hide);
+
+        this._log("Trigger p=%d > %s Rest (%s) %j :: Hide (%s) %j", bestResult.profit, Side[bestResult.restSide],
+            bestResult.restBroker.name(), bestResult.hideBroker.name());
+
+
     };
 }
