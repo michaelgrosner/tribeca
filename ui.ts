@@ -54,10 +54,10 @@ class UI {
     };
 
     sendUpdatedMarket = (book : MarketBook) => {
-        var b = {bidPrice: book.top.bidPrice,
-            bidSize: book.top.bidSize,
-            askPrice: book.top.askPrice,
-            askSize: book.top.askSize,
+        var b = {bidPrice: book.top.bid.price,
+            bidSize: book.top.bid.size,
+            askPrice: book.top.ask.price,
+            askSize: book.top.ask.size,
             exchangeName: Exchange[book.exchangeName]};
         io.emit("market-book", b);
     };

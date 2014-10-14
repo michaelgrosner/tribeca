@@ -106,9 +106,10 @@ module OkCoin {
 
         private onDepth = (msg : OkCoinDepthMessage) => {
             function getLevel(n : number) : MarketUpdate {
-                return {bidPrice: msg.bids[n][0], bidSize: msg.bids[n][1],
-                    askPrice: msg.asks[n][0], askSize: msg.asks[n][1],
-                    time: new Date(parseInt(msg.timestamp))};
+                return new MarketUpdate(
+                    new MarketSide(msg.bids[n][0], msg.bids[n][1]),
+                    new MarketSide(msg.asks[n][0], msg.asks[n][1]),
+                    new Date(parseInt(msg.timestamp)));
             }
 
             var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.OkCoin};

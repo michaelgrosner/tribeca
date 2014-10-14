@@ -174,12 +174,16 @@ module HitBtc {
             // todo: they say they send it?...
             var t : Date = msg.timestamp == undefined ? new Date() : new Date(msg.timestamp/1000.0);
 
-            var orderedBids = this._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
-            var orderedAsks = this._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
+            var ordBids = this._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
+            var ordAsks = this._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
 
-            var top = new MarketUpdateImpl(orderedBids[0].price, orderedBids[0].size, orderedAsks[0].price, orderedAsks[0].size, t);
-            var second = new MarketUpdateImpl(orderedBids[1].price, orderedBids[1].size, orderedAsks[1].price, orderedAsks[1].size, t);
-            this.MarketData.trigger(new MarketBookImpl(top, second, Exchange.HitBtc));
+            var getLevel = (n : number) => {
+                var bid = new MarketSide(ordBids[n].price, ordBids[n].size);
+                var ask = new MarketSide(ordAsks[n].price, ordAsks[n].size);
+                return new MarketUpdate(bid, ask, t);
+            };
+
+            this.MarketData.trigger(new MarketBook(getLevel(0), getLevel(1), Exchange.HitBtc));
         };
 
         private _applyIncrementals(incomingUpdates : Update[],
@@ -203,11 +207,9 @@ module HitBtc {
         }
 
         private getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
-            return {bidPrice: msg.bid[n].price,
-                bidSize: msg.bid[n].size / this._lotMultiplier,
-                askPrice: msg.ask[n].price,
-                askSize: msg.ask[n].size / this._lotMultiplier,
-                time: new Date()};
+            var bid = new MarketSide(msg.bid[n].price, msg.bid[n].size / this._lotMultiplier);
+            var ask = new MarketSide(msg.ask[n].price, msg.ask[n].size / this._lotMultiplier);
+            return new MarketUpdate(bid, ask, new Date());
         }
 
         private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {

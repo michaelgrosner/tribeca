@@ -56,16 +56,16 @@ class Agent {
                     var restTop = restBroker.currentBook().top;
                     var hideTop = hideBroker.currentBook().top;
 
-                    var pBid = -(1 + restBroker.makeFee()) * restTop.bidPrice + (1 + hideBroker.takeFee()) * hideTop.bidPrice;
-                    var pAsk = +(1 + restBroker.makeFee()) * restTop.askPrice - (1 + hideBroker.takeFee()) * hideTop.askPrice;
+                    var pBid = -(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price;
+                    var pAsk = +(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price;
 
                     if (pBid > 0) {
-                        var p = Math.min(restTop.bidSize, hideTop.bidSize);
+                        var p = Math.min(restTop.bid.size, hideTop.bid.size);
                         results.push(new Result(Side.Bid, restBroker, hideBroker, pBid * p));
                     }
 
                     if (pAsk > 0) {
-                        var p = Math.min(restTop.askSize, hideTop.askSize);
+                        var p = Math.min(restTop.ask.size, hideTop.ask.size);
                         results.push(new Result(Side.Ask, restBroker, hideBroker, pAsk * p));
                     }
                 })

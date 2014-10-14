@@ -128,21 +128,13 @@ module AtlasAts {
                 if (qt.side == "SELL") asks.push(qt);
             }
 
-            var getUpdate = (bid : AtlasAtsQuote, ask : AtlasAtsQuote) => {
-                return {
-                    bidPrice: bid.price,
-                    bidSize: bid.size,
-                    askPrice: ask.price,
-                    askSize: ask.size,
-                    time: new Date() };
+            var getUpdate = (n : number) => {
+                var bid = new MarketSide(bids[n].price, bids[n].size);
+                var ask = new MarketSide(asks[n].price, asks[n].size);
+                return new MarketUpdate(bid, ask, new Date());
             };
 
-            var b : MarketBook = {
-                top: getUpdate(bids[0], asks[0]),
-                second: getUpdate(bids[1], asks[1]),
-                exchangeName: Exchange.AtlasAts
-            };
-
+            var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);
             this.MarketData.trigger(b);
         };
 

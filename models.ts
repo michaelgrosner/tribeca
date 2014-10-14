@@ -1,21 +1,23 @@
 /// <reference path="typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 
-interface MarketUpdate {
-    bidPrice : number;
-    bidSize : number;
-    askPrice : number;
-    askSize : number;
-    time : Date;
+class MarketSide {
+    constructor(public price: number, public size: number) { }
+
+    public equals(other : MarketSide) {
+        return this.price == other.price && this.size == other.size;
+    }
 }
 
-class MarketUpdateImpl {
+class MarketUpdate {
     constructor(
-        public bidPrice : number,
-        public bidSize : number,
-        public askPrice : number,
-        public askSize : number,
+        public bid : MarketSide,
+        public ask : MarketSide,
         public time : Date) { }
+
+    public equals(other : MarketUpdate) {
+        return this.ask.equals(other.ask) && this.bid.equals(other.bid);
+    }
 }
 
 enum ConnectivityStatus { Connected, Disconnected }
@@ -25,17 +27,11 @@ enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
 enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other }
 
-interface MarketBook {
-    top : MarketUpdate;
-    second : MarketUpdate;
-    exchangeName : Exchange;
-}
-
-class MarketBookImpl implements MarketBook {
+class MarketBook {
     constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
 }
 
-interface Order {
+class Order {
     side : Side;
     quantity : number;
     type : OrderType;
@@ -176,15 +172,8 @@ class ExchangeBroker implements IBroker {
         return this._currentBook;
     };
 
-    private marketUpdatesEqual = (update1 : MarketUpdate, update2 : MarketUpdate) : boolean => {
-        return update1.askPrice == update2.askPrice &&
-            update1.bidPrice == update2.bidPrice &&
-            update1.askSize == update2.askSize &&
-            update1.askPrice == update2.askPrice;
-    };
-
     private handleMarketData = (book : MarketBook) => {
-        if (this._currentBook == null || (!this.marketUpdatesEqual(book.top, this._currentBook.top) || !this.marketUpdatesEqual(book.second, this._currentBook.second))) {
+        if (this._currentBook == null || (!book.top.equals(this._currentBook.top) || !book.second.equals(this._currentBook.second))) {
             this._currentBook = book;
             this.MarketData.trigger(book);
             this._log(book);

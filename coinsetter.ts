@@ -127,9 +127,10 @@ module Coinsetter {
 
         private onDepth = (msg : Array<CoinsetterDepth>) => {
             function getLevel(n : number) : MarketUpdate {
-                return {bidPrice: msg[n].bid.price, bidSize: msg[n].bid.size,
-                    askPrice: msg[n].ask.price, askSize: msg[n].ask.size,
-                    time: new Date(msg[n].bid.timeStamp)};
+                return new MarketUpdate(
+                    new MarketSide(msg[n].bid.price, msg[n].bid.size),
+                    new MarketSide(msg[n].ask.price, msg[n].ask.size),
+                    new Date(msg[n].bid.timeStamp));
             }
 
             var book : MarketBook = {top: getLevel(0), second: getLevel(1), exchangeName: Exchange.Coinsetter};
