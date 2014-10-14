@@ -56,6 +56,10 @@ module HitBtc {
         timestamp : number;
     }
 
+    class SideUpdate {
+        constructor(public price: number, public size: number) {}
+    }
+
     interface MarketDataSnapshotFullRefresh {
         snapshotSeqNo : number;
         symbol : string;
@@ -163,11 +167,40 @@ module HitBtc {
             this.ConnectChanged.trigger(ConnectivityStatus.Connected);
         };
 
-        _lastBook = null;
+        _lastBook : { [side: string] : { [px: number]: number}} = null;
         private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh) => {
             if (msg.symbol != "BTCUSD" || this._lastBook == null) return;
-            //this._log("onMarketDataIncrementalRefresh", msg);
+
+            // todo: they say they send it?...
+            var t : Date = msg.timestamp == undefined ? new Date() : new Date(msg.timestamp/1000.0);
+
+            var orderedBids = this._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
+            var orderedAsks = this._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
+
+            var top = new MarketUpdateImpl(orderedBids[0].price, orderedBids[0].size, orderedAsks[0].price, orderedAsks[0].size, t);
+            var second = new MarketUpdateImpl(orderedBids[1].price, orderedBids[1].size, orderedAsks[1].price, orderedAsks[1].size, t);
+            this.MarketData.trigger(new MarketBookImpl(top, second, Exchange.HitBtc));
         };
+
+        private _applyIncrementals(incomingUpdates : Update[],
+                                   side : { [px: number]: number},
+                                   cmp : (p1 : SideUpdate, p2 : SideUpdate) => number) {
+            for (var i = 0; i < incomingUpdates.length; i++) {
+                var u : Update = incomingUpdates[i];
+                if (u.size == 0) {
+                    delete side[u.price];
+                }
+                else {
+                    side[u.price] = u.size;
+                }
+            }
+
+            var kvps : SideUpdate[] = [];
+            for (var px in side) {
+                kvps.push(new SideUpdate(parseFloat(px), side[px] / this._lotMultiplier));
+            }
+            return kvps.sort(cmp);
+        }
 
         private getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
             return {bidPrice: msg.bid[n].price,
@@ -180,7 +213,16 @@ module HitBtc {
         private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
             if (msg.symbol != "BTCUSD") return;
 
-            this._lastBook = {bids: msg.bid.slice(0, 2), asks: msg.ask.slice(0, 2)};
+            this._lastBook = {bid: {}, ask: {}};
+
+            for (var i = 0; i < msg.ask.length; i++) {
+                this._lastBook["ask"][msg.ask[i].price] = msg.ask[i].size;
+            }
+
+            for (var i = 0; i < msg.bid.length; i++) {
+                this._lastBook["bid"][msg.bid[i].price] = msg.bid[i].size;
+            }
+
             this.MarketData.trigger({top: this.getLevel(msg, 0),
                 second: this.getLevel(msg, 1),
                 exchangeName: Exchange.HitBtc});

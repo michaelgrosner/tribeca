@@ -9,6 +9,15 @@ interface MarketUpdate {
     time : Date;
 }
 
+class MarketUpdateImpl {
+    constructor(
+        public bidPrice : number,
+        public bidSize : number,
+        public askPrice : number,
+        public askSize : number,
+        public time : Date) { }
+}
+
 enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
@@ -20,6 +29,10 @@ interface MarketBook {
     top : MarketUpdate;
     second : MarketUpdate;
     exchangeName : Exchange;
+}
+
+class MarketBookImpl implements MarketBook {
+    constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
 }
 
 interface Order {
