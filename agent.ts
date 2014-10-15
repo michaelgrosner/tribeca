@@ -6,9 +6,9 @@ class Result {
                 public rest: MarketSide, public hide: MarketSide) {}
 }
 
-class Agent {
+class OrderBrokerAggregator {
     _brokers : Array<IBroker>;
-    _log : Logger = log("Hudson:Agent");
+    _log : Logger = log("Hudson:BrokerAggregator");
     _ui : UI;
     _brokersByExch : { [exchange: number]: IBroker} = {};
 
@@ -17,7 +17,6 @@ class Agent {
         this._ui = ui;
 
         this._brokers.forEach(b => {
-            b.MarketData.on(this.onNewMarketData);
             b.OrderUpdate.on(this._ui.sendOrderStatusUpdate);
         });
 
@@ -27,7 +26,11 @@ class Agent {
         this._ui.NewOrder.on(this.submitOrder);
     }
 
-    private submitOrder = (o : SubmitNewOrder) => {
+    public brokers = () => {
+        return this._brokers;
+    };
+
+    public submitOrder = (o : SubmitNewOrder) => {
         try {
             this._brokersByExch[o.exchange].sendOrder(o);
         }
@@ -35,6 +38,39 @@ class Agent {
             this._log("Exception while sending order", o, e);
         }
     };
+
+    public cancelReplaceOrder = (o : CancelReplaceOrder) => {
+        try {
+            this._brokersByExch[o.exchange].replaceOrder(o);
+        }
+        catch (e) {
+            this._log("Exception while cancel/replacing order", o, e);
+        }
+    };
+
+    public cancelOrder = (o : OrderCancel) => {
+        try {
+            this._brokersByExch[o.exchange].cancelOrder(o);
+        }
+        catch (e) {
+            this._log("Exception while cancelling order", o, e);
+        }
+    };
+}
+
+class Agent {
+    _brokers : Array<IBroker>;
+    _log : Logger = log("Hudson:Agent");
+    _ui : UI;
+
+    constructor(brokers : Array<IBroker>, ui : UI) {
+        this._brokers = brokers;
+        this._ui = ui;
+
+        this._brokers.forEach(b => {
+            b.MarketData.on(this.onNewMarketData);
+        });
+    }
 
     private onNewMarketData = (book : MarketBook) => {
         this.recalcMarkets(book);
