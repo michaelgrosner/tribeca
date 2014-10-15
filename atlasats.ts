@@ -6,6 +6,7 @@ module AtlasAts {
 
     var Faye = require('faye');
     var request = require("request");
+    var crypto = require('crypto');
 
     interface AtlasAtsQuote {
         id : string;

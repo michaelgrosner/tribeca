@@ -1,7 +1,5 @@
-/// <reference path="coinsetter.ts" />
 /// <reference path="hitbtc.ts" />
 /// <reference path="atlasats.ts" />
-/// <reference path="okcoin.ts" />
 /// <reference path="ui.ts" />
 /// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
