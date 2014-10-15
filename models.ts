@@ -31,7 +31,7 @@ class MarketBook {
     constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
 }
 
-class Order {
+interface Order {
     side : Side;
     quantity : number;
     type : OrderType;
@@ -39,8 +39,14 @@ class Order {
     timeInForce : TimeInForce;
 }
 
-interface SubmitNewOrder extends Order {
-    exchange : Exchange;
+class SubmitNewOrder implements Order {
+    constructor(
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce,
+        public exchange : Exchange) {}
 }
 
 interface BrokeredOrder extends Order {

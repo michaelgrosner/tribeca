@@ -84,8 +84,9 @@ class Agent {
             }
         }
 
-        //bestResult.restBroker.ensureOrderAt(bestResult.rest);
-        //bestResult.hideBroker.waitForPriceAt(bestResult.hide);
+        // 1 - new order
+        // 2 - cxl-rep
+        // 3 - cxl
 
         this._log("Trigger p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
             bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
