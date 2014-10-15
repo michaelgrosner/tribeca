@@ -121,6 +121,9 @@ module HitBtc {
                 side: HitBtc.getSide(cancel.side)})
         }
 
+        replaceOrder(replace : BrokeredReplace) {
+        }
+
         makeFee() : number {
             return -0.0001;
         }

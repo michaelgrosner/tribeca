@@ -27,6 +27,14 @@ class ExchangeBroker implements IBroker {
         this._gateway.sendOrder(rpt);
     };
 
+    replaceOrder = (replace : CancelReplaceOrder) => {
+        //this._gateway.replaceOrder(replace);
+    };
+
+    cancelOrder = (cancel : OrderCancel) => {
+        //this._gateway.cancelOrder(cancel);
+    };
+
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
         var orig : OrderStatusReport = this._allOrders[osr.orderId];
         var o : OrderStatusReport = {

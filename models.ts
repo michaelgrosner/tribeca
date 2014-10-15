@@ -49,8 +49,24 @@ class SubmitNewOrder implements Order {
         public exchange : Exchange) {}
 }
 
+class CancelReplaceOrder implements Order {
+    constructor(
+        public origOrderId : string,
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce,
+        public exchange : Exchange) {}
+}
+
 interface BrokeredOrder extends Order {
     orderId : string;
+}
+
+interface BrokeredReplace extends BrokeredOrder {
+    orderId : string;
+    origOrderId : string;
 }
 
 interface GatewayOrderStatusReport {
@@ -71,6 +87,8 @@ interface OrderStatusReport extends Order, GatewayOrderStatusReport {
 }
 
 interface OrderCancel {
+    orderId : string;
+    origOrderId : string;
     side : Side;
 }
 
@@ -88,6 +106,7 @@ interface IGateway {
     exchange() : Exchange;
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
+    replaceOrder(replace : BrokeredReplace);
     OrderUpdate : Evt<GatewayOrderStatusReport>;
 }
 
@@ -99,6 +118,8 @@ interface IBroker {
     takeFee() : number;
     exchange() : Exchange;
     sendOrder(order : Order);
+    cancelOrder(cancel : OrderCancel);
+    replaceOrder(replace : CancelReplaceOrder);
     OrderUpdate : Evt<OrderStatusReport>;
     allOrders() : Array<OrderStatusReport>;
 }

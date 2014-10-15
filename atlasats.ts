@@ -99,6 +99,9 @@ module AtlasAts {
             this.OrderUpdate.trigger(rpt);
         }
 
+        replaceOrder(replace : BrokeredReplace) {
+        }
+
         cancelOrder(cancel : BrokeredCancel) {
             var c : AtlasAtsCancelOrder = {
                 action: "order:cancel",
