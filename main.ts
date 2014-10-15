@@ -3,6 +3,7 @@
 /// <reference path="atlasats.ts" />
 /// <reference path="okcoin.ts" />
 /// <reference path="ui.ts" />
+/// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
 
 //var gateways : Array<IGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc(), new OkCoin.OkCoin()];
