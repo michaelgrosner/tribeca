@@ -77,7 +77,7 @@ module AtlasAts {
             return sign;
         }
 
-        sendOrder(order : BrokeredOrder) {
+        sendOrder = (order : BrokeredOrder) => {
             var o : AtlasAtsOrder = {
                 action: "order:create",
                 item: "BTC",
@@ -97,12 +97,14 @@ module AtlasAts {
                 time: new Date()
             };
             this.OrderUpdate.trigger(rpt);
-        }
+        };
 
-        replaceOrder(replace : BrokeredReplace) {
-        }
+        replaceOrder = (replace : BrokeredReplace) => {
+            this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side));
+            this.sendOrder(replace);
+        };
 
-        cancelOrder(cancel : BrokeredCancel) {
+        cancelOrder = (cancel : BrokeredCancel) => {
             var c : AtlasAtsCancelOrder = {
                 action: "order:cancel",
                 oid: cancel.requestId
@@ -116,7 +118,7 @@ module AtlasAts {
                 time: new Date()
             };
             this.OrderUpdate.trigger(rpt);
-        }
+        };
 
         private onMarketData = (rawMsg : string) => {
             var msg : AtlasAtsMarketUpdate = JSON.parse(rawMsg);

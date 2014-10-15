@@ -114,15 +114,17 @@ module HitBtc {
 
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
 
-        cancelOrder(cancel : BrokeredCancel) {
+        cancelOrder = (cancel : BrokeredCancel) => {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
                 cancelRequestClientOrderId: cancel.requestId,
                 symbol: "BTCUSD",
                 side: HitBtc.getSide(cancel.side)})
-        }
+        };
 
-        replaceOrder(replace : BrokeredReplace) {
-        }
+        replaceOrder = (replace : BrokeredReplace) => {
+            this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side));
+            this.sendOrder(replace);
+        };
 
         makeFee() : number {
             return -0.0001;

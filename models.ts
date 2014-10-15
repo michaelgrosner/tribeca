@@ -60,13 +60,40 @@ class CancelReplaceOrder implements Order {
         public exchange : Exchange) {}
 }
 
-interface BrokeredOrder extends Order {
-    orderId : string;
+class OrderCancel {
+    constructor(
+        public origOrderId : string,
+        public exchange : Exchange) {}
 }
 
-interface BrokeredReplace extends BrokeredOrder {
-    orderId : string;
-    origOrderId : string;
+class BrokeredOrder implements Order {
+    constructor(
+        public orderId : string,
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce,
+        public exchange : Exchange) {}
+}
+
+class BrokeredReplace implements Order {
+    constructor(
+        public orderId : string,
+        public origOrderId : string,
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce,
+        public exchange : Exchange) {}
+}
+
+class BrokeredCancel {
+    constructor(
+        public clientOrderId : string,
+        public requestId : string,
+        public side : Side) {}
 }
 
 interface GatewayOrderStatusReport {
@@ -84,17 +111,6 @@ interface GatewayOrderStatusReport {
 interface OrderStatusReport extends Order, GatewayOrderStatusReport {
     exchange : Exchange;
     message? : string;
-}
-
-interface OrderCancel {
-    orderId : string;
-    origOrderId : string;
-    side : Side;
-}
-
-interface BrokeredCancel extends OrderCancel {
-    clientOrderId : string;
-    requestId : string;
 }
 
 interface IGateway {
