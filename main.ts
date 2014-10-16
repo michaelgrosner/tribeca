@@ -5,7 +5,7 @@
 /// <reference path="agent.ts" />
 
 //var gateways : Array<IGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc(), new OkCoin.OkCoin()];
-var gateways : Array<IGateway> = [new HitBtc.HitBtc(), new AtlasAts.AtlasAts()];
+var gateways : Array<IGateway> = [new AtlasAts.AtlasAts()];
 var brokers : Array<IBroker> = gateways.map(g => new ExchangeBroker(g));
 var ui = new UI();
 var orderAgg = new OrderBrokerAggregator(brokers, ui);

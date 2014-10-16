@@ -8,6 +8,34 @@ module AtlasAts {
     var request = require("request");
     var crypto = require('crypto');
 
+    // example order reject:
+    //      {"limit":0.01,"reject":{"reason":"risk_buying_power"},"tif":"GTC","status":"REJECTED","type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"BUY","oid":"1352-101614-000056-004","item":"BTC","account":1352,"quantity":0.01,"left":0,"average":0}
+
+    // example order fill:
+    //      {"limit":390,"tif":"GTC","status":"OPEN","ack":{"oref":"4696TJEGPJYZA0","time":"2014-10-16 00:12:35"},"type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"SELL","oid":"1352-101614-001825-009","item":"BTC","account":1352,"quantity":0.0001,"left":0.0001,"average":0}
+    //      {"executions":[{"liquidity":"R","time":"2014-10-16 00:12:35","price":392.47,"quantity":0.0001,"venue":"CROX","commission":-0.00007849400000000001,"eid":"4696TJEGPJYZA02_4696TJEGPJZ0"}],"limit":390,"tif":"GTC","status":"DONE","ack":{"oref":"4696TJEGPJYZA0","time":"2014-10-16 00:12:35"},"type":"LIMIT","currency":"USD","executed":0.0001,"clid":"WEB","side":"SELL","oid":"1352-101614-001825-009","item":"BTC","account":1352,"quantity":0.0001,"left":0,"average":392.47}
+
+    interface AtlasAtsExecutionReportReject {
+        reason : string;
+    }
+    interface AtlasAtsExecutionReport {
+        limit : string;
+        reject? : AtlasAtsExecutionReportReject;
+        tif : string;
+        status : string;
+        type : string;
+        currency : string;
+        executed : number;
+        clid: string;
+        side : string;
+        oid : string;
+        item : string;
+        account : string;
+        quantity : number;
+        left : number;
+        average : number;
+    }
+
     interface AtlasAtsQuote {
         id : string;
         mm : string;
@@ -66,13 +94,15 @@ module AtlasAts {
         }
 
         _account : string = "1352";
-        _secret : string = "4f3b057d936f6363fd4e021795f7681e2107cbb99175a0bbf94b25ec9b125fa9";
-        _token : string = "7446ed9575be15cd41f08905282d2935d38ca2d4";
+        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
+        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
+        _simpleToken : string = "9464b821cea0d62939688df750547593";
         _nounce : number = 1;
         private signMessage(channel : string, msg : any) {
-            var inp : string = [this._token, this._nounce, channel, JSON.stringify(msg)].join(":");
-            var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex');
+            var inp : string = [this._token, this._nounce, channel, 'data' in msg ? JSON.stringify(msg['data']) : ''].join(":");
+            var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex').toString().toUpperCase();
             var sign = {ident: {key: this._token, signature: signature, nounce: this._nounce}};
+            this._log(inp);
             this._nounce += 1;
             return sign;
         }
@@ -89,7 +119,17 @@ module AtlasAts {
                 clid: order.orderId
             };
 
-            this._client.publish("/actions", o);
+            request({
+                url: "https://atlasats.com/api/v1/orders",
+                body: JSON.stringify(o),
+                headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
+                method: "POST"
+            }, (err, resp, body) => {
+                this._log("Status", resp.statusCode);
+                this._log(body);
+            });
+
+            //this._client.publish("/actions", o);
 
             var rpt : GatewayOrderStatusReport = {
                 orderId: order.orderId,
@@ -110,7 +150,16 @@ module AtlasAts {
                 oid: cancel.requestId
             };
 
-            this._client.publish("/actions", c);
+            request({
+                url: "https://atlasats.com/api/v1/orders/"+cancel.requestId,
+                headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
+                method: "DELETE"
+            }, (err, resp, body) => {
+                this._log("Status", resp.statusCode);
+                this._log(body);
+            });
+
+            //this._client.publish("/actions", c);
 
             var rpt : GatewayOrderStatusReport = {
                 orderId: cancel.requestId,
@@ -144,20 +193,30 @@ module AtlasAts {
             this.MarketData.trigger(b);
         };
 
+        private onExecRpt = (rawMsg : string) => {
+            var msg
+        };
+
         _log : Logger = log("Hudson:Gateway:AtlasAts");
         _client : any;
 
         constructor() {
-            this._client = new Faye.Client('https://atlasats.com/api/v1/streaming');
+            this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
+                endpoints: {
+                    websocket: 'wss://atlasats.com/api/v1/streaming'
+                }
+            });
+
             this._client.addExtension({
                 outgoing: (msg, cb) => {
-                    msg.ext = this.signMessage("/actions", msg);
-                    this._log("sending outgoing", msg);
+                    if (msg.channel != '/meta/handshake') {
+                        msg.ext = this.signMessage(msg.channel, msg);
+                    }
                     cb(msg);
                 }
             });
 
-            this._client.subscribe("/account/"+this._account+"/orders", this._log);
+            this._client.subscribe("/account/"+this._account+"/orders", m => this._log("acct", m));
             this._client.subscribe("/market", this.onMarketData);
             this._client.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
             this._client.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
