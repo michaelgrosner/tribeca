@@ -27,6 +27,7 @@ class ExchangeBroker implements IBroker {
             timeInForce: order.timeInForce,
             orderStatus: OrderStatus.New,
             exchange: this.exchange()};
+        this._log("sending order %j", rpt);
         this._allOrders[rpt.orderId] = rpt;
         this._gateway.sendOrder(rpt);
     };
@@ -34,18 +35,28 @@ class ExchangeBroker implements IBroker {
     replaceOrder = (replace : CancelReplaceOrder) => {
         var rpt = this._allOrders[replace.origOrderId];
         var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
-            replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange);
+            replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange, rpt.exchangeId);
+        this._log("cancel-replacing order %j %s", rpt, br.toString());
         this._gateway.replaceOrder(br);
     };
 
     cancelOrder = (cancel : OrderCancel) => {
         var rpt = this._allOrders[cancel.origOrderId];
-        var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side);
+        var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
+        this._log("cancelling order %j with %s", rpt, cxl.toString());
         this._gateway.cancelOrder(cxl);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
         var orig : OrderStatusReport = this._allOrders[osr.orderId];
+
+        if (typeof orig === "undefined") {
+            this._log("Cannot get OrderStatusReport for %j, bailing", osr);
+            return;
+        }
+
+        this._log("got gw update %j, applying to %j", osr, orig);
+
         var o : OrderStatusReport = {
             orderId: osr.orderId || orig.orderId,
             orderStatus: osr.orderStatus || orig.orderStatus,
@@ -61,8 +72,12 @@ class ExchangeBroker implements IBroker {
             type: orig.type,
             price: orig.price,
             timeInForce: orig.timeInForce,
-            exchange: orig.exchange
+            exchange: orig.exchange,
+            exchangeId: osr.exchangeId || orig.exchangeId,
         };
+        this._allOrders[osr.orderId] = o;
+        this._log("applied gw update -> %j", o);
+
         this.OrderUpdate.trigger(o);
     };
 

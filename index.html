@@ -27,6 +27,7 @@
         <th>cumQuantity</th>
         <th>averagePrice</th>
         <th>liquidity</th>
+        <th>msg</th>
         <th>cancel</th>
     </tr>
     <tr ng-repeat="order in orders_statuses">
@@ -45,6 +46,7 @@
         <td>{{ order.cumQuantity|number:2 }}</td>
         <td>{{ order.averagePrice|number:2 }}</td>
         <td>{{ availableLiquidityTypes[order.liquidity]}}</td>
+        <td>{{ order.rejectMessage || order.message }}</td>
         <td><button ng-click="cancelOrder(order)">cancel</button></td>
     </tr>
 </table>

@@ -142,11 +142,8 @@ module AtlasAts {
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
                 method: "POST"
             }, (err, resp, body) => {
-                this._log("Status", resp.statusCode);
-                this._log(body);
+                this.onExecRpt(body);
             });
-
-            //this._client.publish("/actions", o);
 
             var rpt : GatewayOrderStatusReport = {
                 orderId: order.orderId,
@@ -162,29 +159,34 @@ module AtlasAts {
         };
 
         cancelOrder = (cancel : BrokeredCancel) => {
-            var c : AtlasAtsCancelOrder = {
-                action: "order:cancel",
-                oid: cancel.requestId
-            };
-
             request({
-                url: "https://atlasats.com/api/v1/orders/"+cancel.requestId,
+                url: "https://atlasats.com/api/v1/orders/"+cancel.exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "DELETE"
             }, (err, resp, body) => {
-                this._log("Status", resp.statusCode);
-                this._log(body);
+                this._log("cxl-resp", err, body);
+                var msg = JSON.parse(body);
 
-                var rpt : GatewayOrderStatusReport = {
-                    orderId: cancel.requestId,
-                    orderStatus: OrderStatus.Cancelled,
-                    time: new Date()
-                };
-                this.OrderUpdate.trigger(rpt);
+                if (!err && msg.status !== "error") {
+                    var rpt : GatewayOrderStatusReport = {
+                        orderId: cancel.clientOrderId,
+                        orderStatus: OrderStatus.Cancelled,
+                        time: new Date()
+                    };
+                    this.OrderUpdate.trigger(rpt);
+                } else {
+                    var rpt : GatewayOrderStatusReport = {
+                        orderId: cancel.clientOrderId,
+                        orderStatus: OrderStatus.CancelRejected,
+                        rejectMessage: body.message,
+                        time: new Date()
+                    };
+                    this.OrderUpdate.trigger(rpt);
+                }
             });
 
             var rpt : GatewayOrderStatusReport = {
-                orderId: cancel.requestId,
+                orderId: cancel.clientOrderId,
                 orderStatus: OrderStatus.PendingCancel,
                 time: new Date()
             };
@@ -222,6 +224,7 @@ module AtlasAts {
                     return OrderStatus.Filled;
                 case "REJECTED":
                     return OrderStatus.Rejected;
+                case "PENDING":
                 case "OPEN":
                     return OrderStatus.Working;
             }
@@ -238,6 +241,9 @@ module AtlasAts {
             }
         };
 
+        // {"account":1352,"clid":"194dc3loq","action":"NEW","oid":"1352-101614-210055-016",
+        // "item_id":"0","side":"BUY","quantity":0.0001,"time":"2014-10-16T21:00:55+00:00",
+        // "type":"LIMIT","tif":"GTC","limit":350,"status":"PENDING","item":"BTC","currency":"USD"}
         private onExecRpt = (rawMsg : string) => {
             var msg : AtlasAtsExecutionReport = JSON.parse(rawMsg);
 
@@ -276,7 +282,7 @@ module AtlasAts {
                 }
             });
 
-            this._client.subscribe("/account/"+this._account+"/orders", m => this._log("acct", m));
+            this._client.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
             this._client.subscribe("/market", this.onMarketData);
             this._client.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
             this._client.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));

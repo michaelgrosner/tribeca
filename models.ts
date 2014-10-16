@@ -1,6 +1,8 @@
 /// <reference path="typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 
+var util = require("util");
+
 class MarketSide {
     constructor(public price: number, public size: number) { }
 
@@ -25,7 +27,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other }
+enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other, CancelRejected }
 enum Liquidity { Make, Take }
 
 class MarketBook {
@@ -48,6 +50,11 @@ class SubmitNewOrder implements Order {
         public price : number,
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
+
+    public toString = () => {
+        return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", Side[this.side], this.quantity,
+            OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
+    };
 }
 
 class CancelReplaceOrder implements Order {
@@ -59,12 +66,22 @@ class CancelReplaceOrder implements Order {
         public price : number,
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
+
+    public toString = () => {
+        return util.format("orig=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.origOrderId,
+            Side[this.side], this.quantity, OrderType[this.type], this.price, TimeInForce[this.timeInForce],
+            Exchange[this.exchange]);
+    };
 }
 
 class OrderCancel {
     constructor(
         public origOrderId : string,
         public exchange : Exchange) {}
+
+    public toString = () => {
+        return util.format("orig=%s; exch=%s", this.origOrderId, Exchange[this.exchange]);
+    };
 }
 
 class BrokeredOrder implements Order {
@@ -76,6 +93,12 @@ class BrokeredOrder implements Order {
         public price : number,
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
+
+    public toString = () => {
+        return util.format("orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.orderId,
+            Side[this.side], this.quantity, OrderType[this.type], this.price,
+            TimeInForce[this.timeInForce], Exchange[this.exchange]);
+    };
 }
 
 class BrokeredReplace implements Order {
@@ -89,6 +112,12 @@ class BrokeredReplace implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange,
         public exchangeId : string) {}
+
+    public toString = () => {
+        return util.format("origCliId=%s; origExchId=%s; orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s",
+            this.origOrderId, this.exchangeId, this.orderId,  Side[this.side], this.quantity,
+            OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
+    };
 }
 
 class BrokeredCancel {
@@ -97,6 +126,11 @@ class BrokeredCancel {
         public requestId : string,
         public side : Side,
         public exchangeId : string) {}
+
+    public toString = () => {
+        return util.format("reqId=%s; origCliId=%s; origExchId=%s, side=%s",
+            this.requestId, this.clientOrderId, this.exchangeId, Side[this.side]);
+    };
 }
 
 interface GatewayOrderStatusReport {
