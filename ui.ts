@@ -18,8 +18,11 @@ class UI {
     NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
     CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
     _log : Logger = log("Hudson:UI");
+    _brokers : Array<IBroker>;
 
-    constructor() {
+    constructor(public brokers : Array<IBroker>) {
+        this._brokers = brokers;
+
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));
         });
@@ -36,6 +39,8 @@ class UI {
                 availableOrderStatuses: OrderStatus,
                 availableLiquidityTypes: Liquidity
             });
+
+            this._brokers.forEach(b => this.sendUpdatedMarket(b.currentBook()));
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order", o);

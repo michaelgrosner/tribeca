@@ -243,6 +243,7 @@ module AtlasAts {
 
         private onExecRpt = (rawMsg : string) => {
             var msg : AtlasAtsExecutionReport = JSON.parse(rawMsg);
+            this._log("EXEC RPT", msg);
 
             var status : GatewayOrderStatusReport = {
                 exchangeId: msg.oid,
