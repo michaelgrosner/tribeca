@@ -24,6 +24,7 @@ class OrderBrokerAggregator {
             this._brokersByExch[brokers[i].exchange()] = brokers[i];
 
         this._ui.NewOrder.on(this.submitOrder);
+        this._ui.CancelOrder.on(this.cancelOrder);
     }
 
     public brokers = () => {

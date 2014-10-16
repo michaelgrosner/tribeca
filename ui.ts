@@ -16,6 +16,7 @@ interface OrderRequestFromUI {
 
 class UI {
     NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
+    CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
     _log : Logger = log("Hudson:UI");
 
     constructor() {
@@ -46,6 +47,11 @@ class UI {
                     timeInForce: TimeInForce[o.timeInForce],
                     type: OrderType[o.orderType]
                 });
+            });
+
+            sock.on("cancel-order", (o : OrderStatusReport) => {
+                this._log("got new cancel req", o);
+                this.CancelOrder.trigger(new OrderCancel(o.orderId, o.exchange));
             });
         });
     }
