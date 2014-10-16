@@ -157,7 +157,7 @@ module AtlasAts {
         };
 
         replaceOrder = (replace : BrokeredReplace) => {
-            this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side));
+            this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
             this.sendOrder(replace);
         };
 

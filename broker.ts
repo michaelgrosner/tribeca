@@ -32,6 +32,7 @@ class ExchangeBroker implements IBroker {
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
+        var rpt = this._allOrders[replace.origOrderId];
         var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
             replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange);
         this._gateway.replaceOrder(br);

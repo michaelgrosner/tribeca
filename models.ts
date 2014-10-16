@@ -87,18 +87,21 @@ class BrokeredReplace implements Order {
         public type : OrderType,
         public price : number,
         public timeInForce : TimeInForce,
-        public exchange : Exchange) {}
+        public exchange : Exchange,
+        public exchangeId : string) {}
 }
 
 class BrokeredCancel {
     constructor(
         public clientOrderId : string,
         public requestId : string,
-        public side : Side) {}
+        public side : Side,
+        public exchangeId : string) {}
 }
 
 interface GatewayOrderStatusReport {
     orderId : string;
+    exchangeId? : string;
     orderStatus : OrderStatus;
     rejectMessage? : string;
     time : Date;
