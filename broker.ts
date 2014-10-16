@@ -12,9 +12,13 @@ class ExchangeBroker implements IBroker {
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
     _allOrders : { [orderId: string]: OrderStatusReport } = {};
 
+    private static generateOrderId = () => {
+        return new Date().getTime().toString(32)
+    };
+
     sendOrder = (order : Order) => {
         var rpt : OrderStatusReport = {
-            orderId: new Date().getTime().toString(32),
+            orderId: ExchangeBroker.generateOrderId(),
             side: order.side,
             quantity: order.quantity,
             type: order.type,
@@ -28,11 +32,15 @@ class ExchangeBroker implements IBroker {
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
-        this._gateway.replaceOrder(replace);
+        var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
+            replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange);
+        this._gateway.replaceOrder(br);
     };
 
     cancelOrder = (cancel : OrderCancel) => {
-        this._gateway.cancelOrder(cancel);
+        var rpt = this._allOrders[cancel.origOrderId];
+        var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side);
+        this._gateway.cancelOrder(cxl);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {

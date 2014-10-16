@@ -107,7 +107,6 @@ interface GatewayOrderStatusReport {
     leavesQuantity? : number;
     cumQuantity? : number;
     averagePrice? : number;
-    fillQuantity? : number;
     liquidity? : Liquidity;
 }
 

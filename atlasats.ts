@@ -250,7 +250,7 @@ module AtlasAts {
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
                 averagePrice: msg.average,
-                fillQuantity: msg.hasOwnProperty("executions") ? msg.executions[0].quantity : null,
+                lastQuantity: msg.hasOwnProperty("executions") ? msg.executions[0].quantity : null,
                 liquidity: msg.hasOwnProperty("executions") ? AtlasAts.getLiquidity(msg.executions[0].liquidity) : null
             };
 

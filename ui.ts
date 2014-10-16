@@ -32,7 +32,8 @@ class UI {
                 availableExchanges: Exchange,
                 availableSides: Side,
                 availableOrderTypes: OrderType,
-                availableOrderStatuses: OrderStatus
+                availableOrderStatuses: OrderStatus,
+                availableLiquidityTypes: Liquidity
             });
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
