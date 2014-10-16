@@ -73,7 +73,7 @@ class ExchangeBroker implements IBroker {
             price: orig.price,
             timeInForce: orig.timeInForce,
             exchange: orig.exchange,
-            exchangeId: osr.exchangeId || orig.exchangeId,
+            exchangeId: osr.exchangeId || orig.exchangeId
         };
         this._allOrders[osr.orderId] = o;
         this._log("applied gw update -> %j", o);

@@ -247,7 +247,7 @@ module HitBtc {
 
         private onExecutionReport = (msg : ExecutionReport) => {
             var status : GatewayOrderStatusReport = {
-                exchOrderId: msg.orderId,
+                exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtc.getStatus(msg),
                 time: new Date(msg.timestamp),

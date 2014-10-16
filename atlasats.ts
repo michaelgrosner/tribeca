@@ -241,14 +241,11 @@ module AtlasAts {
             }
         };
 
-        // {"account":1352,"clid":"194dc3loq","action":"NEW","oid":"1352-101614-210055-016",
-        // "item_id":"0","side":"BUY","quantity":0.0001,"time":"2014-10-16T21:00:55+00:00",
-        // "type":"LIMIT","tif":"GTC","limit":350,"status":"PENDING","item":"BTC","currency":"USD"}
         private onExecRpt = (rawMsg : string) => {
             var msg : AtlasAtsExecutionReport = JSON.parse(rawMsg);
 
             var status : GatewayOrderStatusReport = {
-                exchOrderId: msg.oid,
+                exchangeId: msg.oid,
                 orderId: msg.clid,
                 orderStatus: AtlasAts.getStatus(msg.status),
                 time: new Date(), // doesnt give milliseconds??
