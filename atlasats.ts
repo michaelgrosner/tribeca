@@ -15,12 +15,30 @@ module AtlasAts {
     //      {"limit":390,"tif":"GTC","status":"OPEN","ack":{"oref":"4696TJEGPJYZA0","time":"2014-10-16 00:12:35"},"type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"SELL","oid":"1352-101614-001825-009","item":"BTC","account":1352,"quantity":0.0001,"left":0.0001,"average":0}
     //      {"executions":[{"liquidity":"R","time":"2014-10-16 00:12:35","price":392.47,"quantity":0.0001,"venue":"CROX","commission":-0.00007849400000000001,"eid":"4696TJEGPJYZA02_4696TJEGPJZ0"}],"limit":390,"tif":"GTC","status":"DONE","ack":{"oref":"4696TJEGPJYZA0","time":"2014-10-16 00:12:35"},"type":"LIMIT","currency":"USD","executed":0.0001,"clid":"WEB","side":"SELL","oid":"1352-101614-001825-009","item":"BTC","account":1352,"quantity":0.0001,"left":0,"average":392.47}
 
+    // example cancel ack:
+    //      {"limit":350,"tif":"GTC","status":"DONE","ack":{"oref":"4696TJEGPKHMA0","time":"2014-10-16 01:08:30"},"urout":{"time":"2014-10-16 01:08:38"},"type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"BUY","oid":"1352-101614-011421-012","item":"BTC","account":1352,"quantity":0.0001,"left":0,"average":0}
+
     interface AtlasAtsExecutionReportReject {
         reason : string;
+    }
+    interface AtlasAtsAck {
+        oref : string;
+        time : string;
+    }
+    interface AtlasAtsExecutions {
+        liquidity : string;
+        time : string;
+        price : number;
+        quantity : number;
+        venue : string;
+        commission : string;
+        eid : string;
     }
     interface AtlasAtsExecutionReport {
         limit : string;
         reject? : AtlasAtsExecutionReportReject;
+        ack? : AtlasAtsAck;
+        executions? : AtlasAtsExecutions[];
         tif : string;
         status : string;
         type : string;
@@ -102,7 +120,6 @@ module AtlasAts {
             var inp : string = [this._token, this._nounce, channel, 'data' in msg ? JSON.stringify(msg['data']) : ''].join(":");
             var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex').toString().toUpperCase();
             var sign = {ident: {key: this._token, signature: signature, nounce: this._nounce}};
-            this._log(inp);
             this._nounce += 1;
             return sign;
         }
@@ -157,9 +174,14 @@ module AtlasAts {
             }, (err, resp, body) => {
                 this._log("Status", resp.statusCode);
                 this._log(body);
-            });
 
-            //this._client.publish("/actions", c);
+                var rpt : GatewayOrderStatusReport = {
+                    orderId: cancel.requestId,
+                    orderStatus: OrderStatus.Cancelled,
+                    time: new Date()
+                };
+                this.OrderUpdate.trigger(rpt);
+            });
 
             var rpt : GatewayOrderStatusReport = {
                 orderId: cancel.requestId,
@@ -193,8 +215,46 @@ module AtlasAts {
             this.MarketData.trigger(b);
         };
 
+        private static getStatus = (raw : string) : OrderStatus => {
+            switch (raw) {
+                case "DONE":
+                    // either cancelled or filled
+                    return OrderStatus.Filled;
+                case "REJECTED":
+                    return OrderStatus.Rejected;
+                case "OPEN":
+                    return OrderStatus.Working;
+            }
+        };
+
+        private static getLiquidity = (raw : string) : Liquidity => {
+            switch (raw) {
+                case "A":
+                    return Liquidity.Make;
+                case "T":
+                    return Liquidity.Take;
+                default:
+                    throw new Error("unknown liquidity " + raw);
+            }
+        };
+
         private onExecRpt = (rawMsg : string) => {
-            var msg
+            var msg : AtlasAtsExecutionReport = JSON.parse(rawMsg);
+
+            var status : GatewayOrderStatusReport = {
+                exchOrderId: msg.oid,
+                orderId: msg.clid,
+                orderStatus: AtlasAts.getStatus(msg.status),
+                time: new Date(), // doesnt give milliseconds??
+                rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
+                leavesQuantity: msg.left,
+                cumQuantity: msg.executed,
+                averagePrice: msg.average,
+                fillQuantity: msg.hasOwnProperty("executions") ? msg.executions[0].quantity : null,
+                liquidity: msg.hasOwnProperty("executions") ? AtlasAts.getLiquidity(msg.executions[0].liquidity) : null
+            };
+
+            this.OrderUpdate.trigger(status);
         };
 
         _log : Logger = log("Hudson:Gateway:AtlasAts");

@@ -26,6 +26,7 @@ enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
 enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other }
+enum Liquidity { Make, Take }
 
 class MarketBook {
     constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
@@ -106,6 +107,8 @@ interface GatewayOrderStatusReport {
     leavesQuantity? : number;
     cumQuantity? : number;
     averagePrice? : number;
+    fillQuantity? : number;
+    liquidity? : Liquidity;
 }
 
 interface OrderStatusReport extends Order, GatewayOrderStatusReport {

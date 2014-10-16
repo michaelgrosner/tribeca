@@ -28,11 +28,11 @@ class ExchangeBroker implements IBroker {
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
-        //this._gateway.replaceOrder(replace);
+        this._gateway.replaceOrder(replace);
     };
 
     cancelOrder = (cancel : OrderCancel) => {
-        //this._gateway.cancelOrder(cancel);
+        this._gateway.cancelOrder(cancel);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
