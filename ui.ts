@@ -40,7 +40,7 @@ class UI {
                 availableLiquidityTypes: Liquidity
             });
 
-            this._brokers.forEach(b => this.sendUpdatedMarket(b.currentBook()));
+            this._brokers.filter(b => b.currentBook() != null).forEach(b => this.sendUpdatedMarket(b.currentBook()));
             this._brokers.forEach(b => b.allOrderStates().forEach(s => this.sendOrderStatusUpdate(s)));
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
@@ -67,7 +67,6 @@ class UI {
     };
 
     sendUpdatedMarket = (book : MarketBook) => {
-        if (book == null) return;
         var b = {bidPrice: book.top.bid.price,
             bidSize: book.top.bid.size,
             askPrice: book.top.ask.price,

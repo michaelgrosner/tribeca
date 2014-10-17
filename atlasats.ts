@@ -178,7 +178,7 @@ module AtlasAts {
                     var rpt : GatewayOrderStatusReport = {
                         orderId: cancel.clientOrderId,
                         orderStatus: OrderStatus.CancelRejected,
-                        rejectMessage: body.message,
+                        rejectMessage: msg.message,
                         time: new Date()
                     };
                     this.OrderUpdate.trigger(rpt);
