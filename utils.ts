@@ -20,8 +20,8 @@ class Evt<T> {
     }
 
     public trigger(data? : T) {
-        if (this.handlers) {
-            this.handlers.forEach(h => h(data));
+        for (var i = 0; i < this.handlers.length; i++) {
+            this.handlers[i](data);
         }
     }
 }
