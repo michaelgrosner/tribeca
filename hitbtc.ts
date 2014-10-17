@@ -118,7 +118,14 @@ module HitBtc {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
                 cancelRequestClientOrderId: cancel.requestId,
                 symbol: "BTCUSD",
-                side: HitBtc.getSide(cancel.side)})
+                side: HitBtc.getSide(cancel.side)});
+
+            var status : GatewayOrderStatusReport = {
+                orderId: cancel.clientOrderId,
+                orderStatus: OrderStatus.PendingCancel,
+                time: new Date()
+            };
+            this.OrderUpdate.trigger(status);
         };
 
         replaceOrder = (replace : BrokeredReplace) => {
@@ -263,7 +270,13 @@ module HitBtc {
         };
 
         private onCancelReject = (msg : CancelReject) => {
-            this._log("onCancelReject", msg);
+            var status : GatewayOrderStatusReport = {
+                orderId: msg.clientOrderId,
+                rejectMessage: msg.rejectReasonCode.toString() + " " + msg.rejectReasonText,
+                orderStatus: OrderStatus.CancelRejected,
+                time: new Date(msg.timestamp)
+            };
+            this.OrderUpdate.trigger(status);
         };
 
         private onMessage = (raw : string) => {
@@ -275,11 +288,9 @@ module HitBtc {
                 this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh);
             }
             else if (msg.hasOwnProperty("ExecutionReport")) {
-                this._log(msg);
                 this.onExecutionReport(msg.ExecutionReport);
             }
             else if (msg.hasOwnProperty("CancelReject")) {
-                this._log(msg);
                 this.onCancelReject(msg.CancelReject);
             }
             else {
