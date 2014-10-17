@@ -5,6 +5,9 @@ var log = require('debug');
 interface Logger { (...arg : any[]) : void;
 }
 
+interface Array<T> { last() : T;}
+Array.prototype.last = function() { return this[this.length - 1]; };
+
 class Evt<T> {
     private handlers : { (data? : T): void; }[] = [];
 

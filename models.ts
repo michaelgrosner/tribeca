@@ -176,5 +176,5 @@ interface IBroker {
     cancelOrder(cancel : OrderCancel);
     replaceOrder(replace : CancelReplaceOrder);
     OrderUpdate : Evt<OrderStatusReport>;
-    allOrders() : Array<OrderStatusReport>;
+    allOrderStates() : Array<OrderStatusReport>;
 }

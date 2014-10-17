@@ -66,6 +66,7 @@ class UI {
     };
 
     sendUpdatedMarket = (book : MarketBook) => {
+        if (book == null) return;
         var b = {bidPrice: book.top.bid.price,
             bidSize: book.top.bid.size,
             askPrice: book.top.ask.price,

@@ -1,16 +1,19 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
-    allOrders() : Array<OrderStatusReport> {
+    allOrderStates() : Array<OrderStatusReport> {
         var os : Array<OrderStatusReport> = [];
         for (var k in this._allOrders) {
-            os.push(this._allOrders[k]);
+            var e = this._allOrders[k];
+            for (var i = 0; i < e.length; i++) {
+                os.push(e[i]);
+            }
         }
         return os;
     }
 
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-    _allOrders : { [orderId: string]: OrderStatusReport } = {};
+    _allOrders : { [orderId: string]: OrderStatusReport[] } = {};
 
     private static generateOrderId = () => {
         return new Date().getTime().toString(32)
@@ -28,12 +31,12 @@ class ExchangeBroker implements IBroker {
             orderStatus: OrderStatus.New,
             exchange: this.exchange()};
         this._log("sending order %j", rpt);
-        this._allOrders[rpt.orderId] = rpt;
+        this._allOrders[rpt.orderId] = [rpt];
         this._gateway.sendOrder(rpt);
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
-        var rpt = this._allOrders[replace.origOrderId];
+        var rpt = this._allOrders[replace.origOrderId].last();
         var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
             replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange, rpt.exchangeId);
         this._log("cancel-replacing order %j %s", rpt, br.toString());
@@ -41,17 +44,17 @@ class ExchangeBroker implements IBroker {
     };
 
     cancelOrder = (cancel : OrderCancel) => {
-        var rpt = this._allOrders[cancel.origOrderId];
+        var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         this._log("cancelling order %j with %s", rpt, cxl.toString());
         this._gateway.cancelOrder(cxl);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
-        var orig : OrderStatusReport = this._allOrders[osr.orderId];
+        var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
 
         if (typeof orig === "undefined") {
-            this._log("Cannot get OrderStatusReport for %j, bailing", osr);
+            this._log("Cannot get OrderStatusReport for %j, bailing === %j", osr, this._allOrders[osr.orderId]);
             return;
         }
 
@@ -75,7 +78,7 @@ class ExchangeBroker implements IBroker {
             exchange: orig.exchange,
             exchangeId: osr.exchangeId || orig.exchangeId
         };
-        this._allOrders[osr.orderId] = o;
+        this._allOrders[osr.orderId].push(o);
         this._log("applied gw update -> %j", o);
 
         this.OrderUpdate.trigger(o);
