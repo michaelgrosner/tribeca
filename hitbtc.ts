@@ -257,7 +257,7 @@ module HitBtc {
                 exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtc.getStatus(msg),
-                time: new Date(msg.timestamp),
+                time: new Date(msg.timestamp) || new Date(),
                 rejectMessage: msg.orderRejectReason,
                 lastQuantity: msg.lastQuantity / this._lotMultiplier,
                 lastPrice: msg.lastPrice,
@@ -272,9 +272,9 @@ module HitBtc {
         private onCancelReject = (msg : CancelReject) => {
             var status : GatewayOrderStatusReport = {
                 orderId: msg.clientOrderId,
-                rejectMessage: msg.rejectReasonCode.toString() + " " + msg.rejectReasonText,
+                rejectMessage: msg.rejectReasonText,
                 orderStatus: OrderStatus.CancelRejected,
-                time: new Date(msg.timestamp)
+                time: new Date()
             };
             this.OrderUpdate.trigger(status);
         };
