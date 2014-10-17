@@ -41,6 +41,7 @@ class UI {
             });
 
             this._brokers.forEach(b => this.sendUpdatedMarket(b.currentBook()));
+            this._brokers.forEach(b => b.allOrderStates().forEach(s => this.sendOrderStatusUpdate(s)));
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order", o);
