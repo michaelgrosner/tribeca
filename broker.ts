@@ -1,6 +1,20 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
+    cancelOpenOrders() : void {
+        for (var k in this._allOrders) {
+            var e : OrderStatusReport = this._allOrders[k].last();
+
+            switch (e.orderStatus) {
+                case OrderStatus.New:
+                case OrderStatus.PartialFill:
+                case OrderStatus.Working:
+                    this.cancelOrder(new OrderCancel(e.orderId, e.exchange));
+                    break;
+            }
+        }
+    }
+
     allOrderStates() : Array<OrderStatusReport> {
         var os : Array<OrderStatusReport> = [];
         for (var k in this._allOrders) {
@@ -39,8 +53,8 @@ class ExchangeBroker implements IBroker {
 
     replaceOrder = (replace : CancelReplaceOrder) => {
         var rpt = this._allOrders[replace.origOrderId].last();
-        var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
-            replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange, rpt.exchangeId);
+        var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, rpt.side,
+            replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
         this._log("cancel-replacing order %o %o", rpt, br);
         this._gateway.replaceOrder(br);
     };

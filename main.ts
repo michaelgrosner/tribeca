@@ -4,9 +4,18 @@
 /// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
 
-var gateways : Array<IGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
-//var gateways : Array<IGateway> = [new AtlasAts.AtlasAts()];
-var brokers : Array<IBroker> = gateways.map(g => new ExchangeBroker(g));
-var ui = new UI(brokers);
-var orderAgg = new OrderBrokerAggregator(brokers, ui);
-var agent = new Agent(orderAgg.brokers(), ui);
+var _log = log("Hudson:main");
+
+var brokers : Array<IBroker> = [];
+
+try {
+    var gateways : Array<IGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
+    brokers = gateways.map(g => new ExchangeBroker(g));
+    var ui = new UI(brokers);
+    var orderAgg = new OrderBrokerAggregator(brokers, ui);
+    var agent = new Agent(orderAgg.brokers(), ui);
+}
+catch (e) {
+    _log("unhandled exception caught, terminating %o", e);
+    brokers.forEach(b => b.cancelOpenOrders());
+}

@@ -124,32 +124,51 @@ class Agent {
             }
         }
 
-        this._handleResult(bestResult);
-
-        this._lastBestResult = bestResult;
-    };
-
-    private _lastBestResult : Result = null;
-    private _handleResult = (result : Result) =>  {
-        // cancel
+        // TODO: think about sizing, currently doing 0.025 BTC
         var action : string;
-        if (result == null && this._lastBestResult !== null) {
+        var restExch = bestResult.restBroker.exchange();
+        if (bestResult == null && this._lastBestResult !== null) {
             action = "STOP";
+            // remove fill notification
+            bestResult.restBroker.OrderUpdate.off(o => Agent.arbFire(o, bestResult.hideBroker));
+
+            // cancel open order
+            bestResult.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
         }
         // new
-        else if (result !== null && this._lastBestResult == null) {
+        else if (bestResult !== null && this._lastBestResult == null) {
             action = "START";
-            // need to set up fill notification & triggering
+            // set up fill notification
+            bestResult.restBroker.OrderUpdate.on(o => Agent.arbFire(o, bestResult.hideBroker));
+
+            // send an order
+            bestResult.restBroker.sendOrder(new OrderImpl(bestResult.restSide, 0.025, OrderType.Limit, bestResult.rest.price, TimeInForce.GTC));
         }
         // cxl-rpl
-        else if (result !== null && this._lastBestResult !== null) {
+        else if (bestResult !== null && this._lastBestResult !== null) {
             action = "MODIFY";
+            // cxl-rpl live order
+            // TODO: think about sizing
+            // TODO: only replace this when this exchange price has ticked
+            bestResult.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, bestResult.rest.price, restExch));
         }
         else {
             throw Error("should not have ever gotten here");
         }
 
-        this._log("%s :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", action, result.profit, Side[result.restSide],
-                result.restBroker.name(), result.rest.price, result.hideBroker.name(), result.hide.price);
+        this._log("%s :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", action, bestResult.profit, Side[bestResult.restSide],
+                bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
+
+        this._lastBestResult = bestResult;
     };
+
+    private static arbFire(o : OrderStatusReport, hideBroker : IBroker) {
+        if (o.orderStatus !== OrderStatus.Filled || o.orderStatus !== OrderStatus.PartialFill) return;
+        // TODO: think about sizing
+        var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
+        hideBroker.sendOrder(new OrderImpl(o.side, o.quantity, o.type, px, TimeInForce.IOC));
+    }
+
+    private _lastBestResult : Result = null;
+    private _activeOrderIds : { [ exch : number] : string} = {};
 }

@@ -46,6 +46,20 @@ interface Order {
     timeInForce : TimeInForce;
 }
 
+class OrderImpl implements Order {
+    constructor(
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce) {}
+
+    public inspect()  {
+        return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s", Side[this.side], this.quantity,
+            OrderType[this.type], this.price, TimeInForce[this.timeInForce]);
+    }
+}
+
 class SubmitNewOrder implements Order {
     constructor(
         public side : Side,
@@ -61,20 +75,16 @@ class SubmitNewOrder implements Order {
     }
 }
 
-class CancelReplaceOrder implements Order {
+class CancelReplaceOrder {
     constructor(
         public origOrderId : string,
-        public side : Side,
         public quantity : number,
-        public type : OrderType,
         public price : number,
-        public timeInForce : TimeInForce,
         public exchange : Exchange) {}
 
     public inspect()  {
-        return util.format("orig=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.origOrderId,
-            Side[this.side], this.quantity, OrderType[this.type], this.price, TimeInForce[this.timeInForce],
-            Exchange[this.exchange]);
+        return util.format("orig=%s; quantity=%d; price=%d, exch=%s",
+            this.origOrderId, this.quantity, this.price, Exchange[this.exchange]);
     }
 }
 
@@ -181,4 +191,5 @@ interface IBroker {
     replaceOrder(replace : CancelReplaceOrder);
     OrderUpdate : Evt<OrderStatusReport>;
     allOrderStates() : Array<OrderStatusReport>;
+    cancelOpenOrders() : void;
 }
