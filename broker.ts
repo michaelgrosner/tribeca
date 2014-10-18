@@ -48,7 +48,7 @@ class ExchangeBroker implements IBroker {
         this._allOrders[rpt.orderId] = [rpt];
         var brokeredOrder = new BrokeredOrder(rpt.orderId, rpt.side, rpt.quantity, rpt.type,
             rpt.price, rpt.timeInForce, rpt.exchange);
-        this._gateway.sendOrder(brokeredOrder);
+        this._oeGateway.sendOrder(brokeredOrder);
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
@@ -56,14 +56,14 @@ class ExchangeBroker implements IBroker {
         var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, rpt.side,
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
         this._log("cancel-replacing order %o %o", rpt, br);
-        this._gateway.replaceOrder(br);
+        this._oeGateway.replaceOrder(br);
     };
 
     cancelOrder = (cancel : OrderCancel) => {
         var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         this._log("cancelling order %o with %o", rpt, cxl);
-        this._gateway.cancelOrder(cxl);
+        this._oeGateway.cancelOrder(cxl);
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
@@ -101,25 +101,27 @@ class ExchangeBroker implements IBroker {
     };
 
     makeFee() : number {
-        return this._gateway.makeFee();
+        return this._baseGateway.makeFee();
     }
 
     takeFee() : number {
-        return this._gateway.takeFee();
+        return this._baseGateway.takeFee();
     }
 
     MarketData : Evt<MarketBook> = new Evt();
 
     name() : string {
-        return this._gateway.name();
+        return this._baseGateway.name();
     }
 
     exchange() : Exchange {
-        return this._gateway.exchange();
+        return this._baseGateway.exchange();
     }
 
     _currentBook : MarketBook = null;
-    _gateway : IGateway;
+    _mdGateway : IMarketDataGateway;
+    _baseGateway : IGateway;
+    _oeGateway : IOrderEntryGateway;
     _log : Logger;
 
     public currentBook = () : MarketBook => {
@@ -138,11 +140,15 @@ class ExchangeBroker implements IBroker {
         this._log("Connection status changed ", ConnectivityStatus[cs]);
     };
 
-    constructor(gateway : IGateway) {
-        this._log = log("Hudson:ExchangeBroker:" + gateway.name());
-        this._gateway = gateway;
-        this._gateway.MarketData.on(this.handleMarketData);
-        this._gateway.ConnectChanged.on(this.onConnect);
-        this._gateway.OrderUpdate.on(this.onOrderUpdate);
+    constructor(mdGateway : IMarketDataGateway, baseGateway : IGateway, oeGateway : IOrderEntryGateway) {
+        this._log = log("Hudson:ExchangeBroker:" + baseGateway.name());
+
+        this._mdGateway = mdGateway;
+        this._oeGateway = oeGateway;
+        this._baseGateway = baseGateway;
+
+        this._mdGateway.MarketData.on(this.handleMarketData);
+        this._baseGateway.ConnectChanged.on(this.onConnect);
+        this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
     }
 }

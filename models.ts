@@ -167,17 +167,25 @@ interface OrderStatusReport extends Order, GatewayOrderStatusReport {
 }
 
 interface IGateway {
-    MarketData : Evt<MarketBook>;
     ConnectChanged : Evt<ConnectivityStatus>;
     name() : string;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
+}
+
+interface IMarketDataGateway {
+    MarketData : Evt<MarketBook>;
+}
+
+interface IOrderEntryGateway {
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
     replaceOrder(replace : BrokeredReplace);
     OrderUpdate : Evt<GatewayOrderStatusReport>;
 }
+
+interface ICombinedGateway extends IGateway, IOrderEntryGateway, IMarketDataGateway { }
 
 interface IBroker {
     MarketData : Evt<MarketBook>;

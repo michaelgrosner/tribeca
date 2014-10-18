@@ -107,7 +107,7 @@ module HitBtc {
         timestamp : number;
     }
 
-    export class HitBtc implements IGateway {
+    export class HitBtc implements IMarketDataGateway, IOrderEntryGateway, IGateway {
         exchange() : Exchange {
             return Exchange.HitBtc;
         }

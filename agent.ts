@@ -124,7 +124,8 @@ class Agent {
             }
         }
 
-        // TODO: think about sizing, currently doing 0.025 BTC
+        // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
+        // TODO: some sort of account limits interface
         var action : string;
         var restExch = bestResult.restBroker.exchange();
         if (bestResult == null && this._lastBestResult !== null) {

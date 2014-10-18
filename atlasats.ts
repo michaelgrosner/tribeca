@@ -90,7 +90,7 @@ module AtlasAts {
         oid: string;
     }
 
-    export class AtlasAts implements IGateway {
+    export class AtlasAts implements IMarketDataGateway, IOrderEntryGateway, IGateway {
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
