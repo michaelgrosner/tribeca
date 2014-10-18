@@ -44,19 +44,14 @@ class UI {
             this._brokers.forEach(b => b.allOrderStates().forEach(s => this.sendOrderStatusUpdate(s)));
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
-                this._log("got new order", o);
-                this.NewOrder.trigger({
-                    exchange: Exchange[o.exchange],
-                    side: Side[o.side],
-                    price: o.price,
-                    quantity: o.quantity,
-                    timeInForce: TimeInForce[o.timeInForce],
-                    type: OrderType[o.orderType]
-                });
+                this._log("got new order %o", o);
+                var order = new SubmitNewOrder(Side[o.side], o.quantity, OrderType[o.orderType],
+                    o.price, TimeInForce[o.timeInForce], Exchange[o.exchange]);
+                this.NewOrder.trigger(order);
             });
 
             sock.on("cancel-order", (o : OrderStatusReport) => {
-                this._log("got new cancel req", o);
+                this._log("got new cancel req %o", o);
                 this.CancelOrder.trigger(new OrderCancel(o.orderId, o.exchange));
             });
         });

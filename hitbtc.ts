@@ -237,9 +237,8 @@ module HitBtc {
                 this._lastBook["bid"][msg.bid[i].price] = msg.bid[i].size;
             }
 
-            this.MarketData.trigger({top: this.getLevel(msg, 0),
-                second: this.getLevel(msg, 1),
-                exchangeName: Exchange.HitBtc});
+            var b = new MarketBook(this.getLevel(msg, 0), this.getLevel(msg, 1), Exchange.HitBtc);
+            this.MarketData.trigger(b);
         };
 
         private static getStatus(m : ExecutionReport) : OrderStatus {

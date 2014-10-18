@@ -30,23 +30,25 @@ class ExchangeBroker implements IBroker {
             timeInForce: order.timeInForce,
             orderStatus: OrderStatus.New,
             exchange: this.exchange()};
-        this._log("sending order %j", rpt);
+        this._log("sending order %o", rpt);
         this._allOrders[rpt.orderId] = [rpt];
-        this._gateway.sendOrder(rpt);
+        var brokeredOrder = new BrokeredOrder(rpt.orderId, rpt.side, rpt.quantity, rpt.type,
+            rpt.price, rpt.timeInForce, rpt.exchange);
+        this._gateway.sendOrder(brokeredOrder);
     };
 
     replaceOrder = (replace : CancelReplaceOrder) => {
         var rpt = this._allOrders[replace.origOrderId].last();
         var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, replace.side,
             replace.quantity, replace.type, replace.price, replace.timeInForce, replace.exchange, rpt.exchangeId);
-        this._log("cancel-replacing order %j %s", rpt, br.toString());
+        this._log("cancel-replacing order %o %o", rpt, br);
         this._gateway.replaceOrder(br);
     };
 
     cancelOrder = (cancel : OrderCancel) => {
         var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
-        this._log("cancelling order %j with %s", rpt, cxl.toString());
+        this._log("cancelling order %o with %o", rpt, cxl);
         this._gateway.cancelOrder(cxl);
     };
 
@@ -54,11 +56,11 @@ class ExchangeBroker implements IBroker {
         var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
 
         if (typeof orig === "undefined") {
-            this._log("Cannot get OrderStatusReport for %j, bailing === %j", osr, this._allOrders[osr.orderId]);
+            this._log("Cannot get OrderStatusReport for %o, bailing === %o", osr, this._allOrders[osr.orderId]);
             return;
         }
 
-        this._log("got gw update %j, applying to %j", osr, orig);
+        this._log("got gw update %o, applying to %o", osr, orig);
 
         var o : OrderStatusReport = {
             orderId: osr.orderId || orig.orderId,
@@ -79,7 +81,7 @@ class ExchangeBroker implements IBroker {
             exchangeId: osr.exchangeId || orig.exchangeId
         };
         this._allOrders[osr.orderId].push(o);
-        this._log("applied gw update -> %j", o);
+        this._log("applied gw update -> %o", o);
 
         this.OrderUpdate.trigger(o);
     };

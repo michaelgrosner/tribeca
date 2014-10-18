@@ -32,6 +32,10 @@ enum Liquidity { Make, Take }
 
 class MarketBook {
     constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
+
+    public inspect() {
+        return util.inspect({top: this.top, second: this.second, exchangeName: Exchange[this.exchangeName]});
+    }
 }
 
 interface Order {
@@ -51,10 +55,10 @@ class SubmitNewOrder implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", Side[this.side], this.quantity,
             OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    };
+    }
 }
 
 class CancelReplaceOrder implements Order {
@@ -67,11 +71,11 @@ class CancelReplaceOrder implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("orig=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.origOrderId,
             Side[this.side], this.quantity, OrderType[this.type], this.price, TimeInForce[this.timeInForce],
             Exchange[this.exchange]);
-    };
+    }
 }
 
 class OrderCancel {
@@ -79,9 +83,9 @@ class OrderCancel {
         public origOrderId : string,
         public exchange : Exchange) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("orig=%s; exch=%s", this.origOrderId, Exchange[this.exchange]);
-    };
+    }
 }
 
 class BrokeredOrder implements Order {
@@ -94,11 +98,11 @@ class BrokeredOrder implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.orderId,
             Side[this.side], this.quantity, OrderType[this.type], this.price,
             TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    };
+    }
 }
 
 class BrokeredReplace implements Order {
@@ -113,11 +117,11 @@ class BrokeredReplace implements Order {
         public exchange : Exchange,
         public exchangeId : string) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("origCliId=%s; origExchId=%s; orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s",
             this.origOrderId, this.exchangeId, this.orderId,  Side[this.side], this.quantity,
             OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    };
+    }
 }
 
 class BrokeredCancel {
@@ -127,10 +131,10 @@ class BrokeredCancel {
         public side : Side,
         public exchangeId : string) {}
 
-    public toString = () => {
+    public inspect()  {
         return util.format("reqId=%s; origCliId=%s; origExchId=%s, side=%s",
             this.requestId, this.clientOrderId, this.exchangeId, Side[this.side]);
-    };
+    }
 }
 
 interface GatewayOrderStatusReport {

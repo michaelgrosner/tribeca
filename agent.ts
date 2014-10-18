@@ -12,12 +12,17 @@ class OrderBrokerAggregator {
     _ui : UI;
     _brokersByExch : { [exchange: number]: IBroker} = {};
 
+    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
+
     constructor(brokers : Array<IBroker>, ui : UI) {
         this._brokers = brokers;
         this._ui = ui;
 
         this._brokers.forEach(b => {
-            b.OrderUpdate.on(this._ui.sendOrderStatusUpdate);
+            b.OrderUpdate.on(u => {
+                this.OrderUpdate.trigger(u);
+                this._ui.sendOrderStatusUpdate(u);
+            });
         });
 
         for (var i = 0; i < brokers.length; i++)
@@ -109,9 +114,7 @@ class Agent {
                 })
             });
 
-        if (results.length == 0) return;
-
-        var bestResult : Result;
+        var bestResult : Result = null;
         var bestProfit: number = Number.MIN_VALUE;
         for (var i = 0; i < results.length; i++) {
             var r = results[i];
@@ -121,13 +124,32 @@ class Agent {
             }
         }
 
-        // 1 - new order
-        // 2 - cxl-rep
-        // 3 - cxl
+        this._handleResult(bestResult);
 
-        this._log("Trigger p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
-            bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
+        this._lastBestResult = bestResult;
+    };
 
+    private _lastBestResult : Result = null;
+    private _handleResult = (result : Result) =>  {
+        // cancel
+        var action : string;
+        if (result == null && this._lastBestResult !== null) {
+            action = "STOP";
+        }
+        // new
+        else if (result !== null && this._lastBestResult == null) {
+            action = "START";
+            // need to set up fill notification & triggering
+        }
+        // cxl-rpl
+        else if (result !== null && this._lastBestResult !== null) {
+            action = "MODIFY";
+        }
+        else {
+            throw Error("should not have ever gotten here");
+        }
 
+        this._log("%s :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", action, result.profit, Side[result.restSide],
+                result.restBroker.name(), result.rest.price, result.hideBroker.name(), result.hide.price);
     };
 }
