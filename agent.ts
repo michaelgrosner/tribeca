@@ -125,8 +125,6 @@ class Agent {
             }
         }
 
-        return;
-
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
         var action : string;
@@ -138,6 +136,7 @@ class Agent {
 
             // cancel open order
             bestResult.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
+            delete this._activeOrderIds[restExch];
         }
         // new
         else if (bestResult !== null && this._lastBestResult == null) {
@@ -146,15 +145,21 @@ class Agent {
             bestResult.restBroker.OrderUpdate.on(o => Agent.arbFire(o, bestResult.hideBroker));
 
             // send an order
-            bestResult.restBroker.sendOrder(new OrderImpl(bestResult.restSide, 0.025, OrderType.Limit, bestResult.rest.price, TimeInForce.GTC));
+            var sent = bestResult.restBroker.sendOrder(new OrderImpl(bestResult.restSide, 0.025, OrderType.Limit, bestResult.rest.price, TimeInForce.GTC));
+            this._activeOrderIds[restExch] = sent.sentOrderClientId;
         }
         // cxl-rpl
-        else if (bestResult !== null && this._lastBestResult !== null) {
+        else if (bestResult !== null && this._lastBestResult !== null && bestResult.rest.price !== this._lastBestResult.rest.price) {
             action = "MODIFY";
             // cxl-rpl live order
             // TODO: think about sizing
             // TODO: only replace this when this exchange price has ticked
-            bestResult.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, bestResult.rest.price, restExch));
+            var sent = bestResult.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, bestResult.rest.price, restExch));
+            this._activeOrderIds[restExch] = sent.sentOrderClientId;
+        }
+        // no change, rest broker price has remained the same
+        else if (bestResult !== null && this._lastBestResult !== null) {
+            action = "NO CHANGE";
         }
         else {
             throw Error("should not have ever gotten here");

@@ -147,6 +147,10 @@ class BrokeredCancel {
     }
 }
 
+class SentOrder {
+    constructor(public sentOrderClientId : string) {}
+}
+
 interface GatewayOrderStatusReport {
     orderId : string;
     exchangeId? : string;
@@ -199,9 +203,9 @@ interface IBroker {
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
-    sendOrder(order : Order);
+    sendOrder(order : Order) : SentOrder;
     cancelOrder(cancel : OrderCancel);
-    replaceOrder(replace : CancelReplaceOrder);
+    replaceOrder(replace : CancelReplaceOrder) : SentOrder;
     OrderUpdate : Evt<OrderStatusReport>;
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
