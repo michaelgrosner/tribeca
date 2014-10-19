@@ -314,7 +314,7 @@ module AtlasAts {
             request.get({
                 url: "https://atlasats.com/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
-            }, (er, resp, body) => this.onMarketData(body));
+            }, (er, resp, body) => this.onMarketData(JSON.parse(body)));
         }
     }
 

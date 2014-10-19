@@ -70,6 +70,15 @@ class ExchangeBroker implements IBroker {
     };
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
+
+        if (!this._allOrders.hasOwnProperty(osr.orderId)) {
+            var keys = [];
+            for (var k in this._allOrders)
+                if (this._allOrders.hasOwnProperty(k))
+                    keys.push(k);
+            this._log("ERROR: cannot find orderId from %o, existing: %o", osr, keys);
+        }
+
         var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
         this._log("got gw update %o, applying to %o", osr, orig);
 
