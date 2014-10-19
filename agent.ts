@@ -124,6 +124,9 @@ class Agent {
             }
         }
 
+        // VERY TEMPORARY!
+        return;
+
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
         var action : string;

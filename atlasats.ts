@@ -90,10 +90,52 @@ module AtlasAts {
         oid: string;
     }
 
-    export class AtlasAts implements IMarketDataGateway, IOrderEntryGateway, IGateway {
-        MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+    class AtlasAtsSocket {
+        _client : any;
+
+        constructor() {
+            this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
+                endpoints: {
+                    websocket: 'wss://atlasats.com/api/v1/streaming'
+                }
+            });
+
+            this._client.addExtension({
+                outgoing: (msg, cb) => {
+                    if (msg.channel != '/meta/handshake') {
+                        msg.ext = this.signMessage(msg.channel, msg);
+                    }
+                    cb(msg);
+                }
+            });
+        }
+
+        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
+        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
+        _nounce : number = 1;
+        private signMessage(channel : string, msg : any) {
+            var inp : string = [this._token, this._nounce, channel, 'data' in msg ? JSON.stringify(msg['data']) : ''].join(":");
+            var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex').toString().toUpperCase();
+            var sign = {ident: {key: this._token, signature: signature, nounce: this._nounce}};
+            this._nounce += 1;
+            return sign;
+        }
+
+        send = (msg : string) : void => {
+            this._client.send(msg);
+        };
+
+        on = (channel : string, handler: () => void) => {
+            this._client.on(channel, raw => handler());
+        };
+
+        subscribe<T>(channel : string, handler: (newMsg : T) => void) {
+            this._client.on(channel, raw => handler(JSON.parse(raw)));
+        }
+    }
+
+    class AtlasAtsBaseGateway implements IGateway {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
 
         name() : string {
             return "AtlasAts";
@@ -111,18 +153,17 @@ module AtlasAts {
             return Exchange.AtlasAts;
         }
 
-        _account : string = "1352";
-        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
-        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
-        _simpleToken : string = "9464b821cea0d62939688df750547593";
-        _nounce : number = 1;
-        private signMessage(channel : string, msg : any) {
-            var inp : string = [this._token, this._nounce, channel, 'data' in msg ? JSON.stringify(msg['data']) : ''].join(":");
-            var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex').toString().toUpperCase();
-            var sign = {ident: {key: this._token, signature: signature, nounce: this._nounce}};
-            this._nounce += 1;
-            return sign;
+        constructor(socket : AtlasAtsSocket) {
+            socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
+            socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
         }
+    }
+
+    class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
+        _log : Logger = log("Hudson:Gateway:AtlasAtsOE");
+        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+        _simpleToken : string = "9464b821cea0d62939688df750547593";
+        _account : string = "1352";
 
         sendOrder = (order : BrokeredOrder) => {
             var o : AtlasAtsOrder = {
@@ -193,30 +234,6 @@ module AtlasAts {
             this.OrderUpdate.trigger(rpt);
         };
 
-        private onMarketData = (rawMsg : string) => {
-            var msg : AtlasAtsMarketUpdate = JSON.parse(rawMsg);
-            if (msg.symbol != "BTC" || msg.currency != "USD") return;
-
-            var bids : AtlasAtsQuote[] = [];
-            var asks : AtlasAtsQuote[] = [];
-            for (var i = 0; i < msg.quotes.length; i++) {
-                var qt = msg.quotes[i];
-                if (bids.length > 2 && qt.side == "BUY") continue;
-                if (bids.length > 2 && asks.length > 2) break;
-                if (qt.side == "BUY") bids.push(qt);
-                if (qt.side == "SELL") asks.push(qt);
-            }
-
-            var getUpdate = (n : number) => {
-                var bid = new MarketSide(bids[n].price, bids[n].size);
-                var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, new Date());
-            };
-
-            var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);
-            this.MarketData.trigger(b);
-        };
-
         private static getStatus = (raw : string) : OrderStatus => {
             switch (raw) {
                 case "DONE":
@@ -241,54 +258,74 @@ module AtlasAts {
             }
         };
 
-        private onExecRpt = (rawMsg : string) => {
-            var msg : AtlasAtsExecutionReport = JSON.parse(rawMsg);
+        private onExecRpt = (msg : AtlasAtsExecutionReport) => {
             this._log("EXEC RPT", msg);
 
             var status : GatewayOrderStatusReport = {
                 exchangeId: msg.oid,
                 orderId: msg.clid,
-                orderStatus: AtlasAts.getStatus(msg.status),
+                orderStatus: AtlasAtsOrderEntryGateway.getStatus(msg.status),
                 time: new Date(), // doesnt give milliseconds??
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
                 averagePrice: msg.average,
                 lastQuantity: msg.hasOwnProperty("executions") ? msg.executions[0].quantity : null,
-                liquidity: msg.hasOwnProperty("executions") ? AtlasAts.getLiquidity(msg.executions[0].liquidity) : null
+                liquidity: msg.hasOwnProperty("executions") ? AtlasAtsOrderEntryGateway.getLiquidity(msg.executions[0].liquidity) : null
             };
 
             this.OrderUpdate.trigger(status);
         };
 
-        _log : Logger = log("Hudson:Gateway:AtlasAts");
-        _client : any;
+        constructor(socket : AtlasAtsSocket) {
+            socket.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
+        }
+    }
 
-        constructor() {
-            this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
-                endpoints: {
-                    websocket: 'wss://atlasats.com/api/v1/streaming'
-                }
-            });
+    class AtlasAtsMarketDataGateway implements IMarketDataGateway {
+        MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
-            this._client.addExtension({
-                outgoing: (msg, cb) => {
-                    if (msg.channel != '/meta/handshake') {
-                        msg.ext = this.signMessage(msg.channel, msg);
-                    }
-                    cb(msg);
-                }
-            });
+        private onMarketData = (msg : AtlasAtsMarketUpdate) => {
+            console.log(msg);
+            if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
-            this._client.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
-            this._client.subscribe("/market", this.onMarketData);
-            this._client.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
-            this._client.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
+            var bids : AtlasAtsQuote[] = [];
+            var asks : AtlasAtsQuote[] = [];
+            for (var i = 0; i < msg.quotes.length; i++) {
+                var qt = msg.quotes[i];
+                if (bids.length > 2 && qt.side == "BUY") continue;
+                if (bids.length > 2 && asks.length > 2) break;
+                if (qt.side == "BUY") bids.push(qt);
+                if (qt.side == "SELL") asks.push(qt);
+            }
+
+            var getUpdate = (n : number) => {
+                var bid = new MarketSide(bids[n].price, bids[n].size);
+                var ask = new MarketSide(asks[n].price, asks[n].size);
+                return new MarketUpdate(bid, ask, new Date());
+            };
+
+            var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);
+            this.MarketData.trigger(b);
+        };
+
+        constructor(socket : AtlasAtsSocket) {
+            socket.subscribe("/market", this.onMarketData);
 
             request.get({
                 url: "https://atlasats.com/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
             }, (er, resp, body) => this.onMarketData(body));
+        }
+    }
+
+    export class AtlasAts extends CombinedGateway {
+        constructor() {
+            var socket = new AtlasAtsSocket();
+            super(
+                new AtlasAtsMarketDataGateway(socket),
+                new AtlasAtsOrderEntryGateway(socket),
+                new AtlasAtsBaseGateway(socket));
         }
     }
 }

@@ -185,7 +185,12 @@ interface IOrderEntryGateway {
     OrderUpdate : Evt<GatewayOrderStatusReport>;
 }
 
-interface ICombinedGateway extends IGateway, IOrderEntryGateway, IMarketDataGateway { }
+class CombinedGateway {
+    constructor(
+        public md : IMarketDataGateway,
+        public oe : IOrderEntryGateway,
+        public base : IGateway) { }
+}
 
 interface IBroker {
     MarketData : Evt<MarketBook>;
