@@ -4,18 +4,16 @@
 /// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
 
-var _log = log("Hudson:main");
 
-var brokers : Array<IBroker> = [];
+var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
+var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe));
+var ui = new UI(brokers);
+var orderAgg = new OrderBrokerAggregator(brokers, ui);
+var agent = new Agent(orderAgg.brokers(), ui);
 
-try {
-    var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
-    brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe));
-    var ui = new UI(brokers);
-    var orderAgg = new OrderBrokerAggregator(brokers, ui);
-    var agent = new Agent(orderAgg.brokers(), ui);
-}
-catch (e) {
-    _log("unhandled exception caught, terminating %o", e);
+var exitHandler = e => {
+    log("Hudson:main")("unhandled exception caught, terminating %o", e);
     brokers.forEach(b => b.cancelOpenOrders());
-}
+};
+process.on("uncaughtException", exitHandler);
+process.on("exit", exitHandler);
