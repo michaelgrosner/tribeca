@@ -3,6 +3,7 @@
 class ExchangeBroker implements IBroker {
     cancelOpenOrders() : void {
         for (var k in this._allOrders) {
+            if (!this._allOrders.hasOwnProperty(k)) continue;
             var e : OrderStatusReport = this._allOrders[k].last();
 
             switch (e.orderStatus) {
@@ -53,7 +54,7 @@ class ExchangeBroker implements IBroker {
 
     replaceOrder = (replace : CancelReplaceOrder) => {
         var rpt = this._allOrders[replace.origOrderId].last();
-        var br = new BrokeredReplace(ExchangeBroker.generateOrderId(), replace.origOrderId, rpt.side,
+        var br = new BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
         this._log("cancel-replacing order %o %o", rpt, br);
         this._oeGateway.replaceOrder(br);
@@ -68,12 +69,6 @@ class ExchangeBroker implements IBroker {
 
     public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
         var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
-
-        if (typeof orig === "undefined") {
-            this._log("Cannot get OrderStatusReport for %o, bailing === %o", osr, this._allOrders[osr.orderId]);
-            return;
-        }
-
         this._log("got gw update %o, applying to %o", osr, orig);
 
         var o : OrderStatusReport = {

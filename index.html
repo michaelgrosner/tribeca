@@ -7,7 +7,7 @@
 <body ng-controller="uiCtrl">
 
 <script type="text/ng-template" id="cancel_replace_form.html">
-    <form style="margin: 10px" class="form-horizontal" novalidate role="form" id="cancel_replace_form">
+    <form style="margin: 10px" class="form-horizontal" novalidate role="form">
         <div class="form-group">
             <label>Price</label>
             <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.price" />
@@ -24,7 +24,7 @@
 </script>
 
 <script type="text/ng-template" id="order_form.html">
-    <form style="margin: 20px" class="form-horizontal" novalidate role="form" id="order_form">
+    <form style="margin: 20px" class="form-horizontal" novalidate role="form">
         <div class="form-group">
             <label>Exchange</label>
             <select class="form-control input-sm" ng-model="order.exchange" ng-options="v for (k,v) in availableExchanges"></select>
@@ -59,6 +59,7 @@
 <button type="button"
         class="btn btn-primary"
         style="float: right"
+        id="order_form"
         mypopover popover-template="order_form.html"
         data-placement="bottom">Submit order</button>
 
@@ -114,6 +115,7 @@
         <td><button type="button"
                     class="btn btn-warning btn-xs"
                     mypopover popover-template="cancel_replace_form.html"
+                    id="cancel_replace_form"
                     data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
     </tr>
 </table>

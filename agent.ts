@@ -42,7 +42,7 @@ class OrderBrokerAggregator {
             this._brokersByExch[o.exchange].sendOrder(o);
         }
         catch (e) {
-            this._log("Exception while sending order", o, e);
+            this._log("Exception while sending order", o, e, e.stack);
         }
     };
 
@@ -51,7 +51,7 @@ class OrderBrokerAggregator {
             this._brokersByExch[o.exchange].replaceOrder(o);
         }
         catch (e) {
-            this._log("Exception while cancel/replacing order", o, e);
+            this._log("Exception while cancel/replacing order", o, e, e.stack);
         }
     };
 
@@ -60,7 +60,7 @@ class OrderBrokerAggregator {
             this._brokersByExch[o.exchange].cancelOrder(o);
         }
         catch (e) {
-            this._log("Exception while cancelling order", o, e);
+            this._log("Exception while cancelling order", o, e, e.stack);
         }
     };
 }
