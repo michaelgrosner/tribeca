@@ -396,10 +396,10 @@ module HitBtc {
 
     export class HitBtc extends CombinedGateway {
         constructor() {
-            var baseGw = new HitBtcBaseGateway();
-            var mdGw = new HitBtcMarketDataGateway();
-            var oeGw = new HitBtcOrderEntryGateway();
-            super(mdGw, oeGw, baseGw);
+            super(
+                new HitBtcMarketDataGateway(),
+                new NullOrderGateway(), //new HitBtcOrderEntryGateway(),
+                new HitBtcBaseGateway());
         }
     }
 }

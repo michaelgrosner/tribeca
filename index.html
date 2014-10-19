@@ -6,8 +6,25 @@
 </head>
 <body ng-controller="uiCtrl">
 
+<script type="text/ng-template" id="cancel_replace_form.html">
+    <form style="margin: 10px" class="form-horizontal" novalidate role="form" id="cancel_replace_form">
+        <div class="form-group">
+            <label>Price</label>
+            <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.price" />
+        </div>
+        <div class="form-group">
+            <label>Size</label>
+            <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.quantity" />
+        </div>
+        <button type="button"
+                class="btn btn-success"
+                onclick="$('#cancel_replace_form').popover('hide');"
+                ng-click="cancelReplaceOrder(o)">Submit</button>
+    </form>
+</script>
+
 <script type="text/ng-template" id="order_form.html">
-    <form style="margin: 20px" class="form-horizontal" novalidate role="form">
+    <form style="margin: 20px" class="form-horizontal" novalidate role="form" id="order_form">
         <div class="form-group">
             <label>Exchange</label>
             <select class="form-control input-sm" ng-model="order.exchange" ng-options="v for (k,v) in availableExchanges"></select>
@@ -32,7 +49,10 @@
             <label>Type</label>
             <select class="form-control input-sm" ng-model="order.orderType" ng-options="v for (k,v) in availableOrderTypes"></select>
         </div>
-        <button type="button" class="btn btn-success" ng-click="submitOrder()">Submit</button>
+        <button type="button"
+                class="btn btn-success"
+                onclick="$('#order_form').popover('hide');"
+                ng-click="submitOrder()">Submit</button>
     </form>
 </script>
 
@@ -68,26 +88,33 @@
         <th>averagePrice</th>
         <th>liquidity</th>
         <th>msg</th>
-        <th>cancel</th>
+        <th>cxl</th>
+        <th>c-r</th>
     </tr>
-    <tr ng-repeat="order in orders_statuses|orderBy:'-time'">
-        <td>{{ order.orderId }}</td>
-        <td>{{ order.time|date:'M/d/yy h:mm:ss,sss' }}</td>
-        <td>{{ availableExchanges[order.exchange] }}</td>
-        <td>{{ availableOrderStatuses[order.orderStatus] }}</td>
-        <td>{{ order.price|number:2 }}</td>
-        <td>{{ order.quantity|number:4 }}</td>
-        <td>{{ availableSides[order.side] }}</td>
-        <td>{{ availableOrderTypes[order.type] }}</td>
-        <td>{{ availableTifs[order.timeInForce] }}</td>
-        <td>{{ order.lastQuantity|number:4 }}</td>
-        <td>{{ order.lastPrice|number:2 }}</td>
-        <td>{{ order.leavesQuantity|number:4 }}</td>
-        <td>{{ order.cumQuantity|number:4 }}</td>
-        <td>{{ order.averagePrice|number:2 }}</td>
-        <td>{{ availableLiquidityTypes[order.liquidity]}}</td>
-        <td>{{ order.rejectMessage || order.message }}</td>
-        <td><button type="button" class="btn btn-danger btn-xs"  ng-click="cancelOrder(order)">cancel</button></td>
+    <tr ng-repeat="o in orders_statuses|orderBy:'-time'">
+        <td>{{ o.orderId }}</td>
+        <td>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
+        <td>{{ availableExchanges[o.exchange] }}</td>
+        <td>{{ availableOrderStatuses[o.orderStatus] }}</td>
+        <td>{{ o.price|number:2 }}</td>
+        <td>{{ o.quantity|number:4 }}</td>
+        <td>{{ availableSides[o.side] }}</td>
+        <td>{{ availableOrderTypes[o.type] }}</td>
+        <td>{{ availableTifs[o.timeInForce] }}</td>
+        <td>{{ o.lastQuantity|number:4 }}</td>
+        <td>{{ o.lastPrice|number:2 }}</td>
+        <td>{{ o.leavesQuantity|number:4 }}</td>
+        <td>{{ o.cumQuantity|number:4 }}</td>
+        <td>{{ o.averagePrice|number:2 }}</td>
+        <td>{{ availableLiquidityTypes[o.liquidity]}}</td>
+        <td>{{ o.rejectMessage || o.message }}</td>
+        <td><button type="button"
+                    class="btn btn-danger btn-xs"
+                    ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
+        <td><button type="button"
+                    class="btn btn-warning btn-xs"
+                    mypopover popover-template="cancel_replace_form.html"
+                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
     </tr>
 </table>
 
@@ -155,6 +182,12 @@
         $scope.order = {};
         $scope.submitOrder = function() {
             socket.emit("submit-order", $scope.order);
+        };
+
+        $scope.cancel_replace_model = {};
+        $scope.cancelReplaceOrder = function(orig) {
+            console.log(orig, $scope.cancel_replace_model);
+            socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
         };
 
         $scope.cancelOrder = function(order) {

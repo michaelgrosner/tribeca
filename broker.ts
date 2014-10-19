@@ -152,3 +152,31 @@ class ExchangeBroker implements IBroker {
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
     }
 }
+
+class NullOrderGateway implements IOrderEntryGateway {
+    OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+
+    sendOrder(order : BrokeredOrder) {
+        this.trigger(order.orderId, OrderStatus.New);
+        setTimeout(() => this.trigger(order.orderId, OrderStatus.Working), 10);
+    }
+
+    cancelOrder(cancel : BrokeredCancel) {
+        this.trigger(cancel.clientOrderId, OrderStatus.PendingCancel);
+        setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Cancelled), 10);
+    }
+
+    replaceOrder(replace : BrokeredReplace) {
+        this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+        this.sendOrder(replace);
+    }
+
+    private trigger(orderId : string, status : OrderStatus) {
+        var rpt : GatewayOrderStatusReport = {
+            orderId: orderId,
+            orderStatus: status,
+            time: new Date()
+        };
+        this.OrderUpdate.trigger(rpt);
+    }
+}

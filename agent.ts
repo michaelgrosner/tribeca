@@ -30,6 +30,7 @@ class OrderBrokerAggregator {
 
         this._ui.NewOrder.on(this.submitOrder);
         this._ui.CancelOrder.on(this.cancelOrder);
+        this._ui.ReplaceOrder.on(this.cancelReplaceOrder);
     }
 
     public brokers = () => {
@@ -124,7 +125,6 @@ class Agent {
             }
         }
 
-        // VERY TEMPORARY!
         return;
 
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation

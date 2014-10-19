@@ -12,8 +12,7 @@ var orderAgg = new OrderBrokerAggregator(brokers, ui);
 var agent = new Agent(orderAgg.brokers(), ui);
 
 var exitHandler = e => {
-    log("Hudson:main")("unhandled exception caught, terminating %o", e);
+    log("Hudson:main")("unhandled exception caught, terminating %o\n%o", e, e.stack);
     brokers.forEach(b => b.cancelOpenOrders());
 };
 process.on("uncaughtException", exitHandler);
-process.on("exit", exitHandler);

@@ -92,6 +92,9 @@ module AtlasAts {
 
     class AtlasAtsSocket {
         _client : any;
+        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
+        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
+        _nounce : number = 1;
 
         constructor() {
             this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
@@ -110,9 +113,6 @@ module AtlasAts {
             });
         }
 
-        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
-        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
-        _nounce : number = 1;
         private signMessage(channel : string, msg : any) {
             var inp : string = [this._token, this._nounce, channel, 'data' in msg ? JSON.stringify(msg['data']) : ''].join(":");
             var signature : string = crypto.createHmac('sha256', this._secret).update(inp).digest('hex').toString().toUpperCase();
@@ -130,7 +130,7 @@ module AtlasAts {
         };
 
         subscribe<T>(channel : string, handler: (newMsg : T) => void) {
-            this._client.on(channel, raw => handler(JSON.parse(raw)));
+            this._client.subscribe(channel, raw => handler(JSON.parse(raw)));
         }
     }
 
@@ -286,7 +286,6 @@ module AtlasAts {
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
         private onMarketData = (msg : AtlasAtsMarketUpdate) => {
-            console.log(msg);
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
             var bids : AtlasAtsQuote[] = [];
@@ -324,7 +323,7 @@ module AtlasAts {
             var socket = new AtlasAtsSocket();
             super(
                 new AtlasAtsMarketDataGateway(socket),
-                new AtlasAtsOrderEntryGateway(socket),
+                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
                 new AtlasAtsBaseGateway(socket));
         }
     }

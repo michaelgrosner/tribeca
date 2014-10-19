@@ -14,9 +14,15 @@ interface OrderRequestFromUI {
     orderType : string
 }
 
+interface ReplaceRequestFromUI {
+    price : number;
+    quantity : number;
+}
+
 class UI {
     NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
     CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
+    ReplaceOrder : Evt<CancelReplaceOrder> = new Evt<CancelReplaceOrder>();
     _log : Logger = log("Hudson:UI");
     _brokers : Array<IBroker>;
 
@@ -53,6 +59,11 @@ class UI {
             sock.on("cancel-order", (o : OrderStatusReport) => {
                 this._log("got new cancel req %o", o);
                 this.CancelOrder.trigger(new OrderCancel(o.orderId, o.exchange));
+            });
+
+            sock.on("cancel-replace", (o : OrderStatusReport, replace : ReplaceRequestFromUI) => {
+                this._log("got new cxl-rpl req %o with %o", o, replace);
+                this.ReplaceOrder.trigger(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange));
             });
         });
     }
