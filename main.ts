@@ -12,7 +12,10 @@ var ui = new UI(brokers, agent);
 var orderAgg = new OrderBrokerAggregator(brokers, ui);
 
 var exitHandler = e => {
-    log("Hudson:main")("Terminating %o", e);
+    if (e.hasOwnProperty('stack'))
+        log("Hudson:main")("Terminating", e.stack);
+    else
+        log("Hudson:main")("Terminating [no stack]");
     brokers.forEach(b => b.cancelOpenOrders());
     process.exit();
 };
