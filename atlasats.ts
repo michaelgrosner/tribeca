@@ -166,6 +166,17 @@ module AtlasAts {
         _simpleToken : string = "9464b821cea0d62939688df750547593";
         _account : string = "1352";
 
+        private static _convertTif(tif : TimeInForce) {
+            switch (tif) {
+                case TimeInForce.FOK:
+                    return "FOK";
+                case TimeInForce.GTC:
+                    return "GTC";
+                case TimeInForce.IOC:
+                    return "IOC";
+            }
+        }
+
         sendOrder = (order : BrokeredOrder) => {
             var o : AtlasAtsOrder = {
                 action: "order:create",
@@ -175,7 +186,8 @@ module AtlasAts {
                 quantity: order.quantity,
                 type: order.type == OrderType.Limit ? "limit" : "market",
                 price: order.price,
-                clid: order.orderId
+                clid: order.orderId,
+                tif: AtlasAtsOrderEntryGateway._convertTif(order.timeInForce)
             };
 
             request({
@@ -184,7 +196,7 @@ module AtlasAts {
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
                 method: "POST"
             }, (err, resp, body) => {
-                this.onExecRpt(body);
+                this.onExecRpt(JSON.parse(body));
             });
         };
 
@@ -316,7 +328,7 @@ module AtlasAts {
             var socket = new AtlasAtsSocket();
             super(
                 new AtlasAtsMarketDataGateway(socket),
-                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
+                new AtlasAtsOrderEntryGateway(socket), // new NullOrderGateway(), //
                 new AtlasAtsBaseGateway());
         }
     }
