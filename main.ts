@@ -12,7 +12,7 @@ var ui = new UI(brokers, agent);
 var orderAgg = new OrderBrokerAggregator(brokers, ui);
 
 var exitHandler = e => {
-    if (e.hasOwnProperty('stack'))
+    if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
         log("Hudson:main")("Terminating", e.stack);
     else
         log("Hudson:main")("Terminating [no stack]");
