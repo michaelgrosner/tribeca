@@ -7,9 +7,9 @@
 
 var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
 var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe));
+var agent = new Agent(brokers);
 var ui = new UI(brokers);
 var orderAgg = new OrderBrokerAggregator(brokers, ui);
-var agent = new Agent(orderAgg.brokers(), ui);
 
 var exitHandler = e => {
     log("Hudson:main")("Terminating %o", e);

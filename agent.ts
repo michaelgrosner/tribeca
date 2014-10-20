@@ -33,10 +33,6 @@ class OrderBrokerAggregator {
         this._ui.ReplaceOrder.on(this.cancelReplaceOrder);
     }
 
-    public brokers = () => {
-        return this._brokers;
-    };
-
     public submitOrder = (o : SubmitNewOrder) => {
         try {
             this._brokersByExch[o.exchange].sendOrder(o);
@@ -68,21 +64,14 @@ class OrderBrokerAggregator {
 class Agent {
     _brokers : Array<IBroker>;
     _log : Logger = log("Hudson:Agent");
-    _ui : UI;
 
-    constructor(brokers : Array<IBroker>, ui : UI) {
+    constructor(brokers : Array<IBroker>) {
         this._brokers = brokers;
-        this._ui = ui;
 
         this._brokers.forEach(b => {
-            b.MarketData.on(this.onNewMarketData);
+            b.MarketData.on(this.recalcMarkets);
         });
     }
-
-    private onNewMarketData = (book : MarketBook) => {
-        this.recalcMarkets(book);
-        this._ui.sendUpdatedMarket(book);
-    };
 
     private recalcMarkets = (book : MarketBook) => {
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);

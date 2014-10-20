@@ -33,6 +33,8 @@ class UI {
             res.sendFile(path.join(__dirname, "index.html"));
         });
 
+        brokers.forEach(b => b.MarketData.on(book => this.sendUpdatedMarket(book)));
+
         http.listen(3000, () => this._log('listening on *:3000'));
 
         io.on('connection', sock => {
