@@ -119,7 +119,7 @@ class Agent {
         var bestProfit: number = Number.MIN_VALUE;
         for (var i = 0; i < results.length; i++) {
             var r = results[i];
-            if (bestProfit < r.profit) {
+            if (bestProfit < r.profit && r.restBroker.exchange() == Exchange.HitBtc) {
                 bestProfit = r.profit;
                 bestResult = r;
             }

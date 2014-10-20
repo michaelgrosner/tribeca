@@ -27,7 +27,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other, CancelRejected }
+enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other, CancelRejected, PendingReplace }
 enum Liquidity { Make, Take }
 
 class MarketBook {
@@ -151,22 +151,24 @@ class SentOrder {
     constructor(public sentOrderClientId : string) {}
 }
 
-interface GatewayOrderStatusReport {
-    orderId : string;
+interface OrderStatusReport {
+    side? : Side;
+    quantity? : number;
+    type? : OrderType;
+    price? : number;
+    timeInForce? : TimeInForce;
+    orderId? : string;
     exchangeId? : string;
-    orderStatus : OrderStatus;
+    orderStatus? : OrderStatus;
     rejectMessage? : string;
-    time : Date;
+    time? : Date;
     lastQuantity? : number;
     lastPrice? : number;
     leavesQuantity? : number;
     cumQuantity? : number;
     averagePrice? : number;
     liquidity? : Liquidity;
-}
-
-interface OrderStatusReport extends Order, GatewayOrderStatusReport {
-    exchange : Exchange;
+    exchange? : Exchange;
     message? : string;
 }
 
@@ -186,7 +188,8 @@ interface IOrderEntryGateway {
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
     replaceOrder(replace : BrokeredReplace);
-    OrderUpdate : Evt<GatewayOrderStatusReport>;
+
+    OrderUpdate : Evt<OrderStatusReport>;
 }
 
 class CombinedGateway {

@@ -161,7 +161,7 @@ module AtlasAts {
 
     class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
         _log : Logger = log("Hudson:Gateway:AtlasAtsOE");
-        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+        OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
         _simpleToken : string = "9464b821cea0d62939688df750547593";
         _account : string = "1352";
 
@@ -185,13 +185,6 @@ module AtlasAts {
             }, (err, resp, body) => {
                 this.onExecRpt(body);
             });
-
-            var rpt : GatewayOrderStatusReport = {
-                orderId: order.orderId,
-                orderStatus: OrderStatus.New,
-                time: new Date()
-            };
-            this.OrderUpdate.trigger(rpt);
         };
 
         replaceOrder = (replace : BrokeredReplace) => {
@@ -209,14 +202,14 @@ module AtlasAts {
                 var msg = JSON.parse(body);
 
                 if (!err && msg.status !== "error") {
-                    var rpt : GatewayOrderStatusReport = {
+                    var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
                         orderStatus: OrderStatus.Cancelled,
                         time: new Date()
                     };
                     this.OrderUpdate.trigger(rpt);
                 } else {
-                    var rpt : GatewayOrderStatusReport = {
+                    var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
                         orderStatus: OrderStatus.CancelRejected,
                         rejectMessage: msg.message,
@@ -225,13 +218,6 @@ module AtlasAts {
                     this.OrderUpdate.trigger(rpt);
                 }
             });
-
-            var rpt : GatewayOrderStatusReport = {
-                orderId: cancel.clientOrderId,
-                orderStatus: OrderStatus.PendingCancel,
-                time: new Date()
-            };
-            this.OrderUpdate.trigger(rpt);
         };
 
         private static getStatus = (raw : string) : OrderStatus => {
@@ -261,7 +247,7 @@ module AtlasAts {
         private onExecRpt = (msg : AtlasAtsExecutionReport) => {
             this._log("EXEC RPT", msg);
 
-            var status : GatewayOrderStatusReport = {
+            var status : OrderStatusReport = {
                 exchangeId: msg.oid,
                 orderId: msg.clid,
                 orderStatus: AtlasAtsOrderEntryGateway.getStatus(msg.status),

@@ -50,6 +50,7 @@ class ExchangeBroker implements IBroker {
         var brokeredOrder = new BrokeredOrder(rpt.orderId, rpt.side, rpt.quantity, rpt.type,
             rpt.price, rpt.timeInForce, rpt.exchange);
         this._oeGateway.sendOrder(brokeredOrder);
+        this.onOrderUpdate(rpt);
         return new SentOrder(rpt.orderId);
     };
 
@@ -59,6 +60,15 @@ class ExchangeBroker implements IBroker {
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
         this._log("cancel-replacing order %o %o", rpt, br);
         this._oeGateway.replaceOrder(br);
+
+        var rpt : OrderStatusReport = {
+            orderId: replace.origOrderId,
+            orderStatus: OrderStatus.PendingReplace,
+            price: replace.price,
+            quantity: replace.quantity,
+            time: new Date()};
+        this.onOrderUpdate(rpt);
+
         return new SentOrder(rpt.orderId);
     };
 
@@ -66,10 +76,17 @@ class ExchangeBroker implements IBroker {
         var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         this._log("cancelling order %o with %o", rpt, cxl);
+
+        var rpt : OrderStatusReport = {
+            orderId: cancel.origOrderId,
+            orderStatus: OrderStatus.PendingCancel,
+            time: new Date()};
+        this.onOrderUpdate(rpt);
+
         this._oeGateway.cancelOrder(cxl);
     };
 
-    public onOrderUpdate = (osr : GatewayOrderStatusReport) => {
+    public onOrderUpdate = (osr : OrderStatusReport) => {
 
         if (!this._allOrders.hasOwnProperty(osr.orderId)) {
             var keys = [];
@@ -92,12 +109,12 @@ class ExchangeBroker implements IBroker {
             leavesQuantity: osr.leavesQuantity || orig.leavesQuantity,
             cumQuantity: osr.cumQuantity || orig.cumQuantity,
             averagePrice: osr.averagePrice || orig.averagePrice,
-            side: orig.side,
-            quantity: orig.quantity,
-            type: orig.type,
-            price: orig.price,
-            timeInForce: orig.timeInForce,
-            exchange: orig.exchange,
+            side: osr.side || orig.side,
+            quantity: osr.quantity || orig.quantity,
+            type: osr.type || orig.type,
+            price: osr.price || orig.price,
+            timeInForce: osr.timeInForce || orig.timeInForce,
+            exchange: osr.exchange || orig.exchange,
             exchangeId: osr.exchangeId || orig.exchangeId
         };
         this._allOrders[osr.orderId].push(o);
@@ -160,15 +177,13 @@ class ExchangeBroker implements IBroker {
 }
 
 class NullOrderGateway implements IOrderEntryGateway {
-    OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
 
     sendOrder(order : BrokeredOrder) {
-        this.trigger(order.orderId, OrderStatus.New);
         setTimeout(() => this.trigger(order.orderId, OrderStatus.Working), 10);
     }
 
     cancelOrder(cancel : BrokeredCancel) {
-        this.trigger(cancel.clientOrderId, OrderStatus.PendingCancel);
         setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Cancelled), 10);
     }
 
@@ -178,7 +193,7 @@ class NullOrderGateway implements IOrderEntryGateway {
     }
 
     private trigger(orderId : string, status : OrderStatus) {
-        var rpt : GatewayOrderStatusReport = {
+        var rpt : OrderStatusReport = {
             orderId: orderId,
             orderStatus: status,
             time: new Date()

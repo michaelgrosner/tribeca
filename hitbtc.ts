@@ -209,7 +209,7 @@ module HitBtc {
     }
 
     class HitBtcOrderEntryGateway implements IOrderEntryGateway {
-        OrderUpdate : Evt<GatewayOrderStatusReport> = new Evt<GatewayOrderStatusReport>();
+        OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
         _orderEntryWs : any;
 
         _nonce = 1;
@@ -219,13 +219,6 @@ module HitBtc {
                 cancelRequestClientOrderId: cancel.requestId,
                 symbol: "BTCUSD",
                 side: HitBtcOrderEntryGateway.getSide(cancel.side)});
-
-            var status : GatewayOrderStatusReport = {
-                orderId: cancel.clientOrderId,
-                orderStatus: OrderStatus.PendingCancel,
-                time: new Date()
-            };
-            this.OrderUpdate.trigger(status);
         };
 
         replaceOrder = (replace : BrokeredReplace) => {
@@ -245,13 +238,6 @@ module HitBtc {
             };
 
             this.sendAuth("NewOrder", hitBtcOrder);
-
-            var rpt : GatewayOrderStatusReport = {
-                orderId: order.orderId,
-                orderStatus: OrderStatus.New,
-                time: new Date()
-            };
-            this.OrderUpdate.trigger(rpt);
         };
 
         private static getStatus(m : ExecutionReport) : OrderStatus {
@@ -300,7 +286,7 @@ module HitBtc {
         }
 
         private onExecutionReport = (msg : ExecutionReport) => {
-            var status : GatewayOrderStatusReport = {
+            var status : OrderStatusReport = {
                 exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
@@ -317,7 +303,7 @@ module HitBtc {
         };
 
         private onCancelReject = (msg : CancelReject) => {
-            var status : GatewayOrderStatusReport = {
+            var status : OrderStatusReport = {
                 orderId: msg.clientOrderId,
                 rejectMessage: msg.rejectReasonText,
                 orderStatus: OrderStatus.CancelRejected,
