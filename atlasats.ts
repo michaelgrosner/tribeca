@@ -95,6 +95,7 @@ module AtlasAts {
         _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
         _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
         _nounce : number = 1;
+        _log : Logger = log("Hudson:Gateway:AtlasAtsSocket");
 
         constructor() {
             this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
@@ -107,6 +108,12 @@ module AtlasAts {
                 outgoing: (msg, cb) => {
                     if (msg.channel != '/meta/handshake') {
                         msg.ext = this.signMessage(msg.channel, msg);
+                    }
+                    cb(msg);
+                },
+                incoming: (msg, cb) => {
+                    if (msg.hasOwnProperty('successful') && !msg.successful) {
+                        this._log("UNSUCCESSFUL %o", msg);
                     }
                     cb(msg);
                 }

@@ -162,8 +162,6 @@
 
     var uiCtrl = function($scope, $timeout, $log) {
         $scope.connected = false;
-        $scope.books = {};
-        $scope.orders_statuses = [];
 
         var refresh_timer = function () {
             $timeout(refresh_timer, 250);
@@ -173,6 +171,8 @@
         var socket = io();
         socket.on("hello", function() {
             $scope.connected = true;
+            $scope.books = {};
+            $scope.orders_statuses = [];
             $log.info("connected");
         }).on("disconnect", function() {
             $scope.connected = false;
