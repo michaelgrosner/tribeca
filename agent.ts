@@ -73,7 +73,21 @@ class Agent {
         });
     }
 
-    private recalcMarkets = (book : MarketBook) => {
+    Active : boolean = false;
+    ActiveChanged = new Evt<boolean>();
+
+    changeActiveStatus = (to : boolean) => {
+        if (this.Active != to) {
+            this.recalcMarkets();
+            this._log("changing active status to %o", to);
+            this.Active = to;
+            this.ActiveChanged.trigger(to);
+        }
+    };
+
+    private recalcMarkets = () => {
+        if (!this.Active) return;
+
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
         if (activeBrokers.length <= 1)

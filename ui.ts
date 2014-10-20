@@ -24,16 +24,15 @@ class UI {
     CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
     ReplaceOrder : Evt<CancelReplaceOrder> = new Evt<CancelReplaceOrder>();
     _log : Logger = log("Hudson:UI");
-    _brokers : Array<IBroker>;
 
-    constructor(public brokers : Array<IBroker>) {
-        this._brokers = brokers;
+    constructor(private _brokers : Array<IBroker>, private _agent : Agent) {
 
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));
         });
 
-        brokers.forEach(b => b.MarketData.on(book => this.sendUpdatedMarket(book)));
+        this._brokers.forEach(b => b.MarketData.on(book => this.sendUpdatedMarket(book)));
+        this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
 
         http.listen(3000, () => this._log('listening on *:3000'));
 
@@ -50,6 +49,7 @@ class UI {
 
             this._brokers.filter(b => b.currentBook() != null).forEach(b => this.sendUpdatedMarket(b.currentBook()));
             this._brokers.forEach(b => b.allOrderStates().forEach(s => this.sendOrderStatusUpdate(s)));
+            sock.emit("active-changed", this._agent.Active);
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order %o", o);
@@ -66,6 +66,10 @@ class UI {
             sock.on("cancel-replace", (o : OrderStatusReport, replace : ReplaceRequestFromUI) => {
                 this._log("got new cxl-rpl req %o with %o", o, replace);
                 this.ReplaceOrder.trigger(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange));
+            });
+
+            sock.on("active-change-request", (to : boolean) => {
+                _agent.changeActiveStatus(to);
             });
         });
     }

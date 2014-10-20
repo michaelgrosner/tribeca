@@ -70,7 +70,11 @@
         data-placement="bottom">Submit order</button>
 
 <p>
-    Connection: {{ connected }}
+    Connected: {{ connected }}
+</p>
+<p>
+    <button ng-class="active ? 'btn btn-success' : 'btn btn-danger'"
+            ng-click="changeActive()">Active</button>
 </p>
 
 <p ng-repeat="(exch, book) in books">
@@ -127,83 +131,93 @@
 </table>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.js"></script>
 <script src="//cdn.socket.io/socket.io-1.1.0.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 <script>
-    angular.module('projectApp', ['ui.bootstrap'])
-            .directive('mypopover', function ($compile, $templateCache) {
-                var getTemplate = function (contentType, template_url) {
-                    var template = '';
-                    switch (contentType) {
-                        case 'user':
-                            template = $templateCache.get(template_url);
-                            break;
-                    }
-                    return template;
-                };
-                return {
-                    restrict: "A",
-                    link: function (scope, element, attrs) {
-                        var popOverContent = $compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
-                        var options = {
-                            content: popOverContent,
-                            placement: attrs.dataPlacement,
-                            html: true,
-                            date: scope.date
-                        };
-                        $(element).popover(options).click(function (e) {
-                            e.preventDefault();
-                        });
-                    }
-                };
-            });
+var uiCtrl = function($scope, $timeout, $log) {
+    $scope.connected = false;
+    $scope.active = false;
 
-    var uiCtrl = function($scope, $timeout, $log) {
-        $scope.connected = false;
-
-        var refresh_timer = function () {
-            $timeout(refresh_timer, 250);
-        };
+    var refresh_timer = function () {
         $timeout(refresh_timer, 250);
-
-        var socket = io();
-        socket.on("hello", function() {
-            $scope.connected = true;
-            $scope.books = {};
-            $scope.orders_statuses = [];
-            $log.info("connected");
-        }).on("disconnect", function() {
-            $scope.connected = false;
-            $log.warn("disconnected");
-        }).on("market-book", function(b) {
-             $scope.books[b.exchangeName] = b;
-        }).on('order-options', function(o) {
-            angular.forEach(o, function(vals, key) {
-                $scope[key] = vals;
-            });
-        }).on('order-status-report', function(o) {
-            $scope.orders_statuses.push(o);
-        });
-
-        $scope.order = {};
-        $scope.submitOrder = function() {
-            socket.emit("submit-order", $scope.order);
-        };
-
-        $scope.cancel_replace_model = {};
-        $scope.cancelReplaceOrder = function(orig) {
-            console.log(orig, $scope.cancel_replace_model);
-            socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
-        };
-
-        $scope.cancelOrder = function(order) {
-            socket.emit("cancel-order", order);
-        };
-
-        $log.info("started");
     };
+    $timeout(refresh_timer, 250);
+
+    var socket = io();
+    socket.on("hello", function() {
+        $scope.connected = true;
+        $scope.books = {};
+        $scope.orders_statuses = [];
+        $log.info("connected");
+    }).on("disconnect", function() {
+        $scope.connected = false;
+        $log.warn("disconnected");
+    }).on("market-book", function(b) {
+         $scope.books[b.exchangeName] = b;
+    }).on('order-options', function(o) {
+        angular.forEach(o, function(vals, key) {
+            $scope[key] = vals;
+        });
+    }).on('order-status-report', function(o) {
+        $scope.orders_statuses.push(o);
+    }).on('active-changed', function(b) {
+        $scope.active = b;
+    });
+
+    $scope.order = {};
+    $scope.submitOrder = function() {
+        socket.emit("submit-order", $scope.order);
+    };
+
+    $scope.cancel_replace_model = {};
+    $scope.cancelReplaceOrder = function(orig) {
+        console.log(orig, $scope.cancel_replace_model);
+        socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
+    };
+
+    $scope.cancelOrder = function(order) {
+        socket.emit("cancel-order", order);
+    };
+
+    $scope.changeActive = function() {
+        socket.emit("active-change-request", !$scope.active);
+    };
+
+    $log.info("started");
+};
+
+var mypopover = function ($compile, $templateCache) {
+    var getTemplate = function (contentType, template_url) {
+        var template = '';
+        switch (contentType) {
+            case 'user':
+                template = $templateCache.get(template_url);
+                break;
+        }
+        return template;
+    };
+    return {
+        restrict: "A",
+        link: function (scope, element, attrs) {
+            var popOverContent = $compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
+            var options = {
+                content: popOverContent,
+                placement: attrs.dataPlacement,
+                html: true,
+                date: scope.date
+            };
+            $(element).popover(options).click(function (e) {
+                e.preventDefault();
+            });
+        }
+    };
+}
+
+angular.module('projectApp', ['ui.bootstrap'])
+        .controller('uiCtrl', uiCtrl)
+        .directive('mypopover', mypopover);
 
 </script>
 
