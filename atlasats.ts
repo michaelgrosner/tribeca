@@ -134,9 +134,7 @@ module AtlasAts {
         }
     }
 
-    class AtlasAtsBaseGateway implements IGateway {
-        ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-
+    class AtlasAtsBaseGateway implements IExchangeDetailsGateway {
         name() : string {
             return "AtlasAts";
         }
@@ -152,14 +150,10 @@ module AtlasAts {
         exchange() : Exchange {
             return Exchange.AtlasAts;
         }
-
-        constructor(socket : AtlasAtsSocket) {
-            socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
-            socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
-        }
     }
 
     class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
+        ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         _log : Logger = log("Hudson:Gateway:AtlasAtsOE");
         OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
         _simpleToken : string = "9464b821cea0d62939688df750547593";
@@ -265,10 +259,13 @@ module AtlasAts {
 
         constructor(socket : AtlasAtsSocket) {
             socket.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
+            socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
+            socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
         }
     }
 
     class AtlasAtsMarketDataGateway implements IMarketDataGateway {
+        ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
         private onMarketData = (msg : AtlasAtsMarketUpdate) => {
@@ -297,6 +294,9 @@ module AtlasAts {
         constructor(socket : AtlasAtsSocket) {
             socket.subscribe("/market", this.onMarketData);
 
+            socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
+            socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
+
             request.get({
                 url: "https://atlasats.com/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
@@ -310,7 +310,7 @@ module AtlasAts {
             super(
                 new AtlasAtsMarketDataGateway(socket),
                 new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
-                new AtlasAtsBaseGateway(socket));
+                new AtlasAtsBaseGateway());
         }
     }
 }

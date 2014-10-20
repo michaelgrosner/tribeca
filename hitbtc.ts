@@ -360,7 +360,7 @@ module HitBtc {
         }
     }
 
-    class HitBtcBaseGateway implements IGateway {
+    class HitBtcBaseGateway implements IExchangeDetailsGateway {
         exchange() : Exchange {
             return Exchange.HitBtc;
         }

@@ -172,23 +172,25 @@ interface OrderStatusReport {
     message? : string;
 }
 
-interface IGateway {
-    ConnectChanged : Evt<ConnectivityStatus>;
+interface IExchangeDetailsGateway {
     name() : string;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
 }
 
-interface IMarketDataGateway {
+interface IGateway {
+    ConnectChanged : Evt<ConnectivityStatus>;
+}
+
+interface IMarketDataGateway extends IGateway {
     MarketData : Evt<MarketBook>;
 }
 
-interface IOrderEntryGateway {
+interface IOrderEntryGateway extends IGateway {
     sendOrder(order : BrokeredOrder);
     cancelOrder(cancel : BrokeredCancel);
     replaceOrder(replace : BrokeredReplace);
-
     OrderUpdate : Evt<OrderStatusReport>;
 }
 
@@ -196,7 +198,7 @@ class CombinedGateway {
     constructor(
         public md : IMarketDataGateway,
         public oe : IOrderEntryGateway,
-        public base : IGateway) { }
+        public base : IExchangeDetailsGateway) { }
 }
 
 interface IBroker {

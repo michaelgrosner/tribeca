@@ -143,7 +143,7 @@ class ExchangeBroker implements IBroker {
 
     _currentBook : MarketBook = null;
     _mdGateway : IMarketDataGateway;
-    _baseGateway : IGateway;
+    _baseGateway : IExchangeDetailsGateway;
     _oeGateway : IOrderEntryGateway;
     _log : Logger;
 
@@ -159,11 +159,11 @@ class ExchangeBroker implements IBroker {
         }
     };
 
-    public onConnect = (cs : ConnectivityStatus) => {
-        this._log("Connection status changed ", ConnectivityStatus[cs]);
+    public onConnect = (gwName : string, cs : ConnectivityStatus) => {
+        this._log(gwName, "Connection status changed ", ConnectivityStatus[cs]);
     };
 
-    constructor(mdGateway : IMarketDataGateway, baseGateway : IGateway, oeGateway : IOrderEntryGateway) {
+    constructor(mdGateway : IMarketDataGateway, baseGateway : IExchangeDetailsGateway, oeGateway : IOrderEntryGateway) {
         this._log = log("Hudson:ExchangeBroker:" + baseGateway.name());
 
         this._mdGateway = mdGateway;
@@ -171,13 +171,16 @@ class ExchangeBroker implements IBroker {
         this._baseGateway = baseGateway;
 
         this._mdGateway.MarketData.on(this.handleMarketData);
-        this._baseGateway.ConnectChanged.on(this.onConnect);
+        this._mdGateway.ConnectChanged.on(s => this.onConnect("MD", s));
+
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
+        this._oeGateway.ConnectChanged.on(s => this.onConnect("OE", s));
     }
 }
 
 class NullOrderGateway implements IOrderEntryGateway {
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
+    ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
 
     sendOrder(order : BrokeredOrder) {
         setTimeout(() => this.trigger(order.orderId, OrderStatus.Working), 10);
@@ -199,5 +202,9 @@ class NullOrderGateway implements IOrderEntryGateway {
             time: new Date()
         };
         this.OrderUpdate.trigger(rpt);
+    }
+
+    constructor() {
+        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
     }
 }
