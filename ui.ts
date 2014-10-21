@@ -23,7 +23,7 @@ class UI {
     NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
     CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
     ReplaceOrder : Evt<CancelReplaceOrder> = new Evt<CancelReplaceOrder>();
-    _log : Logger = log("Hudson:UI");
+    _log : Logger = log("tribeca:ui");
 
     constructor(private _brokers : Array<IBroker>, private _agent : Agent) {
 

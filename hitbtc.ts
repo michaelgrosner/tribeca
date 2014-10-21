@@ -193,7 +193,7 @@ module HitBtc {
             this.ConnectChanged.trigger(ConnectivityStatus.Connected);
         };
 
-         _log : Logger = log("Hudson:Gateway:HitBtcMD");
+         _log : Logger = log("tribeca:gateway:HitBtcMD");
         constructor() {
             this._marketDataWs = new ws('ws://api.hitbtc.com:80');
             this._marketDataWs.on('open', this.onOpen);
@@ -351,7 +351,7 @@ module HitBtc {
             }
         };
 
-         _log : Logger = log("Hudson:Gateway:HitBtcOE");
+         _log : Logger = log("tribeca:gateway:HitBtcOE");
         constructor() {
             this._orderEntryWs = new ws("ws://demo-api.hitbtc.com:8080");
             this._orderEntryWs.on('open', this.onOpen);

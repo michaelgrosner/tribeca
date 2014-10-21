@@ -95,7 +95,7 @@ module AtlasAts {
         _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
         _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
         _nounce : number = 1;
-        _log : Logger = log("Hudson:Gateway:AtlasAtsSocket");
+        _log : Logger = log("tribeca:gateway:AtlasAtsSocket");
 
         constructor() {
             this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
@@ -161,7 +161,7 @@ module AtlasAts {
 
     class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-        _log : Logger = log("Hudson:Gateway:AtlasAtsOE");
+        _log : Logger = log("tribeca:gateway:AtlasAtsOE");
         OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
         _simpleToken : string = "9464b821cea0d62939688df750547593";
         _account : string = "1352";

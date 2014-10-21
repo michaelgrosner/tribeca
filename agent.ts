@@ -8,7 +8,7 @@ class Result {
 
 class OrderBrokerAggregator {
     _brokers : Array<IBroker>;
-    _log : Logger = log("Hudson:BrokerAggregator");
+    _log : Logger = log("tribeca:brokeraggregator");
     _ui : UI;
     _brokersByExch : { [exchange: number]: IBroker} = {};
 
@@ -63,7 +63,7 @@ class OrderBrokerAggregator {
 
 class Agent {
     _brokers : Array<IBroker>;
-    _log : Logger = log("Hudson:Agent");
+    _log : Logger = log("tribeca:agent");
 
     constructor(brokers : Array<IBroker>) {
         this._brokers = brokers;

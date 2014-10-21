@@ -13,9 +13,9 @@ var orderAgg = new OrderBrokerAggregator(brokers, ui);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
-        log("Hudson:main")("Terminating", e.stack);
+        log("tribeca:main")("Terminating", e.stack);
     else
-        log("Hudson:main")("Terminating [no stack]");
+        log("tribeca:main")("Terminating [no stack]");
     brokers.forEach(b => b.cancelOpenOrders());
     process.exit();
 };

@@ -104,8 +104,8 @@ class ExchangeBroker implements IBroker {
             orderStatus: osr.orderStatus || orig.orderStatus,
             rejectMessage: osr.rejectMessage || orig.rejectMessage,
             time: osr.time || orig.time,
-            lastQuantity: osr.lastQuantity || orig.lastQuantity,
-            lastPrice: osr.lastPrice || orig.lastPrice,
+            lastQuantity: osr.lastQuantity,
+            lastPrice: osr.lastPrice,
             leavesQuantity: osr.leavesQuantity || orig.leavesQuantity,
             cumQuantity: osr.cumQuantity || orig.cumQuantity,
             averagePrice: osr.averagePrice || orig.averagePrice,
@@ -164,7 +164,7 @@ class ExchangeBroker implements IBroker {
     };
 
     constructor(mdGateway : IMarketDataGateway, baseGateway : IExchangeDetailsGateway, oeGateway : IOrderEntryGateway) {
-        this._log = log("Hudson:ExchangeBroker:" + baseGateway.name());
+        this._log = log("tribeca:exchangebroker:" + baseGateway.name());
 
         this._mdGateway = mdGateway;
         this._oeGateway = oeGateway;
