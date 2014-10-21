@@ -195,7 +195,7 @@ module HitBtc {
 
          _log : Logger = log("Hudson:Gateway:HitBtcMD");
         constructor() {
-            this._marketDataWs = new ws('ws://demo-api.hitbtc.com:80');
+            this._marketDataWs = new ws('ws://api.hitbtc.com:80');
             this._marketDataWs.on('open', this.onOpen);
             this._marketDataWs.on('message', this.onMessage);
             this._marketDataWs.on("error", this.onMessage);

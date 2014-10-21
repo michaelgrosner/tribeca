@@ -62,20 +62,36 @@
     </form>
 </script>
 
-<button type="button"
-        class="btn btn-primary"
-        style="float: right"
-        id="order_form"
-        mypopover popover-template="order_form.html"
-        data-placement="bottom">Submit order</button>
 
-<p>
-    Connected: {{ connected }}
-</p>
-<p>
-    <button ng-class="active ? 'btn btn-success' : 'btn btn-danger'"
-            ng-click="changeActive()">Active</button>
-</p>
+<div class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">%NAME%</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li>
+                    <button ng-class="active ? 'btn navbar-btn btn-success' : 'btn navbar-btn btn-danger'"
+                            ng-click="changeActive()">Active
+                    </button>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <button type="button"
+                        class="btn btn-primary navbar-btn"
+                        id="order_form"
+                        mypopover popover-template="order_form.html"
+                        data-placement="bottom">Submit order
+                </button>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+    <!--/.container-fluid -->
+</div>
 
 <p ng-repeat="(exch, book) in books">
     <b>{{ exch }}</b>: {{ book.bidSize|number:2 }} {{ book.bidPrice|number:2 }} X {{ book.askPrice|number:2 }} {{ book.askSize|number:2 }}
