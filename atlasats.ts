@@ -268,12 +268,21 @@ module AtlasAts {
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
-                averagePrice: msg.average,
-                lastQuantity: msg.hasOwnProperty("executions") ? msg.executions[0].quantity : null,
-                liquidity: msg.hasOwnProperty("executions") ? AtlasAtsOrderEntryGateway.getLiquidity(msg.executions[0].liquidity) : null
+                averagePrice: msg.average
             };
-
             this.OrderUpdate.trigger(status);
+
+            if (typeof msg.executions !== 'undefined') {
+                msg.executions.forEach(exec => {
+                    var status : OrderStatusReport = {
+                        exchangeId: msg.oid,
+                        orderId: msg.clid,
+                        lastQuantity: exec.quantity,
+                        liquidity: AtlasAtsOrderEntryGateway.getLiquidity(exec.liquidity)
+                    };
+                    this.OrderUpdate.trigger(status);
+                });
+            }
         };
 
         constructor(socket : AtlasAtsSocket) {
