@@ -201,10 +201,10 @@ class Agent {
     };
 
     private static arbFire(o : OrderStatusReport, hideBroker : IBroker) {
-        if (o.orderStatus !== OrderStatus.Filled || o.orderStatus !== OrderStatus.PartialFill) return;
+        if (o.lastQuantity != null && o.lastQuantity !== undefined) return;
         // TODO: think about sizing
         var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
-        hideBroker.sendOrder(new OrderImpl(o.side, o.quantity, o.type, px, TimeInForce.IOC));
+        hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));
     }
 
     private _lastBestResult : Result = null;
