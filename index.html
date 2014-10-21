@@ -178,6 +178,8 @@ var uiCtrl = function($scope, $timeout, $log) {
         });
     }).on('order-status-report', function(o) {
         $scope.orders_statuses.push(o);
+    }).on('order-status-report-snapshot', function(os) {
+        $scope.orders_statuses = os;
     }).on('active-changed', function(b) {
         $scope.active = b;
     });

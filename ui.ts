@@ -48,7 +48,11 @@ class UI {
             });
 
             this._brokers.filter(b => b.currentBook() != null).forEach(b => this.sendUpdatedMarket(b.currentBook()));
-            this._brokers.forEach(b => b.allOrderStates().forEach(s => this.sendOrderStatusUpdate(s)));
+
+            this._brokers.forEach(b => {
+                sock.emit("order-status-report-snapshot", b.allOrderStates());
+            });
+
             sock.emit("active-changed", this._agent.Active);
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
