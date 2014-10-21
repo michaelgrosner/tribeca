@@ -79,7 +79,14 @@ class Agent {
     changeActiveStatus = (to : boolean) => {
         if (this.Active != to) {
             this.Active = to;
-            this.recalcMarkets();
+
+            if (this.Active) {
+                this.recalcMarkets();
+            }
+            else if (!this.Active && this._lastBestResult != null) {
+                this.stop(this._lastBestResult);
+            }
+
             this._log("changing active status to %o", to);
             this.ActiveChanged.trigger(to);
         }
@@ -150,58 +157,62 @@ class Agent {
             }
         }
         else {
-            throw Error("should not have ever gotten here");
+            this._log("NOTHING");
         }
-
-        this._lastBestResult = bestResult;
     };
 
-    private noChange = (bestResult : Result) => {
-        this._log("NO CHANGE :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
-                bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
+    private noChange = (r : Result) => {
+        this._log("NO CHANGE :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
+                r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
     };
 
-    private modify = (bestResult : Result) => {
-        var restExch = bestResult.restBroker.exchange();
+    private modify = (r : Result) => {
+        var restExch = r.restBroker.exchange();
         // cxl-rpl live order
         // TODO: think about sizing
         // TODO: only replace this when this exchange price has ticked
-        var sent = bestResult.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, bestResult.rest.price, restExch));
+        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, r.rest.price, restExch));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
-        this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
-            bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
+        this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
+            r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
+
+        this._lastBestResult = r;
     };
 
-    private start = (bestResult : Result) => {
-        var restExch = bestResult.restBroker.exchange();
+    private start = (r : Result) => {
+        var restExch = r.restBroker.exchange();
         // set up fill notification
-        bestResult.restBroker.OrderUpdate.on(o => Agent.arbFire(o, bestResult.hideBroker));
+        r.restBroker.OrderUpdate.on(o => Agent.arbFire(o, r.hideBroker));
 
         // send an order
-        var sent = bestResult.restBroker.sendOrder(new OrderImpl(bestResult.restSide, 0.025, OrderType.Limit, bestResult.rest.price, TimeInForce.GTC));
+        var sent = r.restBroker.sendOrder(new OrderImpl(r.restSide, 0.025, OrderType.Limit, r.rest.price, TimeInForce.GTC));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
-        this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", bestResult.profit, Side[bestResult.restSide],
-            bestResult.restBroker.name(), bestResult.rest.price, bestResult.hideBroker.name(), bestResult.hide.price);
+        this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
+            r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
+
+        this._lastBestResult = r;
     };
 
-    private stop = (lastBestResult : Result) => {
+    private stop = (lr : Result) => {
         // remove fill notification
-        lastBestResult.restBroker.OrderUpdate.off(o => Agent.arbFire(o, lastBestResult.hideBroker));
+        lr.restBroker.OrderUpdate.off(o => Agent.arbFire(o, lr.hideBroker));
 
         // cancel open order
-        var restExch = lastBestResult.restBroker.exchange();
-        lastBestResult.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
+        var restExch = lr.restBroker.exchange();
+        lr.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
         delete this._activeOrderIds[restExch];
 
-        this._log("STOP :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", lastBestResult.profit,
-            Side[lastBestResult.restSide], lastBestResult.restBroker.name(),
-            lastBestResult.rest.price, lastBestResult.hideBroker.name(), lastBestResult.hide.price);
+        this._log("STOP :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", lr.profit,
+            Side[lr.restSide], lr.restBroker.name(),
+            lr.rest.price, lr.hideBroker.name(), lr.hide.price);
+
+        this._lastBestResult = null;
     };
 
     private static arbFire(o : OrderStatusReport, hideBroker : IBroker) {
-        if (o.lastQuantity != null && o.lastQuantity !== undefined) return;
+        if (o.lastQuantity == null || o.lastQuantity == undefined) return;
         // TODO: think about sizing
         var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
         hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));

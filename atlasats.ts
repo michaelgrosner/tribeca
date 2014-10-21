@@ -328,7 +328,7 @@ module AtlasAts {
             var socket = new AtlasAtsSocket();
             super(
                 new AtlasAtsMarketDataGateway(socket),
-                new AtlasAtsOrderEntryGateway(socket), // new NullOrderGateway(), //
+                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket)
                 new AtlasAtsBaseGateway());
         }
     }
