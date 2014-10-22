@@ -216,6 +216,8 @@ class Agent {
         // TODO: think about sizing
         var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
         hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));
+
+        // clear lastBestResult
     }
 
     private _lastBestResult : Result = null;
