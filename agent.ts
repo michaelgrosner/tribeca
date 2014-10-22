@@ -100,40 +100,32 @@ class Agent {
         if (activeBrokers.length <= 1)
             return;
 
-        var results : Result[] = [];
-        activeBrokers.filter(b => b.makeFee() < 0)
-            .forEach(restBroker => {
-                activeBrokers.forEach(hideBroker => {
-                    if (restBroker.exchange() == hideBroker.exchange()) return;
-
-                    // need to determine whether or not I'm already on the market
-                    var restTop = restBroker.currentBook().top;
-                    var hideTop = hideBroker.currentBook().top;
-
-                    var pBid = -(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price;
-                    var pAsk = +(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price;
-
-                    if (pBid > 0) {
-                        var p = Math.min(restTop.bid.size, hideTop.bid.size);
-                        results.push(new Result(Side.Bid, restBroker, hideBroker, pBid * p, restTop.bid, hideTop.bid));
-                    }
-
-                    if (pAsk > 0) {
-                        var p = Math.min(restTop.ask.size, hideTop.ask.size);
-                        results.push(new Result(Side.Ask, restBroker, hideBroker, pAsk * p, restTop.ask, hideTop.ask));
-                    }
-                })
-            });
-
         var bestResult : Result = null;
         var bestProfit: number = Number.MIN_VALUE;
-        for (var i = 0; i < results.length; i++) {
-            var r = results[i];
-            if (bestProfit < r.profit && r.restBroker.exchange() == Exchange.HitBtc) {
-                bestProfit = r.profit;
-                bestResult = r;
-            }
-        }
+        activeBrokers.forEach(restBroker => {
+            activeBrokers.forEach(hideBroker => {
+                if (restBroker.exchange() == hideBroker.exchange()) return;
+
+                // need to determine whether or not I'm already on the market
+                var restTop = restBroker.currentBook().top;
+                var hideTop = hideBroker.currentBook().top;
+
+                var pBid = Math.min(.025, restTop.bid.size, hideTop.bid.size) *
+                    (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
+                var pAsk = Math.min(.025, restTop.ask.size, hideTop.ask.size) *
+                    (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
+
+                if (pBid > bestProfit && pBid > 0) {
+                    bestProfit = pBid;
+                    bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid);
+                }
+
+                if (pAsk > bestProfit && pAsk > 0) {
+                    bestProfit = pAsk;
+                    bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask);
+                }
+            })
+        });
 
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
@@ -169,8 +161,6 @@ class Agent {
     private modify = (r : Result) => {
         var restExch = r.restBroker.exchange();
         // cxl-rpl live order
-        // TODO: think about sizing
-        // TODO: only replace this when this exchange price has ticked
         var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, r.rest.price, restExch));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
@@ -213,11 +203,10 @@ class Agent {
 
     private static arbFire(o : OrderStatusReport, hideBroker : IBroker) {
         if (o.lastQuantity == null || o.lastQuantity == undefined) return;
-        // TODO: think about sizing
         var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
         hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));
 
-        // clear lastBestResult
+        // clear lastBestResult, stop arbFiring, cancel original order. start from scratch
     }
 
     private _lastBestResult : Result = null;
