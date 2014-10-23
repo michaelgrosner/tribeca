@@ -3,7 +3,8 @@
 class Result {
     constructor(public restSide: Side, public restBroker: IBroker,
                 public hideBroker: IBroker, public profit: number,
-                public rest: MarketSide, public hide: MarketSide) {}
+                public rest: MarketSide, public hide: MarketSide,
+                public size: number) {}
 }
 
 class OrderBrokerAggregator {
@@ -110,19 +111,20 @@ class Agent {
                 var restTop = restBroker.currentBook().top;
                 var hideTop = hideBroker.currentBook().top;
 
-                var pBid = Math.min(.025, restTop.bid.size, hideTop.bid.size) *
-                    (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
-                var pAsk = Math.min(.025, restTop.ask.size, hideTop.ask.size) *
-                    (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
+                var bidSize = Math.min(.025, restTop.bid.size, hideTop.bid.size);
+                var pBid = bidSize * (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
+
+                var askSize = Math.min(.025, restTop.ask.size, hideTop.ask.size);
+                var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
                 if (pBid > bestProfit && pBid > 0) {
                     bestProfit = pBid;
-                    bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid);
+                    bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize);
                 }
 
                 if (pAsk > bestProfit && pAsk > 0) {
                     bestProfit = pAsk;
-                    bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask);
+                    bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize);
                 }
             })
         });
@@ -161,7 +163,7 @@ class Agent {
     private modify = (r : Result) => {
         var restExch = r.restBroker.exchange();
         // cxl-rpl live order
-        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], 0.025, r.rest.price, restExch));
+        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], r.size, r.rest.price, restExch));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
         this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
@@ -176,7 +178,7 @@ class Agent {
         r.restBroker.OrderUpdate.on(o => Agent.arbFire(o, r.hideBroker));
 
         // send an order
-        var sent = r.restBroker.sendOrder(new OrderImpl(r.restSide, 0.025, OrderType.Limit, r.rest.price, TimeInForce.GTC));
+        var sent = r.restBroker.sendOrder(new OrderImpl(r.restSide, r.size, OrderType.Limit, r.rest.price, TimeInForce.GTC));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
         this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
