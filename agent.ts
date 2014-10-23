@@ -12,7 +12,7 @@ class MarketDataAggregator {
 
     constructor(private _brokers : Array<IBroker>) {
         this._brokers.forEach(b => {
-            b.MarketData.on(this.MarketData.trigger);
+            b.MarketData.on(m => this.MarketData.trigger(m));
         });
     }
 }
@@ -26,7 +26,7 @@ class OrderBrokerAggregator {
     constructor(private _brokers : Array<IBroker>) {
 
         this._brokers.forEach(b => {
-            b.OrderUpdate.on(this.OrderUpdate.trigger);
+            b.OrderUpdate.on(o => this.OrderUpdate.trigger(o));
         });
 
         for (var i = 0; i < brokers.length; i++)
@@ -211,7 +211,7 @@ class Agent {
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
 
-        this.stop(this._lastBestResult, o.orderStatus == OrderStatus.Filled);
+        this.stop(this._lastBestResult, o.orderStatus == OrderStatus.Complete);
     };
 
     private _lastBestResult : Result = null;

@@ -122,7 +122,7 @@
         <td>{{ o.orderId }}</td>
         <td>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
         <td>{{ availableExchanges[o.exchange] }}</td>
-        <td>{{ availableOrderStatuses[o.orderStatus] }}</td>
+        <td>{{ getOrderStatus(o) }}</td>
         <td>{{ o.price|number:2 }}</td>
         <td>{{ o.quantity|number:4 }}</td>
         <td>{{ availableSides[o.side] }}</td>
@@ -179,7 +179,8 @@ var uiCtrl = function($scope, $timeout, $log) {
     }).on('order-status-report', function(o) {
         $scope.orders_statuses.push(o);
     }).on('order-status-report-snapshot', function(os) {
-        $scope.orders_statuses = os;
+        // this should be driven via the brokeragg
+        os.forEach(function(o) { $scope.orders_statuses.push(o) });
     }).on('active-changed', function(b) {
         $scope.active = b;
     });
@@ -191,7 +192,6 @@ var uiCtrl = function($scope, $timeout, $log) {
 
     $scope.cancel_replace_model = {};
     $scope.cancelReplaceOrder = function(orig) {
-        console.log(orig, $scope.cancel_replace_model);
         socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
     };
 
@@ -201,6 +201,21 @@ var uiCtrl = function($scope, $timeout, $log) {
 
     $scope.changeActive = function() {
         socket.emit("active-change-request", !$scope.active);
+    };
+
+    $scope.getOrderStatus = function(o) {
+        var endingModifier = function (o) {
+            if (o.pendingCancel)
+                return ", PndCxl";
+            else if (o.pendingReplace)
+                return ", PndRpl";
+            else if (o.partiallyFilled)
+                return ", PartFill";
+            else if (o.cancelRejected)
+                return ", CxlRj";
+            return "";
+        };
+        return $scope.availableOrderStatuses[o.orderStatus] + endingModifier(o);
     };
 
     $log.info("started");

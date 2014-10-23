@@ -9,7 +9,7 @@ interface Array<T> { last() : T;}
 Array.prototype.last = function() { return this[this.length - 1]; };
 
 class Evt<T> {
-    private handlers : { (data? : T): void; }[] = [];
+    constructor(private handlers : { (data? : T): void; }[] = []) {}
 
     public on(handler : { (data? : T): void }) {
         this.handlers.push(handler);

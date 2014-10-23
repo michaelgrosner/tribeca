@@ -241,13 +241,18 @@ module HitBtc {
         };
 
         private static getStatus(m : ExecutionReport) : OrderStatus {
-            if (m.execReportType == "new") return OrderStatus.Working;
-            if (m.execReportType == "canceled") return OrderStatus.Cancelled;
-            if (m.execReportType == "rejected") return OrderStatus.Rejected;
-            if (m.execReportType == "expired") return OrderStatus.Cancelled;
-            if (m.orderStatus == "partiallyFilled") return OrderStatus.PartialFill;
-            if (m.orderStatus == "filled") return OrderStatus.Filled;
-            return OrderStatus.Other;
+            switch (m.execReportType) {
+                case "new":
+                case "status":
+                    return OrderStatus.Working;
+                case "canceled":
+                case "expired":
+                    return OrderStatus.Complete;
+                case "rejected":
+                    return OrderStatus.Rejected;
+                default:
+                    return OrderStatus.Other;
+            }
         }
 
         private static getTif(tif : TimeInForce) {
@@ -306,7 +311,8 @@ module HitBtc {
             var status : OrderStatusReport = {
                 orderId: msg.clientOrderId,
                 rejectMessage: msg.rejectReasonText,
-                orderStatus: OrderStatus.CancelRejected,
+                orderStatus: OrderStatus.Rejected,
+                cancelRejected: true,
                 time: new Date()
             };
             this.OrderUpdate.trigger(status);

@@ -8,7 +8,6 @@ class ExchangeBroker implements IBroker {
 
             switch (e.orderStatus) {
                 case OrderStatus.New:
-                case OrderStatus.PartialFill:
                 case OrderStatus.Working:
                     this.cancelOrder(new OrderCancel(e.orderId, e.exchange));
                     break;
@@ -63,7 +62,8 @@ class ExchangeBroker implements IBroker {
 
         var rpt : OrderStatusReport = {
             orderId: replace.origOrderId,
-            orderStatus: OrderStatus.PendingReplace,
+            orderStatus: OrderStatus.Working,
+            pendingReplace: true,
             price: replace.price,
             quantity: replace.quantity,
             time: new Date()};
@@ -79,7 +79,8 @@ class ExchangeBroker implements IBroker {
 
         var rpt : OrderStatusReport = {
             orderId: cancel.origOrderId,
-            orderStatus: OrderStatus.PendingCancel,
+            orderStatus: OrderStatus.Working,
+            pendingCancel: true,
             time: new Date()};
         this.onOrderUpdate(rpt);
 
@@ -99,6 +100,9 @@ class ExchangeBroker implements IBroker {
         var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
         this._log("got gw update %o, applying to %o", osr, orig);
 
+        var cumQuantity = osr.cumQuantity || orig.cumQuantity;
+        var quantity = osr.quantity || orig.quantity;
+
         var o : OrderStatusReport = {
             orderId: osr.orderId || orig.orderId,
             orderStatus: osr.orderStatus || orig.orderStatus,
@@ -107,16 +111,21 @@ class ExchangeBroker implements IBroker {
             lastQuantity: osr.lastQuantity,
             lastPrice: osr.lastPrice,
             leavesQuantity: osr.leavesQuantity || orig.leavesQuantity,
-            cumQuantity: osr.cumQuantity || orig.cumQuantity,
+            cumQuantity: cumQuantity,
             averagePrice: osr.averagePrice || orig.averagePrice,
             side: osr.side || orig.side,
-            quantity: osr.quantity || orig.quantity,
+            quantity: quantity,
             type: osr.type || orig.type,
             price: osr.price || orig.price,
             timeInForce: osr.timeInForce || orig.timeInForce,
             exchange: osr.exchange || orig.exchange,
-            exchangeId: osr.exchangeId || orig.exchangeId
+            exchangeId: osr.exchangeId || orig.exchangeId,
+            partiallyFilled: cumQuantity > 0 && cumQuantity !== quantity,
+            pendingCancel: osr.pendingCancel,
+            pendingReplace: osr.pendingReplace,
+            cancelRejected: osr.cancelRejected
         };
+
         this._allOrders[osr.orderId].push(o);
         this._log("applied gw update -> %o", o);
 
@@ -131,7 +140,7 @@ class ExchangeBroker implements IBroker {
         return this._baseGateway.takeFee();
     }
 
-    MarketData : Evt<MarketBook> = new Evt();
+    MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
     name() : string {
         return this._baseGateway.name();
@@ -187,7 +196,7 @@ class NullOrderGateway implements IOrderEntryGateway {
     }
 
     cancelOrder(cancel : BrokeredCancel) {
-        setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Cancelled), 10);
+        setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Complete), 10);
     }
 
     replaceOrder(replace : BrokeredReplace) {

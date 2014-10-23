@@ -217,15 +217,16 @@ module AtlasAts {
                 if (!err && msg.status !== "error") {
                     var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
-                        orderStatus: OrderStatus.Cancelled,
+                        orderStatus: OrderStatus.Complete,
                         time: new Date()
                     };
                     this.OrderUpdate.trigger(rpt);
                 } else {
                     var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
-                        orderStatus: OrderStatus.CancelRejected,
+                        orderStatus: OrderStatus.Rejected,
                         rejectMessage: msg.message,
+                        cancelRejected: true,
                         time: new Date()
                     };
                     this.OrderUpdate.trigger(rpt);
@@ -236,13 +237,14 @@ module AtlasAts {
         private static getStatus = (raw : string) : OrderStatus => {
             switch (raw) {
                 case "DONE":
-                    // either cancelled or filled
-                    return OrderStatus.Filled;
+                    return OrderStatus.Complete;
                 case "REJECTED":
                     return OrderStatus.Rejected;
                 case "PENDING":
                 case "OPEN":
                     return OrderStatus.Working;
+                default:
+                    return OrderStatus.Other;
             }
         };
 
@@ -268,7 +270,8 @@ module AtlasAts {
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
-                averagePrice: msg.average
+                averagePrice: msg.average,
+                partiallyFilled: msg.left != 0
             };
             this.OrderUpdate.trigger(status);
 

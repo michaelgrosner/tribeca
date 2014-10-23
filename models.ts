@@ -27,7 +27,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, PendingCancel, Working, PartialFill, Filled, Cancelled, Rejected, Other, CancelRejected, PendingReplace }
+enum OrderStatus { New, Working, Complete, Rejected, Other }
 enum Liquidity { Make, Take }
 
 class MarketBook {
@@ -170,6 +170,11 @@ interface OrderStatusReport {
     liquidity? : Liquidity;
     exchange? : Exchange;
     message? : string;
+
+    partiallyFilled? : boolean;
+    pendingCancel? : boolean;
+    pendingReplace? : boolean;
+    cancelRejected? : boolean;
 }
 
 interface IExchangeDetailsGateway {
