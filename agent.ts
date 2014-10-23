@@ -81,7 +81,7 @@ class Agent {
                 this.recalcMarkets();
             }
             else if (!this.Active && this._lastBestResult != null) {
-                this.stop(this._lastBestResult);
+                this.stop(this._lastBestResult, true);
             }
 
             this._log("changing active status to %o", to);
@@ -128,7 +128,7 @@ class Agent {
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
         if (bestResult == null && this._lastBestResult !== null) {
-            this.stop(this._lastBestResult);
+            this.stop(this._lastBestResult, true);
         }
         else if (bestResult !== null && this._lastBestResult == null) {
             this.start(bestResult);
@@ -136,7 +136,7 @@ class Agent {
         else if (bestResult !== null && this._lastBestResult !== null) {
             if (bestResult.restBroker.exchange() != this._lastBestResult.restBroker.exchange()
                     || bestResult.restSide != this._lastBestResult.restSide) {
-                this.stop(this._lastBestResult);
+                this.stop(this._lastBestResult, true);
                 this.start(bestResult);
             }
             else if (bestResult.rest.price !== this._lastBestResult.rest.price) {
@@ -183,13 +183,13 @@ class Agent {
         this._lastBestResult = r;
     };
 
-    private stop = (lr : Result) => {
+    private stop = (lr : Result, sendCancel : boolean) => {
         // remove fill notification
         lr.restBroker.OrderUpdate.off(this.arbFire);
 
         // cancel open order
         var restExch = lr.restBroker.exchange();
-        lr.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
+        if (sendCancel) lr.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
         delete this._activeOrderIds[restExch];
 
         this._log("STOP :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", lr.profit,
@@ -211,7 +211,7 @@ class Agent {
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
 
-        this.stop(this._lastBestResult);
+        this.stop(this._lastBestResult, o.orderStatus == OrderStatus.Filled);
     };
 
     private _lastBestResult : Result = null;
