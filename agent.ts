@@ -7,31 +7,30 @@ class Result {
                 public size: number) {}
 }
 
+class MarketDataAggregator {
+    MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+
+    constructor(private _brokers : Array<IBroker>) {
+        this._brokers.forEach(b => {
+            b.MarketData.on(this.MarketData.trigger);
+        });
+    }
+}
+
 class OrderBrokerAggregator {
-    _brokers : Array<IBroker>;
     _log : Logger = log("tribeca:brokeraggregator");
-    _ui : UI;
     _brokersByExch : { [exchange: number]: IBroker} = {};
 
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
 
-    constructor(brokers : Array<IBroker>, ui : UI) {
-        this._brokers = brokers;
-        this._ui = ui;
+    constructor(private _brokers : Array<IBroker>) {
 
         this._brokers.forEach(b => {
-            b.OrderUpdate.on(u => {
-                this.OrderUpdate.trigger(u);
-                this._ui.sendOrderStatusUpdate(u);
-            });
+            b.OrderUpdate.on(this.OrderUpdate.trigger);
         });
 
         for (var i = 0; i < brokers.length; i++)
             this._brokersByExch[brokers[i].exchange()] = brokers[i];
-
-        this._ui.NewOrder.on(this.submitOrder);
-        this._ui.CancelOrder.on(this.cancelOrder);
-        this._ui.ReplaceOrder.on(this.cancelReplaceOrder);
     }
 
     public submitOrder = (o : SubmitNewOrder) => {
@@ -63,15 +62,12 @@ class OrderBrokerAggregator {
 }
 
 class Agent {
-    _brokers : Array<IBroker>;
     _log : Logger = log("tribeca:agent");
 
-    constructor(brokers : Array<IBroker>) {
-        this._brokers = brokers;
-
-        this._brokers.forEach(b => {
-            b.MarketData.on(this.recalcMarkets);
-        });
+    constructor(private _brokers : Array<IBroker>,
+                private _mdAgg : MarketDataAggregator,
+                private _orderAgg : OrderBrokerAggregator) {
+        _mdAgg.MarketData.on(this.recalcMarkets);
     }
 
     Active : boolean = false;

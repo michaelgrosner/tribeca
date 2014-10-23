@@ -7,9 +7,10 @@
 
 var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
 var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe));
-var agent = new Agent(brokers);
-var ui = new UI(brokers, agent);
-var orderAgg = new OrderBrokerAggregator(brokers, ui);
+var orderAgg = new OrderBrokerAggregator(brokers);
+var mdAgg = new MarketDataAggregator(brokers);
+var agent = new Agent(brokers, mdAgg, orderAgg);
+var ui = new UI(brokers, agent, orderAgg, mdAgg);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

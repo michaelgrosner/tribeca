@@ -20,18 +20,19 @@ interface ReplaceRequestFromUI {
 }
 
 class UI {
-    NewOrder : Evt<SubmitNewOrder> = new Evt<SubmitNewOrder>();
-    CancelOrder : Evt<OrderCancel> = new Evt<OrderCancel>();
-    ReplaceOrder : Evt<CancelReplaceOrder> = new Evt<CancelReplaceOrder>();
     _log : Logger = log("tribeca:ui");
 
-    constructor(private _brokers : Array<IBroker>, private _agent : Agent) {
+    constructor(private _brokers : Array<IBroker>,
+                private _agent : Agent,
+                private _orderAgg : OrderBrokerAggregator,
+                private _mdAgg : MarketDataAggregator) {
 
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));
         });
 
-        this._brokers.forEach(b => b.MarketData.on(book => this.sendUpdatedMarket(book)));
+        this._mdAgg.MarketData.on(this.sendUpdatedMarket);
+        this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
 
         http.listen(3000, () => this._log('listening on *:3000'));
@@ -59,17 +60,17 @@ class UI {
                 this._log("got new order %o", o);
                 var order = new SubmitNewOrder(Side[o.side], o.quantity, OrderType[o.orderType],
                     o.price, TimeInForce[o.timeInForce], Exchange[o.exchange]);
-                this.NewOrder.trigger(order);
+                _orderAgg.submitOrder(order);
             });
 
             sock.on("cancel-order", (o : OrderStatusReport) => {
                 this._log("got new cancel req %o", o);
-                this.CancelOrder.trigger(new OrderCancel(o.orderId, o.exchange));
+                _orderAgg.cancelOrder(new OrderCancel(o.orderId, o.exchange));
             });
 
             sock.on("cancel-replace", (o : OrderStatusReport, replace : ReplaceRequestFromUI) => {
                 this._log("got new cxl-rpl req %o with %o", o, replace);
-                this.ReplaceOrder.trigger(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange));
+                _orderAgg.cancelReplaceOrder(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange));
             });
 
             sock.on("active-change-request", (to : boolean) => {
