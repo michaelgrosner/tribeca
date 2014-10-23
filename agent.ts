@@ -171,7 +171,7 @@ class Agent {
     private start = (r : Result) => {
         var restExch = r.restBroker.exchange();
         // set up fill notification
-        r.restBroker.OrderUpdate.on(o => Agent.arbFire(o, r.hideBroker));
+        r.restBroker.OrderUpdate.on(this.arbFire);
 
         // send an order
         var sent = r.restBroker.sendOrder(new OrderImpl(r.restSide, r.size, OrderType.Limit, r.rest.price, TimeInForce.GTC));
@@ -185,7 +185,7 @@ class Agent {
 
     private stop = (lr : Result) => {
         // remove fill notification
-        lr.restBroker.OrderUpdate.off(o => Agent.arbFire(o, lr.hideBroker));
+        lr.restBroker.OrderUpdate.off(this.arbFire);
 
         // cancel open order
         var restExch = lr.restBroker.exchange();
@@ -199,13 +199,20 @@ class Agent {
         this._lastBestResult = null;
     };
 
-    private static arbFire(o : OrderStatusReport, hideBroker : IBroker) {
-        if (o.lastQuantity == null || o.lastQuantity == undefined) return;
-        var px = o.side == Side.Ask ? hideBroker.currentBook().top.ask.price : hideBroker.currentBook().top.bid.price;
+    private arbFire = (o : OrderStatusReport) => {
+        if (o.lastQuantity == null || o.lastQuantity == undefined)
+            return;
+
+        var hideBroker = this._lastBestResult.hideBroker;
+        var px = o.side == Side.Ask
+            ? hideBroker.currentBook().top.ask.price
+            : hideBroker.currentBook().top.bid.price;
         hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));
 
-        // clear lastBestResult, stop arbFiring, cancel original order. start from scratch
-    }
+        this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
+
+        this.stop(this._lastBestResult);
+    };
 
     private _lastBestResult : Result = null;
     private _activeOrderIds : { [ exch : number] : string} = {};
