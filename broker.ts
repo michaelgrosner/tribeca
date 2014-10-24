@@ -98,7 +98,6 @@ class ExchangeBroker implements IBroker {
         }
 
         var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
-        this._log("got gw update %o, applying to %o", osr, orig);
 
         var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
