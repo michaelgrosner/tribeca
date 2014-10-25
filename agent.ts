@@ -1,12 +1,5 @@
 /// <reference path="models.ts" />
 
-class Result {
-    constructor(public restSide: Side, public restBroker: IBroker,
-                public hideBroker: IBroker, public profit: number,
-                public rest: MarketSide, public hide: MarketSide,
-                public size: number) {}
-}
-
 class MarketDataAggregator {
     MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
@@ -73,6 +66,11 @@ class Agent {
     Active : boolean = false;
     ActiveChanged = new Evt<boolean>();
 
+    LastBestResult : Result = null;
+    BestResultChanged = new Evt<Result>();
+
+    private _activeOrderIds : { [ exch : number] : string} = {};
+
     changeActiveStatus = (to : boolean) => {
         if (this.Active != to) {
             this.Active = to;
@@ -80,8 +78,8 @@ class Agent {
             if (this.Active) {
                 this.recalcMarkets();
             }
-            else if (!this.Active && this._lastBestResult != null) {
-                this.stop(this._lastBestResult, true);
+            else if (!this.Active && this.LastBestResult != null) {
+                this.stop(this.LastBestResult, true);
             }
 
             this._log("changing active status to %o", to);
@@ -90,8 +88,6 @@ class Agent {
     };
 
     private recalcMarkets = () => {
-        if (!this.Active) return;
-
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
         if (activeBrokers.length <= 1)
@@ -125,21 +121,27 @@ class Agent {
             })
         });
 
+        // do this async, off this event cycle
+        process.nextTick(() => this.BestResultChanged.trigger(bestResult));
+
+        if (!this.Active)
+            return;
+
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
-        if (bestResult == null && this._lastBestResult !== null) {
-            this.stop(this._lastBestResult, true);
+        if (bestResult == null && this.LastBestResult !== null) {
+            this.stop(this.LastBestResult, true);
         }
-        else if (bestResult !== null && this._lastBestResult == null) {
+        else if (bestResult !== null && this.LastBestResult == null) {
             this.start(bestResult);
         }
-        else if (bestResult !== null && this._lastBestResult !== null) {
-            if (bestResult.restBroker.exchange() != this._lastBestResult.restBroker.exchange()
-                    || bestResult.restSide != this._lastBestResult.restSide) {
-                this.stop(this._lastBestResult, true);
+        else if (bestResult !== null && this.LastBestResult !== null) {
+            if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
+                    || bestResult.restSide != this.LastBestResult.restSide) {
+                this.stop(this.LastBestResult, true);
                 this.start(bestResult);
             }
-            else if (bestResult.rest.price !== this._lastBestResult.rest.price) {
+            else if (bestResult.rest.price !== this.LastBestResult.rest.price) {
                 this.modify(bestResult);
             }
             else {
@@ -165,7 +167,7 @@ class Agent {
         this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
             r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
 
-        this._lastBestResult = r;
+        this.LastBestResult = r;
     };
 
     private start = (r : Result) => {
@@ -180,7 +182,7 @@ class Agent {
         this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
             r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
 
-        this._lastBestResult = r;
+        this.LastBestResult = r;
     };
 
     private stop = (lr : Result, sendCancel : boolean) => {
@@ -196,14 +198,14 @@ class Agent {
             Side[lr.restSide], lr.restBroker.name(),
             lr.rest.price, lr.hideBroker.name(), lr.hide.price);
 
-        this._lastBestResult = null;
+        this.LastBestResult = null;
     };
 
     private arbFire = (o : OrderStatusReport) => {
         if (o.lastQuantity == null || o.lastQuantity == undefined)
             return;
 
-        var hideBroker = this._lastBestResult.hideBroker;
+        var hideBroker = this.LastBestResult.hideBroker;
         var px = o.side == Side.Ask
             ? hideBroker.currentBook().top.ask.price
             : hideBroker.currentBook().top.bid.price;
@@ -211,9 +213,6 @@ class Agent {
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
 
-        this.stop(this._lastBestResult, o.orderStatus == OrderStatus.Complete);
+        this.stop(this.LastBestResult, o.orderStatus == OrderStatus.Complete);
     };
-
-    private _lastBestResult : Result = null;
-    private _activeOrderIds : { [ exch : number] : string} = {};
 }

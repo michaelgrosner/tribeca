@@ -220,3 +220,16 @@ interface IBroker {
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
 }
+
+class Result {
+    constructor(public restSide: Side, public restBroker: IBroker,
+                public hideBroker: IBroker, public profit: number,
+                public rest: MarketSide, public hide: MarketSide,
+                public size: number) {}
+
+    public toJSON() {
+        return {side: this.restSide, size: this.size, profit: this.profit,
+            restExch: this.restBroker.exchange(), hideExch: this.hideBroker.exchange(),
+            restMkt: this.rest, hide: this.hide};
+    }
+}

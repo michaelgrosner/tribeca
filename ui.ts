@@ -34,6 +34,7 @@ class UI {
         this._mdAgg.MarketData.on(this.sendUpdatedMarket);
         this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
+        this._agent.BestResultChanged.on(s => io.emit("result-change", s));
 
         http.listen(3000, () => this._log('listening on *:3000'));
 
@@ -55,6 +56,9 @@ class UI {
             });
 
             sock.emit("active-changed", this._agent.Active);
+
+            if (this._agent.LastBestResult != null)
+                sock.emit("result-change", this._agent.LastBestResult);
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order %o", o);
@@ -88,7 +92,7 @@ class UI {
             bidSize: book.top.bid.size,
             askPrice: book.top.ask.price,
             askSize: book.top.ask.size,
-            exchangeName: Exchange[book.exchangeName]};
+            exchangeName: book.exchangeName};
         io.emit("market-book", b);
     };
 }

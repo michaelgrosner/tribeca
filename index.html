@@ -93,58 +93,82 @@
     <!--/.container-fluid -->
 </div>
 
-<p ng-repeat="(exch, book) in books">
-    <b>{{ exch }}</b>: {{ book.bidSize|number:2 }} {{ book.bidPrice|number:2 }} X {{ book.askPrice|number:2 }} {{ book.askSize|number:2 }}
-</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <table class="table table-condensed">
+                <tr>
+                    <th>exch</th>
+                    <th>bSz</th>
+                    <th>bPx</th>
+                    <th>aPx</th>
+                    <th>aSz</th>
+                    <th>pft</th>
+                </tr>
+                <tr ng-repeat="(exch, book) in books">
+                    <td ng-class="getRestHideClass(exch)">{{ availableExchanges[exch] }}</td>
+                    <td>{{ book.bidSize|number:2 }}</td>
+                    <td>{{ book.bidPrice|number:2 }}</td>
+                    <td>{{ book.askPrice|number:2 }}</td>
+                    <td>{{ book.askSize|number:2 }}</td>
+                    <td>{{ current_result.profit }}</td>
+                </tr>
+            </table>
+        </div>
 
-<table class="table table-striped table-hover table-condensed">
-    <tr>
-        <th>id</th>
-        <th>time</th>
-        <th>exch</th>
-        <th>status</th>
-        <th>price</th>
-        <th>qty</th>
-        <th>side</th>
-        <th>type</th>
-        <th>tif</th>
-        <th>lQty</th>
-        <th>lPx</th>
-        <th>lvQty</th>
-        <th>cumQty</th>
-        <th>avgPx</th>
-        <th>liq</th>
-        <th>msg</th>
-        <th>cxl</th>
-        <th>c-r</th>
-    </tr>
-    <tr ng-repeat="o in orders_statuses|orderBy:'-time'">
-        <td>{{ o.orderId }}</td>
-        <td>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
-        <td>{{ availableExchanges[o.exchange] }}</td>
-        <td>{{ getOrderStatus(o) }}</td>
-        <td>{{ o.price|number:2 }}</td>
-        <td>{{ o.quantity|number:4 }}</td>
-        <td>{{ availableSides[o.side] }}</td>
-        <td>{{ availableOrderTypes[o.type] }}</td>
-        <td>{{ availableTifs[o.timeInForce] }}</td>
-        <td>{{ o.lastQuantity|number:4 }}</td>
-        <td>{{ o.lastPrice|number:2 }}</td>
-        <td>{{ o.leavesQuantity|number:4 }}</td>
-        <td>{{ o.cumQuantity|number:4 }}</td>
-        <td>{{ o.averagePrice|number:2 }}</td>
-        <td>{{ availableLiquidityTypes[o.liquidity]}}</td>
-        <td>{{ o.rejectMessage || o.message }}</td>
-        <td><button type="button"
-                    class="btn btn-danger btn-xs"
-                    ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
-        <td><button type="button"
-                    class="btn btn-warning btn-xs"
-                    mypopover popover-template="cancel_replace_form.html"
-                    id="cancel_replace_form"
-                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
-    </tr>
-</table>
+        <div class="col-md-9"></div>
+    </div>
+    <div class="row">
+        <table class="table table-striped table-hover table-condensed">
+            <tr>
+                <th>id</th>
+                <th>time</th>
+                <th>exch</th>
+                <th>status</th>
+                <th>price</th>
+                <th>qty</th>
+                <th>side</th>
+                <th>type</th>
+                <th>tif</th>
+                <th>lQty</th>
+                <th>lPx</th>
+                <th>lvQty</th>
+                <th>cumQty</th>
+                <th>avgPx</th>
+                <th>liq</th>
+                <th>msg</th>
+                <th>cxl</th>
+                <th>c-r</th>
+            </tr>
+            <tr ng-repeat="o in orders_statuses|orderBy:'-time'">
+                <td>{{ o.orderId }}</td>
+                <td>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
+                <td>{{ availableExchanges[o.exchange] }}</td>
+                <td>{{ getOrderStatus(o) }}</td>
+                <td>{{ o.price|number:2 }}</td>
+                <td>{{ o.quantity|number:4 }}</td>
+                <td>{{ availableSides[o.side] }}</td>
+                <td>{{ availableOrderTypes[o.type] }}</td>
+                <td>{{ availableTifs[o.timeInForce] }}</td>
+                <td>{{ o.lastQuantity|number:4 }}</td>
+                <td>{{ o.lastPrice|number:2 }}</td>
+                <td>{{ o.leavesQuantity|number:4 }}</td>
+                <td>{{ o.cumQuantity|number:4 }}</td>
+                <td>{{ o.averagePrice|number:2 }}</td>
+                <td>{{ availableLiquidityTypes[o.liquidity]}}</td>
+                <td>{{ o.rejectMessage || o.message }}</td>
+                <td><button type="button"
+                            class="btn btn-danger btn-xs"
+                            ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
+                <td><button type="button"
+                            class="btn btn-warning btn-xs"
+                            mypopover popover-template="cancel_replace_form.html"
+                            id="cancel_replace_form"
+                            data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
+            </tr>
+        </table>
+    </div>
+</div>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.js"></script>
@@ -183,6 +207,9 @@ var uiCtrl = function($scope, $timeout, $log) {
         os.forEach(function(o) { $scope.orders_statuses.push(o) });
     }).on('active-changed', function(b) {
         $scope.active = b;
+    }).on("result-change", function(r) {
+        $log.info("result-change", r);
+        $scope.current_result = r;
     });
 
     $scope.order = {};
@@ -201,6 +228,13 @@ var uiCtrl = function($scope, $timeout, $log) {
 
     $scope.changeActive = function() {
         socket.emit("active-change-request", !$scope.active);
+    };
+
+    $scope.getRestHideClass = function(e) {
+        if (typeof $scope.current_result === "undefined") return "warning";
+        if ($scope.current_result.restExch == e) return 'active';
+        if ($scope.current_result.hideExch == e) return 'success';
+        return 'info';
     };
 
     $scope.getOrderStatus = function(o) {

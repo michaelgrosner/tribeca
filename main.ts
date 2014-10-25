@@ -14,7 +14,7 @@ var ui = new UI(brokers, agent, orderAgg, mdAgg);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
-        log("tribeca:main")("Terminating", e.stack);
+        log("tribeca:main")("Terminating", e, e.stack);
     else
         log("tribeca:main")("Terminating [no stack]");
     brokers.forEach(b => b.cancelOpenOrders());
