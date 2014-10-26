@@ -98,9 +98,9 @@ module AtlasAts {
         _log : Logger = log("tribeca:gateway:AtlasAtsSocket");
 
         constructor() {
-            this._client = new Faye.Client('https://atlasats.com/api/v1/streaming', {
+            this._client = new Faye.Client(Config.AtlasAtsHttpUrl + '/api/v1/streaming', {
                 endpoints: {
-                    websocket: 'wss://atlasats.com/api/v1/streaming'
+                    websocket: Config.AtlasAtsWsUrl
                 }
             });
 
@@ -191,7 +191,7 @@ module AtlasAts {
             };
 
             request({
-                url: "https://atlasats.com/api/v1/orders",
+                url: Config.AtlasAtsHttpUrl + "/api/v1/orders",
                 body: JSON.stringify(o),
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
                 method: "POST"
@@ -207,7 +207,7 @@ module AtlasAts {
 
         cancelOrder = (cancel : BrokeredCancel) => {
             request({
-                url: "https://atlasats.com/api/v1/orders/"+cancel.exchangeId,
+                url: Config.AtlasAtsHttpUrl + "/api/v1/orders/" + cancel.exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "DELETE"
             }, (err, resp, body) => {
@@ -329,7 +329,7 @@ module AtlasAts {
             socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
 
             request.get({
-                url: "https://atlasats.com/api/v1/market/book",
+                url: Config.AtlasAtsHttpUrl + "/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
             }, (er, resp, body) => this.onMarketData(JSON.parse(body)));
         }

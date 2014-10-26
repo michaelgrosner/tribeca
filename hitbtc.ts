@@ -8,9 +8,6 @@ module HitBtc {
     var ws = require('ws');
     var request = require('request');
 
-    var apikey = '004ee1065d6c7a6ac556bea221cd6338';
-    var secretkey = "aa14d615df5d47cb19a13ffe4ea638eb";
-
     var _lotMultiplier = 100.0;
 
     interface NoncePayload<T> {
@@ -195,13 +192,13 @@ module HitBtc {
 
          _log : Logger = log("tribeca:gateway:HitBtcMD");
         constructor() {
-            this._marketDataWs = new ws('ws://api.hitbtc.com:80');
+            this._marketDataWs = new ws(Config.HitBtcMarketDataUrl);
             this._marketDataWs.on('open', this.onOpen);
             this._marketDataWs.on('message', this.onMessage);
             this._marketDataWs.on("error", this.onMessage);
 
             request.get(
-                {url: "https://api.hitbtc.com/api/1/public/BTCUSD/orderbook"},
+                {url: Config.HitBtcPullUrl + "/api/1/public/BTCUSD/orderbook"},
                 (err, body, resp) => {
                     this.onMarketDataSnapshotFullRefresh(resp);
                 });
@@ -323,12 +320,12 @@ module HitBtc {
             this._nonce += 1;
 
             var signMsg = function (m) : string {
-                return crypto.createHmac('sha512', secretkey)
+                return crypto.createHmac('sha512', Config.HitBtcSecret)
                     .update(JSON.stringify(m))
                     .digest('base64');
             };
 
-            return {apikey: apikey, signature: signMsg(msg), message: msg};
+            return {apikey: Config.HitBtcApiKey, signature: signMsg(msg), message: msg};
         };
 
         private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
@@ -359,7 +356,7 @@ module HitBtc {
 
          _log : Logger = log("tribeca:gateway:HitBtcOE");
         constructor() {
-            this._orderEntryWs = new ws("ws://demo-api.hitbtc.com:8080");
+            this._orderEntryWs = new ws(Config.HitBtcOrderEntryUrl);
             this._orderEntryWs.on('open', this.onOpen);
             this._orderEntryWs.on('message', this.onMessage);
             this._orderEntryWs.on("error", this.onMessage);
