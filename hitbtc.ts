@@ -363,6 +363,10 @@ module HitBtc {
         }
     }
 
+    class HitBtcPositionGateway implements IPositionGateway {
+        PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
+    }
+
     class HitBtcBaseGateway implements IExchangeDetailsGateway {
         exchange() : Exchange {
             return Exchange.HitBtc;
@@ -388,6 +392,7 @@ module HitBtc {
             super(
                 new HitBtcMarketDataGateway(),
                 new NullOrderGateway(), //new HitBtcOrderEntryGateway(),
+                new HitBtcPositionGateway(),
                 new HitBtcBaseGateway());
         }
     }

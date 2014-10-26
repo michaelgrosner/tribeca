@@ -159,6 +159,10 @@ module AtlasAts {
         }
     }
 
+    class AtlasAtsPositionGateway implements IPositionGateway {
+        PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
+    }
+
     class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         _log : Logger = log("tribeca:gateway:AtlasAtsOE");
@@ -340,7 +344,8 @@ module AtlasAts {
             var socket = new AtlasAtsSocket();
             super(
                 new AtlasAtsMarketDataGateway(socket),
-                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket)
+                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
+                new AtlasAtsPositionGateway(),
                 new AtlasAtsBaseGateway());
         }
     }

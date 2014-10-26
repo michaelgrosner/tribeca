@@ -204,15 +204,20 @@ interface IOrderEntryGateway extends IGateway {
     OrderUpdate : Evt<OrderStatusReport>;
 }
 
+class CurrencyPosition {
+    constructor(public amount : number, public currency : Currency) { }
+}
+
+interface IPositionGateway {
+    PositionUpdate : Evt<CurrencyPosition>;
+}
+
 class CombinedGateway {
     constructor(
         public md : IMarketDataGateway,
         public oe : IOrderEntryGateway,
+        public pg : IPositionGateway,
         public base : IExchangeDetailsGateway) { }
-}
-
-class CurrencyPosition {
-    constructor(public amount : number, public currency : Currency) { }
 }
 
 interface IBroker {

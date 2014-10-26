@@ -156,9 +156,6 @@ class ExchangeBroker implements IBroker {
     }
 
     _currentBook : MarketBook = null;
-    _mdGateway : IMarketDataGateway;
-    _baseGateway : IExchangeDetailsGateway;
-    _oeGateway : IOrderEntryGateway;
     _log : Logger;
 
     public currentBook = () : MarketBook => {
@@ -177,18 +174,26 @@ class ExchangeBroker implements IBroker {
         this._log(gwName, "Connection status changed ", ConnectivityStatus[cs]);
     };
 
-    constructor(mdGateway : IMarketDataGateway, baseGateway : IExchangeDetailsGateway, oeGateway : IOrderEntryGateway) {
-        this._log = log("tribeca:exchangebroker:" + baseGateway.name());
+    private onPositionUpdate = (positionReport : CurrencyPosition) => {
+        if (this._currencies[positionReport.currency].amount != positionReport.amount) {
+            this._currencies[positionReport.currency] = positionReport;
+            this._log("New currency report: %o", positionReport);
+        }
+    };
 
-        this._mdGateway = mdGateway;
-        this._oeGateway = oeGateway;
-        this._baseGateway = baseGateway;
+    constructor(private _mdGateway : IMarketDataGateway,
+                private _baseGateway : IExchangeDetailsGateway,
+                private _oeGateway : IOrderEntryGateway,
+                private _posGateway : IPositionGateway) {
+        this._log = log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => this.onConnect("MD", s));
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
         this._oeGateway.ConnectChanged.on(s => this.onConnect("OE", s));
+
+        this._posGateway.PositionUpdate.on(this.onPositionUpdate);
     }
 }
 

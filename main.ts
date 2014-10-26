@@ -6,7 +6,7 @@
 
 
 var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(), new HitBtc.HitBtc()];
-var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe));
+var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe, g.pg));
 var orderAgg = new OrderBrokerAggregator(brokers);
 var mdAgg = new MarketDataAggregator(brokers);
 var agent = new Agent(brokers, mdAgg, orderAgg);
