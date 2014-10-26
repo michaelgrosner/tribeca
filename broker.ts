@@ -1,17 +1,18 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
-    PositionUpdate = new Evt<CurrencyPosition>();
-    private _currencies : { [currency : number] : CurrencyPosition } = {};
-    public getPosition(currency : Currency) : CurrencyPosition {
+    PositionUpdate = new Evt<ExchangeCurrencyPosition>();
+    private _currencies : { [currency : number] : ExchangeCurrencyPosition } = {};
+    public getPosition(currency : Currency) : ExchangeCurrencyPosition {
         return this._currencies[currency];
     }
 
     private onPositionUpdate = (rpt : CurrencyPosition) => {
         if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
-            this._currencies[rpt.currency] = rpt;
-            this.PositionUpdate.trigger(rpt);
-            this._log("New currency report: %o", rpt);
+            var newRpt = rpt.toExchangeReport(this.exchange());
+            this._currencies[rpt.currency] = newRpt;
+            this.PositionUpdate.trigger(newRpt);
+            this._log("New currency report: %o", newRpt);
         }
     };
 

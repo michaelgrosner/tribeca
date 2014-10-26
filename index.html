@@ -104,6 +104,8 @@
                     <th>aPx</th>
                     <th>aSz</th>
                     <th>pft</th>
+                    <th>usd</th>
+                    <th>btc</th>
                 </tr>
                 <tr ng-repeat="(exch, book) in books">
                     <td ng-class="getRestHideClass(exch)">{{ availableExchanges[exch] }}</td>
@@ -112,6 +114,8 @@
                     <td>{{ book.askPrice|number:2 }}</td>
                     <td>{{ book.askSize|number:2 }}</td>
                     <td>{{ current_result.profit|number:4 }}</td>
+                    <td>{{ positions[exch][availableCurrencies['USD']] }}</td>
+                    <td>{{ positions[exch][availableCurrencies['BTC']] }}</td>
                 </tr>
             </table>
         </div>
@@ -190,13 +194,14 @@ var uiCtrl = function($scope, $timeout, $log) {
         $scope.connected = true;
         $scope.books = {};
         $scope.orders_statuses = [];
+        $scope.positions = {};
         $log.info("connected");
     }).on("disconnect", function() {
         $scope.connected = false;
         $log.warn("disconnected");
     }).on("market-book", function(b) {
          $scope.books[b.exchangeName] = b;
-    }).on('order-options', function(o) {
+    }).on('enums', function(o) {
         angular.forEach(o, function(vals, key) {
             $scope[key] = vals;
         });
@@ -210,6 +215,11 @@ var uiCtrl = function($scope, $timeout, $log) {
     }).on("result-change", function(r) {
         $log.info("result-change", r);
         $scope.current_result = r;
+    }).on("position-report", function(rpt) {
+        if (rpt == null) return;
+        if (typeof $scope.positions[rpt.exchange] === "undefined")
+            $scope.positions[rpt.exchange] = {};
+        $scope.positions[rpt.exchange][rpt.currency] = rpt.amount;
     });
 
     $scope.order = {};

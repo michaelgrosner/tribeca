@@ -204,11 +204,26 @@ interface IOrderEntryGateway extends IGateway {
     OrderUpdate : Evt<OrderStatusReport>;
 }
 
+class ExchangeCurrencyPosition {
+    constructor(public amount : number,
+                public currency : Currency,
+                public exchange : Exchange) { }
+
+    public inspect() {
+        return util.inspect({amount: this.amount, currency: Currency[this.currency], exchange: Exchange[this.exchange]});
+    }
+}
+
 class CurrencyPosition {
-    constructor(public amount : number, public currency : Currency) { }
+    constructor(public amount : number,
+                public currency : Currency) {}
 
     public inspect() {
         return util.inspect({amount: this.amount, currency: Currency[this.currency]});
+    }
+
+    public toExchangeReport(exch : Exchange) {
+        return new ExchangeCurrencyPosition(this.amount, this.currency, exch);
     }
 }
 
@@ -241,8 +256,8 @@ interface IBroker {
     cancelOpenOrders() : void;
 
     // todo: think about it, should fill reports inc/decrement positions? does it matter?
-    getPosition(currency : Currency) : CurrencyPosition;
-    PositionUpdate : Evt<CurrencyPosition>;
+    getPosition(currency : Currency) : ExchangeCurrencyPosition;
+    PositionUpdate : Evt<ExchangeCurrencyPosition>;
 }
 
 class Result {

@@ -1,5 +1,15 @@
 /// <reference path="models.ts" />
 
+class PositionAggregator {
+    PositionUpdate = new Evt<ExchangeCurrencyPosition>();
+
+    constructor(private _brokers : Array<IBroker>) {
+        this._brokers.forEach(b => {
+            b.PositionUpdate.on(m => this.PositionUpdate.trigger(m));
+        });
+    }
+}
+
 class MarketDataAggregator {
     MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 

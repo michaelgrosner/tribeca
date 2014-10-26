@@ -25,7 +25,8 @@ class UI {
     constructor(private _brokers : Array<IBroker>,
                 private _agent : Agent,
                 private _orderAgg : OrderBrokerAggregator,
-                private _mdAgg : MarketDataAggregator) {
+                private _mdAgg : MarketDataAggregator,
+                private _posAgg : PositionAggregator) {
 
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));
@@ -33,6 +34,7 @@ class UI {
 
         this._mdAgg.MarketData.on(this.sendUpdatedMarket);
         this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
+        this._posAgg.PositionUpdate.on(this.sendPositionUpdate);
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
         this._agent.BestResultChanged.on(s => io.emit("result-change", s));
 
@@ -40,19 +42,24 @@ class UI {
 
         io.on('connection', sock => {
             sock.emit("hello");
-            sock.emit("order-options", {
+            sock.emit("enums", {
                 availableTifs: TimeInForce,
                 availableExchanges: Exchange,
                 availableSides: Side,
                 availableOrderTypes: OrderType,
                 availableOrderStatuses: OrderStatus,
-                availableLiquidityTypes: Liquidity
+                availableLiquidityTypes: Liquidity,
+                availableCurrencies: Currency
             });
 
-            this._brokers.filter(b => b.currentBook() != null).forEach(b => this.sendUpdatedMarket(b.currentBook()));
-
             this._brokers.forEach(b => {
+                if (b.currentBook() != null) this.sendUpdatedMarket(b.currentBook());
                 sock.emit("order-status-report-snapshot", b.allOrderStates());
+
+                // UI only knows about BTC and USD - for now
+                [Currency.BTC, Currency.USD].forEach(c => {
+                    this.sendPositionUpdate(b.getPosition(c));
+                });
             });
 
             sock.emit("active-changed", this._agent.Active);
@@ -82,6 +89,10 @@ class UI {
             });
         });
     }
+
+    sendPositionUpdate = (msg : ExchangeCurrencyPosition) => {
+        io.emit("position-report", msg);
+    };
 
     sendOrderStatusUpdate = (msg : OrderStatusReport) => {
         io.emit("order-status-report", msg);
