@@ -118,7 +118,7 @@ module HitBtc {
             if (msg.symbol != "BTCUSD" || this._lastBook == null) return;
 
             // todo: they say they send it?...
-            var t : Date = msg.timestamp == undefined ? new Date() : new Date(msg.timestamp/1000.0);
+            var t : Date = msg.timestamp == undefined ? date() : date(msg.timestamp/1000.0);
 
             var ordBids = HitBtcMarketDataGateway._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
             var ordAsks = HitBtcMarketDataGateway._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
@@ -155,7 +155,7 @@ module HitBtc {
         private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
             var bid = new MarketSide(msg.bid[n].price, msg.bid[n].size / _lotMultiplier);
             var ask = new MarketSide(msg.ask[n].price, msg.ask[n].size / _lotMultiplier);
-            return new MarketUpdate(bid, ask, new Date());
+            return new MarketUpdate(bid, ask, date());
         }
 
         private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
@@ -295,7 +295,7 @@ module HitBtc {
                 exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
-                time: new Date(msg.timestamp) || new Date(),
+                time: date(msg.timestamp) || date(),
                 rejectMessage: msg.orderRejectReason,
                 lastQuantity: msg.lastQuantity / _lotMultiplier,
                 lastPrice: msg.lastPrice,
@@ -313,7 +313,7 @@ module HitBtc {
                 rejectMessage: msg.rejectReasonText,
                 orderStatus: OrderStatus.Rejected,
                 cancelRejected: true,
-                time: new Date()
+                time: date()
             };
             this.OrderUpdate.trigger(status);
         };

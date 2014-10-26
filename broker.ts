@@ -30,6 +30,7 @@ class ExchangeBroker implements IBroker {
     _allOrders : { [orderId: string]: OrderStatusReport[] } = {};
 
     private static generateOrderId = () => {
+        // use moment.js?
         return new Date().getTime().toString(32)
     };
 
@@ -39,7 +40,7 @@ class ExchangeBroker implements IBroker {
             side: order.side,
             quantity: order.quantity,
             type: order.type,
-            time: new Date(),
+            time: date(),
             price: order.price,
             timeInForce: order.timeInForce,
             orderStatus: OrderStatus.New,
@@ -66,7 +67,7 @@ class ExchangeBroker implements IBroker {
             pendingReplace: true,
             price: replace.price,
             quantity: replace.quantity,
-            time: new Date()};
+            time: date()};
         this.onOrderUpdate(rpt);
 
         return new SentOrder(rpt.orderId);
@@ -81,7 +82,7 @@ class ExchangeBroker implements IBroker {
             orderId: cancel.origOrderId,
             orderStatus: OrderStatus.Working,
             pendingCancel: true,
-            time: new Date()};
+            time: date()};
         this.onOrderUpdate(rpt);
 
         this._oeGateway.cancelOrder(cxl);
@@ -207,7 +208,7 @@ class NullOrderGateway implements IOrderEntryGateway {
         var rpt : OrderStatusReport = {
             orderId: orderId,
             orderStatus: status,
-            time: new Date()
+            time: date()
         };
         this.OrderUpdate.trigger(rpt);
     }

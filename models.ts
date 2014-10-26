@@ -20,6 +20,10 @@ class MarketUpdate {
     public equals(other : MarketUpdate) {
         return this.ask.equals(other.ask) && this.bid.equals(other.bid);
     }
+
+    public inspect() {
+        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()});
+    }
 }
 
 enum ConnectivityStatus { Connected, Disconnected }
@@ -161,7 +165,7 @@ interface OrderStatusReport {
     exchangeId? : string;
     orderStatus? : OrderStatus;
     rejectMessage? : string;
-    time? : Date;
+    time? : Moment;
     lastQuantity? : number;
     lastPrice? : number;
     leavesQuantity? : number;

@@ -218,7 +218,7 @@ module AtlasAts {
                     var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
                         orderStatus: OrderStatus.Complete,
-                        time: new Date()
+                        time: date()
                     };
                     this.OrderUpdate.trigger(rpt);
                 } else {
@@ -227,7 +227,7 @@ module AtlasAts {
                         orderStatus: OrderStatus.Rejected,
                         rejectMessage: msg.message,
                         cancelRejected: true,
-                        time: new Date()
+                        time: date()
                     };
                     this.OrderUpdate.trigger(rpt);
                 }
@@ -266,7 +266,7 @@ module AtlasAts {
                 exchangeId: msg.oid,
                 orderId: msg.clid,
                 orderStatus: AtlasAtsOrderEntryGateway.getStatus(msg.status),
-                time: new Date(), // doesnt give milliseconds??
+                time: date(), // doesnt give milliseconds??
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
@@ -315,7 +315,7 @@ module AtlasAts {
             var getUpdate = (n : number) => {
                 var bid = new MarketSide(bids[n].price, bids[n].size);
                 var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, new Date());
+                return new MarketUpdate(bid, ask, date());
             };
 
             var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);

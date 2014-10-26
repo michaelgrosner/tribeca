@@ -1,9 +1,11 @@
 /// <reference path="typings/tsd.d.ts" />
 
 var log = require('debug');
+var momentjs = require('moment');
 
-interface Logger { (...arg : any[]) : void;
-}
+var date = momentjs.utc;
+
+interface Logger { (...arg : any[]) : void;}
 
 interface Array<T> { last() : T;}
 Array.prototype.last = function() { return this[this.length - 1]; };
