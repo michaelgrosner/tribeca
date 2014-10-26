@@ -37,4 +37,8 @@ class Config {
 
     public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
     public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
+    public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
+    public static get AtlasAtsAccount() : string { return "1352"; }
+    public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
+    public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
 }

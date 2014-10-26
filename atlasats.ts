@@ -92,8 +92,8 @@ module AtlasAts {
 
     class AtlasAtsSocket {
         _client : any;
-        _secret : string = "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7";
-        _token : string = "0e48f9bd6f8dec728df2547b7a143e504a83cb2d";
+        _secret : string = Config.AtlasAtsSecret;
+        _token : string = Config.AtlasAtsMultiToken;
         _nounce : number = 1;
         _log : Logger = log("tribeca:gateway:AtlasAtsSocket");
 
@@ -163,8 +163,8 @@ module AtlasAts {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         _log : Logger = log("tribeca:gateway:AtlasAtsOE");
         OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-        _simpleToken : string = "9464b821cea0d62939688df750547593";
-        _account : string = "1352";
+        _simpleToken : string = Config.AtlasAtsSimpleToken;
+        _account : string = Config.AtlasAtsAccount;
 
         private static _convertTif(tif : TimeInForce) {
             switch (tif) {

@@ -1,6 +1,11 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
+    private _currencies : { [currency : number] : CurrencyPosition } = {};
+    public getPosition(currency : Currency) : CurrencyPosition {
+        return this._currencies[currency];
+    }
+
     cancelOpenOrders() : void {
         for (var k in this._allOrders) {
             if (!this._allOrders.hasOwnProperty(k)) continue;

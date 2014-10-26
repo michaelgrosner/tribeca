@@ -26,6 +26,7 @@ class MarketUpdate {
     }
 }
 
+enum Currency { USD, BTC }
 enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
@@ -210,6 +211,10 @@ class CombinedGateway {
         public base : IExchangeDetailsGateway) { }
 }
 
+class CurrencyPosition {
+    constructor(public amount : number, public currency : Currency) { }
+}
+
 interface IBroker {
     MarketData : Evt<MarketBook>;
     name() : string;
@@ -223,6 +228,7 @@ interface IBroker {
     OrderUpdate : Evt<OrderStatusReport>;
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
+    getPosition(currency : Currency) : CurrencyPosition;
 }
 
 class Result {
