@@ -26,7 +26,7 @@ class MarketUpdate {
     }
 }
 
-enum Currency { USD, BTC }
+enum Currency { USD, BTC, LTC }
 enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
@@ -206,6 +206,10 @@ interface IOrderEntryGateway extends IGateway {
 
 class CurrencyPosition {
     constructor(public amount : number, public currency : Currency) { }
+
+    public inspect() {
+        return util.inspect({amount: this.amount, currency: Currency[this.currency]});
+    }
 }
 
 interface IPositionGateway {
@@ -222,18 +226,22 @@ class CombinedGateway {
 
 interface IBroker {
     MarketData : Evt<MarketBook>;
+
     name() : string;
     currentBook() : MarketBook;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
+
     sendOrder(order : Order) : SentOrder;
     cancelOrder(cancel : OrderCancel);
     replaceOrder(replace : CancelReplaceOrder) : SentOrder;
     OrderUpdate : Evt<OrderStatusReport>;
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
+
     getPosition(currency : Currency) : CurrencyPosition;
+    PositionUpdate : Evt<CurrencyPosition>;
 }
 
 class Result {

@@ -1,10 +1,19 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
+    PositionUpdate = new Evt<CurrencyPosition>();
     private _currencies : { [currency : number] : CurrencyPosition } = {};
     public getPosition(currency : Currency) : CurrencyPosition {
         return this._currencies[currency];
     }
+
+    private onPositionUpdate = (rpt : CurrencyPosition) => {
+        if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
+            this._currencies[rpt.currency] = rpt;
+            this.PositionUpdate.trigger(rpt);
+            this._log("New currency report: %o", rpt);
+        }
+    };
 
     cancelOpenOrders() : void {
         for (var k in this._allOrders) {
@@ -172,13 +181,6 @@ class ExchangeBroker implements IBroker {
 
     public onConnect = (gwName : string, cs : ConnectivityStatus) => {
         this._log(gwName, "Connection status changed ", ConnectivityStatus[cs]);
-    };
-
-    private onPositionUpdate = (positionReport : CurrencyPosition) => {
-        if (this._currencies[positionReport.currency].amount != positionReport.amount) {
-            this._currencies[positionReport.currency] = positionReport;
-            this._log("New currency report: %o", positionReport);
-        }
     };
 
     constructor(private _mdGateway : IMarketDataGateway,

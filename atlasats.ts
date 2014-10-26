@@ -159,8 +159,53 @@ module AtlasAts {
         }
     }
 
+    interface AtlasAtsPosition {
+        size : number;
+        item : string;
+    }
+
+    interface AtlasAtsPositionReport {
+        buyingpower : number;
+        positions : Array<AtlasAtsPosition>;
+    }
+
     class AtlasAtsPositionGateway implements IPositionGateway {
         PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
+
+        private static _convertItem(item : string) : Currency {
+            switch (item) {
+                case "BTC":
+                    return Currency.BTC;
+                case "USD":
+                    return Currency.USD;
+                case "LTC":
+                    return Currency.LTC;
+                default:
+                    throw Error("item " + item);
+            }
+        }
+
+        _log : Logger = log("tribeca:gateway:AtlasAtsPG");
+
+        private onTimerTick = () => {
+            request({
+                url: Config.AtlasAtsHttpUrl + "/api/v1/account",
+                headers: {"Authorization": "Token token=\""+Config.AtlasAtsSimpleToken+"\""},
+                method: "GET"
+            }, (err, resp, body) => {
+                var rpt : AtlasAtsPositionReport = JSON.parse(body);
+
+                this.PositionUpdate.trigger(new CurrencyPosition(rpt.buyingpower, Currency.USD));
+                rpt.positions.forEach(p => {
+                    var position = new CurrencyPosition(p.size, AtlasAtsPositionGateway._convertItem(p.item));
+                    this.PositionUpdate.trigger(position);
+                });
+            });
+        };
+
+        constructor() {
+            setInterval(this.onTimerTick, 15000);
+        }
     }
 
     class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
