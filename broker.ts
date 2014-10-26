@@ -198,34 +198,3 @@ class ExchangeBroker implements IBroker {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
     }
 }
-
-class NullOrderGateway implements IOrderEntryGateway {
-    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-    ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-
-    sendOrder(order : BrokeredOrder) {
-        setTimeout(() => this.trigger(order.orderId, OrderStatus.Working), 10);
-    }
-
-    cancelOrder(cancel : BrokeredCancel) {
-        setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Complete), 10);
-    }
-
-    replaceOrder(replace : BrokeredReplace) {
-        this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-        this.sendOrder(replace);
-    }
-
-    private trigger(orderId : string, status : OrderStatus) {
-        var rpt : OrderStatusReport = {
-            orderId: orderId,
-            orderStatus: status,
-            time: date()
-        };
-        this.OrderUpdate.trigger(rpt);
-    }
-
-    constructor() {
-        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
-    }
-}

@@ -240,6 +240,7 @@ interface IBroker {
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
 
+    // todo: think about it, should fill reports inc/decrement positions? does it matter?
     getPosition(currency : Currency) : CurrencyPosition;
     PositionUpdate : Evt<CurrencyPosition>;
 }

@@ -1,12 +1,14 @@
 /// <reference path="typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
+/// <reference path="null.ts" />
 
 module HitBtc {
 
     var crypto = require('crypto');
     var ws = require('ws');
     var request = require('request');
+    var url = require("url");
 
     var _lotMultiplier = 100.0;
 
@@ -363,8 +365,52 @@ module HitBtc {
         }
     }
 
+    interface HitBtcPositionReport {
+        currency_code : string;
+        balance : number;
+    }
+
     class HitBtcPositionGateway implements IPositionGateway {
+        _log : Logger = log("tribeca:gateway:AtlasAtsPG");
         PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
+
+        private _nonce = 0;
+        private getAuth = (uri : string) : any => {
+            this._nonce += 1;
+            var comb = uri + "?nonce=" + this._nonce + "&apikey=" + Config.HitBtcApiKey;
+            var signature = crypto.createHmac('sha512', Config.HitBtcSecret).update(comb).digest('hex').toString().toLowerCase();
+            return {url: url.resolve(Config.HitBtcPullUrl, uri),
+                    method: "GET",
+                    headers: {"X-Signature": signature},
+                    qs: {nonce: this._nonce.toString(), apikey: Config.HitBtcApiKey}};
+        };
+
+        private static convertCurrency(code : string) : Currency {
+            switch (code) {
+                case "USD": return Currency.USD;
+                case "BTC": return Currency.BTC;
+                case "LTC": return Currency.LTC;
+                default: throw Error("code " + code);
+            }
+        }
+
+        private onTick = () => {
+            request.get(
+                this.getAuth("/api/1/payment/balance"),
+                (err, body, resp) => {
+                    this._log("err: %o, body: %o, resp: %o", err, body, resp);
+                    var rpts : Array<HitBtcPositionReport> = JSON.parse(resp).balance;
+                    rpts.forEach(r => {
+                        var position = new CurrencyPosition(r.balance, HitBtcPositionGateway.convertCurrency(r.currency_code));
+                        this.PositionUpdate.trigger(position);
+                    });
+                });
+        };
+
+        constructor() {
+            this.onTick();
+            setInterval(this.onTick, 1500);
+        }
     }
 
     class HitBtcBaseGateway implements IExchangeDetailsGateway {
@@ -392,7 +438,7 @@ module HitBtc {
             super(
                 new HitBtcMarketDataGateway(),
                 new NullOrderGateway(), //new HitBtcOrderEntryGateway(),
-                new HitBtcPositionGateway(),
+                new NullPositionGateway(), //new HitBtcPositionGateway(), // Payment actions are not permitted in demo mode -- helpful.
                 new HitBtcBaseGateway());
         }
     }
