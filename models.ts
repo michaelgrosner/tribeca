@@ -156,6 +156,10 @@ class SentOrder {
     constructor(public sentOrderClientId : string) {}
 }
 
+class OrderGatewayActionReport {
+    constructor(public sentTime : Moment) {}
+}
+
 interface OrderStatusReport {
     side? : Side;
     quantity? : number;
@@ -175,6 +179,7 @@ interface OrderStatusReport {
     liquidity? : Liquidity;
     exchange? : Exchange;
     message? : string;
+    computationalLatency? : Duration;
 
     partiallyFilled? : boolean;
     pendingCancel? : boolean;
@@ -198,9 +203,9 @@ interface IMarketDataGateway extends IGateway {
 }
 
 interface IOrderEntryGateway extends IGateway {
-    sendOrder(order : BrokeredOrder);
-    cancelOrder(cancel : BrokeredCancel);
-    replaceOrder(replace : BrokeredReplace);
+    sendOrder(order : BrokeredOrder) : OrderGatewayActionReport;
+    cancelOrder(cancel : BrokeredCancel) : OrderGatewayActionReport;
+    replaceOrder(replace : BrokeredReplace) : OrderGatewayActionReport;
     OrderUpdate : Evt<OrderStatusReport>;
 }
 

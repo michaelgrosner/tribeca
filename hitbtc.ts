@@ -202,7 +202,7 @@ module HitBtc {
             request.get(
                 {url: Config.HitBtcPullUrl + "/api/1/public/BTCUSD/orderbook"},
                 (err, body, resp) => {
-                    this.onMarketDataSnapshotFullRefresh(resp, moment());
+                    this.onMarketDataSnapshotFullRefresh(resp, date());
                 });
         }
     }
@@ -213,19 +213,20 @@ module HitBtc {
 
         _nonce = 1;
 
-        cancelOrder = (cancel : BrokeredCancel) => {
+        cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
                 cancelRequestClientOrderId: cancel.requestId,
                 symbol: "BTCUSD",
                 side: HitBtcOrderEntryGateway.getSide(cancel.side)});
+            return new OrderGatewayActionReport(date());
         };
 
-        replaceOrder = (replace : BrokeredReplace) => {
+        replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
             this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-            this.sendOrder(replace);
+            return this.sendOrder(replace);
         };
 
-        sendOrder = (order : BrokeredOrder) => {
+        sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
             var hitBtcOrder : NewOrder = {
                 clientOrderId: order.orderId,
                 symbol: "BTCUSD",
@@ -237,6 +238,7 @@ module HitBtc {
             };
 
             this.sendAuth("NewOrder", hitBtcOrder);
+            return new OrderGatewayActionReport(date());
         };
 
         private static getStatus(m : ExecutionReport) : OrderStatus {

@@ -4,17 +4,19 @@ class NullOrderGateway implements IOrderEntryGateway {
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
     ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
 
-    sendOrder(order : BrokeredOrder) {
+    sendOrder(order : BrokeredOrder) : OrderGatewayActionReport {
         setTimeout(() => this.trigger(order.orderId, OrderStatus.Working), 10);
+        return new OrderGatewayActionReport(date());
     }
 
-    cancelOrder(cancel : BrokeredCancel) {
+    cancelOrder(cancel : BrokeredCancel) : OrderGatewayActionReport {
         setTimeout(() => this.trigger(cancel.clientOrderId, OrderStatus.Complete), 10);
+        return new OrderGatewayActionReport(date());
     }
 
-    replaceOrder(replace : BrokeredReplace) {
+    replaceOrder(replace : BrokeredReplace) : OrderGatewayActionReport {
         this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-        this.sendOrder(replace);
+        return this.sendOrder(replace);
     }
 
     private trigger(orderId : string, status : OrderStatus) {

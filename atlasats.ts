@@ -227,7 +227,7 @@ module AtlasAts {
             }
         }
 
-        sendOrder = (order : BrokeredOrder) => {
+        sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
             var o : AtlasAtsOrder = {
                 action: "order:create",
                 item: "BTC",
@@ -248,14 +248,16 @@ module AtlasAts {
             }, (err, resp, body) => {
                 this.onExecRpt(JSON.parse(body));
             });
+
+            return new OrderGatewayActionReport(date());
         };
 
-        replaceOrder = (replace : BrokeredReplace) => {
+        replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
             this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-            this.sendOrder(replace);
+            return this.sendOrder(replace);
         };
 
-        cancelOrder = (cancel : BrokeredCancel) => {
+        cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             request({
                 url: Config.AtlasAtsHttpUrl + "/api/v1/orders/" + cancel.exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
@@ -282,6 +284,8 @@ module AtlasAts {
                     this.OrderUpdate.trigger(rpt);
                 }
             });
+
+            return new OrderGatewayActionReport(date());
         };
 
         private static getStatus = (raw : string) : OrderStatus => {
@@ -382,7 +386,7 @@ module AtlasAts {
                 url: Config.AtlasAtsHttpUrl + "/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
             }, (er, resp, body) => {
-                var t = moment();
+                var t = date();
                 this.onMarketData(JSON.parse(body), t)
             });
         }

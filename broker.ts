@@ -50,22 +50,26 @@ class ExchangeBroker implements IBroker {
     };
 
     sendOrder = (order : Order) : SentOrder => {
+        var orderId = ExchangeBroker.generateOrderId();
+        var exch = this.exchange();
+        var brokeredOrder = new BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
+
+        var sent = this._oeGateway.sendOrder(brokeredOrder);
+
         var rpt : OrderStatusReport = {
-            orderId: ExchangeBroker.generateOrderId(),
+            orderId: orderId,
             side: order.side,
             quantity: order.quantity,
             type: order.type,
-            time: date(),
+            time: sent.sentTime,
             price: order.price,
             timeInForce: order.timeInForce,
             orderStatus: OrderStatus.New,
-            exchange: this.exchange()};
-        this._log("sending order %o", rpt);
+            exchange: exch};
         this._allOrders[rpt.orderId] = [rpt];
-        var brokeredOrder = new BrokeredOrder(rpt.orderId, rpt.side, rpt.quantity, rpt.type,
-            rpt.price, rpt.timeInForce, rpt.exchange);
-        this._oeGateway.sendOrder(brokeredOrder);
+        this._log("sent order %o", rpt);
         this.onOrderUpdate(rpt);
+
         return new SentOrder(rpt.orderId);
     };
 
@@ -73,8 +77,8 @@ class ExchangeBroker implements IBroker {
         var rpt = this._allOrders[replace.origOrderId].last();
         var br = new BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
-        this._log("cancel-replacing order %o %o", rpt, br);
-        this._oeGateway.replaceOrder(br);
+
+        var sent = this._oeGateway.replaceOrder(br);
 
         var rpt : OrderStatusReport = {
             orderId: replace.origOrderId,
@@ -82,7 +86,8 @@ class ExchangeBroker implements IBroker {
             pendingReplace: true,
             price: replace.price,
             quantity: replace.quantity,
-            time: date()};
+            time: sent.sentTime};
+        this._log("cancel-replaced order %o %o", rpt, br);
         this.onOrderUpdate(rpt);
 
         return new SentOrder(rpt.orderId);
@@ -91,16 +96,15 @@ class ExchangeBroker implements IBroker {
     cancelOrder = (cancel : OrderCancel) => {
         var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
-        this._log("cancelling order %o with %o", rpt, cxl);
+        var sent = this._oeGateway.cancelOrder(cxl);
+        this._log("cancelled order %o with %o", rpt, cxl);
 
         var rpt : OrderStatusReport = {
             orderId: cancel.origOrderId,
             orderStatus: OrderStatus.Working,
             pendingCancel: true,
-            time: date()};
+            time: sent.sentTime};
         this.onOrderUpdate(rpt);
-
-        this._oeGateway.cancelOrder(cxl);
     };
 
     public onOrderUpdate = (osr : OrderStatusReport) => {
@@ -135,6 +139,7 @@ class ExchangeBroker implements IBroker {
             timeInForce: osr.timeInForce || orig.timeInForce,
             exchange: osr.exchange || orig.exchange,
             exchangeId: osr.exchangeId || orig.exchangeId,
+            computationalLatency: osr.computationalLatency,
             partiallyFilled: cumQuantity > 0 && cumQuantity !== quantity,
             pendingCancel: osr.pendingCancel,
             pendingReplace: osr.pendingReplace,
