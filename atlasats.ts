@@ -137,8 +137,11 @@ module AtlasAts {
             this._client.on(channel, raw => handler());
         };
 
-        subscribe<T>(channel : string, handler: (newMsg : T) => void) {
-            this._client.subscribe(channel, raw => handler(JSON.parse(raw)));
+        subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
+            this._client.subscribe(channel, raw => {
+                var t = date();
+                handler(new Timestamped(JSON.parse(raw), t))
+            });
         }
     }
 
@@ -313,14 +316,16 @@ module AtlasAts {
             }
         };
 
-        private onExecRpt = (msg : AtlasAtsExecutionReport) => {
+        private onExecRpt = (tsMsg : Timestamped<AtlasAtsExecutionReport>) => {
+            var t = tsMsg.time;
+            var msg = tsMsg.data;
             this._log("EXEC RPT", msg);
 
             var status : OrderStatusReport = {
                 exchangeId: msg.oid,
                 orderId: msg.clid,
                 orderStatus: AtlasAtsOrderEntryGateway.getStatus(msg.status),
-                time: date(), // doesnt give milliseconds??
+                time: t, // doesnt give milliseconds??
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,
                 cumQuantity: msg.executed,
@@ -353,7 +358,9 @@ module AtlasAts {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
-        private onMarketData = (msg : AtlasAtsMarketUpdate, t : Moment = date()) => {
+        private onMarketData = (tsMsg : Timestamped<AtlasAtsMarketUpdate>) => {
+            var t = tsMsg.time;
+            var msg = tsMsg.data;
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
             var bids : AtlasAtsQuote[] = [];
@@ -387,7 +394,7 @@ module AtlasAts {
                 qs: {item: "BTC", currency: "USD"}
             }, (er, resp, body) => {
                 var t = date();
-                this.onMarketData(JSON.parse(body), t)
+                this.onMarketData(new Timestamped(JSON.parse(body), t))
             });
         }
     }

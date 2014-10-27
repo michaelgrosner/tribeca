@@ -3,6 +3,10 @@
 
 var util = require("util");
 
+class Timestamped<T> {
+    constructor(public data : T, public time = date()) {}
+}
+
 class MarketSide {
     constructor(public price: number, public size: number) { }
 
