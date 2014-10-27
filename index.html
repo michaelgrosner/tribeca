@@ -134,6 +134,7 @@
                 <th>side</th>
                 <th>type</th>
                 <th>tif</th>
+                <th>lat</th>
                 <th>lQty</th>
                 <th>lPx</th>
                 <th>lvQty</th>
@@ -154,6 +155,7 @@
                 <td>{{ availableSides[o.side] }}</td>
                 <td>{{ availableOrderTypes[o.type] }}</td>
                 <td>{{ availableTifs[o.timeInForce] }}</td>
+                <td>{{ o.computationalLatency }}</td>
                 <td>{{ o.lastQuantity|number:4 }}</td>
                 <td>{{ o.lastPrice|number:2 }}</td>
                 <td>{{ o.leavesQuantity|number:4 }}</td>

@@ -24,7 +24,7 @@ class ExchangeBroker implements IBroker {
             switch (e.orderStatus) {
                 case OrderStatus.New:
                 case OrderStatus.Working:
-                    this.cancelOrder(new OrderCancel(e.orderId, e.exchange));
+                    this.cancelOrder(new OrderCancel(e.orderId, e.exchange, date()));
                     break;
             }
         }
@@ -49,7 +49,7 @@ class ExchangeBroker implements IBroker {
         return new Date().getTime().toString(32)
     };
 
-    sendOrder = (order : Order) : SentOrder => {
+    sendOrder = (order : SubmitNewOrder) : SentOrder => {
         var orderId = ExchangeBroker.generateOrderId();
         var exch = this.exchange();
         var brokeredOrder = new BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
@@ -65,7 +65,8 @@ class ExchangeBroker implements IBroker {
             price: order.price,
             timeInForce: order.timeInForce,
             orderStatus: OrderStatus.New,
-            exchange: exch};
+            exchange: exch,
+            computationalLatency: sent.sentTime.diff(order.generatedTime)};
         this._allOrders[rpt.orderId] = [rpt];
         this._log("sent order %o", rpt);
         this.onOrderUpdate(rpt);
@@ -86,7 +87,8 @@ class ExchangeBroker implements IBroker {
             pendingReplace: true,
             price: replace.price,
             quantity: replace.quantity,
-            time: sent.sentTime};
+            time: sent.sentTime,
+            computationalLatency: sent.sentTime.diff(replace.generatedTime)};
         this._log("cancel-replaced order %o %o", rpt, br);
         this.onOrderUpdate(rpt);
 
@@ -103,7 +105,8 @@ class ExchangeBroker implements IBroker {
             orderId: cancel.origOrderId,
             orderStatus: OrderStatus.Working,
             pendingCancel: true,
-            time: sent.sentTime};
+            time: sent.sentTime,
+            computationalLatency: sent.sentTime.diff(cancel.generatedTime)};
         this.onOrderUpdate(rpt);
     };
 

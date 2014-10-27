@@ -70,18 +70,18 @@ class UI {
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order %o", o);
                 var order = new SubmitNewOrder(Side[o.side], o.quantity, OrderType[o.orderType],
-                    o.price, TimeInForce[o.timeInForce], Exchange[o.exchange]);
+                    o.price, TimeInForce[o.timeInForce], Exchange[o.exchange], date());
                 _orderAgg.submitOrder(order);
             });
 
             sock.on("cancel-order", (o : OrderStatusReport) => {
                 this._log("got new cancel req %o", o);
-                _orderAgg.cancelOrder(new OrderCancel(o.orderId, o.exchange));
+                _orderAgg.cancelOrder(new OrderCancel(o.orderId, o.exchange, date()));
             });
 
             sock.on("cancel-replace", (o : OrderStatusReport, replace : ReplaceRequestFromUI) => {
                 this._log("got new cxl-rpl req %o with %o", o, replace);
-                _orderAgg.cancelReplaceOrder(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange));
+                _orderAgg.cancelReplaceOrder(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange, date()));
             });
 
             sock.on("active-change-request", (to : boolean) => {

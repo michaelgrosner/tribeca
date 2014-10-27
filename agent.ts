@@ -70,7 +70,7 @@ class Agent {
     constructor(private _brokers : Array<IBroker>,
                 private _mdAgg : MarketDataAggregator,
                 private _orderAgg : OrderBrokerAggregator) {
-        _mdAgg.MarketData.on(this.recalcMarkets);
+        _mdAgg.MarketData.on(m => this.recalcMarkets(m.top.time));
     }
 
     Active : boolean = false;
@@ -86,10 +86,10 @@ class Agent {
             this.Active = to;
 
             if (this.Active) {
-                this.recalcMarkets();
+                this.recalcMarkets(date());
             }
             else if (!this.Active && this.LastBestResult != null) {
-                this.stop(this.LastBestResult, true);
+                this.stop(this.LastBestResult, true, date());
             }
 
             this._log("changing active status to %o", to);
@@ -97,7 +97,7 @@ class Agent {
         }
     };
 
-    private recalcMarkets = () => {
+    private recalcMarkets = (generatedTime : Moment) => {
         var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
 
         if (activeBrokers.length <= 1)
@@ -121,12 +121,12 @@ class Agent {
 
                 if (pBid > bestProfit && pBid > 0) {
                     bestProfit = pBid;
-                    bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize);
+                    bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                 }
 
                 if (pAsk > bestProfit && pAsk > 0) {
                     bestProfit = pAsk;
-                    bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize);
+                    bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
             })
         });
@@ -148,7 +148,7 @@ class Agent {
         else if (bestResult !== null && this.LastBestResult !== null) {
             if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
                     || bestResult.restSide != this.LastBestResult.restSide) {
-                this.stop(this.LastBestResult, true);
+                this.stop(this.LastBestResult, true, bestResult.generatedTime);
                 this.start(bestResult);
             }
             else if (bestResult.rest.price !== this.LastBestResult.rest.price) {
@@ -171,7 +171,7 @@ class Agent {
     private modify = (r : Result) => {
         var restExch = r.restBroker.exchange();
         // cxl-rpl live order
-        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], r.size, r.rest.price, restExch));
+        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], r.size, r.rest.price, restExch, r.generatedTime));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
         this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
@@ -186,7 +186,7 @@ class Agent {
         r.restBroker.OrderUpdate.on(this.arbFire);
 
         // send an order
-        var sent = r.restBroker.sendOrder(new OrderImpl(r.restSide, r.size, OrderType.Limit, r.rest.price, TimeInForce.GTC));
+        var sent = r.restBroker.sendOrder(new SubmitNewOrder(r.restSide, r.size, OrderType.Limit, r.rest.price, TimeInForce.GTC, restExch, r.generatedTime));
         this._activeOrderIds[restExch] = sent.sentOrderClientId;
 
         this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
@@ -195,13 +195,13 @@ class Agent {
         this.LastBestResult = r;
     };
 
-    private stop = (lr : Result, sendCancel : boolean) => {
+    private stop = (lr : Result, sendCancel : boolean, t : Moment) => {
         // remove fill notification
         lr.restBroker.OrderUpdate.off(this.arbFire);
 
         // cancel open order
         var restExch = lr.restBroker.exchange();
-        if (sendCancel) lr.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch));
+        if (sendCancel) lr.restBroker.cancelOrder(new OrderCancel(this._activeOrderIds[restExch], restExch, t));
         delete this._activeOrderIds[restExch];
 
         this._log("STOP :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", lr.profit,
@@ -219,10 +219,10 @@ class Agent {
         var px = o.side == Side.Ask
             ? hideBroker.currentBook().top.ask.price
             : hideBroker.currentBook().top.bid.price;
-        hideBroker.sendOrder(new OrderImpl(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC));
+        hideBroker.sendOrder(new SubmitNewOrder(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC, hideBroker.exchange(), o.time));
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
 
-        this.stop(this.LastBestResult, o.orderStatus == OrderStatus.Complete);
+        this.stop(this.LastBestResult, o.orderStatus == OrderStatus.Complete, o.time);
     };
 }

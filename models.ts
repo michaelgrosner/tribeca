@@ -49,20 +49,7 @@ interface Order {
     type : OrderType;
     price : number;
     timeInForce : TimeInForce;
-}
-
-class OrderImpl implements Order {
-    constructor(
-        public side : Side,
-        public quantity : number,
-        public type : OrderType,
-        public price : number,
-        public timeInForce : TimeInForce) {}
-
-    public inspect()  {
-        return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s", Side[this.side], this.quantity,
-            OrderType[this.type], this.price, TimeInForce[this.timeInForce]);
-    }
+    exchange : Exchange;
 }
 
 class SubmitNewOrder implements Order {
@@ -72,7 +59,8 @@ class SubmitNewOrder implements Order {
         public type : OrderType,
         public price : number,
         public timeInForce : TimeInForce,
-        public exchange : Exchange) {}
+        public exchange : Exchange,
+        public generatedTime: Moment) {}
 
     public inspect()  {
         return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", Side[this.side], this.quantity,
@@ -85,7 +73,8 @@ class CancelReplaceOrder {
         public origOrderId : string,
         public quantity : number,
         public price : number,
-        public exchange : Exchange) {}
+        public exchange : Exchange,
+        public generatedTime : Moment) {}
 
     public inspect()  {
         return util.format("orig=%s; quantity=%d; price=%d, exch=%s",
@@ -96,7 +85,8 @@ class CancelReplaceOrder {
 class OrderCancel {
     constructor(
         public origOrderId : string,
-        public exchange : Exchange) {}
+        public exchange : Exchange,
+        public generatedTime : Moment) {}
 
     public inspect()  {
         return util.format("orig=%s; exch=%s", this.origOrderId, Exchange[this.exchange]);
@@ -179,7 +169,7 @@ interface OrderStatusReport {
     liquidity? : Liquidity;
     exchange? : Exchange;
     message? : string;
-    computationalLatency? : Duration;
+    computationalLatency? : number;
 
     partiallyFilled? : boolean;
     pendingCancel? : boolean;
@@ -253,7 +243,7 @@ interface IBroker {
     takeFee() : number;
     exchange() : Exchange;
 
-    sendOrder(order : Order) : SentOrder;
+    sendOrder(order : SubmitNewOrder) : SentOrder;
     cancelOrder(cancel : OrderCancel);
     replaceOrder(replace : CancelReplaceOrder) : SentOrder;
     OrderUpdate : Evt<OrderStatusReport>;
@@ -269,7 +259,7 @@ class Result {
     constructor(public restSide: Side, public restBroker: IBroker,
                 public hideBroker: IBroker, public profit: number,
                 public rest: MarketSide, public hide: MarketSide,
-                public size: number) {}
+                public size: number, public generatedTime: Moment) {}
 
     public toJSON() {
         return {side: this.restSide, size: this.size, profit: this.profit,
