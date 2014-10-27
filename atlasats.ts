@@ -349,7 +349,7 @@ module AtlasAts {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
 
-        private onMarketData = (msg : AtlasAtsMarketUpdate) => {
+        private onMarketData = (msg : AtlasAtsMarketUpdate, t : Moment = date()) => {
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
             var bids : AtlasAtsQuote[] = [];
@@ -365,7 +365,7 @@ module AtlasAts {
             var getUpdate = (n : number) => {
                 var bid = new MarketSide(bids[n].price, bids[n].size);
                 var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, date());
+                return new MarketUpdate(bid, ask, t);
             };
 
             var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);
@@ -381,7 +381,10 @@ module AtlasAts {
             request.get({
                 url: Config.AtlasAtsHttpUrl + "/api/v1/market/book",
                 qs: {item: "BTC", currency: "USD"}
-            }, (er, resp, body) => this.onMarketData(JSON.parse(body)));
+            }, (er, resp, body) => {
+                var t = moment();
+                this.onMarketData(JSON.parse(body), t)
+            });
         }
     }
 

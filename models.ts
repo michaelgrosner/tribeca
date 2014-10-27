@@ -15,7 +15,7 @@ class MarketUpdate {
     constructor(
         public bid : MarketSide,
         public ask : MarketSide,
-        public time : Date) { }
+        public time : Moment) { }
 
     public equals(other : MarketUpdate) {
         return this.ask.equals(other.ask) && this.bid.equals(other.bid);

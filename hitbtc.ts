@@ -113,11 +113,8 @@ module HitBtc {
         _marketDataWs : any;
 
         _lastBook : { [side: string] : { [px: number]: number}} = null;
-        private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh) => {
+        private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
             if (msg.symbol != "BTCUSD" || this._lastBook == null) return;
-
-            // todo: they say they send it?...
-            var t : Date = msg.timestamp == undefined ? date() : date(msg.timestamp/1000.0);
 
             var ordBids = HitBtcMarketDataGateway._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
             var ordAsks = HitBtcMarketDataGateway._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
@@ -151,13 +148,13 @@ module HitBtc {
             return kvps.sort(cmp);
         }
 
-        private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number) : MarketUpdate {
+        private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number, t : Moment) : MarketUpdate {
             var bid = new MarketSide(msg.bid[n].price, msg.bid[n].size / _lotMultiplier);
             var ask = new MarketSide(msg.ask[n].price, msg.ask[n].size / _lotMultiplier);
-            return new MarketUpdate(bid, ask, date());
+            return new MarketUpdate(bid, ask, t);
         }
 
-        private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh) => {
+        private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
             if (msg.symbol != "BTCUSD") return;
 
             this._lastBook = {bid: {}, ask: {}};
@@ -170,17 +167,20 @@ module HitBtc {
                 this._lastBook["bid"][msg.bid[i].price] = msg.bid[i].size;
             }
 
-            var b = new MarketBook(HitBtcMarketDataGateway.getLevel(msg, 0), HitBtcMarketDataGateway.getLevel(msg, 1), Exchange.HitBtc);
+            var b = new MarketBook(HitBtcMarketDataGateway.getLevel(msg, 0, t),
+                                   HitBtcMarketDataGateway.getLevel(msg, 1, t),
+                                   Exchange.HitBtc);
             this.MarketData.trigger(b);
         };
 
         private onMessage = (raw : string) => {
+            var t = date();
             var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
-                this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh);
+                this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, t);
             }
             else if (msg.hasOwnProperty("MarketDataSnapshotFullRefresh")) {
-                this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh);
+                this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, t);
             }
             else {
                 this._log("unhandled message", msg);
@@ -202,7 +202,7 @@ module HitBtc {
             request.get(
                 {url: Config.HitBtcPullUrl + "/api/1/public/BTCUSD/orderbook"},
                 (err, body, resp) => {
-                    this.onMarketDataSnapshotFullRefresh(resp);
+                    this.onMarketDataSnapshotFullRefresh(resp, moment());
                 });
         }
     }
