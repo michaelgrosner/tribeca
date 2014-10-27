@@ -140,7 +140,7 @@ class Agent {
         // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
         // TODO: some sort of account limits interface
         if (bestResult == null && this.LastBestResult !== null) {
-            this.stop(this.LastBestResult, true);
+            this.stop(this.LastBestResult, true, generatedTime);
         }
         else if (bestResult !== null && this.LastBestResult == null) {
             this.start(bestResult);
@@ -148,7 +148,7 @@ class Agent {
         else if (bestResult !== null && this.LastBestResult !== null) {
             if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
                     || bestResult.restSide != this.LastBestResult.restSide) {
-                this.stop(this.LastBestResult, true, bestResult.generatedTime);
+                this.stop(this.LastBestResult, true, generatedTime);
                 this.start(bestResult);
             }
             else if (bestResult.rest.price !== this.LastBestResult.rest.price) {
