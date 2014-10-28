@@ -8,6 +8,7 @@ module AtlasAts {
     var Faye = require('faye');
     var request = require("request");
     var crypto = require('crypto');
+    var url = require("url");
 
     // example order reject:
     //      {"limit":0.01,"reject":{"reason":"risk_buying_power"},"tif":"GTC","status":"REJECTED","type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"BUY","oid":"1352-101614-000056-004","item":"BTC","account":1352,"quantity":0.01,"left":0,"average":0}
@@ -93,15 +94,17 @@ module AtlasAts {
 
     class AtlasAtsSocket {
         _client : any;
-        _secret : string = Config.AtlasAtsSecret;
-        _token : string = Config.AtlasAtsMultiToken;
+        _secret : string;
+        _token : string;
         _nounce : number = 1;
         _log : Logger = log("tribeca:gateway:AtlasAtsSocket");
 
-        constructor() {
-            this._client = new Faye.Client(Config.AtlasAtsHttpUrl + '/api/v1/streaming', {
+        constructor(config : IConfigProvider) {
+            this._secret = config.GetString("AtlasAtsSecret");
+            this._token = config.GetString("AtlasAtsMultiToken");
+            this._client = new Faye.Client(url.resolve(config.GetString("AtlasAtsHttpUrl"), '/api/v1/streaming'), {
                 endpoints: {
-                    websocket: Config.AtlasAtsWsUrl
+                    websocket: config.GetString("AtlasAtsWsUrl")
                 }
             });
 
@@ -196,11 +199,13 @@ module AtlasAts {
         }
 
         _log : Logger = log("tribeca:gateway:AtlasAtsPG");
+        _sendUrl : string;
+        _simpleToken : string;
 
         private onTimerTick = () => {
             request({
-                url: Config.AtlasAtsHttpUrl + "/api/v1/account",
-                headers: {"Authorization": "Token token=\""+Config.AtlasAtsSimpleToken+"\""},
+                url: url.resolve(this._sendUrl, "/api/v1/account"),
+                headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "GET"
             }, (err, resp, body) => {
                 var rpt : AtlasAtsPositionReport = JSON.parse(body);
@@ -213,8 +218,10 @@ module AtlasAts {
             });
         };
 
-        constructor() {
+        constructor(config : IConfigProvider) {
             setInterval(this.onTimerTick, 15000);
+            this._sendUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/orders");
+            this._simpleToken = config.GetString("AtlasAtsSimpleToken");
         }
     }
 
@@ -222,8 +229,8 @@ module AtlasAts {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         _log : Logger = log("tribeca:gateway:AtlasAtsOE");
         OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-        _simpleToken : string = Config.AtlasAtsSimpleToken;
-        _account : string = Config.AtlasAtsAccount;
+        _simpleToken : string;
+        _account : string;
 
         private static _convertTif(tif : TimeInForce) {
             switch (tif) {
@@ -250,7 +257,7 @@ module AtlasAts {
             };
 
             request({
-                url: Config.AtlasAtsHttpUrl + "/api/v1/orders",
+                url: this._sendUrl + "/api/v1/orders",
                 body: JSON.stringify(o),
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
                 method: "POST"
@@ -268,7 +275,7 @@ module AtlasAts {
 
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             request({
-                url: Config.AtlasAtsHttpUrl + "/api/v1/orders/" + cancel.exchangeId,
+                url: this._sendUrl + "/" + cancel.exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "DELETE"
             }, (err, resp, body) => {
@@ -353,7 +360,12 @@ module AtlasAts {
             }
         };
 
-        constructor(socket : AtlasAtsSocket) {
+        private _sendUrl : string;
+        constructor(socket : AtlasAtsSocket, config : IConfigProvider) {
+            this._sendUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/orders");
+            this._simpleToken = config.GetString("AtlasAtsSimpleToken");
+            this._account = config.GetString("AtlasAtsAccount");
+
             socket.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
             socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
             socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
@@ -389,14 +401,16 @@ module AtlasAts {
             this.MarketData.trigger(b);
         };
 
-        constructor(socket : AtlasAtsSocket) {
+        private _atlasAtsHttpUrl : string;
+        constructor(socket : AtlasAtsSocket, config : IConfigProvider) {
+            this._atlasAtsHttpUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/market/book");
             socket.subscribe("/market", this.onMarketData);
 
             socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
             socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
 
             request.get({
-                url: Config.AtlasAtsHttpUrl + "/api/v1/market/book",
+                url: this._atlasAtsHttpUrl,
                 qs: {item: "BTC", currency: "USD"}
             }, (er, resp, body) => {
                 var t = date();
@@ -406,12 +420,12 @@ module AtlasAts {
     }
 
     export class AtlasAts extends CombinedGateway {
-        constructor() {
-            var socket = new AtlasAtsSocket();
+        constructor(config : IConfigProvider) {
+            var socket = new AtlasAtsSocket(config);
             super(
-                new AtlasAtsMarketDataGateway(socket),
+                new AtlasAtsMarketDataGateway(socket, config),
                 new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
-                new AtlasAtsPositionGateway(),
+                new AtlasAtsPositionGateway(config),
                 new AtlasAtsBaseGateway());
         }
     }

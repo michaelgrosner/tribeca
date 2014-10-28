@@ -201,14 +201,14 @@ module HitBtc {
         };
 
          _log : Logger = log("tribeca:gateway:HitBtcMD");
-        constructor() {
-            this._marketDataWs = new ws(Config.HitBtcMarketDataUrl);
+        constructor(config : IConfigProvider) {
+            this._marketDataWs = new ws(config.GetString("HitBtcMarketDataUrl"));
             this._marketDataWs.on('open', this.onOpen);
             this._marketDataWs.on('message', this.onMessage);
             this._marketDataWs.on("error", this.onMessage);
 
             request.get(
-                {url: Config.HitBtcPullUrl + "/api/1/public/BTCUSD/orderbook"},
+                {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/orderbook")},
                 (err, body, resp) => {
                     this.onMarketDataSnapshotFullRefresh(resp, date());
                 });
@@ -332,12 +332,12 @@ module HitBtc {
             this._nonce += 1;
 
             var signMsg = function (m) : string {
-                return crypto.createHmac('sha512', Config.HitBtcSecret)
+                return crypto.createHmac('sha512', this._secret)
                     .update(JSON.stringify(m))
                     .digest('base64');
             };
 
-            return {apikey: Config.HitBtcApiKey, signature: signMsg(msg), message: msg};
+            return {apikey: this._apiKey, signature: signMsg(msg), message: msg};
         };
 
         private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
@@ -367,8 +367,12 @@ module HitBtc {
         };
 
          _log : Logger = log("tribeca:gateway:HitBtcOE");
-        constructor() {
-            this._orderEntryWs = new ws(Config.HitBtcOrderEntryUrl);
+        private _apiKey : string;
+        private _secret : string;
+        constructor(config : IConfigProvider) {
+            this._apiKey = config.GetString("HitBtcApiKey");
+            this._secret = config.GetString("HitBtcSecret");
+            this._orderEntryWs = new ws(config.GetString("HitBtcOrderEntryUrl"));
             this._orderEntryWs.on('open', this.onOpen);
             this._orderEntryWs.on('message', this.onMessage);
             this._orderEntryWs.on("error", this.onMessage);
@@ -387,12 +391,12 @@ module HitBtc {
         private _nonce = 0;
         private getAuth = (uri : string) : any => {
             this._nonce += 1;
-            var comb = uri + "?nonce=" + this._nonce + "&apikey=" + Config.HitBtcApiKey;
-            var signature = crypto.createHmac('sha512', Config.HitBtcSecret).update(comb).digest('hex').toString().toLowerCase();
-            return {url: url.resolve(Config.HitBtcPullUrl, uri),
+            var comb = uri + "?nonce=" + this._nonce + "&apikey=" + this._apiKey;
+            var signature = crypto.createHmac('sha512', this._secret).update(comb).digest('hex').toString().toLowerCase();
+            return {url: url.resolve(this._pullUrl, uri),
                     method: "GET",
                     headers: {"X-Signature": signature},
-                    qs: {nonce: this._nonce.toString(), apikey: Config.HitBtcApiKey}};
+                    qs: {nonce: this._nonce.toString(), apikey: this._apiKey}};
         };
 
         private static convertCurrency(code : string) : Currency {
@@ -417,7 +421,13 @@ module HitBtc {
                 });
         };
 
-        constructor() {
+        private _apiKey : string;
+        private _secret : string;
+        private _pullUrl : string;
+        constructor(config : IConfigProvider) {
+            this._apiKey = config.GetString("HitBtcApiKey");
+            this._secret = config.GetString("HitBtcSecret");
+            this._pullUrl = config.GetString("HitBtcPullUrl")
             this.onTick();
             setInterval(this.onTick, 1500);
         }
@@ -444,9 +454,9 @@ module HitBtc {
     }
 
     export class HitBtc extends CombinedGateway {
-        constructor() {
+        constructor(config : IConfigProvider) {
             super(
-                new HitBtcMarketDataGateway(),
+                new HitBtcMarketDataGateway(config),
                 new NullOrderGateway(), //new HitBtcOrderEntryGateway(),
                 new NullPositionGateway(), //new HitBtcPositionGateway(), // Payment actions are not permitted in demo mode -- helpful.
                 new HitBtcBaseGateway());

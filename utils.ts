@@ -28,7 +28,7 @@ class Evt<T> {
     }
 }
 
-class Config {
+class DebugConfig {
     public static get HitBtcPullUrl() : string { return "http://demo-api.hitbtc.com"; }
     public static get HitBtcOrderEntryUrl() : string { return "ws://demo-api.hitbtc.com:8080"; }
     public static get HitBtcMarketDataUrl() : string { return 'ws://demo-api.hitbtc.com:80'; }
@@ -41,4 +41,16 @@ class Config {
     public static get AtlasAtsAccount() : string { return "1352"; }
     public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
     public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
+}
+
+interface IConfigProvider {
+    GetString(configKey : string) : string;
+}
+
+class DebugConfigProvider implements IConfigProvider {
+    GetString(configKey : string) : string {
+        if (!DebugConfig.hasOwnProperty(configKey))
+            throw Error("DebugConfig does not have property " + configKey);
+        return DebugConfig[configKey];
+    }
 }
