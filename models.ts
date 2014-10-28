@@ -181,6 +181,7 @@ interface OrderStatusReport {
     exchange? : Exchange;
     message? : string;
     computationalLatency? : number;
+    version? : number;
 
     partiallyFilled? : boolean;
     pendingCancel? : boolean;

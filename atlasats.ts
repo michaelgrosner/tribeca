@@ -139,8 +139,14 @@ module AtlasAts {
 
         subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
             this._client.subscribe(channel, raw => {
-                var t = date();
-                handler(new Timestamped(JSON.parse(raw), t))
+                try {
+                    var t = date();
+                    handler(new Timestamped(JSON.parse(raw), t));
+                }
+                catch (e) {
+                    this._log("Error parsing msg %o", raw);
+                    throw e;
+                }
             });
         }
     }

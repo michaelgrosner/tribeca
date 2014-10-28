@@ -145,6 +145,7 @@
                 <th>avgPx</th>
                 <th>liq</th>
                 <th>msg</th>
+                <th>ver</th>
                 <th>cxl</th>
                 <th>c-r</th>
             </tr>
@@ -166,6 +167,7 @@
                 <td>{{ o.averagePrice|number:2 }}</td>
                 <td>{{ availableLiquidityTypes[o.liquidity]}}</td>
                 <td>{{ o.rejectMessage || o.message }}</td>
+                <td>{{ o.version }}</td>
                 <td><button type="button"
                             class="btn btn-danger btn-xs"
                             ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>

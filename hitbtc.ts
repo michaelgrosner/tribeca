@@ -175,7 +175,15 @@ module HitBtc {
 
         private onMessage = (raw : string) => {
             var t = date();
-            var msg = JSON.parse(raw);
+
+            try {
+                var msg = JSON.parse(raw);
+            }
+            catch (e) {
+                this._log("Error parsing msg %o", raw);
+                throw e;
+            }
+
             if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
                 this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, t);
             }

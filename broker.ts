@@ -146,7 +146,8 @@ class ExchangeBroker implements IBroker {
             partiallyFilled: cumQuantity > 0 && cumQuantity !== quantity,
             pendingCancel: osr.pendingCancel,
             pendingReplace: osr.pendingReplace,
-            cancelRejected: osr.cancelRejected
+            cancelRejected: osr.cancelRejected,
+            version: (typeof orig.version === "undefined") ? 0 : orig.version + 1
         };
 
         this._allOrders[osr.orderId].push(o);
