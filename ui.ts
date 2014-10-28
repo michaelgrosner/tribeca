@@ -53,7 +53,7 @@ class UI {
             });
 
             this._brokers.forEach(b => {
-                if (b.currentBook() != null) this.sendUpdatedMarket(b.currentBook());
+                this.sendUpdatedMarket(b.currentBook);
                 sock.emit("order-status-report-snapshot", b.allOrderStates());
 
                 // UI only knows about BTC and USD - for now
@@ -99,6 +99,7 @@ class UI {
     };
 
     sendUpdatedMarket = (book : MarketBook) => {
+        if (book == null) return;
         var b = {bidPrice: book.top.bid.price,
             bidSize: book.top.bid.size,
             askPrice: book.top.ask.price,

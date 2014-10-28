@@ -98,7 +98,7 @@ class Agent {
     };
 
     private recalcMarkets = (generatedTime : Moment) => {
-        var activeBrokers = this._brokers.filter(b => b.currentBook() != null);
+        var activeBrokers = this._brokers.filter(b => b.currentBook != null);
 
         if (activeBrokers.length <= 1)
             return;
@@ -110,8 +110,8 @@ class Agent {
                 if (restBroker.exchange() == hideBroker.exchange()) return;
 
                 // need to determine whether or not I'm already on the market
-                var restTop = restBroker.currentBook().top;
-                var hideTop = hideBroker.currentBook().top;
+                var restTop = restBroker.currentBook.top;
+                var hideTop = hideBroker.currentBook.top;
 
                 var bidSize = Math.min(.025, restTop.bid.size, hideTop.bid.size);
                 var pBid = bidSize * (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
@@ -217,8 +217,8 @@ class Agent {
 
         var hideBroker = this.LastBestResult.hideBroker;
         var px = o.side == Side.Ask
-            ? hideBroker.currentBook().top.ask.price
-            : hideBroker.currentBook().top.bid.price;
+            ? hideBroker.currentBook.top.ask.price
+            : hideBroker.currentBook.top.bid.price;
         hideBroker.sendOrder(new SubmitNewOrder(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC, hideBroker.exchange(), o.time));
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);

@@ -176,9 +176,9 @@ class ExchangeBroker implements IBroker {
     _currentBook : MarketBook = null;
     _log : Logger;
 
-    public currentBook = () : MarketBook => {
+    public get currentBook() : MarketBook {
         return this._currentBook;
-    };
+    }
 
     private handleMarketData = (book : MarketBook) => {
         if (this._currentBook == null || (!book.top.equals(this._currentBook.top) || !book.second.equals(this._currentBook.second))) {

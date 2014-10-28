@@ -242,7 +242,7 @@ interface IBroker {
     MarketData : Evt<MarketBook>;
 
     name() : string;
-    currentBook() : MarketBook;
+    currentBook : MarketBook;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
