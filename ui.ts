@@ -37,12 +37,14 @@ class UI {
         this._posAgg.PositionUpdate.on(this.sendPositionUpdate);
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
         this._agent.BestResultChanged.on(s => io.emit("result-change", s));
+        this._brokers.forEach(b => b.ConnectChanged.on(cs => this.sendUpdatedConnectionStatus(b.exchange(), cs)));
 
         http.listen(3000, () => this._log('listening on *:3000'));
 
         io.on('connection', sock => {
             sock.emit("hello");
             sock.emit("enums", {
+                availableConnectivityStatuses: ConnectivityStatus,
                 availableTifs: TimeInForce,
                 availableExchanges: Exchange,
                 availableSides: Side,
@@ -53,6 +55,7 @@ class UI {
             });
 
             this._brokers.forEach(b => {
+                this.sendUpdatedConnectionStatus(b.exchange(), b.connectStatus);
                 this.sendUpdatedMarket(b.currentBook);
                 sock.emit("order-status-report-snapshot", b.allOrderStates());
 
@@ -89,6 +92,10 @@ class UI {
             });
         });
     }
+
+    sendUpdatedConnectionStatus = (exch : Exchange, cs : ConnectivityStatus) => {
+        io.emit("connection-status", exch, cs);
+    };
 
     sendPositionUpdate = (msg : ExchangeCurrencyPosition) => {
         io.emit("position-report", msg);

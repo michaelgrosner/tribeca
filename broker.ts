@@ -181,16 +181,35 @@ class ExchangeBroker implements IBroker {
     }
 
     private handleMarketData = (book : MarketBook) => {
-        if (this._currentBook == null || (!book.top.equals(this._currentBook.top) || !book.second.equals(this._currentBook.second))) {
+        if (!book.equals(this.currentBook)) {
             this._currentBook = book;
             this.MarketData.trigger(book);
             this._log(book);
         }
     };
 
-    public onConnect = (gwName : string, cs : ConnectivityStatus) => {
-        this._log(gwName, "Connection status changed ", ConnectivityStatus[cs]);
+    ConnectChanged = new Evt<ConnectivityStatus>();
+    private mdConnected = ConnectivityStatus.Disconnected;
+    private oeConnected = ConnectivityStatus.Disconnected;
+    private _connectStatus = ConnectivityStatus.Disconnected;
+    public onConnect = (gwType : GatewayType, cs : ConnectivityStatus) => {
+        if (gwType == GatewayType.MarketData) this.mdConnected = cs;
+        if (gwType == GatewayType.OrderEntry) this.oeConnected = cs;
+
+        var newStatus = this.mdConnected == ConnectivityStatus.Connected && this.oeConnected == ConnectivityStatus.Connected
+            ? ConnectivityStatus.Connected
+            : ConnectivityStatus.Disconnected;
+
+        if (newStatus != this._connectStatus)
+            this.ConnectChanged.trigger(newStatus);
+
+        this._connectStatus = newStatus;
+        this._log(GatewayType[gwType], "Connection status changed ", ConnectivityStatus[cs]);
     };
+
+    public get connectStatus() : ConnectivityStatus {
+        return this._connectStatus;
+    }
 
     constructor(private _mdGateway : IMarketDataGateway,
                 private _baseGateway : IExchangeDetailsGateway,
@@ -199,10 +218,15 @@ class ExchangeBroker implements IBroker {
         this._log = log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.MarketData.on(this.handleMarketData);
-        this._mdGateway.ConnectChanged.on(s => this.onConnect("MD", s));
+        this._mdGateway.ConnectChanged.on(s => {
+            if (s == ConnectivityStatus.Disconnected) this._currentBook = null;
+            this.onConnect(GatewayType.MarketData, s);
+        });
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
-        this._oeGateway.ConnectChanged.on(s => this.onConnect("OE", s));
+        this._oeGateway.ConnectChanged.on(s => {
+            this.onConnect(GatewayType.OrderEntry, s)
+        });
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
     }

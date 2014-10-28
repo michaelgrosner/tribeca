@@ -106,9 +106,11 @@
                     <th>pft</th>
                     <th>usd</th>
                     <th>btc</th>
+                    <th>rest</th>
                 </tr>
-                <tr ng-repeat="(exch, book) in books">
-                    <td ng-class="getRestHideClass(exch)">{{ availableExchanges[exch] }}</td>
+                <tr ng-repeat="(exch, book) in books"
+                    ng-class="availableConnectivityStatuses[connectionStatus[exch]] == 'Connected' ? 'success' : 'danger'">
+                    <td>{{ availableExchanges[exch] }}</td>
                     <td>{{ book.bidSize|number:2 }}</td>
                     <td>{{ book.bidPrice|number:2 }}</td>
                     <td>{{ book.askPrice|number:2 }}</td>
@@ -116,6 +118,7 @@
                     <td>{{ current_result.profit|number:4 }}</td>
                     <td>{{ positions[exch][availableCurrencies['USD']] }}</td>
                     <td>{{ positions[exch][availableCurrencies['BTC']] }}</td>
+                    <td>{{ current_result.restExch == exch }}</td>
                 </tr>
             </table>
         </div>
@@ -197,6 +200,7 @@ var uiCtrl = function($scope, $timeout, $log) {
         $scope.books = {};
         $scope.orders_statuses = [];
         $scope.positions = {};
+        $scope.connectionStatus = {};
         $log.info("connected");
     }).on("disconnect", function() {
         $scope.connected = false;
@@ -215,13 +219,14 @@ var uiCtrl = function($scope, $timeout, $log) {
     }).on('active-changed', function(b) {
         $scope.active = b;
     }).on("result-change", function(r) {
-        $log.info("result-change", r);
         $scope.current_result = r;
     }).on("position-report", function(rpt) {
         if (rpt == null) return;
         if (typeof $scope.positions[rpt.exchange] === "undefined")
             $scope.positions[rpt.exchange] = {};
         $scope.positions[rpt.exchange][rpt.currency] = rpt.amount;
+    }).on("connection-status", function(exch, cs) {
+        $scope.connectionStatus[exch] = cs;
     });
 
     $scope.order = {};
@@ -240,13 +245,6 @@ var uiCtrl = function($scope, $timeout, $log) {
 
     $scope.changeActive = function() {
         socket.emit("active-change-request", !$scope.active);
-    };
-
-    $scope.getRestHideClass = function(e) {
-        if (typeof $scope.current_result === "undefined") return "warning";
-        if ($scope.current_result.restExch == e) return 'active';
-        if ($scope.current_result.hideExch == e) return 'success';
-        return 'info';
     };
 
     $scope.getOrderStatus = function(o) {

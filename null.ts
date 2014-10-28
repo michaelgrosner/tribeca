@@ -29,7 +29,7 @@ class NullOrderGateway implements IOrderEntryGateway {
     }
 
     constructor() {
-        this.ConnectChanged.trigger(ConnectivityStatus.Connected);
+        setTimeout(() => this.ConnectChanged.trigger(ConnectivityStatus.Connected), 500);
     }
 }
 

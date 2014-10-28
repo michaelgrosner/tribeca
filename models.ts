@@ -22,6 +22,7 @@ class MarketUpdate {
         public time : Moment) { }
 
     public equals(other : MarketUpdate) {
+        if (other == null) return false;
         return this.ask.equals(other.ask) && this.bid.equals(other.bid);
     }
 
@@ -30,6 +31,7 @@ class MarketUpdate {
     }
 }
 
+enum GatewayType { MarketData, OrderEntry, Position }
 enum Currency { USD, BTC, LTC }
 enum ConnectivityStatus { Connected, Disconnected }
 enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
@@ -41,6 +43,11 @@ enum Liquidity { Make, Take }
 
 class MarketBook {
     constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
+
+    public equals(other : MarketBook) {
+        if (other == null) return false;
+        return this.top.equals(other.top) && this.second.equals(other.second);
+    }
 
     public inspect() {
         return util.inspect({top: this.top, second: this.second, exchangeName: Exchange[this.exchangeName]});
@@ -257,6 +264,9 @@ interface IBroker {
     // todo: think about it, should fill reports inc/decrement positions? does it matter?
     getPosition(currency : Currency) : ExchangeCurrencyPosition;
     PositionUpdate : Evt<ExchangeCurrencyPosition>;
+
+    connectStatus : ConnectivityStatus;
+    ConnectChanged : Evt<ConnectivityStatus>;
 }
 
 class Result {

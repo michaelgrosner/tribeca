@@ -98,7 +98,7 @@ class Agent {
     };
 
     private recalcMarkets = (generatedTime : Moment) => {
-        var activeBrokers = this._brokers.filter(b => b.currentBook != null);
+        var activeBrokers = this._brokers.filter(b => b.currentBook != null && b.connectStatus == ConnectivityStatus.Connected);
 
         if (activeBrokers.length <= 1)
             return;
