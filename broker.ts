@@ -68,7 +68,6 @@ class ExchangeBroker implements IBroker {
             exchange: exch,
             computationalLatency: sent.sentTime.diff(order.generatedTime)};
         this._allOrders[rpt.orderId] = [rpt];
-        this._log("sent order %o", rpt);
         this.onOrderUpdate(rpt);
 
         return new SentOrder(rpt.orderId);
@@ -89,7 +88,6 @@ class ExchangeBroker implements IBroker {
             quantity: replace.quantity,
             time: sent.sentTime,
             computationalLatency: sent.sentTime.diff(replace.generatedTime)};
-        this._log("cancel-replaced order %o %o", rpt, br);
         this.onOrderUpdate(rpt);
 
         return new SentOrder(rpt.orderId);
@@ -99,7 +97,6 @@ class ExchangeBroker implements IBroker {
         var rpt = this._allOrders[cancel.origOrderId].last();
         var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         var sent = this._oeGateway.cancelOrder(cxl);
-        this._log("cancelled order %o with %o", rpt, cxl);
 
         var rpt : OrderStatusReport = {
             orderId: cancel.origOrderId,
@@ -125,30 +122,32 @@ class ExchangeBroker implements IBroker {
         var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
 
-        var o : OrderStatusReport = {
-            orderId: osr.orderId || orig.orderId,
-            orderStatus: osr.orderStatus || orig.orderStatus,
-            rejectMessage: osr.rejectMessage || orig.rejectMessage,
-            time: osr.time || orig.time,
-            lastQuantity: osr.lastQuantity,
-            lastPrice: osr.lastPrice,
-            leavesQuantity: osr.leavesQuantity || orig.leavesQuantity,
-            cumQuantity: cumQuantity,
-            averagePrice: osr.averagePrice || orig.averagePrice,
-            side: osr.side || orig.side,
-            quantity: quantity,
-            type: osr.type || orig.type,
-            price: osr.price || orig.price,
-            timeInForce: osr.timeInForce || orig.timeInForce,
-            exchange: osr.exchange || orig.exchange,
-            exchangeId: osr.exchangeId || orig.exchangeId,
-            computationalLatency: osr.computationalLatency,
-            partiallyFilled: cumQuantity > 0 && cumQuantity !== quantity,
-            pendingCancel: osr.pendingCancel,
-            pendingReplace: osr.pendingReplace,
-            cancelRejected: osr.cancelRejected,
-            version: (typeof orig.version === "undefined") ? 0 : orig.version + 1
-        };
+        var o = new OrderStatusReportImpl(
+            osr.side || orig.side,
+            quantity,
+            osr.type || orig.type,
+            osr.price || orig.price,
+            osr.timeInForce || orig.timeInForce,
+            osr.orderId || orig.orderId,
+            osr.exchangeId || orig.exchangeId,
+            osr.orderStatus || orig.orderStatus,
+            osr.rejectMessage || orig.rejectMessage,
+            osr.time || orig.time,
+            osr.lastQuantity,
+            osr.lastPrice,
+            osr.leavesQuantity || orig.leavesQuantity,
+            cumQuantity,
+            osr.averagePrice || orig.averagePrice,
+            osr.liquidity,
+            osr.exchange || orig.exchange,
+            osr.message || orig.message,
+            osr.computationalLatency,
+            (typeof orig.version === "undefined") ? 0 : orig.version + 1,
+            cumQuantity > 0 && cumQuantity !== quantity,
+            osr.pendingCancel,
+            osr.pendingReplace,
+            osr.cancelRejected
+        );
 
         this._allOrders[osr.orderId].push(o);
         this._log("applied gw update -> %o", o);

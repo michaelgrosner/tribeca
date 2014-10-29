@@ -27,7 +27,7 @@ class MarketUpdate {
     }
 
     public inspect() {
-        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()});
+        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()}, {colors: true});
     }
 }
 
@@ -50,7 +50,7 @@ class MarketBook {
     }
 
     public inspect() {
-        return util.inspect({top: this.top, second: this.second, exchangeName: Exchange[this.exchangeName]});
+        return util.inspect({top: this.top, second: this.second, exchangeName: Exchange[this.exchangeName]}, {colors: true});
     }
 }
 
@@ -189,6 +189,45 @@ interface OrderStatusReport {
     cancelRejected? : boolean;
 }
 
+class OrderStatusReportImpl implements OrderStatusReport {
+    constructor(
+        public side : Side,
+        public quantity : number,
+        public type : OrderType,
+        public price : number,
+        public timeInForce : TimeInForce,
+        public orderId : string,
+        public exchangeId : string,
+        public orderStatus : OrderStatus,
+        public rejectMessage : string,
+        public time : Moment,
+        public lastQuantity : number,
+        public lastPrice : number,
+        public leavesQuantity : number,
+        public cumQuantity : number,
+        public averagePrice : number,
+        public liquidity : Liquidity,
+        public exchange : Exchange,
+        public message : string,
+        public computationalLatency : number,
+        public version : number,
+        public partiallyFilled : boolean,
+        public pendingCancel : boolean,
+        public pendingReplace : boolean,
+        public cancelRejected : boolean) {}
+
+    public inspect() {
+        return util.inspect({side: Side[this.side], quantity: this.quantity, type: OrderType[this.type], price: this.price,
+            timeInForce: TimeInForce[this.timeInForce], orderId: this.orderId, exchangeId: this.exchangeId,
+            orderStatus: OrderStatus[this.orderStatus], rejectMessage: this.rejectMessage, time: this.time.toISOString(),
+            lastQuantity: this.lastQuantity, lastPrice: this.lastPrice, leavesQuantity: this.leavesQuantity,
+            cumQuantity: this.cumQuantity, averagePrice: this.averagePrice, liquidity: Liquidity[this.liquidity],
+            exchange: Exchange[this.exchange], message: this.message, computationalLatency: this.computationalLatency,
+            version: this.version, partiallyFilled: this.partiallyFilled, pendingCancel: this.pendingCancel,
+            pendingReplace: this.pendingReplace, cancelRejected: this.cancelRejected}, {colors: true});
+    }
+}
+
 interface IExchangeDetailsGateway {
     name() : string;
     makeFee() : number;
@@ -217,7 +256,7 @@ class ExchangeCurrencyPosition {
                 public exchange : Exchange) { }
 
     public inspect() {
-        return util.inspect({amount: this.amount, currency: Currency[this.currency], exchange: Exchange[this.exchange]});
+        return util.inspect({amount: this.amount, currency: Currency[this.currency], exchange: Exchange[this.exchange]}, {colors: true});
     }
 }
 
@@ -226,7 +265,7 @@ class CurrencyPosition {
                 public currency : Currency) {}
 
     public inspect() {
-        return util.inspect({amount: this.amount, currency: Currency[this.currency]});
+        return util.inspect({amount: this.amount, currency: Currency[this.currency]}, {colors: true});
     }
 
     public toExchangeReport(exch : Exchange) {
