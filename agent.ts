@@ -65,11 +65,14 @@ class OrderBrokerAggregator {
 }
 
 class Agent {
-    _log : Logger = log("tribeca:agent");
+    private _log : Logger = log("tribeca:agent");
+    private _maxSize : number;
 
     constructor(private _brokers : Array<IBroker>,
                 private _mdAgg : MarketDataAggregator,
-                private _orderAgg : OrderBrokerAggregator) {
+                private _orderAgg : OrderBrokerAggregator,
+                private config : IConfigProvider) {
+        this._maxSize = config.GetNumber("MaxSize");
         _mdAgg.MarketData.on(m => this.recalcMarkets(m.top.time));
     }
 
@@ -113,10 +116,10 @@ class Agent {
                 var restTop = restBroker.currentBook.top;
                 var hideTop = hideBroker.currentBook.top;
 
-                var bidSize = Math.min(.025, restTop.bid.size, hideTop.bid.size);
+                var bidSize = Math.min(this._maxSize, restTop.bid.size, hideTop.bid.size);
                 var pBid = bidSize * (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
 
-                var askSize = Math.min(.025, restTop.ask.size, hideTop.ask.size);
+                var askSize = Math.min(this._maxSize, restTop.ask.size, hideTop.ask.size);
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
                 if (pBid > bestProfit && pBid > 0) {

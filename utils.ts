@@ -34,6 +34,7 @@ class BaseConfig {
     public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
     public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
     public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
+    public static get MaxSize() : string { return "0.01"; }
 }
 
 class ProdConfig {
@@ -58,9 +59,14 @@ class DebugConfig {
 
 interface IConfigProvider {
     GetString(configKey : string) : string;
+    GetNumber(configKey : string) : number;
 }
 
 class ConfigProvider implements IConfigProvider {
+    public GetNumber = (configKey : string) : number => {
+        return parseFloat(this.GetString(configKey));
+    };
+
     public GetString = (configKey : string) : string => {
         var mode = process.env.TRIBECA_MODE;
         if (mode === "prod") {

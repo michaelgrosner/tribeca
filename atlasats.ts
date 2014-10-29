@@ -194,7 +194,7 @@ module AtlasAts {
                 case "LTC":
                     return Currency.LTC;
                 default:
-                    throw Error("item " + item);
+                    return null;
             }
         }
 
@@ -212,7 +212,9 @@ module AtlasAts {
 
                 this.PositionUpdate.trigger(new CurrencyPosition(rpt.buyingpower, Currency.USD));
                 rpt.positions.forEach(p => {
-                    var position = new CurrencyPosition(p.size, AtlasAtsPositionGateway._convertItem(p.item));
+                    var currency = AtlasAtsPositionGateway._convertItem(p.item);
+                    if (currency == null) return;
+                    var position = new CurrencyPosition(p.size, currency);
                     this.PositionUpdate.trigger(position);
                 });
             });
@@ -257,12 +259,19 @@ module AtlasAts {
             };
 
             request({
-                url: this._sendUrl + "/api/v1/orders",
+                url: this._orderUrl,
                 body: JSON.stringify(o),
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\"", "Content-Type": "application/json"},
                 method: "POST"
             }, (err, resp, body) => {
-                this.onExecRpt(JSON.parse(body));
+                try {
+                    var t = date();
+                    this.onExecRpt(new Timestamped(JSON.parse(body), t));
+                }
+                catch (e) {
+                    this._log("url: %s, err: %o, body: %o", this._orderUrl, err, body);
+                    throw e;
+                }
             });
 
             return new OrderGatewayActionReport(date());
@@ -275,7 +284,7 @@ module AtlasAts {
 
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             request({
-                url: this._sendUrl + "/" + cancel.exchangeId,
+                url: this._orderUrl + "/" + cancel.exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "DELETE"
             }, (err, resp, body) => {
@@ -322,7 +331,7 @@ module AtlasAts {
             switch (raw) {
                 case "A":
                     return Liquidity.Make;
-                case "T":
+                case "R":
                     return Liquidity.Take;
                 default:
                     throw new Error("unknown liquidity " + raw);
@@ -332,7 +341,6 @@ module AtlasAts {
         private onExecRpt = (tsMsg : Timestamped<AtlasAtsExecutionReport>) => {
             var t = tsMsg.time;
             var msg = tsMsg.data;
-            this._log("EXEC RPT", msg);
 
             var status : OrderStatusReport = {
                 exchangeId: msg.oid,
@@ -360,9 +368,9 @@ module AtlasAts {
             }
         };
 
-        private _sendUrl : string;
+        private _orderUrl : string;
         constructor(socket : AtlasAtsSocket, config : IConfigProvider) {
-            this._sendUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/orders");
+            this._orderUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/orders");
             this._simpleToken = config.GetString("AtlasAtsSimpleToken");
             this._account = config.GetString("AtlasAtsAccount");
 
@@ -424,7 +432,7 @@ module AtlasAts {
             var socket = new AtlasAtsSocket(config);
             super(
                 new AtlasAtsMarketDataGateway(socket, config),
-                new NullOrderGateway(), //new AtlasAtsOrderEntryGateway(socket),
+                new AtlasAtsOrderEntryGateway(socket, config),
                 new AtlasAtsPositionGateway(config),
                 new AtlasAtsBaseGateway());
         }
