@@ -28,6 +28,24 @@ class Evt<T> {
     }
 }
 
+class BaseConfig {
+    public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
+    public static get AtlasAtsAccount() : string { return "1352"; }
+    public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
+    public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
+    public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
+}
+
+class ProdConfig {
+    public static get HitBtcPullUrl() : string { return "http://api.hitbtc.com"; }
+    public static get HitBtcOrderEntryUrl() : string { return "wss://api.hitbtc.com:8080"; }
+    public static get HitBtcMarketDataUrl() : string { return 'ws://api.hitbtc.com:80'; }
+    public static get HitBtcApiKey() : string { return '5565ab3621cb0f8f9f07a926ce46ef2c'; }
+    public static get HitBtcSecret() : string { return "b03fe2dad1c1843510edcca56446ac20"; }
+
+    public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
+}
+
 class DebugConfig {
     public static get HitBtcPullUrl() : string { return "http://demo-api.hitbtc.com"; }
     public static get HitBtcOrderEntryUrl() : string { return "ws://demo-api.hitbtc.com:8080"; }
@@ -35,22 +53,32 @@ class DebugConfig {
     public static get HitBtcApiKey() : string { return '004ee1065d6c7a6ac556bea221cd6338'; }
     public static get HitBtcSecret() : string { return "aa14d615df5d47cb19a13ffe4ea638eb"; }
 
-    public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
-    public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
-    public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
-    public static get AtlasAtsAccount() : string { return "1352"; }
-    public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
-    public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
+    public static get AtlasAtsWsUrl() : string { return 'ws://test-atlasats.com/api/v1/streaming'; }
 }
 
 interface IConfigProvider {
     GetString(configKey : string) : string;
 }
 
-class DebugConfigProvider implements IConfigProvider {
-    GetString(configKey : string) : string {
-        if (!DebugConfig.hasOwnProperty(configKey))
-            throw Error("DebugConfig does not have property " + configKey);
-        return DebugConfig[configKey];
+class ConfigProvider implements IConfigProvider {
+    public GetString = (configKey : string) : string => {
+        var mode = process.env.TRIBECA_MODE;
+        if (mode === "prod") {
+            return ConfigProvider.GetInternal(ProdConfig, BaseConfig, configKey, "prod");
+        }
+        else if (mode === "dev") {
+            return ConfigProvider.GetInternal(DebugConfig, BaseConfig, configKey, "dev");
+        }
+        throw Error(mode + " is not a valid TRIBECA_MODE");
+    };
+
+    private static GetInternal(config : any, baseConfig : any, key : string, provider : string) : string {
+        if (config.hasOwnProperty(key))
+            return config[key];
+
+        if (baseConfig.hasOwnProperty(key))
+            return baseConfig[key];
+
+        throw Error(provider + " config does not have property " + key);
     }
 }

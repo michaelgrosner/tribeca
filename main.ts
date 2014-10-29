@@ -4,7 +4,7 @@
 /// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
 
-var config = new DebugConfigProvider();
+var config = new ConfigProvider();
 var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(config), new HitBtc.HitBtc(config)];
 var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe, g.pg));
 var posAgg = new PositionAggregator(brokers);
