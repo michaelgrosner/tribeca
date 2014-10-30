@@ -421,6 +421,12 @@ module HitBtc {
                 this.getAuth("/api/1/payment/balance"),
                 (err, body, resp) => {
                     var rpts : Array<HitBtcPositionReport> = JSON.parse(resp).balance;
+
+                    if (typeof rpts === 'undefined' || err) {
+                        this._log("Trouble getting positions err: %o body: %o", err, body);
+                        return;
+                    }
+
                     rpts.forEach(r => {
                         var currency = HitBtcPositionGateway.convertCurrency(r.currency_code);
                         if (currency == null) return;
