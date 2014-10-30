@@ -100,17 +100,21 @@ class Agent {
         }
     };
 
+    private static isBrokerActive(b : IBroker) : boolean {
+        return b.currentBook != null && b.connectStatus == ConnectivityStatus.Connected;
+    }
+
     private recalcMarkets = (generatedTime : Moment) => {
-        var activeBrokers = this._brokers.filter(b => b.currentBook != null && b.connectStatus == ConnectivityStatus.Connected);
-
-        if (activeBrokers.length <= 1)
-            return;
-
         var bestResult : Result = null;
         var bestProfit: number = Number.MIN_VALUE;
-        activeBrokers.forEach(restBroker => {
-            activeBrokers.forEach(hideBroker => {
-                if (restBroker.exchange() == hideBroker.exchange()) return;
+
+        for (var i = 0; i < this._brokers.length; i++) {
+            var restBroker = this._brokers[i];
+            if (!Agent.isBrokerActive(restBroker)) continue;
+
+            for (var j = 0; j < this._brokers.length; j++) {
+                var hideBroker = this._brokers[j];
+                if (i == j || !Agent.isBrokerActive(hideBroker)) continue;
 
                 // need to determine whether or not I'm already on the market
                 var restTop = restBroker.currentBook.top;
@@ -131,8 +135,8 @@ class Agent {
                     bestProfit = pAsk;
                     bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
-            })
-        });
+            }
+        }
 
         // do this async, off this event cycle
         process.nextTick(() => this.BestResultChanged.trigger(bestResult));
