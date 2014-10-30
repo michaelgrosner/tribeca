@@ -65,21 +65,18 @@ interface IConfigProvider {
 
 class ConfigProvider implements IConfigProvider {
     private static Log : Logger = log("tribeca:config");
-    private _mode : string = process.env.TRIBECA_MODE;
     private _config : {[key: string] : string} = {};
 
-    constructor() {
-        this._mode = process.env.TRIBECA_MODE;
-
+    constructor(private _env : string) {
         var _configOverrideSet : any;
-        if (this._mode == "prod") {
+        if (this._env == "prod") {
             _configOverrideSet = ProdConfig;
         }
-        else if (this._mode == "dev") {
+        else if (this._env == "dev") {
             _configOverrideSet = DebugConfig;
         }
         else {
-            throw Error(this._mode + " is not a valid TRIBECA_MODE");
+            throw Error(this._env + " is not a valid TRIBECA_MODE");
         }
 
         for (var k in BaseConfig) {
@@ -94,7 +91,7 @@ class ConfigProvider implements IConfigProvider {
 
         for (var k in this._config) {
             if (this._config.hasOwnProperty(k)) {
-                ConfigProvider.Log("%s = %s (%s)", k, this._config[k], _configOverrideSet.hasOwnProperty(k) ? this._mode : "base");
+                ConfigProvider.Log("%s = %s (%s)", k, this._config[k], _configOverrideSet.hasOwnProperty(k) ? this._env : "base");
             }
         }
     }
@@ -110,6 +107,6 @@ class ConfigProvider implements IConfigProvider {
         if (BaseConfig.hasOwnProperty(configKey))
             return BaseConfig[configKey];
 
-        throw Error(this._mode + " config does not have property " + configKey);
+        throw Error(this._env + " config does not have property " + configKey);
     };
 }

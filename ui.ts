@@ -22,7 +22,8 @@ interface ReplaceRequestFromUI {
 class UI {
     _log : Logger = log("tribeca:ui");
 
-    constructor(private _brokers : Array<IBroker>,
+    constructor(private _env : string,
+                private _brokers : Array<IBroker>,
                 private _agent : Agent,
                 private _orderAgg : OrderBrokerAggregator,
                 private _mdAgg : MarketDataAggregator,
@@ -42,7 +43,7 @@ class UI {
         http.listen(3000, () => this._log('listening on *:3000'));
 
         io.on('connection', sock => {
-            sock.emit("hello");
+            sock.emit("hello", this._env);
             sock.emit("enums", {
                 availableConnectivityStatuses: ConnectivityStatus,
                 availableTifs: TimeInForce,

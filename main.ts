@@ -4,14 +4,15 @@
 /// <reference path="broker.ts" />
 /// <reference path="agent.ts" />
 
-var config = new ConfigProvider();
+var env = process.env.TRIBECA_MODE;
+var config = new ConfigProvider(env);
 var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(config), new HitBtc.HitBtc(config)];
 var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe, g.pg));
 var posAgg = new PositionAggregator(brokers);
 var orderAgg = new OrderBrokerAggregator(brokers);
 var mdAgg = new MarketDataAggregator(brokers);
 var agent = new Agent(brokers, mdAgg, orderAgg, config);
-var ui = new UI(brokers, agent, orderAgg, mdAgg, posAgg);
+var ui = new UI(env, brokers, agent, orderAgg, mdAgg, posAgg);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

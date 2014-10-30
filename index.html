@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="projectApp">
+<html ng-app="projectApp" ng-controller="uiCtrl">
 <head>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
@@ -9,8 +9,9 @@
     background-color: #dff0d8;
 }
     </style>
+    <title>tribeca [{{ env }}]</title>
 </head>
-<body ng-controller="uiCtrl">
+<body>
 
 <script type="text/ng-template" id="cancel_replace_form.html">
     <form style="margin: 10px" class="form-horizontal" novalidate role="form">
@@ -197,7 +198,8 @@ var uiCtrl = function($scope, $timeout, $log) {
     $timeout(refresh_timer, 250);
 
     var socket = io();
-    socket.on("hello", function() {
+    socket.on("hello", function(env) {
+        $scope.env = env;
         $scope.connected = true;
         $scope.books = {};
         $scope.orders_statuses = [];
