@@ -383,11 +383,17 @@ module AtlasAts {
     class AtlasAtsMarketDataGateway implements IMarketDataGateway {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
         MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+        _log : Logger = log("tribeca:gateway:AtlasAtsMD");
 
         private onMarketData = (tsMsg : Timestamped<AtlasAtsMarketUpdate>) => {
             var t = tsMsg.time;
             var msg = tsMsg.data;
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
+
+            if (msg.quotes.length < 1) {
+                this._log("No quotes! WTF?", msg);
+                return;
+            }
 
             var bids : AtlasAtsQuote[] = [];
             var asks : AtlasAtsQuote[] = [];
