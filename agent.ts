@@ -116,10 +116,10 @@ class Agent {
                 var restTop = restBroker.currentBook.top;
                 var hideTop = hideBroker.currentBook.top;
 
-                var bidSize = Math.min(this._maxSize, restTop.bid.size, hideTop.bid.size);
+                var bidSize = Math.min(this._maxSize, hideTop.bid.size);
                 var pBid = bidSize * (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
 
-                var askSize = Math.min(this._maxSize, restTop.ask.size, hideTop.ask.size);
+                var askSize = Math.min(this._maxSize, hideTop.ask.size);
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
                 if (pBid > bestProfit && pBid > 0) {
@@ -215,7 +215,7 @@ class Agent {
     };
 
     private arbFire = (o : OrderStatusReport) => {
-        if (o.lastQuantity == null || o.lastQuantity == undefined)
+        if (!(o.lastQuantity > 0))
             return;
 
         var hideBroker = this.LastBestResult.hideBroker;
