@@ -2,6 +2,7 @@
 
 var log = require('debug');
 var momentjs = require('moment');
+var util = require("util");
 
 var date = momentjs.utc;
 
@@ -63,28 +64,52 @@ interface IConfigProvider {
 }
 
 class ConfigProvider implements IConfigProvider {
+    private static Log : Logger = log("tribeca:config");
+    private _mode : string = process.env.TRIBECA_MODE;
+    private _config : {[key: string] : string} = {};
+
+    constructor() {
+        this._mode = process.env.TRIBECA_MODE;
+
+        var _configOverrideSet : any;
+        if (this._mode == "prod") {
+            _configOverrideSet = ProdConfig;
+        }
+        else if (this._mode == "dev") {
+            _configOverrideSet = DebugConfig;
+        }
+        else {
+            throw Error(this._mode + " is not a valid TRIBECA_MODE");
+        }
+
+        for (var k in BaseConfig) {
+            if (BaseConfig.hasOwnProperty(k))
+                this._config[k] = BaseConfig[k];
+        }
+
+        for (var k in _configOverrideSet) {
+            if (_configOverrideSet.hasOwnProperty(k))
+                this._config[k] = _configOverrideSet[k];
+        }
+
+        for (var k in this._config) {
+            if (this._config.hasOwnProperty(k)) {
+                ConfigProvider.Log("%s = %s (%s)", k, this._config[k], _configOverrideSet.hasOwnProperty(k) ? this._mode : "base");
+            }
+        }
+    }
+
     public GetNumber = (configKey : string) : number => {
         return parseFloat(this.GetString(configKey));
     };
 
     public GetString = (configKey : string) : string => {
-        var mode = process.env.TRIBECA_MODE;
-        if (mode === "prod") {
-            return ConfigProvider.GetInternal(ProdConfig, BaseConfig, configKey, "prod");
-        }
-        else if (mode === "dev") {
-            return ConfigProvider.GetInternal(DebugConfig, BaseConfig, configKey, "dev");
-        }
-        throw Error(mode + " is not a valid TRIBECA_MODE");
+        if (this._config.hasOwnProperty(configKey))
+            return this._config[configKey];
+
+        if (BaseConfig.hasOwnProperty(configKey))
+            return BaseConfig[configKey];
+
+        throw Error(this._mode + " config does not have property " + configKey);
     };
-
-    private static GetInternal(config : any, baseConfig : any, key : string, provider : string) : string {
-        if (config.hasOwnProperty(key))
-            return config[key];
-
-        if (baseConfig.hasOwnProperty(key))
-            return baseConfig[key];
-
-        throw Error(provider + " config does not have property " + key);
-    }
 }
