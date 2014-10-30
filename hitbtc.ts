@@ -259,6 +259,11 @@ module HitBtc {
                     return OrderStatus.Complete;
                 case "rejected":
                     return OrderStatus.Rejected;
+                case "trade":
+                    if (m.orderStatus == "filled")
+                        return OrderStatus.Complete;
+                    else
+                        return OrderStatus.Working;
                 default:
                     return OrderStatus.Other;
             }
@@ -299,12 +304,14 @@ module HitBtc {
             }
         }
 
-        private onExecutionReport = (msg : ExecutionReport) => {
+        private onExecutionReport = (tsMsg : Timestamped<ExecutionReport>) => {
+            var t = tsMsg.time;
+            var msg = tsMsg.data;
             var status : OrderStatusReport = {
                 exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
                 orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
-                time: date(msg.timestamp) || date(),
+                time: t,
                 rejectMessage: msg.orderRejectReason,
                 lastQuantity: msg.lastQuantity / _lotMultiplier,
                 lastPrice: msg.lastPrice,
@@ -316,13 +323,14 @@ module HitBtc {
             this.OrderUpdate.trigger(status);
         };
 
-        private onCancelReject = (msg : CancelReject) => {
+        private onCancelReject = (tsMsg : Timestamped<CancelReject>) => {
+            var msg = tsMsg.data;
             var status : OrderStatusReport = {
                 orderId: msg.clientOrderId,
                 rejectMessage: msg.rejectReasonText,
                 orderStatus: OrderStatus.Rejected,
                 cancelRejected: true,
-                time: date()
+                time: tsMsg.time
             };
             this.OrderUpdate.trigger(status);
         };
@@ -354,12 +362,13 @@ module HitBtc {
         };
 
         private onMessage = (raw : string) => {
+            var t = date();
             var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("ExecutionReport")) {
-                this.onExecutionReport(msg.ExecutionReport);
+                this.onExecutionReport(new Timestamped(msg.ExecutionReport, t));
             }
             else if (msg.hasOwnProperty("CancelReject")) {
-                this.onCancelReject(msg.CancelReject);
+                this.onCancelReject(new Timestamped(msg.CancelReject, t));
             }
             else {
                 this._log("unhandled message", msg);
