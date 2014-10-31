@@ -64,8 +64,11 @@ module OkCoin {
                     return;
                 }
 
-                if (typeof msg.success !== "undefined" && msg.success != "true") {
-                    this._log("Unsuccessful message %o", msg);
+                if (typeof msg.success !== "undefined") {
+                    if (msg.success !== "true")
+                        this._log("Unsuccessful message %o", msg);
+                    else
+                        this._log("Successfully connected to %s", msg.channel);
                     return;
                 }
 
