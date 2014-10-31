@@ -294,7 +294,7 @@ module AtlasAts {
                 if (!err && msg.status !== "error") {
                     var rpt : OrderStatusReport = {
                         orderId: cancel.clientOrderId,
-                        orderStatus: OrderStatus.Complete,
+                        orderStatus: OrderStatus.Cancelled,
                         time: date()
                     };
                     this.OrderUpdate.trigger(rpt);

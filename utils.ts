@@ -35,6 +35,12 @@ class BaseConfig {
     public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
     public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
     public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
+
+    public static get OkCoinPartner() : string { return "2013015"; }
+    public static get OkCoinSecretKey() : string { return "75AB165AD31EB279A6EBEE709734A6C1"; }
+    public static get OkCoinWsUrl() : string { return "wss://real.okcoin.com:10440/websocket/okcoinapi"; }
+    public static get OkCoinHttpUrl() : string { return "https://www.okcoin.com/api/v1/"; }
+
     public static get MaxSize() : string { return "0.01"; }
 }
 

@@ -255,6 +255,7 @@ module HitBtc {
                 case "status":
                     return OrderStatus.Working;
                 case "canceled":
+                    return OrderStatus.Cancelled;
                 case "expired":
                     return OrderStatus.Complete;
                 case "rejected":

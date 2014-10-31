@@ -5,6 +5,10 @@ var util = require("util");
 
 class Timestamped<T> {
     constructor(public data : T, public time = date()) {}
+
+    public inspect() {
+        return util.inspect({time: this.time.toISOString(), data: this.data});
+    }
 }
 
 class MarketSide {
@@ -38,7 +42,7 @@ enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
 enum Side { Bid, Ask }
 enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, Working, Complete, Rejected, Other }
+enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 enum Liquidity { Make, Take }
 
 class MarketBook {
