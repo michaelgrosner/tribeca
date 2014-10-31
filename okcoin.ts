@@ -268,7 +268,7 @@ module OkCoin {
             var socket = new OkCoinSocket(config);
             super(
                 new OkCoinMarketDataGateway(socket),
-                new NullOrderGateway(), //new OkCoinOrderEntryGateway(socket),
+                config.GetString("OkCoinOrderDestination") == "OkCoin" ? <IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http) : new NullOrderGateway(),
                 new NullPositionGateway(), //new OkCoinPositionGateway(config),
                 new OkCoinBaseGateway());
             }

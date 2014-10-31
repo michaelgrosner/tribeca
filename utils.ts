@@ -52,6 +52,10 @@ class ProdConfig {
     public static get HitBtcSecret() : string { return "b03fe2dad1c1843510edcca56446ac20"; }
 
     public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
+
+    public static get AtlasAtsOrderDestination() : string { return "Null"; }
+    public static get HitBtcOrderDestination() : string { return "Null"; }
+    public static get OkCoinOrderDestination() : string { return "OkCoin"; }
 }
 
 class DebugConfig {
@@ -62,6 +66,10 @@ class DebugConfig {
     public static get HitBtcSecret() : string { return "aa14d615df5d47cb19a13ffe4ea638eb"; }
 
     public static get AtlasAtsWsUrl() : string { return 'ws://test-atlasats.com/api/v1/streaming'; }
+
+    public static get AtlasAtsOrderDestination() : string { return "Null"; }
+    public static get HitBtcOrderDestination() : string { return "HitBtc"; }
+    public static get OkCoinOrderDestination() : string { return "Null"; }
 }
 
 interface IConfigProvider {

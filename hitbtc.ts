@@ -473,7 +473,7 @@ module HitBtc {
         constructor(config : IConfigProvider) {
             super(
                 new HitBtcMarketDataGateway(config),
-                new HitBtcOrderEntryGateway(config),
+                config.GetString("HitBtcOrderDestination") == "HitBtc" ? <IOrderEntryGateway>new HitBtcOrderEntryGateway(config) : new NullOrderGateway(),
                 new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
                 new HitBtcBaseGateway());
         }

@@ -438,7 +438,7 @@ module AtlasAts {
             var socket = new AtlasAtsSocket(config);
             super(
                 new AtlasAtsMarketDataGateway(socket, config),
-                new AtlasAtsOrderEntryGateway(socket, config),
+                config.GetString("AtlasAtsOrderDestination") == "AtlasAts" ? <IOrderEntryGateway>new AtlasAtsOrderEntryGateway(socket, config) : new NullOrderGateway(),
                 new AtlasAtsPositionGateway(config),
                 new AtlasAtsBaseGateway());
         }
