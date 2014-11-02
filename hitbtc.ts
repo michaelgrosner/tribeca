@@ -308,15 +308,17 @@ module HitBtc {
         private onExecutionReport = (tsMsg : Timestamped<ExecutionReport>) => {
             var t = tsMsg.time;
             var msg = tsMsg.data;
+
+            var ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
             var status : OrderStatusReport = {
                 exchangeId: msg.orderId,
                 orderId: msg.clientOrderId,
-                orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
+                orderStatus: ordStatus,
                 time: t,
                 rejectMessage: msg.orderRejectReason,
-                lastQuantity: msg.lastQuantity / _lotMultiplier,
-                lastPrice: msg.lastPrice,
-                leavesQuantity: msg.leavesQuantity / _lotMultiplier,
+                lastQuantity: msg.lastQuantity > 0 ? msg.lastQuantity / _lotMultiplier : undefined,
+                lastPrice: msg.lastQuantity > 0 ? msg.lastPrice : undefined,
+                leavesQuantity: ordStatus == OrderStatus.Working ? msg.leavesQuantity / _lotMultiplier : undefined,
                 cumQuantity: msg.cumQuantity / _lotMultiplier,
                 averagePrice: msg.averagePrice
             };
@@ -399,7 +401,7 @@ module HitBtc {
         PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
 
         private getAuth = (uri : string) : any => {
-            var _nonce : number = date().valueOf();
+            var _nonce : number = new Date().getDate();
             var comb = uri + "?nonce=" + _nonce + "&apikey=" + this._apiKey;
             var signature = crypto.createHmac('sha512', this._secret).update(comb).digest('hex').toString().toLowerCase();
             return {url: url.resolve(this._pullUrl, uri),
@@ -444,7 +446,7 @@ module HitBtc {
             this._apiKey = config.GetString("HitBtcApiKey");
             this._secret = config.GetString("HitBtcSecret");
             this._pullUrl = config.GetString("HitBtcPullUrl");
-            this.onTick();
+            setTimeout(this.onTick(), 10);
             setInterval(this.onTick, 1500);
         }
     }
@@ -465,8 +467,6 @@ module HitBtc {
         name() : string {
             return "HitBtc";
         }
-
-        ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
     }
 
     export class HitBtc extends CombinedGateway {
@@ -474,7 +474,7 @@ module HitBtc {
             super(
                 new HitBtcMarketDataGateway(config),
                 config.GetString("HitBtcOrderDestination") == "HitBtc" ? <IOrderEntryGateway>new HitBtcOrderEntryGateway(config) : new NullOrderGateway(),
-                new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
+                new NullPositionGateway(), //new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
                 new HitBtcBaseGateway());
         }
     }
