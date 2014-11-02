@@ -132,7 +132,7 @@ class ExchangeBroker implements IBroker {
             osr.exchangeId || orig.exchangeId,
             osr.orderStatus || orig.orderStatus,
             osr.rejectMessage || orig.rejectMessage,
-            osr.time || orig.time,
+            osr.time || date(),
             osr.lastQuantity,
             osr.lastPrice,
             osr.leavesQuantity || orig.leavesQuantity,

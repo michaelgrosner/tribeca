@@ -8,6 +8,7 @@ module OkCoin {
     var crypto = require("crypto");
     var request = require("request");
     var url = require("url");
+    var querystring = require("querystring");
 
     interface OkCoinMessageIncomingMessage {
         channel : string;
@@ -35,7 +36,7 @@ module OkCoin {
     }
 
     interface OkCoinOrderAck {
-        result : string;
+        result : boolean;
         order_id : string;
     }
 
@@ -132,26 +133,37 @@ module OkCoin {
     }
 
     class OkCoinHttp {
-        private signMsg = m => {
+        private signMsg = (m : Map<string, string>) => {
             var els : string[] = [];
+
+            var keys = [];
             for (var key in m) {
+                if (m.hasOwnProperty(key))
+                    keys.push(key);
+            }
+            keys.sort();
+
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
                 if (m.hasOwnProperty(key))
                     els.push(key + "=" + m[key]);
             }
 
-            var sig = els.join("&") + this._secretKey;
+            var sig = els.join("&") + "&secret_key=" + this._secretKey;
             return crypto.createHmac('md5', this._secretKey).update(sig).digest("hex").toString().toUpperCase();
         };
 
-        post = (actionUrl: string, msg : any, cb : (m : Timestamped<any>) => void) => {
+        post = <T>(actionUrl: string, msg : any, cb : (m : Timestamped<T>) => void) => {
             msg.partner = this._partner;
             msg.sign = this.signMsg(msg);
-            this._log("sending signed %s", msg);
+
+            var body = querystring.stringify(msg);
+            this._log("sending signed %s", body);
 
             request({
                 url: url.resolve(this._baseUrl, actionUrl),
-                body: msg,
-                headers: {"Content-Type": "application/json"},
+                body: body,
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
                 method: "POST"
             }, (err, resp, body) => {
                 try {
@@ -184,14 +196,15 @@ module OkCoin {
             var o = {
                 symbol: "btc_usd",
                 type: order.side == Side.Bid ? "buy" : "sell",
-                rate: order.price,
+                price: order.price,
                 amount: order.quantity};
 
             this._http.post("trade.do", o, (tsMsg : Timestamped<OkCoinOrderAck>) => {
+                this._log("trade.do %o", tsMsg);
                 this.OrderUpdate.trigger({
                     orderId: order.orderId,
                     exchangeId: tsMsg.data.order_id,
-                    orderStatus: tsMsg.data.result == "true" ? OrderStatus.Working : OrderStatus.Rejected
+                    orderStatus: tsMsg.data.result == true ? OrderStatus.Working : OrderStatus.Rejected
                 })
             });
 
@@ -201,10 +214,11 @@ module OkCoin {
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             var c = {symbol: "btc_usd", order_id: cancel.exchangeId};
             this._http.post("cancel_order.do", c, (tsMsg : Timestamped<OkCoinOrderAck>) => {
+                this._log("cancel_order.do %o", tsMsg);
                 this.OrderUpdate.trigger({
                     orderId: cancel.clientOrderId,
-                    orderStatus: tsMsg.data.result == "true" ? OrderStatus.Cancelled : OrderStatus.Rejected,
-                    cancelRejected: tsMsg.data.result != "true"
+                    orderStatus: tsMsg.data.result == true ? OrderStatus.Cancelled : OrderStatus.Rejected,
+                    cancelRejected: tsMsg.data.result != true
                 })
             });
 
