@@ -53,8 +53,8 @@ class ProdConfig {
 
     public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
 
-    public static get AtlasAtsOrderDestination() : string { return "Null"; }
-    public static get HitBtcOrderDestination() : string { return "Null"; }
+    public static get AtlasAtsOrderDestination() : string { return "AtlasAts"; }
+    public static get HitBtcOrderDestination() : string { return "HitBtc"; }
     public static get OkCoinOrderDestination() : string { return "OkCoin"; }
 }
 
