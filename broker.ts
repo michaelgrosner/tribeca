@@ -1,6 +1,8 @@
 /// <reference path="utils.ts" />
 
 class ExchangeBroker implements IBroker {
+    _log : Logger;
+
     PositionUpdate = new Evt<ExchangeCurrencyPosition>();
     private _currencies : { [currency : number] : ExchangeCurrencyPosition } = {};
     public getPosition(currency : Currency) : ExchangeCurrencyPosition {
@@ -163,7 +165,6 @@ class ExchangeBroker implements IBroker {
         return this._baseGateway.takeFee();
     }
 
-    MarketData = new Evt<MarketUpdate>();
 
     name() : string {
         return this._baseGateway.name();
@@ -173,18 +174,33 @@ class ExchangeBroker implements IBroker {
         return this._baseGateway.exchange();
     }
 
-    _currentBook : MarketUpdate = null;
-    _log : Logger;
+    MarketData = new Evt<Market>();
+    _currentBook : Market = null;
 
-    public get currentBook() : MarketUpdate {
+    public get currentBook() : Market {
         return this._currentBook;
     }
 
+    private static getMarketDataFlag(current : MarketUpdate, previous : Market) {
+        if (previous === null) return MarketDataFlag.First;
+
+        var cmb = (c : MarketSide, p : MarketSide) => {
+            var priceChanged = Math.abs(c.price - p.price) > 1e-4;
+            var sizeChanged = Math.abs(c.size - p.size) > 1e-4;
+            if (priceChanged && sizeChanged) return MarketDataFlag.PriceAndSizeChanged;
+            if (priceChanged) return MarketDataFlag.PriceChanged;
+            if (sizeChanged) return MarketDataFlag.SizeChanged;
+            return MarketDataFlag.NoChange;
+        };
+
+        return (cmb(current.ask, previous.update.ask) | cmb(current.bid, previous.update.bid));
+    }
+
     private handleMarketData = (book : MarketUpdate) => {
-        if (!book.equals(this.currentBook)) {
-            this._currentBook = book;
-            this.MarketData.trigger(book);
-            this._log(book);
+        if (this.currentBook == null || !book.equals(this.currentBook.update)) {
+            this._currentBook = new Market(book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
+            this.MarketData.trigger(this.currentBook);
+            this._log(this.currentBook);
         }
     };
 

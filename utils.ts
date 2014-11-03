@@ -29,6 +29,10 @@ class Evt<T> {
     }
 }
 
+function hasFlag(val: number, flag: number) {
+    return (val & flag) != 0;
+}
+
 class BaseConfig {
     public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
     public static get AtlasAtsAccount() : string { return "1352"; }

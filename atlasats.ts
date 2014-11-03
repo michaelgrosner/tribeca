@@ -408,7 +408,7 @@ module AtlasAts {
             var getUpdate = (n : number) => {
                 var bid = new MarketSide(bids[n].price, bids[n].size);
                 var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, t, Exchange.AtlasAts);
+                return new MarketUpdate(bid, ask, t);
             };
 
             var b = getUpdate(0);

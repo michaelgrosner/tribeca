@@ -116,7 +116,7 @@ module OkCoin {
                 return new MarketUpdate(
                     new MarketSide(msg.bids[n][0], msg.bids[n][1]),
                     new MarketSide(msg.asks[n][0], msg.asks[n][1]),
-                    tsMsg.time, Exchange.OkCoin);
+                    tsMsg.time);
             };
 
             this.MarketData.trigger(getLevel(0));

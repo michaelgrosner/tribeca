@@ -122,7 +122,7 @@ module HitBtc {
             var getLevel = (n : number) => {
                 var bid = new MarketSide(ordBids[n].price, ordBids[n].size);
                 var ask = new MarketSide(ordAsks[n].price, ordAsks[n].size);
-                return new MarketUpdate(bid, ask, t, Exchange.HitBtc);
+                return new MarketUpdate(bid, ask, t);
             };
 
             this.MarketData.trigger(getLevel(0));
@@ -151,7 +151,7 @@ module HitBtc {
         private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number, t : Moment) : MarketUpdate {
             var bid = new MarketSide(msg.bid[n].price, msg.bid[n].size / _lotMultiplier);
             var ask = new MarketSide(msg.ask[n].price, msg.ask[n].size / _lotMultiplier);
-            return new MarketUpdate(bid, ask, t, Exchange.HitBtc);
+            return new MarketUpdate(bid, ask, t);
         }
 
         private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {

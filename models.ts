@@ -23,17 +23,27 @@ class MarketUpdate {
     constructor(
         public bid : MarketSide,
         public ask : MarketSide,
-        public time : Moment,
-        public exchange : Exchange) { }
+        public time : Moment) { }
 
     public equals(other : MarketUpdate) {
         if (other == null) return false;
-        return this.ask.equals(other.ask) && this.bid.equals(other.bid) && this.exchange == other.exchange;
+        return this.ask.equals(other.ask) && this.bid.equals(other.bid);
     }
 
     public inspect() {
-        return util.inspect({bid: this.bid, ask: this.ask,
-            time: this.time.toISOString(), exch: Exchange[this.exchange]}, {colors: true});
+        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()}, {colors: true});
+    }
+}
+
+class Market {
+    constructor(
+        public update : MarketUpdate,
+        public exchange : Exchange,
+        public flag : MarketDataFlag) { }
+
+    public inspect() {
+        return util.inspect({update: this.update, exchange: Exchange[this.exchange],
+            flag: MarketDataFlag[this.flag]}, {colors: true});
     }
 }
 
@@ -46,6 +56,14 @@ enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
 enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 enum Liquidity { Make, Take }
+
+enum MarketDataFlag {
+    NoChange = 0,
+    First = 1,
+    PriceChanged = 1 << 1,
+    SizeChanged = 1 << 2,
+    PriceAndSizeChanged = 1 << 3
+}
 
 interface Order {
     side : Side;
@@ -279,10 +297,10 @@ class CombinedGateway {
 }
 
 interface IBroker {
-    MarketData : Evt<MarketUpdate>;
+    MarketData : Evt<Market>;
+    currentBook : Market;
 
     name() : string;
-    currentBook : MarketUpdate;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
