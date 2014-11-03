@@ -139,7 +139,7 @@ class Agent {
         }
 
         // do this async, off this event cycle
-        process.nextTick(() => this.BestResultChanged.trigger(bestResult));
+        setTimeout(() => this.BestResultChanged.trigger(bestResult), 0);
 
         if (!this.Active)
             return;
