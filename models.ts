@@ -23,15 +23,17 @@ class MarketUpdate {
     constructor(
         public bid : MarketSide,
         public ask : MarketSide,
-        public time : Moment) { }
+        public time : Moment,
+        public exchange : Exchange) { }
 
     public equals(other : MarketUpdate) {
         if (other == null) return false;
-        return this.ask.equals(other.ask) && this.bid.equals(other.bid);
+        return this.ask.equals(other.ask) && this.bid.equals(other.bid) && this.exchange == other.exchange;
     }
 
     public inspect() {
-        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()}, {colors: true});
+        return util.inspect({bid: this.bid, ask: this.ask,
+            time: this.time.toISOString(), exch: Exchange[this.exchange]}, {colors: true});
     }
 }
 
@@ -44,19 +46,6 @@ enum OrderType { Limit, Market }
 enum TimeInForce { IOC, FOK, GTC }
 enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 enum Liquidity { Make, Take }
-
-class MarketBook {
-    constructor(public top: MarketUpdate, public second: MarketUpdate, public exchangeName: Exchange) { }
-
-    public equals(other : MarketBook) {
-        if (other == null) return false;
-        return this.top.equals(other.top) && this.second.equals(other.second);
-    }
-
-    public inspect() {
-        return util.inspect({top: this.top, second: this.second, exchangeName: Exchange[this.exchangeName]}, {colors: true});
-    }
-}
 
 interface Order {
     side : Side;
@@ -244,7 +233,7 @@ interface IGateway {
 }
 
 interface IMarketDataGateway extends IGateway {
-    MarketData : Evt<MarketBook>;
+    MarketData : Evt<MarketUpdate>;
 }
 
 interface IOrderEntryGateway extends IGateway {
@@ -290,10 +279,10 @@ class CombinedGateway {
 }
 
 interface IBroker {
-    MarketData : Evt<MarketBook>;
+    MarketData : Evt<MarketUpdate>;
 
     name() : string;
-    currentBook : MarketBook;
+    currentBook : MarketUpdate;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;

@@ -109,7 +109,7 @@ module HitBtc {
     }
 
     class HitBtcMarketDataGateway implements IMarketDataGateway {
-        MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+        MarketData = new Evt<MarketUpdate>();
         _marketDataWs : any;
 
         _lastBook : { [side: string] : { [px: number]: number}} = null;
@@ -122,10 +122,10 @@ module HitBtc {
             var getLevel = (n : number) => {
                 var bid = new MarketSide(ordBids[n].price, ordBids[n].size);
                 var ask = new MarketSide(ordAsks[n].price, ordAsks[n].size);
-                return new MarketUpdate(bid, ask, t);
+                return new MarketUpdate(bid, ask, t, Exchange.HitBtc);
             };
 
-            this.MarketData.trigger(new MarketBook(getLevel(0), getLevel(1), Exchange.HitBtc));
+            this.MarketData.trigger(getLevel(0));
         };
 
         private static _applyIncrementals(incomingUpdates : Update[],
@@ -151,7 +151,7 @@ module HitBtc {
         private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number, t : Moment) : MarketUpdate {
             var bid = new MarketSide(msg.bid[n].price, msg.bid[n].size / _lotMultiplier);
             var ask = new MarketSide(msg.ask[n].price, msg.ask[n].size / _lotMultiplier);
-            return new MarketUpdate(bid, ask, t);
+            return new MarketUpdate(bid, ask, t, Exchange.HitBtc);
         }
 
         private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
@@ -167,9 +167,7 @@ module HitBtc {
                 this._lastBook["bid"][msg.bid[i].price] = msg.bid[i].size;
             }
 
-            var b = new MarketBook(HitBtcMarketDataGateway.getLevel(msg, 0, t),
-                                   HitBtcMarketDataGateway.getLevel(msg, 1, t),
-                                   Exchange.HitBtc);
+            var b = HitBtcMarketDataGateway.getLevel(msg, 0, t);
             this.MarketData.trigger(b);
         };
 

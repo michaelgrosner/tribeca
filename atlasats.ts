@@ -382,7 +382,7 @@ module AtlasAts {
 
     class AtlasAtsMarketDataGateway implements IMarketDataGateway {
         ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-        MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+        MarketData = new Evt<MarketUpdate>();
         _log : Logger = log("tribeca:gateway:AtlasAtsMD");
 
         private onMarketData = (tsMsg : Timestamped<AtlasAtsMarketUpdate>) => {
@@ -408,10 +408,10 @@ module AtlasAts {
             var getUpdate = (n : number) => {
                 var bid = new MarketSide(bids[n].price, bids[n].size);
                 var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, t);
+                return new MarketUpdate(bid, ask, t, Exchange.AtlasAts);
             };
 
-            var b = new MarketBook(getUpdate(0), getUpdate(1), Exchange.AtlasAts);
+            var b = getUpdate(0);
             this.MarketData.trigger(b);
         };
 

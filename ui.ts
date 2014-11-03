@@ -106,13 +106,13 @@ class UI {
         io.emit("order-status-report", msg);
     };
 
-    sendUpdatedMarket = (book : MarketBook) => {
+    sendUpdatedMarket = (book : MarketUpdate) => {
         if (book == null) return;
-        var b = {bidPrice: book.top.bid.price,
-            bidSize: book.top.bid.size,
-            askPrice: book.top.ask.price,
-            askSize: book.top.ask.size,
-            exchangeName: book.exchangeName};
+        var b = {bidPrice: book.bid.price,
+            bidSize: book.bid.size,
+            askPrice: book.ask.price,
+            askSize: book.ask.size,
+            exchangeName: book.exchange};
         io.emit("market-book", b);
     };
 }

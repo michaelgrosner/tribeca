@@ -11,7 +11,7 @@ class PositionAggregator {
 }
 
 class MarketDataAggregator {
-    MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+    MarketData = new Evt<MarketUpdate>();
 
     constructor(private _brokers : Array<IBroker>) {
         this._brokers.forEach(b => {
@@ -73,7 +73,7 @@ class Agent {
                 private _orderAgg : OrderBrokerAggregator,
                 private config : IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
-        _mdAgg.MarketData.on(m => this.recalcMarkets(m.top.time));
+        _mdAgg.MarketData.on(m => this.recalcMarkets(m.time));
     }
 
     Active : boolean = false;
@@ -117,8 +117,8 @@ class Agent {
                 if (i == j || !Agent.isBrokerActive(hideBroker)) continue;
 
                 // need to determine whether or not I'm already on the market
-                var restTop = restBroker.currentBook.top;
-                var hideTop = hideBroker.currentBook.top;
+                var restTop = restBroker.currentBook;
+                var hideTop = hideBroker.currentBook;
 
                 var bidSize = Math.min(this._maxSize, hideTop.bid.size);
                 var pBid = bidSize * (-(1 + restBroker.makeFee()) * restTop.bid.price + (1 + hideBroker.takeFee()) * hideTop.bid.price);
@@ -224,8 +224,8 @@ class Agent {
 
         var hideBroker = this.LastBestResult.hideBroker;
         var px = o.side == Side.Ask
-            ? hideBroker.currentBook.top.ask.price
-            : hideBroker.currentBook.top.bid.price;
+            ? hideBroker.currentBook.ask.price
+            : hideBroker.currentBook.bid.price;
         hideBroker.sendOrder(new SubmitNewOrder(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC, hideBroker.exchange(), o.time));
 
         this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);

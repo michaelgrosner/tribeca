@@ -163,7 +163,7 @@ class ExchangeBroker implements IBroker {
         return this._baseGateway.takeFee();
     }
 
-    MarketData : Evt<MarketBook> = new Evt<MarketBook>();
+    MarketData = new Evt<MarketUpdate>();
 
     name() : string {
         return this._baseGateway.name();
@@ -173,14 +173,14 @@ class ExchangeBroker implements IBroker {
         return this._baseGateway.exchange();
     }
 
-    _currentBook : MarketBook = null;
+    _currentBook : MarketUpdate = null;
     _log : Logger;
 
-    public get currentBook() : MarketBook {
+    public get currentBook() : MarketUpdate {
         return this._currentBook;
     }
 
-    private handleMarketData = (book : MarketBook) => {
+    private handleMarketData = (book : MarketUpdate) => {
         if (!book.equals(this.currentBook)) {
             this._currentBook = book;
             this.MarketData.trigger(book);

@@ -107,7 +107,7 @@ module OkCoin {
     }
 
     class OkCoinMarketDataGateway implements IMarketDataGateway {
-        MarketData = new Evt<MarketBook>();
+        MarketData = new Evt<MarketUpdate>();
         ConnectChanged = new Evt<ConnectivityStatus>();
 
         private onDepth = (tsMsg : Timestamped<OkCoinDepthMessage>) => {
@@ -116,11 +116,10 @@ module OkCoin {
                 return new MarketUpdate(
                     new MarketSide(msg.bids[n][0], msg.bids[n][1]),
                     new MarketSide(msg.asks[n][0], msg.asks[n][1]),
-                    tsMsg.time);
+                    tsMsg.time, Exchange.OkCoin);
             };
 
-            var book : MarketBook = new MarketBook(getLevel(0), getLevel(1), Exchange.OkCoin);
-            this.MarketData.trigger(book);
+            this.MarketData.trigger(getLevel(0));
         };
 
         constructor(socket : OkCoinSocket) {
