@@ -149,25 +149,24 @@ module OkCoin {
             }
 
             var sig = els.join("&") + "&secret_key=" + this._secretKey;
-            return crypto.createHmac('md5', this._secretKey).update(sig).digest("hex").toString().toUpperCase();
+            return crypto.createHash('md5', this._secretKey).update(sig).digest("hex").toString().toUpperCase();
         };
 
         post = <T>(actionUrl: string, msg : any, cb : (m : Timestamped<T>) => void) => {
             msg.partner = this._partner;
             msg.sign = this.signMsg(msg);
 
-            var body = querystring.stringify(msg);
-            this._log("sending signed %s", body);
-
+            var t_start = date();
             request({
                 url: url.resolve(this._baseUrl, actionUrl),
-                body: body,
+                body: querystring.stringify(msg),
                 headers: {"Content-Type": "application/x-www-form-urlencoded"},
                 method: "POST"
             }, (err, resp, body) => {
                 try {
                     var t = date();
                     cb(new Timestamped(JSON.parse(body), t));
+                    this._log("POST to OKCoin took %s ms", t.diff(t_start));
                 }
                 catch (e) {
                     this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
