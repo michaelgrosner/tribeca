@@ -67,12 +67,14 @@ class OrderBrokerAggregator {
 class Agent {
     private _log : Logger = log("tribeca:agent");
     private _maxSize : number;
+    private _minProfit : number;
 
     constructor(private _brokers : Array<IBroker>,
                 private _mdAgg : MarketDataAggregator,
                 private _orderAgg : OrderBrokerAggregator,
                 private config : IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
+        this._minProfit = config.GetNumber("MinProfit");
         _mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));
     }
 
@@ -126,12 +128,12 @@ class Agent {
                 var askSize = Math.min(this._maxSize, hideTop.ask.size);
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
-                if (pBid > bestProfit && pBid > 0) {
+                if (pBid > bestProfit && pBid > this._minProfit) {
                     bestProfit = pBid;
                     bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                 }
 
-                if (pAsk > bestProfit && pAsk > 0) {
+                if (pAsk > bestProfit && pAsk > this._minProfit) {
                     bestProfit = pAsk;
                     bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
@@ -158,7 +160,7 @@ class Agent {
                 this.stop(this.LastBestResult, true, generatedTime);
                 this.start(bestResult);
             }
-            else if (bestResult.rest.price !== this.LastBestResult.rest.price) {
+            else if (Math.abs(bestResult.rest.price - this.LastBestResult.rest.price) > 1e-3) {
                 this.modify(bestResult);
             }
             else {
@@ -177,9 +179,11 @@ class Agent {
 
     private modify = (r : Result) => {
         var restExch = r.restBroker.exchange();
-        // cxl-rpl live order
-        var sent = r.restBroker.replaceOrder(new CancelReplaceOrder(this._activeOrderIds[restExch], r.size, r.rest.price, restExch, r.generatedTime));
-        this._activeOrderIds[restExch] = sent.sentOrderClientId;
+        // cxl-rpl live order -- need to rethink cxl-rpl
+        var cxl = new OrderCancel(this._activeOrderIds[restExch], restExch, r.generatedTime);
+        r.restBroker.cancelOrder(cxl);
+        var newOrder = new SubmitNewOrder(r.restSide, r.size, OrderType.Limit, r.rest.price, TimeInForce.GTC, restExch, r.generatedTime);
+        this._activeOrderIds[restExch] = r.restBroker.sendOrder(newOrder).sentOrderClientId;
 
         this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Side[r.restSide],
             r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);

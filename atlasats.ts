@@ -207,15 +207,20 @@ module AtlasAts {
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "GET"
             }, (err, resp, body) => {
-                var rpt : AtlasAtsPositionReport = JSON.parse(body);
+                try {
+                    var rpt : AtlasAtsPositionReport = JSON.parse(body);
 
-                this.PositionUpdate.trigger(new CurrencyPosition(rpt.buyingpower, Currency.USD));
-                rpt.positions.forEach(p => {
-                    var currency = AtlasAtsPositionGateway._convertItem(p.item);
-                    if (currency == null) return;
-                    var position = new CurrencyPosition(p.size, currency);
-                    this.PositionUpdate.trigger(position);
-                });
+                    this.PositionUpdate.trigger(new CurrencyPosition(rpt.buyingpower, Currency.USD));
+                    rpt.positions.forEach(p => {
+                        var currency = AtlasAtsPositionGateway._convertItem(p.item);
+                        if (currency == null) return;
+                        var position = new CurrencyPosition(p.size, currency);
+                        this.PositionUpdate.trigger(position);
+                    });
+                }
+                catch (e) {
+                    this._log("Exception when downloading positions: %o, body: %s", e, body);
+                }
             });
         };
 
@@ -281,9 +286,23 @@ module AtlasAts {
             return this.sendOrder(replace);
         };
 
+        private _cancelsWaitingForExchangeOrderId : {[clId : string] : BrokeredCancel} = {};
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
+            // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
+            if (typeof cancel.exchangeId !== "undefined") {
+                this.sendCancel(cancel.exchangeId, cancel);
+            }
+            else {
+                this._cancelsWaitingForExchangeOrderId[cancel.clientOrderId] = cancel;
+                this._log("Registered %s for late deletion", cancel.clientOrderId);
+            }
+
+            return new OrderGatewayActionReport(date());
+        };
+
+        private sendCancel = (exchangeId : string, cancel : BrokeredCancel) => {
             request({
-                url: this._orderUrl + "/" + cancel.exchangeId,
+                url: this._orderUrl + "/" + exchangeId,
                 headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
                 method: "DELETE"
             }, (err, resp, body) => {
@@ -308,8 +327,6 @@ module AtlasAts {
                     this.OrderUpdate.trigger(rpt);
                 }
             });
-
-            return new OrderGatewayActionReport(date());
         };
 
         private static getStatus = (raw : string) : OrderStatus => {
@@ -341,10 +358,20 @@ module AtlasAts {
             var t = tsMsg.time;
             var msg = tsMsg.data;
 
+            var orderStatus = AtlasAtsOrderEntryGateway.getStatus(msg.status);
+
+            // cancel any open orders waiting for oid
+            if (this._cancelsWaitingForExchangeOrderId.hasOwnProperty(msg.clid)) {
+                var cancel = this._cancelsWaitingForExchangeOrderId[msg.clid];
+                this.sendCancel(msg.oid, cancel);
+                this._log("Deleting %s late, oid: %s", cancel.clientOrderId, msg.clid);
+                delete this._cancelsWaitingForExchangeOrderId[msg.clid];
+            }
+
             var status : OrderStatusReport = {
                 exchangeId: msg.oid,
                 orderId: msg.clid,
-                orderStatus: AtlasAtsOrderEntryGateway.getStatus(msg.status),
+                orderStatus: orderStatus,
                 time: t, // doesnt give milliseconds??
                 rejectMessage: msg.hasOwnProperty("reject") ? msg.reject.reason : null,
                 leavesQuantity: msg.left,

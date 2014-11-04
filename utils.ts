@@ -46,6 +46,7 @@ class BaseConfig {
     public static get OkCoinHttpUrl() : string { return "https://www.okcoin.com/api/v1/"; }
 
     public static get MaxSize() : string { return "0.01"; }
+    public static get MinProfit() : string { return "0.01"; }
 }
 
 class ProdConfig {
