@@ -73,7 +73,6 @@ module AtlasAts {
         bid : number;
         asksize : number;
         ask : number;
-        quotes : Array<AtlasAtsQuote>;
     }
 
     interface AtlasAtsOrder {
@@ -387,31 +386,15 @@ module AtlasAts {
 
         private onMarketData = (tsMsg : Timestamped<AtlasAtsMarketUpdate>) => {
             var t = tsMsg.time;
-            var msg = tsMsg.data;
+            var msg : AtlasAtsMarketUpdate = tsMsg.data;
             if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
-            if (msg.quotes.length < 1) {
-                this._log("No quotes! WTF?", msg);
-                return;
-            }
+            var b = new MarketUpdate(
+                new MarketSide(msg.bid, msg.bidsize),
+                new MarketSide(msg.ask, msg.asksize),
+                t
+            );
 
-            var bids : AtlasAtsQuote[] = [];
-            var asks : AtlasAtsQuote[] = [];
-            for (var i = 0; i < msg.quotes.length; i++) {
-                var qt = msg.quotes[i];
-                if (bids.length > 2 && qt.side == "BUY") continue;
-                if (bids.length > 2 && asks.length > 2) break;
-                if (qt.side == "BUY") bids.push(qt);
-                if (qt.side == "SELL") asks.push(qt);
-            }
-
-            var getUpdate = (n : number) => {
-                var bid = new MarketSide(bids[n].price, bids[n].size);
-                var ask = new MarketSide(asks[n].price, asks[n].size);
-                return new MarketUpdate(bid, ask, t);
-            };
-
-            var b = getUpdate(0);
             this.MarketData.trigger(b);
         };
 
