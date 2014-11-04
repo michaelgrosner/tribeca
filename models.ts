@@ -190,7 +190,6 @@ interface OrderStatusReport {
     averagePrice? : number;
     liquidity? : Liquidity;
     exchange? : Exchange;
-    message? : string;
     computationalLatency? : number;
     version? : number;
 
@@ -219,7 +218,6 @@ class OrderStatusReportImpl implements OrderStatusReport {
         public averagePrice : number,
         public liquidity : Liquidity,
         public exchange : Exchange,
-        public message : string,
         public computationalLatency : number,
         public version : number,
         public partiallyFilled : boolean,
@@ -233,7 +231,7 @@ class OrderStatusReportImpl implements OrderStatusReport {
             orderStatus: OrderStatus[this.orderStatus], rejectMessage: this.rejectMessage, time: this.time.toISOString(),
             lastQuantity: this.lastQuantity, lastPrice: this.lastPrice, leavesQuantity: this.leavesQuantity,
             cumQuantity: this.cumQuantity, averagePrice: this.averagePrice, liquidity: Liquidity[this.liquidity],
-            exchange: Exchange[this.exchange], message: this.message, computationalLatency: this.computationalLatency,
+            exchange: Exchange[this.exchange], computationalLatency: this.computationalLatency,
             version: this.version, partiallyFilled: this.partiallyFilled, pendingCancel: this.pendingCancel,
             pendingReplace: this.pendingReplace, cancelRejected: this.cancelRejected}, {colors: true});
     }
