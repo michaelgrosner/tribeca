@@ -157,8 +157,14 @@ class Agent {
         else if (bestResult !== null && this.LastBestResult !== null) {
             if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
                     || bestResult.restSide != this.LastBestResult.restSide) {
-                this.stop(this.LastBestResult, true, generatedTime);
-                this.start(bestResult);
+                // don't flicker
+                if (Math.abs(bestResult.profit - this.LastBestResult.profit) < this._minProfit) {
+                    this.noChange(bestResult);
+                }
+                else {
+                    this.stop(this.LastBestResult, true, generatedTime);
+                    this.start(bestResult);
+                }
             }
             else if (Math.abs(bestResult.rest.price - this.LastBestResult.rest.price) > 1e-3) {
                 this.modify(bestResult);

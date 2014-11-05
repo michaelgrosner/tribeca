@@ -198,7 +198,6 @@ module OkCoin {
                 amount: order.quantity};
 
             this._http.post("trade.do", o, (tsMsg : Timestamped<OkCoinOrderAck>) => {
-                this._log("trade.do %o", tsMsg);
                 this.OrderUpdate.trigger({
                     orderId: order.orderId,
                     exchangeId: tsMsg.data.order_id,
@@ -212,7 +211,6 @@ module OkCoin {
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
             var c = {symbol: "btc_usd", order_id: cancel.exchangeId};
             this._http.post("cancel_order.do", c, (tsMsg : Timestamped<OkCoinOrderAck>) => {
-                this._log("cancel_order.do %o", tsMsg);
                 this.OrderUpdate.trigger({
                     orderId: cancel.clientOrderId,
                     orderStatus: tsMsg.data.result == true ? OrderStatus.Cancelled : OrderStatus.Rejected,

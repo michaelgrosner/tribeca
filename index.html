@@ -108,6 +108,7 @@
                     <th>usd</th>
                     <th>btc</th>
                     <th>rest</th>
+                    <th>hide</th>
                 </tr>
                 <tr ng-repeat="(exch, book) in books"
                     ng-class="availableConnectivityStatuses[connectionStatus[exch]] == 'Connected' ? 'success' : 'danger'">
@@ -120,6 +121,7 @@
                     <td>{{ positions[exch][availableCurrencies['USD']] }}</td>
                     <td>{{ positions[exch][availableCurrencies['BTC']] }}</td>
                     <td>{{ current_result.restExch == exch }}</td>
+                    <td>{{ current_result.hideExch == exch }}</td>
                 </tr>
             </table>
         </div>
