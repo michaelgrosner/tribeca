@@ -198,18 +198,40 @@ module OkCoin {
                 amount: order.quantity};
 
             this._http.post("trade.do", o, (tsMsg : Timestamped<OkCoinOrderAck>) => {
+                // cancel any open orders waiting for oid
+                if (this._cancelsWaitingForExchangeOrderId.hasOwnProperty(order.orderId)) {
+                    var cancel = this._cancelsWaitingForExchangeOrderId[order.orderId];
+                    this.sendCancel(order.orderId, cancel);
+                    this._log("Deleting %s late, oid: %s", cancel.clientOrderId, order.orderId);
+                    delete this._cancelsWaitingForExchangeOrderId[order.orderId];
+                }
+
                 this.OrderUpdate.trigger({
                     orderId: order.orderId,
                     exchangeId: tsMsg.data.order_id,
                     orderStatus: tsMsg.data.result == true ? OrderStatus.Working : OrderStatus.Rejected
-                })
+                });
             });
 
             return new OrderGatewayActionReport(date());
         };
 
+        private _cancelsWaitingForExchangeOrderId : {[clId : string] : BrokeredCancel} = {};
         cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
-            var c = {symbol: "btc_usd", order_id: cancel.exchangeId};
+            // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
+            if (typeof cancel.exchangeId !== "undefined") {
+                this.sendCancel(cancel.exchangeId, cancel);
+            }
+            else {
+                this._cancelsWaitingForExchangeOrderId[cancel.clientOrderId] = cancel;
+                this._log("Registered %s for late deletion", cancel.clientOrderId);
+            }
+
+            return new OrderGatewayActionReport(date());
+        };
+
+        private sendCancel = (exchangeId : string, cancel : BrokeredCancel) => {
+            var c = {symbol: "btc_usd", order_id: exchangeId};
             this._http.post("cancel_order.do", c, (tsMsg : Timestamped<OkCoinOrderAck>) => {
                 this.OrderUpdate.trigger({
                     orderId: cancel.clientOrderId,
@@ -217,8 +239,6 @@ module OkCoin {
                     cancelRejected: tsMsg.data.result != true
                 })
             });
-
-            return new OrderGatewayActionReport(date());
         };
 
         replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
@@ -236,8 +256,17 @@ module OkCoin {
             }
         }
 
+        // order ack
+        // { averagePrice: '0', completedTradeAmount: '0', createdDate: 1415150194937, id: 13106663, status: 0, tradeAmount: '0.01', tradePrice: '0', tradeType: 'sell', tradeUnitPrice: '300', unTrade: '0.01', userid: 2013015 } status Working
+
+        // order fill
+        // { averagePrice: '330.82', completedTradeAmount: '0.01', createdDate: 1415150194000, id: 13106663, status: 2, tradeAmount: '0.01', tradePrice: '3.30', tradeType: 'sell', tradeUnitPrice: '300', unTrade: '0', userid: 2013015 } status Complete
+
+        // order cxl
+        // { averagePrice: '0', completedTradeAmount: '0', createdDate: 1415150297000, id: 13106953, status: -1, tradeAmount: '0.01', tradePrice: '0', tradeType: 'sell', tradeUnitPrice: '400', unTrade: '0', userid: 2013015 }
+
         private onMessage = (tsMsg : Timestamped<OkCoinExecutionReport>) => {
-            this._log("%o status %s", tsMsg, OrderStatus[OkCoinOrderEntryGateway.getStatus(tsMsg.data.status)]);
+            this._log("got new exec rpt %o", tsMsg);
         };
 
         _log : Logger = log("tribeca:gateway:OkCoinOE");
