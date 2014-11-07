@@ -25,13 +25,14 @@ module OkCoin {
 
     interface OkCoinExecutionReport {
         createdDate : string;
-        userid : string;
+        id : number;
         tradeType : string;
-        tradeAmount : number;
-        tradeUnitPrice : number;
-        completedTradeAmount : number;
-        tradePrice : number;
-        averagePrice : number;
+        tradeAmount : string;
+        tradeUnitPrice : string;
+        completedTradeAmount : string;
+        tradePrice : string;
+        averagePrice : string;
+        unTrade : string;
         status : number;
     }
 
@@ -165,8 +166,9 @@ module OkCoin {
             }, (err, resp, body) => {
                 try {
                     var t = date();
-                    cb(new Timestamped(JSON.parse(body), t));
-                    this._log("POST to OKCoin took %s ms", t.diff(t_start));
+                    var data = JSON.parse(body);
+                    cb(new Timestamped(data, t));
+                    this._log("POST to OKCoin took %s ms : %o", t.diff(t_start), data);
                 }
                 catch (e) {
                     this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
@@ -266,6 +268,31 @@ module OkCoin {
         // { averagePrice: '0', completedTradeAmount: '0', createdDate: 1415150297000, id: 13106953, status: -1, tradeAmount: '0.01', tradePrice: '0', tradeType: 'sell', tradeUnitPrice: '400', unTrade: '0', userid: 2013015 }
 
         private onMessage = (tsMsg : Timestamped<OkCoinExecutionReport>) => {
+            var t = tsMsg.time;
+            var msg : OkCoinExecutionReport = tsMsg.data;
+
+            var lastQty = parseFloat(msg.tradeAmount);
+            var lastPx = parseFloat(msg.tradeUnitPrice);
+            var lvsQty = parseFloat(msg.unTrade);
+            var cumQty = parseFloat(msg.completedTradeAmount);
+            var avgPx = parseFloat(msg.averagePrice);
+            var ordStatus = OkCoinOrderEntryGateway.getStatus(tsMsg.data.status);
+
+            var status : OrderStatusReport = {
+                exchangeId: msg.id.toString(),
+                orderId: msg.clientOrderId,
+                orderStatus: ordStatus,
+                time: t,
+                //rejectMessage: msg.orderRejectReason,
+                lastQuantity: lastQty > 0 ? lastQty : undefined,
+                lastPrice: lastPx > 0 ? lastPx : undefined,
+                leavesQuantity: ordStatus == OrderStatus.Working ? lvsQty : undefined,
+                cumQuantity: cumQty > 0 ? cumQty : undefined,
+                averagePrice: avgPx > 0 ? avgPx : undefined
+            };
+
+            this.OrderUpdate.trigger(status);
+
             this._log("got new exec rpt %o", tsMsg);
         };
 
