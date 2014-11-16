@@ -122,62 +122,6 @@ module OkCoin {
         }
     }
 
-    class OkCoinHttp {
-        private signMsg = (m : Map<string, string>) => {
-            var els : string[] = [];
-
-            var keys = [];
-            for (var key in m) {
-                if (m.hasOwnProperty(key))
-                    keys.push(key);
-            }
-            keys.sort();
-
-            for (var i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                if (m.hasOwnProperty(key))
-                    els.push(key + "=" + m[key]);
-            }
-
-            var sig = els.join("&") + "&secret_key=" + this._secretKey;
-            return crypto.createHash('md5', this._secretKey).update(sig).digest("hex").toString().toUpperCase();
-        };
-
-        post = <T>(actionUrl: string, msg : any, cb : (m : Timestamped<T>) => void) => {
-            msg.partner = this._partner;
-            msg.sign = this.signMsg(msg);
-
-            var t_start = date();
-            request({
-                url: url.resolve(this._baseUrl, actionUrl),
-                body: querystring.stringify(msg),
-                headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                method: "POST"
-            }, (err, resp, body) => {
-                try {
-                    var t = date();
-                    var data = JSON.parse(body);
-                    cb(new Timestamped(data, t));
-                    this._log("POST to OKCoin took %s ms : %o", t.diff(t_start), data);
-                }
-                catch (e) {
-                    this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
-                    throw e;
-                }
-            });
-        };
-
-        _log : Logger = log("tribeca:gateway:OkCoinHTTP");
-        _secretKey : string;
-        _partner : string;
-        _baseUrl : string;
-        constructor(config : IConfigProvider) {
-            this._partner = config.GetString("OkCoinPartner");
-            this._secretKey = config.GetString("OkCoinSecretKey");
-            this._baseUrl = config.GetString("OkCoinHttpUrl")
-        }
-    }
-
     class OkCoinFixBridge {
         sendOrder = (order : BrokeredOrder) => {
             var o = {
@@ -198,6 +142,10 @@ module OkCoin {
                 side: cancel.side == Side.Bid ? "buy" : "sell"
             };
             this._sock.send(JSON.stringify({evt: "Cxl", obj: c}));
+        };
+
+        getAccountInfo = (acctId : string) => {
+            this._sock.send(JSON.stringify({evt: "Acct", obj: {acctId: acctId}}));
         };
 
         _log : Logger = log("tribeca:gateway:OkCoinFIX");
@@ -330,9 +278,22 @@ module OkCoin {
     }
 
     class OkCoinPositionGateway implements IPositionGateway {
+        _log : Logger = log("tribeca:gateway:OkCoinPG");
         PositionUpdate = new Evt<CurrencyPosition>();
 
-        constructor(config : IConfigProvider) {}
+        private trigger = () => {
+            this._fix.getAccountInfo(this._config.GetString("OkCoinPartner"))
+        };
+
+        constructor(
+            private _config : IConfigProvider,
+            private _fix : OkCoinFixBridge) {
+
+            _fix.subscribe("Acct", msg => this._log("got pos rept %o", msg));
+
+            this.trigger();
+            setInterval(this.trigger, 15000);
+        }
     }
 
     class OkCoinBaseGateway implements IExchangeDetailsGateway {
@@ -355,13 +316,12 @@ module OkCoin {
 
     export class OkCoin extends CombinedGateway {
         constructor(config : IConfigProvider) {
-            var http = new OkCoinHttp(config);
             var socket = new OkCoinSocket(config);
             var fix = new OkCoinFixBridge();
             super(
                 new OkCoinMarketDataGateway(socket),
                 config.GetString("OkCoinOrderDestination") == "OkCoin" ? <IOrderEntryGateway>new OkCoinOrderEntryGateway(fix) : new NullOrderGateway(),
-                new NullPositionGateway(), //new OkCoinPositionGateway(config),
+                new NullPositionGateway(), //new OkCoinPositionGateway(config, fix),
                 new OkCoinBaseGateway());
             }
     }
