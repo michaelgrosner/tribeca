@@ -1,6 +1,7 @@
 /// <reference path="typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
+/// <reference path="fix.ts" />
 /// <reference path="null.ts" />
 
 module OkCoin {
@@ -9,7 +10,6 @@ module OkCoin {
     var request = require("request");
     var url = require("url");
     var querystring = require("querystring");
-    var zeromq = require("zmq");
 
     interface OkCoinMessageIncomingMessage {
         channel : string;
@@ -36,7 +36,7 @@ module OkCoin {
         averagePrice : number;
     }
 
-    class OkCoinSocket {
+    class OkCoinWebsocket {
         subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
             var subsReq = {event: 'addChannel',
                            channel: channel,
@@ -81,7 +81,7 @@ module OkCoin {
 
         ConnectChanged = new Evt<ConnectivityStatus>();
         _serializedHeartbeat = JSON.stringify({event: "pong"});
-        _log : Logger = log("tribeca:gateway:OkCoinSocket");
+        _log : Logger = log("tribeca:gateway:OkCoinWebsocket");
         _secretKey : string;
         _partner : string;
         _handlers : { [channel : string] : (newMsg : Timestamped<any>) => void} = {};
@@ -113,7 +113,7 @@ module OkCoin {
             this.MarketData.trigger(getLevel(0));
         };
 
-        constructor(socket : OkCoinSocket) {
+        constructor(socket : OkCoinWebsocket) {
             socket.ConnectChanged.on(cs => {
                 if (cs == ConnectivityStatus.Connected)
                     socket.subscribe("ok_btcusd_depth", this.onDepth);
@@ -122,8 +122,11 @@ module OkCoin {
         }
     }
 
-    class OkCoinFixBridge {
-        sendOrder = (order : BrokeredOrder) => {
+    class OkCoinOrderEntryGateway implements IOrderEntryGateway {
+        OrderUpdate = new Evt<OrderStatusReport>();
+        ConnectChanged = new Evt<ConnectivityStatus>();
+
+        sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
             var o = {
                 id: order.orderId,
                 symbol: "BTC/USD",
@@ -131,54 +134,8 @@ module OkCoin {
                 price: order.price,
                 tif: "GTC",
                 amount: order.quantity};
-            this._sock.send(JSON.stringify({evt: "New", obj: o}));
-        };
+            this._socket.sendEvent("New", o);
 
-        cancelOrder = (exchangeId : string, cancel : BrokeredCancel) => {
-            var c = {
-                symbol: "BTC/USD",
-                origOrderId: cancel.clientOrderId,
-                origExchOrderId: exchangeId,
-                side: cancel.side == Side.Bid ? "buy" : "sell"
-            };
-            this._sock.send(JSON.stringify({evt: "Cxl", obj: c}));
-        };
-
-        getAccountInfo = (acctId : string) => {
-            this._sock.send(JSON.stringify({evt: "Acct", obj: {acctId: acctId}}));
-        };
-
-        _log : Logger = log("tribeca:gateway:OkCoinFIX");
-        _sock : any;
-        constructor() {
-            this._sock = new zeromq.socket("pair");
-            this._sock.connect("tcp://localhost:5556");
-            this._sock.on("message", rawMsg => {
-                var msg = JSON.parse(rawMsg);
-                this._log("got new message %o", msg);
-
-                if (this._handlers.hasOwnProperty(msg.evt)) {
-                    this._handlers[msg.evt](new Timestamped(msg.obj, new Date(msg.ts)));
-                }
-                else {
-                    this._log("no handler registered for inbound FIX message: %o", msg);
-                }
-            });
-        }
-
-        _handlers : { [channel : string] : (newMsg : Timestamped<any>) => void} = {};
-
-        subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
-            this._handlers[channel] = handler;
-        }
-    }
-
-    class OkCoinOrderEntryGateway implements IOrderEntryGateway {
-        OrderUpdate = new Evt<OrderStatusReport>();
-        ConnectChanged = new Evt<ConnectivityStatus>();
-
-        sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
-            this._socket.sendOrder(order);
             return new OrderGatewayActionReport(date());
         };
 
@@ -197,7 +154,13 @@ module OkCoin {
         };
 
         private sendCancel = (exchangeId : string, cancel : BrokeredCancel) => {
-            this._socket.cancelOrder(exchangeId, cancel);
+            var c = {
+                symbol: "BTC/USD",
+                origOrderId: cancel.clientOrderId,
+                origExchOrderId: exchangeId,
+                side: cancel.side == Side.Bid ? "buy" : "sell"
+            };
+            this._socket.sendEvent("Cxl", c);
         };
 
         replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
@@ -271,7 +234,7 @@ module OkCoin {
         };
 
         _log : Logger = log("tribeca:gateway:OkCoinOE");
-        constructor(private _socket : OkCoinFixBridge) {
+        constructor(private _socket : Fix.FixGateway) {
             _socket.subscribe("ConnectionStatus", this.onConnectionStatus);
             _socket.subscribe("ExecRpt", this.onMessage);
         }
@@ -282,12 +245,10 @@ module OkCoin {
         PositionUpdate = new Evt<CurrencyPosition>();
 
         private trigger = () => {
-            this._fix.getAccountInfo(this._config.GetString("OkCoinPartner"))
+            this._fix.sendEvent("Acct", {acctId: null});
         };
 
-        constructor(
-            private _config : IConfigProvider,
-            private _fix : OkCoinFixBridge) {
+        constructor(private _fix : Fix.FixGateway) {
 
             _fix.subscribe("Acct", msg => this._log("got pos rept %o", msg));
 
@@ -316,8 +277,8 @@ module OkCoin {
 
     export class OkCoin extends CombinedGateway {
         constructor(config : IConfigProvider) {
-            var socket = new OkCoinSocket(config);
-            var fix = new OkCoinFixBridge();
+            var socket = new OkCoinWebsocket(config);
+            var fix = new Fix.FixGateway();
             super(
                 new OkCoinMarketDataGateway(socket),
                 config.GetString("OkCoinOrderDestination") == "OkCoin" ? <IOrderEntryGateway>new OkCoinOrderEntryGateway(fix) : new NullOrderGateway(),
