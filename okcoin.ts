@@ -9,6 +9,7 @@ module OkCoin {
     var request = require("request");
     var url = require("url");
     var querystring = require("querystring");
+    var zeromq = require("zmq");
 
     interface OkCoinMessageIncomingMessage {
         channel : string;
@@ -24,26 +25,15 @@ module OkCoin {
     }
 
     interface OkCoinExecutionReport {
-        createdDate : string;
-        id : number;
-        tradeType : string;
-        tradeAmount : string;
-        tradeUnitPrice : string;
-        completedTradeAmount : string;
-        tradePrice : string;
-        averagePrice : string;
-        unTrade : string;
-        status : number;
-    }
-
-    interface OkCoinOrderAck {
-        result : boolean;
-        order_id : string;
-    }
-
-    interface OkCoinOutgoingMessage {
-        sign : string;
-        partner : string;
+        exchangeId : string;
+        orderId : string;
+        orderStatus : string;
+        rejectMessage : string;
+        lastQuantity: number;
+        lastPrice : number;
+        leavesQuantity : number;
+        cumQuantity : number;
+        averagePrice : number;
     }
 
     class OkCoinSocket {
@@ -111,13 +101,13 @@ module OkCoin {
         MarketData = new Evt<MarketUpdate>();
         ConnectChanged = new Evt<ConnectivityStatus>();
 
-        private onDepth = (tsMsg : Timestamped<OkCoinDepthMessage>) => {
-            var msg = tsMsg.data;
+        private onDepth = (prettyMegan : Timestamped<OkCoinDepthMessage>) => {
+            var msg = prettyMegan.data;
             var getLevel = n => {
                 return new MarketUpdate(
                     new MarketSide(msg.bids[n][0], msg.bids[n][1]),
                     new MarketSide(msg.asks[n][0], msg.asks[n][1]),
-                    tsMsg.time);
+                    prettyMegan.time);
             };
 
             this.MarketData.trigger(getLevel(0));
@@ -188,33 +178,59 @@ module OkCoin {
         }
     }
 
+    class OkCoinFixBridge {
+        sendOrder = (order : BrokeredOrder) => {
+            var o = {
+                id: order.orderId,
+                symbol: "BTC/USD",
+                side: order.side == Side.Bid ? "buy" : "sell",
+                price: order.price,
+                tif: "GTC",
+                amount: order.quantity};
+            this._sock.send(JSON.stringify({evt: "New", obj: o}));
+        };
+
+        cancelOrder = (exchangeId : string, cancel : BrokeredCancel) => {
+            var c = {
+                symbol: "BTC/USD",
+                origOrderId: cancel.clientOrderId,
+                origExchOrderId: exchangeId,
+                side: cancel.side == Side.Bid ? "buy" : "sell"
+            };
+            this._sock.send(JSON.stringify({evt: "Cxl", obj: c}));
+        };
+
+        _log : Logger = log("tribeca:gateway:OkCoinFIX");
+        _sock : any;
+        constructor() {
+            this._sock = new zeromq.socket("pair");
+            this._sock.connect("tcp://localhost:5556");
+            this._sock.on("message", rawMsg => {
+                var msg = JSON.parse(rawMsg);
+                this._log("got new message %o", msg);
+
+                if (this._handlers.hasOwnProperty(msg.evt)) {
+                    this._handlers[msg.evt](new Timestamped(msg.obj, new Date(msg.ts)));
+                }
+                else {
+                    this._log("no handler registered for inbound FIX message: %o", msg);
+                }
+            });
+        }
+
+        _handlers : { [channel : string] : (newMsg : Timestamped<any>) => void} = {};
+
+        subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
+            this._handlers[channel] = handler;
+        }
+    }
+
     class OkCoinOrderEntryGateway implements IOrderEntryGateway {
         OrderUpdate = new Evt<OrderStatusReport>();
         ConnectChanged = new Evt<ConnectivityStatus>();
 
         sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
-            var o = {
-                symbol: "btc_usd",
-                type: order.side == Side.Bid ? "buy" : "sell",
-                price: order.price,
-                amount: order.quantity};
-
-            this._http.post("trade.do", o, (tsMsg : Timestamped<OkCoinOrderAck>) => {
-                // cancel any open orders waiting for oid
-                if (this._cancelsWaitingForExchangeOrderId.hasOwnProperty(order.orderId)) {
-                    var cancel = this._cancelsWaitingForExchangeOrderId[order.orderId];
-                    this.sendCancel(order.orderId, cancel);
-                    this._log("Deleting %s late, oid: %s", cancel.clientOrderId, order.orderId);
-                    delete this._cancelsWaitingForExchangeOrderId[order.orderId];
-                }
-
-                this.OrderUpdate.trigger({
-                    orderId: order.orderId,
-                    exchangeId: tsMsg.data.order_id,
-                    orderStatus: tsMsg.data.result == true ? OrderStatus.Working : OrderStatus.Rejected
-                });
-            });
-
+            this._socket.sendOrder(order);
             return new OrderGatewayActionReport(date());
         };
 
@@ -233,14 +249,7 @@ module OkCoin {
         };
 
         private sendCancel = (exchangeId : string, cancel : BrokeredCancel) => {
-            var c = {symbol: "btc_usd", order_id: exchangeId};
-            this._http.post("cancel_order.do", c, (tsMsg : Timestamped<OkCoinOrderAck>) => {
-                this.OrderUpdate.trigger({
-                    orderId: cancel.clientOrderId,
-                    orderStatus: tsMsg.data.result == true ? OrderStatus.Cancelled : OrderStatus.Rejected,
-                    cancelRejected: tsMsg.data.result != true
-                })
-            });
+            this._socket.cancelOrder(exchangeId, cancel);
         };
 
         replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
@@ -248,47 +257,52 @@ module OkCoin {
             return this.sendOrder(replace);
         };
 
-        private static getStatus(code: number) : OrderStatus {
-            switch (code) {
-                case 0: return OrderStatus.Working;
-                case 1: return OrderStatus.Working;
-                case 2: return OrderStatus.Complete;
-                case -1: return OrderStatus.Cancelled;
-                default: return OrderStatus.Other;
+        private static getStatus(status: string) : OrderStatus {
+            // these are the quickfix tags
+            switch (status) {
+                case '0':
+                case '1':
+                case '6': // pending cxl, repl, and new are all working
+                case 'A':
+                case 'E':
+                case '5':
+                    return OrderStatus.Working;
+                case '2':
+                    return OrderStatus.Complete;
+                case '3':
+                case '4':
+                    return OrderStatus.Cancelled;
+                case '8':
+                    return OrderStatus.Rejected;
             }
+            return OrderStatus.Other;
         }
-
-        // order ack
-        // { averagePrice: '0', completedTradeAmount: '0', createdDate: 1415150194937, id: 13106663, status: 0, tradeAmount: '0.01', tradePrice: '0', tradeType: 'sell', tradeUnitPrice: '300', unTrade: '0.01', userid: 2013015 } status Working
-
-        // order fill
-        // { averagePrice: '330.82', completedTradeAmount: '0.01', createdDate: 1415150194000, id: 13106663, status: 2, tradeAmount: '0.01', tradePrice: '3.30', tradeType: 'sell', tradeUnitPrice: '300', unTrade: '0', userid: 2013015 } status Complete
-
-        // order cxl
-        // { averagePrice: '0', completedTradeAmount: '0', createdDate: 1415150297000, id: 13106953, status: -1, tradeAmount: '0.01', tradePrice: '0', tradeType: 'sell', tradeUnitPrice: '400', unTrade: '0', userid: 2013015 }
 
         private onMessage = (tsMsg : Timestamped<OkCoinExecutionReport>) => {
             var t = tsMsg.time;
             var msg : OkCoinExecutionReport = tsMsg.data;
 
-            var lastQty = parseFloat(msg.tradeAmount);
-            var lastPx = parseFloat(msg.tradeUnitPrice);
-            var lvsQty = parseFloat(msg.unTrade);
-            var cumQty = parseFloat(msg.completedTradeAmount);
-            var avgPx = parseFloat(msg.averagePrice);
-            var ordStatus = OkCoinOrderEntryGateway.getStatus(tsMsg.data.status);
+            // cancel any open orders waiting for oid
+            if (this._cancelsWaitingForExchangeOrderId.hasOwnProperty(msg.orderId)) {
+                var cancel = this._cancelsWaitingForExchangeOrderId[msg.orderId];
+                this.sendCancel(msg.exchangeId, cancel);
+                this._log("Deleting %s late, oid: %s", cancel.clientOrderId, msg.orderId);
+                delete this._cancelsWaitingForExchangeOrderId[msg.orderId];
+            }
 
+            var orderStatus = OkCoinOrderEntryGateway.getStatus(msg.orderStatus);
             var status : OrderStatusReport = {
-                exchangeId: msg.id.toString(),
-                orderId: msg.clientOrderId,
-                orderStatus: ordStatus,
+                exchangeId: msg.exchangeId,
+                orderId: msg.orderId,
+                orderStatus: orderStatus,
                 time: t,
-                //rejectMessage: msg.orderRejectReason,
-                lastQuantity: lastQty > 0 ? lastQty : undefined,
-                lastPrice: lastPx > 0 ? lastPx : undefined,
-                leavesQuantity: ordStatus == OrderStatus.Working ? lvsQty : undefined,
-                cumQuantity: cumQty > 0 ? cumQty : undefined,
-                averagePrice: avgPx > 0 ? avgPx : undefined
+                lastQuantity: msg.lastQuantity > 0 ? msg.lastQuantity : undefined,
+                lastPrice: msg.lastPrice > 0 ? msg.lastPrice : undefined,
+                leavesQuantity: orderStatus == OrderStatus.Working ? msg.leavesQuantity : undefined,
+                cumQuantity: msg.cumQuantity > 0 ? msg.cumQuantity : undefined,
+                averagePrice: msg.averagePrice > 0 ? msg.averagePrice : undefined,
+                pendingCancel: msg.orderStatus == "6",
+                pendingReplace: msg.orderStatus == "E"
             };
 
             this.OrderUpdate.trigger(status);
@@ -296,14 +310,22 @@ module OkCoin {
             this._log("got new exec rpt %o", tsMsg);
         };
 
+        private onConnectionStatus = (tsMsg : Timestamped<string>) => {
+            if (tsMsg.data == "Logon") {
+                this.ConnectChanged.trigger(ConnectivityStatus.Connected);
+            }
+            else if (tsMsg.data == "Logout") {
+                this.ConnectChanged.trigger(ConnectivityStatus.Disconnected);
+            }
+            else {
+                throw new Error(util.format("unknown connection status raised by FIX socket : %o", tsMsg));
+            }
+        };
+
         _log : Logger = log("tribeca:gateway:OkCoinOE");
-        constructor(private _socket : OkCoinSocket,
-                    private _http : OkCoinHttp) {
-            this._socket.ConnectChanged.on(cs => {
-                if (cs == ConnectivityStatus.Connected)
-                    this._socket.subscribe("ok_usd_realtrades", this.onMessage);
-                this.ConnectChanged.trigger(cs)
-            });
+        constructor(private _socket : OkCoinFixBridge) {
+            _socket.subscribe("ConnectionStatus", this.onConnectionStatus);
+            _socket.subscribe("ExecRpt", this.onMessage);
         }
     }
 
@@ -335,9 +357,10 @@ module OkCoin {
         constructor(config : IConfigProvider) {
             var http = new OkCoinHttp(config);
             var socket = new OkCoinSocket(config);
+            var fix = new OkCoinFixBridge();
             super(
                 new OkCoinMarketDataGateway(socket),
-                config.GetString("OkCoinOrderDestination") == "OkCoin" ? <IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http) : new NullOrderGateway(),
+                config.GetString("OkCoinOrderDestination") == "OkCoin" ? <IOrderEntryGateway>new OkCoinOrderEntryGateway(fix) : new NullOrderGateway(),
                 new NullPositionGateway(), //new OkCoinPositionGateway(config),
                 new OkCoinBaseGateway());
             }
