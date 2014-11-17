@@ -45,6 +45,7 @@ class ExchangeBroker implements IBroker {
 
     OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
     _allOrders : { [orderId: string]: OrderStatusReport[] } = {};
+    _exchIdsToClientIds : { [exchId: string] : string} = {};
 
     private static generateOrderId = () => {
         // use moment.js?
@@ -110,8 +111,18 @@ class ExchangeBroker implements IBroker {
     };
 
     public onOrderUpdate = (osr : OrderStatusReport) => {
+        var orderChain = this._allOrders[osr.orderId];
 
-        if (!this._allOrders.hasOwnProperty(osr.orderId)) {
+        if (typeof orderChain === "undefined") {
+            // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
+            var secondChance = this._exchIdsToClientIds[osr.exchangeId];
+            if (typeof secondChance !== "undefined") {
+                osr.orderId = secondChance;
+                orderChain = this._allOrders[secondChance];
+            }
+        }
+
+        if (typeof orderChain === "undefined") {
             var keys = [];
             for (var k in this._allOrders)
                 if (this._allOrders.hasOwnProperty(k))
@@ -119,10 +130,11 @@ class ExchangeBroker implements IBroker {
             this._log("ERROR: cannot find orderId from %o, existing: %o", osr, keys);
         }
 
-        var orig : OrderStatusReport = this._allOrders[osr.orderId].last();
+        var orig : OrderStatusReport = orderChain.last();
 
         var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
+        var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
         var o = new OrderStatusReportImpl(
             osr.side || orig.side,
@@ -144,12 +156,13 @@ class ExchangeBroker implements IBroker {
             osr.exchange || orig.exchange,
             osr.computationalLatency,
             (typeof orig.version === "undefined") ? 0 : orig.version + 1,
-            cumQuantity > 0 && cumQuantity !== quantity,
+            partiallyFilled,
             osr.pendingCancel,
             osr.pendingReplace,
             osr.cancelRejected
         );
 
+        this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
         this._allOrders[osr.orderId].push(o);
         this._log("applied gw update -> %o", o);
 
