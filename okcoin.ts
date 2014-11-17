@@ -217,8 +217,6 @@ module OkCoin {
             };
 
             this.OrderUpdate.trigger(status);
-
-            this._log("got new exec rpt %o", tsMsg);
         };
 
         private onConnectionStatus = (tsMsg : Timestamped<string>) => {

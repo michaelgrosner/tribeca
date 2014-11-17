@@ -7,7 +7,7 @@
 
 var env = process.env.TRIBECA_MODE;
 var config = new ConfigProvider(env);
-var gateways : Array<CombinedGateway> = [new AtlasAts.AtlasAts(config), new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
+var gateways : Array<CombinedGateway> = [new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
 var brokers = gateways.map(g => new ExchangeBroker(g.md, g.base, g.oe, g.pg));
 var posAgg = new PositionAggregator(brokers);
 var orderAgg = new OrderBrokerAggregator(brokers);

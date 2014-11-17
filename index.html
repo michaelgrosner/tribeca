@@ -153,28 +153,30 @@
                 <th>c-r</th>
             </tr>
             <tr ng-repeat="o in orders_statuses|orderBy:'-time'">
-                <td>{{ o.orderId }}</td>
-                <td>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
-                <td>{{ availableExchanges[o.exchange] }}</td>
-                <td>{{ getOrderStatus(o) }}</td>
-                <td>{{ o.price|number:2 }}</td>
-                <td>{{ o.quantity|number:4 }}</td>
-                <td>{{ availableSides[o.side] }}</td>
-                <td>{{ availableOrderTypes[o.type] }}</td>
-                <td>{{ availableTifs[o.timeInForce] }}</td>
-                <td>{{ o.computationalLatency }}</td>
-                <td>{{ o.lastQuantity|number:4 }}</td>
-                <td>{{ o.lastPrice|number:2 }}</td>
-                <td>{{ o.leavesQuantity|number:4 }}</td>
-                <td>{{ o.cumQuantity|number:4 }}</td>
-                <td>{{ o.averagePrice|number:2 }}</td>
-                <td>{{ availableLiquidityTypes[o.liquidity]}}</td>
-                <td>{{ o.rejectMessage }}</td>
-                <td>{{ o.version }}</td>
-                <td><button type="button"
+                <td bind-once>{{ o.orderId }}</td>
+                <td bind-once>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
+                <td bind-once>{{ availableExchanges[o.exchange] }}</td>
+                <td bind-once>{{ getOrderStatus(o) }}</td>
+                <td bind-once>{{ o.price|number:2 }}</td>
+                <td bind-once>{{ o.quantity|number:4 }}</td>
+                <td bind-once>{{ availableSides[o.side] }}</td>
+                <td bind-once>{{ availableOrderTypes[o.type] }}</td>
+                <td bind-once>{{ availableTifs[o.timeInForce] }}</td>
+                <td bind-once>{{ o.computationalLatency }}</td>
+                <td bind-once>{{ o.lastQuantity|number:4 }}</td>
+                <td bind-once>{{ o.lastPrice|number:2 }}</td>
+                <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
+                <td bind-once>{{ o.cumQuantity|number:4 }}</td>
+                <td bind-once>{{ o.averagePrice|number:2 }}</td>
+                <td bind-once>{{ availableLiquidityTypes[o.liquidity]}}</td>
+                <td bind-once>{{ o.rejectMessage }}</td>
+                <td bind-once>{{ o.version }}</td>
+                <td bind-once>
+                    <button type="button"
                             class="btn btn-danger btn-xs"
                             ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
-                <td><button type="button"
+                <td bind-once>
+                    <button type="button"
                             class="btn btn-warning btn-xs"
                             mypopover popover-template="cancel_replace_form.html"
                             id="cancel_replace_form"
@@ -296,11 +298,23 @@ var mypopover = function ($compile, $templateCache) {
             });
         }
     };
-}
+};
+
+var bindOnce = function () {
+    return {
+        scope: true,
+        link: function ($scope) {
+            setTimeout(function () {
+                $scope.$destroy();
+            }, 0);
+        }
+    }
+};
 
 angular.module('projectApp', ['ui.bootstrap'])
         .controller('uiCtrl', uiCtrl)
-        .directive('mypopover', mypopover);
+        .directive('mypopover', mypopover)
+        .directive('bindOnce', bindOnce);
 
 </script>
 
