@@ -132,7 +132,7 @@ module OkCoin {
                 symbol: "BTC/USD",
                 side: order.side == Side.Bid ? "buy" : "sell",
                 price: order.price,
-                tif: "GTC",
+                tif: TimeInForce[order.timeInForce],
                 amount: order.quantity};
             this._socket.sendEvent("New", o);
 

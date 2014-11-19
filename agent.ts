@@ -236,10 +236,13 @@ class Agent {
         var px = o.side == Side.Ask
             ? hideBroker.currentBook.update.ask.price
             : hideBroker.currentBook.update.bid.price;
-        hideBroker.sendOrder(new SubmitNewOrder(o.side, o.lastQuantity, o.type, px, TimeInForce.IOC, hideBroker.exchange(), o.time));
+        var side = o.side == Side.Bid ? Side.Ask : Side.Bid;
+        hideBroker.sendOrder(new SubmitNewOrder(side, o.lastQuantity, o.type, px, TimeInForce.IOC, hideBroker.exchange(), o.time));
 
-        this._log("ARBFIRE :: %s for %d at %d on %s", Side[o.side], o.lastQuantity, px, Exchange[hideBroker.exchange()]);
+        this._log("ARBFIRE :: rested %s %d for %d on %s --> pushing %s %d for %d on %s",
+            Side[o.side], o.lastQuantity, o.lastPrice, Exchange[this.LastBestResult.restBroker.exchange()],
+            Side[side], o.lastQuantity, px, Exchange[this.LastBestResult.hideBroker.exchange()]);
 
-        this.stop(this.LastBestResult, o.orderStatus == OrderStatus.Complete, o.time);
+        this.stop(this.LastBestResult, o.orderStatus != OrderStatus.Complete, o.time);
     };
 }
