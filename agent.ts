@@ -113,13 +113,12 @@ class Agent {
         for (var i = 0; i < this._brokers.length; i++) {
             var restBroker = this._brokers[i];
             if (!Agent.isBrokerActive(restBroker)) continue;
+            var restTop = restBroker.currentBook.update;
 
             for (var j = 0; j < this._brokers.length; j++) {
                 var hideBroker = this._brokers[j];
                 if (i == j || !Agent.isBrokerActive(hideBroker)) continue;
 
-                // need to determine whether or not I'm already on the market
-                var restTop = restBroker.currentBook.update;
                 var hideTop = hideBroker.currentBook.update;
 
                 var bidSize = Math.min(this._maxSize, hideTop.bid.size);
@@ -128,12 +127,12 @@ class Agent {
                 var askSize = Math.min(this._maxSize, hideTop.ask.size);
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
-                if (pBid > bestProfit && pBid > this._minProfit) {
+                if (pBid > bestProfit && pBid > this._minProfit && bidSize > .01) {
                     bestProfit = pBid;
                     bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                 }
 
-                if (pAsk > bestProfit && pAsk > this._minProfit) {
+                if (pAsk > bestProfit && pAsk > this._minProfit && askSize > .01) {
                     bestProfit = pAsk;
                     bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
