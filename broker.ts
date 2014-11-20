@@ -230,6 +230,8 @@ class ExchangeBroker implements IBroker {
 
         if (newStatus != this._connectStatus)
             this.ConnectChanged.trigger(newStatus);
+        else
+            return;
 
         this._connectStatus = newStatus;
         this._log(GatewayType[gwType], "Connection status changed ", ConnectivityStatus[cs]);

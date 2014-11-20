@@ -219,22 +219,10 @@ module OkCoin {
             this.OrderUpdate.trigger(status);
         };
 
-        private onConnectionStatus = (tsMsg : Timestamped<string>) => {
-            if (tsMsg.data == "Logon") {
-                this.ConnectChanged.trigger(ConnectivityStatus.Connected);
-            }
-            else if (tsMsg.data == "Logout") {
-                this.ConnectChanged.trigger(ConnectivityStatus.Disconnected);
-            }
-            else {
-                throw new Error(util.format("unknown connection status raised by FIX socket : %o", tsMsg));
-            }
-        };
-
         _log : Logger = log("tribeca:gateway:OkCoinOE");
         constructor(private _socket : Fix.FixGateway) {
-            _socket.subscribe("ConnectionStatus", this.onConnectionStatus);
             _socket.subscribe("ExecRpt", this.onMessage);
+            _socket.ConnectChanged.on(cs => this.ConnectChanged.trigger(cs));
         }
     }
 
