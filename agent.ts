@@ -127,12 +127,12 @@ class Agent {
                 var askSize = Math.min(this._maxSize, hideTop.ask.size);
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
-                if (pBid > bestProfit && pBid > this._minProfit && bidSize > .01) {
+                if (pBid > bestProfit && pBid > this._minProfit && bidSize >= .01) {
                     bestProfit = pBid;
                     bestResult = new Result(Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                 }
 
-                if (pAsk > bestProfit && pAsk > this._minProfit && askSize > .01) {
+                if (pAsk > bestProfit && pAsk > this._minProfit && askSize >= .01) {
                     bestProfit = pAsk;
                     bestResult = new Result(Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
