@@ -77,25 +77,41 @@ class DebugConfig {
     public static get OkCoinOrderDestination() : string { return "Null"; }
 }
 
+enum Environment {
+    Dev,
+    Prod
+}
+
 interface IConfigProvider {
     GetString(configKey : string) : string;
     GetNumber(configKey : string) : number;
+
+    environment() : Environment;
 }
 
 class ConfigProvider implements IConfigProvider {
+    private _env : Environment;
+    environment() : Environment {
+        return this._env;
+    }
+
     private static Log : Logger = log("tribeca:config");
     private _config : {[key: string] : string} = {};
 
-    constructor(private _env : string) {
+    constructor(private _rawEnv : string) {
         var _configOverrideSet : any;
-        if (this._env == "prod") {
-            _configOverrideSet = ProdConfig;
-        }
-        else if (this._env == "dev") {
-            _configOverrideSet = DebugConfig;
-        }
-        else {
-            throw Error(this._env + " is not a valid TRIBECA_MODE");
+
+        switch (this._rawEnv) {
+            case "prod":
+                _configOverrideSet = ProdConfig;
+                this._env = Environment.Prod;
+                break;
+            case "dev":
+                _configOverrideSet = DebugConfig;
+                this._env = Environment.Dev;
+                break;
+            default:
+                throw Error(this._env + " is not a valid TRIBECA_MODE");
         }
 
         for (var k in BaseConfig) {

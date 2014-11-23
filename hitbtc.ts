@@ -9,6 +9,7 @@ module HitBtc {
     var ws = require('ws');
     var request = require('request');
     var url = require("url");
+    var querystring = require("querystring");
 
     var _lotMultiplier = 100.0;
 
@@ -391,7 +392,8 @@ module HitBtc {
 
     interface HitBtcPositionReport {
         currency_code : string;
-        balance : number;
+        cash : number;
+        reserved : number;
     }
 
     class HitBtcPositionGateway implements IPositionGateway {
@@ -399,13 +401,19 @@ module HitBtc {
         PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
 
         private getAuth = (uri : string) : any => {
-            var _nonce : number = new Date().getDate();
-            var comb = uri + "?nonce=" + _nonce + "&apikey=" + this._apiKey;
-            var signature = crypto.createHmac('sha512', this._secret).update(comb).digest('hex').toString().toLowerCase();
+            var nonce : number = new Date().getTime() * 1000;
+            var comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey});
+
+            var signature = crypto.createHmac('sha512', this._secret)
+                                  .update(comb)
+                                  .digest('hex')
+                                  .toString()
+                                  .toLowerCase();
+
             return {url: url.resolve(this._pullUrl, uri),
                     method: "GET",
                     headers: {"X-Signature": signature},
-                    qs: {nonce: _nonce.toString(), apikey: this._apiKey}};
+                    qs: {nonce: nonce.toString(), apikey: this._apiKey}};
         };
 
         private static convertCurrency(code : string) : Currency {
@@ -419,19 +427,19 @@ module HitBtc {
 
         private onTick = () => {
             request.get(
-                this.getAuth("/api/1/payment/balance"),
+                this.getAuth("/api/1/trading/balance"),
                 (err, body, resp) => {
                     var rpts : Array<HitBtcPositionReport> = JSON.parse(resp).balance;
 
                     if (typeof rpts === 'undefined' || err) {
-                        this._log("Trouble getting positions err: %o body: %o", err, body);
+                        this._log("Trouble getting positions err: %o body: %o", err, body.body);
                         return;
                     }
 
                     rpts.forEach(r => {
                         var currency = HitBtcPositionGateway.convertCurrency(r.currency_code);
                         if (currency == null) return;
-                        var position = new CurrencyPosition(r.balance, currency);
+                        var position = new CurrencyPosition(r.cash, currency);
                         this.PositionUpdate.trigger(position);
                     });
                 });
@@ -444,8 +452,8 @@ module HitBtc {
             this._apiKey = config.GetString("HitBtcApiKey");
             this._secret = config.GetString("HitBtcSecret");
             this._pullUrl = config.GetString("HitBtcPullUrl");
-            setTimeout(this.onTick(), 10);
-            setInterval(this.onTick, 1500);
+            this.onTick();
+            setInterval(this.onTick, 15000);
         }
     }
 
@@ -472,7 +480,7 @@ module HitBtc {
             super(
                 new HitBtcMarketDataGateway(config),
                 config.GetString("HitBtcOrderDestination") == "HitBtc" ? <IOrderEntryGateway>new HitBtcOrderEntryGateway(config) : new NullOrderGateway(),
-                new NullPositionGateway(), //new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
+                config.environment() == Environment.Dev ? new NullPositionGateway() : new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
                 new HitBtcBaseGateway());
         }
     }
