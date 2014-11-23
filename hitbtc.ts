@@ -401,7 +401,7 @@ module HitBtc {
         PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
 
         private getAuth = (uri : string) : any => {
-            var nonce : number = new Date().getTime() * 1000;
+            var nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
             var comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey});
 
             var signature = crypto.createHmac('sha512', this._secret)
@@ -477,10 +477,19 @@ module HitBtc {
 
     export class HitBtc extends CombinedGateway {
         constructor(config : IConfigProvider) {
+            var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
+                <IOrderEntryGateway>new HitBtcOrderEntryGateway(config)
+                : new NullOrderGateway();
+
+            // Payment actions are not permitted in demo mode -- helpful.
+            var positionGateway = config.environment() == Environment.Dev ?
+                new NullPositionGateway() :
+                new HitBtcPositionGateway(config);
+
             super(
                 new HitBtcMarketDataGateway(config),
-                config.GetString("HitBtcOrderDestination") == "HitBtc" ? <IOrderEntryGateway>new HitBtcOrderEntryGateway(config) : new NullOrderGateway(),
-                config.environment() == Environment.Dev ? new NullPositionGateway() : new HitBtcPositionGateway(config), // Payment actions are not permitted in demo mode -- helpful.
+                orderGateway,
+                positionGateway,
                 new HitBtcBaseGateway());
         }
     }
