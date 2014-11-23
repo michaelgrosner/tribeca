@@ -2,6 +2,7 @@
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
 /// <reference path="null.ts" />
+/// <reference path="config.ts" />
 
 module AtlasAts {
 

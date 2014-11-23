@@ -1,0 +1,114 @@
+/// <reference path="typings/tsd.d.ts" />
+
+class BaseConfig {
+    public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
+    public static get AtlasAtsAccount() : string { return "1352"; }
+    public static get AtlasAtsSecret() : string { return "d61eb29445f7a72a83fbc056b1693c962eb97524918f1e9e2d10b6965c16c8c7"; }
+    public static get AtlasAtsMultiToken() : string { return "0e48f9bd6f8dec728df2547b7a143e504a83cb2d"; }
+    public static get AtlasAtsHttpUrl() : string { return "https://atlasats.com"; }
+
+    public static get OkCoinPartner() : string { return "2013015"; }
+    public static get OkCoinSecretKey() : string { return "75AB165AD31EB279A6EBEE709734A6C1"; }
+    public static get OkCoinWsUrl() : string { return "wss://real.okcoin.com:10440/websocket/okcoinapi"; }
+    public static get OkCoinHttpUrl() : string { return "https://www.okcoin.com/api/v1/"; }
+
+    public static get MaxSize() : string { return "0.01"; }
+    public static get MinProfit() : string { return "0.01"; }
+}
+
+class ProdConfig {
+    public static get HitBtcPullUrl() : string { return "http://api.hitbtc.com"; }
+    public static get HitBtcOrderEntryUrl() : string { return "wss://api.hitbtc.com:8080"; }
+    public static get HitBtcMarketDataUrl() : string { return 'ws://api.hitbtc.com:80'; }
+    public static get HitBtcApiKey() : string { return '5565ab3621cb0f8f9f07a926ce46ef2c'; }
+    public static get HitBtcSecret() : string { return "b03fe2dad1c1843510edcca56446ac20"; }
+
+    public static get AtlasAtsWsUrl() : string { return 'wss://atlasats.com/api/v1/streaming'; }
+
+    public static get AtlasAtsOrderDestination() : string { return "AtlasAts"; }
+    public static get HitBtcOrderDestination() : string { return "HitBtc"; }
+    public static get OkCoinOrderDestination() : string { return "OkCoin"; }
+}
+
+class DebugConfig {
+    public static get HitBtcPullUrl() : string { return "http://demo-api.hitbtc.com"; }
+    public static get HitBtcOrderEntryUrl() : string { return "ws://demo-api.hitbtc.com:8080"; }
+    public static get HitBtcMarketDataUrl() : string { return 'ws://demo-api.hitbtc.com:80'; }
+    public static get HitBtcApiKey() : string { return '004ee1065d6c7a6ac556bea221cd6338'; }
+    public static get HitBtcSecret() : string { return "aa14d615df5d47cb19a13ffe4ea638eb"; }
+
+    public static get AtlasAtsWsUrl() : string { return 'ws://test-atlasats.com/api/v1/streaming'; }
+
+    public static get AtlasAtsOrderDestination() : string { return "Null"; }
+    public static get HitBtcOrderDestination() : string { return "HitBtc"; }
+    public static get OkCoinOrderDestination() : string { return "Null"; }
+}
+
+enum Environment {
+    Dev,
+    Prod
+}
+
+interface IConfigProvider {
+    GetString(configKey : string) : string;
+    GetNumber(configKey : string) : number;
+
+    environment() : Environment;
+}
+
+class ConfigProvider implements IConfigProvider {
+    private _env : Environment;
+    environment() : Environment {
+        return this._env;
+    }
+
+    private static Log : Logger = log("tribeca:config");
+    private _config : {[key: string] : string} = {};
+
+    constructor(private _rawEnv : string) {
+        var _configOverrideSet : any;
+
+        switch (this._rawEnv) {
+            case "prod":
+                _configOverrideSet = ProdConfig;
+                this._env = Environment.Prod;
+                break;
+            case "dev":
+                _configOverrideSet = DebugConfig;
+                this._env = Environment.Dev;
+                break;
+            default:
+                throw Error(this._env + " is not a valid TRIBECA_MODE");
+        }
+
+        for (var k in BaseConfig) {
+            if (BaseConfig.hasOwnProperty(k))
+                this._config[k] = BaseConfig[k];
+        }
+
+        for (var k in _configOverrideSet) {
+            if (_configOverrideSet.hasOwnProperty(k))
+                this._config[k] = _configOverrideSet[k];
+        }
+
+        for (var k in this._config) {
+            if (this._config.hasOwnProperty(k)) {
+                ConfigProvider.Log("%s = %s (%s)", k, this._config[k], _configOverrideSet.hasOwnProperty(k) ? this._env : "base");
+            }
+        }
+    }
+
+    public GetNumber = (configKey : string) : number => {
+        return parseFloat(this.GetString(configKey));
+    };
+
+    public GetString = (configKey : string) : string => {
+        if (this._config.hasOwnProperty(configKey))
+            return this._config[configKey];
+
+        if (BaseConfig.hasOwnProperty(configKey))
+            return BaseConfig[configKey];
+
+        throw Error(this._env + " config does not have property " + configKey);
+    };
+}
