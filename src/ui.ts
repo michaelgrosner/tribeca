@@ -1,9 +1,11 @@
-/// <reference path="models.ts" />
+/// <reference path="agent.ts" />
 
-var app = require('express')();
+import express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var path = require("path");
+import path = require("path");
+import Agent = require("agent");
 
 interface OrderRequestFromUI {
     exchange : string;
@@ -19,15 +21,15 @@ interface ReplaceRequestFromUI {
     quantity : number;
 }
 
-class UI {
+export class UI {
     _log : Logger = log("tribeca:ui");
 
     constructor(private _env : string,
                 private _brokers : Array<IBroker>,
-                private _agent : Agent,
-                private _orderAgg : OrderBrokerAggregator,
-                private _mdAgg : MarketDataAggregator,
-                private _posAgg : PositionAggregator) {
+                private _agent : Agent.Agent,
+                private _orderAgg : Agent.OrderBrokerAggregator,
+                private _mdAgg : Agent.MarketDataAggregator,
+                private _posAgg : Agent.PositionAggregator) {
 
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));

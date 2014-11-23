@@ -1,6 +1,9 @@
 /// <reference path="models.ts" />
+/// <reference path="config.ts" />
 
-class PositionAggregator {
+import Config = require("config");
+
+export class PositionAggregator {
     PositionUpdate = new Evt<ExchangeCurrencyPosition>();
 
     constructor(private _brokers : Array<IBroker>) {
@@ -10,7 +13,7 @@ class PositionAggregator {
     }
 }
 
-class MarketDataAggregator {
+export class MarketDataAggregator {
     MarketData = new Evt<Market>();
 
     constructor(private _brokers : Array<IBroker>) {
@@ -20,7 +23,7 @@ class MarketDataAggregator {
     }
 }
 
-class OrderBrokerAggregator {
+export class OrderBrokerAggregator {
     _log : Logger = log("tribeca:brokeraggregator");
     _brokersByExch : { [exchange: number]: IBroker} = {};
 
@@ -32,8 +35,8 @@ class OrderBrokerAggregator {
             b.OrderUpdate.on(o => this.OrderUpdate.trigger(o));
         });
 
-        for (var i = 0; i < brokers.length; i++)
-            this._brokersByExch[brokers[i].exchange()] = brokers[i];
+        for (var i = 0; i < this._brokers.length; i++)
+            this._brokersByExch[this._brokers[i].exchange()] = this._brokers[i];
     }
 
     public submitOrder = (o : SubmitNewOrder) => {
@@ -64,7 +67,7 @@ class OrderBrokerAggregator {
     };
 }
 
-class Agent {
+export class Agent {
     private _log : Logger = log("tribeca:agent");
     private _maxSize : number;
     private _minProfit : number;
@@ -72,7 +75,7 @@ class Agent {
     constructor(private _brokers : Array<IBroker>,
                 private _mdAgg : MarketDataAggregator,
                 private _orderAgg : OrderBrokerAggregator,
-                private config : IConfigProvider) {
+                private config : Config.IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
         this._minProfit = config.GetNumber("MinProfit");
         _mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));

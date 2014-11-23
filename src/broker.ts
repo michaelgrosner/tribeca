@@ -1,6 +1,6 @@
 /// <reference path="utils.ts" />
 
-class ExchangeBroker implements IBroker {
+export class ExchangeBroker implements IBroker {
     _log : Logger;
 
     PositionUpdate = new Evt<ExchangeCurrencyPosition>();

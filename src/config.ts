@@ -44,19 +44,19 @@ class DebugConfig {
     public static get OkCoinOrderDestination() : string { return "Null"; }
 }
 
-enum Environment {
+export enum Environment {
     Dev,
     Prod
 }
 
-interface IConfigProvider {
+export interface IConfigProvider {
     GetString(configKey : string) : string;
     GetNumber(configKey : string) : number;
 
     environment() : Environment;
 }
 
-class ConfigProvider implements IConfigProvider {
+export class ConfigProvider implements IConfigProvider {
     private _env : Environment;
     environment() : Environment {
         return this._env;
