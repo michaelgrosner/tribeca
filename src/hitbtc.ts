@@ -1,4 +1,4 @@
-/// <reference path="typings/tsd.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
 /// <reference path="null.ts" />

@@ -1,4 +1,4 @@
-/// <reference path="typings/tsd.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 class BaseConfig {
     public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
