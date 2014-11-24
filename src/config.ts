@@ -1,4 +1,7 @@
 /// <reference path="../typings/tsd.d.ts" />
+/// <reference path="models.ts" />
+
+import Utils = require("./utils");
 
 class BaseConfig {
     public static get AtlasAtsSimpleToken() : string { return "9464b821cea0d62939688df750547593"; }
@@ -62,7 +65,7 @@ export class ConfigProvider implements IConfigProvider {
         return this._env;
     }
 
-    private static Log : Logger = log("tribeca:config");
+    private static Log : Utils.Logger = Utils.log("tribeca:config");
     private _config : {[key: string] : string} = {};
 
     constructor(private _rawEnv : string) {

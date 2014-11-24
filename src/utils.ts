@@ -1,17 +1,14 @@
 /// <reference path="../typings/tsd.d.ts" />
 
-var log = require('debug');
-var momentjs = require('moment');
-var util = require("util");
+export var log = require('debug');
+import momentjs = require('moment');
+import util = require("util");
 
-var date = momentjs.utc;
+export var date = momentjs.utc;
 
-interface Logger { (...arg : any[]) : void;}
+export interface Logger { (...arg : any[]) : void;}
 
-interface Array<T> { last() : T;}
-Array.prototype.last = function() { return this[this.length - 1]; };
-
-class Evt<T> {
+export class Evt<T> {
     constructor(private handlers : { (data? : T): void; }[] = []) {}
 
     public on(handler : { (data? : T): void }) {

@@ -1,15 +1,21 @@
 /// <reference path="utils.ts" />
+/// <reference path="models.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
-export class ExchangeBroker implements IBroker {
-    _log : Logger;
+import Models = require("./models");
+import Utils = require("./utils");
+import _ = require("lodash");
 
-    PositionUpdate = new Evt<ExchangeCurrencyPosition>();
-    private _currencies : { [currency : number] : ExchangeCurrencyPosition } = {};
-    public getPosition(currency : Currency) : ExchangeCurrencyPosition {
+export class ExchangeBroker implements Models.IBroker {
+    _log : Utils.Logger;
+
+    PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
+    private _currencies : { [currency : number] : Models.ExchangeCurrencyPosition } = {};
+    public getPosition(currency : Models.Currency) : Models.ExchangeCurrencyPosition {
         return this._currencies[currency];
     }
 
-    private onPositionUpdate = (rpt : CurrencyPosition) => {
+    private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
             var newRpt = rpt.toExchangeReport(this.exchange());
             this._currencies[rpt.currency] = newRpt;
@@ -21,19 +27,19 @@ export class ExchangeBroker implements IBroker {
     cancelOpenOrders() : void {
         for (var k in this._allOrders) {
             if (!this._allOrders.hasOwnProperty(k)) continue;
-            var e : OrderStatusReport = this._allOrders[k].last();
+            var e : Models.OrderStatusReport = _.last(this._allOrders[k]);
 
             switch (e.orderStatus) {
-                case OrderStatus.New:
-                case OrderStatus.Working:
-                    this.cancelOrder(new OrderCancel(e.orderId, e.exchange, date()));
+                case Models.OrderStatus.New:
+                case Models.OrderStatus.Working:
+                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, Utils.date()));
                     break;
             }
         }
     }
 
-    allOrderStates() : Array<OrderStatusReport> {
-        var os : Array<OrderStatusReport> = [];
+    allOrderStates() : Array<Models.OrderStatusReport> {
+        var os : Array<Models.OrderStatusReport> = [];
         for (var k in this._allOrders) {
             var e = this._allOrders[k];
             for (var i = 0; i < e.length; i++) {
@@ -43,8 +49,8 @@ export class ExchangeBroker implements IBroker {
         return os;
     }
 
-    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
-    _allOrders : { [orderId: string]: OrderStatusReport[] } = {};
+    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
     _exchIdsToClientIds : { [exchId: string] : string} = {};
 
     private static generateOrderId = () => {
@@ -52,14 +58,14 @@ export class ExchangeBroker implements IBroker {
         return new Date().getTime().toString(32)
     };
 
-    sendOrder = (order : SubmitNewOrder) : SentOrder => {
+    sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = ExchangeBroker.generateOrderId();
         var exch = this.exchange();
-        var brokeredOrder = new BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
-        var rpt : OrderStatusReport = {
+        var rpt : Models.OrderStatusReport = {
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
@@ -67,25 +73,25 @@ export class ExchangeBroker implements IBroker {
             time: sent.sentTime,
             price: order.price,
             timeInForce: order.timeInForce,
-            orderStatus: OrderStatus.New,
+            orderStatus: Models.OrderStatus.New,
             exchange: exch,
             computationalLatency: sent.sentTime.diff(order.generatedTime)};
         this._allOrders[rpt.orderId] = [rpt];
         this.onOrderUpdate(rpt);
 
-        return new SentOrder(rpt.orderId);
+        return new Models.SentOrder(rpt.orderId);
     };
 
-    replaceOrder = (replace : CancelReplaceOrder) : SentOrder => {
-        var rpt = this._allOrders[replace.origOrderId].last();
-        var br = new BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
+    replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
+        var rpt = _.last(this._allOrders[replace.origOrderId]);
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
 
         var sent = this._oeGateway.replaceOrder(br);
 
-        var rpt : OrderStatusReport = {
+        var rpt : Models.OrderStatusReport = {
             orderId: replace.origOrderId,
-            orderStatus: OrderStatus.Working,
+            orderStatus: Models.OrderStatus.Working,
             pendingReplace: true,
             price: replace.price,
             quantity: replace.quantity,
@@ -93,24 +99,24 @@ export class ExchangeBroker implements IBroker {
             computationalLatency: sent.sentTime.diff(replace.generatedTime)};
         this.onOrderUpdate(rpt);
 
-        return new SentOrder(rpt.orderId);
+        return new Models.SentOrder(rpt.orderId);
     };
 
-    cancelOrder = (cancel : OrderCancel) => {
-        var rpt = this._allOrders[cancel.origOrderId].last();
-        var cxl = new BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
+    cancelOrder = (cancel : Models.OrderCancel) => {
+        var rpt = _.last(this._allOrders[cancel.origOrderId]);
+        var cxl = new Models.BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         var sent = this._oeGateway.cancelOrder(cxl);
 
-        var rpt : OrderStatusReport = {
+        var rpt : Models.OrderStatusReport = {
             orderId: cancel.origOrderId,
-            orderStatus: OrderStatus.Working,
+            orderStatus: Models.OrderStatus.Working,
             pendingCancel: true,
             time: sent.sentTime,
             computationalLatency: sent.sentTime.diff(cancel.generatedTime)};
         this.onOrderUpdate(rpt);
     };
 
-    public onOrderUpdate = (osr : OrderStatusReport) => {
+    public onOrderUpdate = (osr : Models.OrderStatusReport) => {
         var orderChain = this._allOrders[osr.orderId];
 
         if (typeof orderChain === "undefined") {
@@ -130,13 +136,13 @@ export class ExchangeBroker implements IBroker {
             this._log("ERROR: cannot find orderId from %o, existing: %o", osr, keys);
         }
 
-        var orig : OrderStatusReport = orderChain.last();
+        var orig : Models.OrderStatusReport = _.last(orderChain);
 
         var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
         var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
-        var o = new OrderStatusReportImpl(
+        var o = new Models.OrderStatusReportImpl(
             osr.side || orig.side,
             quantity,
             osr.type || orig.type,
@@ -146,7 +152,7 @@ export class ExchangeBroker implements IBroker {
             osr.exchangeId || orig.exchangeId,
             osr.orderStatus || orig.orderStatus,
             osr.rejectMessage,
-            osr.time || date(),
+            osr.time || Utils.date(),
             osr.lastQuantity,
             osr.lastPrice,
             osr.leavesQuantity || orig.leavesQuantity,
@@ -182,51 +188,51 @@ export class ExchangeBroker implements IBroker {
         return this._baseGateway.name();
     }
 
-    exchange() : Exchange {
+    exchange() : Models.Exchange {
         return this._baseGateway.exchange();
     }
 
-    MarketData = new Evt<Market>();
-    _currentBook : Market = null;
+    MarketData = new Utils.Evt<Models.Market>();
+    _currentBook : Models.Market = null;
 
-    public get currentBook() : Market {
+    public get currentBook() : Models.Market {
         return this._currentBook;
     }
 
-    private static getMarketDataFlag(current : MarketUpdate, previous : Market) {
-        if (previous === null) return MarketDataFlag.First;
+    private static getMarketDataFlag(current : Models.MarketUpdate, previous : Models.Market) {
+        if (previous === null) return Models.MarketDataFlag.First;
 
-        var cmb = (c : MarketSide, p : MarketSide) => {
+        var cmb = (c : Models.MarketSide, p : Models.MarketSide) => {
             var priceChanged = Math.abs(c.price - p.price) > 1e-4;
             var sizeChanged = Math.abs(c.size - p.size) > 1e-4;
-            if (priceChanged && sizeChanged) return MarketDataFlag.PriceAndSizeChanged;
-            if (priceChanged) return MarketDataFlag.PriceChanged;
-            if (sizeChanged) return MarketDataFlag.SizeChanged;
-            return MarketDataFlag.NoChange;
+            if (priceChanged && sizeChanged) return Models.MarketDataFlag.PriceAndSizeChanged;
+            if (priceChanged) return Models.MarketDataFlag.PriceChanged;
+            if (sizeChanged) return Models.MarketDataFlag.SizeChanged;
+            return Models.MarketDataFlag.NoChange;
         };
 
         return (cmb(current.ask, previous.update.ask) | cmb(current.bid, previous.update.bid));
     }
 
-    private handleMarketData = (book : MarketUpdate) => {
+    private handleMarketData = (book : Models.MarketUpdate) => {
         if (this.currentBook == null || !book.equals(this.currentBook.update)) {
-            this._currentBook = new Market(book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
+            this._currentBook = new Models.Market(book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
             this.MarketData.trigger(this.currentBook);
             this._log(this.currentBook);
         }
     };
 
-    ConnectChanged = new Evt<ConnectivityStatus>();
-    private mdConnected = ConnectivityStatus.Disconnected;
-    private oeConnected = ConnectivityStatus.Disconnected;
-    private _connectStatus = ConnectivityStatus.Disconnected;
-    public onConnect = (gwType : GatewayType, cs : ConnectivityStatus) => {
-        if (gwType == GatewayType.MarketData) this.mdConnected = cs;
-        if (gwType == GatewayType.OrderEntry) this.oeConnected = cs;
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    private mdConnected = Models.ConnectivityStatus.Disconnected;
+    private oeConnected = Models.ConnectivityStatus.Disconnected;
+    private _connectStatus = Models.ConnectivityStatus.Disconnected;
+    public onConnect = (gwType : Models.GatewayType, cs : Models.ConnectivityStatus) => {
+        if (gwType == Models.GatewayType.MarketData) this.mdConnected = cs;
+        if (gwType == Models.GatewayType.OrderEntry) this.oeConnected = cs;
 
-        var newStatus = this.mdConnected == ConnectivityStatus.Connected && this.oeConnected == ConnectivityStatus.Connected
-            ? ConnectivityStatus.Connected
-            : ConnectivityStatus.Disconnected;
+        var newStatus = this.mdConnected == Models.ConnectivityStatus.Connected && this.oeConnected == Models.ConnectivityStatus.Connected
+            ? Models.ConnectivityStatus.Connected
+            : Models.ConnectivityStatus.Disconnected;
 
         if (newStatus != this._connectStatus)
             this.ConnectChanged.trigger(newStatus);
@@ -234,28 +240,28 @@ export class ExchangeBroker implements IBroker {
             return;
 
         this._connectStatus = newStatus;
-        this._log(GatewayType[gwType], "Connection status changed ", ConnectivityStatus[cs]);
+        this._log(Models.GatewayType[gwType], "Connection status changed ", Models.ConnectivityStatus[cs]);
     };
 
-    public get connectStatus() : ConnectivityStatus {
+    public get connectStatus() : Models.ConnectivityStatus {
         return this._connectStatus;
     }
 
-    constructor(private _mdGateway : IMarketDataGateway,
-                private _baseGateway : IExchangeDetailsGateway,
-                private _oeGateway : IOrderEntryGateway,
-                private _posGateway : IPositionGateway) {
-        this._log = log("tribeca:exchangebroker:" + this._baseGateway.name());
+    constructor(private _mdGateway : Models.IMarketDataGateway,
+                private _baseGateway : Models.IExchangeDetailsGateway,
+                private _oeGateway : Models.IOrderEntryGateway,
+                private _posGateway : Models.IPositionGateway) {
+        this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
-            if (s == ConnectivityStatus.Disconnected) this._currentBook = null;
-            this.onConnect(GatewayType.MarketData, s);
+            if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
+            this.onConnect(Models.GatewayType.MarketData, s);
         });
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
         this._oeGateway.ConnectChanged.on(s => {
-            this.onConnect(GatewayType.OrderEntry, s)
+            this.onConnect(Models.GatewayType.OrderEntry, s)
         });
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);

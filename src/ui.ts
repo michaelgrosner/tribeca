@@ -1,11 +1,15 @@
 /// <reference path="agent.ts" />
+/// <reference path="models.ts" />
+/// <reference path="utils.ts" />
 
 import express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 import path = require("path");
-import Agent = require("agent");
+import Agent = require("./agent");
+import Models = require("./models");
+import Utils = require("./utils");
 
 interface OrderRequestFromUI {
     exchange : string;
@@ -22,10 +26,10 @@ interface ReplaceRequestFromUI {
 }
 
 export class UI {
-    _log : Logger = log("tribeca:ui");
+    _log : Utils.Logger = Utils.log("tribeca:ui");
 
     constructor(private _env : string,
-                private _brokers : Array<IBroker>,
+                private _brokers : Array<Models.IBroker>,
                 private _agent : Agent.Agent,
                 private _orderAgg : Agent.OrderBrokerAggregator,
                 private _mdAgg : Agent.MarketDataAggregator,
@@ -47,14 +51,14 @@ export class UI {
         io.on('connection', sock => {
             sock.emit("hello", this._env);
             sock.emit("enums", {
-                availableConnectivityStatuses: ConnectivityStatus,
-                availableTifs: TimeInForce,
-                availableExchanges: Exchange,
-                availableSides: Side,
-                availableOrderTypes: OrderType,
-                availableOrderStatuses: OrderStatus,
-                availableLiquidityTypes: Liquidity,
-                availableCurrencies: Currency
+                availableConnectivityStatuses: Models.ConnectivityStatus,
+                availableTifs: Models.TimeInForce,
+                availableExchanges: Models.Exchange,
+                availableSides: Models.Side,
+                availableOrderTypes: Models.OrderType,
+                availableOrderStatuses: Models.OrderStatus,
+                availableLiquidityTypes: Models.Liquidity,
+                availableCurrencies: Models.Currency
             });
 
             this._brokers.forEach(b => {
@@ -63,7 +67,7 @@ export class UI {
                 sock.emit("order-status-report-snapshot", b.allOrderStates());
 
                 // UI only knows about BTC and USD - for now
-                [Currency.BTC, Currency.USD].forEach(c => {
+                [Models.Currency.BTC, Models.Currency.USD].forEach(c => {
                     this.sendPositionUpdate(b.getPosition(c));
                 });
             });
@@ -75,19 +79,19 @@ export class UI {
 
             sock.on("submit-order", (o : OrderRequestFromUI) => {
                 this._log("got new order %o", o);
-                var order = new SubmitNewOrder(Side[o.side], o.quantity, OrderType[o.orderType],
-                    o.price, TimeInForce[o.timeInForce], Exchange[o.exchange], date());
+                var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
+                    o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
                 _orderAgg.submitOrder(order);
             });
 
-            sock.on("cancel-order", (o : OrderStatusReport) => {
+            sock.on("cancel-order", (o : Models.OrderStatusReport) => {
                 this._log("got new cancel req %o", o);
-                _orderAgg.cancelOrder(new OrderCancel(o.orderId, o.exchange, date()));
+                _orderAgg.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()));
             });
 
-            sock.on("cancel-replace", (o : OrderStatusReport, replace : ReplaceRequestFromUI) => {
+            sock.on("cancel-replace", (o : Models.OrderStatusReport, replace : ReplaceRequestFromUI) => {
                 this._log("got new cxl-rpl req %o with %o", o, replace);
-                _orderAgg.cancelReplaceOrder(new CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange, date()));
+                _orderAgg.cancelReplaceOrder(new Models.CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange, Utils.date()));
             });
 
             sock.on("active-change-request", (to : boolean) => {
@@ -96,19 +100,19 @@ export class UI {
         });
     }
 
-    sendUpdatedConnectionStatus = (exch : Exchange, cs : ConnectivityStatus) => {
+    sendUpdatedConnectionStatus = (exch : Models.Exchange, cs : Models.ConnectivityStatus) => {
         io.emit("connection-status", exch, cs);
     };
 
-    sendPositionUpdate = (msg : ExchangeCurrencyPosition) => {
+    sendPositionUpdate = (msg : Models.ExchangeCurrencyPosition) => {
         io.emit("position-report", msg);
     };
 
-    sendOrderStatusUpdate = (msg : OrderStatusReport) => {
+    sendOrderStatusUpdate = (msg : Models.OrderStatusReport) => {
         io.emit("order-status-report", msg);
     };
 
-    sendUpdatedMarket = (book : Market) => {
+    sendUpdatedMarket = (book : Models.Market) => {
         if (book == null) return;
         var b = {bidPrice: book.update.bid.price,
             bidSize: book.update.bid.size,

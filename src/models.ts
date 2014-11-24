@@ -1,17 +1,18 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 
-var util = require("util");
+import util = require("util");
+import Utils = require("./utils");
 
-class Timestamped<T> {
-    constructor(public data : T, public time = date()) {}
+export class Timestamped<T> {
+    constructor(public data : T, public time = Utils.date()) {}
 
     public inspect() {
         return util.inspect({time: this.time.toISOString(), data: this.data});
     }
 }
 
-class MarketSide {
+export class MarketSide {
     constructor(public price: number, public size: number) { }
 
     public equals(other : MarketSide) {
@@ -19,7 +20,7 @@ class MarketSide {
     }
 }
 
-class MarketUpdate {
+export class MarketUpdate {
     constructor(
         public bid : MarketSide,
         public ask : MarketSide,
@@ -35,7 +36,7 @@ class MarketUpdate {
     }
 }
 
-class Market {
+export class Market {
     constructor(
         public update : MarketUpdate,
         public exchange : Exchange,
@@ -47,17 +48,17 @@ class Market {
     }
 }
 
-enum GatewayType { MarketData, OrderEntry, Position }
-enum Currency { USD, BTC, LTC }
-enum ConnectivityStatus { Connected, Disconnected }
-enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
-enum Side { Bid, Ask }
-enum OrderType { Limit, Market }
-enum TimeInForce { IOC, FOK, GTC }
-enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
-enum Liquidity { Make, Take }
+export enum GatewayType { MarketData, OrderEntry, Position }
+export enum Currency { USD, BTC, LTC }
+export enum ConnectivityStatus { Connected, Disconnected }
+export enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts }
+export enum Side { Bid, Ask }
+export enum OrderType { Limit, Market }
+export enum TimeInForce { IOC, FOK, GTC }
+export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
+export enum Liquidity { Make, Take }
 
-enum MarketDataFlag {
+export enum MarketDataFlag {
     NoChange = 0,
     First = 1,
     PriceChanged = 1 << 1,
@@ -65,7 +66,7 @@ enum MarketDataFlag {
     PriceAndSizeChanged = 1 << 3
 }
 
-interface Order {
+export interface Order {
     side : Side;
     quantity : number;
     type : OrderType;
@@ -74,7 +75,7 @@ interface Order {
     exchange : Exchange;
 }
 
-class SubmitNewOrder implements Order {
+export class SubmitNewOrder implements Order {
     constructor(
         public side : Side,
         public quantity : number,
@@ -90,7 +91,7 @@ class SubmitNewOrder implements Order {
     }
 }
 
-class CancelReplaceOrder {
+export class CancelReplaceOrder {
     constructor(
         public origOrderId : string,
         public quantity : number,
@@ -104,7 +105,7 @@ class CancelReplaceOrder {
     }
 }
 
-class OrderCancel {
+export class OrderCancel {
     constructor(
         public origOrderId : string,
         public exchange : Exchange,
@@ -115,7 +116,7 @@ class OrderCancel {
     }
 }
 
-class BrokeredOrder implements Order {
+export class BrokeredOrder implements Order {
     constructor(
         public orderId : string,
         public side : Side,
@@ -132,7 +133,7 @@ class BrokeredOrder implements Order {
     }
 }
 
-class BrokeredReplace implements Order {
+export class BrokeredReplace implements Order {
     constructor(
         public orderId : string,
         public origOrderId : string,
@@ -151,7 +152,7 @@ class BrokeredReplace implements Order {
     }
 }
 
-class BrokeredCancel {
+export class BrokeredCancel {
     constructor(
         public clientOrderId : string,
         public requestId : string,
@@ -164,15 +165,15 @@ class BrokeredCancel {
     }
 }
 
-class SentOrder {
+export class SentOrder {
     constructor(public sentOrderClientId : string) {}
 }
 
-class OrderGatewayActionReport {
+export class OrderGatewayActionReport {
     constructor(public sentTime : Moment) {}
 }
 
-interface OrderStatusReport {
+export interface OrderStatusReport {
     side? : Side;
     quantity? : number;
     type? : OrderType;
@@ -199,7 +200,7 @@ interface OrderStatusReport {
     cancelRejected? : boolean;
 }
 
-class OrderStatusReportImpl implements OrderStatusReport {
+export class OrderStatusReportImpl implements OrderStatusReport {
     constructor(
         public side : Side,
         public quantity : number,
@@ -237,29 +238,29 @@ class OrderStatusReportImpl implements OrderStatusReport {
     }
 }
 
-interface IExchangeDetailsGateway {
+export interface IExchangeDetailsGateway {
     name() : string;
     makeFee() : number;
     takeFee() : number;
     exchange() : Exchange;
 }
 
-interface IGateway {
-    ConnectChanged : Evt<ConnectivityStatus>;
+export interface IGateway {
+    ConnectChanged : Utils.Evt<ConnectivityStatus>;
 }
 
-interface IMarketDataGateway extends IGateway {
-    MarketData : Evt<MarketUpdate>;
+export interface IMarketDataGateway extends IGateway {
+    MarketData : Utils.Evt<MarketUpdate>;
 }
 
-interface IOrderEntryGateway extends IGateway {
+export interface IOrderEntryGateway extends IGateway {
     sendOrder(order : BrokeredOrder) : OrderGatewayActionReport;
     cancelOrder(cancel : BrokeredCancel) : OrderGatewayActionReport;
     replaceOrder(replace : BrokeredReplace) : OrderGatewayActionReport;
-    OrderUpdate : Evt<OrderStatusReport>;
+    OrderUpdate : Utils.Evt<OrderStatusReport>;
 }
 
-class ExchangeCurrencyPosition {
+export class ExchangeCurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency,
                 public exchange : Exchange) { }
@@ -269,7 +270,7 @@ class ExchangeCurrencyPosition {
     }
 }
 
-class CurrencyPosition {
+export class CurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency) {}
 
@@ -282,11 +283,11 @@ class CurrencyPosition {
     }
 }
 
-interface IPositionGateway {
-    PositionUpdate : Evt<CurrencyPosition>;
+export interface IPositionGateway {
+    PositionUpdate : Utils.Evt<CurrencyPosition>;
 }
 
-class CombinedGateway {
+export class CombinedGateway {
     constructor(
         public md : IMarketDataGateway,
         public oe : IOrderEntryGateway,
@@ -294,8 +295,8 @@ class CombinedGateway {
         public base : IExchangeDetailsGateway) { }
 }
 
-interface IBroker {
-    MarketData : Evt<Market>;
+export interface IBroker {
+    MarketData : Utils.Evt<Market>;
     currentBook : Market;
 
     name() : string;
@@ -306,19 +307,19 @@ interface IBroker {
     sendOrder(order : SubmitNewOrder) : SentOrder;
     cancelOrder(cancel : OrderCancel);
     replaceOrder(replace : CancelReplaceOrder) : SentOrder;
-    OrderUpdate : Evt<OrderStatusReport>;
+    OrderUpdate : Utils.Evt<OrderStatusReport>;
     allOrderStates() : Array<OrderStatusReport>;
     cancelOpenOrders() : void;
 
     // todo: think about it, should fill reports inc/decrement positions? does it matter?
     getPosition(currency : Currency) : ExchangeCurrencyPosition;
-    PositionUpdate : Evt<ExchangeCurrencyPosition>;
+    PositionUpdate : Utils.Evt<ExchangeCurrencyPosition>;
 
     connectStatus : ConnectivityStatus;
-    ConnectChanged : Evt<ConnectivityStatus>;
+    ConnectChanged : Utils.Evt<ConnectivityStatus>;
 }
 
-class Result {
+export class Result {
     constructor(public restSide: Side, public restBroker: IBroker,
                 public hideBroker: IBroker, public profit: number,
                 public rest: MarketSide, public hide: MarketSide,

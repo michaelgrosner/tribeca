@@ -1,14 +1,17 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="models.ts" />
-/// <reference path="null.ts" />
 /// <reference path="config.ts" />
+/// <reference path="nullgw.ts" />
 
 var Faye = require('faye');
 import request = require("request");
 import crypto = require('crypto');
 import url = require("url");
-import Config = require("config");
+import Config = require("./config");
+import Models = require("./models");
+import NullGateway = require("./nullgw");
+import Utils = require("./utils");
 
 // example order reject:
 //      {"limit":0.01,"reject":{"reason":"risk_buying_power"},"tif":"GTC","status":"REJECTED","type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"BUY","oid":"1352-101614-000056-004","item":"BTC","account":1352,"quantity":0.01,"left":0,"average":0}
@@ -96,7 +99,7 @@ class AtlasAtsSocket {
     _secret : string;
     _token : string;
     _nounce : number = 1;
-    _log : Logger = log("tribeca:gateway:AtlasAtsSocket");
+    _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsSocket");
 
     constructor(config : Config.IConfigProvider) {
         this._secret = config.GetString("AtlasAtsSecret");
@@ -139,11 +142,11 @@ class AtlasAtsSocket {
         this._client.on(channel, raw => handler());
     };
 
-    subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
+    subscribe<T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) {
         this._client.subscribe(channel, raw => {
             try {
-                var t = date();
-                handler(new Timestamped(JSON.parse(raw), t));
+                var t = Utils.date();
+                handler(new Models.Timestamped(JSON.parse(raw), t));
             }
             catch (e) {
                 this._log("Error parsing msg %o", raw);
@@ -153,7 +156,7 @@ class AtlasAtsSocket {
     }
 }
 
-class AtlasAtsBaseGateway implements IExchangeDetailsGateway {
+class AtlasAtsBaseGateway implements Models.IExchangeDetailsGateway {
     name() : string {
         return "AtlasAts";
     }
@@ -166,8 +169,8 @@ class AtlasAtsBaseGateway implements IExchangeDetailsGateway {
         return 0.002;
     }
 
-    exchange() : Exchange {
-        return Exchange.AtlasAts;
+    exchange() : Models.Exchange {
+        return Models.Exchange.AtlasAts;
     }
 }
 
@@ -181,23 +184,23 @@ interface AtlasAtsPositionReport {
     positions : Array<AtlasAtsPosition>;
 }
 
-class AtlasAtsPositionGateway implements IPositionGateway {
-    PositionUpdate : Evt<CurrencyPosition> = new Evt<CurrencyPosition>();
+class AtlasAtsPositionGateway implements Models.IPositionGateway {
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    private static _convertItem(item : string) : Currency {
+    private static _convertItem(item : string) : Models.Currency {
         switch (item) {
             case "BTC":
-                return Currency.BTC;
+                return Models.Currency.BTC;
             case "USD":
-                return Currency.USD;
+                return Models.Currency.USD;
             case "LTC":
-                return Currency.LTC;
+                return Models.Currency.LTC;
             default:
                 return null;
         }
     }
 
-    _log : Logger = log("tribeca:gateway:AtlasAtsPG");
+    _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsPG");
     _sendUrl : string;
     _simpleToken : string;
 
@@ -210,11 +213,11 @@ class AtlasAtsPositionGateway implements IPositionGateway {
             try {
                 var rpt : AtlasAtsPositionReport = JSON.parse(body);
 
-                this.PositionUpdate.trigger(new CurrencyPosition(rpt.buyingpower, Currency.USD));
+                this.PositionUpdate.trigger(new Models.CurrencyPosition(rpt.buyingpower, Models.Currency.USD));
                 rpt.positions.forEach(p => {
                     var currency = AtlasAtsPositionGateway._convertItem(p.item);
                     if (currency == null) return;
-                    var position = new CurrencyPosition(p.size, currency);
+                    var position = new Models.CurrencyPosition(p.size, currency);
                     this.PositionUpdate.trigger(position);
                 });
             }
@@ -231,32 +234,32 @@ class AtlasAtsPositionGateway implements IPositionGateway {
     }
 }
 
-class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
-    ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-    _log : Logger = log("tribeca:gateway:AtlasAtsOE");
-    OrderUpdate : Evt<OrderStatusReport> = new Evt<OrderStatusReport>();
+class AtlasAtsOrderEntryGateway implements Models.IOrderEntryGateway {
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsOE");
+    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     _simpleToken : string;
     _account : string;
 
-    private static _convertTif(tif : TimeInForce) {
+    private static _convertTif(tif : Models.TimeInForce) {
         switch (tif) {
-            case TimeInForce.FOK:
+            case Models.TimeInForce.FOK:
                 return "FOK";
-            case TimeInForce.GTC:
+            case Models.TimeInForce.GTC:
                 return "GTC";
-            case TimeInForce.IOC:
+            case Models.TimeInForce.IOC:
                 return "IOC";
         }
     }
 
-    sendOrder = (order : BrokeredOrder) : OrderGatewayActionReport => {
+    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var o : AtlasAtsOrder = {
             action: "order:create",
             item: "BTC",
             currency: "USD",
-            side: order.side == Side.Bid ? "BUY" : "SELL",
+            side: order.side == Models.Side.Bid ? "BUY" : "SELL",
             quantity: order.quantity,
-            type: order.type == OrderType.Limit ? "limit" : "market",
+            type: order.type == Models.OrderType.Limit ? "limit" : "market",
             price: order.price,
             clid: order.orderId,
             tif: AtlasAtsOrderEntryGateway._convertTif(order.timeInForce)
@@ -269,8 +272,8 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
             method: "POST"
         }, (err, resp, body) => {
             try {
-                var t = date();
-                this.onExecRpt(new Timestamped(JSON.parse(body), t));
+                var t = Utils.date();
+                this.onExecRpt(new Models.Timestamped(JSON.parse(body), t));
             }
             catch (e) {
                 this._log("url: %s, err: %o, body: %o", this._orderUrl, err, body);
@@ -278,16 +281,16 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
             }
         });
 
-        return new OrderGatewayActionReport(date());
+        return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    replaceOrder = (replace : BrokeredReplace) : OrderGatewayActionReport => {
-        this.cancelOrder(new BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
+        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     };
 
-    private _cancelsWaitingForExchangeOrderId : {[clId : string] : BrokeredCancel} = {};
-    cancelOrder = (cancel : BrokeredCancel) : OrderGatewayActionReport => {
+    private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.BrokeredCancel} = {};
+    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
         if (typeof cancel.exchangeId !== "undefined") {
             this.sendCancel(cancel.exchangeId, cancel);
@@ -297,10 +300,10 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
             this._log("Registered %s for late deletion", cancel.clientOrderId);
         }
 
-        return new OrderGatewayActionReport(date());
+        return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    private sendCancel = (exchangeId : string, cancel : BrokeredCancel) => {
+    private sendCancel = (exchangeId : string, cancel : Models.BrokeredCancel) => {
         request({
             url: this._orderUrl + "/" + exchangeId,
             headers: {"Authorization": "Token token=\""+this._simpleToken+"\""},
@@ -310,51 +313,51 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
             var msg = JSON.parse(body);
 
             if (!err && msg.status !== "error") {
-                var rpt : OrderStatusReport = {
+                var rpt : Models.OrderStatusReport = {
                     orderId: cancel.clientOrderId,
-                    orderStatus: OrderStatus.Cancelled,
-                    time: date()
+                    orderStatus: Models.OrderStatus.Cancelled,
+                    time: Utils.date()
                 };
                 this.OrderUpdate.trigger(rpt);
             } else {
-                var rpt : OrderStatusReport = {
+                var rpt : Models.OrderStatusReport = {
                     orderId: cancel.clientOrderId,
-                    orderStatus: OrderStatus.Rejected,
+                    orderStatus: Models.OrderStatus.Rejected,
                     rejectMessage: msg.message,
                     cancelRejected: true,
-                    time: date()
+                    time: Utils.date()
                 };
                 this.OrderUpdate.trigger(rpt);
             }
         });
     };
 
-    private static getStatus = (raw : string) : OrderStatus => {
+    private static getStatus = (raw : string) : Models.OrderStatus => {
         switch (raw) {
             case "DONE":
-                return OrderStatus.Complete;
+                return Models.OrderStatus.Complete;
             case "REJECTED":
-                return OrderStatus.Rejected;
+                return Models.OrderStatus.Rejected;
             case "PENDING":
             case "OPEN":
-                return OrderStatus.Working;
+                return Models.OrderStatus.Working;
             default:
-                return OrderStatus.Other;
+                return Models.OrderStatus.Other;
         }
     };
 
-    private static getLiquidity = (raw : string) : Liquidity => {
+    private static getLiquidity = (raw : string) : Models.Liquidity => {
         switch (raw) {
             case "A":
-                return Liquidity.Make;
+                return Models.Liquidity.Make;
             case "R":
-                return Liquidity.Take;
+                return Models.Liquidity.Take;
             default:
                 throw new Error("unknown liquidity " + raw);
         }
     };
 
-    private onExecRpt = (tsMsg : Timestamped<AtlasAtsExecutionReport>) => {
+    private onExecRpt = (tsMsg : Models.Timestamped<AtlasAtsExecutionReport>) => {
         var t = tsMsg.time;
         var msg = tsMsg.data;
 
@@ -368,7 +371,7 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
             delete this._cancelsWaitingForExchangeOrderId[msg.clid];
         }
 
-        var status : OrderStatusReport = {
+        var status : Models.OrderStatusReport = {
             exchangeId: msg.oid,
             orderId: msg.clid,
             orderStatus: orderStatus,
@@ -383,7 +386,7 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
 
         if (typeof msg.executions !== 'undefined') {
             msg.executions.forEach(exec => {
-                var status : OrderStatusReport = {
+                var status : Models.OrderStatusReport = {
                     exchangeId: msg.oid,
                     orderId: msg.clid,
                     lastQuantity: exec.quantity,
@@ -401,24 +404,24 @@ class AtlasAtsOrderEntryGateway implements IOrderEntryGateway {
         this._account = config.GetString("AtlasAtsAccount");
 
         socket.subscribe("/account/"+this._account+"/orders", this.onExecRpt);
-        socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
-        socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
+        socket.on('transport:up', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        socket.on('transport:down', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
     }
 }
 
-class AtlasAtsMarketDataGateway implements IMarketDataGateway {
-    ConnectChanged : Evt<ConnectivityStatus> = new Evt<ConnectivityStatus>();
-    MarketData = new Evt<MarketUpdate>();
-    _log : Logger = log("tribeca:gateway:AtlasAtsMD");
+class AtlasAtsMarketDataGateway implements Models.IMarketDataGateway {
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    MarketData = new Utils.Evt<Models.MarketUpdate>();
+    _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsMD");
 
-    private onMarketData = (tsMsg : Timestamped<AtlasAtsMarketUpdate>) => {
+    private onMarketData = (tsMsg : Models.Timestamped<AtlasAtsMarketUpdate>) => {
         var t = tsMsg.time;
         var msg : AtlasAtsMarketUpdate = tsMsg.data;
         if (msg.symbol != "BTC" || msg.currency != "USD") return;
 
-        var b = new MarketUpdate(
-            new MarketSide(msg.bid, msg.bidsize),
-            new MarketSide(msg.ask, msg.asksize),
+        var b = new Models.MarketUpdate(
+            new Models.MarketSide(msg.bid, msg.bidsize),
+            new Models.MarketSide(msg.ask, msg.asksize),
             t
         );
 
@@ -430,25 +433,30 @@ class AtlasAtsMarketDataGateway implements IMarketDataGateway {
         this._atlasAtsHttpUrl = url.resolve(config.GetString("AtlasAtsHttpUrl"), "/api/v1/market/book");
         socket.subscribe("/market", this.onMarketData);
 
-        socket.on('transport:up', () => this.ConnectChanged.trigger(ConnectivityStatus.Connected));
-        socket.on('transport:down', () => this.ConnectChanged.trigger(ConnectivityStatus.Disconnected));
+        socket.on('transport:up', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        socket.on('transport:down', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
 
         request.get({
             url: this._atlasAtsHttpUrl,
             qs: {item: "BTC", currency: "USD"}
         }, (er, resp, body) => {
-            var t = date();
-            this.onMarketData(new Timestamped(JSON.parse(body), t))
+            var t = Utils.date();
+            this.onMarketData(new Models.Timestamped(JSON.parse(body), t))
         });
     }
 }
 
-export class AtlasAts extends CombinedGateway {
+export class AtlasAts extends Models.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var socket = new AtlasAtsSocket(config);
+
+        var orderEntry = config.GetString("AtlasAtsOrderDestination") == "AtlasAts"
+            ? <Models.IOrderEntryGateway>new AtlasAtsOrderEntryGateway(socket, config)
+            : new NullGateway.NullOrderGateway();
+
         super(
             new AtlasAtsMarketDataGateway(socket, config),
-            config.GetString("AtlasAtsOrderDestination") == "AtlasAts" ? <IOrderEntryGateway>new AtlasAtsOrderEntryGateway(socket, config) : new NullOrderGateway(),
+            orderEntry,
             new AtlasAtsPositionGateway(config),
             new AtlasAtsBaseGateway());
     }

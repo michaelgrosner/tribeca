@@ -1,17 +1,22 @@
 /// <reference path="../typings/tsd.d.ts" />
+/// <reference path="utils.ts" />
+/// <reference path="models.ts" />
 
 import zeromq = require("zmq");
+import Models = require("./models");
+import Utils = require("./utils");
+import util = require("util");
 
 export class FixGateway {
-    ConnectChanged = new Evt<ConnectivityStatus>();
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     sendEvent = (evt : string, obj : any) => {
         this._sock.send(JSON.stringify({evt: evt, obj: obj}));
     };
 
     _lastHeartbeatTime : Moment = null;
-    _handlers : { [channel : string] : (newMsg : Timestamped<any>) => void} = {};
-    _log : Logger = log("tribeca:gateway:FixBridge");
+    _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
+    _log : Utils.Logger = Utils.log("tribeca:gateway:FixBridge");
     _sock : any;
     constructor() {
         this._sock = zeromq.socket("pair");
@@ -21,7 +26,7 @@ export class FixGateway {
             var msg = JSON.parse(rawMsg);
 
             if (this._handlers.hasOwnProperty(msg.evt)) {
-                this._handlers[msg.evt](new Timestamped(msg.obj, new Date(msg.ts)));
+                this._handlers[msg.evt](new Models.Timestamped(msg.obj, Utils.date(msg.ts)));
             }
             else {
                 this._log("no handler registered for inbound FIX message: %o", msg);
@@ -33,29 +38,29 @@ export class FixGateway {
 
     private checkMissedHeartbeats = () => {
         if (this._lastHeartbeatTime == null) {
-            this.ConnectChanged.trigger(ConnectivityStatus.Disconnected);
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
             return;
         }
 
-        if (date().diff(this._lastHeartbeatTime) > 10000) {
-            this.ConnectChanged.trigger(ConnectivityStatus.Disconnected);
+        if (Utils.date().diff(this._lastHeartbeatTime) > 10000) {
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
         }
     };
 
-    private onConnectionStatus = (tsMsg : Timestamped<string>) => {
+    private onConnectionStatus = (tsMsg : Models.Timestamped<string>) => {
         if (tsMsg.data == "Logon") {
-            this._lastHeartbeatTime = date();
-            this.ConnectChanged.trigger(ConnectivityStatus.Connected);
+            this._lastHeartbeatTime = Utils.date();
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         else if (tsMsg.data == "Logout") {
-            this.ConnectChanged.trigger(ConnectivityStatus.Disconnected);
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
         }
         else {
             throw new Error(util.format("unknown connection status raised by FIX socket : %o", tsMsg));
         }
     };
 
-    subscribe<T>(channel : string, handler: (newMsg : Timestamped<T>) => void) {
+    subscribe<T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) {
         this._handlers[channel] = handler;
     }
 }
