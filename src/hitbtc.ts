@@ -113,7 +113,7 @@ interface CancelReject {
 
 class HitBtcMarketDataGateway implements Models.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.MarketUpdate>();
-    _marketDataWs : any;
+    _marketDataWs : ws;
 
     _lastBook : { [side: string] : { [px: number]: number}} = null;
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
@@ -206,7 +206,7 @@ class HitBtcMarketDataGateway implements Models.IMarketDataGateway {
         this._marketDataWs = new ws(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onOpen);
         this._marketDataWs.on('message', this.onMessage);
-        this._marketDataWs.on("error", this.onMessage);
+        this._marketDataWs.on("error", this._log);
 
         request.get(
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/orderbook")},
@@ -218,7 +218,7 @@ class HitBtcMarketDataGateway implements Models.IMarketDataGateway {
 
 class HitBtcOrderEntryGateway implements Models.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-    _orderEntryWs : any;
+    _orderEntryWs : ws;
 
     _nonce = 1;
 
@@ -388,7 +388,7 @@ class HitBtcOrderEntryGateway implements Models.IOrderEntryGateway {
         this._orderEntryWs = new ws(config.GetString("HitBtcOrderEntryUrl"));
         this._orderEntryWs.on('open', this.onOpen);
         this._orderEntryWs.on('message', this.onMessage);
-        this._orderEntryWs.on("error", this.onMessage);
+        this._orderEntryWs.on("error", this._log);
     }
 }
 

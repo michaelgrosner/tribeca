@@ -89,7 +89,7 @@ class OkCoinWebsocket {
     _secretKey : string;
     _partner : string;
     _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
-    _ws : any;
+    _ws : ws;
     constructor(config : Config.IConfigProvider) {
         this._partner = config.GetString("OkCoinPartner");
         this._secretKey = config.GetString("OkCoinSecretKey");
