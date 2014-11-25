@@ -256,9 +256,8 @@ class HitBtcOrderEntryGateway implements Models.IOrderEntryGateway {
             case "status":
                 return Models.OrderStatus.Working;
             case "canceled":
-                return Models.OrderStatus.Cancelled;
             case "expired":
-                return Models.OrderStatus.Complete;
+                return Models.OrderStatus.Cancelled;
             case "rejected":
                 return Models.OrderStatus.Rejected;
             case "trade":

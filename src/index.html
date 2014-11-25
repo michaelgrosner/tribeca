@@ -171,11 +171,11 @@
                 <td bind-once>{{ availableLiquidityTypes[o.liquidity]}}</td>
                 <td bind-once>{{ o.rejectMessage }}</td>
                 <td bind-once>{{ o.version }}</td>
-                <td bind-once>
+                <td>
                     <button type="button"
                             class="btn btn-danger btn-xs"
                             ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
-                <td bind-once>
+                <td>
                     <button type="button"
                             class="btn btn-warning btn-xs"
                             mypopover popover-template="cancel_replace_form.html"
@@ -248,6 +248,7 @@ var uiCtrl = function($scope, $timeout, $log) {
     };
 
     $scope.cancelOrder = function(order) {
+        $log.info("cancel-order", order);
         socket.emit("cancel-order", order);
     };
 

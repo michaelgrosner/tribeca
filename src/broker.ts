@@ -5,6 +5,61 @@
 import Models = require("./models");
 import Utils = require("./utils");
 import _ = require("lodash");
+import mongodb = require('mongodb');
+import Q = require("q");
+import momentjs = require('moment');
+
+export class OrderStatusPersister {
+     _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
+
+    public getLatestStatuses = (last : number, exchange : Models.Exchange) : Q.Promise<Models.OrderStatusReport[]> => {
+        var deferred = Q.defer<Models.OrderStatusReport[]>();
+        this._db.then(db => {
+            var selector : Models.OrderStatusReport = {exchange: exchange};
+            db.collection('osr').find(selector, {}, {limit: last}, (err, docs) => {
+                if (err) deferred.reject(err);
+                else {
+                    docs.toArray((err, arr) => {
+                        if (err) {
+                            deferred.reject(err);
+                        }
+                        else {
+                            var cvtArr = _.map(arr, x => {
+                                x.time = momentjs(x.time);
+                                return x;
+                            });
+                            deferred.resolve(cvtArr);
+                        }
+                    });
+                }
+            });
+        }).done();
+
+        return deferred.promise;
+    };
+
+    public persist = (report : Models.OrderStatusReport) => {
+        var rpt : any = report;
+        rpt.time = rpt.time.toISOString();
+        this._db.then(db => db.collection('osr').insert(rpt, (err, res) => {
+            if (err)
+                this._log("Unable to insert order %s; %o", report.orderId, err);
+        })).done();
+    };
+
+    _db : Q.Promise<mongodb.Db>;
+    constructor() {
+        var deferred = Q.defer<mongodb.Db>();
+        mongodb.MongoClient.connect('mongodb://localhost:27017/tribeca', (err, db) => {
+            if (err) deferred.reject(err);
+            else {
+                deferred.resolve(db);
+                this._log("Successfully connected to DB");
+            }
+        });
+        this._db = deferred.promise;
+    }
+}
 
 export class ExchangeBroker implements Models.IBroker {
     _log : Utils.Logger;
@@ -170,9 +225,11 @@ export class ExchangeBroker implements Models.IBroker {
 
         this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
         this._allOrders[osr.orderId].push(o);
-        this._log("applied gw update -> %o", o);
 
         this.OrderUpdate.trigger(o);
+
+        this._log("applied gw update -> %o", o);
+        this._persister.persist(o);
     };
 
     makeFee() : number {
@@ -250,7 +307,8 @@ export class ExchangeBroker implements Models.IBroker {
     constructor(private _mdGateway : Models.IMarketDataGateway,
                 private _baseGateway : Models.IExchangeDetailsGateway,
                 private _oeGateway : Models.IOrderEntryGateway,
-                private _posGateway : Models.IPositionGateway) {
+                private _posGateway : Models.IPositionGateway,
+                private _persister : OrderStatusPersister) {
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.MarketData.on(this.handleMarketData);
@@ -265,5 +323,16 @@ export class ExchangeBroker implements Models.IBroker {
         });
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
+
+        this._persister.getLatestStatuses(10, this.exchange()).then(osrs => {
+            _.each(osrs, osr => {
+                this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
+
+                if (!this._allOrders.hasOwnProperty(osr.orderId))
+                    this._allOrders[osr.orderId] = [osr];
+                else
+                    this._allOrders[osr.orderId].push(osr);
+            });
+        });
     }
 }
