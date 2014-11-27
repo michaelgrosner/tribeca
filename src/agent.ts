@@ -144,42 +144,38 @@ export class Agent {
             }
         }
 
-        // do this async, off this event cycle
-        setTimeout(() => this.BestResultChanged.trigger(bestResult), 0);
-
-        if (!this.Active)
-            return;
-
-        // TODO: think about sizing, currently doing 0.025 BTC - risk mitigation
-        // TODO: some sort of account limits interface
-        if (bestResult == null && this.LastBestResult !== null) {
-            this.stop(this.LastBestResult, true, generatedTime);
-        }
-        else if (bestResult !== null && this.LastBestResult == null) {
-            this.start(bestResult);
-        }
-        else if (bestResult !== null && this.LastBestResult !== null) {
-            if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
-                    || bestResult.restSide != this.LastBestResult.restSide) {
-                // don't flicker
-                if (Math.abs(bestResult.profit - this.LastBestResult.profit) < this._minProfit) {
-                    this.noChange(bestResult);
+        if (this.Active) {
+            if (bestResult == null && this.LastBestResult !== null) {
+                this.stop(this.LastBestResult, true, generatedTime);
+            }
+            else if (bestResult !== null && this.LastBestResult == null) {
+                this.start(bestResult);
+            }
+            else if (bestResult !== null && this.LastBestResult !== null) {
+                if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
+                        || bestResult.restSide != this.LastBestResult.restSide) {
+                    // don't flicker
+                    if (Math.abs(bestResult.profit - this.LastBestResult.profit) < this._minProfit) {
+                        this.noChange(bestResult);
+                    }
+                    else {
+                        this.stop(this.LastBestResult, true, generatedTime);
+                        this.start(bestResult);
+                    }
+                }
+                else if (Math.abs(bestResult.rest.price - this.LastBestResult.rest.price) > 1e-3) {
+                    this.modify(bestResult);
                 }
                 else {
-                    this.stop(this.LastBestResult, true, generatedTime);
-                    this.start(bestResult);
+                    this.noChange(bestResult);
                 }
             }
-            else if (Math.abs(bestResult.rest.price - this.LastBestResult.rest.price) > 1e-3) {
-                this.modify(bestResult);
-            }
             else {
-                this.noChange(bestResult);
+                this._log("NOTHING");
             }
         }
-        else {
-            this._log("NOTHING");
-        }
+
+        this.BestResultChanged.trigger(bestResult)
     };
 
     private noChange = (r : Models.Result) => {
