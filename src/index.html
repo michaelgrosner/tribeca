@@ -107,6 +107,7 @@
                     <th>pft</th>
                     <th>usd</th>
                     <th>btc</th>
+                    <th>val</th>
                     <th>rest</th>
                     <th>hide</th>
                 </tr>
@@ -120,6 +121,7 @@
                     <td>{{ current_result.profit|number:4 }}</td>
                     <td>{{ positions[exch][availableCurrencies['USD']] | number:3 }}</td>
                     <td>{{ positions[exch][availableCurrencies['BTC']] | number:3 }}</td>
+                    <td>{{ (positions[exch][availableCurrencies['USD']] + positions[exch][availableCurrencies['BTC']]*(book.bidPrice + book.askPrice)/2.0) | number:3 }}</td>
                     <td>{{ current_result.restExch == exch }}</td>
                     <td>{{ current_result.hideExch == exch }}</td>
                 </tr>
