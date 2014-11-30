@@ -114,8 +114,8 @@
                     ng-class="exch.connected ? 'success' : 'danger'">
                     <td>{{ exch.name }}</td>
                     <td>{{ exch.bidSize|number:2 }}</td>
-                    <td>{{ exch.bidPrice|number:2 }}</td>
-                    <td>{{ exch.askPrice|number:2 }}</td>
+                    <td>{{ exch.bid|number:2 }}</td>
+                    <td>{{ exch.ask|number:2 }}</td>
                     <td>{{ exch.askSize|number:2 }}</td>
                     <td>{{ exch.usdPosition | number:3 }}</td>
                     <td>{{ exch.btcPosition | number:3 }}</td>

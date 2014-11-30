@@ -7,8 +7,9 @@ require.config({
         'jquery': '//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min',
         'angular': '//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular',
         'socket.io-client': '//cdn.socket.io/socket.io-1.1.0',
-        'ui-bootstrap': '//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min',
-        'bootstrap': '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min'
+        'bootstrap': '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min',
+        'moment': '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min',
+        'ui.bootstrap': '//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min'
     },
 
     shim: {
@@ -16,13 +17,12 @@ require.config({
             exports: 'angular',
             deps: ['jquery']
         },
-        'ui-bootstrap': ['angular'],
+        'ui.bootstrap': ['angular'],
         'socket.io-client': ['jquery'],
         'bootstrap': ['jquery']
     }
 });
 
-require(["angular", "./client"], () => {
-    console.log("bootstrapping projectApp");
+require(["angular", "./client", 'ui.bootstrap'], () => {
     angular.bootstrap(document, ["projectApp"]);
 });

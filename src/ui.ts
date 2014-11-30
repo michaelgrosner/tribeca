@@ -38,16 +38,6 @@ export class UI {
 
         io.on('connection', sock => {
             sock.emit("hello", this._env);
-            sock.emit("enums", {
-                availableConnectivityStatuses: Models.ConnectivityStatus,
-                availableTifs: Models.TimeInForce,
-                availableExchanges: Models.Exchange,
-                availableSides: Models.Side,
-                availableOrderTypes: Models.OrderType,
-                availableOrderStatuses: Models.OrderStatus,
-                availableLiquidityTypes: Models.Liquidity,
-                availableCurrencies: Models.Currency
-            });
 
             this._brokers.forEach(b => {
                 this.sendUpdatedConnectionStatus(b.exchange(), b.connectStatus);

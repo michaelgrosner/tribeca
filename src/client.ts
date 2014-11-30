@@ -1,9 +1,11 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="./models.ts" />
+/// <amd-dependency path="ui.bootstrap"/>
 
 import angular = require("angular");
 import Models = require("./models");
 import io = require("socket.io-client");
+import moment = require("moment");
 
 module Client {
     interface MainWindowScope extends ng.IScope {
@@ -87,8 +89,9 @@ module Client {
 
         constructor(public osr : Models.OrderStatusReport, private $scope : MainWindowScope) {
             this.orderId = osr.orderId;
-            this.time = osr.time.format('M/d/yy h:mm:ss,sss');
-            this.timeSortable = osr.time.toDate();
+            var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
+            this.time = parsedTime.format('M/d/yy h:mm:ss,sss');
+            this.timeSortable = parsedTime.toDate();
             this.exchange = Models.Exchange[osr.exchange];
             this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
             this.price = osr.price;
@@ -233,10 +236,8 @@ module Client {
         }
     };
 
-    console.log("starting to load projectApp");
-    angular.module('projectApp', [])
+    angular.module('projectApp', ['ui.bootstrap'])
            .controller('uiCtrl', uiCtrl)
            .directive('mypopover', mypopover)
            .directive('bindOnce', bindOnce);
-    console.log("loaded projectApp");
 }
