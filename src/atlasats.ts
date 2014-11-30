@@ -12,6 +12,7 @@ import Config = require("./config");
 import Models = require("./models");
 import NullGateway = require("./nullgw");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
 // example order reject:
 //      {"limit":0.01,"reject":{"reason":"risk_buying_power"},"tif":"GTC","status":"REJECTED","type":"LIMIT","currency":"USD","executed":0,"clid":"WEB","side":"BUY","oid":"1352-101614-000056-004","item":"BTC","account":1352,"quantity":0.01,"left":0,"average":0}
@@ -156,7 +157,7 @@ class AtlasAtsSocket {
     }
 }
 
-class AtlasAtsBaseGateway implements Models.IExchangeDetailsGateway {
+class AtlasAtsBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name() : string {
         return "AtlasAts";
     }
@@ -184,7 +185,7 @@ interface AtlasAtsPositionReport {
     positions : Array<AtlasAtsPosition>;
 }
 
-class AtlasAtsPositionGateway implements Models.IPositionGateway {
+class AtlasAtsPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private static _convertItem(item : string) : Models.Currency {
@@ -234,7 +235,7 @@ class AtlasAtsPositionGateway implements Models.IPositionGateway {
     }
 }
 
-class AtlasAtsOrderEntryGateway implements Models.IOrderEntryGateway {
+class AtlasAtsOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsOE");
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
@@ -409,7 +410,7 @@ class AtlasAtsOrderEntryGateway implements Models.IOrderEntryGateway {
     }
 }
 
-class AtlasAtsMarketDataGateway implements Models.IMarketDataGateway {
+class AtlasAtsMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     MarketData = new Utils.Evt<Models.MarketUpdate>();
     _log : Utils.Logger = Utils.log("tribeca:gateway:AtlasAtsMD");
@@ -446,12 +447,12 @@ class AtlasAtsMarketDataGateway implements Models.IMarketDataGateway {
     }
 }
 
-export class AtlasAts extends Models.CombinedGateway {
+export class AtlasAts extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var socket = new AtlasAtsSocket(config);
 
         var orderEntry = config.GetString("AtlasAtsOrderDestination") == "AtlasAts"
-            ? <Models.IOrderEntryGateway>new AtlasAtsOrderEntryGateway(socket, config)
+            ? <Interfaces.IOrderEntryGateway>new AtlasAtsOrderEntryGateway(socket, config)
             : new NullGateway.NullOrderGateway();
 
         super(

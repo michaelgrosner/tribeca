@@ -14,10 +14,11 @@ import Agent = require("./agent");
 import UI = require("./ui");
 import Models = require("./models");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
-var gateways : Array<Models.CombinedGateway> = [new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
+var gateways : Array<Interfaces.CombinedGateway> = [new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
 var persister = new Broker.OrderStatusPersister();
 var brokers = gateways.map(g => new Broker.ExchangeBroker(g.md, g.base, g.oe, g.pg, persister));
 var posAgg = new Agent.PositionAggregator(brokers);

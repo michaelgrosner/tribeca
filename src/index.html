@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html ng-app="projectApp" ng-controller="uiCtrl">
+<html ng-controller="uiCtrl">
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
 
@@ -9,6 +10,9 @@
     background-color: #dff0d8;
 }
     </style>
+
+     <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js" data-main="require-config.js"></script>
+
     <title>tribeca [{{ env }}]</title>
 </head>
 <body>
@@ -26,7 +30,7 @@
         <button type="button"
                 class="btn btn-success"
                 onclick="$('#cancel_replace_form').popover('hide');"
-                ng-click="cancelReplaceOrder(o)">Submit</button>
+                ng-click="o.cancelReplace()">Submit</button>
     </form>
 </script>
 
@@ -89,9 +93,7 @@
                 </button>
             </ul>
         </div>
-        <!--/.nav-collapse -->
     </div>
-    <!--/.container-fluid -->
 </div>
 
 <div class="container-fluid">
@@ -104,28 +106,23 @@
                     <th>bPx</th>
                     <th>aPx</th>
                     <th>aSz</th>
-                    <th>pft</th>
                     <th>usd</th>
                     <th>btc</th>
                     <th>val</th>
-                    <th>rest</th>
-                    <th>hide</th>
                 </tr>
-                <tr ng-repeat="(exch, book) in books"
-                    ng-class="availableConnectivityStatuses[connectionStatus[exch]] == 'Connected' ? 'success' : 'danger'">
-                    <td>{{ availableExchanges[exch] }}</td>
-                    <td>{{ book.bidSize|number:2 }}</td>
-                    <td>{{ book.bidPrice|number:2 }}</td>
-                    <td>{{ book.askPrice|number:2 }}</td>
-                    <td>{{ book.askSize|number:2 }}</td>
-                    <td>{{ current_result.profit|number:4 }}</td>
-                    <td>{{ positions[exch][availableCurrencies['USD']] | number:3 }}</td>
-                    <td>{{ positions[exch][availableCurrencies['BTC']] | number:3 }}</td>
-                    <td>{{ (positions[exch][availableCurrencies['USD']] + positions[exch][availableCurrencies['BTC']]*(book.bidPrice + book.askPrice)/2.0) | number:3 }}</td>
-                    <td>{{ current_result.restExch == exch }}</td>
-                    <td>{{ current_result.hideExch == exch }}</td>
+                <tr ng-repeat="exch in exchanges"
+                    ng-class="exch.connected ? 'success' : 'danger'">
+                    <td>{{ exch.name }}</td>
+                    <td>{{ exch.bidSize|number:2 }}</td>
+                    <td>{{ exch.bidPrice|number:2 }}</td>
+                    <td>{{ exch.askPrice|number:2 }}</td>
+                    <td>{{ exch.askSize|number:2 }}</td>
+                    <td>{{ exch.usdPosition | number:3 }}</td>
+                    <td>{{ exch.btcPosition | number:3 }}</td>
+                    <td>{{ exch.usdValue | number:3 }}</td>
                 </tr>
             </table>
+            {{ current_result }}
         </div>
 
         <div class="col-md-9"></div>
@@ -154,29 +151,29 @@
                 <th>cxl</th>
                 <th>c-r</th>
             </tr>
-            <tr ng-repeat="o in orders_statuses|orderBy:'-time'">
+            <tr ng-repeat="o in orders_statuses|orderBy:'-timeSortable'">
                 <td bind-once>{{ o.orderId }}</td>
-                <td bind-once>{{ o.time|date:'M/d/yy h:mm:ss,sss' }}</td>
-                <td bind-once>{{ availableExchanges[o.exchange] }}</td>
-                <td bind-once>{{ getOrderStatus(o) }}</td>
+                <td bind-once>{{ o.time }}</td>
+                <td bind-once>{{ o.exchange }}</td>
+                <td bind-once>{{ o.orderStatus }}</td>
                 <td bind-once>{{ o.price|number:2 }}</td>
                 <td bind-once>{{ o.quantity|number:4 }}</td>
-                <td bind-once>{{ availableSides[o.side] }}</td>
-                <td bind-once>{{ availableOrderTypes[o.type] }}</td>
-                <td bind-once>{{ availableTifs[o.timeInForce] }}</td>
+                <td bind-once>{{ o.side }}</td>
+                <td bind-once>{{ o.orderType }}</td>
+                <td bind-once>{{ o.timeInForce }}</td>
                 <td bind-once>{{ o.computationalLatency }}</td>
                 <td bind-once>{{ o.lastQuantity|number:4 }}</td>
                 <td bind-once>{{ o.lastPrice|number:2 }}</td>
                 <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
                 <td bind-once>{{ o.cumQuantity|number:4 }}</td>
                 <td bind-once>{{ o.averagePrice|number:2 }}</td>
-                <td bind-once>{{ availableLiquidityTypes[o.liquidity]}}</td>
+                <td bind-once>{{ o.liquidity }}</td>
                 <td bind-once>{{ o.rejectMessage }}</td>
                 <td bind-once>{{ o.version }}</td>
                 <td>
                     <button type="button"
                             class="btn btn-danger btn-xs"
-                            ng-click="cancelOrder(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
+                            ng-click="o.cancel()"><span class="glyphicon glyphicon-remove"></span></button></td>
                 <td>
                     <button type="button"
                             class="btn btn-warning btn-xs"
@@ -187,139 +184,5 @@
         </table>
     </div>
 </div>
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.js"></script>
-<script src="//cdn.socket.io/socket.io-1.1.0.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-<script>
-var uiCtrl = function($scope, $timeout, $log) {
-    $scope.connected = false;
-    $scope.active = false;
-
-    var refresh_timer = function () {
-        $timeout(refresh_timer, 250);
-    };
-    $timeout(refresh_timer, 250);
-
-    var socket = io();
-    socket.on("hello", function(env) {
-        $scope.env = env;
-        $scope.connected = true;
-        $scope.books = {};
-        $scope.orders_statuses = [];
-        $scope.positions = {};
-        $scope.connectionStatus = {};
-        $log.info("connected");
-    }).on("disconnect", function() {
-        $scope.connected = false;
-        $log.warn("disconnected");
-    }).on("market-book", function(b) {
-         $scope.books[b.exchangeName] = b;
-    }).on('enums', function(o) {
-        angular.forEach(o, function(vals, key) {
-            $scope[key] = vals;
-        });
-    }).on('order-status-report', function(o) {
-        $scope.orders_statuses.push(o);
-    }).on('order-status-report-snapshot', function(os) {
-        // this should be driven via the brokeragg
-        os.forEach(function(o) { $scope.orders_statuses.push(o) });
-    }).on('active-changed', function(b) {
-        $scope.active = b;
-    }).on("result-change", function(r) {
-        $scope.current_result = r;
-    }).on("position-report", function(rpt) {
-        if (rpt == null) return;
-        if (typeof $scope.positions[rpt.exchange] === "undefined")
-            $scope.positions[rpt.exchange] = {};
-        $scope.positions[rpt.exchange][rpt.currency] = rpt.amount;
-    }).on("connection-status", function(exch, cs) {
-        $scope.connectionStatus[exch] = cs;
-    });
-
-    $scope.order = {};
-    $scope.submitOrder = function() {
-        socket.emit("submit-order", $scope.order);
-    };
-
-    $scope.cancel_replace_model = {};
-    $scope.cancelReplaceOrder = function(orig) {
-        socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
-    };
-
-    $scope.cancelOrder = function(order) {
-        $log.info("cancel-order", order);
-        socket.emit("cancel-order", order);
-    };
-
-    $scope.changeActive = function() {
-        socket.emit("active-change-request", !$scope.active);
-    };
-
-    $scope.getOrderStatus = function(o) {
-        var endingModifier = function (o) {
-            if (o.pendingCancel)
-                return ", PndCxl";
-            else if (o.pendingReplace)
-                return ", PndRpl";
-            else if (o.partiallyFilled)
-                return ", PartFill";
-            else if (o.cancelRejected)
-                return ", CxlRj";
-            return "";
-        };
-        return $scope.availableOrderStatuses[o.orderStatus] + endingModifier(o);
-    };
-
-    $log.info("started");
-};
-
-var mypopover = function ($compile, $templateCache) {
-    var getTemplate = function (contentType, template_url) {
-        var template = '';
-        switch (contentType) {
-            case 'user':
-                template = $templateCache.get(template_url);
-                break;
-        }
-        return template;
-    };
-    return {
-        restrict: "A",
-        link: function (scope, element, attrs) {
-            var popOverContent = $compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
-            var options = {
-                content: popOverContent,
-                placement: attrs.dataPlacement,
-                html: true,
-                date: scope.date
-            };
-            $(element).popover(options).click(function (e) {
-                e.preventDefault();
-            });
-        }
-    };
-};
-
-var bindOnce = function () {
-    return {
-        scope: true,
-        link: function ($scope) {
-            setTimeout(function () {
-                $scope.$destroy();
-            }, 0);
-        }
-    }
-};
-
-angular.module('projectApp', ['ui.bootstrap'])
-        .controller('uiCtrl', uiCtrl)
-        .directive('mypopover', mypopover)
-        .directive('bindOnce', bindOnce);
-
-</script>
-
 </body>
 </html>

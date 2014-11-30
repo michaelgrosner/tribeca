@@ -4,11 +4,12 @@
 import Config = require("./config");
 import Models = require("./models");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
 export class PositionAggregator {
     PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
 
-    constructor(private _brokers : Array<Models.IBroker>) {
+    constructor(private _brokers : Array<Interfaces.IBroker>) {
         this._brokers.forEach(b => {
             b.PositionUpdate.on(m => this.PositionUpdate.trigger(m));
         });
@@ -18,7 +19,7 @@ export class PositionAggregator {
 export class MarketDataAggregator {
     MarketData = new Utils.Evt<Models.Market>();
 
-    constructor(private _brokers : Array<Models.IBroker>) {
+    constructor(private _brokers : Array<Interfaces.IBroker>) {
         this._brokers.forEach(b => {
             b.MarketData.on(m => this.MarketData.trigger(m));
         });
@@ -27,11 +28,11 @@ export class MarketDataAggregator {
 
 export class OrderBrokerAggregator {
     _log : Utils.Logger = Utils.log("tribeca:brokeraggregator");
-    _brokersByExch : { [exchange: number]: Models.IBroker} = {};
+    _brokersByExch : { [exchange: number]: Interfaces.IBroker} = {};
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
-    constructor(private _brokers : Array<Models.IBroker>) {
+    constructor(private _brokers : Array<Interfaces.IBroker>) {
 
         this._brokers.forEach(b => {
             b.OrderUpdate.on(o => this.OrderUpdate.trigger(o));
@@ -74,7 +75,7 @@ export class Agent {
     private _maxSize : number;
     private _minProfit : number;
 
-    constructor(private _brokers : Array<Models.IBroker>,
+    constructor(private _brokers : Array<Interfaces.IBroker>,
                 private _mdAgg : MarketDataAggregator,
                 private _orderAgg : OrderBrokerAggregator,
                 private config : Config.IConfigProvider) {
@@ -86,8 +87,8 @@ export class Agent {
     Active : boolean = false;
     ActiveChanged = new Utils.Evt<boolean>();
 
-    LastBestResult : Models.Result = null;
-    BestResultChanged = new Utils.Evt<Models.Result>();
+    LastBestResult : Interfaces.Result = null;
+    BestResultChanged = new Utils.Evt<Interfaces.Result>();
 
     private _activeOrderIds : { [ exch : number] : string} = {};
 
@@ -107,12 +108,12 @@ export class Agent {
         }
     };
 
-    private static isBrokerActive(b : Models.IBroker) : boolean {
+    private static isBrokerActive(b : Interfaces.IBroker) : boolean {
         return b.currentBook != null && b.connectStatus == Models.ConnectivityStatus.Connected;
     }
 
     private recalcMarkets = (generatedTime : Moment) => {
-        var bestResult : Models.Result = null;
+        var bestResult : Interfaces.Result = null;
         var bestProfit: number = Number.MIN_VALUE;
 
         for (var i = 0; i < this._brokers.length; i++) {
@@ -134,12 +135,12 @@ export class Agent {
 
                 if (pBid > bestProfit && pBid > this._minProfit && bidSize >= .01) {
                     bestProfit = pBid;
-                    bestResult = new Models.Result(Models.Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
+                    bestResult = new Interfaces.Result(Models.Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                 }
 
                 if (pAsk > bestProfit && pAsk > this._minProfit && askSize >= .01) {
                     bestProfit = pAsk;
-                    bestResult = new Models.Result(Models.Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
+                    bestResult = new Interfaces.Result(Models.Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                 }
             }
         }
@@ -178,12 +179,12 @@ export class Agent {
         this.BestResultChanged.trigger(bestResult)
     };
 
-    private noChange = (r : Models.Result) => {
+    private noChange = (r : Interfaces.Result) => {
         this._log("NO CHANGE :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Models.Side[r.restSide],
                 r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
     };
 
-    private modify = (r : Models.Result) => {
+    private modify = (r : Interfaces.Result) => {
         var restExch = r.restBroker.exchange();
         // cxl-rpl live order -- need to rethink cxl-rpl
         var cxl = new Models.OrderCancel(this._activeOrderIds[restExch], restExch, r.generatedTime);
@@ -197,7 +198,7 @@ export class Agent {
         this.LastBestResult = r;
     };
 
-    private start = (r : Models.Result) => {
+    private start = (r : Interfaces.Result) => {
         var restExch = r.restBroker.exchange();
         // set up fill notification
         r.restBroker.OrderUpdate.on(this.arbFire);
@@ -212,7 +213,7 @@ export class Agent {
         this.LastBestResult = r;
     };
 
-    private stop = (lr : Models.Result, sendCancel : boolean, t : Moment) => {
+    private stop = (lr : Interfaces.Result, sendCancel : boolean, t : Moment) => {
         // remove fill notification
         lr.restBroker.OrderUpdate.off(this.arbFire);
 

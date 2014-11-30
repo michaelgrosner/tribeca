@@ -3,8 +3,9 @@
 
 import Models = require("./models");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
-export class NullOrderGateway implements Models.IOrderEntryGateway {
+export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -37,7 +38,7 @@ export class NullOrderGateway implements Models.IOrderEntryGateway {
     }
 }
 
-export class NullPositionGateway implements Models.IPositionGateway {
+export class NullPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     constructor() {

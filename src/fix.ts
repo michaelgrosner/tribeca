@@ -6,6 +6,7 @@ import zeromq = require("zmq");
 import Models = require("./models");
 import Utils = require("./utils");
 import util = require("util");
+import Interfaces = require("./interfaces");
 
 export class FixGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();

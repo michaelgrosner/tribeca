@@ -1,15 +1,7 @@
 /// <reference path="../typings/tsd.d.ts" />
-/// <reference path="utils.ts" />
-
-import util = require("util");
-import Utils = require("./utils");
 
 export class Timestamped<T> {
-    constructor(public data : T, public time = Utils.date()) {}
-
-    public inspect() {
-        return util.inspect({time: this.time.toISOString(), data: this.data});
-    }
+    constructor(public data : T, public time : Moment) {}
 }
 
 export class MarketSide {
@@ -30,10 +22,6 @@ export class MarketUpdate {
         if (other == null) return false;
         return this.ask.equals(other.ask) && this.bid.equals(other.bid);
     }
-
-    public inspect() {
-        return util.inspect({bid: this.bid, ask: this.ask, time: this.time.toISOString()}, {colors: true});
-    }
 }
 
 export class Market {
@@ -41,11 +29,6 @@ export class Market {
         public update : MarketUpdate,
         public exchange : Exchange,
         public flag : MarketDataFlag) { }
-
-    public inspect() {
-        return util.inspect({update: this.update, exchange: Exchange[this.exchange],
-            flag: MarketDataFlag[this.flag]}, {colors: true});
-    }
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
@@ -84,11 +67,6 @@ export class SubmitNewOrder implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange,
         public generatedTime: Moment) {}
-
-    public inspect()  {
-        return util.format("side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", Side[this.side], this.quantity,
-            OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    }
 }
 
 export class CancelReplaceOrder {
@@ -98,11 +76,6 @@ export class CancelReplaceOrder {
         public price : number,
         public exchange : Exchange,
         public generatedTime : Moment) {}
-
-    public inspect()  {
-        return util.format("orig=%s; quantity=%d; price=%d, exch=%s",
-            this.origOrderId, this.quantity, this.price, Exchange[this.exchange]);
-    }
 }
 
 export class OrderCancel {
@@ -110,10 +83,6 @@ export class OrderCancel {
         public origOrderId : string,
         public exchange : Exchange,
         public generatedTime : Moment) {}
-
-    public inspect()  {
-        return util.format("orig=%s; exch=%s", this.origOrderId, Exchange[this.exchange]);
-    }
 }
 
 export class BrokeredOrder implements Order {
@@ -125,12 +94,6 @@ export class BrokeredOrder implements Order {
         public price : number,
         public timeInForce : TimeInForce,
         public exchange : Exchange) {}
-
-    public inspect()  {
-        return util.format("orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s", this.orderId,
-            Side[this.side], this.quantity, OrderType[this.type], this.price,
-            TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    }
 }
 
 export class BrokeredReplace implements Order {
@@ -144,12 +107,6 @@ export class BrokeredReplace implements Order {
         public timeInForce : TimeInForce,
         public exchange : Exchange,
         public exchangeId : string) {}
-
-    public inspect()  {
-        return util.format("origCliId=%s; origExchId=%s; orderId=%s; side=%s; quantity=%d; type=%d; price=%d, tif=%s; exch=%s",
-            this.origOrderId, this.exchangeId, this.orderId,  Side[this.side], this.quantity,
-            OrderType[this.type], this.price, TimeInForce[this.timeInForce], Exchange[this.exchange]);
-    }
 }
 
 export class BrokeredCancel {
@@ -158,11 +115,6 @@ export class BrokeredCancel {
         public requestId : string,
         public side : Side,
         public exchangeId : string) {}
-
-    public inspect()  {
-        return util.format("reqId=%s; origCliId=%s; origExchId=%s, side=%s",
-            this.requestId, this.clientOrderId, this.exchangeId, Side[this.side]);
-    }
 }
 
 export class SentOrder {
@@ -225,109 +177,33 @@ export class OrderStatusReportImpl implements OrderStatusReport {
         public pendingCancel : boolean,
         public pendingReplace : boolean,
         public cancelRejected : boolean) {}
-
-    public inspect() {
-        return util.inspect({side: Side[this.side], quantity: this.quantity, type: OrderType[this.type], price: this.price,
-            timeInForce: TimeInForce[this.timeInForce], orderId: this.orderId, exchangeId: this.exchangeId,
-            orderStatus: OrderStatus[this.orderStatus], rejectMessage: this.rejectMessage, time: this.time.toISOString(),
-            lastQuantity: this.lastQuantity, lastPrice: this.lastPrice, leavesQuantity: this.leavesQuantity,
-            cumQuantity: this.cumQuantity, averagePrice: this.averagePrice, liquidity: Liquidity[this.liquidity],
-            exchange: Exchange[this.exchange], computationalLatency: this.computationalLatency,
-            version: this.version, partiallyFilled: this.partiallyFilled, pendingCancel: this.pendingCancel,
-            pendingReplace: this.pendingReplace, cancelRejected: this.cancelRejected}, {colors: true});
-    }
-}
-
-export interface IExchangeDetailsGateway {
-    name() : string;
-    makeFee() : number;
-    takeFee() : number;
-    exchange() : Exchange;
-}
-
-export interface IGateway {
-    ConnectChanged : Utils.Evt<ConnectivityStatus>;
-}
-
-export interface IMarketDataGateway extends IGateway {
-    MarketData : Utils.Evt<MarketUpdate>;
-}
-
-export interface IOrderEntryGateway extends IGateway {
-    sendOrder(order : BrokeredOrder) : OrderGatewayActionReport;
-    cancelOrder(cancel : BrokeredCancel) : OrderGatewayActionReport;
-    replaceOrder(replace : BrokeredReplace) : OrderGatewayActionReport;
-    OrderUpdate : Utils.Evt<OrderStatusReport>;
 }
 
 export class ExchangeCurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency,
                 public exchange : Exchange) { }
-
-    public inspect() {
-        return util.inspect({amount: this.amount, currency: Currency[this.currency], exchange: Exchange[this.exchange]}, {colors: true});
-    }
 }
 
 export class CurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency) {}
 
-    public inspect() {
-        return util.inspect({amount: this.amount, currency: Currency[this.currency]}, {colors: true});
-    }
-
     public toExchangeReport(exch : Exchange) {
         return new ExchangeCurrencyPosition(this.amount, this.currency, exch);
     }
 }
 
-export interface IPositionGateway {
-    PositionUpdate : Utils.Evt<CurrencyPosition>;
+export interface OrderRequestFromUI {
+    exchange : string;
+    side : string;
+    price : number;
+    quantity : number;
+    timeInForce : string;
+    orderType : string
 }
 
-export class CombinedGateway {
-    constructor(
-        public md : IMarketDataGateway,
-        public oe : IOrderEntryGateway,
-        public pg : IPositionGateway,
-        public base : IExchangeDetailsGateway) { }
-}
-
-export interface IBroker {
-    MarketData : Utils.Evt<Market>;
-    currentBook : Market;
-
-    name() : string;
-    makeFee() : number;
-    takeFee() : number;
-    exchange() : Exchange;
-
-    sendOrder(order : SubmitNewOrder) : SentOrder;
-    cancelOrder(cancel : OrderCancel);
-    replaceOrder(replace : CancelReplaceOrder) : SentOrder;
-    OrderUpdate : Utils.Evt<OrderStatusReport>;
-    allOrderStates() : Array<OrderStatusReport>;
-    cancelOpenOrders() : void;
-
-    // todo: think about it, should fill reports inc/decrement positions? does it matter?
-    getPosition(currency : Currency) : ExchangeCurrencyPosition;
-    PositionUpdate : Utils.Evt<ExchangeCurrencyPosition>;
-
-    connectStatus : ConnectivityStatus;
-    ConnectChanged : Utils.Evt<ConnectivityStatus>;
-}
-
-export class Result {
-    constructor(public restSide: Side, public restBroker: IBroker,
-                public hideBroker: IBroker, public profit: number,
-                public rest: MarketSide, public hide: MarketSide,
-                public size: number, public generatedTime: Moment) {}
-
-    public toJSON() {
-        return {side: this.restSide, size: this.size, profit: this.profit,
-            restExch: this.restBroker.exchange(), hideExch: this.hideBroker.exchange(),
-            restMkt: this.rest, hide: this.hide};
-    }
+export interface ReplaceRequestFromUI {
+    price : number;
+    quantity : number;
 }

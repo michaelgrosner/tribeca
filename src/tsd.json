@@ -40,6 +40,9 @@
     },
     "lodash/lodash.d.ts": {
       "commit": "639f974f9d2fbd4809e2df6c5df83ed89f99c7fa"
+    },
+    "requirejs/require.d.ts": {
+      "commit": "16fc1fb8b440e55e88bd1bbb393dcf2e9fb07d22"
     }
   }
 }

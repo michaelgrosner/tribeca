@@ -14,6 +14,7 @@ import Fix = require("./fix");
 import NullGateway = require("./nullgw");
 import Models = require("./models");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
 interface OkCoinMessageIncomingMessage {
     channel : string;
@@ -101,7 +102,7 @@ class OkCoinWebsocket {
     }
 }
 
-class OkCoinMarketDataGateway implements Models.IMarketDataGateway {
+class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.MarketUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -126,7 +127,7 @@ class OkCoinMarketDataGateway implements Models.IMarketDataGateway {
     }
 }
 
-class OkCoinOrderEntryGateway implements Models.IOrderEntryGateway {
+class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -284,7 +285,7 @@ class OkCoinHttp {
     }
 }
 
-class OkCoinPositionGateway implements Models.IPositionGateway {
+class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
@@ -317,7 +318,7 @@ class OkCoinPositionGateway implements Models.IPositionGateway {
     }
 }
 
-class OkCoinBaseGateway implements Models.IExchangeDetailsGateway {
+class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name() : string {
         return "OkCoin";
     }
@@ -335,14 +336,14 @@ class OkCoinBaseGateway implements Models.IExchangeDetailsGateway {
     }
 }
 
-export class OkCoin extends Models.CombinedGateway {
+export class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var http = new OkCoinHttp(config);
         var socket = new OkCoinWebsocket(config);
         var fix = new Fix.FixGateway();
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Models.IOrderEntryGateway>new OkCoinOrderEntryGateway(fix)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(fix)
             : new NullGateway.NullOrderGateway();
 
         super(

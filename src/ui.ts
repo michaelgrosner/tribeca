@@ -10,26 +10,13 @@ import path = require("path");
 import Agent = require("./agent");
 import Models = require("./models");
 import Utils = require("./utils");
-
-interface OrderRequestFromUI {
-    exchange : string;
-    side : string;
-    price : number;
-    quantity : number;
-    timeInForce : string;
-    orderType : string
-}
-
-interface ReplaceRequestFromUI {
-    price : number;
-    quantity : number;
-}
+import Interfaces = require("./interfaces");
 
 export class UI {
     _log : Utils.Logger = Utils.log("tribeca:ui");
 
     constructor(private _env : string,
-                private _brokers : Array<Models.IBroker>,
+                private _brokers : Array<Interfaces.IBroker>,
                 private _agent : Agent.Agent,
                 private _orderAgg : Agent.OrderBrokerAggregator,
                 private _mdAgg : Agent.MarketDataAggregator,
@@ -38,6 +25,7 @@ export class UI {
         app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, "index.html"));
         });
+        app.use(express.static(__dirname));
 
         this._mdAgg.MarketData.on(this.sendUpdatedMarket);
         this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
@@ -77,7 +65,7 @@ export class UI {
             if (this._agent.LastBestResult != null)
                 sock.emit("result-change", this._agent.LastBestResult);
 
-            sock.on("submit-order", (o : OrderRequestFromUI) => {
+            sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
                 this._log("got new order %o", o);
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
@@ -89,7 +77,7 @@ export class UI {
                 _orderAgg.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()));
             });
 
-            sock.on("cancel-replace", (o : Models.OrderStatusReport, replace : ReplaceRequestFromUI) => {
+            sock.on("cancel-replace", (o : Models.OrderStatusReport, replace : Models.ReplaceRequestFromUI) => {
                 this._log("got new cxl-rpl req %o with %o", o, replace);
                 _orderAgg.cancelReplaceOrder(new Models.CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange, Utils.date()));
             });
@@ -114,11 +102,6 @@ export class UI {
 
     sendUpdatedMarket = (book : Models.Market) => {
         if (book == null) return;
-        var b = {bidPrice: book.update.bid.price,
-            bidSize: book.update.bid.size,
-            askPrice: book.update.ask.price,
-            askSize: book.update.ask.size,
-            exchangeName: book.exchange};
-        io.emit("market-book", b);
+        io.emit("market-book", book);
     };
 }

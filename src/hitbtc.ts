@@ -12,6 +12,7 @@ import querystring = require("querystring");
 import NullGateway = require("./nullgw");
 import Models = require("./models");
 import Utils = require("./utils");
+import Interfaces = require("./interfaces");
 
 var _lotMultiplier = 100.0;
 
@@ -111,7 +112,7 @@ interface CancelReject {
     timestamp : number;
 }
 
-class HitBtcMarketDataGateway implements Models.IMarketDataGateway {
+class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.MarketUpdate>();
     _marketDataWs : ws;
 
@@ -216,7 +217,7 @@ class HitBtcMarketDataGateway implements Models.IMarketDataGateway {
     }
 }
 
-class HitBtcOrderEntryGateway implements Models.IOrderEntryGateway {
+class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     _orderEntryWs : ws;
 
@@ -397,7 +398,7 @@ interface HitBtcPositionReport {
     reserved : number;
 }
 
-class HitBtcPositionGateway implements Models.IPositionGateway {
+class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
@@ -458,7 +459,7 @@ class HitBtcPositionGateway implements Models.IPositionGateway {
     }
 }
 
-class HitBtcBaseGateway implements Models.IExchangeDetailsGateway {
+class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
     exchange() : Models.Exchange {
         return Models.Exchange.HitBtc;
     }
@@ -476,10 +477,10 @@ class HitBtcBaseGateway implements Models.IExchangeDetailsGateway {
     }
 }
 
-export class HitBtc extends Models.CombinedGateway {
+export class HitBtc extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Models.IOrderEntryGateway>new HitBtcOrderEntryGateway(config)
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config)
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.

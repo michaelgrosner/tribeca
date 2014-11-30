@@ -8,6 +8,7 @@ import _ = require("lodash");
 import mongodb = require('mongodb');
 import Q = require("q");
 import momentjs = require('moment');
+import Interfaces = require("./interfaces");
 
 export class OrderStatusPersister {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
@@ -61,7 +62,7 @@ export class OrderStatusPersister {
     }
 }
 
-export class ExchangeBroker implements Models.IBroker {
+export class ExchangeBroker implements Interfaces.IBroker {
     _log : Utils.Logger;
 
     PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
@@ -304,10 +305,10 @@ export class ExchangeBroker implements Models.IBroker {
         return this._connectStatus;
     }
 
-    constructor(private _mdGateway : Models.IMarketDataGateway,
-                private _baseGateway : Models.IExchangeDetailsGateway,
-                private _oeGateway : Models.IOrderEntryGateway,
-                private _posGateway : Models.IPositionGateway,
+    constructor(private _mdGateway : Interfaces.IMarketDataGateway,
+                private _baseGateway : Interfaces.IExchangeDetailsGateway,
+                private _oeGateway : Interfaces.IOrderEntryGateway,
+                private _posGateway : Interfaces.IPositionGateway,
                 private _persister : OrderStatusPersister) {
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
