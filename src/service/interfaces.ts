@@ -1,7 +1,7 @@
-/// <reference path="models.ts" />
+/// <reference path="../common/models.ts" />
 
 import Utils = require("./utils");
-import Models = require("./models");
+import Models = require("../common/models");
 
 export interface IExchangeDetailsGateway {
     name() : string;

@@ -1,6 +1,6 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
-/// <reference path="models.ts" />
+/// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
 /// <reference path="nullgw.ts" />
 
@@ -9,7 +9,7 @@ import request = require("request");
 import crypto = require('crypto');
 import url = require("url");
 import Config = require("./config");
-import Models = require("./models");
+import Models = require("../common/models");
 import NullGateway = require("./nullgw");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");

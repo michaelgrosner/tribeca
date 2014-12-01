@@ -3,7 +3,7 @@
 /// <reference path="okcoin.ts" />
 /// <reference path="ui.ts" />
 /// <reference path="agent.ts" />
-/// <reference path="models.ts" />
+/// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
 
 import Config = require("./config");
@@ -12,7 +12,7 @@ import OkCoin = require("./okcoin");
 import Broker = require("./broker");
 import Agent = require("./agent");
 import UI = require("./ui");
-import Models = require("./models");
+import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 

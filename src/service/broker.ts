@@ -1,8 +1,8 @@
 /// <reference path="utils.ts" />
-/// <reference path="models.ts" />
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../common/models.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
 
-import Models = require("./models");
+import Models = require("../common/models");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');

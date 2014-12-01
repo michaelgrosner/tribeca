@@ -1,0 +1,45 @@
+{
+  "name": "Tribeca",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Gruntfile.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "angularjs": "^0.0.1",
+    "collections": "^1.2.1",
+    "connect": "^3.2.0",
+    "express": "^4.8.8",
+    "debug": "^2.0.0",
+    "faye": "^1.0.3",
+    "fibers": "^1.0.2",
+    "jquery": "^2.1.1",
+    "lodash": "^2.4.1",
+    "mongodb": "^1.4.22",
+    "moment": "^2.8.3",
+    "q": "^1.0.1",
+    "serve-static": "^1.6.4",
+    "socket.io": "^1.1.0",
+    "request": "^2.44.0",
+    "socket.io-client": "^0.9.16",
+    "utf8": "^2.0.0",
+    "ws": "^0.4.32",
+    "zmq": "^2.8.0"
+  },
+  "devDependencies": {
+    "grunt-contrib-copy": "^0.7.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-ts": "^1.12.1",
+    "mocha": "^2.0.1"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "author": "Michael Grosner",
+  "license": "ISC"
+}

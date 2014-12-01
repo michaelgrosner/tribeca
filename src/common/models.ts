@@ -1,4 +1,4 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
 
 export class Timestamped<T> {
     constructor(public data : T, public time : Moment) {}

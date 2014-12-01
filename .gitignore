@@ -3,3 +3,4 @@ typings
 *.js.map
 *.js
 *.idea
+.baseDir.ts

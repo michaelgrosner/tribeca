@@ -1,5 +1,5 @@
 /// <reference path="agent.ts" />
-/// <reference path="models.ts" />
+/// <reference path="../common/models.ts" />
 /// <reference path="utils.ts" />
 
 import express = require('express');
@@ -8,7 +8,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 import path = require("path");
 import Agent = require("./agent");
-import Models = require("./models");
+import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 
@@ -22,10 +22,11 @@ export class UI {
                 private _mdAgg : Agent.MarketDataAggregator,
                 private _posAgg : Agent.PositionAggregator) {
 
+        var adminPath = path.join(__dirname, "..", "..", "admin", "admin");
         app.get('/', (req, res) => {
-            res.sendFile(path.join(__dirname, "index.html"));
+            res.sendFile(path.join(adminPath, "index.html"));
         });
-        app.use(express.static(__dirname));
+        app.use(express.static(adminPath));
 
         this._mdAgg.MarketData.on(this.sendUpdatedMarket);
         this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
@@ -34,7 +35,7 @@ export class UI {
         this._agent.BestResultChanged.on(s => io.emit("result-change", s));
         this._brokers.forEach(b => b.ConnectChanged.on(cs => this.sendUpdatedConnectionStatus(b.exchange(), cs)));
 
-        http.listen(3000, () => this._log('listening on *:3000'));
+        http.listen(3000, () => this._log('Listening to admins on *:3000...'));
 
         io.on('connection', sock => {
             sock.emit("hello", this._env);

@@ -1,5 +1,5 @@
-/// <reference path="../typings/tsd.d.ts" />
-/// <reference path="./models.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../common/models.ts" />
 /// <reference path="./client.ts" />
 
 require.config({
@@ -9,7 +9,7 @@ require.config({
         'socket.io-client': '//cdn.socket.io/socket.io-1.1.0',
         'bootstrap': '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min',
         'moment': '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min',
-        'ui.bootstrap': '//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min'
+        'ui.bootstrap': '//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min'
     },
 
     shim: {

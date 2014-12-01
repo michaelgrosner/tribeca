@@ -1,9 +1,9 @@
-/// <reference path="../typings/tsd.d.ts" />
-/// <reference path="./models.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../common/models.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 
 import angular = require("angular");
-import Models = require("./models");
+import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
 
