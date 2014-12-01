@@ -4,3 +4,4 @@ typings
 *.js
 *.idea
 .baseDir.ts
+tribeca/

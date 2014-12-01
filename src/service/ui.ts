@@ -22,11 +22,13 @@ export class UI {
                 private _mdAgg : Agent.MarketDataAggregator,
                 private _posAgg : Agent.PositionAggregator) {
 
-        var adminPath = path.join(__dirname, "..", "..", "admin", "admin");
+        var adminPath = path.join(__dirname, "..", "admin", "admin");
         app.get('/', (req, res) => {
             res.sendFile(path.join(adminPath, "index.html"));
         });
         app.use(express.static(adminPath));
+        app.use(express.static(path.join(__dirname, "..", "admin", "common")));
+        app.use(express.static(path.join(__dirname, "..", "admin")));
 
         this._mdAgg.MarketData.on(this.sendUpdatedMarket);
         this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);

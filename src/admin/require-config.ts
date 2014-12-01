@@ -17,9 +17,11 @@ require.config({
             exports: 'angular',
             deps: ['jquery']
         },
-        'ui.bootstrap': ['angular'],
         'socket.io-client': ['jquery'],
-        'bootstrap': ['jquery']
+        'bootstrap': ['jquery'],
+        'ui.bootstrap': {
+            deps: ['angular', 'bootstrap']
+        }
     }
 });
 
