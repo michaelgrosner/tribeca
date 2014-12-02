@@ -207,3 +207,14 @@ export interface ReplaceRequestFromUI {
     price : number;
     quantity : number;
 }
+
+export class ResultMessage {
+    constructor(public restSide: Side,
+                public restExchange: Exchange, public hideExchange: Exchange,
+                public restMkt: MarketSide, public hideMkt: MarketSide,
+                public profit: number, public size: number, public time: Moment) { }
+}
+
+export class InactableResultMessage {
+    constructor(public isActive: boolean, public msg: ResultMessage = null) { }
+}

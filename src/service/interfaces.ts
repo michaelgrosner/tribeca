@@ -66,10 +66,4 @@ export class Result {
                 public hideBroker: IBroker, public profit: number,
                 public rest: Models.MarketSide, public hide: Models.MarketSide,
                 public size: number, public generatedTime: Moment) {}
-
-    public toJSON() {
-        return {side: this.restSide, size: this.size, profit: this.profit,
-            restExch: this.restBroker.exchange(), hideExch: this.hideBroker.exchange(),
-            restMkt: this.rest, hide: this.hide};
-    }
 }

@@ -14,7 +14,7 @@ module Client {
         active : boolean;
         orders_statuses : DisplayOrderStatusReport[];
         exchanges : { [exchange: number]: DisplayExchangeInformation };
-        current_result : string;
+        current_result : DisplayResult;
         order : Models.OrderRequestFromUI;
         cancel_replace_model : Models.ReplaceRequestFromUI;
 
@@ -90,7 +90,7 @@ module Client {
         constructor(public osr : Models.OrderStatusReport, private $scope : MainWindowScope) {
             this.orderId = osr.orderId;
             var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
-            this.time = parsedTime.format('M/d/yy h:mm:ss,sss');
+            this.time = parsedTime.format('M/d/YY h:mm:ss,SSS');
             this.timeSortable = parsedTime.toDate();
             this.exchange = Models.Exchange[osr.exchange];
             this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
@@ -134,6 +134,35 @@ module Client {
         }
     }
 
+    class DisplayResult {
+        side : string;
+        restExchange : string;
+        hideExchange : string;
+        restMarket : number;
+        hideMarket : number;
+        profit : number;
+        size : number;
+        time : string;
+        hasResult : boolean;
+
+        update = (wrappedMsg : Models.InactableResultMessage) => {
+            if (wrappedMsg.isActive) {
+                var res = wrappedMsg.msg;
+                this.side = Models.Side[res.restSide];
+                this.restExchange = Models.Exchange[res.restExchange];
+                this.hideExchange = Models.Exchange[res.hideExchange];
+                this.hideMarket = res.hideMkt.price;
+                this.restMarket = res.restMkt.price;
+                this.profit = res.profit;
+                this.size = res.size;
+
+                var parsedTime = (moment.isMoment(res.time) ? res.time : moment(res.time));
+                this.time = parsedTime.format('M/d/YY h:mm:ss,SSS');
+            }
+            this.hasResult = wrappedMsg.isActive;
+        }
+    }
+
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService) => {
         $scope.connected = false;
         $scope.active = false;
@@ -160,6 +189,7 @@ module Client {
             $scope.connected = true;
             $scope.exchanges = {};
             $scope.orders_statuses = [];
+            $scope.current_result = new DisplayResult();
             $log.info("connected");
         }).on("disconnect", () => {
             $scope.connected = false;
@@ -167,8 +197,8 @@ module Client {
         }).on("market-book", (b : Models.Market) => getOrAddDisplayExchange(b.exchange).updateMarket(b))
           .on('order-status-report', (o : Models.OrderStatusReport) => addOrderRpt(o))
           .on('order-status-report-snapshot', (os : Models.OrderStatusReport[]) => os.forEach(addOrderRpt))
-          .on('active-changed', (b) => $scope.active = b )
-          .on("result-change", (r : string) => $scope.current_result = r)
+          .on('active-changed', b => $scope.active = b )
+          .on("result-change", (r : Models.InactableResultMessage) => $scope.current_result.update(r))
           .on("position-report", (rpt : Models.ExchangeCurrencyPosition) => getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt))
           .on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) => getOrAddDisplayExchange(exch).setConnectStatus(cs) );
 

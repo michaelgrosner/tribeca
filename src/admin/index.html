@@ -114,19 +114,24 @@
                     ng-class="exch.connected ? 'success' : 'danger'">
                     <td>{{ exch.name }}</td>
                     <td>{{ exch.bidSize|number:2 }}</td>
-                    <td>{{ exch.bid|number:2 }}</td>
-                    <td>{{ exch.ask|number:2 }}</td>
+                    <td>{{ exch.bid|currency }}</td>
+                    <td>{{ exch.ask|currency }}</td>
                     <td>{{ exch.askSize|number:2 }}</td>
-                    <td>{{ exch.usdPosition | number:3 }}</td>
-                    <td>{{ exch.btcPosition | number:3 }}</td>
-                    <td>{{ exch.usdValue | number:3 }}</td>
+                    <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
+                    <td>{{ exch.btcPosition|currency:"B":3 }}</td>
+                    <td>{{ exch.usdValue|currency:undefined:3 }}</td>
                 </tr>
             </table>
-            {{ current_result }}
         </div>
-
         <div class="col-md-9"></div>
     </div>
+
+    <div class="row">
+        <pre ng-if="current_result.hasResult">side={{ current_result.side }} sz={{ current_result.size|number:3 }} pft={{ current_result.profit|currency:undefined:3 }} :: Rest {{ current_result.restExchange }} at {{ current_result.restMarket|currency }} :: Hide on {{ current_result.hideExchange }} at {{ current_result.hideMarket|currency }} :: {{ current_result.time }}</pre>
+
+        <pre ng-if="!current_result.hasResult">No Result :: {{ current_result.time }}</pre>
+    </div>
+
     <div class="row">
         <table class="table table-striped table-hover table-condensed">
             <tr>
@@ -156,17 +161,17 @@
                 <td bind-once>{{ o.time }}</td>
                 <td bind-once>{{ o.exchange }}</td>
                 <td bind-once>{{ o.orderStatus }}</td>
-                <td bind-once>{{ o.price|number:2 }}</td>
+                <td bind-once>{{ o.price|currency }}</td>
                 <td bind-once>{{ o.quantity|number:4 }}</td>
                 <td bind-once>{{ o.side }}</td>
                 <td bind-once>{{ o.orderType }}</td>
                 <td bind-once>{{ o.timeInForce }}</td>
                 <td bind-once>{{ o.computationalLatency }}</td>
                 <td bind-once>{{ o.lastQuantity|number:4 }}</td>
-                <td bind-once>{{ o.lastPrice|number:2 }}</td>
+                <td bind-once>{{ o.lastPrice|currency }}</td>
                 <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
                 <td bind-once>{{ o.cumQuantity|number:4 }}</td>
-                <td bind-once>{{ o.averagePrice|number:2 }}</td>
+                <td bind-once>{{ o.averagePrice|currency }}</td>
                 <td bind-once>{{ o.liquidity }}</td>
                 <td bind-once>{{ o.rejectMessage }}</td>
                 <td bind-once>{{ o.version }}</td>

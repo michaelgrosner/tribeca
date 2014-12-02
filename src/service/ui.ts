@@ -30,11 +30,11 @@ export class UI {
         app.use(express.static(path.join(__dirname, "..", "admin", "common")));
         app.use(express.static(path.join(__dirname, "..", "admin")));
 
-        this._mdAgg.MarketData.on(this.sendUpdatedMarket);
-        this._orderAgg.OrderUpdate.on(this.sendOrderStatusUpdate);
-        this._posAgg.PositionUpdate.on(this.sendPositionUpdate);
+        this._mdAgg.MarketData.on(x => this.sendUpdatedMarket(x));
+        this._orderAgg.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
+        this._posAgg.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
-        this._agent.BestResultChanged.on(s => io.emit("result-change", s));
+        this._agent.BestResultChanged.on(x => this.sendResultChange(x));
         this._brokers.forEach(b => b.ConnectChanged.on(cs => this.sendUpdatedConnectionStatus(b.exchange(), cs)));
 
         http.listen(3000, () => this._log('Listening to admins on *:3000...'));
@@ -55,8 +55,7 @@ export class UI {
 
             sock.emit("active-changed", this._agent.Active);
 
-            if (this._agent.LastBestResult != null)
-                sock.emit("result-change", this._agent.LastBestResult);
+            this.sendResultChange(this._agent.LastBestResult);
 
             sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
                 this._log("got new order %o", o);
@@ -96,5 +95,16 @@ export class UI {
     sendUpdatedMarket = (book : Models.Market) => {
         if (book == null) return;
         io.emit("market-book", book);
+    };
+
+    sendResultChange = (res : Interfaces.Result) => {
+        var serialize = (r : Interfaces.Result) => {
+            if (r != null) {
+                return new Models.ResultMessage(r.restSide, r.restBroker.exchange(), r.hideBroker.exchange(),
+                    r.rest, r.hide, r.profit, r.size, r.generatedTime);
+            }
+            return null;
+        };
+        io.emit("result-change", new Models.InactableResultMessage(res != null, serialize(res)));
     };
 }
