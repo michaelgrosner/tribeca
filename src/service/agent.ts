@@ -112,6 +112,11 @@ export class Agent {
         return b.currentBook != null && b.connectStatus == Models.ConnectivityStatus.Connected;
     }
 
+    private static hasEnoughPosition(b : Interfaces.IBroker, cur : Models.Currency, minAmt : number) {
+        var pos = b.getPosition(cur);
+        return pos != null && pos.amount > minAmt;
+    }
+
     private recalcMarkets = (generatedTime : Moment) => {
         var bestResult : Interfaces.Result = null;
         var bestProfit: number = Number.MIN_VALUE;
@@ -134,13 +139,19 @@ export class Agent {
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
                 if (pBid > bestProfit && pBid > this._minProfit && bidSize >= .01) {
-                    bestProfit = pBid;
-                    bestResult = new Interfaces.Result(Models.Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
+                    if (Agent.hasEnoughPosition(restBroker, Models.Currency.USD, bidSize*restTop.bid.price) &&
+                        Agent.hasEnoughPosition(hideBroker, Models.Currency.BTC, bidSize)) {
+                        bestProfit = pBid;
+                        bestResult = new Interfaces.Result(Models.Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
+                    }
                 }
 
                 if (pAsk > bestProfit && pAsk > this._minProfit && askSize >= .01) {
-                    bestProfit = pAsk;
-                    bestResult = new Interfaces.Result(Models.Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
+                    if (Agent.hasEnoughPosition(restBroker, Models.Currency.BTC, askSize) &&
+                        Agent.hasEnoughPosition(hideBroker, Models.Currency.USD, askSize*hideTop.ask.price)) {
+                        bestProfit = pAsk;
+                        bestResult = new Interfaces.Result(Models.Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
+                    }
                 }
             }
         }

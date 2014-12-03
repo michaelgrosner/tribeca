@@ -11,11 +11,11 @@ export interface Logger { (...arg : any[]) : void;}
 export class Evt<T> {
     constructor(private handlers : { (data? : T): void; }[] = []) {}
 
-    public on(handler : { (data? : T): void }) {
+    public on(handler : (data? : T) => void) {
         this.handlers.push(handler);
     }
 
-    public off(handler : { (data? : T): void }) {
+    public off(handler : (data? : T) => void) {
         this.handlers = this.handlers.filter(h => h !== handler);
     }
 
