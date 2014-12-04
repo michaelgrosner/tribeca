@@ -76,7 +76,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
             var newRpt = rpt.toExchangeReport(this.exchange());
             this._currencies[rpt.currency] = newRpt;
             this.PositionUpdate.trigger(newRpt);
-            this._log("New currency report: %o", newRpt);
+            this._log("New currency report: %s", newRpt);
         }
     };
 
@@ -229,7 +229,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this.OrderUpdate.trigger(o);
 
-        this._log("applied gw update -> %o", o);
+        this._log("applied gw update -> %s", o);
         this._persister.persist(o);
     };
 
@@ -276,7 +276,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
         if (this.currentBook == null || !book.equals(this.currentBook.update)) {
             this._currentBook = new Models.Market(book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
             this.MarketData.trigger(this.currentBook);
-            this._log(this.currentBook);
+            this._log("%s", this.currentBook);
         }
     };
 
