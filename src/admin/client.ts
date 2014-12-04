@@ -25,6 +25,38 @@ module Client {
         getOrderStatus : (o : Models.OrderStatusReport) => string;
     }
 
+    class DisplayOrder implements Models.OrderRequestFromUI {
+        exchange : string;
+        side : string;
+        price : number;
+        quantity : number;
+        timeInForce : string;
+        orderType : string;
+
+        availableExchanges : string[];
+        availableSides : string[];
+        availableTifs : string[];
+        availableOrderTypes : string[];
+
+        private static getNames<T>(enumObject : T) {
+            var names : string[] = [];
+            for (var mem in enumObject) {
+                if (!enumObject.hasOwnProperty(mem)) continue;
+                if (parseInt(mem, 10) >= 0) {
+                  names.push(enumObject[mem]);
+                }
+            }
+            return names;
+        }
+
+        constructor() {
+            this.availableExchanges = DisplayOrder.getNames(Models.Exchange);
+            this.availableSides = DisplayOrder.getNames(Models.Side);
+            this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
+            this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
+        }
+    }
+
     class DisplayExchangeInformation {
         connected : boolean;
         name : string;
@@ -206,7 +238,7 @@ module Client {
             $scope.orders_statuses.push(new DisplayOrderStatusReport(o, $scope));
         };
 
-        $scope.order = {exchange: null, side: null, price: null, quantity: null, timeInForce: null, orderType: null};
+        $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {
             socket.emit("submit-order", $scope.order);
         };
