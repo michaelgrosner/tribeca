@@ -21,7 +21,7 @@ export class FixGateway {
     _sock : any;
     constructor() {
         this._sock = zeromq.socket("pair");
-        this._sock.connect("tcp://localhost:5556");
+        this._sock.connect("ipc:///tmp/tribecafix");
         this.subscribe("ConnectionStatus", this.onConnectionStatus);
         this._sock.on("message", rawMsg => {
             var msg = JSON.parse(rawMsg);
