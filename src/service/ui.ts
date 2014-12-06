@@ -11,6 +11,7 @@ import Agent = require("./agent");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import _ = require("lodash");
 
 export class UI {
     _log : Utils.Logger = Utils.log("tribeca:ui");
@@ -45,7 +46,9 @@ export class UI {
             this._brokers.forEach(b => {
                 this.sendUpdatedConnectionStatus(b.exchange(), b.connectStatus);
                 this.sendUpdatedMarket(b.currentBook);
-                sock.emit("order-status-report-snapshot", b.allOrderStates());
+
+                var states = b.allOrderStates();
+                sock.emit("order-status-report-snapshot", states.slice(Math.max(states.length - 100, 1)));
 
                 // UI only knows about BTC and USD - for now
                 [Models.Currency.BTC, Models.Currency.USD].forEach(c => {

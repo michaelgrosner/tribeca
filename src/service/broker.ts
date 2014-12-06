@@ -325,7 +325,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
-        this._persister.getLatestStatuses(10, this.exchange()).then(osrs => {
+        this._persister.getLatestStatuses(1000, this.exchange()).then(osrs => {
             _.each(osrs, osr => {
                 this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
