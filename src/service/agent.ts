@@ -166,7 +166,7 @@ export class Agent {
             else if (bestResult !== null && this.LastBestResult !== null) {
                 if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
                         || bestResult.restSide != this.LastBestResult.restSide) {
-                    // don't flicker
+                  // don't flicker
                     if (Math.abs(bestResult.profit - this.LastBestResult.profit) < this._minProfit) {
                         this.noChange(bestResult);
                     }
@@ -187,7 +187,7 @@ export class Agent {
             }
         }
 
-        this.BestResultChanged.trigger(bestResult)
+        this.BestResultChanged.trigger(bestResult);
     };
 
     private noChange = (r : Interfaces.Result) => {

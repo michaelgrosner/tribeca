@@ -26,8 +26,9 @@ export class FixGateway {
         this._sock.on("message", rawMsg => {
             var msg = JSON.parse(rawMsg);
 
-            if (this._handlers.hasOwnProperty(msg.evt)) {
-                this._handlers[msg.evt](new Models.Timestamped(msg.obj, Utils.date(msg.ts)));
+            var handler = this._handlers[msg.evt];
+            if (typeof handler !== "undefined") {
+                handler(new Models.Timestamped(msg.obj, Utils.date(msg.ts)));
             }
             else {
                 this._log("no handler registered for inbound FIX message: %o", msg);
