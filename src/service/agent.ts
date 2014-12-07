@@ -87,8 +87,13 @@ export class Agent {
     Active : boolean = false;
     ActiveChanged = new Utils.Evt<boolean>();
 
-    LastBestResult : Interfaces.Result = null;
     BestResultChanged = new Utils.Evt<Interfaces.Result>();
+    private _lastBestResult = null;
+    get LastBestResult() : Interfaces.Result { return this._lastBestResult; }
+    set LastBestResult(r : Interfaces.Result) {
+        this._lastBestResult = r;
+        this.BestResultChanged.trigger(r);
+    }
 
     private _activeOrderIds : { [ exch : number] : string} = {};
 
@@ -166,9 +171,9 @@ export class Agent {
             else if (bestResult !== null && this.LastBestResult !== null) {
                 if (bestResult.restBroker.exchange() != this.LastBestResult.restBroker.exchange()
                         || bestResult.restSide != this.LastBestResult.restSide) {
-                  // don't flicker
+                    // don't flicker
                     if (Math.abs(bestResult.profit - this.LastBestResult.profit) < this._minProfit) {
-                        this.noChange(bestResult);
+                        this.ignore(bestResult);
                     }
                     else {
                         this.stop(this.LastBestResult, true, generatedTime);
@@ -183,16 +188,27 @@ export class Agent {
                 }
             }
             else {
-                this._log("NOTHING");
+                this.nothing();
             }
         }
+    };
 
-        this.BestResultChanged.trigger(bestResult);
+    private nothing = () => {
+        this._log("NOTHING");
+        this.LastBestResult = null;
+    };
+
+    private ignore = (r : Interfaces.Result) => {
+        this._log("IGNORED :: prevExch=%s newExch=%s; prevSide=%s newSide=%s; prevPft=%d newPft=%d",
+            Models.Exchange[this.LastBestResult.restBroker.exchange()], Models.Exchange[r.restBroker.exchange()],
+            Models.Side[this.LastBestResult.restSide], Models.Side[r.restSide],
+            this.LastBestResult.profit, r.profit);
     };
 
     private noChange = (r : Interfaces.Result) => {
         this._log("NO CHANGE :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Models.Side[r.restSide],
                 r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
+        this.LastBestResult = r;
     };
 
     private modify = (r : Interfaces.Result) => {
