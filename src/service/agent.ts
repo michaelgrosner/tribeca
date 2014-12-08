@@ -191,6 +191,10 @@ export class Agent {
                 this.nothing();
             }
         }
+        else {
+            // ugh, this is only for UI
+            this.BestResultChanged.trigger(bestResult);
+        }
     };
 
     private nothing = () => {
