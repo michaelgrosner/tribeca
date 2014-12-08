@@ -198,6 +198,9 @@ module Client {
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService) => {
         $scope.connected = false;
         $scope.active = false;
+        $scope.exchanges = {};
+        $scope.orders_statuses = [];
+        $scope.current_result = new DisplayResult();
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);
@@ -219,12 +222,12 @@ module Client {
         socket.on("hello", (env) => {
             $scope.env = env;
             $scope.connected = true;
-            $scope.exchanges = {};
-            $scope.orders_statuses = [];
-            $scope.current_result = new DisplayResult();
             $log.info("connected");
         }).on("disconnect", () => {
             $scope.connected = false;
+            $scope.exchanges = {};
+            $scope.orders_statuses.length = 0;
+            $scope.current_result.update(new Models.InactableResultMessage(false));
             $log.warn("disconnected");
         }).on("market-book", (b : Models.Market) => getOrAddDisplayExchange(b.exchange).updateMarket(b))
           .on('order-status-report', (o : Models.OrderStatusReport) => addOrderRpt(o))

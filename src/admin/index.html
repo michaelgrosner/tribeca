@@ -17,177 +17,182 @@
 </head>
 <body>
 
-<script type="text/ng-template" id="cancel_replace_form.html">
-    <form style="margin: 10px" class="form-horizontal" novalidate role="form">
-        <div class="form-group">
-            <label>Price</label>
-            <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.price" />
-        </div>
-        <div class="form-group">
-            <label>Size</label>
-            <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.quantity" />
-        </div>
-        <button type="button"
-                class="btn btn-success"
-                onclick="$('#cancel_replace_form').popover('hide');"
-                ng-click="o.cancelReplace()">Submit</button>
-    </form>
-</script>
+    <script type="text/ng-template" id="cancel_replace_form.html">
+        <form style="margin: 10px" class="form-horizontal" novalidate role="form">
+            <div class="form-group">
+                <label>Price</label>
+                <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.price" />
+            </div>
+            <div class="form-group">
+                <label>Size</label>
+                <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.quantity" />
+            </div>
+            <button type="button"
+                    class="btn btn-success"
+                    onclick="$('#cancel_replace_form').popover('hide');"
+                    ng-click="o.cancelReplace()">Submit</button>
+        </form>
+    </script>
 
-<script type="text/ng-template" id="order_form.html">
-    <form style="margin: 20px" class="form-horizontal" novalidate role="form">
-        <div class="form-group">
-            <label>Exchange</label>
-            <select class="form-control input-sm" ng-model="order.exchange" ng-options="x for x in order.availableExchanges"></select>
-        </div>
-        <div class="form-group">
-            <label>Side</label>
-            <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
-        </div>
-        <div class="form-group">
-            <label>Price</label>
-            <input class="form-control input-sm" type="number" ng-model="order.price" />
-        </div>
-        <div class="form-group">
-            <label>Size</label>
-            <input class="form-control input-sm" type="number" ng-model="order.quantity" />
-        </div>
-        <div class="form-group">
-            <label>TIF</label>
-            <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
-        </div>
-        <div class="form-group">
-            <label>Type</label>
-            <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
-        </div>
-        <button type="button"
-                class="btn btn-success"
-                onclick="$('#order_form').popover('hide');"
-                ng-click="submitOrder()">Submit</button>
-    </form>
-</script>
+    <script type="text/ng-template" id="order_form.html">
+        <form style="margin: 20px" class="form-horizontal" novalidate role="form">
+            <div class="form-group">
+                <label>Exchange</label>
+                <select class="form-control input-sm" ng-model="order.exchange" ng-options="x for x in order.availableExchanges"></select>
+            </div>
+            <div class="form-group">
+                <label>Side</label>
+                <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
+            </div>
+            <div class="form-group">
+                <label>Price</label>
+                <input class="form-control input-sm" type="number" ng-model="order.price" />
+            </div>
+            <div class="form-group">
+                <label>Size</label>
+                <input class="form-control input-sm" type="number" ng-model="order.quantity" />
+            </div>
+            <div class="form-group">
+                <label>TIF</label>
+                <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
+            </div>
+            <button type="button"
+                    class="btn btn-success"
+                    onclick="$('#order_form').popover('hide');"
+                    ng-click="submitOrder()">Submit</button>
+        </form>
+    </script>
 
+    <div ng-if="!connected">
+        Not connected
+    </div>
 
-<div class="navbar navbar-default" role="navigation">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">tribeca</a>
-        </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li>
-                    <button ng-class="active ? 'btn navbar-btn btn-success' : 'btn navbar-btn btn-danger'"
-                            ng-click="changeActive()">Active
+    <div ng-if="connected">
+        <div class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
                     </button>
-                </li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <button type="button"
-                        class="btn btn-primary navbar-btn"
-                        id="order_form"
-                        mypopover popover-template="order_form.html"
-                        data-placement="bottom">Submit order
-                </button>
-            </ul>
+                    <a class="navbar-brand" href="#">tribeca</a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li>
+                            <button ng-class="active ? 'btn navbar-btn btn-success' : 'btn navbar-btn btn-danger'"
+                                    ng-click="changeActive()">Active
+                            </button>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <button type="button"
+                                class="btn btn-primary navbar-btn"
+                                id="order_form"
+                                mypopover popover-template="order_form.html"
+                                data-placement="bottom">Submit order
+                        </button>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <table class="table table-condensed">
+                        <tr>
+                            <th>exch</th>
+                            <th>bSz</th>
+                            <th>bPx</th>
+                            <th>aPx</th>
+                            <th>aSz</th>
+                            <th>usd</th>
+                            <th>btc</th>
+                            <th>val</th>
+                        </tr>
+                        <tr ng-repeat="exch in exchanges"
+                            ng-class="exch.connected ? 'success' : 'danger'">
+                            <td>{{ exch.name }}</td>
+                            <td>{{ exch.bidSize|number:2 }}</td>
+                            <td>{{ exch.bid|currency }}</td>
+                            <td>{{ exch.ask|currency }}</td>
+                            <td>{{ exch.askSize|number:2 }}</td>
+                            <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
+                            <td>{{ exch.btcPosition|currency:"B":3 }}</td>
+                            <td>{{ exch.usdValue|currency:undefined:3 }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-9"></div>
+            </div>
+
+            <div class="row">
+                <pre ng-if="current_result.hasResult">side={{ current_result.side }} sz={{ current_result.size|number:3 }} pft={{ current_result.profit|currency:undefined:3 }} :: Rest {{ current_result.restExchange }} at {{ current_result.restMarket|currency }} :: Hide on {{ current_result.hideExchange }} at {{ current_result.hideMarket|currency }} :: {{ current_result.time }}</pre>
+
+                <pre ng-if="!current_result.hasResult">No Result :: {{ current_result.time }}</pre>
+            </div>
+
+            <div class="row">
+                <table class="table table-striped table-hover table-condensed">
+                    <tr>
+                        <th>id</th>
+                        <th>time</th>
+                        <th>exch</th>
+                        <th>status</th>
+                        <th>price</th>
+                        <th>qty</th>
+                        <th>side</th>
+                        <th>type</th>
+                        <th>tif</th>
+                        <th>lat</th>
+                        <th>lQty</th>
+                        <th>lPx</th>
+                        <th>lvQty</th>
+                        <th>cumQty</th>
+                        <th>avgPx</th>
+                        <th>liq</th>
+                        <th>msg</th>
+                        <th>ver</th>
+                        <th>cxl</th>
+                        <th>c-r</th>
+                    </tr>
+                    <tr ng-repeat="o in orders_statuses|orderBy:'-timeSortable'">
+                        <td bind-once>{{ o.orderId }}</td>
+                        <td bind-once>{{ o.time }}</td>
+                        <td bind-once>{{ o.exchange }}</td>
+                        <td bind-once>{{ o.orderStatus }}</td>
+                        <td bind-once>{{ o.price|currency }}</td>
+                        <td bind-once>{{ o.quantity|number:4 }}</td>
+                        <td bind-once>{{ o.side }}</td>
+                        <td bind-once>{{ o.orderType }}</td>
+                        <td bind-once>{{ o.timeInForce }}</td>
+                        <td bind-once>{{ o.computationalLatency }}</td>
+                        <td bind-once>{{ o.lastQuantity|number:4 }}</td>
+                        <td bind-once>{{ o.lastPrice|currency }}</td>
+                        <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
+                        <td bind-once>{{ o.cumQuantity|number:4 }}</td>
+                        <td bind-once>{{ o.averagePrice|currency }}</td>
+                        <td bind-once>{{ o.liquidity }}</td>
+                        <td bind-once>{{ o.rejectMessage }}</td>
+                        <td bind-once>{{ o.version }}</td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-danger btn-xs"
+                                    ng-click="o.cancel()"><span class="glyphicon glyphicon-remove"></span></button></td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-warning btn-xs"
+                                    mypopover popover-template="cancel_replace_form.html"
+                                    id="cancel_replace_form"
+                                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
-</div>
-
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-3">
-            <table class="table table-condensed">
-                <tr>
-                    <th>exch</th>
-                    <th>bSz</th>
-                    <th>bPx</th>
-                    <th>aPx</th>
-                    <th>aSz</th>
-                    <th>usd</th>
-                    <th>btc</th>
-                    <th>val</th>
-                </tr>
-                <tr ng-repeat="exch in exchanges"
-                    ng-class="exch.connected ? 'success' : 'danger'">
-                    <td>{{ exch.name }}</td>
-                    <td>{{ exch.bidSize|number:2 }}</td>
-                    <td>{{ exch.bid|currency }}</td>
-                    <td>{{ exch.ask|currency }}</td>
-                    <td>{{ exch.askSize|number:2 }}</td>
-                    <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
-                    <td>{{ exch.btcPosition|currency:"B":3 }}</td>
-                    <td>{{ exch.usdValue|currency:undefined:3 }}</td>
-                </tr>
-            </table>
-        </div>
-        <div class="col-md-9"></div>
-    </div>
-
-    <div class="row">
-        <pre ng-if="current_result.hasResult">side={{ current_result.side }} sz={{ current_result.size|number:3 }} pft={{ current_result.profit|currency:undefined:3 }} :: Rest {{ current_result.restExchange }} at {{ current_result.restMarket|currency }} :: Hide on {{ current_result.hideExchange }} at {{ current_result.hideMarket|currency }} :: {{ current_result.time }}</pre>
-
-        <pre ng-if="!current_result.hasResult">No Result :: {{ current_result.time }}</pre>
-    </div>
-
-    <div class="row">
-        <table class="table table-striped table-hover table-condensed">
-            <tr>
-                <th>id</th>
-                <th>time</th>
-                <th>exch</th>
-                <th>status</th>
-                <th>price</th>
-                <th>qty</th>
-                <th>side</th>
-                <th>type</th>
-                <th>tif</th>
-                <th>lat</th>
-                <th>lQty</th>
-                <th>lPx</th>
-                <th>lvQty</th>
-                <th>cumQty</th>
-                <th>avgPx</th>
-                <th>liq</th>
-                <th>msg</th>
-                <th>ver</th>
-                <th>cxl</th>
-                <th>c-r</th>
-            </tr>
-            <tr ng-repeat="o in orders_statuses|orderBy:'-timeSortable'">
-                <td bind-once>{{ o.orderId }}</td>
-                <td bind-once>{{ o.time }}</td>
-                <td bind-once>{{ o.exchange }}</td>
-                <td bind-once>{{ o.orderStatus }}</td>
-                <td bind-once>{{ o.price|currency }}</td>
-                <td bind-once>{{ o.quantity|number:4 }}</td>
-                <td bind-once>{{ o.side }}</td>
-                <td bind-once>{{ o.orderType }}</td>
-                <td bind-once>{{ o.timeInForce }}</td>
-                <td bind-once>{{ o.computationalLatency }}</td>
-                <td bind-once>{{ o.lastQuantity|number:4 }}</td>
-                <td bind-once>{{ o.lastPrice|currency }}</td>
-                <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
-                <td bind-once>{{ o.cumQuantity|number:4 }}</td>
-                <td bind-once>{{ o.averagePrice|currency }}</td>
-                <td bind-once>{{ o.liquidity }}</td>
-                <td bind-once>{{ o.rejectMessage }}</td>
-                <td bind-once>{{ o.version }}</td>
-                <td>
-                    <button type="button"
-                            class="btn btn-danger btn-xs"
-                            ng-click="o.cancel()"><span class="glyphicon glyphicon-remove"></span></button></td>
-                <td>
-                    <button type="button"
-                            class="btn btn-warning btn-xs"
-                            mypopover popover-template="cancel_replace_form.html"
-                            id="cancel_replace_form"
-                            data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
-            </tr>
-        </table>
-    </div>
-</div>
 </body>
 </html>
