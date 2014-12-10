@@ -131,7 +131,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             exchange: exch,
-            computationalLatency: sent.sentTime.diff(order.generatedTime)};
+            computationalLatency: sent.sentTime.diff(order.generatedTime),
+            rejectMessage: order.msg};
         this._allOrders[rpt.orderId] = [rpt];
         this.onOrderUpdate(rpt);
 

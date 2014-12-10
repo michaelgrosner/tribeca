@@ -269,7 +269,8 @@ export class Agent {
             ? hideBroker.currentBook.update.ask.price
             : hideBroker.currentBook.update.bid.price;
         var side = o.side == Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
-        hideBroker.sendOrder(new Models.SubmitNewOrder(side, o.lastQuantity, o.type, px, Models.TimeInForce.IOC, hideBroker.exchange(), o.time));
+        hideBroker.sendOrder(new Models.SubmitNewOrder(side, o.lastQuantity, o.type, px, Models.TimeInForce.IOC,
+            hideBroker.exchange(), o.time, "AF: " + o.orderId));
 
         this._log("ARBFIRE :: rested %s %d for %d on %s --> pushing %s %d for %d on %s",
             Models.Side[o.side], o.lastQuantity, o.lastPrice, Models.Exchange[this.LastBestResult.restBroker.exchange()],

@@ -82,7 +82,8 @@ export class SubmitNewOrder implements Order {
         public price : number,
         public timeInForce : TimeInForce,
         public exchange : Exchange,
-        public generatedTime: Moment) {}
+        public generatedTime: Moment,
+        public msg: string = null) {}
 }
 
 export class CancelReplaceOrder {
