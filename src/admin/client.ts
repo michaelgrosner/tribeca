@@ -122,7 +122,7 @@ module Client {
         constructor(public osr : Models.OrderStatusReport, private $scope : MainWindowScope) {
             this.orderId = osr.orderId;
             var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
-            this.time = parsedTime.format('M/d/YY h:mm:ss,SSS');
+            this.time = Models.toUtcFormattedTime(parsedTime);
             this.timeSortable = parsedTime.toDate();
             this.exchange = Models.Exchange[osr.exchange];
             this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
@@ -189,7 +189,7 @@ module Client {
                 this.size = res.size;
 
                 var parsedTime = (moment.isMoment(res.time) ? res.time : moment(res.time));
-                this.time = parsedTime.format('M/d/YY h:mm:ss,SSS');
+                this.time = Models.toUtcFormattedTime(parsedTime);
             }
             this.hasResult = wrappedMsg.isActive;
         }

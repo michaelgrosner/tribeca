@@ -4,7 +4,7 @@ export class Timestamped<T> {
     constructor(public data : T, public time : Moment) {}
 
     public toString() {
-        return "time=" + this.time.format('M/d/YY h:mm:ss,SSS') + ";data=" + this.data;
+        return "time=" + toUtcFormattedTime(this.time) + ";data=" + this.data;
     }
 }
 
@@ -272,4 +272,8 @@ export class ResultMessage {
 
 export class InactableResultMessage {
     constructor(public isActive: boolean, public msg: ResultMessage = null) { }
+}
+
+export function toUtcFormattedTime(t : Moment) {
+    return t.format('M/D/YY HH:mm:ss,SSS');
 }

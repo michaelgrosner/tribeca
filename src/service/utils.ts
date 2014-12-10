@@ -1,5 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
+import Models = require("../common/models");
 import momentjs = require('moment');
 export var date = momentjs.utc;
 
@@ -8,7 +9,7 @@ import winston = require("winston");
 winston.add(winston.transports.File, { filename: 'tribeca.log', timestamp: false, json: false });
 export var log = (name : string) => {
     return (...msg : any[]) => {
-        var head = util.format.bind(this, date().format('M/d/YY h:mm:ss,SSS') + "\t[" + name + "]\t" + msg.shift());
+        var head = util.format.bind(this, Models.toUtcFormattedTime(date()) + "\t[" + name + "]\t" + msg.shift());
         winston.info(head.apply(this, msg));
     };
 };
