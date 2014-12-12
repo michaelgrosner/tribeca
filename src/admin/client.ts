@@ -223,19 +223,36 @@ module Client {
             $scope.env = env;
             $scope.connected = true;
             $log.info("connected");
-        }).on("disconnect", () => {
+        });
+
+        socket.on("disconnect", () => {
             $scope.connected = false;
             $scope.exchanges = {};
             $scope.orders_statuses.length = 0;
             $scope.current_result.update(new Models.InactableResultMessage(false));
             $log.warn("disconnected");
-        }).on("market-book", (b : Models.Market) => getOrAddDisplayExchange(b.exchange).updateMarket(b))
-          .on('order-status-report', (o : Models.OrderStatusReport) => addOrderRpt(o))
-          .on('order-status-report-snapshot', (os : Models.OrderStatusReport[]) => os.forEach(addOrderRpt))
-          .on('active-changed', b => $scope.active = b )
-          .on("result-change", (r : Models.InactableResultMessage) => $scope.current_result.update(r))
-          .on("position-report", (rpt : Models.ExchangeCurrencyPosition) => getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt))
-          .on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) => getOrAddDisplayExchange(exch).setConnectStatus(cs) );
+        });
+
+        socket.on("market-book", (b : Models.Market) =>
+            getOrAddDisplayExchange(b.exchange).updateMarket(b));
+
+        socket.on('order-status-report', (o : Models.OrderStatusReport) =>
+            addOrderRpt(o));
+
+        socket.on('order-status-report-snapshot', (os : Models.OrderStatusReport[]) =>
+            os.forEach(addOrderRpt));
+
+        socket.on('active-changed', b =>
+            $scope.active = b );
+
+        socket.on("result-change", (r : Models.InactableResultMessage) =>
+            $scope.current_result.update(r));
+
+        socket.on("position-report", (rpt : Models.ExchangeCurrencyPosition) =>
+            getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt));
+
+        socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
+            getOrAddDisplayExchange(exch).setConnectStatus(cs) );
 
         var addOrderRpt = (o : Models.OrderStatusReport) => {
             $scope.orders_statuses.push(new DisplayOrderStatusReport(o, $scope));
