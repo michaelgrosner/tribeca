@@ -9,6 +9,7 @@
 import Config = require("./config");
 import HitBtc = require("./hitbtc");
 import OkCoin = require("./okcoin");
+import BtcChina = require("./btcchina");
 import Broker = require("./broker");
 import Agent = require("./agent");
 import UI = require("./ui");
@@ -18,7 +19,7 @@ import Interfaces = require("./interfaces");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
-var gateways : Array<Interfaces.CombinedGateway> = [new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
+var gateways : Array<Interfaces.CombinedGateway> = [new BtcChina.BtcChina(config)]; //[new HitBtc.HitBtc(config), new OkCoin.OkCoin(config)];
 var persister = new Broker.OrderStatusPersister();
 var brokers = gateways.map(g => new Broker.ExchangeBroker(g.md, g.base, g.oe, g.pg, persister));
 var posAgg = new Agent.PositionAggregator(brokers);
