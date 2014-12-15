@@ -112,17 +112,19 @@
                             <th>aSz</th>
                             <th>usd</th>
                             <th>btc</th>
+                            <th>ltc</th>
                             <th>val</th>
                         </tr>
                         <tr ng-repeat="exch in exchanges"
                             ng-class="exch.connected ? 'success' : 'danger'">
                             <td>{{ exch.name }}</td>
-                            <td>{{ exch.bidSize|number:2 }}</td>
-                            <td>{{ exch.bid|currency }}</td>
-                            <td>{{ exch.ask|currency }}</td>
-                            <td>{{ exch.askSize|number:2 }}</td>
+                            <td>{{ exch.bidSize|number:3 }}</td>
+                            <td>{{ exch.bid|currency:"B":4 }}</td>
+                            <td>{{ exch.ask|currency:"B":4 }}</td>
+                            <td>{{ exch.askSize|number:3 }}</td>
                             <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
                             <td>{{ exch.btcPosition|currency:"B":3 }}</td>
+                            <td>{{ exch.ltcPosition|currency:"B":3 }}</td>
                             <td>{{ exch.usdValue|currency:undefined:3 }}</td>
                         </tr>
                     </table>

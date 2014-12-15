@@ -11,6 +11,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import request = require("request");
 
 interface GroupOrderLevel {
     price : number;
@@ -55,6 +56,46 @@ class BtcChinaPositionGateway implements Interfaces.IPositionGateway {
     constructor(config : Config.IConfigProvider) {}
 }
 
+interface PolledOrderBook {
+    bids : number[][];
+    asks : number[][];
+}
+
+class PollingBtcChinaMarketDataGateway implements Interfaces.IMarketDataGateway {
+    _log : Utils.Logger = Utils.log("tribeca:gateway:BtcChinaPollMD");
+
+    MarketData = new Utils.Evt<Models.MarketUpdate>();
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+
+    private static onBook(sideData : number[][]) : Models.MarketSide {
+        return new Models.MarketSide(sideData[0][0], sideData[0][1]);
+    }
+
+    private getMarketData = () => {
+        request({
+            url: "https://data.btcchina.com/data/orderbook?market=btcltc&limit=1",
+            method: "GET"
+        }, (err, resp, body) => {
+            try {
+                var t = Utils.date();
+                var data : PolledOrderBook = JSON.parse(body);
+                var bid = PollingBtcChinaMarketDataGateway.onBook(data.bids);
+                var ask = PollingBtcChinaMarketDataGateway.onBook(data.asks);
+                this.MarketData.trigger(new Models.MarketUpdate(bid, ask, t));
+            }
+            catch (e) {
+                this._log("url: %s, err: %o, body: %o", "https://data.btcchina.com/data/orderbook?market=btcltc", err, body);
+                throw e;
+            }
+        });
+    };
+
+    constructor() {
+        setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 5);
+        setInterval(this.getMarketData, 5000);
+    }
+}
+
 class BtcChinaMarketDataGateway implements Interfaces.IMarketDataGateway {
     _log : Utils.Logger = Utils.log("tribeca:gateway:BtcChinaMD");
 
@@ -78,10 +119,13 @@ class BtcChinaMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     constructor(socket : any) {
-        socket.emit('subscribe', 'grouporder_btcltc');
         socket.on('grouporder', this.onGroupOrderData);
 
-        socket.on('connect', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        socket.on('connect', () => {
+            this._log("connected");
+            socket.emit('subscribe', 'grouporder_btcltc');
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+        });
         socket.on('disconnect', () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
     }
 }
@@ -106,7 +150,7 @@ class BtcChinaBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class BtcChina extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
-        var socket = io('https://websocket.btcchina.com/');
+        var socket = io.connect('https://websocket.btcchina.com');
 
         var orderGateway = config.GetString("BtcChinaOrderDestination") == "BtcChina" ?
             <Interfaces.IOrderEntryGateway>new BtcChinaOrderEntryGateway(socket)
@@ -117,7 +161,7 @@ export class BtcChina extends Interfaces.CombinedGateway {
             new BtcChinaPositionGateway(config);
 
         super(
-            new BtcChinaMarketDataGateway(socket),
+            new PollingBtcChinaMarketDataGateway(),
             orderGateway,
             positionGateway,
             new BtcChinaBaseGateway());

@@ -67,6 +67,7 @@ module Client {
 
         usdPosition : number = null;
         btcPosition : number = null;
+        ltcPosition : number = null;
         usdValue : number = null;
 
         constructor(exchange : Models.Exchange) {
@@ -85,11 +86,16 @@ module Client {
         };
 
         public updatePosition = (position : Models.ExchangeCurrencyPosition) => {
-            if (position.currency == Models.Currency.BTC) {
-                this.btcPosition = position.amount;
-            }
-            else if (position.currency == Models.Currency.USD) {
-                this.usdPosition = position.amount;
+            switch (position.currency) {
+                case Models.Currency.BTC:
+                    this.btcPosition = position.amount;
+                    break;
+                case Models.Currency.USD:
+                    this.usdPosition = position.amount;
+                    break;
+                case Models.Currency.LTC:
+                    this.ltcPosition = position.amount;
+                    break;
             }
 
             if (this.btcPosition != null && this.usdPosition != null) {
