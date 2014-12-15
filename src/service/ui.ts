@@ -51,7 +51,7 @@ export class UI {
                 sock.emit("order-status-report-snapshot", states.slice(Math.max(states.length - 100, 1)));
 
                 // UI only knows about BTC and USD - for now
-                [Models.Currency.BTC, Models.Currency.USD].forEach(c => {
+                [Models.Currency.BTC, Models.Currency.USD, Models.Currency.LTC].forEach(c => {
                     this.sendPositionUpdate(b.getPosition(c));
                 });
             });
@@ -88,10 +88,12 @@ export class UI {
     };
 
     sendPositionUpdate = (msg : Models.ExchangeCurrencyPosition) => {
+        if (msg == null) return;
         io.emit("position-report", msg);
     };
 
     sendOrderStatusUpdate = (msg : Models.OrderStatusReport) => {
+        if (msg == null) return;
         io.emit("order-status-report", msg);
     };
 
