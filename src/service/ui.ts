@@ -1,4 +1,5 @@
-/// <reference path="agent.ts" />
+/// <reference path="arbagent.ts" />
+/// <reference path="aggregators.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="utils.ts" />
 
@@ -7,21 +8,21 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 import path = require("path");
-import Agent = require("./agent");
+import Agent = require("./arbagent");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import _ = require("lodash");
+import Aggregators = require("./aggregators");
 
 export class UI {
     _log : Utils.Logger = Utils.log("tribeca:ui");
 
     constructor(private _env : string,
                 private _brokers : Array<Interfaces.IBroker>,
-                private _agent : Agent.Agent,
-                private _orderAgg : Agent.OrderBrokerAggregator,
-                private _mdAgg : Agent.MarketDataAggregator,
-                private _posAgg : Agent.PositionAggregator) {
+                private _agent : Agent.ArbAgent,
+                private _orderAgg : Aggregators.OrderBrokerAggregator,
+                private _mdAgg : Aggregators.MarketDataAggregator,
+                private _posAgg : Aggregators.PositionAggregator) {
 
         var adminPath = path.join(__dirname, "..", "admin", "admin");
         app.get('/', (req, res) => {

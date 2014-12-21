@@ -1,83 +1,21 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
+/// <reference path="utils.ts" />
 
 import Config = require("./config");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import Aggregators = require("./aggregators");
 
-export class PositionAggregator {
-    PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
-
-    constructor(private _brokers : Array<Interfaces.IBroker>) {
-        this._brokers.forEach(b => {
-            b.PositionUpdate.on(m => this.PositionUpdate.trigger(m));
-        });
-    }
-}
-
-export class MarketDataAggregator {
-    MarketData = new Utils.Evt<Models.Market>();
-
-    constructor(private _brokers : Array<Interfaces.IBroker>) {
-        this._brokers.forEach(b => {
-            b.MarketData.on(m => this.MarketData.trigger(m));
-        });
-    }
-}
-
-export class OrderBrokerAggregator {
-    _log : Utils.Logger = Utils.log("tribeca:brokeraggregator");
-    _brokersByExch : { [exchange: number]: Interfaces.IBroker} = {};
-
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-
-    constructor(private _brokers : Array<Interfaces.IBroker>) {
-
-        this._brokers.forEach(b => {
-            b.OrderUpdate.on(o => this.OrderUpdate.trigger(o));
-        });
-
-        for (var i = 0; i < this._brokers.length; i++)
-            this._brokersByExch[this._brokers[i].exchange()] = this._brokers[i];
-    }
-
-    public submitOrder = (o : Models.SubmitNewOrder) => {
-        try {
-            this._brokersByExch[o.exchange].sendOrder(o);
-        }
-        catch (e) {
-            this._log("Exception while sending order", o, e, e.stack);
-        }
-    };
-
-    public cancelReplaceOrder = (o : Models.CancelReplaceOrder) => {
-        try {
-            this._brokersByExch[o.exchange].replaceOrder(o);
-        }
-        catch (e) {
-            this._log("Exception while cancel/replacing order", o, e, e.stack);
-        }
-    };
-
-    public cancelOrder = (o : Models.OrderCancel) => {
-        try {
-            this._brokersByExch[o.exchange].cancelOrder(o);
-        }
-        catch (e) {
-            this._log("Exception while cancelling order", o, e, e.stack);
-        }
-    };
-}
-
-export class Agent {
+export class ArbAgent {
     private _log : Utils.Logger = Utils.log("tribeca:agent");
     private _maxSize : number;
     private _minProfit : number;
 
     constructor(private _brokers : Array<Interfaces.IBroker>,
-                private _mdAgg : MarketDataAggregator,
-                private _orderAgg : OrderBrokerAggregator,
+                private _mdAgg : Aggregators.MarketDataAggregator,
+                private _orderAgg : Aggregators.OrderBrokerAggregator,
                 private config : Config.IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
         this._minProfit = config.GetNumber("MinProfit");
@@ -128,12 +66,12 @@ export class Agent {
 
         for (var i = 0; i < this._brokers.length; i++) {
             var restBroker = this._brokers[i];
-            if (!Agent.isBrokerActive(restBroker)) continue;
+            if (!ArbAgent.isBrokerActive(restBroker)) continue;
             var restTop = restBroker.currentBook.update;
 
             for (var j = 0; j < this._brokers.length; j++) {
                 var hideBroker = this._brokers[j];
-                if (i == j || !Agent.isBrokerActive(hideBroker)) continue;
+                if (i == j || !ArbAgent.isBrokerActive(hideBroker)) continue;
 
                 var hideTop = hideBroker.currentBook.update;
 
@@ -144,16 +82,16 @@ export class Agent {
                 var pAsk = askSize * (+(1 + restBroker.makeFee()) * restTop.ask.price - (1 + hideBroker.takeFee()) * hideTop.ask.price);
 
                 if (pBid > bestProfit && pBid > this._minProfit && bidSize >= .01) {
-                    if (Agent.hasEnoughPosition(restBroker, Models.Currency.USD, bidSize*restTop.bid.price) &&
-                        Agent.hasEnoughPosition(hideBroker, Models.Currency.BTC, bidSize)) {
+                    if (ArbAgent.hasEnoughPosition(restBroker, Models.Currency.USD, bidSize*restTop.bid.price) &&
+                        ArbAgent.hasEnoughPosition(hideBroker, Models.Currency.BTC, bidSize)) {
                         bestProfit = pBid;
                         bestResult = new Interfaces.Result(Models.Side.Bid, restBroker, hideBroker, pBid, restTop.bid, hideTop.bid, bidSize, generatedTime);
                     }
                 }
 
                 if (pAsk > bestProfit && pAsk > this._minProfit && askSize >= .01) {
-                    if (Agent.hasEnoughPosition(restBroker, Models.Currency.BTC, askSize) &&
-                        Agent.hasEnoughPosition(hideBroker, Models.Currency.USD, askSize*hideTop.ask.price)) {
+                    if (ArbAgent.hasEnoughPosition(restBroker, Models.Currency.BTC, askSize) &&
+                        ArbAgent.hasEnoughPosition(hideBroker, Models.Currency.USD, askSize*hideTop.ask.price)) {
                         bestProfit = pAsk;
                         bestResult = new Interfaces.Result(Models.Side.Ask, restBroker, hideBroker, pAsk, restTop.ask, hideTop.ask, askSize, generatedTime);
                     }
