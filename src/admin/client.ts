@@ -25,7 +25,7 @@ module Client {
         getOrderStatus : (o : Models.OrderStatusReport) => string;
     }
 
-    class DisplayOrder implements Models.OrderRequestFromUI {
+    class DisplayOrder {
         exchange : string;
         side : string;
         price : number;
@@ -266,7 +266,9 @@ module Client {
 
         $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {
-            socket.emit("submit-order", $scope.order);
+            var o = $scope.order;
+            socket.emit("submit-order",
+                new Models.OrderRequestFromUI(o.exchange, o.side, o.price, o.quantity, o.timeInForce, o.orderType));
         };
 
         $scope.cancel_replace_model = {price: null, quantity: null};

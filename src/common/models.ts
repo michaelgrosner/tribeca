@@ -249,13 +249,14 @@ export class CurrencyPosition {
     }
 }
 
-export interface OrderRequestFromUI {
-    exchange : string;
-    side : string;
-    price : number;
-    quantity : number;
-    timeInForce : string;
-    orderType : string
+export class OrderRequestFromUI {
+    constructor(
+        public exchange : string,
+        public side : string,
+        public price : number,
+        public quantity : number,
+        public timeInForce : string,
+        public orderType : string) {}
 }
 
 export interface ReplaceRequestFromUI {

@@ -14,7 +14,7 @@ export class PositionAggregator {
 }
 
 export class MarketDataAggregator {
-    MarketData = new Utils.Evt<Models.Market>();
+    MarketData : Utils.Evt<Models.Market> = new Utils.Evt<Models.Market>();
 
     constructor(private _brokers : Array<Interfaces.IBroker>) {
         this._brokers.forEach(b => {

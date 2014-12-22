@@ -19,7 +19,7 @@ export class ArbAgent {
                 private config : Config.IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
         this._minProfit = config.GetNumber("MinProfit");
-        _mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));
+        //_mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));
     }
 
     Active : boolean = false;
