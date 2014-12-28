@@ -39,9 +39,9 @@ export class OrderBrokerAggregator {
             this._brokersByExch[this._brokers[i].exchange()] = this._brokers[i];
     }
 
-    public submitOrder = (o : Models.SubmitNewOrder) => {
+    public submitOrder = (o : Models.SubmitNewOrder) : Models.SentOrder => {
         try {
-            this._brokersByExch[o.exchange].sendOrder(o);
+            return this._brokersByExch[o.exchange].sendOrder(o);
         }
         catch (e) {
             this._log("Exception while sending order", o, e, e.stack);

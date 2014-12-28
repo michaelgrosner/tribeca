@@ -7,6 +7,7 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Aggregators = require("./aggregators");
+import Quoter = require("./quoter");
 
 export class ArbAgent {
     private _log : Utils.Logger = Utils.log("tribeca:agent");
@@ -16,10 +17,11 @@ export class ArbAgent {
     constructor(private _brokers : Array<Interfaces.IBroker>,
                 private _mdAgg : Aggregators.MarketDataAggregator,
                 private _orderAgg : Aggregators.OrderBrokerAggregator,
+                private _quoter : Quoter.Quoter,
                 private config : Config.IConfigProvider) {
         this._maxSize = config.GetNumber("MaxSize");
         this._minProfit = config.GetNumber("MinProfit");
-        //_mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));
+        _mdAgg.MarketData.on(m => this.recalcMarkets(m.update.time));
     }
 
     Active : boolean = false;
@@ -154,29 +156,19 @@ export class ArbAgent {
     };
 
     private modify = (r : Interfaces.Result) => {
-        var restExch = r.restBroker.exchange();
-        // cxl-rpl live order -- need to rethink cxl-rpl
-        var cxl = new Models.OrderCancel(this._activeOrderIds[restExch], restExch, r.generatedTime);
-        r.restBroker.cancelOrder(cxl);
-        var newOrder = new Models.SubmitNewOrder(r.restSide, r.size, Models.OrderType.Limit, r.rest.price, Models.TimeInForce.GTC, restExch, r.generatedTime);
-        this._activeOrderIds[restExch] = r.restBroker.sendOrder(newOrder).sentOrderClientId;
+        var action = this._quoter.updateQuote(new Quoter.Quote(Quoter.QuoteAction.New, r.restSide,
+            r.restBroker.exchange(), r.generatedTime, r.rest.price, r.rest.size));
 
-        this._log("MODIFY :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Models.Side[r.restSide],
-            r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
+        var verb  = "MODIFY";
+        if (action == Quoter.QuoteSent.First) {
+            verb = "START";
+            r.restBroker.OrderUpdate.on(this.arbFire);
+        }
+        else if (action == Quoter.QuoteSent.UnsentDuplicate) {
+            verb = "NO CHANGE";
+        }
 
-        this.LastBestResult = r;
-    };
-
-    private start = (r : Interfaces.Result) => {
-        var restExch = r.restBroker.exchange();
-        // set up fill notification
-        r.restBroker.OrderUpdate.on(this.arbFire);
-
-        // send an order
-        var sent = r.restBroker.sendOrder(new Models.SubmitNewOrder(r.restSide, r.size, Models.OrderType.Limit, r.rest.price, Models.TimeInForce.GTC, restExch, r.generatedTime));
-        this._activeOrderIds[restExch] = sent.sentOrderClientId;
-
-        this._log("START :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", r.profit, Models.Side[r.restSide],
+        this._log("%s :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", verb, r.profit, Models.Side[r.restSide],
             r.restBroker.name(), r.rest.price, r.hideBroker.name(), r.hide.price);
 
         this.LastBestResult = r;
@@ -187,9 +179,7 @@ export class ArbAgent {
         lr.restBroker.OrderUpdate.off(this.arbFire);
 
         // cancel open order
-        var restExch = lr.restBroker.exchange();
-        if (sendCancel) lr.restBroker.cancelOrder(new Models.OrderCancel(this._activeOrderIds[restExch], restExch, t));
-        delete this._activeOrderIds[restExch];
+        this._quoter.updateQuote(new Quoter.Quote(Quoter.QuoteAction.Cancel, lr.restSide, lr.restBroker.exchange(), t));
 
         this._log("STOP :: p=%d > %s Rest (%s) %d :: Hide (%s) %d", lr.profit,
             Models.Side[lr.restSide], lr.restBroker.name(),
