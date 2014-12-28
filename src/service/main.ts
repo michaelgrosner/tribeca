@@ -17,17 +17,22 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Aggregators = require("./aggregators");
+import Quoter = require("./quoter");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
 var gateways : Array<Interfaces.CombinedGateway> = [new HitBtc.HitBtc(config)];
 var persister = new Broker.OrderStatusPersister();
 var brokers = gateways.map(g => new Broker.ExchangeBroker(g.md, g.base, g.oe, g.pg, persister));
+var exchQuoters = brokers.map(b => new Quoter.ExchangeQuoter(b));
 var posAgg = new Aggregators.PositionAggregator(brokers);
 var orderAgg = new Aggregators.OrderBrokerAggregator(brokers);
 var mdAgg = new Aggregators.MarketDataAggregator(brokers);
-var agent = new Agent.ArbAgent(brokers, mdAgg, orderAgg, config);
-var ui = new UI.UI(env, brokers, agent, orderAgg, mdAgg, posAgg);
+var fvAgent = new Agent.FairValueAgent(mdAgg);
+var quoteGenerator = new Agent.QuoteGenerator(fvAgent);
+var quoter = new Quoter.Quoter(exchQuoters);
+var trader = new Agent.Trader(quoteGenerator, quoter, fvAgent, brokers.map(b => b.exchange()));
+var ui = new UI.UI(env, brokers, trader, orderAgg, mdAgg, posAgg);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

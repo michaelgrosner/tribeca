@@ -15,12 +15,21 @@ export class PositionAggregator {
 
 export class MarketDataAggregator {
     MarketData : Utils.Evt<Models.Market> = new Utils.Evt<Models.Market>();
+    _brokersByExch : { [exchange: number]: Interfaces.IBroker} = {};
 
     constructor(private _brokers : Array<Interfaces.IBroker>) {
         this._brokers.forEach(b => {
             b.MarketData.on(m => this.MarketData.trigger(m));
         });
+
+        for (var i = 0; i < this._brokers.length; i++)
+            this._brokersByExch[this._brokers[i].exchange()] = this._brokers[i];
     }
+
+    getCurrentBook = (exchange : Models.Exchange) => {
+        var broker = this._brokersByExch[exchange];
+        return typeof broker !== "undefined" ? broker.currentBook : null;
+    };
 }
 
 export class OrderBrokerAggregator {

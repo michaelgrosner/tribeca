@@ -5,11 +5,12 @@
 
 import express = require('express');
 var app = express();
-var http = require('http').Server(app);
+var http = (<any>require('http')).Server(app);
 var io = require('socket.io')(http);
 import path = require("path");
 import Agent = require("./arbagent");
 import Models = require("../common/models");
+import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Aggregators = require("./aggregators");
@@ -19,7 +20,7 @@ export class UI {
 
     constructor(private _env : string,
                 private _brokers : Array<Interfaces.IBroker>,
-                private _agent : Agent.ArbAgent,
+                private _agent : Agent.Trader,
                 private _orderAgg : Aggregators.OrderBrokerAggregator,
                 private _mdAgg : Aggregators.MarketDataAggregator,
                 private _posAgg : Aggregators.PositionAggregator) {
@@ -36,7 +37,7 @@ export class UI {
         this._orderAgg.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
         this._posAgg.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
-        this._agent.BestResultChanged.on(x => this.sendResultChange(x));
+        this._agent.NewTradingDecision.on(x => this.sendResultChange(x));
         this._brokers.forEach(b => b.ConnectChanged.on(cs => this.sendUpdatedConnectionStatus(b.exchange(), cs)));
 
         http.listen(3000, () => this._log('Listening to admins on *:3000...'));
@@ -55,11 +56,11 @@ export class UI {
                 [Models.Currency.BTC, Models.Currency.USD, Models.Currency.LTC].forEach(c => {
                     this.sendPositionUpdate(b.getPosition(c));
                 });
+
+                this.sendResultChange(this._agent.getTradingDecision(b.exchange()));
             });
 
             sock.emit("active-changed", this._agent.Active);
-
-            this.sendResultChange(this._agent.LastBestResult);
 
             sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
                 this._log("got new order %o", o);
@@ -103,14 +104,8 @@ export class UI {
         io.emit("market-book", book);
     };
 
-    sendResultChange = (res : Interfaces.Result) => {
-        var serialize = (r : Interfaces.Result) => {
-            if (r != null) {
-                return new Models.ResultMessage(r.restSide, r.restBroker.exchange(), r.hideBroker.exchange(),
-                    r.rest, r.hide, r.profit, r.size, r.generatedTime);
-            }
-            return null;
-        };
-        io.emit("result-change", new Models.InactableResultMessage(res != null, serialize(res)));
+    sendResultChange = (res : Models.TradingDecision) => {
+        if (res == null) return;
+        io.emit(Messaging.Topics.NewTradingDecision, res);
     };
 }

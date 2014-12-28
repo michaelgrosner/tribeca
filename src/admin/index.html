@@ -133,9 +133,7 @@
             </div>
 
             <div class="row">
-                <pre ng-if="current_result.hasResult">side={{ current_result.side }} sz={{ current_result.size|number:3 }} pft={{ current_result.profit|currency:undefined:3 }} :: Rest {{ current_result.restExchange }} at {{ current_result.restMarket|currency }} :: Hide on {{ current_result.hideExchange }} at {{ current_result.hideMarket|currency }} :: {{ current_result.time }}</pre>
-
-                <pre ng-if="!current_result.hasResult">No Result :: {{ current_result.time }}</pre>
+                <pre>{{ current_result }}</pre>
             </div>
 
             <div class="row">

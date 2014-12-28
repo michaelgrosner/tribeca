@@ -6,6 +6,7 @@ import angular = require("angular");
 import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
+import Messaging = require("../common/messaging")
 
 module Client {
     interface MainWindowScope extends ng.IScope {
@@ -173,31 +174,24 @@ module Client {
     }
 
     class DisplayResult {
-        side : string;
-        restExchange : string;
-        hideExchange : string;
-        restMarket : number;
-        hideMarket : number;
-        profit : number;
-        size : number;
-        time : string;
-        hasResult : boolean;
+        bidAction : string;
+        askAction : string;
 
-        update = (wrappedMsg : Models.InactableResultMessage) => {
-            if (wrappedMsg.isActive) {
-                var res = wrappedMsg.msg;
-                this.side = Models.Side[res.restSide];
-                this.restExchange = Models.Exchange[res.restExchange];
-                this.hideExchange = Models.Exchange[res.hideExchange];
-                this.hideMarket = res.hideMkt.price;
-                this.restMarket = res.restMkt.price;
-                this.profit = res.profit;
-                this.size = res.size;
+        bixPx : number;
+        bidSz : number;
+        askPx : number;
+        askSz : number;
 
-                var parsedTime = (moment.isMoment(res.time) ? res.time : moment(res.time));
-                this.time = Models.toUtcFormattedTime(parsedTime);
-            }
-            this.hasResult = wrappedMsg.isActive;
+        fairValue : number;
+
+        update = (msg : Models.TradingDecision) => {
+            this.bidAction = Models.QuoteAction[msg.bidAction];
+            this.askAction = Models.QuoteAction[msg.askAction];
+            this.bixPx = msg.bidQuote.price;
+            this.askPx = msg.askQuote.price;
+            this.bidSz = msg.bidQuote.size;
+            this.askSz = msg.askQuote.size;
+            this.fairValue = msg.fairValue.price;
         }
     }
 
@@ -235,7 +229,6 @@ module Client {
             $scope.connected = false;
             $scope.exchanges = {};
             $scope.orders_statuses.length = 0;
-            $scope.current_result.update(new Models.InactableResultMessage(false));
             $log.warn("disconnected");
         });
 
@@ -251,14 +244,14 @@ module Client {
         socket.on('active-changed', b =>
             $scope.active = b );
 
-        socket.on("result-change", (r : Models.InactableResultMessage) =>
-            $scope.current_result.update(r));
-
         socket.on("position-report", (rpt : Models.ExchangeCurrencyPosition) =>
             getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt));
 
         socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
             getOrAddDisplayExchange(exch).setConnectStatus(cs) );
+
+        socket.on(Messaging.Topics.NewTradingDecision, (d : Models.TradingDecision) =>
+            $scope.current_result.update(d));
 
         var addOrderRpt = (o : Models.OrderStatusReport) => {
             $scope.orders_statuses.push(new DisplayOrderStatusReport(o, $scope));

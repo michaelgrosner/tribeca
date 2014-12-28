@@ -264,15 +264,50 @@ export interface ReplaceRequestFromUI {
     quantity : number;
 }
 
-export class ResultMessage {
-    constructor(public restSide: Side,
-                public restExchange: Exchange, public hideExchange: Exchange,
-                public restMkt: MarketSide, public hideMkt: MarketSide,
-                public profit: number, public size: number, public time: Moment) { }
+export class FairValue {
+    constructor(public price : number,
+                public mkt : Market) {}
 }
 
-export class InactableResultMessage {
-    constructor(public isActive: boolean, public msg: ResultMessage = null) { }
+export class TradingDecision {
+    constructor(public bidAction : QuoteSent, public bidQuote : Quote,
+                public askAction : QuoteSent, public askQuote : Quote,
+                public fairValue : FairValue) {}
+
+    public toString() {
+        return "bid:[" + this.bidQuote + "::" + QuoteSent[this.bidAction] + "], " +
+               "ask:[" + this.askQuote + "::" + QuoteSent[this.askAction] + "], " +
+               "fv: " + this.fairValue.price;
+    }
+}
+
+export enum QuoteAction { New, Cancel }
+export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnableToSend }
+
+export class Quote {
+    constructor(public type : QuoteAction,
+                public side : Side,
+                public exchange : Exchange,
+                public time : Moment,
+                public price : number = null,
+                public size : number = null) {}
+
+    public equals(other : Quote, tol : number = 1e-3) {
+        return this.type == other.type
+            && this.side == other.side
+            && this.exchange == other.exchange
+            && Math.abs(this.price - other.price) < tol
+            && Math.abs(this.size - other.size) < tol;
+    }
+
+    public toString() {
+        if (this.type == QuoteAction.New) {
+            return "px="+this.price+";sz="+this.size;
+        }
+        else {
+            return "del";
+        }
+    }
 }
 
 export function toUtcFormattedTime(t : Moment) {
