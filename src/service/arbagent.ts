@@ -105,10 +105,10 @@ export class Trader {
             askQt = Trader.ConvertToStopQuote(quote.bid);
         }
 
-        var askAction = this._quoter.updateQuote(quote.ask);
-        var bidAction = this._quoter.updateQuote(quote.bid);
+        var askAction = this._quoter.updateQuote(askQt);
+        var bidAction = this._quoter.updateQuote(bidQt);
 
-        var decision = new Models.TradingDecision(bidAction, bidQt, askAction, askQt, fv);
+        var decision = new Models.TradingDecision(bidAction, quote.bid, askAction, quote.ask, fv);
         this._tradingDecsionsByExch[exchange] = decision;
         this.NewTradingDecision.trigger(decision);
         this._log("New trading decision: %s", decision);
