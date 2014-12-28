@@ -16,7 +16,9 @@ export var log = (name : string) => {
 export interface Logger { (...arg : any[]) : void;}
 
 export class Evt<T> {
-    constructor(private handlers : { (data? : T): void; }[] = []) {}
+    constructor(private handlers : { (data? : T): void; }[] = []) {
+        handlers.forEach(this.on);
+    }
 
     public on(handler : (data? : T) => void) {
         this.handlers.push(handler);

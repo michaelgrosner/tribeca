@@ -23,10 +23,20 @@ export class FairValueAgent {
 
         if (mkt != null) {
             var mid = (mkt.update.ask.price + mkt.update.bid.price) / 2.0;
-            this._fvsByExch[mkt.exchange] = new Models.FairValue(mid, mkt);
-            this.NewValue.trigger(mkt.exchange);
+
+            var newFv = new Models.FairValue(mid, mkt);
+            var previousFv = this._fvsByExch[mkt.exchange];
+            if (!FairValueAgent.fairValuesAreSame(newFv, previousFv)) {
+                this._fvsByExch[mkt.exchange] = newFv;
+                this.NewValue.trigger(mkt.exchange);
+            }
         }
     };
+
+    private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
+        if (previousFv == null && newFv != null) return false;
+        return Math.abs(newFv.price - previousFv.price) < 1e-3;
+    }
 
     public getFairValue = (exchange : Models.Exchange) : Models.FairValue => {
         return this._fvsByExch[exchange];
@@ -108,6 +118,7 @@ export class Trader {
         var askAction = this._quoter.updateQuote(askQt);
         var bidAction = this._quoter.updateQuote(bidQt);
 
+        // this is questionable, probably should use Quote and FairValue instead of doing this
         var decision = new Models.TradingDecision(bidAction, quote.bid, askAction, quote.ask, fv);
         this._tradingDecsionsByExch[exchange] = decision;
         this.NewTradingDecision.trigger(decision);

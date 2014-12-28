@@ -160,7 +160,7 @@
                         <th>cxl</th>
                         <th>c-r</th>
                     </tr>
-                    <tr ng-repeat="o in orders_statuses|orderBy:'-timeSortable'">
+                    <tr ng-repeat="o in orders_statuses|orderBy:'-timeSortable' track by $index">
                         <td bind-once>{{ o.orderId }}</td>
                         <td bind-once>{{ o.time }}</td>
                         <td bind-once>{{ o.exchange }}</td>
