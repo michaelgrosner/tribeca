@@ -1,0 +1,54 @@
+<table ng-controller="OrderListController" class="table table-striped table-hover table-condensed">
+    <tr>
+        <th>id</th>
+        <th>time</th>
+        <th>exch</th>
+        <th>status</th>
+        <th>price</th>
+        <th>qty</th>
+        <th>side</th>
+        <th>type</th>
+        <th>tif</th>
+        <th>lat</th>
+        <th>lQty</th>
+        <th>lPx</th>
+        <th>lvQty</th>
+        <th>cumQty</th>
+        <th>avgPx</th>
+        <th>liq</th>
+        <th>msg</th>
+        <th>ver</th>
+        <th>cxl</th>
+        <th>c-r</th>
+    </tr>
+    <tr ng-repeat="o in order_statuses|orderBy:'-timeSortable' track by o.trackable">
+        <td bind-once>{{ o.orderId }}</td>
+        <td bind-once>{{ o.time }}</td>
+        <td bind-once>{{ o.exchange }}</td>
+        <td bind-once>{{ o.orderStatus }}</td>
+        <td bind-once>{{ o.price|currency }}</td>
+        <td bind-once>{{ o.quantity|number:4 }}</td>
+        <td bind-once>{{ o.side }}</td>
+        <td bind-once>{{ o.orderType }}</td>
+        <td bind-once>{{ o.timeInForce }}</td>
+        <td bind-once>{{ o.computationalLatency }}</td>
+        <td bind-once>{{ o.lastQuantity|number:4 }}</td>
+        <td bind-once>{{ o.lastPrice|currency }}</td>
+        <td bind-once>{{ o.leavesQuantity|number:4 }}</td>
+        <td bind-once>{{ o.cumQuantity|number:4 }}</td>
+        <td bind-once>{{ o.averagePrice|currency }}</td>
+        <td bind-once>{{ o.liquidity }}</td>
+        <td bind-once>{{ o.rejectMessage }}</td>
+        <td bind-once>{{ o.version }}</td>
+        <td>
+            <button type="button"
+                    class="btn btn-danger btn-xs"
+                    ng-click="o.cancel()"><span class="glyphicon glyphicon-remove"></span></button></td>
+        <td>
+            <button type="button"
+                    class="btn btn-warning btn-xs"
+                    id="cancel_replace_form"
+                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
+                    <!-- mypopover popover-template="cancel_replace_form.html" -->
+    </tr>
+</table>

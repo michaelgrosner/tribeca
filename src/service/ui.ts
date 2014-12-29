@@ -49,9 +49,6 @@ export class UI {
                 this.sendUpdatedConnectionStatus(b.exchange(), b.connectStatus);
                 this.sendUpdatedMarket(b.currentBook);
 
-                var states = b.allOrderStates();
-                sock.emit("order-status-report-snapshot", states.slice(Math.max(states.length - 100, 1)));
-
                 // UI only knows about BTC and USD - for now
                 [Models.Currency.BTC, Models.Currency.USD, Models.Currency.LTC].forEach(c => {
                     this.sendPositionUpdate(b.getPosition(c));
@@ -61,6 +58,13 @@ export class UI {
             });
 
             sock.emit("active-changed", this._agent.Active);
+
+            sock.on("subscribe-order-status-report", () => {
+                this._brokers.forEach(b => {
+                    var states = b.allOrderStates();
+                    sock.emit("order-status-report-snapshot", states.slice(Math.max(states.length - 100, 1)));
+                });
+            });
 
             sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
                 this._log("got new order %o", o);

@@ -6,24 +6,19 @@ import angular = require("angular");
 import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
-import Messaging = require("../common/messaging")
+import Messaging = require("../common/messaging");
 
 module Client {
     interface MainWindowScope extends ng.IScope {
         env : string;
         connected : boolean;
         active : boolean;
-        orders_statuses : DisplayOrderStatusReport[];
         exchanges : { [exchange: number]: DisplayExchangeInformation };
         current_result : DisplayResult;
         order : Models.OrderRequestFromUI;
-        cancel_replace_model : Models.ReplaceRequestFromUI;
 
         submitOrder : () => void;
-        cancelReplaceOrder : (orig : Models.OrderStatusReport) => void;
-        cancelOrder : (orig : Models.OrderStatusReport) => void;
         changeActive : () => void;
-        getOrderStatus : (o : Models.OrderStatusReport) => string;
     }
 
     class DisplayOrder {
@@ -105,74 +100,6 @@ module Client {
         };
     }
 
-    class DisplayOrderStatusReport {
-        orderId : string;
-        time : string;
-        timeSortable : Date;
-        exchange : string;
-        orderStatus : string;
-        price : number;
-        quantity : number;
-        side : string;
-        orderType : string;
-        tif : string;
-        computationalLatency : number;
-        lastQuantity : number;
-        lastPrice : number;
-        leavesQuantity : number;
-        cumQuantity : number;
-        averagePrice : number;
-        liquidity : string;
-        rejectMessage : string;
-        version : number;
-
-        constructor(public osr : Models.OrderStatusReport, private $scope : MainWindowScope) {
-            this.orderId = osr.orderId;
-            var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
-            this.time = Models.toUtcFormattedTime(parsedTime);
-            this.timeSortable = parsedTime.toDate();
-            this.exchange = Models.Exchange[osr.exchange];
-            this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
-            this.price = osr.price;
-            this.quantity = osr.quantity;
-            this.side = Models.Side[osr.side];
-            this.orderType = Models.OrderType[osr.type];
-            this.tif = Models.TimeInForce[osr.timeInForce];
-            this.computationalLatency = osr.computationalLatency;
-            this.lastQuantity = osr.lastQuantity;
-            this.lastPrice = osr.lastPrice;
-            this.leavesQuantity = osr.leavesQuantity;
-            this.cumQuantity = osr.cumQuantity;
-            this.averagePrice = osr.averagePrice;
-            this.liquidity = Models.Liquidity[osr.liquidity];
-            this.rejectMessage = osr.rejectMessage;
-            this.version = osr.version;
-        }
-
-        public cancel = () => {
-            this.$scope.cancelOrder(this.osr);
-        };
-
-        public cancelReplace = () => {
-            this.$scope.cancelReplaceOrder(this.osr);
-        };
-
-        private static getOrderStatus(o : Models.OrderStatusReport) : string {
-            var endingModifier = (o : Models.OrderStatusReport) => {
-                if (o.pendingCancel)
-                    return ", PndCxl";
-                else if (o.pendingReplace)
-                    return ", PndRpl";
-                else if (o.partiallyFilled)
-                    return ", PartFill";
-                else if (o.cancelRejected)
-                    return ", CxlRj";
-                return "";
-            };
-            return Models.OrderStatus[o.orderStatus] + endingModifier(o);
-        }
-    }
-
     class DisplayResult {
         bidAction : string;
         askAction : string;
@@ -195,11 +122,10 @@ module Client {
         }
     }
 
-    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService) => {
+    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
         $scope.connected = false;
         $scope.active = false;
         $scope.exchanges = {};
-        $scope.orders_statuses = [];
         $scope.current_result = new DisplayResult();
 
         var refresh_timer = () => {
@@ -218,7 +144,6 @@ module Client {
             return disp;
         };
 
-        var socket = io();
         socket.on("hello", (env) => {
             $scope.env = env;
             $scope.connected = true;
@@ -228,18 +153,11 @@ module Client {
         socket.on("disconnect", () => {
             $scope.connected = false;
             $scope.exchanges = {};
-            $scope.orders_statuses.length = 0;
             $log.warn("disconnected");
         });
 
         socket.on("market-book", (b : Models.Market) =>
             getOrAddDisplayExchange(b.exchange).updateMarket(b));
-
-        socket.on('order-status-report', (o : Models.OrderStatusReport) =>
-            addOrderRpt(o));
-
-        socket.on('order-status-report-snapshot', (os : Models.OrderStatusReport[]) =>
-            os.forEach(addOrderRpt));
 
         socket.on('active-changed', b =>
             $scope.active = b );
@@ -253,10 +171,6 @@ module Client {
         socket.on(Messaging.Topics.NewTradingDecision, (d : Models.TradingDecision) =>
             $scope.current_result.update(d));
 
-        var addOrderRpt = (o : Models.OrderStatusReport) => {
-            $scope.orders_statuses.push(new DisplayOrderStatusReport(o, $scope));
-        };
-
         $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {
             var o = $scope.order;
@@ -264,21 +178,11 @@ module Client {
                 new Models.OrderRequestFromUI(o.exchange, o.side, o.price, o.quantity, o.timeInForce, o.orderType));
         };
 
-        $scope.cancel_replace_model = {price: null, quantity: null};
-        $scope.cancelReplaceOrder = (orig) => {
-            socket.emit("cancel-replace", orig, $scope.cancel_replace_model);
-        };
-
-        $scope.cancelOrder = (order : Models.OrderStatusReport) => {
-            $log.info("cancel-order", order);
-            socket.emit("cancel-order", order);
-        };
-
         $scope.changeActive = () => {
             socket.emit("active-change-request", !$scope.active);
         };
 
-        $log.info("started");
+        $log.info("started client");
     };
 
     var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
@@ -308,19 +212,8 @@ module Client {
         };
     };
 
-    var bindOnce = () => {
-        return {
-            scope: true,
-            link: ($scope) => {
-                setTimeout(() => {
-                    $scope.$destroy();
-                }, 0);
-            }
-        }
-    };
-
-    angular.module('projectApp', ['ui.bootstrap'])
+    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective'])
+           .factory("socket", () => io())
            .controller('uiCtrl', uiCtrl)
            .directive('mypopover', mypopover)
-           .directive('bindOnce', bindOnce);
 }
