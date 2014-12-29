@@ -85,6 +85,6 @@ var exchangeDirective = () : ng.IDirective => {
     }
 };
 
-angular.module('exchangesDirective', ['ui.bootstrap'])
+angular.module('exchangesDirective', ['ui.bootstrap', 'sharedDirectives'])
        .controller('ExchangesController', ExchangesController)
        .directive("exchanges", exchangeDirective);

@@ -17,23 +17,6 @@
 </head>
 <body>
 
-    <script type="text/ng-template" id="cancel_replace_form.html">
-        <form style="margin: 10px" class="form-horizontal" novalidate role="form">
-            <div class="form-group">
-                <label>Price</label>
-                <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.price" />
-            </div>
-            <div class="form-group">
-                <label>Size</label>
-                <input class="form-control input-sm" type="number" ng-model="cancel_replace_model.quantity" />
-            </div>
-            <button type="button"
-                    class="btn btn-success"
-                    onclick="$('#cancel_replace_form').popover('hide');"
-                    ng-click="o.cancelReplace()">Submit</button>
-        </form>
-    </script>
-
     <script type="text/ng-template" id="order_form.html">
         <form style="margin: 20px" class="form-horizontal" novalidate role="form">
             <div class="form-group">

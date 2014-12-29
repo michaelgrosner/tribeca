@@ -115,35 +115,7 @@ module Client {
         $log.info("started client");
     };
 
-    var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
-        var getTemplate = (contentType, template_url) => {
-            var template = '';
-            switch (contentType) {
-                case 'user':
-                    template = $templateCache.get(template_url);
-                    break;
-            }
-            return template;
-        };
-        return {
-            restrict: "A",
-            link: (scope, element, attrs) => {
-                var popOverContent = $compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
-                var options = {
-                    content: popOverContent,
-                    placement: attrs.dataPlacement,
-                    html: true,
-                    date: scope.date
-                };
-                $(element).popover(options).click((e) => {
-                    e.preventDefault();
-                });
-            }
-        };
-    };
-
-    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective'])
+    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'pairsDirective', 'sharedDirectives'])
            .factory("socket", () => io())
            .controller('uiCtrl', uiCtrl)
-           .directive('mypopover', mypopover)
 }

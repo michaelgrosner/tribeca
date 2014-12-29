@@ -25,6 +25,6 @@ require.config({
     }
 });
 
-require(["angular", "./client", 'ui.bootstrap', './orderlist', './exchange'], () => {
+require(["angular", "./client", 'ui.bootstrap', './orderlist', './exchange', './pair', './shared_directives'], () => {
     angular.bootstrap(document, ["projectApp"]);
 });

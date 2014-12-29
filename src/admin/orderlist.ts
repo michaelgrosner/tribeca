@@ -111,17 +111,6 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     $log.info("started orderlist");
 };
 
-var bindOnce = () => {
-    return {
-        scope: true,
-        link: ($scope) => {
-            setTimeout(() => {
-                $scope.$destroy();
-            }, 0);
-        }
-    }
-};
-
 var orderListDirective = () : ng.IDirective => {
     return {
         restrict: "E",
@@ -129,7 +118,6 @@ var orderListDirective = () : ng.IDirective => {
     }
 };
 
-angular.module('orderListDirective', ['ui.bootstrap'])
+angular.module('orderListDirective', ['ui.bootstrap', 'sharedDirectives'])
        .controller('OrderListController', OrderListController)
-       .directive("orderList", orderListDirective)
-       .directive('bindOnce', bindOnce);
+       .directive("orderList", orderListDirective);
