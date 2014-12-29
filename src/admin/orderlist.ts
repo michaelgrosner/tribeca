@@ -90,7 +90,6 @@ var OrderListController = ($scope : OrderListScope, $timeout : ng.ITimeoutServic
     $scope.order_statuses = [];
 
     var addOrderRpt = (o : Models.OrderStatusReport) => {
-        $log.debug("new OSR");
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, socket, $scope.cancel_replace_model));
     };
 

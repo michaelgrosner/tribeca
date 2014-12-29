@@ -13,7 +13,6 @@ module Client {
         env : string;
         connected : boolean;
         active : boolean;
-        exchanges : { [exchange: number]: DisplayExchangeInformation };
         current_result : DisplayResult;
         order : Models.OrderRequestFromUI;
 
@@ -53,53 +52,6 @@ module Client {
         }
     }
 
-    class DisplayExchangeInformation {
-        connected : boolean;
-        name : string;
-        bidSize : number;
-        bid : number;
-        askSize : number;
-        ask : number;
-
-        usdPosition : number = null;
-        btcPosition : number = null;
-        ltcPosition : number = null;
-        usdValue : number = null;
-
-        constructor(exchange : Models.Exchange) {
-            this.name = Models.Exchange[exchange];
-        }
-
-        public setConnectStatus = (cs : Models.ConnectivityStatus) => {
-            this.connected = cs == Models.ConnectivityStatus.Connected;
-        };
-
-        public updateMarket = (book : Models.Market) => {
-            this.bidSize = book.update.bid.size;
-            this.bid = book.update.bid.price;
-            this.ask = book.update.ask.price;
-            this.askSize = book.update.ask.size;
-        };
-
-        public updatePosition = (position : Models.ExchangeCurrencyPosition) => {
-            switch (position.currency) {
-                case Models.Currency.BTC:
-                    this.btcPosition = position.amount;
-                    break;
-                case Models.Currency.USD:
-                    this.usdPosition = position.amount;
-                    break;
-                case Models.Currency.LTC:
-                    this.ltcPosition = position.amount;
-                    break;
-            }
-
-            if (this.btcPosition != null && this.usdPosition != null) {
-                this.usdValue = this.usdPosition + this.btcPosition * (this.bid + this.ask)/2.0;
-            }
-        };
-    }
-
     class DisplayResult {
         bidAction : string;
         askAction : string;
@@ -125,24 +77,12 @@ module Client {
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
         $scope.connected = false;
         $scope.active = false;
-        $scope.exchanges = {};
         $scope.current_result = new DisplayResult();
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);
         };
         $timeout(refresh_timer, 250);
-
-        var getOrAddDisplayExchange = (exch : Models.Exchange) : DisplayExchangeInformation => {
-            var disp = $scope.exchanges[exch];
-
-            if (angular.isUndefined(disp)) {
-                $scope.exchanges[exch] = new DisplayExchangeInformation(exch);
-                disp = $scope.exchanges[exch];
-            }
-
-            return disp;
-        };
 
         socket.on("hello", (env) => {
             $scope.env = env;
@@ -152,21 +92,11 @@ module Client {
 
         socket.on("disconnect", () => {
             $scope.connected = false;
-            $scope.exchanges = {};
             $log.warn("disconnected");
         });
 
-        socket.on("market-book", (b : Models.Market) =>
-            getOrAddDisplayExchange(b.exchange).updateMarket(b));
-
         socket.on('active-changed', b =>
             $scope.active = b );
-
-        socket.on("position-report", (rpt : Models.ExchangeCurrencyPosition) =>
-            getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt));
-
-        socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
-            getOrAddDisplayExchange(exch).setConnectStatus(cs) );
 
         socket.on(Messaging.Topics.NewTradingDecision, (d : Models.TradingDecision) =>
             $scope.current_result.update(d));
@@ -212,7 +142,7 @@ module Client {
         };
     };
 
-    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective'])
+    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective'])
            .factory("socket", () => io())
            .controller('uiCtrl', uiCtrl)
            .directive('mypopover', mypopover)

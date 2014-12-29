@@ -1,0 +1,15 @@
+<table ng-controller="ExchangesController" class="table table-condensed">
+    <tr>
+        <th>exch</th>
+        <th>usd</th>
+        <th>btc</th>
+        <th>ltc</th>
+    </tr>
+    <tr ng-repeat="exch in exchanges"
+        ng-class="exch.connected ? 'success' : 'danger'">
+        <td>{{ exch.name }}</td>
+        <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
+        <td>{{ exch.btcPosition|currency:"B":3 }}</td>
+        <td>{{ exch.ltcPosition|currency:"B":3 }}</td>
+    </tr>
+</table>
