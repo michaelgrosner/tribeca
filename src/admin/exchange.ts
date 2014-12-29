@@ -43,7 +43,7 @@ class DisplayExchangeInformation {
     };
 }
 
-var ExchangesController = ($scope : ExchangesScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
     var getOrAddDisplayExchange = (exch : Models.Exchange) : DisplayExchangeInformation => {
         var disp = $scope.exchanges[exch];
 
@@ -74,12 +74,6 @@ var ExchangesController = ($scope : ExchangesScope, $timeout : ng.ITimeoutServic
     socket.on("disconnect", () => {
         $scope.exchanges = {};
     });
-
-    // i hate this
-    var refresh_timer = () => {
-        $timeout(refresh_timer, 250);
-    };
-    $timeout(refresh_timer, 250);
 
     $log.info("started exchanges");
 };

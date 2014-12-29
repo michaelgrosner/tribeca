@@ -85,7 +85,7 @@ class DisplayOrderStatusReport {
     }
 }
 
-var OrderListController = ($scope : OrderListScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
     $scope.cancel_replace_model = {price: null, quantity: null};
     $scope.order_statuses = [];
 
@@ -107,12 +107,6 @@ var OrderListController = ($scope : OrderListScope, $timeout : ng.ITimeoutServic
     socket.on("disconnect", () => {
         $scope.order_statuses.length = 0;
     });
-
-    // get rid of this crap
-    var refresh_timer = () => {
-        $timeout(refresh_timer, 250);
-    };
-    $timeout(refresh_timer, 250);
 
     $log.info("started orderlist");
 };
