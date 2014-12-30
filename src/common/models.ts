@@ -38,12 +38,13 @@ export class MarketUpdate {
 
 export class Market {
     constructor(
+        public pair : CurrencyPair,
         public update : MarketUpdate,
         public exchange : Exchange,
         public flag : MarketDataFlag) { }
 
     public toString() {
-        return this.update + ";exchange=" + Exchange[this.exchange] + ";flag=" + MarketDataFlag[this.flag];
+        return this.pair + ";" + this.update + ";exchange=" + Exchange[this.exchange] + ";flag=" + MarketDataFlag[this.flag];
     }
 }
 
@@ -307,6 +308,14 @@ export class Quote {
         else {
             return "del";
         }
+    }
+}
+
+export class CurrencyPair {
+    constructor(public base : Currency, public quote : Currency) {}
+
+    public toString() {
+        return CurrencyPair[this.base] + "/" + CurrencyPair[this.quote];
     }
 }
 

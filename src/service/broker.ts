@@ -273,9 +273,12 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return (cmb(current.ask, previous.update.ask) | cmb(current.bid, previous.update.bid));
     }
 
+    // TODO: multi currency/multi exchange handling
+    private static _pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+
     private handleMarketData = (book : Models.MarketUpdate) => {
         if (this.currentBook == null || !book.equals(this.currentBook.update)) {
-            this._currentBook = new Models.Market(book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
+            this._currentBook = new Models.Market(ExchangeBroker._pair, book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
             this.MarketData.trigger(this.currentBook);
             this._log("%s", this.currentBook);
         }

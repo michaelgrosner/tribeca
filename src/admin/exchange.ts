@@ -12,6 +12,30 @@ interface ExchangesScope extends ng.IScope {
     exchanges : { [exch : number] : DisplayExchangeInformation};
 }
 
+class DisplayPair {
+    name : string;
+    base : string;
+    quote : string;
+
+    bidSize : number;
+    bid : number;
+    askSize : number;
+    ask : number;
+
+    constructor(public pair : Models.CurrencyPair) {
+        this.quote = Models.Currency[pair.quote];
+        this.base = Models.Currency[pair.base];
+        this.name = this.base + "/" + this.quote;
+    }
+
+    public updateMarket = (update : Models.MarketUpdate) => {
+        this.bidSize = update.bid.size;
+        this.bid = update.bid.price;
+        this.ask = update.ask.price;
+        this.askSize = update.ask.size;
+    };
+}
+
 class DisplayExchangeInformation {
     connected : boolean;
     name : string;
@@ -20,7 +44,7 @@ class DisplayExchangeInformation {
     btcPosition : number = null;
     ltcPosition : number = null;
 
-    constructor(exchange : Models.Exchange) {
+    constructor(public _log : ng.ILogService, public exchange : Models.Exchange) {
         this.name = Models.Exchange[exchange];
     }
 
@@ -41,6 +65,22 @@ class DisplayExchangeInformation {
                 break;
         }
     };
+
+    pairs : DisplayPair[] = [];
+
+    public getOrAddDisplayPair = (pair : Models.CurrencyPair) : DisplayPair => {
+        for (var i = 0; i < this.pairs.length; i++) {
+            var p = this.pairs[i];
+            if (pair.base === p.pair.base && pair.quote === p.pair.quote) {
+                return p;
+            }
+        }
+
+        this._log.info("adding new pair", pair, "to exchange", Models.Exchange[this.exchange]);
+        var newPair = new DisplayPair(pair);
+        this.pairs.push(newPair);
+        return newPair;
+    };
 }
 
 var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
@@ -48,7 +88,8 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         var disp = $scope.exchanges[exch];
 
         if (angular.isUndefined(disp)) {
-            $scope.exchanges[exch] = new DisplayExchangeInformation(exch);
+            $log.info("adding new exchange", Models.Exchange[exch]);
+            $scope.exchanges[exch] = new DisplayExchangeInformation($log, exch);
             disp = $scope.exchanges[exch];
         }
 
@@ -60,6 +101,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         $scope.exchanges = {};
         socket.emit("subscribe-position-report");
         socket.emit("subscribe-connection-status");
+        socket.emit("subscribe-market-book");
     };
 
     socket.on("hello", subscriber);
@@ -70,6 +112,9 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
         getOrAddDisplayExchange(exch).setConnectStatus(cs) );
+
+    socket.on("market-book", (book : Models.Market) =>
+        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.update));
 
     socket.on("disconnect", () => {
         $scope.exchanges = {};

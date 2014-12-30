@@ -66,6 +66,12 @@ export class UI {
                 });
             });
 
+            sock.on("subscribe-market-book", () => {
+                this._brokers.forEach(b => {
+                    this.sendUpdatedMarket(this._mdAgg.getCurrentBook(b.exchange()));
+                });
+            });
+
             sock.on("subscribe-connection-status", () => {
                 this._brokers.forEach(b => {
                     this.sendUpdatedConnectionStatus(b.exchange(), b.connectStatus);
