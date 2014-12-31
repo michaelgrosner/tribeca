@@ -26,11 +26,6 @@ export class MarketUpdate {
         public ask : MarketSide,
         public time : Moment) { }
 
-    public equals(other : MarketUpdate) {
-        if (other == null) return false;
-        return this.ask.equals(other.ask) && this.bid.equals(other.bid);
-    }
-
     public toString() {
         return "bid=[" + this.bid + "];ask=[" + this.ask + "];time=" + this.time.format('M/d/YY h:mm:ss,SSS');
     }
@@ -38,13 +33,11 @@ export class MarketUpdate {
 
 export class Market {
     constructor(
-        public pair : CurrencyPair,
         public update : MarketUpdate,
-        public exchange : Exchange,
         public flag : MarketDataFlag) { }
 
     public toString() {
-        return this.pair + ";" + this.update + ";exchange=" + Exchange[this.exchange] + ";flag=" + MarketDataFlag[this.flag];
+        return this.update + ";flag=" + MarketDataFlag[this.flag];
     }
 }
 
@@ -271,16 +264,7 @@ export class FairValue {
 }
 
 export class TradingDecision {
-    constructor(public pair : CurrencyPair, public exchange : Exchange,
-                public bidAction : QuoteSent, public bidQuote : Quote,
-                public askAction : QuoteSent, public askQuote : Quote,
-                public fairValue : FairValue) {}
-
-    public toString() {
-        return "bid:[" + this.bidQuote + "::" + QuoteSent[this.bidAction] + "], " +
-               "ask:[" + this.askQuote + "::" + QuoteSent[this.askAction] + "], " +
-               "fv: " + this.fairValue.price;
-    }
+    constructor(public bidAction : QuoteSent, public askAction : QuoteSent) {}
 }
 
 export enum QuoteAction { New, Cancel }
@@ -289,7 +273,6 @@ export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnableToSend }
 export class Quote {
     constructor(public type : QuoteAction,
                 public side : Side,
-                public exchange : Exchange,
                 public time : Moment,
                 public price : number = null,
                 public size : number = null) {}
@@ -297,7 +280,6 @@ export class Quote {
     public equals(other : Quote, tol : number = 1e-3) {
         return this.type == other.type
             && this.side == other.side
-            && this.exchange == other.exchange
             && Math.abs(this.price - other.price) < tol
             && Math.abs(this.size - other.size) < tol;
     }
@@ -312,6 +294,10 @@ export class Quote {
     }
 }
 
+export class TwoSidedQuote {
+    constructor(public bid : Quote, public ask : Quote) {}
+}
+
 export class CurrencyPair {
     constructor(public base : Currency, public quote : Currency) {}
 
@@ -322,4 +308,8 @@ export class CurrencyPair {
 
 export function toUtcFormattedTime(t : Moment) {
     return t.format('M/D/YY HH:mm:ss,SSS');
+}
+
+export class ExchangePairMessage<T> {
+    constructor(public exchange : Exchange, public pair : CurrencyPair, public data : T) { }
 }

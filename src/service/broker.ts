@@ -251,6 +251,11 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._baseGateway.exchange();
     }
 
+    private static _pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+    public get pair() {
+        return ExchangeBroker._pair;
+    }
+
     MarketData = new Utils.Evt<Models.Market>();
     _currentBook : Models.Market = null;
 
@@ -273,12 +278,10 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return (cmb(current.ask, previous.update.ask) | cmb(current.bid, previous.update.bid));
     }
 
-    // TODO: multi currency/multi exchange handling
-    private static _pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
-
     private handleMarketData = (book : Models.MarketUpdate) => {
-        if (this.currentBook == null || !book.equals(this.currentBook.update)) {
-            this._currentBook = new Models.Market(ExchangeBroker._pair, book, this.exchange(), ExchangeBroker.getMarketDataFlag(book, this.currentBook));
+        var flag = ExchangeBroker.getMarketDataFlag(book, this.currentBook);
+        if (flag !== Models.MarketDataFlag.NoChange) {
+            this._currentBook = new Models.Market(book, flag);
             this.MarketData.trigger(this.currentBook);
             this._log("%s", this.currentBook);
         }

@@ -6,7 +6,6 @@ import Config = require("./config");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Aggregators = require("./aggregators");
 
 class QuoteOrder {
     constructor(public quote : Models.Quote, public orderId : string) {}
@@ -14,23 +13,32 @@ class QuoteOrder {
 
 // aggregator for quoting
 export class Quoter {
-    private _quotersByExchange : { [ exch : number] : ExchangeQuoter } = {};
+    private _bidQuoter : ExchangeQuoter;
+    private _askQuoter : ExchangeQuoter;
 
-    constructor(exchQuoters : ExchangeQuoter[]) {
-        exchQuoters.forEach(q => this._quotersByExchange[q.exchange] = q);
+    constructor(broker : Interfaces.IBroker) {
+        this._bidQuoter = new ExchangeQuoter(broker);
+        this._askQuoter = new ExchangeQuoter(broker);
     }
 
     public updateQuote = (q : Models.Quote) : Models.QuoteSent => {
-        return this._quotersByExchange[q.exchange].updateQuote(q);
+        switch (q.side) {
+            case Models.Side.Ask:
+                return this._askQuoter.updateQuote(q);
+            case Models.Side.Bid:
+                return this._bidQuoter.updateQuote(q);
+        }
     };
 }
 
 // idea: single EQ per side, switch side in Quoter above
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
-    private _activeQuotes : { [ side : number] : QuoteOrder } = {};
+    private _activeQuote : QuoteOrder = null;
+    private _exchange : Models.Exchange;
 
     constructor(private _broker : Interfaces.IBroker) {
+        this._exchange = this._broker.exchange();
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
     }
 
@@ -43,9 +51,9 @@ export class ExchangeQuoter {
             case Models.OrderStatus.Cancelled:
             case Models.OrderStatus.Complete:
             case Models.OrderStatus.Rejected:
-                var bySide = this._activeQuotes[o.side];
-                if (typeof bySide !== "undefined" && bySide.orderId === o.orderId) {
-                    delete this._activeQuotes[o.side];
+                var bySide = this._activeQuote;
+                if (bySide !== null && bySide.orderId === o.orderId) {
+                    this._activeQuote = null;
                 }
         }
     };
@@ -56,7 +64,7 @@ export class ExchangeQuoter {
 
         switch (q.type) {
             case Models.QuoteAction.New:
-                if (typeof this._activeQuotes[q.side] !== "undefined") {
+                if (this._activeQuote !== null) {
                     return this.modify(q);
                 }
                 else {
@@ -76,25 +84,25 @@ export class ExchangeQuoter {
     };
 
     private start = (q : Models.Quote) : Models.QuoteSent => {
-        var existing = this._activeQuotes[q.side];
+        var existing = this._activeQuote[q.side];
         if (typeof existing !== "undefined" && existing.quote.equals(q)) {
             return Models.QuoteSent.UnsentDuplicate;
         }
 
-        var newOrder = new Models.SubmitNewOrder(q.side, q.size, Models.OrderType.Limit, q.price, Models.TimeInForce.GTC, q.exchange, q.time);
+        var newOrder = new Models.SubmitNewOrder(q.side, q.size, Models.OrderType.Limit, q.price, Models.TimeInForce.GTC, this._exchange, q.time);
         var sent = this._broker.sendOrder(newOrder);
-        this._activeQuotes[q.side] = new QuoteOrder(q, sent.sentOrderClientId);
+        this._activeQuote = new QuoteOrder(q, sent.sentOrderClientId);
         return Models.QuoteSent.First;
     };
 
     private stop = (q : Models.Quote) : Models.QuoteSent => {
-        if (typeof this._activeQuotes[q.side] === "undefined") {
+        if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDuplicate;
         }
 
-        var cxl = new Models.OrderCancel(this._activeQuotes[q.side].orderId, q.exchange, q.time);
+        var cxl = new Models.OrderCancel(this._activeQuote.orderId, this._exchange, q.time);
         this._broker.cancelOrder(cxl);
-        delete this._activeQuotes[q.side];
+        this._activeQuote = null;
         return Models.QuoteSent.Delete;
     };
 }

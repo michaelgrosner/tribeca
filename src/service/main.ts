@@ -16,30 +16,25 @@ import UI = require("./ui");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Aggregators = require("./aggregators");
 import Quoter = require("./quoter");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
-var gateways : Array<Interfaces.CombinedGateway> = [new HitBtc.HitBtc(config)];
+var gateway = new HitBtc.HitBtc(config);
 var persister = new Broker.OrderStatusPersister();
-var brokers = gateways.map(g => new Broker.ExchangeBroker(g.md, g.base, g.oe, g.pg, persister));
-var exchQuoters = brokers.map(b => new Quoter.ExchangeQuoter(b));
-var posAgg = new Aggregators.PositionAggregator(brokers);
-var orderAgg = new Aggregators.OrderBrokerAggregator(brokers);
-var mdAgg = new Aggregators.MarketDataAggregator(brokers);
-var fvAgent = new Agent.FairValueAgent(mdAgg);
+var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister);
+var fvAgent = new Agent.FairValueAgent(broker);
 var quoteGenerator = new Agent.QuoteGenerator(fvAgent);
-var quoter = new Quoter.Quoter(exchQuoters);
-var trader = new Agent.Trader(quoteGenerator, quoter, fvAgent, brokers.map(b => b.exchange()));
-var ui = new UI.UI(env, brokers, trader, orderAgg, mdAgg, posAgg);
+var quoter = new Quoter.Quoter(broker);
+var trader = new Agent.Trader(broker, quoteGenerator, quoter);
+var ui = new UI.UI(env, broker.pair, broker, trader, fvAgent, quoteGenerator);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
         Utils.log("tribeca:main")("Terminating", e, e.stack);
     else
         Utils.log("tribeca:main")("Terminating [no stack]");
-    brokers.forEach(b => b.cancelOpenOrders());
+    broker.cancelOpenOrders();
     process.exit();
 };
 process.on("uncaughtException", exitHandler);

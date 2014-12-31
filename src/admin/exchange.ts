@@ -44,14 +44,20 @@ class DisplayPair {
         this.askSize = update.ask.size;
     };
 
-    public updateQuote = (quote : Models.TradingDecision) => {
+    public updateDecision = (quote : Models.TradingDecision) => {
         this.bidAction = Models.QuoteAction[quote.bidAction];
         this.askAction = Models.QuoteAction[quote.askAction];
-        this.qBidPx = quote.bidQuote.price;
-        this.qBidSz = quote.bidQuote.size;
-        this.qAskPx = quote.askQuote.price;
-        this.qAskSz = quote.askQuote.size;
-        this.fairValue = quote.fairValue.price;
+    };
+
+    public updateQuote = (quote : Models.TwoSidedQuote) => {
+        this.qBidPx = quote.bid.price;
+        this.qBidSz = quote.bid.size;
+        this.qAskPx = quote.ask.price;
+        this.qAskSz = quote.ask.size;
+    };
+
+    public updateFairValue = (fv : Models.FairValue) => {
+        this.fairValue = fv.price;
     };
 }
 
@@ -95,7 +101,9 @@ class DisplayExchangeInformation {
             }
         }
 
-        this._log.info("adding new pair", pair, "to exchange", Models.Exchange[this.exchange]);
+        this._log.info("adding new pair, base:", Models.Currency[pair.base], "quote:",
+            Models.Currency[pair.quote], "to exchange", Models.Exchange[this.exchange]);
+
         var newPair = new DisplayPair(pair);
         this.pairs.push(newPair);
         return newPair;
@@ -122,6 +130,8 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         socket.emit("subscribe-connection-status");
         socket.emit("subscribe-market-book");
         socket.emit("subscribe-new-trading-decision");
+        socket.emit("subscribe-fair-value");
+        socket.emit("subscribe-quote");
     };
 
     socket.on("hello", subscriber);
@@ -133,11 +143,17 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
     socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
         getOrAddDisplayExchange(exch).setConnectStatus(cs) );
 
-    socket.on("market-book", (book : Models.Market) =>
-        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.update));
+    socket.on("market-book", (book : Models.ExchangePairMessage<Models.Market>) =>
+        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.data.update));
 
-    socket.on("new-trading-decision", (d : Models.TradingDecision) =>
-        getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateQuote(d));
+    socket.on("new-trading-decision", (d : Models.ExchangePairMessage<Models.TradingDecision>) =>
+        getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateDecision(d.data));
+
+    socket.on('fair-value', (fv : Models.ExchangePairMessage<Models.FairValue>) =>
+        getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateFairValue(fv.data));
+    
+    socket.on('quote', (fv : Models.ExchangePairMessage<Models.TwoSidedQuote>) =>
+        getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateQuote(fv.data));
 
     socket.on("disconnect", () => {
         $scope.exchanges = {};

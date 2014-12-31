@@ -13,7 +13,6 @@ module Client {
         env : string;
         connected : boolean;
         active : boolean;
-        current_result : DisplayResult;
         order : Models.OrderRequestFromUI;
 
         submitOrder : () => void;
@@ -52,32 +51,9 @@ module Client {
         }
     }
 
-    class DisplayResult {
-        bidAction : string;
-        askAction : string;
-
-        bixPx : number;
-        bidSz : number;
-        askPx : number;
-        askSz : number;
-
-        fairValue : number;
-
-        update = (msg : Models.TradingDecision) => {
-            this.bidAction = Models.QuoteAction[msg.bidAction];
-            this.askAction = Models.QuoteAction[msg.askAction];
-            this.bixPx = msg.bidQuote.price;
-            this.askPx = msg.askQuote.price;
-            this.bidSz = msg.bidQuote.size;
-            this.askSz = msg.askQuote.size;
-            this.fairValue = msg.fairValue.price;
-        }
-    }
-
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
         $scope.connected = false;
         $scope.active = false;
-        $scope.current_result = new DisplayResult();
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);
@@ -97,9 +73,6 @@ module Client {
 
         socket.on('active-changed', b =>
             $scope.active = b );
-
-        socket.on(Messaging.Topics.NewTradingDecision, (d : Models.TradingDecision) =>
-            $scope.current_result.update(d));
 
         $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {

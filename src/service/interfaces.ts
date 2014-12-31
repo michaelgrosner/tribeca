@@ -45,6 +45,7 @@ export interface IBroker {
     makeFee() : number;
     takeFee() : number;
     exchange() : Models.Exchange;
+    pair : Models.CurrencyPair;
 
     sendOrder(order : Models.SubmitNewOrder) : Models.SentOrder;
     cancelOrder(cancel : Models.OrderCancel);
@@ -59,11 +60,4 @@ export interface IBroker {
 
     connectStatus : Models.ConnectivityStatus;
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
-}
-
-export class Result {
-    constructor(public restSide: Models.Side, public restBroker: IBroker,
-                public hideBroker: IBroker, public profit: number,
-                public rest: Models.MarketSide, public hide: Models.MarketSide,
-                public size: number, public generatedTime: Moment) {}
 }
