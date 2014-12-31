@@ -22,6 +22,15 @@ class DisplayPair {
     askSize : number;
     ask : number;
 
+    bidAction : string;
+    askAction : string;
+
+    qBidPx : number;
+    qBidSz : number;
+    qAskPx : number;
+    qAskSz : number;
+    fairValue : number;
+
     constructor(public pair : Models.CurrencyPair) {
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
@@ -33,6 +42,16 @@ class DisplayPair {
         this.bid = update.bid.price;
         this.ask = update.ask.price;
         this.askSize = update.ask.size;
+    };
+
+    public updateQuote = (quote : Models.TradingDecision) => {
+        this.bidAction = Models.QuoteAction[quote.bidAction];
+        this.askAction = Models.QuoteAction[quote.askAction];
+        this.qBidPx = quote.bidQuote.price;
+        this.qBidSz = quote.bidQuote.size;
+        this.qAskPx = quote.askQuote.price;
+        this.qAskSz = quote.askQuote.size;
+        this.fairValue = quote.fairValue.price;
     };
 }
 
@@ -102,6 +121,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         socket.emit("subscribe-position-report");
         socket.emit("subscribe-connection-status");
         socket.emit("subscribe-market-book");
+        socket.emit("subscribe-new-trading-decision");
     };
 
     socket.on("hello", subscriber);
@@ -115,6 +135,9 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on("market-book", (book : Models.Market) =>
         getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.update));
+
+    socket.on("new-trading-decision", (d : Models.TradingDecision) =>
+        getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateQuote(d));
 
     socket.on("disconnect", () => {
         $scope.exchanges = {};

@@ -25,6 +25,7 @@ export class Quoter {
     };
 }
 
+// idea: single EQ per side, switch side in Quoter above
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
     private _activeQuotes : { [ side : number] : QuoteOrder } = {};

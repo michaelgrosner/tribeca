@@ -271,7 +271,8 @@ export class FairValue {
 }
 
 export class TradingDecision {
-    constructor(public bidAction : QuoteSent, public bidQuote : Quote,
+    constructor(public pair : CurrencyPair, public exchange : Exchange,
+                public bidAction : QuoteSent, public bidQuote : Quote,
                 public askAction : QuoteSent, public askQuote : Quote,
                 public fairValue : FairValue) {}
 

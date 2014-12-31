@@ -83,6 +83,9 @@ export class Trader {
     private _tradingDecsionsByExch : { [ exch : number] : Models.TradingDecision} = {};
     NewTradingDecision = new Utils.Evt<Models.TradingDecision>();
 
+    // TODO: multi currency/multi exchange handling
+    private static _pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+
     changeActiveStatus = (to : boolean) => {
         if (this.Active != to) {
             this.Active = to;
@@ -119,7 +122,7 @@ export class Trader {
         var bidAction = this._quoter.updateQuote(bidQt);
 
         // this is questionable, probably should use Quote and FairValue instead of doing this
-        var decision = new Models.TradingDecision(bidAction, quote.bid, askAction, quote.ask, fv);
+        var decision = new Models.TradingDecision(Trader._pair, exchange, bidAction, quote.bid, askAction, quote.ask, fv);
         this._tradingDecsionsByExch[exchange] = decision;
         this.NewTradingDecision.trigger(decision);
         this._log("New trading decision: %s", decision);
