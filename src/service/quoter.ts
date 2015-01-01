@@ -34,6 +34,7 @@ export class Quoter {
 // idea: single EQ per side, switch side in Quoter above
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
+    private _log : Utils.Logger = Utils.log("tribeca:quoter");
     private _activeQuote : QuoteOrder = null;
     private _exchange : Models.Exchange;
 
@@ -97,7 +98,7 @@ export class ExchangeQuoter {
 
     private stop = (q : Models.Quote) : Models.QuoteSent => {
         if (this._activeQuote === null) {
-            return Models.QuoteSent.UnsentDuplicate;
+            return Models.QuoteSent.UnsentDelete;
         }
 
         var cxl = new Models.OrderCancel(this._activeQuote.orderId, this._exchange, q.time);

@@ -34,3 +34,7 @@ export class Evt<T> {
         }
     }
 }
+
+export function roundFloat(x : number) {
+    return Math.round(x * 100) / 100;
+}

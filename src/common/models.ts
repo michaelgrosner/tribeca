@@ -265,10 +265,14 @@ export class FairValue {
 
 export class TradingDecision {
     constructor(public bidAction : QuoteSent, public askAction : QuoteSent) {}
+
+    public toString() {
+        return "bidAction=" + QuoteSent[this.bidAction] + ",askAction=" + QuoteSent[this.askAction];
+    }
 }
 
 export enum QuoteAction { New, Cancel }
-export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnableToSend }
+export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnsentDelete, UnableToSend }
 
 export class Quote {
     constructor(public type : QuoteAction,
@@ -296,6 +300,10 @@ export class Quote {
 
 export class TwoSidedQuote {
     constructor(public bid : Quote, public ask : Quote) {}
+
+    public toString() {
+        return "bid=[" + this.bid + "]; ask=[" + this.ask + "]";
+    }
 }
 
 export class CurrencyPair {

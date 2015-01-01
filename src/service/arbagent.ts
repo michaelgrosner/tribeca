@@ -111,7 +111,7 @@ export class Trader {
         var decision = new Models.TradingDecision(bidAction, askAction);
         this.latestDecision = decision;
         this.NewTradingDecision.trigger(decision);
-        this._log("New trading decision: %s from quote %s", decision, quote);
+        this._log("New trading decision: %s from quote %s", decision.toString(), quote.toString());
     };
 
     private static ConvertToStopQuote(q : Models.Quote) {
