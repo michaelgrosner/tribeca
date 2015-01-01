@@ -84,8 +84,8 @@ export class ExchangeQuoter {
     };
 
     private start = (q : Models.Quote) : Models.QuoteSent => {
-        var existing = this._activeQuote[q.side];
-        if (typeof existing !== "undefined" && existing.quote.equals(q)) {
+        var existing = this._activeQuote;
+        if (existing !== null && existing.quote.equals(q)) {
             return Models.QuoteSent.UnsentDuplicate;
         }
 

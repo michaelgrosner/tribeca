@@ -11,7 +11,7 @@
         <button type="button"
                 class="btn btn-success"
                 onclick="$('#cancel_replace_form').popover('hide');"
-                ng-click="o.cancelReplace()">Submit</button>
+                ng-click="cancel_replace(o)">Submit</button>
     </form>
 </script>
 
@@ -60,7 +60,7 @@
         <td>
             <button type="button"
                     class="btn btn-danger btn-xs"
-                    ng-click="o.cancel()"><span class="glyphicon glyphicon-remove"></span></button></td>
+                    ng-click="cancel(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
         <td>
             <button type="button"
                     class="btn btn-warning btn-xs"

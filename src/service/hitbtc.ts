@@ -243,7 +243,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(order.side),
             quantity: order.quantity * _lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
-            price: order.price,
+            price: Math.round(order.price * 100) / 100,
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
@@ -366,16 +366,22 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private onMessage = (raw : string) => {
-        var t = Utils.date();
-        var msg = JSON.parse(raw);
-        if (msg.hasOwnProperty("ExecutionReport")) {
-            this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, t));
+        try {
+            var t = Utils.date();
+            var msg = JSON.parse(raw);
+            if (msg.hasOwnProperty("ExecutionReport")) {
+                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, t));
+            }
+            else if (msg.hasOwnProperty("CancelReject")) {
+                this.onCancelReject(new Models.Timestamped(msg.CancelReject, t));
+            }
+            else {
+                this._log("unhandled message", msg);
+            }
         }
-        else if (msg.hasOwnProperty("CancelReject")) {
-            this.onCancelReject(new Models.Timestamped(msg.CancelReject, t));
-        }
-        else {
-            this._log("unhandled message", msg);
+        catch (e) {
+            this._log("exception while processing message %s", raw);
+            throw e;
         }
     };
 

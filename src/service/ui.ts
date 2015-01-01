@@ -54,7 +54,7 @@ export class UI {
 
             sock.on("subscribe-order-status-report", () => {
                 var states = this._broker.allOrderStates();
-                sock.emit("order-status-report-snapshot", states.slice(Math.max(states.length - 100, 1)));
+                sock.emit("order-status-report-snapshot", this._wrapOutgoingMessage(states.slice(Math.max(states.length - 100, 1))));
             });
 
             sock.on("subscribe-position-report", () => {
@@ -79,7 +79,7 @@ export class UI {
             });
 
             sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
-                this._log("got new order %o", o);
+                this._log("got new order", o);
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
                 this._broker.sendOrder(order);

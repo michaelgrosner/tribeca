@@ -151,7 +151,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on('fair-value', (fv : Models.ExchangePairMessage<Models.FairValue>) =>
         getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateFairValue(fv.data));
-    
+
     socket.on('quote', (fv : Models.ExchangePairMessage<Models.TwoSidedQuote>) =>
         getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateQuote(fv.data));
 

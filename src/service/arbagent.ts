@@ -51,9 +51,10 @@ export class QuoteGenerator {
         var fv = this._fvAgent.latestFairValue;
 
         if (fv != null) {
-            var bidPx = Math.max(fv.price - .02, 0);
+            var width = .20;
+            var bidPx = Math.max(fv.price - width, 0);
             var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, fv.mkt.update.time, bidPx, .01);
-            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, fv.price + .02, .01);
+            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, fv.price + width, .01);
 
             this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
             this.NewQuote.trigger();
@@ -88,10 +89,14 @@ export class Trader {
     private sendQuote = () : void => {
         var quote = this._quoteGenerator.latestQuote;
 
+        if (quote === null) {
+            return;
+        }
+
         var bidQt : Models.Quote = null;
         var askQt : Models.Quote = null;
 
-        if (this.Active && quote != null && this.isBrokerActive()) {
+        if (this.Active && this.isBrokerActive()) {
             bidQt = quote.bid;
             askQt = quote.ask;
         }
