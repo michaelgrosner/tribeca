@@ -66,6 +66,7 @@ class DisplayPair {
 
     public updateParameters = (p : Models.QuotingParameters) => {
         this.width(p.width);
+        this.size(p.size);
     };
 
     private _width : number = null;
@@ -73,12 +74,27 @@ class DisplayPair {
         if (arguments.length === 1) {
             if (this._width == null || Math.abs(val - this._width) > 1e-4) {
                 this._width = val;
-                var parameters = new Models.QuotingParameters(val);
-                this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, parameters))
+                this.sendNewParameters();
             }
         }
         return this._width;
-    }
+    };
+
+    private _size : number = null;
+    public size = (val? : number) : number => {
+        if (arguments.length === 1) {
+            if (this._size == null || Math.abs(val - this._size) > 1e-4) {
+                this._size = val;
+                this.sendNewParameters();
+            }
+        }
+        return this._size;
+    };
+
+    private sendNewParameters = () => {
+        var parameters = new Models.QuotingParameters(this._width, this._size);
+        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, parameters));
+    };
 }
 
 class DisplayExchangeInformation {

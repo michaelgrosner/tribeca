@@ -42,15 +42,15 @@ export class QuotingParametersRepository {
     private _log : Utils.Logger = Utils.log("tribeca:qpr");
     NewParameters = new Utils.Evt();
 
-    private _latest = new Models.QuotingParameters(.2);
+    private _latest = new Models.QuotingParameters(.2, .01);
     public get latest() : Models.QuotingParameters {
         return this._latest;
     }
 
     public updateParameters = (newParams : Models.QuotingParameters) => {
-        if (Math.abs(this.latest.width - newParams.width) > 1e-4) {
+        if (Math.abs(this.latest.width - newParams.width) > 1e-4 || Math.abs(this.latest.size - newParams.size) > 1e-4) {
             this._latest = newParams;
-            this._log("Changed parameters width=%d", this.latest.width);
+            this._log("Changed parameters width=%d size=%d", this.latest.width, this.latest.size);
             this.NewParameters.trigger();
         }
     };
@@ -73,9 +73,13 @@ export class QuoteGenerator {
         if (fv != null) {
             var params = this._qlParamRepo.latest;
             var width = params.width;
+            var size = params.size;
+
             var bidPx = Math.max(fv.price - width, 0);
-            var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, fv.mkt.update.time, bidPx, .01);
-            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, fv.price + width, .01);
+            var askPx = fv.price + width;
+
+            var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, fv.mkt.update.time, bidPx, size);
+            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, askPx, size);
 
             this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
             this.NewQuote.trigger();

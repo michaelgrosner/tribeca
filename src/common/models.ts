@@ -315,7 +315,7 @@ export class CurrencyPair {
 }
 
 export class QuotingParameters {
-    constructor(public width : number) {}
+    constructor(public width : number, public size : number) {}
 }
 
 export function toUtcFormattedTime(t : Moment) {
