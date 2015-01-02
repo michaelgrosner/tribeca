@@ -314,6 +314,10 @@ export class CurrencyPair {
     }
 }
 
+export class QuotingParameters {
+    constructor(public width : number) {}
+}
+
 export function toUtcFormattedTime(t : Moment) {
     return t.format('M/D/YY HH:mm:ss,SSS');
 }

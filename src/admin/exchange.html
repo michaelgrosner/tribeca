@@ -30,6 +30,7 @@
                     <th>qA</th>
                     <th>qAz</th>
                     <th>askAct</th>
+                    <th>width</th>
                 </tr>
                 <tr ng-repeat="pair in exch.pairs" class="table table-condensed">
                     <td>{{ pair.name }}</td>
@@ -44,6 +45,7 @@
                     <td>{{ pair.qAskPx|number:2 }}</td>
                     <td>{{ pair.qAskSz|number:2 }}</td>
                     <td>{{ pair.askAction }}</td>
+                    <td><input type="number" width="40" ng-model="pair.width" ng-model-options="{ getterSetter: true }"></td>
                 </tr>
             </table>
         </div>

@@ -38,20 +38,41 @@ export class FairValueAgent {
     }
 }
 
+export class QuotingParametersRepository {
+    private _log : Utils.Logger = Utils.log("tribeca:qpr");
+    NewParameters = new Utils.Evt();
+
+    private _latest = new Models.QuotingParameters(.2);
+    public get latest() : Models.QuotingParameters {
+        return this._latest;
+    }
+
+    public updateParameters = (newParams : Models.QuotingParameters) => {
+        if (Math.abs(this.latest.width - newParams.width) > 1e-4) {
+            this._latest = newParams;
+            this._log("Changed parameters width=%d", this.latest.width);
+            this.NewParameters.trigger();
+        }
+    };
+}
+
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
-    NewQuote = new Utils.Evt<Models.Exchange>();
+    NewQuote = new Utils.Evt();
     public latestQuote : Models.TwoSidedQuote = null;
 
-    constructor(private _fvAgent : FairValueAgent) {
+    constructor(private _qlParamRepo : QuotingParametersRepository,
+                private _fvAgent : FairValueAgent) {
         this._fvAgent.NewValue.on(this.handleNewFairValue);
+        this._qlParamRepo.NewParameters.on(this.handleNewFairValue);
     }
 
     private handleNewFairValue = () => {
         var fv = this._fvAgent.latestFairValue;
 
         if (fv != null) {
-            var width = .20;
+            var params = this._qlParamRepo.latest;
+            var width = params.width;
             var bidPx = Math.max(fv.price - width, 0);
             var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, fv.mkt.update.time, bidPx, .01);
             var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, fv.price + width, .01);

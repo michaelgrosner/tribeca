@@ -22,7 +22,8 @@ export class UI {
                 private _broker : Interfaces.IBroker,
                 private _agent : Agent.Trader,
                 private _fvAgent : Agent.FairValueAgent,
-                private _quoteGenerator : Agent.QuoteGenerator) {
+                private _quoteGenerator : Agent.QuoteGenerator,
+                private _paramRepo : Agent.QuotingParametersRepository) {
         this._exchange = this._broker.exchange();
 
         var adminPath = path.join(__dirname, "..", "admin", "admin");
@@ -78,6 +79,11 @@ export class UI {
                 this.sendQuote();
             });
 
+            sock.on("subscribe-parameter-updates", () => {
+                this.sendQuotingParameters();
+            });
+
+            // TODO: if i ever truly go to multi-server, these would need to be filtered. ideally client-side to the right server
             sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
                 this._log("got new order", o);
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
@@ -97,6 +103,10 @@ export class UI {
 
             sock.on("active-change-request", (to : boolean) => {
                 _agent.changeActiveStatus(to);
+            });
+
+            sock.on("parameters-update-request", (p : Models.ExchangePairMessage<Models.QuotingParameters>) => {
+                this._paramRepo.updateParameters(p.data);
             });
         });
     }
@@ -137,6 +147,12 @@ export class UI {
         var quote = this._quoteGenerator.latestQuote;
         if (quote == null) return;
         io.emit("quote", this._wrapOutgoingMessage(quote));
+    };
+
+    sendQuotingParameters = () => {
+        var p = this._paramRepo.latest;
+        if (p == null) return;
+        io.emit("parameter-updates", this._wrapOutgoingMessage(p));
     };
 
     private _wrapOutgoingMessage = <T>(msg : T) : Models.ExchangePairMessage<T> => {

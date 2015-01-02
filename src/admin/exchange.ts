@@ -10,6 +10,7 @@ import Messaging = require("../common/messaging");
 
 interface ExchangesScope extends ng.IScope {
     exchanges : { [exch : number] : DisplayExchangeInformation};
+    sendUpdatedParameters : (p : Models.ExchangePairMessage<Models.QuotingParameters>) => void;
 }
 
 class DisplayPair {
@@ -31,7 +32,10 @@ class DisplayPair {
     qAskSz : number;
     fairValue : number;
 
-    constructor(public pair : Models.CurrencyPair) {
+    constructor(private $scope : ExchangesScope,
+                private $log : ng.ILogService,
+                private exch : Models.Exchange,
+                public pair : Models.CurrencyPair) {
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
         this.name = this.base + "/" + this.quote;
@@ -59,6 +63,22 @@ class DisplayPair {
     public updateFairValue = (fv : Models.FairValue) => {
         this.fairValue = fv.price;
     };
+
+    public updateParameters = (p : Models.QuotingParameters) => {
+        this.width(p.width);
+    };
+
+    private _width : number = null;
+    public width = (val? : number) : number => {
+        if (arguments.length === 1) {
+            if (this._width == null || Math.abs(val - this._width) > 1e-4) {
+                this._width = val;
+                var parameters = new Models.QuotingParameters(val);
+                this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, parameters))
+            }
+        }
+        return this._width;
+    }
 }
 
 class DisplayExchangeInformation {
@@ -69,7 +89,7 @@ class DisplayExchangeInformation {
     btcPosition : number = null;
     ltcPosition : number = null;
 
-    constructor(public _log : ng.ILogService, public exchange : Models.Exchange) {
+    constructor(private $scope : ExchangesScope, private _log : ng.ILogService, public exchange : Models.Exchange) {
         this.name = Models.Exchange[exchange];
     }
 
@@ -104,7 +124,7 @@ class DisplayExchangeInformation {
         this._log.info("adding new pair, base:", Models.Currency[pair.base], "quote:",
             Models.Currency[pair.quote], "to exchange", Models.Exchange[this.exchange]);
 
-        var newPair = new DisplayPair(pair);
+        var newPair = new DisplayPair(this.$scope, this._log, this.exchange, pair);
         this.pairs.push(newPair);
         return newPair;
     };
@@ -116,11 +136,15 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
         if (angular.isUndefined(disp)) {
             $log.info("adding new exchange", Models.Exchange[exch]);
-            $scope.exchanges[exch] = new DisplayExchangeInformation($log, exch);
+            $scope.exchanges[exch] = new DisplayExchangeInformation($scope, $log, exch);
             disp = $scope.exchanges[exch];
         }
 
         return disp;
+    };
+
+    $scope.sendUpdatedParameters = (p : Models.ExchangePairMessage<Models.QuotingParameters>) => {
+        socket.emit("parameters-update-request", p);
     };
 
     // ugh
@@ -132,6 +156,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         socket.emit("subscribe-new-trading-decision");
         socket.emit("subscribe-fair-value");
         socket.emit("subscribe-quote");
+        socket.emit("subscribe-parameter-updates");
     };
 
     socket.on("hello", subscriber);
@@ -152,8 +177,11 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
     socket.on('fair-value', (fv : Models.ExchangePairMessage<Models.FairValue>) =>
         getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateFairValue(fv.data));
 
-    socket.on('quote', (fv : Models.ExchangePairMessage<Models.TwoSidedQuote>) =>
-        getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateQuote(fv.data));
+    socket.on('quote', (q : Models.ExchangePairMessage<Models.TwoSidedQuote>) =>
+        getOrAddDisplayExchange(q.exchange).getOrAddDisplayPair(q.pair).updateQuote(q.data));
+
+    socket.on("parameter-updates", (p : Models.ExchangePairMessage<Models.QuotingParameters>) =>
+        getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));
 
     socket.on("disconnect", () => {
         $scope.exchanges = {};
