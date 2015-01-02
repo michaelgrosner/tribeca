@@ -103,19 +103,16 @@ class OkCoinWebsocket {
 }
 
 class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
-    MarketData = new Utils.Evt<Models.MarketUpdate>();
+    MarketData = new Utils.Evt<Models.Market>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     private onDepth = (prettyMegan : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = prettyMegan.data;
-        var getLevel = n => {
-            return new Models.MarketUpdate(
-                new Models.MarketSide(msg.bids[n][0], msg.bids[n][1]),
-                new Models.MarketSide(msg.asks[n][0], msg.asks[n][1]),
-                prettyMegan.time);
-        };
 
-        this.MarketData.trigger(getLevel(0));
+        var getLevel = n => new Models.MarketSide(n[0], n[1]);
+        var mkt = new Models.Market(msg.bids.map(getLevel), msg.asks.map(getLevel), prettyMegan.time);
+
+        this.MarketData.trigger(mkt);
     };
 
     constructor(socket : OkCoinWebsocket) {

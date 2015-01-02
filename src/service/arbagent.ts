@@ -21,7 +21,7 @@ export class FairValueAgent {
         var mkt = this._broker.currentBook;
 
         if (mkt != null) {
-            var mid = (mkt.update.ask.price + mkt.update.bid.price) / 2.0;
+            var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
 
             var newFv = new Models.FairValue(mid, mkt);
             var previousFv = this.latestFairValue;
@@ -78,8 +78,9 @@ export class QuoteGenerator {
             var bidPx = Math.max(fv.price - width, 0);
             var askPx = fv.price + width;
 
-            var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, fv.mkt.update.time, bidPx, size);
-            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, fv.mkt.update.time, askPx, size);
+            var t = Utils.date(); // TODO: this is obviously incorrect
+            var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
+            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
 
             this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
             this.NewQuote.trigger();

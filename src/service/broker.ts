@@ -263,28 +263,36 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._currentBook;
     }
 
-    private static getMarketDataFlag(current : Models.MarketUpdate, previous : Models.Market) {
-        if (previous === null) return Models.MarketDataFlag.First;
+    private handleMarketData = (book : Models.Market) => {
+        var bids : Models.MarketSide[] = [];
+        var asks : Models.MarketSide[] = [];
+        var isDupe = true;
+        for (var i = 0; i < 5; i++) {
+            var bid = book.bids[i];
+            var ask = book.asks[i];
 
-        var cmb = (c : Models.MarketSide, p : Models.MarketSide) => {
-            var priceChanged = Math.abs(c.price - p.price) > 1e-4;
-            var sizeChanged = Math.abs(c.size - p.size) > 1e-4;
-            if (priceChanged && sizeChanged) return Models.MarketDataFlag.PriceAndSizeChanged;
-            if (priceChanged) return Models.MarketDataFlag.PriceChanged;
-            if (sizeChanged) return Models.MarketDataFlag.SizeChanged;
-            return Models.MarketDataFlag.NoChange;
-        };
+            bids.push(bid);
+            asks.push(ask);
 
-        return (cmb(current.ask, previous.update.ask) | cmb(current.bid, previous.update.bid));
-    }
-
-    private handleMarketData = (book : Models.MarketUpdate) => {
-        var flag = ExchangeBroker.getMarketDataFlag(book, this.currentBook);
-        if (flag !== Models.MarketDataFlag.NoChange) {
-            this._currentBook = new Models.Market(book, flag);
-            this.MarketData.trigger(this.currentBook);
-            this._log("%s", this.currentBook);
+            if (isDupe) {
+                if (this.currentBook !== null) {
+                    if (!Models.marketSideEquals(bid, this.currentBook.bids[i]) ||
+                        !Models.marketSideEquals(ask, this.currentBook.asks[i])) {
+                        isDupe = false;
+                    }
+                }
+                else {
+                    isDupe = false;
+                }
+            }
         }
+
+        if (isDupe) return;
+
+        var truncatedMkt = new Models.Market(bids, asks, book.time);
+
+        this._currentBook = book;
+        this.MarketData.trigger(this.currentBook);
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();

@@ -10,35 +10,18 @@ export class Timestamped<T> {
 
 export class MarketSide {
     constructor(public price: number, public size: number) { }
+}
 
-    public equals(other : MarketSide) {
-        return this.price == other.price && this.size == other.size;
-    }
-
-    public toString() {
-        return "price=" + this.price + ";size=" + this.size;
-    }
- }
-
-export class MarketUpdate {
-    constructor(
-        public bid : MarketSide,
-        public ask : MarketSide,
-        public time : Moment) { }
-
-    public toString() {
-        return "bid=[" + this.bid + "];ask=[" + this.ask + "];time=" + this.time.format('M/d/YY h:mm:ss,SSS');
-    }
+export function marketSideEquals(t : MarketSide, other : MarketSide, tol : number = 1e-4) {
+    if (other == null) return false;
+    return Math.abs(t.price - other.price) > tol && Math.abs(t.size - other.size) > tol;
 }
 
 export class Market {
     constructor(
-        public update : MarketUpdate,
-        public flag : MarketDataFlag) { }
-
-    public toString() {
-        return this.update + ";flag=" + MarketDataFlag[this.flag];
-    }
+        public bids : MarketSide[],
+        public asks : MarketSide[],
+        public time : Moment) { }
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
@@ -52,11 +35,12 @@ export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 export enum Liquidity { Make, Take }
 
 export enum MarketDataFlag {
-    NoChange = 0,
-    First = 1,
-    PriceChanged = 1 << 1,
-    SizeChanged = 1 << 2,
-    PriceAndSizeChanged = 1 << 3
+    Unknown = 0,
+    NoChange = 1,
+    First = 1 << 1,
+    PriceChanged = 1 << 2,
+    SizeChanged = 1 << 3,
+    PriceAndSizeChanged = 1 << 4
 }
 
 export interface Order {

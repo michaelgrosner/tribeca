@@ -41,11 +41,11 @@ class DisplayPair {
         this.name = this.base + "/" + this.quote;
     }
 
-    public updateMarket = (update : Models.MarketUpdate) => {
-        this.bidSize = update.bid.size;
-        this.bid = update.bid.price;
-        this.ask = update.ask.price;
-        this.askSize = update.ask.size;
+    public updateMarket = (update : Models.Market) => {
+        this.bidSize = update.bids[0].size;
+        this.bid = update.bids[0].price;
+        this.ask = update.asks[0].price;
+        this.askSize = update.asks[0].size;
     };
 
     public updateDecision = (quote : Models.TradingDecision) => {
@@ -185,7 +185,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         getOrAddDisplayExchange(exch).setConnectStatus(cs) );
 
     socket.on("market-book", (book : Models.ExchangePairMessage<Models.Market>) =>
-        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.data.update));
+        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.data));
 
     socket.on("new-trading-decision", (d : Models.ExchangePairMessage<Models.TradingDecision>) =>
         getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateDecision(d.data));

@@ -61,10 +61,6 @@ interface Update {
     timestamp : number;
 }
 
-class SideUpdate {
-    constructor(public price: number, public size: number) {}
-}
-
 interface MarketDataSnapshotFullRefresh {
     snapshotSeqNo : number;
     symbol : string;
@@ -113,28 +109,31 @@ interface CancelReject {
 }
 
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
-    MarketData = new Utils.Evt<Models.MarketUpdate>();
+    MarketData = new Utils.Evt<Models.Market>();
     _marketDataWs : ws;
 
-    _lastBook : { [side: string] : { [px: number]: number}} = null;
+    _lastBids : { [px: number]: number} = {};
+    _lastAsks : { [px: number]: number} = {};
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
-        if (msg.symbol != "BTCUSD" || this._lastBook == null) return;
+        if (msg.symbol != "BTCUSD" || this._lastBids == null || this._lastAsks == null) return;
+        this.onMarketDataUpdate(msg.bid, msg.ask, t);
+    };
 
-        var ordBids = HitBtcMarketDataGateway._applyIncrementals(msg.bid, this._lastBook["bid"], (a, b) => a.price > b.price ? -1 : 1);
-        var ordAsks = HitBtcMarketDataGateway._applyIncrementals(msg.ask, this._lastBook["ask"], (a, b) => a.price > b.price ? 1 : -1);
+    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
+        if (msg.symbol != "BTCUSD") return;
+        this.onMarketDataUpdate(msg.bid, msg.ask, t);
+    };
 
-        var getLevel = (n : number) => {
-            var bid = new Models.MarketSide(ordBids[n].price, ordBids[n].size);
-            var ask = new Models.MarketSide(ordAsks[n].price, ordAsks[n].size);
-            return new Models.MarketUpdate(bid, ask, t);
-        };
+    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Moment) => {
+        var ordBids = HitBtcMarketDataGateway._applyIncrementals(bids, this._lastBids, (a, b) => a.price > b.price ? -1 : 1);
+        var ordAsks = HitBtcMarketDataGateway._applyIncrementals(asks, this._lastAsks, (a, b) => a.price > b.price ? 1 : -1);
 
-        this.MarketData.trigger(getLevel(0));
+        this.MarketData.trigger(new Models.Market(ordBids, ordAsks, t));
     };
 
     private static _applyIncrementals(incomingUpdates : Update[],
-                               side : { [px: number]: number},
-                               cmp : (p1 : SideUpdate, p2 : SideUpdate) => number) {
+                                      side : { [px: number]: number},
+                                      cmp : (p1 : Models.MarketSide, p2 : Models.MarketSide) => number) {
         for (var i = 0; i < incomingUpdates.length; i++) {
             var u : Update = incomingUpdates[i];
             if (u.size == 0) {
@@ -145,35 +144,12 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             }
         }
 
-        var kvps : SideUpdate[] = [];
+        var kvps : Models.MarketSide[] = [];
         for (var px in side) {
-            kvps.push(new SideUpdate(parseFloat(px), side[px] / _lotMultiplier));
+            kvps.push(new Models.MarketSide(parseFloat(px), side[px] / _lotMultiplier));
         }
         return kvps.sort(cmp);
     }
-
-    private static getLevel(msg : MarketDataSnapshotFullRefresh, n : number, t : Moment) : Models.MarketUpdate {
-        var bid = new Models.MarketSide(msg.bid[n].price, msg.bid[n].size / _lotMultiplier);
-        var ask = new Models.MarketSide(msg.ask[n].price, msg.ask[n].size / _lotMultiplier);
-        return new Models.MarketUpdate(bid, ask, t);
-    }
-
-    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
-        if (msg.symbol != "BTCUSD") return;
-
-        this._lastBook = {bid: {}, ask: {}};
-
-        for (var i = 0; i < msg.ask.length; i++) {
-            this._lastBook["ask"][msg.ask[i].price] = msg.ask[i].size;
-        }
-
-        for (var i = 0; i < msg.bid.length; i++) {
-            this._lastBook["bid"][msg.bid[i].price] = msg.bid[i].size;
-        }
-
-        var b = HitBtcMarketDataGateway.getLevel(msg, 0, t);
-        this.MarketData.trigger(b);
-    };
 
     private onMessage = (raw : string) => {
         var t = Utils.date();
