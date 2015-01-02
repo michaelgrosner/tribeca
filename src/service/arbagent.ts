@@ -26,6 +26,8 @@ export class QuotingParametersRepository {
     };
 }
 
+enum RecalcRequest { FairValue, Quote }
+
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
     public NewQuote = new Utils.Evt();
@@ -36,47 +38,48 @@ export class QuoteGenerator {
 
     constructor(private _broker : Interfaces.IBroker,
                 private _qlParamRepo : QuotingParametersRepository) {
-        _broker.MarketData.on(this.recalcMarkets);
-        this._qlParamRepo.NewParameters.on(this.recalcMarkets);
+        _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue));
+        this._qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote));
     }
 
-    private recalcMarkets = () => {
+    private recalcFairValue = (mkt : Models.Market) => {
+        var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
+
+        var newFv = new Models.FairValue(mid, mkt);
+        var previousFv = this.latestFairValue;
+        if (!QuoteGenerator.fairValuesAreSame(newFv, previousFv)) {
+            this.latestFairValue = newFv;
+            return true;
+        }
+        return false;
+    };
+
+    private recalcQuote = () => {
+        if (this.latestFairValue == null) return false;
+        var params = this._qlParamRepo.latest;
+        var width = params.width;
+        var size = params.size;
+
+        var bidPx = Math.max(this.latestFairValue.price - width, 0);
+        var askPx = this.latestFairValue.price + width;
+
+        var t = Utils.date(); // TODO: this is obviously incorrect
+        var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
+        var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
+
+        this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
+        return true;
+    };
+
+    private recalcMarkets = (req : RecalcRequest) => {
         var mkt = this._broker.currentBook;
+        if (mkt == null) return;
 
-        var fvChanged = false;
-        if (mkt != null) {
-            var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
+        var updateFv = req > RecalcRequest.FairValue || this.recalcFairValue(mkt);
+        var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote());
 
-            var newFv = new Models.FairValue(mid, mkt);
-            var previousFv = this.latestFairValue;
-            if (!QuoteGenerator.fairValuesAreSame(newFv, previousFv)) {
-                this.latestFairValue = newFv;
-                fvChanged = true;
-            }
-        }
-        else {
-            return;
-        }
-
-        var newQt = false;
-        if (this.latestFairValue != null) {
-            var params = this._qlParamRepo.latest;
-            var width = params.width;
-            var size = params.size;
-
-            var bidPx = Math.max(this.latestFairValue.price - width, 0);
-            var askPx = this.latestFairValue.price + width;
-
-            var t = Utils.date(); // TODO: this is obviously incorrect
-            var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
-            var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
-
-            this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
-            newQt = true;
-        }
-
-        if (fvChanged) this.NewValue.trigger();
-        if (newQt) this.NewQuote.trigger();
+        if (updateFv) this.NewValue.trigger();
+        if (updateQuote) this.NewQuote.trigger();
     };
 
     private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
