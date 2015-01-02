@@ -21,7 +21,6 @@ export class UI {
                 private _pair : Models.CurrencyPair,
                 private _broker : Interfaces.IBroker,
                 private _agent : Agent.Trader,
-                private _fvAgent : Agent.FairValueAgent,
                 private _quoteGenerator : Agent.QuoteGenerator,
                 private _paramRepo : Agent.QuotingParametersRepository) {
         this._exchange = this._broker.exchange();
@@ -39,7 +38,7 @@ export class UI {
         this._broker.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._broker.ConnectChanged.on(x => this.sendUpdatedConnectionStatus(this._exchange, x));
         this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
-        this._fvAgent.NewValue.on(this.sendFairValue);
+        this._quoteGenerator.NewValue.on(this.sendFairValue);
         this._quoteGenerator.NewQuote.on(this.sendQuote);
         this._agent.NewTradingDecision.on(this.sendResultChange);
 
@@ -138,7 +137,7 @@ export class UI {
     };
 
     sendFairValue = () => {
-        var fv = this._fvAgent.latestFairValue;
+        var fv = this._quoteGenerator.latestFairValue;
         if (fv == null) return;
         io.emit("fair-value", this._wrapOutgoingMessage(fv));
     };

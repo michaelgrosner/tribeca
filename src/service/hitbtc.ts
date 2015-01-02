@@ -112,16 +112,18 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     _marketDataWs : ws;
 
-    _lastBids : { [px: number]: number} = {};
-    _lastAsks : { [px: number]: number} = {};
+    private _hasProcessedSnapshot = false;
+    private _lastBids : { [px: number]: number} = {};
+    private _lastAsks : { [px: number]: number} = {};
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
-        if (msg.symbol != "BTCUSD" || this._lastBids == null || this._lastAsks == null) return;
+        if (msg.symbol != "BTCUSD" || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
     };
 
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
         if (msg.symbol != "BTCUSD") return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
+        this._hasProcessedSnapshot = true;
     };
 
     private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Moment) => {

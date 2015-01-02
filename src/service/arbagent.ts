@@ -8,36 +8,6 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 
-// computes theoretical values based off the market and theo parameters
-export class FairValueAgent {
-    public NewValue = new Utils.Evt();
-    public latestFairValue : Models.FairValue = null;
-
-    constructor(private _broker : Interfaces.IBroker) {
-        _broker.MarketData.on(this.recalcMarkets);
-    }
-
-    private recalcMarkets = () => {
-        var mkt = this._broker.currentBook;
-
-        if (mkt != null) {
-            var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
-
-            var newFv = new Models.FairValue(mid, mkt);
-            var previousFv = this.latestFairValue;
-            if (!FairValueAgent.fairValuesAreSame(newFv, previousFv)) {
-                this.latestFairValue = newFv;
-                this.NewValue.trigger();
-            }
-        }
-    };
-
-    private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
-        if (previousFv == null && newFv != null) return false;
-        return Math.abs(newFv.price - previousFv.price) < 1e-3;
-    }
-}
-
 export class QuotingParametersRepository {
     private _log : Utils.Logger = Utils.log("tribeca:qpr");
     NewParameters = new Utils.Evt();
@@ -58,34 +28,61 @@ export class QuotingParametersRepository {
 
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
-    NewQuote = new Utils.Evt();
-    public latestQuote : Models.TwoSidedQuote = null;
+    public NewQuote = new Utils.Evt();
+    public NewValue = new Utils.Evt();
 
-    constructor(private _qlParamRepo : QuotingParametersRepository,
-                private _fvAgent : FairValueAgent) {
-        this._fvAgent.NewValue.on(this.handleNewFairValue);
-        this._qlParamRepo.NewParameters.on(this.handleNewFairValue);
+    public latestQuote : Models.TwoSidedQuote = null;
+    public latestFairValue : Models.FairValue = null;
+
+    constructor(private _broker : Interfaces.IBroker,
+                private _qlParamRepo : QuotingParametersRepository) {
+        _broker.MarketData.on(this.recalcMarkets);
+        this._qlParamRepo.NewParameters.on(this.recalcMarkets);
     }
 
-    private handleNewFairValue = () => {
-        var fv = this._fvAgent.latestFairValue;
+    private recalcMarkets = () => {
+        var mkt = this._broker.currentBook;
 
-        if (fv != null) {
+        var fvChanged = false;
+        if (mkt != null) {
+            var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
+
+            var newFv = new Models.FairValue(mid, mkt);
+            var previousFv = this.latestFairValue;
+            if (!QuoteGenerator.fairValuesAreSame(newFv, previousFv)) {
+                this.latestFairValue = newFv;
+                fvChanged = true;
+            }
+        }
+        else {
+            return;
+        }
+
+        var newQt = false;
+        if (this.latestFairValue != null) {
             var params = this._qlParamRepo.latest;
             var width = params.width;
             var size = params.size;
 
-            var bidPx = Math.max(fv.price - width, 0);
-            var askPx = fv.price + width;
+            var bidPx = Math.max(this.latestFairValue.price - width, 0);
+            var askPx = this.latestFairValue.price + width;
 
             var t = Utils.date(); // TODO: this is obviously incorrect
             var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
             var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
 
             this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
-            this.NewQuote.trigger();
+            newQt = true;
         }
+
+        if (fvChanged) this.NewValue.trigger();
+        if (newQt) this.NewQuote.trigger();
     };
+
+    private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
+        if (previousFv == null && newFv != null) return false;
+        return Math.abs(newFv.price - previousFv.price) < 1e-3;
+    }
 }
 
 // makes decisions about whether or not a quote should be submitted
