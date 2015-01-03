@@ -132,7 +132,7 @@ export class UI {
     sendResultChange = () => {
         var res : Models.TradingDecision = this._quoteGenerator.latestDecision;
         if (res == null) return;
-        setTimeout(() => io.emit(Messaging.Topics.NewTradingDecision, this._wrapOutgoingMessage(res)), 0);
+        setTimeout(() => io.emit("new-trading-decision", this._wrapOutgoingMessage(res)), 0);
     };
 
     sendFairValue = () => {
