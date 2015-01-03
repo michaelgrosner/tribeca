@@ -289,9 +289,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         if (isDupe) return;
 
-        var truncatedMkt = new Models.Market(bids, asks, book.time);
-
-        this._currentBook = book;
+        this._currentBook = new Models.Market(bids, asks, book.time);
         this.MarketData.trigger(this.currentBook);
     };
 

@@ -29,6 +29,14 @@ export class Quoter {
                 return this._bidQuoter.updateQuote(q);
         }
     };
+
+    public quotesSent = () => {
+        var qts : Models.TwoSidedQuote[] = [];
+        for (var i = 0; i < this._askQuoter.quotesSent.length; i++) {
+            qts.push(new Models.TwoSidedQuote(this._bidQuoter.quotesSent[i].data, this._askQuoter.quotesSent[i].data));
+        }
+        return qts;
+    }
 }
 
 // wraps a single broker to make orders behave like quotes
@@ -37,9 +45,15 @@ export class ExchangeQuoter {
     private _activeQuote : QuoteOrder = null;
     private _exchange : Models.Exchange;
 
+    public quotesSent : Models.Timestamped<Models.Quote>[] = [];
+
     constructor(private _broker : Interfaces.IBroker) {
         this._exchange = this._broker.exchange();
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
+
+        setInterval(() => {
+            this.quotesSent = this.quotesSent.filter(q => Math.abs(q.time.diff(Utils.date())) < 2000);
+        }, 500);
     }
 
     public get exchange() {
@@ -91,6 +105,7 @@ export class ExchangeQuoter {
 
         var newOrder = new Models.SubmitNewOrder(q.side, q.size, Models.OrderType.Limit, q.price, Models.TimeInForce.GTC, this._exchange, q.time);
         var sent = this._broker.sendOrder(newOrder);
+        this.quotesSent.push(new Models.Timestamped(q, Utils.date()));
         this._activeQuote = new QuoteOrder(q, sent.sentOrderClientId);
         return Models.QuoteSent.First;
     };

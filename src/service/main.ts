@@ -22,10 +22,9 @@ var gateway = new HitBtc.HitBtc(config);
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister);
 var paramsRepo = new Agent.QuotingParametersRepository();
-var quoteGenerator = new Agent.QuoteGenerator(broker, paramsRepo);
 var quoter = new Quoter.Quoter(broker);
-var trader = new Agent.Trader(broker, quoteGenerator, quoter);
-var ui = new UI.UI(env, broker.pair, broker, trader, quoteGenerator, paramsRepo);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo);
+var ui = new UI.UI(env, broker.pair, broker, quoteGenerator, paramsRepo);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

@@ -26,6 +26,10 @@ export class Market {
         public bids : MarketSide[],
         public asks : MarketSide[],
         public time : Moment) { }
+
+    public toString() {
+        return "asks: [" + this.asks.join(";") + "] bids: [" + this.bids.join(";") + "]";
+    }
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
@@ -185,6 +189,10 @@ export class OrderStatusReportImpl implements OrderStatusReport {
         if (this.exchangeId != null) components.push("exchangeId="+this.exchangeId);
         if (this.exchange != null) components.push("exchange="+Exchange[this.exchange]);
         components.push("orderStatus="+OrderStatus[this.orderStatus]);
+        if (this.partiallyFilled) components.push("partiallyFilled");
+        if (this.pendingCancel) components.push("pendingCancel");
+        if (this.pendingReplace) components.push("pendingReplace");
+        if (this.cancelRejected) components.push("cancelRejected");
         components.push("side="+Side[this.side]);
         components.push("quantity="+this.quantity);
         components.push("price="+this.price);
@@ -199,10 +207,6 @@ export class OrderStatusReportImpl implements OrderStatusReport {
         if (this.cumQuantity != null) components.push("cumQuantity="+this.cumQuantity);
         if (this.averagePrice != null) components.push("averagePrice="+this.averagePrice);
         if (this.liquidity != null) components.push("liquidity="+Liquidity[this.liquidity]);
-        if (this.partiallyFilled) components.push("partiallyFilled");
-        if (this.pendingCancel) components.push("pendingCancel");
-        if (this.pendingReplace) components.push("pendingReplace");
-        if (this.cancelRejected) components.push("cancelRejected");
 
         return components.join(";");
     }

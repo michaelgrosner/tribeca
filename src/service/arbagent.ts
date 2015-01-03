@@ -18,6 +18,7 @@ export class QuotingParametersRepository {
     }
 
     public updateParameters = (newParams : Models.QuotingParameters) => {
+        if (newParams.size <= 0 || newParams.width <= 0) return;
         if (Math.abs(this.latest.width - newParams.width) > 1e-4 || Math.abs(this.latest.size - newParams.size) > 1e-4) {
             this._latest = newParams;
             this._log("Changed parameters width=%d size=%d", this.latest.width, this.latest.size);
@@ -26,46 +27,52 @@ export class QuotingParametersRepository {
     };
 }
 
-enum RecalcRequest { FairValue, Quote }
+enum RecalcRequest { FairValue, Quote, TradingDecision }
 
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
-    public NewQuote = new Utils.Evt();
+
     public NewValue = new Utils.Evt();
-
-    private _latestQuote : Models.TwoSidedQuote = null;
-    public get latestQuote() { return this._latestQuote; }
-    public set latestQuote(q : Models.TwoSidedQuote) {
-        this._latestQuote = q;
-        this._recentlyGeneratedQuotes.push(new Models.Timestamped(q, Utils.date()));
-    }
-
     public latestFairValue : Models.FairValue = null;
 
-    private _recentlyGeneratedQuotes : Models.Timestamped<Models.TwoSidedQuote>[] = [];
+    public NewQuote = new Utils.Evt();
+    public latestQuote : Models.TwoSidedQuote = null;
 
-    constructor(private _broker : Interfaces.IBroker,
+    public latestDecision : Models.TradingDecision = null;
+    public NewTradingDecision = new Utils.Evt<Models.TradingDecision>();
+
+    constructor(private _quoter : Quoter.Quoter,
+                private _broker : Interfaces.IBroker,
                 private _qlParamRepo : QuotingParametersRepository) {
         _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
-        this._qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
-
-        setInterval(() => {
-            this._recentlyGeneratedQuotes = this._recentlyGeneratedQuotes.filter(q => Math.abs(q.time.diff(Utils.date())) < 2000);
-        }, 500);
+        _qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
     }
 
-    private getFirstNonQuoteMarket = (qts : Models.Timestamped<Models.TwoSidedQuote>[],
-                                          mkts : Models.MarketSide[],
-                                          picker : (tsq : Models.TwoSidedQuote) => Models.Quote) : Models.MarketSide => {
+    public Active : boolean = false;
+    public ActiveChanged = new Utils.Evt();
+    changeActiveStatus = (to : boolean) => {
+        if (this.Active != to) {
+            this.Active = to;
+            this._log("changing active status to ", to);
+
+            this.recalcMarkets(RecalcRequest.TradingDecision, Utils.date());
+            this.ActiveChanged.trigger(this.Active);
+        }
+    };
+
+    private getFirstNonQuoteMarket = (mkts : Models.MarketSide[], picker : (tsq : Models.TwoSidedQuote) => Models.Quote) : Models.MarketSide => {
+        var rgq = this._quoter.quotesSent();
+        this._log("getFirstNonQuoteMarket || %s || %s", mkts.join(","), rgq.join(","));
+
         for (var i = 0; i < mkts.length; i++) {
-            var m = mkts[i];
+            var m : Models.MarketSide = mkts[i];
 
             var anyMatch = false;
-            for (var j = 0; !anyMatch && j < qts.length; j++) {
-                var q : Models.Quote = picker(qts[j].data);
-                if (Math.abs(q.price - m.price) < 1e-2 && Math.abs(q.size - m.size) < 1e-2)  {
-                    this._log("thinking that quote=%s and market=%s are the same, backing off", q.toString(), m.toString());
+            for (var j = 0; !anyMatch && j < rgq.length; j++) {
+                var q : Models.Quote = picker(rgq[j]);
+                if (Math.abs(q.price - m.price) < .01 && Math.abs(q.size - m.size) < .01)  {
+                    this._log("quote=%s and market=%s same, backing off", q.toString(), m.toString());
                     anyMatch = true;
                 }
             }
@@ -76,8 +83,8 @@ export class QuoteGenerator {
     };
 
     private recalcFairValue = (mkt : Models.Market) => {
-        var ask = this.getFirstNonQuoteMarket(this._recentlyGeneratedQuotes, mkt.asks, q => q.ask);
-        var bid = this.getFirstNonQuoteMarket(this._recentlyGeneratedQuotes, mkt.bids, q => q.bid);
+        var ask = this.getFirstNonQuoteMarket(mkt.asks, q => q.ask);
+        var bid = this.getFirstNonQuoteMarket(mkt.bids, q => q.bid);
         var mid = (ask.price + bid.price) / 2.0;
 
         var newFv = new Models.FairValue(mid, mkt);
@@ -108,46 +115,24 @@ export class QuoteGenerator {
     private recalcMarkets = (req : RecalcRequest, t : Moment) => {
         var mkt = this._broker.currentBook;
         if (mkt == null) return;
+        this._log("recalcing based off %s", mkt);
 
         var updateFv = req > RecalcRequest.FairValue || this.recalcFairValue(mkt);
         var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote(t));
+        var sentQuote = req > RecalcRequest.TradingDecision || (updateQuote && this.sendQuote());
 
         if (updateFv) this.NewValue.trigger();
         if (updateQuote) this.NewQuote.trigger();
+        if (sentQuote) this.NewTradingDecision.trigger();
     };
 
     private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
         if (previousFv == null && newFv != null) return false;
         return Math.abs(newFv.price - previousFv.price) < 1e-3;
     }
-}
-
-// makes decisions about whether or not a quote should be submitted
-export class Trader {
-    private _log : Utils.Logger = Utils.log("tribeca:trader");
-    public Active : boolean = false;
-    public ActiveChanged = new Utils.Evt();
-    public latestDecision : Models.TradingDecision = null;
-    public NewTradingDecision = new Utils.Evt<Models.TradingDecision>();
-
-    changeActiveStatus = (to : boolean) => {
-        if (this.Active != to) {
-            this.Active = to;
-            this._log("changing active status to %o", to);
-
-            this.sendQuote();
-            this.ActiveChanged.trigger(this.Active);
-        }
-    };
-
-    constructor(private _broker : Interfaces.IBroker,
-                private _quoteGenerator : QuoteGenerator,
-                private _quoter : Quoter.Quoter) {
-        this._quoteGenerator.NewQuote.on(this.sendQuote);
-    }
 
     private sendQuote = () : void => {
-        var quote = this._quoteGenerator.latestQuote;
+        var quote = this.latestQuote;
 
         if (quote === null) {
             return;
@@ -161,8 +146,8 @@ export class Trader {
             askQt = quote.ask;
         }
         else {
-            bidQt = Trader.ConvertToStopQuote(quote.ask);
-            askQt = Trader.ConvertToStopQuote(quote.bid);
+            bidQt = QuoteGenerator.ConvertToStopQuote(quote.ask);
+            askQt = QuoteGenerator.ConvertToStopQuote(quote.bid);
         }
 
         var askAction = this._quoter.updateQuote(askQt);
@@ -172,7 +157,7 @@ export class Trader {
         this.latestDecision = decision;
         this.NewTradingDecision.trigger(decision);
 
-        var fv = this._quoteGenerator.latestFairValue;
+        var fv = this.latestFairValue;
         this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
             decision.toString(), quote.toString(), fv.price,
             fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),

@@ -20,7 +20,6 @@ export class UI {
     constructor(private _env : string,
                 private _pair : Models.CurrencyPair,
                 private _broker : Interfaces.IBroker,
-                private _agent : Agent.Trader,
                 private _quoteGenerator : Agent.QuoteGenerator,
                 private _paramRepo : Agent.QuotingParametersRepository) {
         this._exchange = this._broker.exchange();
@@ -37,16 +36,16 @@ export class UI {
         this._broker.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
         this._broker.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._broker.ConnectChanged.on(x => this.sendUpdatedConnectionStatus(this._exchange, x));
-        this._agent.ActiveChanged.on(s => io.emit("active-changed", s));
+        this._quoteGenerator.ActiveChanged.on(s => io.emit("active-changed", s));
         this._quoteGenerator.NewValue.on(this.sendFairValue);
         this._quoteGenerator.NewQuote.on(this.sendQuote);
-        this._agent.NewTradingDecision.on(this.sendResultChange);
+        this._quoteGenerator.NewTradingDecision.on(this.sendResultChange);
 
         http.listen(3000, () => this._log('Listening to admins on *:3000...'));
 
         io.on('connection', sock => {
             sock.emit("hello", this._env);
-            sock.emit("active-changed", this._agent.Active);
+            sock.emit("active-changed", this._quoteGenerator.Active);
 
             sock.on("subscribe-new-trading-decision", () => {
                 this.sendResultChange();
@@ -101,7 +100,7 @@ export class UI {
             });
 
             sock.on("active-change-request", (to : boolean) => {
-                _agent.changeActiveStatus(to);
+                _quoteGenerator.changeActiveStatus(to);
             });
 
             sock.on("parameters-update-request", (p : Models.ExchangePairMessage<Models.QuotingParameters>) => {
@@ -131,7 +130,7 @@ export class UI {
     };
 
     sendResultChange = () => {
-        var res : Models.TradingDecision = this._agent.latestDecision;
+        var res : Models.TradingDecision = this._quoteGenerator.latestDecision;
         if (res == null) return;
         io.emit(Messaging.Topics.NewTradingDecision, this._wrapOutgoingMessage(res));
     };
