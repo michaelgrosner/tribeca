@@ -39,8 +39,8 @@ export class QuoteGenerator {
     public NewQuote = new Utils.Evt();
     public latestQuote : Models.TwoSidedQuote = null;
 
+    public NewTradingDecision = new Utils.Evt();
     public latestDecision : Models.TradingDecision = null;
-    public NewTradingDecision = new Utils.Evt<Models.TradingDecision>();
 
     constructor(private _quoter : Quoter.Quoter,
                 private _broker : Interfaces.IBroker,
@@ -61,18 +61,16 @@ export class QuoteGenerator {
         }
     };
 
-    private getFirstNonQuoteMarket = (mkts : Models.MarketSide[], picker : (tsq : Models.TwoSidedQuote) => Models.Quote) : Models.MarketSide => {
-        var rgq = this._quoter.quotesSent();
-        this._log("getFirstNonQuoteMarket || %s || %s", mkts.join(","), rgq.join(","));
+    private getFirstNonQuoteMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide => {
+        var rgq = this._quoter.quotesSent(s);
 
         for (var i = 0; i < mkts.length; i++) {
             var m : Models.MarketSide = mkts[i];
 
             var anyMatch = false;
             for (var j = 0; !anyMatch && j < rgq.length; j++) {
-                var q : Models.Quote = picker(rgq[j]);
+                var q : Models.Quote = rgq[j].quote;
                 if (Math.abs(q.price - m.price) < .01 && Math.abs(q.size - m.size) < .01)  {
-                    this._log("quote=%s and market=%s same, backing off", q.toString(), m.toString());
                     anyMatch = true;
                 }
             }
@@ -83,8 +81,8 @@ export class QuoteGenerator {
     };
 
     private recalcFairValue = (mkt : Models.Market) => {
-        var ask = this.getFirstNonQuoteMarket(mkt.asks, q => q.ask);
-        var bid = this.getFirstNonQuoteMarket(mkt.bids, q => q.bid);
+        var ask = this.getFirstNonQuoteMarket(mkt.asks, Models.Side.Ask);
+        var bid = this.getFirstNonQuoteMarket(mkt.bids, Models.Side.Bid);
         var mid = (ask.price + bid.price) / 2.0;
 
         var newFv = new Models.FairValue(mid, mkt);
@@ -115,11 +113,10 @@ export class QuoteGenerator {
     private recalcMarkets = (req : RecalcRequest, t : Moment) => {
         var mkt = this._broker.currentBook;
         if (mkt == null) return;
-        this._log("recalcing based off %s", mkt);
 
         var updateFv = req > RecalcRequest.FairValue || this.recalcFairValue(mkt);
         var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote(t));
-        var sentQuote = req > RecalcRequest.TradingDecision || (updateQuote && this.sendQuote());
+        var sentQuote = req > RecalcRequest.TradingDecision || (updateQuote && this.sendQuote(t));
 
         if (updateFv) this.NewValue.trigger();
         if (updateQuote) this.NewQuote.trigger();
@@ -131,7 +128,7 @@ export class QuoteGenerator {
         return Math.abs(newFv.price - previousFv.price) < 1e-3;
     }
 
-    private sendQuote = () : void => {
+    private sendQuote = (t : Moment) : void => {
         var quote = this.latestQuote;
 
         if (quote === null) {
@@ -150,8 +147,8 @@ export class QuoteGenerator {
             askQt = QuoteGenerator.ConvertToStopQuote(quote.bid);
         }
 
-        var askAction = this._quoter.updateQuote(askQt);
-        var bidAction = this._quoter.updateQuote(bidQt);
+        var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
+        var bidAction = this._quoter.updateQuote(new Models.Timestamped(bidQt, t));
 
         var decision = new Models.TradingDecision(bidAction, askAction);
         this.latestDecision = decision;

@@ -120,37 +120,37 @@ export class UI {
 
     sendOrderStatusUpdate = (msg : Models.OrderStatusReport) => {
         if (msg == null) return;
-        io.emit("order-status-report", this._wrapOutgoingMessage(msg));
+        setTimeout(() => io.emit("order-status-report", this._wrapOutgoingMessage(msg)), 0);
     };
 
     sendUpdatedMarket = () => {
         var book = this._broker.currentBook;
         if (book == null) return;
-        io.emit("market-book", this._wrapOutgoingMessage(book));
+        setTimeout(() => io.emit("market-book", this._wrapOutgoingMessage(book)), 0);
     };
 
     sendResultChange = () => {
         var res : Models.TradingDecision = this._quoteGenerator.latestDecision;
         if (res == null) return;
-        io.emit(Messaging.Topics.NewTradingDecision, this._wrapOutgoingMessage(res));
+        setTimeout(() => io.emit(Messaging.Topics.NewTradingDecision, this._wrapOutgoingMessage(res)), 0);
     };
 
     sendFairValue = () => {
         var fv = this._quoteGenerator.latestFairValue;
         if (fv == null) return;
-        io.emit("fair-value", this._wrapOutgoingMessage(fv));
+        setTimeout(() => io.emit("fair-value", this._wrapOutgoingMessage(fv)), 0);
     };
 
     sendQuote = () => {
         var quote = this._quoteGenerator.latestQuote;
         if (quote == null) return;
-        io.emit("quote", this._wrapOutgoingMessage(quote));
+        setTimeout(() => io.emit("quote", this._wrapOutgoingMessage(quote)), 0);
     };
 
     sendQuotingParameters = () => {
         var p = this._paramRepo.latest;
         if (p == null) return;
-        io.emit("parameter-updates", this._wrapOutgoingMessage(p));
+        setTimeout(() => io.emit("parameter-updates", this._wrapOutgoingMessage(p)), 0);
     };
 
     private _wrapOutgoingMessage = <T>(msg : T) : Models.ExchangePairMessage<T> => {
