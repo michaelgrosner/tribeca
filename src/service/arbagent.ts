@@ -30,20 +30,55 @@ enum RecalcRequest { FairValue, Quote }
 
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
+    private _log : Utils.Logger = Utils.log("tribeca:qg");
     public NewQuote = new Utils.Evt();
     public NewValue = new Utils.Evt();
 
-    public latestQuote : Models.TwoSidedQuote = null;
+    private _latestQuote : Models.TwoSidedQuote = null;
+    public get latestQuote() { return this._latestQuote; }
+    public set latestQuote(q : Models.TwoSidedQuote) {
+        this._latestQuote = q;
+        this._recentlyGeneratedQuotes.push(new Models.Timestamped(q, Utils.date()));
+    }
+
     public latestFairValue : Models.FairValue = null;
+
+    private _recentlyGeneratedQuotes : Models.Timestamped<Models.TwoSidedQuote>[] = [];
 
     constructor(private _broker : Interfaces.IBroker,
                 private _qlParamRepo : QuotingParametersRepository) {
-        _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue));
-        this._qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote));
+        _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
+        this._qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
+
+        setInterval(() => {
+            this._recentlyGeneratedQuotes = this._recentlyGeneratedQuotes.filter(q => Math.abs(q.time.diff(Utils.date())) < 2000);
+        }, 500);
     }
 
+    private getFirstNonQuoteMarket = (qts : Models.Timestamped<Models.TwoSidedQuote>[],
+                                          mkts : Models.MarketSide[],
+                                          picker : (tsq : Models.TwoSidedQuote) => Models.Quote) : Models.MarketSide => {
+        for (var i = 0; i < mkts.length; i++) {
+            var m = mkts[i];
+
+            var anyMatch = false;
+            for (var j = 0; !anyMatch && j < qts.length; j++) {
+                var q : Models.Quote = picker(qts[j].data);
+                if (Math.abs(q.price - m.price) < 1e-2 && Math.abs(q.size - m.size) < 1e-2)  {
+                    this._log("thinking that quote=%s and market=%s are the same, backing off", q.toString(), m.toString());
+                    anyMatch = true;
+                }
+            }
+
+            if (!anyMatch)
+                return m;
+        }
+    };
+
     private recalcFairValue = (mkt : Models.Market) => {
-        var mid = (mkt.asks[0].price + mkt.bids[0].price) / 2.0;
+        var ask = this.getFirstNonQuoteMarket(this._recentlyGeneratedQuotes, mkt.asks, q => q.ask);
+        var bid = this.getFirstNonQuoteMarket(this._recentlyGeneratedQuotes, mkt.bids, q => q.bid);
+        var mid = (ask.price + bid.price) / 2.0;
 
         var newFv = new Models.FairValue(mid, mkt);
         var previousFv = this.latestFairValue;
@@ -54,7 +89,7 @@ export class QuoteGenerator {
         return false;
     };
 
-    private recalcQuote = () => {
+    private recalcQuote = (t : Moment) => {
         if (this.latestFairValue == null) return false;
         var params = this._qlParamRepo.latest;
         var width = params.width;
@@ -63,7 +98,6 @@ export class QuoteGenerator {
         var bidPx = Math.max(this.latestFairValue.price - width, 0);
         var askPx = this.latestFairValue.price + width;
 
-        var t = Utils.date(); // TODO: this is obviously incorrect
         var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
         var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
 
@@ -71,12 +105,12 @@ export class QuoteGenerator {
         return true;
     };
 
-    private recalcMarkets = (req : RecalcRequest) => {
+    private recalcMarkets = (req : RecalcRequest, t : Moment) => {
         var mkt = this._broker.currentBook;
         if (mkt == null) return;
 
         var updateFv = req > RecalcRequest.FairValue || this.recalcFairValue(mkt);
-        var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote());
+        var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote(t));
 
         if (updateFv) this.NewValue.trigger();
         if (updateQuote) this.NewQuote.trigger();
@@ -137,7 +171,13 @@ export class Trader {
         var decision = new Models.TradingDecision(bidAction, askAction);
         this.latestDecision = decision;
         this.NewTradingDecision.trigger(decision);
-        this._log("New trading decision: %s from quote %s", decision.toString(), quote.toString());
+
+        var fv = this._quoteGenerator.latestFairValue;
+        this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
+            decision.toString(), quote.toString(), fv.price,
+            fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
+            fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
+            fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
     };
 
     private static ConvertToStopQuote(q : Models.Quote) {

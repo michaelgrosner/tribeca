@@ -10,6 +10,10 @@ export class Timestamped<T> {
 
 export class MarketSide {
     constructor(public price: number, public size: number) { }
+
+    public toString() {
+        return "px="+this.price+";size="+this.size;
+    }
 }
 
 export function marketSideEquals(t : MarketSide, other : MarketSide, tol : number = 1e-4) {
