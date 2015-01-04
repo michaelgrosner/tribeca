@@ -1,12 +1,12 @@
 <div ng-controller="ExchangesController">
-    <div style="padding: 5px"
+    <div style="padding: 5px; border: 1px solid #d3d3d3"
          ng-repeat="exch in exchanges"
          ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
         <p><b>{{ exch.name }}</b> :: USD: {{ exch.usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
 
         <div class="row" ng-repeat="pair in exch.pairs">
             <div class="col-md-1">
-                <div>{{ pair.name }}</div>
+                <h4>{{ pair.name }}</h4>
                 <div>
                     <button ng-class="pair.active ? 'btn btn-success' : 'btn btn-danger'" ng-click="pair.changeActive()">Active</button>
                 </div>
@@ -51,11 +51,11 @@
                             <th>size</th>
                         </tr>
                         <tr class="active row">
-                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.width" ng-model-options="{ getterSetter: true }"></td>
-                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.size" ng-model-options="{ getterSetter: true }"></td>
+                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.quotingParameters.display.width"></td>
+                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.quotingParameters.display.size"></td>
                             <td>
-                                <input class="btn btn-default" type="button" ng-click="pair.reset()" value="Reset" />
-                                <input class="btn btn-default" type="submit" ng-click="pair.update()" value="Save" />
+                                <input class="btn btn-default" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                                <input class="btn btn-default" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
                             </td>
                         </tr>
                     </table>

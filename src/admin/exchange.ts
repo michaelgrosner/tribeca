@@ -14,6 +14,29 @@ interface ExchangesScope extends ng.IScope {
     changeActive : (p : Models.ExchangePairMessage<boolean>) => void;
 }
 
+class DisplayQuotingParameters {
+    master : Models.QuotingParameters = new Models.QuotingParameters(0, 0);
+    display : Models.QuotingParameters = new Models.QuotingParameters(0, 0);
+
+    constructor(private $scope : ExchangesScope,
+                private pair : Models.CurrencyPair,
+                private exch : Models.Exchange) {}
+
+    public reset = () => {
+        this.display = angular.copy(this.master);
+    };
+
+    public submit = () => {
+        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
+    };
+
+    public update = (p : Models.QuotingParameters) => {
+        console.log("updating parameters", p);
+        this.master = angular.copy(p);
+        this.display = angular.copy(p);
+    };
+}
+
 class DisplayPair {
     name : string;
     base : string;
@@ -38,13 +61,15 @@ class DisplayPair {
         this.$scope.changeActive(new Models.ExchangePairMessage(this.exch, this.pair, !this.active));
     };
 
+    quotingParameters : DisplayQuotingParameters;
+
     constructor(private $scope : ExchangesScope,
-                private $log : ng.ILogService,
                 private exch : Models.Exchange,
                 public pair : Models.CurrencyPair) {
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
         this.name = this.base + "/" + this.quote;
+        this.quotingParameters = new DisplayQuotingParameters($scope, this.pair, this.exch);
     }
 
     public updateMarket = (update : Models.Market) => {
@@ -71,35 +96,7 @@ class DisplayPair {
     };
 
     public updateParameters = (p : Models.QuotingParameters) => {
-        this.width(p.width);
-        this.size(p.size);
-    };
-
-    private _width : number = null;
-    public width = (val? : number) : number => {
-        if (arguments.length === 1) {
-            if (this._width == null || Math.abs(val - this._width) > 1e-4) {
-                this._width = val;
-                this.sendNewParameters();
-            }
-        }
-        return this._width;
-    };
-
-    private _size : number = null;
-    public size = (val? : number) : number => {
-        if (arguments.length === 1) {
-            if (this._size == null || Math.abs(val - this._size) > 1e-4) {
-                this._size = val;
-                this.sendNewParameters();
-            }
-        }
-        return this._size;
-    };
-
-    private sendNewParameters = () => {
-        var parameters = new Models.QuotingParameters(this._width, this._size);
-        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, parameters));
+        this.quotingParameters.update(p);
     };
 }
 
@@ -146,7 +143,7 @@ class DisplayExchangeInformation {
         this._log.info("adding new pair, base:", Models.Currency[pair.base], "quote:",
             Models.Currency[pair.quote], "to exchange", Models.Exchange[this.exchange]);
 
-        var newPair = new DisplayPair(this.$scope, this._log, this.exchange, pair);
+        var newPair = new DisplayPair(this.$scope, this.exchange, pair);
         this.pairs.push(newPair);
         return newPair;
     };

@@ -111,24 +111,24 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
-            {width: 100, field:'orderId', displayName:'id'},
             {width: 140, field:'time', displayName:'time'},
-            {field:'exchange', displayName:'exch'},
+            {width: 100, field:'orderId', displayName:'id'},
+            {width: 35, field:'version', displayName:'v'},
+            {width: 60, field:'exchange', displayName:'exch'},
             {width: 150, field:'orderStatus', displayName:'status'},
-            {width: 70, field:'price', displayName:'px'},
-            {field:'quantity', displayName:'qty'},
+            {width: 65, field:'price', displayName:'px'},
+            {width: 60, field:'quantity', displayName:'qty'},
             {width: 50, field:'side', displayName:'side'},
             {width: 50, field:'orderType', displayName:'type'},
             {width: 50, field:'timeInForce', displayName:'tif'},
-            {width: 40, field:'computationalLatency', displayName:'lat'},
-            {field:'lastQuantity', displayName:'lQty'},
-            {width: 70, field:'lastPrice', displayName:'lPx'},
-            {field:'leavesQuantity', displayName:'lvQty'},
-            {field:'cumQuantity', displayName:'cum'},
-            {width: 70, field:'averagePrice', displayName:'avg'},
+            {width: 35, field:'computationalLatency', displayName:'lat'},
+            {width: 60, field:'lastQuantity', displayName:'lQty'},
+            {width: 65, field:'lastPrice', displayName:'lPx'},
+            {width: 60, field:'leavesQuantity', displayName:'lvQty'},
+            {width: 60, field:'cumQuantity', displayName:'cum'},
+            {width: 65, field:'averagePrice', displayName:'avg'},
             {width: 40, field:'liquidity', displayName:'liq'},
-            {width: "*", field:'rejectMessage', displayName:'msg'},
-            {width: 40, field:'version', displayName:'ver'}
+            {width: "*", field:'rejectMessage', displayName:'msg'}
         ]
     };
 

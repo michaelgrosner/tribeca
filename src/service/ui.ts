@@ -41,6 +41,7 @@ export class UI {
         this._quoteGenerator.NewValue.on(this.sendFairValue);
         this._quoteGenerator.NewQuote.on(this.sendQuote);
         this._quoteGenerator.NewTradingDecision.on(this.sendResultChange);
+        this._paramRepo.NewParameters.on(this.sendQuotingParameters);
 
         http.listen(3000, () => this._log('Listening to admins on *:3000...'));
 
