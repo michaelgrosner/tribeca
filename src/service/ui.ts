@@ -37,7 +37,7 @@ export class UI {
         this._broker.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
         this._broker.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._broker.ConnectChanged.on(x => this.sendUpdatedConnectionStatus(this._exchange, x));
-        this._quoteGenerator.ActiveChanged.on(s => io.emit("active-changed", s));
+        this._quoteGenerator.ActiveChanged.on(this.sendActiveChange);
         this._quoteGenerator.NewValue.on(this.sendFairValue);
         this._quoteGenerator.NewQuote.on(this.sendQuote);
         this._quoteGenerator.NewTradingDecision.on(this.sendResultChange);
@@ -46,7 +46,7 @@ export class UI {
 
         io.on('connection', sock => {
             sock.emit("hello", this._env);
-            sock.emit("active-changed", this._quoteGenerator.Active);
+            sock.emit("active-changed", this.sendActiveChange());
 
             sock.on("subscribe-new-trading-decision", () => {
                 this.sendResultChange();
@@ -100,8 +100,10 @@ export class UI {
                 this._broker.replaceOrder(new Models.CancelReplaceOrder(o.orderId, replace.quantity, replace.price, o.exchange, Utils.date()));
             });
 
-            sock.on("active-change-request", (to : boolean) => {
-                _quoteGenerator.changeActiveStatus(to);
+            sock.on("active-change-request", (to : Models.ExchangePairMessage<boolean>) => {
+                this._log("got active-change-request %j", to);
+                if (to.exchange === this._exchange && to.pair.base === this._pair.base && to.pair.quote === this._pair.quote)
+                    _quoteGenerator.changeActiveStatus(to.data);
             });
 
             sock.on("parameters-update-request", (p : Models.ExchangePairMessage<Models.QuotingParameters>) => {
@@ -109,6 +111,10 @@ export class UI {
             });
         });
     }
+
+    sendActiveChange = () => {
+        setTimeout(() => io.emit("active-changed", this._wrapOutgoingMessage(this._quoteGenerator.Active)), 0);
+    };
 
     sendUpdatedConnectionStatus = (exch : Models.Exchange, cs : Models.ConnectivityStatus) => {
         io.emit("connection-status", exch, cs);

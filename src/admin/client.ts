@@ -12,11 +12,8 @@ module Client {
     interface MainWindowScope extends ng.IScope {
         env : string;
         connected : boolean;
-        active : boolean;
         order : Models.OrderRequestFromUI;
-
         submitOrder : () => void;
-        changeActive : () => void;
     }
 
     class DisplayOrder {
@@ -53,7 +50,6 @@ module Client {
 
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
         $scope.connected = false;
-        $scope.active = false;
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);
@@ -71,18 +67,11 @@ module Client {
             $log.warn("disconnected");
         });
 
-        socket.on('active-changed', b =>
-            $scope.active = b );
-
         $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {
             var o = $scope.order;
             socket.emit("submit-order",
                 new Models.OrderRequestFromUI(o.exchange, o.side, o.price, o.quantity, o.timeInForce, o.orderType));
-        };
-
-        $scope.changeActive = () => {
-            socket.emit("active-change-request", !$scope.active);
         };
 
         $log.info("started client");

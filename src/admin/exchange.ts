@@ -11,6 +11,7 @@ import Messaging = require("../common/messaging");
 interface ExchangesScope extends ng.IScope {
     exchanges : { [exch : number] : DisplayExchangeInformation};
     sendUpdatedParameters : (p : Models.ExchangePairMessage<Models.QuotingParameters>) => void;
+    changeActive : (p : Models.ExchangePairMessage<boolean>) => void;
 }
 
 class DisplayPair {
@@ -31,6 +32,11 @@ class DisplayPair {
     qAskPx : number;
     qAskSz : number;
     fairValue : number;
+
+    active : boolean = false;
+    changeActive = () => {
+        this.$scope.changeActive(new Models.ExchangePairMessage(this.exch, this.pair, !this.active));
+    };
 
     constructor(private $scope : ExchangesScope,
                 private $log : ng.ILogService,
@@ -163,6 +169,10 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         socket.emit("parameters-update-request", p);
     };
 
+    $scope.changeActive = (p : Models.ExchangePairMessage<boolean>) => {
+        socket.emit("active-change-request", p);
+    };
+
     // ugh
     var subscriber = () => {
         $scope.exchanges = {};
@@ -198,6 +208,12 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on("parameter-updates", (p : Models.ExchangePairMessage<Models.QuotingParameters>) =>
         getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));
+
+    socket.on('active-changed', (b : Models.ExchangePairMessage<boolean>) => {
+        $log.info('active-changed', b);
+        getOrAddDisplayExchange(b.exchange).getOrAddDisplayPair(b.pair).active = b.data;
+    });
+
 
     socket.on("disconnect", () => {
         $scope.exchanges = {};
