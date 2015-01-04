@@ -54,8 +54,7 @@ export class UI {
             });
 
             sock.on("subscribe-order-status-report", () => {
-                var states = this._broker.allOrderStates();
-                sock.emit("order-status-report-snapshot", this._wrapOutgoingMessage(states.slice(Math.max(states.length - 100, 1))));
+                sock.emit("order-status-report-snapshot", this._wrapOutgoingMessage(this._broker.allOrderStates()));
             });
 
             sock.on("subscribe-position-report", () => {
