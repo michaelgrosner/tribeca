@@ -88,7 +88,7 @@ module Client {
         $log.info("started client");
     };
 
-    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'pairsDirective', 'sharedDirectives'])
+    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'sharedDirectives'])
            .factory("socket", () => io())
            .controller('uiCtrl', uiCtrl)
 }

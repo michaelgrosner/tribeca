@@ -1,6 +1,7 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
+/// <amd-dependency path="ngGrid"/>
 
 import angular = require("angular");
 import Models = require("../common/models");
@@ -13,6 +14,8 @@ interface OrderListScope extends ng.IScope {
     cancel_replace_model : Models.ReplaceRequestFromUI;
     cancel : (o : DisplayOrderStatusReport) => void;
     cancel_replace : (o : DisplayOrderStatusReport) => void;
+
+    gridOptions : any;
 }
 
 class DisplayOrderStatusReport {
@@ -79,9 +82,55 @@ class DisplayOrderStatusReport {
     }
 }
 
+/*
+        <th>cxl</th>
+        <th>c-r</th>
+    </tr>
+    <tr ng-repeat="o in order_statuses|orderBy:'-timeSortable' track by o.trackable">
+        <td>
+            <button type="button"
+                    class="btn btn-danger btn-xs"
+                    ng-click="cancel(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
+        <td>
+            <button type="button"
+                    class="btn btn-warning btn-xs"
+                    id="cancel_replace_form"
+                    mypopover popover-template="cancel_replace_form.html"
+                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
+ */
+
+
 var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
     $scope.cancel_replace_model = {price: null, quantity: null};
     $scope.order_statuses = [];
+    $scope.gridOptions = {
+        data: 'order_statuses',
+        showGroupPanel: true,
+        primaryKey: 'trackable',
+        groupsCollapsedByDefault: false,
+        enableColumnResize: true,
+        sortInfo: {fields: ['time'], directions: ['desc']},
+        columnDefs: [
+            {width: 100, field:'orderId', displayName:'id'},
+            {width: 140, field:'time', displayName:'time'},
+            {field:'exchange', displayName:'exch'},
+            {width: 150, field:'orderStatus', displayName:'status'},
+            {width: 70, field:'price', displayName:'px'},
+            {field:'quantity', displayName:'qty'},
+            {width: 50, field:'side', displayName:'side'},
+            {width: 50, field:'orderType', displayName:'type'},
+            {width: 50, field:'timeInForce', displayName:'tif'},
+            {width: 40, field:'computationalLatency', displayName:'lat'},
+            {field:'lastQuantity', displayName:'lQty'},
+            {width: 70, field:'lastPrice', displayName:'lPx'},
+            {field:'leavesQuantity', displayName:'lvQty'},
+            {field:'cumQuantity', displayName:'cum'},
+            {width: 70, field:'averagePrice', displayName:'avg'},
+            {width: 40, field:'liquidity', displayName:'liq'},
+            {width: "*", field:'rejectMessage', displayName:'msg'},
+            {width: 40, field:'version', displayName:'ver'}
+        ]
+    };
 
     $scope.cancel = (o : DisplayOrderStatusReport) => {
         socket.emit("cancel-order", o.osr);
@@ -120,6 +169,6 @@ var orderListDirective = () : ng.IDirective => {
     }
 };
 
-angular.module('orderListDirective', ['ui.bootstrap', 'sharedDirectives'])
+angular.module('orderListDirective', ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
        .controller('OrderListController', OrderListController)
        .directive("orderList", orderListDirective);

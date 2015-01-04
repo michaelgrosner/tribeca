@@ -31,6 +31,7 @@ export class UI {
         app.use(express.static(adminPath));
         app.use(express.static(path.join(__dirname, "..", "admin", "common")));
         app.use(express.static(path.join(__dirname, "..", "admin")));
+        app.use(express.static(path.join(__dirname, "..", "admin")));
 
         this._broker.MarketData.on(this.sendUpdatedMarket);
         this._broker.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
