@@ -150,13 +150,12 @@ export class QuoteGenerator {
         var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
         var bidAction = this._quoter.updateQuote(new Models.Timestamped(bidQt, t));
 
-        var decision = new Models.TradingDecision(bidAction, askAction);
-        this.latestDecision = decision;
-        this.NewTradingDecision.trigger(decision);
+        this.latestDecision = new Models.TradingDecision(bidAction, askAction);
+        this.NewTradingDecision.trigger();
 
         var fv = this.latestFairValue;
         this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
-            decision.toString(), quote.toString(), fv.price,
+            this.latestDecision.toString(), quote.toString(), fv.price,
             fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
             fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
             fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());

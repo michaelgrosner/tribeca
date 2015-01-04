@@ -305,13 +305,12 @@ export class ExchangeBroker implements Interfaces.IBroker {
             ? Models.ConnectivityStatus.Connected
             : Models.ConnectivityStatus.Disconnected;
 
-        if (newStatus != this._connectStatus)
+        if (newStatus !== this._connectStatus) {
             this.ConnectChanged.trigger(newStatus);
-        else
-            return;
-
-        this._connectStatus = newStatus;
-        this._log(Models.GatewayType[gwType], "Connection status changed ", Models.ConnectivityStatus[cs]);
+            this._connectStatus = newStatus;
+            this._log("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[cs],
+                Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
+        }
     };
 
     public get connectStatus() : Models.ConnectivityStatus {
