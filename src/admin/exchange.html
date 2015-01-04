@@ -1,55 +1,62 @@
 <div ng-controller="ExchangesController">
-    <div ng-repeat="exch in exchanges" class="bg-info">
-        <table ng-class="exch.connected ? 'success' : 'danger'" class="table table-striped table-hover table-condensed">
-            <tr>
-                <th>name</th>
-                <th>usd</th>
-                <th>btc</th>
-                <th>ltc</th>
-            </tr>
-            <tr>
-                <td>{{ exch.name }}</td>
-                <td>{{ exch.usdPosition|currency:undefined:3 }}</td>
-                <td>{{ exch.btcPosition|currency:"B":3 }}</td>
-                <td>{{ exch.ltcPosition|currency:"B":3 }}</td>
-            </tr>
-        </table>
+    <div style="padding: 5px"
+         ng-repeat="exch in exchanges"
+         ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+        <p><b>{{ exch.name }}</b> :: USD: {{ exch.usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
 
-        <div ng-repeat="pair in exch.pairs">
-            <table class="table table-bordered table-striped table-hover table-condensed">
-                <tr>
-                    <th>pair</th>
-                    <th>bidAct</th>
-                    <th>qBz</th>
-                    <th>qB</th>
-                    <th>bidSz</th>
-                    <th>bidPx</th>
-                    <th>FV</th>
-                    <th>askPx</th>
-                    <th>askSz</th>
-                    <th>qA</th>
-                    <th>qAz</th>
-                    <th>askAct</th>
-                    <th>width</th>
-                    <th>size</th>
-                </tr>
-                <tr ng-repeat="pair in exch.pairs" class="table table-condensed">
-                    <td>{{ pair.name }}</td>
-                    <td>{{ pair.bidAction }}</td>
-                    <td>{{ pair.qBidSz|number:2 }}</td>
-                    <td>{{ pair.qBidPx|number:2 }}</td>
-                    <td>{{ pair.bidSize|number:2 }}</td>
-                    <td>{{ pair.bid|number:2 }}</td>
-                    <td>{{ pair.fairValue|number:2 }}</td>
-                    <td>{{ pair.ask|number:2 }}</td>
-                    <td>{{ pair.askSize|number:2 }}</td>
-                    <td>{{ pair.qAskPx|number:2 }}</td>
-                    <td>{{ pair.qAskSz|number:2 }}</td>
-                    <td>{{ pair.askAction }}</td>
-                    <td><input type="number" onClick="this.select()" style="width: 60px" ng-model="pair.width" ng-model-options="{ getterSetter: true }"></td>
-                    <td><input type="number" onClick="this.select()" style="width: 60px" ng-model="pair.size" ng-model-options="{ getterSetter: true }"></td>
-                </tr>
-            </table>
+        <div class="row" ng-repeat="pair in exch.pairs">
+            <div class="col-md-1">{{ pair.name }}</div>
+
+            <div class="col-md-8">
+                <table class="table table-bordered table-condensed container">
+                    <tr class="active row">
+                        <th>bidAct</th>
+                        <th>qBz</th>
+                        <th>qB</th>
+                        <th>bidSz</th>
+                        <th>bidPx</th>
+                        <th>FV</th>
+                        <th>askPx</th>
+                        <th>askSz</th>
+                        <th>qA</th>
+                        <th>qAz</th>
+                        <th>askAct</th>
+                    </tr>
+                    <tr class="active row">
+                        <td>{{ pair.bidAction }}</td>
+                        <td>{{ pair.qBidSz|number:2 }}</td>
+                        <td>{{ pair.qBidPx|number:2 }}</td>
+                        <td>{{ pair.bidSize|number:2 }}</td>
+                        <td>{{ pair.bid|number:2 }}</td>
+                        <td>{{ pair.fairValue|number:2 }}</td>
+                        <td>{{ pair.ask|number:2 }}</td>
+                        <td>{{ pair.askSize|number:2 }}</td>
+                        <td>{{ pair.qAskPx|number:2 }}</td>
+                        <td>{{ pair.qAskSz|number:2 }}</td>
+                        <td>{{ pair.askAction }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="col-md-3">
+                <form novalidate>
+                    <table class="table table-bordered table-condensed container">
+                        <tr class="active row">
+                            <th>width</th>
+                            <th>size</th>
+                        </tr>
+                        <tr class="active row">
+                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.width" ng-model-options="{ getterSetter: true }"></td>
+                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.size" ng-model-options="{ getterSetter: true }"></td>
+                            <td>
+                                <input class="btn btn-default" type="button" ng-click="pair.reset()" value="Reset" />
+                                <input class="btn btn-default" type="submit" ng-click="pair.update()" value="Save" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>
