@@ -93,10 +93,14 @@ export class QuoteGenerator {
         var bidPx = Math.max(this.latestFairValue.price - width, 0);
         var askPx = this.latestFairValue.price + width;
 
-        var bidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
-        var askQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
+        var newBidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
+        var newAskQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
 
-        this.latestQuote = new Models.TwoSidedQuote(bidQuote, askQuote);
+        this.latestQuote = new Models.TwoSidedQuote(
+            QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
+            QuoteGenerator.quotesAreSame(newAskQuote, this.latestQuote, t => t.ask)
+        );
+
         return true;
     };
 
@@ -116,6 +120,13 @@ export class QuoteGenerator {
     private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
         if (previousFv == null && newFv != null) return false;
         return Math.abs(newFv.price - previousFv.price) < 1e-3;
+    }
+
+    private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
+        var previousQ = sideGetter(prevTwoSided);
+        if (previousQ == null && newQ != null) return newQ;
+        if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
+        return Math.abs(newQ.price - previousQ.price) < .05 ? previousQ : newQ;
     }
 
     private sendQuote = (t : Moment) : void => {
