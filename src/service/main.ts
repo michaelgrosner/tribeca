@@ -18,7 +18,17 @@ import Quoter = require("./quoter");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
-var gateway = new HitBtc.HitBtc(config);
+
+var getExch = () : Interfaces.CombinedGateway => {
+    var ex = process.env.EXCHANGE.toLowerCase();
+    switch (ex) {
+        case "hitbtc": return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
+        case "okcoin": return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+    }
+};
+
+var gateway = getExch();
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister);
 var paramsRepo = new Agent.QuotingParametersRepository();

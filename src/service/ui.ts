@@ -47,7 +47,7 @@ export class UI {
 
         io.on('connection', sock => {
             sock.emit("hello", this._env);
-            sock.emit("active-changed", this.sendActiveChange());
+            this.sendActiveChange();
 
             sock.on("subscribe-new-trading-decision", () => {
                 this.sendResultChange();
