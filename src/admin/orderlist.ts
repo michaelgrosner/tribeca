@@ -107,7 +107,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         data: 'order_statuses',
         showGroupPanel: true,
         primaryKey: 'trackable',
-        groupsCollapsedByDefault: false,
+        groupsCollapsedByDefault: true,
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [

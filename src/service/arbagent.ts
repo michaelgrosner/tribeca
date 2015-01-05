@@ -8,23 +8,13 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 
-export class QuotingParametersRepository {
-    private _log : Utils.Logger = Utils.log("tribeca:qpr");
-    NewParameters = new Utils.Evt();
+export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
+    constructor() {
+        super("qpr",
+            (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
+            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4);
 
-    private _latest = new Models.QuotingParameters(.2, .01);
-    public get latest() : Models.QuotingParameters {
-        return this._latest;
     }
-
-    public updateParameters = (newParams : Models.QuotingParameters) => {
-        if (newParams.size <= 0 || newParams.width <= 0) return;
-        if (Math.abs(this.latest.width - newParams.width) > 1e-4 || Math.abs(this.latest.size - newParams.size) > 1e-4) {
-            this._latest = newParams;
-            this._log("Changed parameters width=%d size=%d", this.latest.width, this.latest.size);
-            this.NewParameters.trigger();
-        }
-    };
 }
 
 enum RecalcRequest { FairValue, Quote, TradingDecision }

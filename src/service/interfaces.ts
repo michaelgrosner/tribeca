@@ -61,3 +61,26 @@ export interface IBroker {
     connectStatus : Models.ConnectivityStatus;
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
 }
+
+export class Repository<T> {
+    constructor(private _name : string,
+                private _validator : (a : T) => boolean,
+                private _paramsEqual : (a : T, b : T) => boolean) {}
+
+    private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
+    NewParameters = new Utils.Evt();
+
+    private _latest : T;
+    public get latest() : T {
+        return this._latest;
+    }
+
+    public updateParameters = (newParams : T) => {
+        if (!this._validator(newParams)) return;
+        if (this._paramsEqual(newParams, this._latest)) {
+            this._latest = newParams;
+            this._log("Changed parameters %j", this.latest);
+            this.NewParameters.trigger();
+        }
+    };
+}

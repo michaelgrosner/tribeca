@@ -310,6 +310,10 @@ export class QuotingParameters {
     constructor(public width : number, public size : number) {}
 }
 
+export class SafetySettings {
+    constructor(public tradesPerMinute : number) {}
+}
+
 export function toUtcFormattedTime(t : Moment) {
     return t.format('M/D/YY HH:mm:ss,SSS');
 }
