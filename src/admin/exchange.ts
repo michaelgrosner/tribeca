@@ -11,29 +11,47 @@ import Messaging = require("../common/messaging");
 interface ExchangesScope extends ng.IScope {
     exchanges : { [exch : number] : DisplayExchangeInformation};
     sendUpdatedParameters : (p : Models.ExchangePairMessage<Models.QuotingParameters>) => void;
+    sendUpdatedSafetySettingsParameters : (p : Models.ExchangePairMessage<Models.SafetySettings>) => void;
     changeActive : (p : Models.ExchangePairMessage<boolean>) => void;
 }
 
-class DisplayQuotingParameters {
-    master : Models.QuotingParameters = new Models.QuotingParameters(0, 0);
-    display : Models.QuotingParameters = new Models.QuotingParameters(0, 0);
+class FormViewModel<T> {
+    master : T;
+    display : T;
 
-    constructor(private $scope : ExchangesScope,
-                private pair : Models.CurrencyPair,
-                private exch : Models.Exchange) {}
+    constructor(defaultParameter : T) {
+        this.master = angular.copy(defaultParameter);
+        this.display = angular.copy(defaultParameter);
+    }
 
     public reset = () => {
         this.display = angular.copy(this.master);
     };
 
-    public submit = () => {
-        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
-    };
-
-    public update = (p : Models.QuotingParameters) => {
+    public update = (p : T) => {
         console.log("updating parameters", p);
         this.master = angular.copy(p);
         this.display = angular.copy(p);
+    };
+}
+
+class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
+    constructor(private $scope : ExchangesScope, private pair : Models.CurrencyPair, private exch : Models.Exchange) {
+        super(new Models.QuotingParameters(null, null));
+    }
+
+    public submit = () => {
+        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
+    };
+}
+
+class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
+    constructor(private $scope : ExchangesScope, private pair : Models.CurrencyPair, private exch : Models.Exchange) {
+        super(new Models.SafetySettings(null));
+    }
+
+    public submit = () => {
+        this.$scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
     };
 }
 
@@ -62,6 +80,7 @@ class DisplayPair {
     };
 
     quotingParameters : DisplayQuotingParameters;
+    safetySettings : DisplaySafetySettingsParameters;
 
     constructor(private $scope : ExchangesScope,
                 private exch : Models.Exchange,
@@ -70,6 +89,7 @@ class DisplayPair {
         this.base = Models.Currency[pair.base];
         this.name = this.base + "/" + this.quote;
         this.quotingParameters = new DisplayQuotingParameters($scope, this.pair, this.exch);
+        this.safetySettings = new DisplaySafetySettingsParameters($scope, this.pair, this.exch);
     }
 
     public updateMarket = (update : Models.Market) => {
@@ -166,6 +186,10 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         socket.emit("parameters-update-request", p);
     };
 
+    $scope.sendUpdatedSafetySettingsParameters = (p : Models.ExchangePairMessage<Models.SafetySettings>) => {
+        socket.emit("ss-parameters-update-request", p);
+    };
+
     $scope.changeActive = (p : Models.ExchangePairMessage<boolean>) => {
         socket.emit("active-change-request", p);
     };
@@ -207,7 +231,6 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));
 
     socket.on('active-changed', (b : Models.ExchangePairMessage<boolean>) => {
-        $log.info('active-changed', b);
         getOrAddDisplayExchange(b.exchange).getOrAddDisplayPair(b.pair).active = b.data;
     });
 

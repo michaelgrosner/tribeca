@@ -11,7 +11,8 @@ export class SafetySettingsRepository extends Interfaces.Repository<Models.Safet
     constructor() {
         super("ssr",
             (s : Models.SafetySettings) => s.tradesPerMinute > 0,
-            (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0
+            (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0,
+            new Models.SafetySettings(2)
         );
     }
 }

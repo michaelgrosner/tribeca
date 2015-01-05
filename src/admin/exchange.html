@@ -12,7 +12,7 @@
                 </button>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-md-7">
                 <table class="table table-bordered table-condensed container">
                     <tr class="active row">
                         <th>bidAct</th>
@@ -43,19 +43,40 @@
                 </table>
             </div>
 
-            <div class="col-md-3" style="height: 84px">
+            <div class="col-md-2" style="height: 84px">
                 <form novalidate>
                     <table class="table table-bordered table-condensed container">
                         <tr class="active row">
                             <th>width</th>
                             <th>size</th>
+                            <td>
+                                <input class="btn btn-default btn-xs" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                            </td>
                         </tr>
                         <tr class="active row">
-                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.quotingParameters.display.width"></td>
-                            <td><input type="number" onClick="this.select()" style="width: 70px" ng-model="pair.quotingParameters.display.size"></td>
+                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.quotingParameters.display.width"></td>
+                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.quotingParameters.display.size"></td>
                             <td>
-                                <input class="btn btn-default btn-sm" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                <input class="btn btn-default btn-sm" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                                <input class="btn btn-default btn-xs" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+
+            <div class="col-md-2" style="height: 84px">
+                <form novalidate>
+                    <table class="table table-bordered table-condensed container">
+                        <tr class="active row">
+                            <th>t/min</th>
+                            <td>
+                                <input class="btn btn-default btn-xs" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
+                            </td>
+                        </tr>
+                        <tr class="active row">
+                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.safetySettings.display.tradesPerMinute"></td>
+                            <td>
+                                <input class="btn btn-default btn-xs" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
                             </td>
                         </tr>
                     </table>

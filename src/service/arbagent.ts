@@ -12,7 +12,8 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
     constructor() {
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
-            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4);
+            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4,
+            new Models.QuotingParameters(.5, .01));
 
     }
 }
@@ -123,6 +124,7 @@ export class QuoteGenerator {
     }
 
     private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
+        if (prevTwoSided == null) return newQ;
         var previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;

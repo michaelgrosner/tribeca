@@ -65,7 +65,10 @@ export interface IBroker {
 export class Repository<T> {
     constructor(private _name : string,
                 private _validator : (a : T) => boolean,
-                private _paramsEqual : (a : T, b : T) => boolean) {}
+                private _paramsEqual : (a : T, b : T) => boolean,
+                defaultParameter : T) {
+        this._latest = defaultParameter;
+    }
 
     private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
     NewParameters = new Utils.Evt();
