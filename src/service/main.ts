@@ -15,6 +15,7 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
+import Safety = require("./safety");
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
@@ -31,9 +32,11 @@ var getExch = () : Interfaces.CombinedGateway => {
 var gateway = getExch();
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister);
+var safetyRepo = new Safety.SafetySettingsRepository();
+var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 var paramsRepo = new Agent.QuotingParametersRepository();
 var quoter = new Quoter.Quoter(broker);
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties);
 var ui = new UI.UI(env, broker.pair, broker, quoteGenerator, paramsRepo);
 
 var exitHandler = e => {

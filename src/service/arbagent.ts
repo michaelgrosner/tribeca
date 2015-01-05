@@ -7,6 +7,7 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
+import Safety = require("./safety");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor() {
@@ -35,9 +36,11 @@ export class QuoteGenerator {
 
     constructor(private _quoter : Quoter.Quoter,
                 private _broker : Interfaces.IBroker,
-                private _qlParamRepo : QuotingParametersRepository) {
+                private _qlParamRepo : QuotingParametersRepository,
+                private _safeties : Safety.SafetySettingsManager) {
         _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
+        _safeties.SafetySettingsViolated.on(() => this.changeActiveStatus(false));
     }
 
     public Active : boolean = false;

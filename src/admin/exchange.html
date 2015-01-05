@@ -43,43 +43,50 @@
                 </table>
             </div>
 
-            <div class="col-md-2" style="height: 84px">
-                <form novalidate>
-                    <table class="table table-bordered table-condensed container">
-                        <tr class="active row">
-                            <th>width</th>
-                            <th>size</th>
-                            <td>
-                                <input class="btn btn-default btn-xs" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                            </td>
-                        </tr>
-                        <tr class="active row">
-                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.quotingParameters.display.width"></td>
-                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.quotingParameters.display.size"></td>
-                            <td>
-                                <input class="btn btn-default btn-xs" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
-                            </td>
-                        </tr>
-                    </table>
+            <div class="col-md-2">
+                <form class="form-horizontal" novalidate>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon">width</div>
+                            <input ng-class="pair.quotingParameters.pending ? 'has-warning form-control input-sm' : 'has-success form-control input-sm'"
+                                   type="number"
+                                   style="width: 90px"
+                                   onClick="this.select()"
+                                   ng-model="pair.quotingParameters.display.width">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon">size</div>
+                            <input ng-class="pair.quotingParameters.pending ? 'has-warning form-control input-sm' : 'has-success form-control input-sm'"
+                                   type="number"
+                                   style="width: 90px"
+                                   onClick="this.select()"
+                                   ng-model="pair.quotingParameters.display.size">
+                        </div>
+                    </div>
+
+                    <input class="btn btn-default btn-xs" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                    <input class="btn btn-default btn-xs" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
                 </form>
             </div>
 
-            <div class="col-md-2" style="height: 84px">
-                <form novalidate>
-                    <table class="table table-bordered table-condensed container">
-                        <tr class="active row">
-                            <th>t/min</th>
-                            <td>
-                                <input class="btn btn-default btn-xs" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
-                            </td>
-                        </tr>
-                        <tr class="active row">
-                            <td><input type="number" style="width: 50px" onClick="this.select()" ng-model="pair.safetySettings.display.tradesPerMinute"></td>
-                            <td>
-                                <input class="btn btn-default btn-xs" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
-                            </td>
-                        </tr>
-                    </table>
+            <div class="col-md-2">
+                <form class="form-horizontal" novalidate>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon">t/sec</div>
+                            <input ng-class="pair.safetySettings.pending ? 'has-warning form-control input-sm' : 'has-success form-control input-sm'"
+                                   style="width: 90px"
+                                   type="number"
+                                   onClick="this.select()"
+                                   ng-model="pair.safetySettings.display.tradesPerMinute">
+                        </div>
+                    </div>
+
+                    <input class="btn btn-default btn-xs" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
+                    <input class="btn btn-default btn-xs" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
                 </form>
             </div>
 

@@ -18,8 +18,10 @@ interface ExchangesScope extends ng.IScope {
 class FormViewModel<T> {
     master : T;
     display : T;
+    pending : boolean = false;
 
-    constructor(defaultParameter : T) {
+    constructor(defaultParameter : T,
+                private _submitAction : (disp : T) => void) {
         this.master = angular.copy(defaultParameter);
         this.display = angular.copy(defaultParameter);
     }
@@ -32,27 +34,27 @@ class FormViewModel<T> {
         console.log("updating parameters", p);
         this.master = angular.copy(p);
         this.display = angular.copy(p);
+        this.pending = false;
+    };
+
+    public submit = () => {
+        this.pending = true;
+        this._submitAction(this.display);
     };
 }
 
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
-    constructor(private $scope : ExchangesScope, private pair : Models.CurrencyPair, private exch : Models.Exchange) {
-        super(new Models.QuotingParameters(null, null));
+    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
+        super(new Models.QuotingParameters(null, null),
+              d => $scope.sendUpdatedParameters(new Models.ExchangePairMessage(exch, pair, d)));
     }
-
-    public submit = () => {
-        this.$scope.sendUpdatedParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
-    };
 }
 
 class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
-    constructor(private $scope : ExchangesScope, private pair : Models.CurrencyPair, private exch : Models.Exchange) {
-        super(new Models.SafetySettings(null));
+    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
+        super(new Models.SafetySettings(null),
+              d => $scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(exch, pair, d));
     }
-
-    public submit = () => {
-        this.$scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(this.exch, this.pair, this.display));
-    };
 }
 
 class DisplayPair {
