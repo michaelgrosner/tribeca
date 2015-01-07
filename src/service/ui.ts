@@ -2,11 +2,6 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="utils.ts" />
 
-import express = require('express');
-var app = express();
-var http = (<any>require('http')).Server(app);
-var io = require('socket.io')(http);
-import path = require("path");
 import Agent = require("./arbagent");
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
@@ -21,17 +16,9 @@ export class UI {
                 private _pair : Models.CurrencyPair,
                 private _broker : Interfaces.IBroker,
                 private _quoteGenerator : Agent.QuoteGenerator,
-                private _paramRepo : Agent.QuotingParametersRepository) {
+                private _paramRepo : Agent.QuotingParametersRepository,
+                private _io : any) {
         this._exchange = this._broker.exchange();
-
-        var adminPath = path.join(__dirname, "..", "admin", "admin");
-        app.get('/', (req, res) => {
-            res.sendFile(path.join(adminPath, "index.html"));
-        });
-        app.use(express.static(adminPath));
-        app.use(express.static(path.join(__dirname, "..", "admin", "common")));
-        app.use(express.static(path.join(__dirname, "..", "admin")));
-        app.use(express.static(path.join(__dirname, "..", "admin")));
 
         this._broker.MarketData.on(this.sendUpdatedMarket);
         this._broker.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
@@ -43,9 +30,7 @@ export class UI {
         this._quoteGenerator.NewTradingDecision.on(this.sendResultChange);
         this._paramRepo.NewParameters.on(this.sendQuotingParameters);
 
-        http.listen(3000, () => this._log('Listening to admins on *:3000...'));
-
-        io.on('connection', sock => {
+        this._io.on('connection', sock => {
             sock.emit("hello", this._env);
             this.sendActiveChange();
 
@@ -113,51 +98,51 @@ export class UI {
     }
 
     sendActiveChange = () => {
-        setTimeout(() => io.emit("active-changed", this._wrapOutgoingMessage(this._quoteGenerator.Active)), 0);
+        setTimeout(() => this._io.emit("active-changed", this._wrapOutgoingMessage(this._quoteGenerator.Active)), 0);
     };
 
     sendUpdatedConnectionStatus = (exch : Models.Exchange, cs : Models.ConnectivityStatus) => {
-        io.emit("connection-status", exch, cs);
+        setTimeout(() => this._io.emit("connection-status", exch, cs), 0);
     };
 
     sendPositionUpdate = (msg : Models.ExchangeCurrencyPosition) => {
         if (msg == null) return;
-        io.emit("position-report", msg);
+        setTimeout(() => this._io.emit("position-report", msg), 0);
     };
 
     sendOrderStatusUpdate = (msg : Models.OrderStatusReport) => {
         if (msg == null) return;
-        setTimeout(() => io.emit("order-status-report", this._wrapOutgoingMessage(msg)), 0);
+        setTimeout(() => this._io.emit("order-status-report", this._wrapOutgoingMessage(msg)), 0);
     };
 
     sendUpdatedMarket = () => {
         var book = this._broker.currentBook;
         if (book == null) return;
-        setTimeout(() => io.emit("market-book", this._wrapOutgoingMessage(book)), 0);
+        setTimeout(() => this._io.emit("market-book", this._wrapOutgoingMessage(book)), 0);
     };
 
     sendResultChange = () => {
         var res : Models.TradingDecision = this._quoteGenerator.latestDecision;
         if (res == null) return;
-        setTimeout(() => io.emit("new-trading-decision", this._wrapOutgoingMessage(res)), 0);
+        setTimeout(() => this._io.emit("new-trading-decision", this._wrapOutgoingMessage(res)), 0);
     };
 
     sendFairValue = () => {
         var fv = this._quoteGenerator.latestFairValue;
         if (fv == null) return;
-        setTimeout(() => io.emit("fair-value", this._wrapOutgoingMessage(fv)), 0);
+        setTimeout(() => this._io.emit("fair-value", this._wrapOutgoingMessage(fv)), 0);
     };
 
     sendQuote = () => {
         var quote = this._quoteGenerator.latestQuote;
         if (quote == null) return;
-        setTimeout(() => io.emit("quote", this._wrapOutgoingMessage(quote)), 0);
+        setTimeout(() => this._io.emit("quote", this._wrapOutgoingMessage(quote)), 0);
     };
 
     sendQuotingParameters = () => {
         var p = this._paramRepo.latest;
         if (p == null) return;
-        setTimeout(() => io.emit("parameter-updates", this._wrapOutgoingMessage(p)), 0);
+        setTimeout(() => this._io.emit("parameter-updates", this._wrapOutgoingMessage(p)), 0);
     };
 
     private _wrapOutgoingMessage = <T>(msg : T) : Models.ExchangePairMessage<T> => {
