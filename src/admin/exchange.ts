@@ -53,7 +53,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
     constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
         super(new Models.SafetySettings(null),
-              d => $scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(exch, pair, d));
+              d => $scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(exch, pair, d)));
     }
 }
 

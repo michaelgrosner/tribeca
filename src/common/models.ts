@@ -269,7 +269,6 @@ export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnsentDelete, Un
 export class Quote {
     constructor(public type : QuoteAction,
                 public side : Side,
-                public time : Moment,
                 public price : number = null,
                 public size : number = null) {}
 

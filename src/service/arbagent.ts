@@ -55,31 +55,28 @@ export class QuoteGenerator {
         }
     };
 
-    private getFirstNonQuoteMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide => {
+    private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
         var rgq = this._quoter.quotesSent(s);
 
-        for (var i = 0; i < mkts.length; i++) {
-            var m : Models.MarketSide = mkts[i];
-
-            var anyMatch = false;
-            for (var j = 0; !anyMatch && j < rgq.length; j++) {
+        return mkts.filter(m => {
+            for (var j = 0; j < rgq.length; j++) {
                 var q : Models.Quote = rgq[j].quote;
                 if (Math.abs(q.price - m.price) < .01 && Math.abs(q.size - m.size) < .01)  {
-                    anyMatch = true;
+                    return false;
                 }
             }
-
-            if (!anyMatch)
-                return m;
-        }
+            return true;
+        });
     };
 
     private recalcFairValue = (mkt : Models.Market) => {
-        var ask = this.getFirstNonQuoteMarket(mkt.asks, Models.Side.Ask);
-        var bid = this.getFirstNonQuoteMarket(mkt.bids, Models.Side.Bid);
-        var mid = (ask.price + bid.price) / 2.0;
+        var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
+        var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
-        var newFv = new Models.FairValue(mid, mkt);
+        var weightedMid = n => (ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
+        var fv = weightedMid(0); //*.85 + weightedMid(1)*.1 + weightedMid(2)*.05;
+
+        var newFv = new Models.FairValue(fv, mkt);
         var previousFv = this.latestFairValue;
         if (!QuoteGenerator.fairValuesAreSame(newFv, previousFv)) {
             this.latestFairValue = newFv;
@@ -97,8 +94,27 @@ export class QuoteGenerator {
         var bidPx = Math.max(this.latestFairValue.price - width, 0);
         var askPx = this.latestFairValue.price + width;
 
-        var newBidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, t, bidPx, size);
-        var newAskQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, t, askPx, size);
+        var buildQuote = (s, px) => new Models.Quote(Models.QuoteAction.New, s, px, size);
+
+        var checkCrossedQuotes = (oppSide : Models.Side, q : Models.Quote) => {
+            var doesQuoteCross = oppSide === Models.Side.Bid
+                ? (a : Models.Quote, b : Models.Quote) => a.price > b.price
+                : (a : Models.Quote, b : Models.Quote) => a.price < b.price;
+
+            var qs = this._quoter.quotesSent(oppSide);
+            for (var qi = 0; qi < qs.length; qi++) {
+                if (doesQuoteCross(qs[qi].quote, q)) return qs[qi].quote;
+            }
+            return q;
+        };
+
+        var getQuote = (s, px) => {
+            var oppoSide = s === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
+            return checkCrossedQuotes(oppoSide, buildQuote(s, px));
+        };
+
+        var newBidQuote = getQuote(Models.Side.Bid, bidPx);
+        var newAskQuote = getQuote(Models.Side.Ask, askPx);
 
         this.latestQuote = new Models.TwoSidedQuote(
             QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
@@ -144,7 +160,10 @@ export class QuoteGenerator {
         var bidQt : Models.Quote = null;
         var askQt : Models.Quote = null;
 
-        if (this.Active && this.isBrokerActive()) {
+        if (this.Active
+                && this.isBrokerConnected()
+                && this.hasEnoughPosition(this._broker.pair.base, quote.ask.size)
+                && this.hasEnoughPosition(this._broker.pair.quote, quote.bid.size*quote.bid.price)) {
             bidQt = quote.bid;
             askQt = quote.ask;
         }
@@ -168,15 +187,15 @@ export class QuoteGenerator {
     };
 
     private static ConvertToStopQuote(q : Models.Quote) {
-        return new Models.Quote(Models.QuoteAction.Cancel, q.side, q.time);
+        return new Models.Quote(Models.QuoteAction.Cancel, q.side);
     }
 
-    private isBrokerActive = () : boolean => {
+    private isBrokerConnected = () : boolean => {
         return this._broker.connectStatus == Models.ConnectivityStatus.Connected;
     };
 
-    private hasEnoughPosition = (b : Interfaces.IBroker, cur : Models.Currency, minAmt : number) : boolean => {
-        var pos = b.getPosition(cur);
+    private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
+        var pos = this._broker.getPosition(cur);
         return pos != null && pos.amount > minAmt;
     };
 }
