@@ -13,10 +13,14 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
     constructor() {
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
-            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4,
-            new Models.QuotingParameters(.5, .01));
+            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode,
+            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top));
 
     }
+}
+
+class GeneratedQuote {
+    constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
 }
 
 enum RecalcRequest { FairValue, Quote, TradingDecision }
@@ -73,28 +77,51 @@ export class QuoteGenerator {
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
-        var weightedMid = n => (ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
-        var fv = weightedMid(0); //*.85 + weightedMid(1)*.1 + weightedMid(2)*.05;
+        var midLevel = n => (ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
+        var fv = midLevel(0);
 
-        var newFv = new Models.FairValue(fv, mkt);
-        var previousFv = this.latestFairValue;
-        if (!QuoteGenerator.fairValuesAreSame(newFv, previousFv)) {
-            this.latestFairValue = newFv;
-            return true;
-        }
-        return false;
+        this.latestFairValue = new Models.FairValue(fv, new Models.Market(bid, ask, mkt.time));
+        return true;
     };
 
-    private recalcQuote = (t : Moment) => {
-        if (this.latestFairValue == null) return false;
-        var params = this._qlParamRepo.latest;
+    private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
         var size = params.size;
 
-        var bidPx = Math.max(this.latestFairValue.price - width, 0);
-        var askPx = this.latestFairValue.price + width;
+        var bidPx = Math.max(fv.price - width, 0);
+        var askPx = fv.price + width;
 
-        var buildQuote = (s, px) => new Models.Quote(Models.QuoteAction.New, s, px, size);
+        return new GeneratedQuote(bidPx, size, askPx, size);
+    }
+
+    private static computeTopQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+        var width = params.width;
+
+        var bidPx = fv.mkt.bids[0].price;
+        var minBid = fv.price - width / 2.0;
+        bidPx = Math.min(minBid, bidPx);
+
+        var askPx = fv.mkt.asks[0].price;
+        var minAsk = fv.price + width / 2.0;
+        askPx = Math.max(minAsk, askPx);
+
+        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
+    }
+
+    private static computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+        switch (params.mode) {
+            case Models.QuotingMode.Mid: return QuoteGenerator.computeMidQuote(fv, params);
+            case Models.QuotingMode.Top: return QuoteGenerator.computeTopQuote(fv, params);
+        }
+    }
+
+    private recalcQuote = (t : Moment) => {
+        var fv = this.latestFairValue;
+        if (fv == null) return false;
+
+        var genQt = QuoteGenerator.computeQuote(fv, this._qlParamRepo.latest);
+
+        var buildQuote = (s, px, sz) => new Models.Quote(Models.QuoteAction.New, s, px, sz);
 
         var checkCrossedQuotes = (oppSide : Models.Side, q : Models.Quote) => {
             var doesQuoteCross = oppSide === Models.Side.Bid
@@ -108,13 +135,13 @@ export class QuoteGenerator {
             return q;
         };
 
-        var getQuote = (s, px) => {
+        var getQuote = (s, px, sz) => {
             var oppoSide = s === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
-            return checkCrossedQuotes(oppoSide, buildQuote(s, px));
+            return checkCrossedQuotes(oppoSide, buildQuote(s, px, sz));
         };
 
-        var newBidQuote = getQuote(Models.Side.Bid, bidPx);
-        var newAskQuote = getQuote(Models.Side.Ask, askPx);
+        var newBidQuote = getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
+        var newAskQuote = getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
 
         this.latestQuote = new Models.TwoSidedQuote(
             QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
@@ -136,11 +163,6 @@ export class QuoteGenerator {
         if (updateQuote) this.NewQuote.trigger();
         if (sentQuote) this.NewTradingDecision.trigger();
     };
-
-    private static fairValuesAreSame(newFv : Models.FairValue, previousFv : Models.FairValue) {
-        if (previousFv == null && newFv != null) return false;
-        return Math.abs(newFv.price - previousFv.price) < 1e-3;
-    }
 
     private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
         if (prevTwoSided == null) return newQ;

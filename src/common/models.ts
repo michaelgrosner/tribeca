@@ -305,8 +305,10 @@ export class CurrencyPair {
     }
 }
 
+export enum QuotingMode { Top, Mid }
+
 export class QuotingParameters {
-    constructor(public width : number, public size : number) {}
+    constructor(public width : number, public size : number, public mode : QuotingMode) {}
 }
 
 export class SafetySettings {

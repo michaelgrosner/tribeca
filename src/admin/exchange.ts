@@ -44,9 +44,16 @@ class FormViewModel<T> {
 }
 
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
+    availableQuotingModes = [];
+
     constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
-        super(new Models.QuotingParameters(null, null),
+        super(new Models.QuotingParameters(null, null, null),
               d => $scope.sendUpdatedParameters(new Models.ExchangePairMessage(exch, pair, d)));
+
+        var modes = [Models.QuotingMode.Mid, Models.QuotingMode.Top];
+        this.availableQuotingModes = modes.map(m => {
+            return {'str': Models.QuotingMode[m], 'val': m};
+        })
     }
 }
 
