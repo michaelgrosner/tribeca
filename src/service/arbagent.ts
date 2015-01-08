@@ -201,11 +201,13 @@ export class QuoteGenerator {
         this.NewTradingDecision.trigger();
 
         var fv = this.latestFairValue;
+
         this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
-            this.latestDecision.toString(), quote.toString(), fv.price,
-            fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
-            fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
-            fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
+                this.latestDecision.toString(), quote.toString(), fv.price,
+                fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
+                fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
+                fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
+
     };
 
     private static ConvertToStopQuote(q : Models.Quote) {
