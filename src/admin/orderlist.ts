@@ -44,14 +44,18 @@ class DisplayOrderStatusReport {
     constructor(public osr : Models.OrderStatusReport, pair : Models.CurrencyPair) {
         this.pair = Models.Currency[pair.base] + "/" + Models.Currency[pair.quote];
         this.orderId = osr.orderId;
+        this.exchange = Models.Exchange[osr.exchange];
+        this.side = Models.Side[osr.side];
+        this.updateWith(osr);
+    }
+
+    public updateWith = (osr : Models.OrderStatusReport) => {
         var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
         this.time = Models.toUtcFormattedTime(parsedTime);
         this.timeSortable = parsedTime.toDate();
-        this.exchange = Models.Exchange[osr.exchange];
         this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
         this.price = osr.price;
         this.quantity = osr.quantity;
-        this.side = Models.Side[osr.side];
         this.orderType = Models.OrderType[osr.type];
         this.tif = Models.TimeInForce[osr.timeInForce];
         this.computationalLatency = osr.computationalLatency;
@@ -64,7 +68,7 @@ class DisplayOrderStatusReport {
         this.rejectMessage = osr.rejectMessage;
         this.version = osr.version;
         this.trackable = osr.orderId + ":" + osr.version;
-    }
+    };
 
     private static getOrderStatus(o : Models.OrderStatusReport) : string {
         var endingModifier = (o : Models.OrderStatusReport) => {
@@ -106,7 +110,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     $scope.gridOptions = {
         data: 'order_statuses',
         showGroupPanel: true,
-        primaryKey: 'trackable',
+        primaryKey: 'orderId',
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
@@ -141,6 +145,13 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     };
 
     var addOrderRpt = (o : Models.OrderStatusReport, p : Models.CurrencyPair) => {
+        for (var i = $scope.order_statuses.length - 1; i >= 0; i--) {
+            if ($scope.order_statuses[i].orderId === o.orderId) {
+                $scope.order_statuses[i].updateWith(o);
+                return;
+            }
+        }
+
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, p));
     };
 
