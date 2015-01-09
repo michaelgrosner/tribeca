@@ -43,6 +43,19 @@ class FormViewModel<T> {
     };
 }
 
+class QuotingButtonViewModel extends FormViewModel<boolean> {
+    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
+        super(false,
+            d => $scope.changeActive(new Models.ExchangePairMessage(exch, pair, !d)));
+    }
+
+    public getClass = () => {
+        if (this.pending) return "btn btn-warning";
+        if (this.display) return "btn btn-success";
+        return "btn btn-danger"
+    }
+}
+
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableQuotingModes = [];
 
@@ -83,11 +96,7 @@ class DisplayPair {
     qAskSz : number;
     fairValue : number;
 
-    active : boolean = false;
-    changeActive = () => {
-        this.$scope.changeActive(new Models.ExchangePairMessage(this.exch, this.pair, !this.active));
-    };
-
+    active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
     safetySettings : DisplaySafetySettingsParameters;
 
@@ -97,6 +106,8 @@ class DisplayPair {
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
         this.name = this.base + "/" + this.quote;
+
+        this.active = new QuotingButtonViewModel($scope, this.pair, this.exch);
         this.quotingParameters = new DisplayQuotingParameters($scope, this.pair, this.exch);
         this.safetySettings = new DisplaySafetySettingsParameters($scope, this.pair, this.exch);
     }
@@ -108,9 +119,9 @@ class DisplayPair {
         this.askSize = update.asks[0].size;
     };
 
-    public updateDecision = (quote : Models.TradingDecision) => {
-        this.bidAction = Models.QuoteAction[quote.bidAction];
-        this.askAction = Models.QuoteAction[quote.askAction];
+    public updateDecision = (decision : Models.TradingDecision) => {
+        this.bidAction = Models.QuoteSent[decision.bidAction];
+        this.askAction = Models.QuoteSent[decision.askAction];
     };
 
     public updateQuote = (quote : Models.TwoSidedQuote) => {
@@ -240,7 +251,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));
 
     socket.on('active-changed', (b : Models.ExchangePairMessage<boolean>) => {
-        getOrAddDisplayExchange(b.exchange).getOrAddDisplayPair(b.pair).active = b.data;
+        getOrAddDisplayExchange(b.exchange).getOrAddDisplayPair(b.pair).active.update(b.data);
     });
 
 

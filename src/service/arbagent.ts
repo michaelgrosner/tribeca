@@ -183,7 +183,6 @@ export class QuoteGenerator {
         var askQt : Models.Quote = null;
 
         if (this.Active
-                && this.isBrokerConnected()
                 && this.hasEnoughPosition(this._broker.pair.base, quote.ask.size)
                 && this.hasEnoughPosition(this._broker.pair.quote, quote.bid.size*quote.bid.price)) {
             bidQt = quote.bid;
@@ -213,10 +212,6 @@ export class QuoteGenerator {
     private static ConvertToStopQuote(q : Models.Quote) {
         return new Models.Quote(Models.QuoteAction.Cancel, q.side);
     }
-
-    private isBrokerConnected = () : boolean => {
-        return this._broker.connectStatus == Models.ConnectivityStatus.Connected;
-    };
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
         var pos = this._broker.getPosition(cur);

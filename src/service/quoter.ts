@@ -77,11 +77,12 @@ export class ExchangeQuoter {
         switch (q.data.type) {
             case Models.QuoteAction.New:
                 if (this._activeQuote !== null) {
+                    if (this._activeQuote.quote.equals(q.data)) {
+                        return Models.QuoteSent.UnsentDuplicate;
+                    }
                     return this.modify(q);
                 }
-                else {
-                    return this.start(q);
-                }
+                return this.start(q);
             case Models.QuoteAction.Cancel:
                 return this.stop(q);
             default:

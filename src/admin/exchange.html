@@ -6,8 +6,8 @@
 
         <div class="row" ng-repeat="pair in exch.pairs">
             <div class="col-md-1 center-block">
-                <button ng-class="pair.active ? 'btn btn-success' : 'btn btn-danger'"
-                        ng-click="pair.changeActive()">
+                <button ng-class="pair.active.getClass()"
+                        ng-click="pair.active.submit()">
                     {{ pair.name }}
                 </button>
             </div>
