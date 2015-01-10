@@ -35,7 +35,7 @@ export class Market {
 export enum GatewayType { MarketData, OrderEntry, Position }
 export enum Currency { USD, BTC, LTC }
 export enum ConnectivityStatus { Connected, Disconnected }
-export enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts, BtcChina }
+export enum Exchange { Coinsetter, HitBtc, OkCoin, AtlasAts, BtcChina, Null }
 export enum Side { Bid, Ask }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }

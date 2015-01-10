@@ -8,6 +8,7 @@
 import Config = require("./config");
 import HitBtc = require("./hitbtc");
 import OkCoin = require("./okcoin");
+import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
 import UI = require("./ui");
@@ -43,6 +44,7 @@ var getExch = () : Interfaces.CombinedGateway => {
     switch (ex) {
         case "hitbtc": return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
         case "okcoin": return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+        case "null": return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
     }
 };

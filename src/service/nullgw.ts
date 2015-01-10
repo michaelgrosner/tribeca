@@ -46,3 +46,49 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
         setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(2, Models.Currency.BTC)), 5000);
     }
 }
+
+class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
+    MarketData = new Utils.Evt<Models.Market>();
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+
+    constructor() {
+        setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
+        setInterval(() => this.MarketData.trigger(this.generateMarketData()), 500);
+    }
+
+    private generateMarketData = () => {
+        var genSingleLevel = () => new Models.MarketSide(Math.random(), Math.random());
+        var genSide = () => {
+            var s = [];
+            for (var x = 0; x < 5; x++) {
+                s.push(genSingleLevel());
+            }
+            return s;
+        };
+        return new Models.Market(genSide(), genSide(), Utils.date());
+    }
+}
+
+class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
+    name() : string {
+        return "Null";
+    }
+
+    makeFee() : number {
+        return 0;
+    }
+
+    takeFee() : number {
+        return 0;
+    }
+
+    exchange() : Models.Exchange {
+        return Models.Exchange.Null;
+    }
+}
+
+export class NullGateway extends Interfaces.CombinedGateway {
+    constructor() {
+        super(new NullMarketDataGateway(), new NullOrderGateway(), new NullPositionGateway(), new NullGatewayDetails());
+    }
+}
