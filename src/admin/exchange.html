@@ -15,7 +15,6 @@
             <div class="col-md-7">
                 <table class="table table-bordered table-condensed container">
                     <tr class="active row">
-                        <th>bidAct</th>
                         <th>qBz</th>
                         <th>qB</th>
                         <th>bidSz</th>
@@ -25,10 +24,8 @@
                         <th>askSz</th>
                         <th>qA</th>
                         <th>qAz</th>
-                        <th>askAct</th>
                     </tr>
                     <tr class="active row">
-                        <td>{{ pair.bidAction }}</td>
                         <td>{{ pair.qBidSz|number:2 }}</td>
                         <td>{{ pair.qBidPx|number:2 }}</td>
                         <td>{{ pair.bidSize|number:2 }}</td>
@@ -38,7 +35,6 @@
                         <td>{{ pair.askSize|number:2 }}</td>
                         <td>{{ pair.qAskPx|number:2 }}</td>
                         <td>{{ pair.qAskSz|number:2 }}</td>
-                        <td>{{ pair.askAction }}</td>
                     </tr>
                 </table>
             </div>

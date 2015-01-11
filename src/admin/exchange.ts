@@ -88,9 +88,6 @@ class DisplayPair {
     askSize : number;
     ask : number;
 
-    bidAction : string;
-    askAction : string;
-
     qBidPx : number;
     qBidSz : number;
     qAskPx : number;
@@ -113,6 +110,14 @@ class DisplayPair {
         makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
             .registerSubscriber(this.updateMarket, ms => ms.forEach(this.updateMarket))
             .registerDisconnectedHandler(this.clearMarket);
+
+        makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
+            .registerSubscriber(this.updateQuote, qs => qs.forEach(this.updateQuote))
+            .registerDisconnectedHandler(this.clearQuote);
+
+        makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
+            .registerSubscriber(this.updateFairValue, qs => qs.forEach(this.updateFairValue))
+            .registerDisconnectedHandler(this.clearFairValue);
 
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
@@ -137,11 +142,6 @@ class DisplayPair {
         this.askSize = update.asks[0].size;
     };
 
-    public updateDecision = (decision : Models.TradingDecision) => {
-        this.bidAction = Models.QuoteSent[decision.bidAction];
-        this.askAction = Models.QuoteSent[decision.askAction];
-    };
-
     public updateQuote = (quote : Models.TwoSidedQuote) => {
         this.qBidPx = quote.bid.price;
         this.qBidSz = quote.bid.size;
@@ -149,8 +149,19 @@ class DisplayPair {
         this.qAskSz = quote.ask.size;
     };
 
+    public clearQuote = () => {
+        this.qBidPx = null;
+        this.qBidSz = null;
+        this.qAskPx = null;
+        this.qAskSz = null;
+    };
+
     public updateFairValue = (fv : Models.FairValue) => {
         this.fairValue = fv.price;
+    };
+
+    public clearFairValue = () => {
+        this.fairValue = null;
     };
 
     public updateParameters = (p : Models.QuotingParameters) => {
@@ -240,9 +251,6 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         $scope.exchanges = {};
         socket.emit("subscribe-position-report");
         socket.emit("subscribe-connection-status");
-        socket.emit("subscribe-new-trading-decision");
-        socket.emit("subscribe-fair-value");
-        socket.emit("subscribe-quote");
         socket.emit("subscribe-parameter-updates");
     };
 
@@ -254,15 +262,6 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
         getOrAddDisplayExchange(exch).setConnectStatus(cs) );
-
-    socket.on("new-trading-decision", (d : Models.ExchangePairMessage<Models.TradingDecision>) =>
-        getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateDecision(d.data));
-
-    socket.on('fair-value', (fv : Models.ExchangePairMessage<Models.FairValue>) =>
-        getOrAddDisplayExchange(fv.exchange).getOrAddDisplayPair(fv.pair).updateFairValue(fv.data));
-
-    socket.on('quote', (q : Models.ExchangePairMessage<Models.TwoSidedQuote>) =>
-        getOrAddDisplayExchange(q.exchange).getOrAddDisplayPair(q.pair).updateQuote(q.data));
 
     socket.on("parameter-updates", (p : Models.ExchangePairMessage<Models.QuotingParameters>) =>
         getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));

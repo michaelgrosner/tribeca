@@ -327,7 +327,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _posGateway : Interfaces.IPositionGateway,
                 private _persister : OrderStatusPersister,
                 io : any) {
-        var msgLog = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name() + ":messaging");
+        var msgLog = Utils.log("tribeca:messaging:marketdata");
         this._marketPublisher = new Messaging.ExchangePairPubSub.ExchangePairPublisher<Models.Market>(
             this.exchange(), ExchangeBroker._pair, Messaging.Topics.MarketData, () => this.currentBook === null ? [] : [this.currentBook], io, msgLog);
 

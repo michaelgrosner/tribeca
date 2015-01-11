@@ -56,7 +56,7 @@ var safetyRepo = new Safety.SafetySettingsRepository();
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 var paramsRepo = new Agent.QuotingParametersRepository();
 var quoter = new Quoter.Quoter(broker);
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, io);
 var ui = new UI.UI(env, broker.pair, broker, quoteGenerator, paramsRepo, io);
 
 var exitHandler = e => {

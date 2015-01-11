@@ -20,23 +20,15 @@ export class UI {
                 private _io : any) {
         this._exchange = this._broker.exchange();
 
-        this._broker.MarketData.on(this.sendUpdatedMarket);
         this._broker.OrderUpdate.on(x => this.sendOrderStatusUpdate(x));
         this._broker.PositionUpdate.on(x => this.sendPositionUpdate(x));
         this._broker.ConnectChanged.on(x => this.sendUpdatedConnectionStatus(this._exchange, x));
         this._quoteGenerator.ActiveChanged.on(this.sendActiveChange);
-        this._quoteGenerator.NewValue.on(this.sendFairValue);
-        this._quoteGenerator.NewQuote.on(this.sendQuote);
-        this._quoteGenerator.NewTradingDecision.on(this.sendResultChange);
         this._paramRepo.NewParameters.on(this.sendQuotingParameters);
 
         this._io.on('connection', sock => {
             sock.emit("hello", this._env);
             this.sendActiveChange();
-
-            sock.on("subscribe-new-trading-decision", () => {
-                this.sendResultChange();
-            });
 
             sock.on("subscribe-order-status-report", () => {
                 sock.emit("order-status-report-snapshot", this._wrapOutgoingMessage(this._broker.allOrderStates()));
@@ -47,20 +39,8 @@ export class UI {
                 this.sendPositionUpdate(this._broker.getPosition(this._pair.quote));
             });
 
-            sock.on("subscribe-market-book", () => {
-                this.sendUpdatedMarket();
-            });
-
             sock.on("subscribe-connection-status", () => {
                 this.sendUpdatedConnectionStatus(this._exchange, this._broker.connectStatus);
-            });
-
-            sock.on("subscribe-fair-value", () => {
-                this.sendFairValue();
-            });
-
-            sock.on("subscribe-quote", () => {
-                this.sendQuote();
             });
 
             sock.on("subscribe-parameter-updates", () => {
@@ -113,30 +93,6 @@ export class UI {
     sendOrderStatusUpdate = (msg : Models.OrderStatusReport) => {
         if (msg == null) return;
         setTimeout(() => this._io.emit("order-status-report", this._wrapOutgoingMessage(msg)), 0);
-    };
-
-    sendUpdatedMarket = () => {
-        var book = this._broker.currentBook;
-        if (book == null) return;
-        setTimeout(() => this._io.emit("market-book", this._wrapOutgoingMessage(book)), 0);
-    };
-
-    sendResultChange = () => {
-        var res : Models.TradingDecision = this._quoteGenerator.latestDecision;
-        if (res == null) return;
-        setTimeout(() => this._io.emit("new-trading-decision", this._wrapOutgoingMessage(res)), 0);
-    };
-
-    sendFairValue = () => {
-        var fv = this._quoteGenerator.latestFairValue;
-        if (fv == null) return;
-        setTimeout(() => this._io.emit("fair-value", this._wrapOutgoingMessage(fv)), 0);
-    };
-
-    sendQuote = () => {
-        var quote = this._quoteGenerator.latestQuote;
-        if (quote == null) return;
-        setTimeout(() => this._io.emit("quote", this._wrapOutgoingMessage(quote)), 0);
     };
 
     sendQuotingParameters = () => {
