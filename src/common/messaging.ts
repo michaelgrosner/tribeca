@@ -193,6 +193,7 @@ export class Topics {
     static SafetySettings = "ss";
     static Product = "p";
     static OrderStatusReports = "osr";
+    static ProductAdvertisement = "pa";
 }
 
 export module ExchangePairMessaging {

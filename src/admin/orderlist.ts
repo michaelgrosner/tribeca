@@ -104,7 +104,7 @@ class DisplayOrderStatusReport {
  */
 
 
-var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket, productListings : any) => {
     $scope.cancel_replace_model = {price: null, quantity: null};
     $scope.order_statuses = [];
     $scope.gridOptions = {
@@ -169,6 +169,8 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     socket.on("disconnect", () => {
         $scope.order_statuses.length = 0;
     });
+
+    productListings.addCallback(pa => $log.info("from the order list", pa));
 
     $log.info("started orderlist");
 };

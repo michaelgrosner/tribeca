@@ -4,7 +4,6 @@
 
 import angular = require("angular");
 import Models = require("../common/models");
-import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
 
@@ -78,6 +77,5 @@ module Client {
     };
 
     angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'sharedDirectives'])
-           .factory("socket", () => io.connect())
            .controller('uiCtrl', uiCtrl)
 }

@@ -54,6 +54,8 @@ var getExch = () : Interfaces.CombinedGateway => {
 var gateway = getExch();
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair);
+new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
 var getPublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);

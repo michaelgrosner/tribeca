@@ -325,3 +325,7 @@ export function toUtcFormattedTime(t : Moment) {
 export class ExchangePairMessage<T> {
     constructor(public exchange : Exchange, public pair : CurrencyPair, public data : T) { }
 }
+
+export class ProductAdvertisement {
+    constructor(public exchange : Exchange, public pair : CurrencyPair) { }
+}
