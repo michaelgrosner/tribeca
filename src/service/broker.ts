@@ -15,10 +15,10 @@ import Interfaces = require("./interfaces");
 export class OrderStatusPersister {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
-    public getLatestStatuses = (last : number, exchange : Models.Exchange) : Q.Promise<Models.OrderStatusReport[]> => {
+    public getLatestStatuses = (last : number, exchange : Models.Exchange, pair : Models.CurrencyPair) : Q.Promise<Models.OrderStatusReport[]> => {
         var deferred = Q.defer<Models.OrderStatusReport[]>();
         this._db.then(db => {
-            var selector : Models.OrderStatusReport = {exchange: exchange};
+            var selector : Models.OrderStatusReport = {exchange: exchange, pair: pair};
             db.collection('osr').find(selector, {}, {limit: last}, (err, docs) => {
                 if (err) deferred.reject(err);
                 else {
@@ -350,7 +350,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
-        this._persister.getLatestStatuses(1000, this.exchange()).then(osrs => {
+        this._persister.getLatestStatuses(1000, this.exchange(), _pair).then(osrs => {
             _.each(osrs, osr => {
                 this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
