@@ -51,7 +51,7 @@ var getExch = () : Interfaces.CombinedGateway => {
 
 var gateway = getExch();
 var persister = new Broker.OrderStatusPersister();
-var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister);
+var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister, io);
 var safetyRepo = new Safety.SafetySettingsRepository();
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 var paramsRepo = new Agent.QuotingParametersRepository();

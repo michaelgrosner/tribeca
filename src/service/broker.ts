@@ -1,8 +1,10 @@
 /// <reference path="utils.ts" />
 /// <reference path="../common/models.ts" />
+/// <reference path="../common/messaging.ts" />
 /// <reference path="../../typings/tsd.d.ts" />
 
 import Models = require("../common/models");
+import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
@@ -63,7 +65,8 @@ export class OrderStatusPersister {
 }
 
 export class ExchangeBroker implements Interfaces.IBroker {
-    _log : Utils.Logger;
+    private _log : Utils.Logger;
+    private _marketPublisher : Messaging.IPublish<Models.Market>;
 
     PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
     private _currencies : { [currency : number] : Models.ExchangeCurrencyPosition } = {};
@@ -291,6 +294,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._currentBook = new Models.Market(bids, asks, book.time);
         this.MarketData.trigger(this.currentBook);
+        this._marketPublisher.publish(this.currentBook);
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
@@ -321,7 +325,12 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _persister : OrderStatusPersister) {
+                private _persister : OrderStatusPersister,
+                io : any) {
+        var msgLog = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name() + ":messaging");
+        this._marketPublisher = new Messaging.ExchangePairPubSub.ExchangePairPublisher<Models.Market>(
+            this.exchange(), ExchangeBroker._pair, Messaging.Topics.MarketData, () => this.currentBook === null ? [] : [this.currentBook], io, msgLog);
+
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.MarketData.on(this.handleMarketData);

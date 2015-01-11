@@ -1,5 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
+/// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 
 import angular = require("angular");
@@ -102,7 +103,17 @@ class DisplayPair {
 
     constructor(private $scope : ExchangesScope,
                 private exch : Models.Exchange,
-                public pair : Models.CurrencyPair) {
+                public pair : Models.CurrencyPair,
+                log : ng.ILogService,
+                io : any) {
+
+        var makeSubscriber = <T>(topic : string) =>
+            new Messaging.ExchangePairPubSub.ExchangePairSubscriber<T>(exch, pair, topic, io, log.info);
+
+        makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
+            .registerSubscriber(this.updateMarket, ms => ms.forEach(this.updateMarket))
+            .registerDisconnectedHandler(this.clearMarket);
+
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
         this.name = this.base + "/" + this.quote;
@@ -111,6 +122,13 @@ class DisplayPair {
         this.quotingParameters = new DisplayQuotingParameters($scope, this.pair, this.exch);
         this.safetySettings = new DisplaySafetySettingsParameters($scope, this.pair, this.exch);
     }
+
+    private clearMarket = () => {
+        this.bidSize = null;
+        this.bid = null;
+        this.ask = null;
+        this.askSize = null;
+    };
 
     public updateMarket = (update : Models.Market) => {
         this.bidSize = update.bids[0].size;
@@ -148,7 +166,10 @@ class DisplayExchangeInformation {
     btcPosition : number = null;
     ltcPosition : number = null;
 
-    constructor(private $scope : ExchangesScope, private _log : ng.ILogService, public exchange : Models.Exchange) {
+    constructor(private $scope : ExchangesScope,
+                private _log : ng.ILogService,
+                public exchange : Models.Exchange,
+                private _io : any) {
         this.name = Models.Exchange[exchange];
     }
 
@@ -183,7 +204,7 @@ class DisplayExchangeInformation {
         this._log.info("adding new pair, base:", Models.Currency[pair.base], "quote:",
             Models.Currency[pair.quote], "to exchange", Models.Exchange[this.exchange]);
 
-        var newPair = new DisplayPair(this.$scope, this.exchange, pair);
+        var newPair = new DisplayPair(this.$scope, this.exchange, pair, this._log, this._io);
         this.pairs.push(newPair);
         return newPair;
     };
@@ -195,7 +216,7 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
         if (angular.isUndefined(disp)) {
             $log.info("adding new exchange", Models.Exchange[exch]);
-            $scope.exchanges[exch] = new DisplayExchangeInformation($scope, $log, exch);
+            $scope.exchanges[exch] = new DisplayExchangeInformation($scope, $log, exch, socket);
             disp = $scope.exchanges[exch];
         }
 
@@ -219,7 +240,6 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
         $scope.exchanges = {};
         socket.emit("subscribe-position-report");
         socket.emit("subscribe-connection-status");
-        socket.emit("subscribe-market-book");
         socket.emit("subscribe-new-trading-decision");
         socket.emit("subscribe-fair-value");
         socket.emit("subscribe-quote");
@@ -234,9 +254,6 @@ var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socke
 
     socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
         getOrAddDisplayExchange(exch).setConnectStatus(cs) );
-
-    socket.on("market-book", (book : Models.ExchangePairMessage<Models.Market>) =>
-        getOrAddDisplayExchange(book.exchange).getOrAddDisplayPair(book.pair).updateMarket(book.data));
 
     socket.on("new-trading-decision", (d : Models.ExchangePairMessage<Models.TradingDecision>) =>
         getOrAddDisplayExchange(d.exchange).getOrAddDisplayPair(d.pair).updateDecision(d.data));

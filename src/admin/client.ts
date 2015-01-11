@@ -78,6 +78,6 @@ module Client {
     };
 
     angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'sharedDirectives'])
-           .factory("socket", () => io())
+           .factory("socket", () => io.connect())
            .controller('uiCtrl', uiCtrl)
 }

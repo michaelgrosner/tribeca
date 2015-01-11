@@ -301,7 +301,7 @@ export class CurrencyPair {
     constructor(public base : Currency, public quote : Currency) {}
 
     public toString() {
-        return CurrencyPair[this.base] + "/" + CurrencyPair[this.quote];
+        return Currency[this.base] + "/" + Currency[this.quote];
     }
 }
 
