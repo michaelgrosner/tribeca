@@ -10,18 +10,19 @@ module Prefixes {
 
 export interface IPublish<T> {
     publish : (msg : T) => void;
+    registerSnapshot : (generator : () => T[]) => IPublish<T>;
 }
 
 export class Publisher<T> implements IPublish<T> {
     constructor(private topic : string,
                 private _io : any,
-                private _snapshot : () => T[],
+                private _snapshot : () => T[] = null,
                 private _log : (...args: any[]) => void = console.log) {
         this._io.on("connection", s => {
-            this._log("socket", s.id, "connected");
+            this._log("socket", s.id, "connected for Publisher", topic);
 
             s.on("disconnect", () => {
-                this._log("socket", s.id, "disconnected");
+                this._log("socket", s.id, "disconnected for Publisher", topic);
             });
 
             this._log("awaiting client snapshot requests on topic", Prefixes.SUBSCRIBE+topic);
@@ -33,8 +34,17 @@ export class Publisher<T> implements IPublish<T> {
         });
     }
 
-    public publish = (msg : T) => {
-        this._io.emit(this.topic, msg);
+    public publish = (msg : T) => this._io.emit(this.topic, msg);
+
+    public registerSnapshot = (generator : () => T[]) => {
+        if (this._snapshot === null) {
+            this._snapshot = generator;
+        }
+        else {
+            throw new Error("already registered snapshot generator for topic " + this.topic);
+        }
+
+        return this;
     }
 }
 
@@ -132,36 +142,79 @@ export class Subscriber<T> implements ISubscribe<T> {
     };
 }
 
+export interface IFire<T> {
+    fire(msg : T) : void;
+}
+
+export class Fire<T> implements IFire<T> {
+    constructor(private topic : string,
+                private _io : any) {}
+
+    public fire = (msg : T) : void => {
+        this._io.emit(this.topic, msg);
+    };
+}
+
+export interface IReceive<T> {
+    registerReceiver(handler : (msg : T) => void) : void;
+}
+
+export class Receiver<T> implements IReceive<T> {
+    private _handler : (msg : T) => void = null;
+    constructor(private topic : string,
+                private _io : any,
+                private _log : (...args: any[]) => void = console.log) {
+        _io.on("connection", s => {
+            this._log("socket", s.id, "connected for Receiver", topic);
+            s.on(topic, msg => {
+                if (this._handler !== null)
+                    this._handler(msg);
+            });
+        });
+    }
+
+    registerReceiver = (handler : (msg : T) => void) => {
+        if (this._handler === null) {
+            this._handler = handler;
+        }
+        else {
+            throw new Error("already registered receive handler for topic " + this.topic);
+        }
+    };
+}
+
 export class Topics {
     static FairValue = "fv";
     static Quote = "q";
-    static TradingDecision = "td";
     static ActiveSubscription = "a";
     static ActiveChange = "ac";
     static MarketData = "md";
-    static QuotingParametersSubscription = "qp-sub";
-    static QuotingParametersChange = "qp-chg";
+    static QuotingParametersChange = "qp-sub";
+    static SafetySettings = "ss";
+    static Product = "p";
+}
+
+module ExchangePairMessaging {
+    export function wrapTopic(exch : Models.Exchange, pair : Models.CurrencyPair, topic : string) {
+        return exch + "." + pair.base + "/" + pair.quote + "." + topic;
+    }
 }
 
 export module ExchangePairPubSub {
-    function wrapTopic(exch : Models.Exchange, pair : Models.CurrencyPair, topic : string) {
-        return exch + "." + pair.base + "/" + pair.quote + "." + topic;
-    }
-
     export class ExchangePairPublisher<T> implements IPublish<T> {
         private _wrapped : IPublish<T>;
         constructor(exch : Models.Exchange,
                     pair : Models.CurrencyPair,
                     topic : string,
-                    snapshot : () => T[],
                     io : any,
+                    snapshot : () => T[] = null,
                     log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Publisher<T>(wrapTopic(exch, pair, topic), io, snapshot, log);
+            this._wrapped = new Publisher<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, snapshot, log);
         }
 
-        public publish = (msg : T) => {
-            this._wrapped.publish(msg);
-        };
+        public publish = (msg : T) => this._wrapped.publish(msg);
+
+        public registerSnapshot = (generator : () => T[]) => this._wrapped.registerSnapshot(generator);
     }
 
     export class ExchangePairSubscriber<T> implements ISubscribe<T> {
@@ -171,19 +224,44 @@ export module ExchangePairPubSub {
                     topic : string,
                     io : any,
                     log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Subscriber<T>(wrapTopic(exch, pair, topic), io, log);
+            this._wrapped = new Subscriber<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, log);
         }
 
-        public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
-            return this._wrapped.registerSubscriber(incrementalHandler, snapshotHandler);
-        };
+        public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) =>
+            this._wrapped.registerSubscriber(incrementalHandler, snapshotHandler);
 
-        public registerDisconnectedHandler = (handler : () => void) => {
-            return this._wrapped.registerDisconnectedHandler(handler);
-        };
+        public registerDisconnectedHandler = (handler : () => void) =>
+            this._wrapped.registerDisconnectedHandler(handler);
 
-        public registerConnectHandler = (handler : () => void) => {
-            return this._wrapped.registerConnectHandler(handler);
-        };
+        public registerConnectHandler = (handler : () => void) =>
+            this._wrapped.registerConnectHandler(handler);
+    }
+}
+
+export module ExchangePairFireAndForget {
+    export class ExchangePairFire<T> implements IFire<T> {
+        private _wrapped : IFire<T>;
+        constructor(exch : Models.Exchange,
+                    pair : Models.CurrencyPair,
+                    topic : string,
+                    io : any,
+                    log : (...args: any[]) => void = console.log) {
+            this._wrapped = new Fire<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io);
+        }
+
+        public fire = (msg : T) => this._wrapped.fire(msg);
+    }
+
+    export class ExchangePairReceiver<T> implements IReceive<T> {
+        private _wrapped : IReceive<T>;
+        constructor(exch : Models.Exchange,
+                    pair : Models.CurrencyPair,
+                    topic : string,
+                    io : any,
+                    log : (...args: any[]) => void = console.log) {
+            this._wrapped = new Receiver<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, log);
+        }
+
+        public registerReceiver = (handler : (msg : T) => void) => this._wrapped.registerReceiver(handler);
     }
 }
