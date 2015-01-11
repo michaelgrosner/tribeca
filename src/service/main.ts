@@ -63,9 +63,10 @@ var getPublisher = <T>(topic : string) => {
 var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
 var fvPublisher = getPublisher(Messaging.Topics.FairValue);
 var marketDataPublisher = getPublisher(Messaging.Topics.MarketData);
+var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports);
 
 var persister = new Broker.OrderStatusPersister();
-var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, persister, marketDataPublisher);
+var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, persister, marketDataPublisher, orderStatusPublisher);
 var safetyRepo = new Safety.SafetySettingsRepository();
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 var paramsRepo = new Agent.QuotingParametersRepository();

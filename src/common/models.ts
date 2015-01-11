@@ -129,6 +129,7 @@ export class OrderGatewayActionReport {
 }
 
 export interface OrderStatusReport {
+    pair? : CurrencyPair;
     side? : Side;
     quantity? : number;
     type? : OrderType;
@@ -157,6 +158,7 @@ export interface OrderStatusReport {
 
 export class OrderStatusReportImpl implements OrderStatusReport {
     constructor(
+        public pair : CurrencyPair,
         public side : Side,
         public quantity : number,
         public type : OrderType,
@@ -187,6 +189,7 @@ export class OrderStatusReportImpl implements OrderStatusReport {
         components.push("orderId="+this.orderId);
         components.push("time="+this.time.format('M/d/YY h:mm:ss,SSS'));
         if (this.exchangeId != null) components.push("exchangeId="+this.exchangeId);
+        components.push("pair="+Currency[this.pair.base] + "/" + Currency[this.pair.quote]);
         if (this.exchange != null) components.push("exchange="+Exchange[this.exchange]);
         components.push("orderStatus="+OrderStatus[this.orderStatus]);
         if (this.partiallyFilled) components.push("partiallyFilled");

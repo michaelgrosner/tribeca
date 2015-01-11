@@ -192,6 +192,7 @@ export class Topics {
     static QuotingParametersChange = "qp-sub";
     static SafetySettings = "ss";
     static Product = "p";
+    static OrderStatusReports = "osr";
 }
 
 export module ExchangePairMessaging {

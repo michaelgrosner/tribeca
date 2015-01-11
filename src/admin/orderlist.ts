@@ -41,8 +41,8 @@ class DisplayOrderStatusReport {
     version : number;
     trackable : string;
 
-    constructor(public osr : Models.OrderStatusReport, pair : Models.CurrencyPair) {
-        this.pair = Models.Currency[pair.base] + "/" + Models.Currency[pair.quote];
+    constructor(public osr : Models.OrderStatusReport) {
+        this.pair = Models.Currency[osr.pair.base] + "/" + Models.Currency[osr.pair.quote];
         this.orderId = osr.orderId;
         this.exchange = Models.Exchange[osr.exchange];
         this.side = Models.Side[osr.side];
@@ -119,6 +119,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
             {width: 100, field:'orderId', displayName:'id'},
             {width: 35, field:'version', displayName:'v'},
             {width: 60, field:'exchange', displayName:'exch'},
+            {width: 60, field:'pair', displayName:'pair'},
             {width: 150, field:'orderStatus', displayName:'status'},
             {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 60, field:'quantity', displayName:'qty'},
@@ -144,7 +145,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         socket.emit("cancel-replace", o.osr, $scope.cancel_replace_model);
     };
 
-    var addOrderRpt = (o : Models.OrderStatusReport, p : Models.CurrencyPair) => {
+    var addOrderRpt = (o : Models.OrderStatusReport) => {
         for (var i = $scope.order_statuses.length - 1; i >= 0; i--) {
             if ($scope.order_statuses[i].orderId === o.orderId) {
                 $scope.order_statuses[i].updateWith(o);
@@ -152,7 +153,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
             }
         }
 
-        $scope.order_statuses.push(new DisplayOrderStatusReport(o, p));
+        $scope.order_statuses.push(new DisplayOrderStatusReport(o));
     };
 
     socket.on("hello", () => {
@@ -160,11 +161,10 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     });
     socket.emit("subscribe-order-status-report");
 
-    socket.on('order-status-report', (o : Models.ExchangePairMessage<Models.OrderStatusReport>) =>
-        addOrderRpt(o.data, o.pair));
+    socket.on('order-status-report', addOrderRpt);
 
     socket.on('order-status-report-snapshot', (os : Models.ExchangePairMessage<Models.OrderStatusReport[]>) =>
-        os.data.forEach(o => addOrderRpt(o, os.pair)));
+        os.data.forEach(o => addOrderRpt(o)));
 
     socket.on("disconnect", () => {
         $scope.order_statuses.length = 0;

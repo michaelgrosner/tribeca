@@ -124,6 +124,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
         var rpt : Models.OrderStatusReport = {
+            pair: this.pair,
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
@@ -202,6 +203,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
         var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
         var o = new Models.OrderStatusReportImpl(
+            osr.pair || orig.pair,
             osr.side || orig.side,
             quantity,
             osr.type || orig.type,
@@ -234,6 +236,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._log("applied gw update -> %s", o);
         this._persister.persist(o);
+        this._orderStatusPublisher.publish(o);
     };
 
     makeFee() : number {
@@ -325,10 +328,12 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _persister : OrderStatusPersister,
-                private _marketPublisher : Messaging.IPublish<Models.Market>) {
+                private _marketPublisher : Messaging.IPublish<Models.Market>,
+                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+        _orderStatusPublisher.registerSnapshot(() => this.allOrderStates());
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
