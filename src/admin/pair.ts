@@ -201,7 +201,7 @@ angular.module('pairDirective', ['ui.bootstrap', 'sharedDirectives'])
        .directive("pair", () => {
             return {
                 restrict: "E",
-                scope: {exch: "=info"},
+                scope: {exch: "@"},
                 templateUrl: "pair.html"
             }
         });

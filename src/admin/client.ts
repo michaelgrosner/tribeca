@@ -74,7 +74,9 @@ module Client {
                 }
 
                 $log.info("adding new exchange", Models.Exchange[pa.exchange]);
-                return new Exchange.DisplayExchangeInformation($log, pa.exchange, socket);
+                var exch = new Exchange.DisplayExchangeInformation($log, pa.exchange, socket);
+                $scope.exchanges.push(exch);
+                return exch;
             };
 
             getExchInfo().getOrAddDisplayPair(pa.pair);

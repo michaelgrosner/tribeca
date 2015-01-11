@@ -1,8 +1,8 @@
 <div>
     <div ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
-        <p><b>{{ exch.name }}</b> :: USD: {{ exch.usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
+        <p><b>{{ name }}</b> :: USD: {{ usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
 
-        <div class="row" ng-repeat="pair in exch.pairs">
+        <div class="row" ng-repeat="pair in pairs">
             <pair info="pair"></pair>
         </div>
     </div>

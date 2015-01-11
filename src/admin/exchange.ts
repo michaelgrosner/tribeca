@@ -20,7 +20,7 @@ export class DisplayExchangeInformation {
     ltcPosition : number;
 
     private _positionSubscriber : Messaging.ISubscribe<Models.CurrencyPosition>;
-    private _connectivitySubsciber : Messaging.ISubscribe<Models.ConnectivityStatus>;
+    private _connectivitySubscriber : Messaging.ISubscribe<Models.ConnectivityStatus>;
 
     constructor(private _log : ng.ILogService,
                 public exchange : Models.Exchange,
@@ -35,7 +35,7 @@ export class DisplayExchangeInformation {
             .registerDisconnectedHandler(this.clearPosition)
             .registerSubscriber(this.updatePosition, us => us.forEach(this.updatePosition));
 
-        this._connectivitySubsciber = makeSubscriber(Messaging.Topics.ExchangeConnectivity)
+        this._connectivitySubscriber = makeSubscriber(Messaging.Topics.ExchangeConnectivity)
             .registerSubscriber(this.setConnectStatus, cs => cs.forEach(this.setConnectStatus));
 
         this.name = Models.Exchange[exchange];
@@ -43,7 +43,7 @@ export class DisplayExchangeInformation {
 
     public dispose = () => {
         this._positionSubscriber.disconnect();
-        this._connectivitySubsciber.disconnect();
+        this._connectivitySubscriber.disconnect();
         this.pairs.forEach(p => p.dispose());
         this.pairs.length = 0;
     };
@@ -94,7 +94,7 @@ angular.module('exchangesDirective', ['ui.bootstrap', 'pairDirective', 'sharedDi
        .directive("exchanges", () => {
             return {
                 restrict: "E",
-                scope: {context: "@"},
+                scope: {exch: "@"},
                 templateUrl: "exchange.html"
             }
         });
