@@ -52,6 +52,7 @@ export interface ISubscribe<T> {
     registerSubscriber : (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => ISubscribe<T>;
     registerDisconnectedHandler : (handler : () => void) => ISubscribe<T>;
     registerConnectHandler : (handler : () => void) => ISubscribe<T>;
+    disconnect : () => void;
 }
 
 export class Subscriber<T> implements ISubscribe<T> {
@@ -64,40 +65,51 @@ export class Subscriber<T> implements ISubscribe<T> {
     constructor(private topic : string,
                 private _io : any,
                 private _log : (...args: any[]) => void = console.log) {
-        var onConnect = () => {
-            if (this._needsSnapshot) {
-                this._log("requesting snapshot via ", Prefixes.SUBSCRIBE+topic);
-                _io.emit(Prefixes.SUBSCRIBE+topic);
-                this._needsSnapshot = false;
-                if (this._connectHandler !== null)
-                    this._connectHandler();
-            }
-            else {
-                this._log("already have snapshot to ", topic);
-            }
-        };
+        _io.on("connect", this.onConnect);
+        _io.on("disconnect", this.onDisconnect);
+        _io.on(topic, this.onIncremental);
+        _io.on(topic+Prefixes.SNAPSHOT, this.onSnapshot);
 
-        _io.on("connect", onConnect);
-
-        _io.on("disconnect", () => {
-            this._needsSnapshot = true;
-            this._log("disconnected from ", topic);
-            if (this._disconnectHandler !== null)
-                this._disconnectHandler();
-        });
-
-        _io.on(topic, (m : T) => {
-            if (this._incrementalHandler !== null)
-                this._incrementalHandler(m);
-        });
-
-        _io.on(topic+Prefixes.SNAPSHOT, (msgs : T[]) => {
-            if (this._snapshotHandler !== null)
-                this._snapshotHandler(msgs);
-        });
-
-        onConnect();
+        this.onConnect();
     }
+
+    private onConnect = () => {
+        if (this._needsSnapshot) {
+            this._log("requesting snapshot via ", Prefixes.SUBSCRIBE+this.topic);
+            this._io.emit(Prefixes.SUBSCRIBE+this.topic);
+            this._needsSnapshot = false;
+            if (this._connectHandler !== null)
+                this._connectHandler();
+        }
+        else {
+            this._log("already have snapshot to ", this.topic);
+        }
+    };
+
+    private onDisconnect = () => {
+        this._needsSnapshot = true;
+        this._log("disconnected from ", this.topic);
+        if (this._disconnectHandler !== null)
+            this._disconnectHandler();
+    };
+
+    private onIncremental = (m : T) => {
+        if (this._incrementalHandler !== null)
+            this._incrementalHandler(m);
+    };
+
+    private onSnapshot = (msgs : T[]) => {
+        if (this._snapshotHandler !== null)
+            this._snapshotHandler(msgs);
+    };
+
+    public disconnect = () => {
+        this._log("disconnection from ", this.topic);
+        this._io.off("connect", this.onConnect);
+        this._io.off("disconnect", this.onDisconnect);
+        this._io.off(this.topic, this.onIncremental);
+        this._io.off(this.topic+Prefixes.SNAPSHOT, this.onSnapshot);
+    };
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
         this._log("registered subscriber for topic", this.topic);
