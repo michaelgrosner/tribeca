@@ -30,9 +30,6 @@ enum RecalcRequest { FairValue, Quote, TradingDecision }
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
-    private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>;
-    private _fvPublisher : Messaging.IPublish<Models.FairValue>;
-
     public latestFairValue : Models.FairValue = null;
     public latestQuote : Models.TwoSidedQuote = null;
     public latestDecision : Models.TradingDecision = null;
@@ -41,16 +38,14 @@ export class QuoteGenerator {
                 private _broker : Interfaces.IBroker,
                 private _qlParamRepo : QuotingParametersRepository,
                 private _safeties : Safety.SafetySettingsManager,
-                io : any) {
+                private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
+                private _fvPublisher : Messaging.IPublish<Models.FairValue>) {
         _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
         _safeties.SafetySettingsViolated.on(() => this.changeActiveStatus(false));
 
-        this._quotePublisher = new Messaging.ExchangePairPubSub.ExchangePairPublisher<Models.TwoSidedQuote>(
-            _broker.exchange(), _broker.pair, Messaging.Topics.Quote, () => this.latestQuote === null ? [] : [this.latestQuote], io, Utils.log("tribeca:messaging:quote"));
-
-        this._fvPublisher = new Messaging.ExchangePairPubSub.ExchangePairPublisher<Models.FairValue>(
-            _broker.exchange(), _broker.pair, Messaging.Topics.FairValue, () => this.latestFairValue === null ? [] : [this.latestFairValue], io, Utils.log("tribeca:messaging:fv"));
+        _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
+        _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
     }
 
     public Active : boolean = false;

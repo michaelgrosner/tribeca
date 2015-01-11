@@ -194,74 +194,12 @@ export class Topics {
     static Product = "p";
 }
 
-module ExchangePairMessaging {
-    export function wrapTopic(exch : Models.Exchange, pair : Models.CurrencyPair, topic : string) {
+export module ExchangePairMessaging {
+    export function wrapExchangePairTopic(exch : Models.Exchange, pair : Models.CurrencyPair, topic : string) {
         return exch + "." + pair.base + "/" + pair.quote + "." + topic;
     }
-}
 
-export module ExchangePairPubSub {
-    export class ExchangePairPublisher<T> implements IPublish<T> {
-        private _wrapped : IPublish<T>;
-        constructor(exch : Models.Exchange,
-                    pair : Models.CurrencyPair,
-                    topic : string,
-                    io : any,
-                    snapshot : () => T[] = null,
-                    log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Publisher<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, snapshot, log);
-        }
-
-        public publish = (msg : T) => this._wrapped.publish(msg);
-
-        public registerSnapshot = (generator : () => T[]) => this._wrapped.registerSnapshot(generator);
-    }
-
-    export class ExchangePairSubscriber<T> implements ISubscribe<T> {
-        private _wrapped : ISubscribe<T>;
-        constructor(exch : Models.Exchange,
-                    pair : Models.CurrencyPair,
-                    topic : string,
-                    io : any,
-                    log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Subscriber<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, log);
-        }
-
-        public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) =>
-            this._wrapped.registerSubscriber(incrementalHandler, snapshotHandler);
-
-        public registerDisconnectedHandler = (handler : () => void) =>
-            this._wrapped.registerDisconnectedHandler(handler);
-
-        public registerConnectHandler = (handler : () => void) =>
-            this._wrapped.registerConnectHandler(handler);
-    }
-}
-
-export module ExchangePairFireAndForget {
-    export class ExchangePairFire<T> implements IFire<T> {
-        private _wrapped : IFire<T>;
-        constructor(exch : Models.Exchange,
-                    pair : Models.CurrencyPair,
-                    topic : string,
-                    io : any,
-                    log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Fire<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io);
-        }
-
-        public fire = (msg : T) => this._wrapped.fire(msg);
-    }
-
-    export class ExchangePairReceiver<T> implements IReceive<T> {
-        private _wrapped : IReceive<T>;
-        constructor(exch : Models.Exchange,
-                    pair : Models.CurrencyPair,
-                    topic : string,
-                    io : any,
-                    log : (...args: any[]) => void = console.log) {
-            this._wrapped = new Receiver<T>(ExchangePairMessaging.wrapTopic(exch, pair, topic), io, log);
-        }
-
-        public registerReceiver = (handler : (msg : T) => void) => this._wrapped.registerReceiver(handler);
+    export function wrapExchangeTopic(exch : Models.Exchange, topic : string) {
+        return exch + "." + topic;
     }
 }

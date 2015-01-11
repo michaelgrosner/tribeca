@@ -3,6 +3,7 @@
 /// <reference path="ui.ts" />
 /// <reference path="arbagent.ts" />
 /// <reference path="../common/models.ts" />
+/// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 
 import Config = require("./config");
@@ -11,6 +12,7 @@ import OkCoin = require("./okcoin");
 import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
+import Messaging = require("../common/messaging");
 import UI = require("./ui");
 import Models = require("../common/models");
 import Utils = require("./utils");
@@ -50,13 +52,26 @@ var getExch = () : Interfaces.CombinedGateway => {
 };
 
 var gateway = getExch();
+
+var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+
+var getPublisher = <T>(topic : string) => {
+    var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
+    return new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
+};
+
+var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
+var fvPublisher = getPublisher(Messaging.Topics.FairValue);
+var marketDataPublisher = getPublisher(Messaging.Topics.MarketData);
+
 var persister = new Broker.OrderStatusPersister();
-var broker = new Broker.ExchangeBroker(gateway.md, gateway.base, gateway.oe, gateway.pg, persister, io);
+var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, persister, marketDataPublisher);
 var safetyRepo = new Safety.SafetySettingsRepository();
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 var paramsRepo = new Agent.QuotingParametersRepository();
 var quoter = new Quoter.Quoter(broker);
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, io);
+
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, quotePublisher, fvPublisher);
 var ui = new UI.UI(env, broker.pair, broker, quoteGenerator, paramsRepo, io);
 
 var exitHandler = e => {

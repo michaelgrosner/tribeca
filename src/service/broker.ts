@@ -66,7 +66,6 @@ export class OrderStatusPersister {
 
 export class ExchangeBroker implements Interfaces.IBroker {
     private _log : Utils.Logger;
-    private _marketPublisher : Messaging.IPublish<Models.Market>;
 
     PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
     private _currencies : { [currency : number] : Models.ExchangeCurrencyPosition } = {};
@@ -254,9 +253,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._baseGateway.exchange();
     }
 
-    private static _pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
     public get pair() {
-        return ExchangeBroker._pair;
+        return this._pair;
     }
 
     MarketData = new Utils.Evt<Models.Market>();
@@ -321,15 +319,16 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._connectStatus;
     }
 
-    constructor(private _mdGateway : Interfaces.IMarketDataGateway,
+    constructor(private _pair : Models.CurrencyPair,
+                private _mdGateway : Interfaces.IMarketDataGateway,
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _persister : OrderStatusPersister,
-                io : any) {
+                private _marketPublisher : Messaging.IPublish<Models.Market>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
-        this._marketPublisher = new Messaging.ExchangePairPubSub.ExchangePairPublisher<Models.Market>(
-            this.exchange(), ExchangeBroker._pair, Messaging.Topics.MarketData, () => this.currentBook === null ? [] : [this.currentBook], io, msgLog);
+
+        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 

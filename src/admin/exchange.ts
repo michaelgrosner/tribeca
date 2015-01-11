@@ -104,8 +104,10 @@ class DisplayPair {
                 log : ng.ILogService,
                 io : any) {
 
-        var makeSubscriber = <T>(topic : string) =>
-            new Messaging.ExchangePairPubSub.ExchangePairSubscriber<T>(exch, pair, topic, io, log.info);
+        var makeSubscriber = <T>(topic : string) => {
+            var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
+            return new Messaging.Subscriber<T>(wrappedTopic, io, log.info);
+        };
 
         makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
             .registerSubscriber(this.updateMarket, ms => ms.forEach(this.updateMarket))
