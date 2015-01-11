@@ -46,30 +46,7 @@ var bindOnce = () => {
     }
 };
 
-interface IProductsService {
-    advertisements : Models.ProductAdvertisement[];
-    addCallback : any;
-}
-
-var productListingService = ($rootScope : ng.IRootScopeService, socket : SocketIOClient.Socket, $log : ng.ILogService) : IProductsService => {
-    var cbs = [];
-    var data = {advertisements: [], addCallback: a => cbs.push(a)};
-
-    var addAdvert = (a : Models.ProductAdvertisement) => {
-        $log.info("Adding product advertisement", Models.Exchange[a.exchange], Models.Currency[a.pair.base] + "/" + Models.Currency[a.pair.quote]);
-
-        data.advertisements.push(a);
-        cbs.forEach(cb => cb(a));
-    };
-
-    new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
-        .registerSubscriber(addAdvert, as => as.forEach(addAdvert));
-
-    return data;
-};
-
 angular.module('sharedDirectives', ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
-       .factory("socket", () => io.connect())
-       .factory("productListings", productListingService);
+       .factory("socket", () => io.connect());

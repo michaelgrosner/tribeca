@@ -104,7 +104,7 @@ class DisplayOrderStatusReport {
  */
 
 
-var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket, productListings : any) => {
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
     $scope.cancel_replace_model = {price: null, quantity: null};
     $scope.order_statuses = [];
     $scope.gridOptions = {
@@ -156,21 +156,12 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         $scope.order_statuses.push(new DisplayOrderStatusReport(o));
     };
 
-    socket.on("hello", () => {
-        socket.emit("subscribe-order-status-report");
-    });
-    socket.emit("subscribe-order-status-report");
-
-    socket.on('order-status-report', addOrderRpt);
-
-    socket.on('order-status-report-snapshot', (os : Models.ExchangePairMessage<Models.OrderStatusReport[]>) =>
-        os.data.forEach(o => addOrderRpt(o)));
-
-    socket.on("disconnect", () => {
-        $scope.order_statuses.length = 0;
-    });
-
-    productListings.addCallback(pa => $log.info("from the order list", pa));
+    var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(Models.Exchange.HitBtc, pair, Messaging.Topics.OrderStatusReports);
+    new Messaging.Subscriber(topic, socket, $log.info)
+        .registerConnectHandler(() => $scope.order_statuses.length = 0)
+        .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
+        .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
     $log.info("started orderlist");
 };

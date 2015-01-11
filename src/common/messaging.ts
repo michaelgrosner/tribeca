@@ -104,7 +104,7 @@ export class Subscriber<T> implements ISubscribe<T> {
     };
 
     public disconnect = () => {
-        this._log("disconnection from ", this.topic);
+        this._log("forcing disconnection from ", this.topic);
         this._io.off("connect", this.onConnect);
         this._io.off("disconnect", this.onDisconnect);
         this._io.off(this.topic, this.onIncremental);
