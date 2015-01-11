@@ -49,4 +49,4 @@ var bindOnce = () => {
 angular.module('sharedDirectives', ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
-       .factory("socket", () => io.connect());
+       .factory("socket", () => io());

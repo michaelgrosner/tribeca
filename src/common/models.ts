@@ -215,23 +215,9 @@ export class OrderStatusReportImpl implements OrderStatusReport {
     }
 }
 
-export class ExchangeCurrencyPosition {
-    constructor(public amount : number,
-                public currency : Currency,
-                public exchange : Exchange) { }
-
-    public toString() {
-        return "exchange=" + Exchange[this.exchange] + ";currency=" + Currency[this.currency] + ";amount=" + this.amount;
-    }
-}
-
 export class CurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency) {}
-
-    public toExchangeReport(exch : Exchange) {
-        return new ExchangeCurrencyPosition(this.amount, this.currency, exch);
-    }
 
     public toString() {
         return "currency=" + Currency[this.currency] + ";amount=" + this.amount;

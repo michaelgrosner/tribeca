@@ -57,25 +57,50 @@ var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair);
 new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
-var getPublisher = <T>(topic : string) => {
+var getEnginePublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
     return new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
 };
 
-var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
-var fvPublisher = getPublisher(Messaging.Topics.FairValue);
-var marketDataPublisher = getPublisher(Messaging.Topics.MarketData);
-var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports);
+var quotePublisher = getEnginePublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
+var fvPublisher = getEnginePublisher(Messaging.Topics.FairValue);
+var marketDataPublisher = getEnginePublisher(Messaging.Topics.MarketData);
+var orderStatusPublisher = getEnginePublisher(Messaging.Topics.OrderStatusReports);
+var safetySettingsPublisher = getEnginePublisher(Messaging.Topics.SafetySettings);
+var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
+var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
+
+var getExchangePublisher = <T>(topic : string) => {
+    var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(gateway.base.exchange(), topic);
+    return new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
+};
+
+var positionPublisher = getExchangePublisher(Messaging.Topics.Position);
+var connectivity = getExchangePublisher(Messaging.Topics.ExchangeConnectivity);
+
+var getReciever = <T>(topic : string) => {
+    var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
+    return new Messaging.Receiver<T>(wrappedTopic, io, Utils.log("tribeca:messaging"));
+};
+
+var safetySettingsReciever = getReciever(Messaging.Topics.SafetySettings);
+var activeReciever = getReciever(Messaging.Topics.ActiveChange);
+var quotingParametersReciever = getReciever(Messaging.Topics.QuotingParametersChange);
 
 var persister = new Broker.OrderStatusPersister();
-var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, persister, marketDataPublisher, orderStatusPublisher);
-var safetyRepo = new Safety.SafetySettingsRepository();
+var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg,
+    persister, marketDataPublisher, orderStatusPublisher, positionPublisher, connectivity);
+
+var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReciever);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
-var paramsRepo = new Agent.QuotingParametersRepository();
+
+var active = new Agent.ActiveRepository(safeties, activePublisher, activeReciever);
+var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReciever);
+
 var quoter = new Quoter.Quoter(broker);
 
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, quotePublisher, fvPublisher);
-var ui = new UI.UI(env, broker.pair, broker, quoteGenerator, paramsRepo, io);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
+var ui = new UI.UI(env, broker, io);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

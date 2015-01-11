@@ -12,12 +12,25 @@ import Quoter = require("./quoter");
 import Safety = require("./safety");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
-    constructor() {
+    constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
+                rec : Messaging.IReceive<Models.QuotingParameters>) {
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
             (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode,
-            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top));
+            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top), rec, pub);
 
+    }
+}
+
+export class ActiveRepository extends Interfaces.Repository<boolean> {
+    constructor(private _safeties : Safety.SafetySettingsManager,
+                pub : Messaging.IPublish<boolean>,
+                rec : Messaging.IReceive<boolean>) {
+        super("active",
+            (p : boolean) => true,
+            (a : boolean, b : boolean) => a !== b,
+            false, rec, pub);
+        _safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
     }
 }
 
@@ -39,26 +52,14 @@ export class QuoteGenerator {
                 private _qlParamRepo : QuotingParametersRepository,
                 private _safeties : Safety.SafetySettingsManager,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
-                private _fvPublisher : Messaging.IPublish<Models.FairValue>) {
+                private _fvPublisher : Messaging.IPublish<Models.FairValue>,
+                private _activeRepo : ActiveRepository) {
         _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
-        _safeties.SafetySettingsViolated.on(() => this.changeActiveStatus(false));
-
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+        _activeRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.TradingDecision, Utils.date()));
     }
-
-    public Active : boolean = false;
-    public ActiveChanged = new Utils.Evt();
-    changeActiveStatus = (to : boolean) => {
-        if (this.Active != to) {
-            this.Active = to;
-            this._log("changing active status to ", to);
-
-            this.recalcMarkets(RecalcRequest.TradingDecision, Utils.date());
-            this.ActiveChanged.trigger(this.Active);
-        }
-    };
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
         var rgq = this._quoter.quotesSent(s);
@@ -182,7 +183,7 @@ export class QuoteGenerator {
         var bidQt : Models.Quote = null;
         var askQt : Models.Quote = null;
 
-        if (this.Active
+        if (this._activeRepo.latest
                 && this.hasEnoughPosition(this._broker.pair.base, quote.ask.size)
                 && this.hasEnoughPosition(this._broker.pair.quote, quote.bid.size*quote.bid.price)) {
             bidQt = quote.bid;

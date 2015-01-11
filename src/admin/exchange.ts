@@ -8,189 +8,58 @@ import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
+import Pair = require("./pair");
 
-interface ExchangesScope extends ng.IScope {
-    exchanges : { [exch : number] : DisplayExchangeInformation};
-    sendUpdatedParameters : (p : Models.ExchangePairMessage<Models.QuotingParameters>) => void;
-    sendUpdatedSafetySettingsParameters : (p : Models.ExchangePairMessage<Models.SafetySettings>) => void;
-    changeActive : (p : Models.ExchangePairMessage<boolean>) => void;
-}
-
-class FormViewModel<T> {
-    master : T;
-    display : T;
-    pending : boolean = false;
-
-    constructor(defaultParameter : T,
-                private _submitAction : (disp : T) => void) {
-        this.master = angular.copy(defaultParameter);
-        this.display = angular.copy(defaultParameter);
-    }
-
-    public reset = () => {
-        this.display = angular.copy(this.master);
-    };
-
-    public update = (p : T) => {
-        console.log("updating parameters", p);
-        this.master = angular.copy(p);
-        this.display = angular.copy(p);
-        this.pending = false;
-    };
-
-    public submit = () => {
-        this.pending = true;
-        this._submitAction(this.display);
-    };
-}
-
-class QuotingButtonViewModel extends FormViewModel<boolean> {
-    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
-        super(false,
-            d => $scope.changeActive(new Models.ExchangePairMessage(exch, pair, !d)));
-    }
-
-    public getClass = () => {
-        if (this.pending) return "btn btn-warning";
-        if (this.display) return "btn btn-success";
-        return "btn btn-danger"
-    }
-}
-
-class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
-    availableQuotingModes = [];
-
-    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
-        super(new Models.QuotingParameters(null, null, null),
-              d => $scope.sendUpdatedParameters(new Models.ExchangePairMessage(exch, pair, d)));
-
-        var modes = [Models.QuotingMode.Mid, Models.QuotingMode.Top];
-        this.availableQuotingModes = modes.map(m => {
-            return {'str': Models.QuotingMode[m], 'val': m};
-        })
-    }
-}
-
-class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
-    constructor($scope : ExchangesScope, pair : Models.CurrencyPair, exch : Models.Exchange) {
-        super(new Models.SafetySettings(null),
-              d => $scope.sendUpdatedSafetySettingsParameters(new Models.ExchangePairMessage(exch, pair, d)));
-    }
-}
-
-class DisplayPair {
-    name : string;
-    base : string;
-    quote : string;
-
-    bidSize : number;
-    bid : number;
-    askSize : number;
-    ask : number;
-
-    qBidPx : number;
-    qBidSz : number;
-    qAskPx : number;
-    qAskSz : number;
-    fairValue : number;
-
-    active : QuotingButtonViewModel;
-    quotingParameters : DisplayQuotingParameters;
-    safetySettings : DisplaySafetySettingsParameters;
-
-    constructor(private $scope : ExchangesScope,
-                private exch : Models.Exchange,
-                public pair : Models.CurrencyPair,
-                log : ng.ILogService,
-                io : any) {
-
-        var makeSubscriber = <T>(topic : string) => {
-            var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
-            return new Messaging.Subscriber<T>(wrappedTopic, io, log.info);
-        };
-
-        makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
-            .registerSubscriber(this.updateMarket, ms => ms.forEach(this.updateMarket))
-            .registerDisconnectedHandler(this.clearMarket);
-
-        makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
-            .registerSubscriber(this.updateQuote, qs => qs.forEach(this.updateQuote))
-            .registerDisconnectedHandler(this.clearQuote);
-
-        makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
-            .registerSubscriber(this.updateFairValue, qs => qs.forEach(this.updateFairValue))
-            .registerDisconnectedHandler(this.clearFairValue);
-
-        this.quote = Models.Currency[pair.quote];
-        this.base = Models.Currency[pair.base];
-        this.name = this.base + "/" + this.quote;
-
-        this.active = new QuotingButtonViewModel($scope, this.pair, this.exch);
-        this.quotingParameters = new DisplayQuotingParameters($scope, this.pair, this.exch);
-        this.safetySettings = new DisplaySafetySettingsParameters($scope, this.pair, this.exch);
-    }
-
-    private clearMarket = () => {
-        this.bidSize = null;
-        this.bid = null;
-        this.ask = null;
-        this.askSize = null;
-    };
-
-    public updateMarket = (update : Models.Market) => {
-        this.bidSize = update.bids[0].size;
-        this.bid = update.bids[0].price;
-        this.ask = update.asks[0].price;
-        this.askSize = update.asks[0].size;
-    };
-
-    public updateQuote = (quote : Models.TwoSidedQuote) => {
-        this.qBidPx = quote.bid.price;
-        this.qBidSz = quote.bid.size;
-        this.qAskPx = quote.ask.price;
-        this.qAskSz = quote.ask.size;
-    };
-
-    public clearQuote = () => {
-        this.qBidPx = null;
-        this.qBidSz = null;
-        this.qAskPx = null;
-        this.qAskSz = null;
-    };
-
-    public updateFairValue = (fv : Models.FairValue) => {
-        this.fairValue = fv.price;
-    };
-
-    public clearFairValue = () => {
-        this.fairValue = null;
-    };
-
-    public updateParameters = (p : Models.QuotingParameters) => {
-        this.quotingParameters.update(p);
-    };
-}
-
-class DisplayExchangeInformation {
+export class DisplayExchangeInformation {
     connected : boolean;
     name : string;
+    pairs : Pair.DisplayPair[] = [];
 
-    usdPosition : number = null;
-    btcPosition : number = null;
-    ltcPosition : number = null;
+    usdPosition : number;
+    btcPosition : number;
+    ltcPosition : number;
 
-    constructor(private $scope : ExchangesScope,
-                private _log : ng.ILogService,
+    private _positionSubscriber : Messaging.ISubscribe<Models.CurrencyPosition>;
+    private _connectivitySubsciber : Messaging.ISubscribe<Models.ConnectivityStatus>;
+
+    constructor(private _log : ng.ILogService,
                 public exchange : Models.Exchange,
                 private _io : any) {
+
+        var makeSubscriber = <T>(topic : string) => {
+            var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(exchange, topic);
+            return new Messaging.Subscriber<T>(wrappedTopic, _io, _log.info);
+        };
+
+        this._positionSubscriber = makeSubscriber(Messaging.Topics.Position)
+            .registerDisconnectedHandler(this.clearPosition)
+            .registerSubscriber(this.updatePosition, us => us.forEach(this.updatePosition));
+
+        this._connectivitySubsciber = makeSubscriber(Messaging.Topics.ExchangeConnectivity)
+            .registerSubscriber(this.setConnectStatus, cs => cs.forEach(this.setConnectStatus));
+
         this.name = Models.Exchange[exchange];
     }
 
-    public setConnectStatus = (cs : Models.ConnectivityStatus) => {
+    public dispose = () => {
+        this._positionSubscriber.disconnect();
+        this._connectivitySubsciber.disconnect();
+        this.pairs.forEach(p => p.dispose());
+        this.pairs.length = 0;
+    };
+
+    private setConnectStatus = (cs : Models.ConnectivityStatus) => {
         this.connected = cs == Models.ConnectivityStatus.Connected;
     };
 
-    public updatePosition = (position : Models.ExchangeCurrencyPosition) => {
+    private clearPosition = () => {
+        this.usdPosition = null;
+        this.btcPosition = null;
+        this.ltcPosition = null;
+    };
+
+    private updatePosition = (position : Models.CurrencyPosition) => {
+        if (position === null) return;
         switch (position.currency) {
             case Models.Currency.BTC:
                 this.btcPosition = position.amount;
@@ -204,9 +73,7 @@ class DisplayExchangeInformation {
         }
     };
 
-    pairs : DisplayPair[] = [];
-
-    public getOrAddDisplayPair = (pair : Models.CurrencyPair) : DisplayPair => {
+    public getOrAddDisplayPair = (pair : Models.CurrencyPair) : Pair.DisplayPair => {
         for (var i = 0; i < this.pairs.length; i++) {
             var p = this.pairs[i];
             if (pair.base === p.pair.base && pair.quote === p.pair.quote) {
@@ -217,76 +84,17 @@ class DisplayExchangeInformation {
         this._log.info("adding new pair, base:", Models.Currency[pair.base], "quote:",
             Models.Currency[pair.quote], "to exchange", Models.Exchange[this.exchange]);
 
-        var newPair = new DisplayPair(this.$scope, this.exchange, pair, this._log, this._io);
+        var newPair = new Pair.DisplayPair(this.exchange, pair, this._log, this._io);
         this.pairs.push(newPair);
         return newPair;
     };
 }
 
-var ExchangesController = ($scope : ExchangesScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
-    var getOrAddDisplayExchange = (exch : Models.Exchange) : DisplayExchangeInformation => {
-        var disp = $scope.exchanges[exch];
-
-        if (angular.isUndefined(disp)) {
-            $log.info("adding new exchange", Models.Exchange[exch]);
-            $scope.exchanges[exch] = new DisplayExchangeInformation($scope, $log, exch, socket);
-            disp = $scope.exchanges[exch];
-        }
-
-        return disp;
-    };
-
-    $scope.sendUpdatedParameters = (p : Models.ExchangePairMessage<Models.QuotingParameters>) => {
-        socket.emit("parameters-update-request", p);
-    };
-
-    $scope.sendUpdatedSafetySettingsParameters = (p : Models.ExchangePairMessage<Models.SafetySettings>) => {
-        socket.emit("ss-parameters-update-request", p);
-    };
-
-    $scope.changeActive = (p : Models.ExchangePairMessage<boolean>) => {
-        socket.emit("active-change-request", p);
-    };
-
-    // ugh
-    var subscriber = () => {
-        $scope.exchanges = {};
-        socket.emit("subscribe-position-report");
-        socket.emit("subscribe-connection-status");
-        socket.emit("subscribe-parameter-updates");
-    };
-
-    socket.on("hello", subscriber);
-    subscriber();
-
-    socket.on("position-report", (rpt : Models.ExchangeCurrencyPosition) =>
-        getOrAddDisplayExchange(rpt.exchange).updatePosition(rpt));
-
-    socket.on("connection-status", (exch : Models.Exchange, cs : Models.ConnectivityStatus) =>
-        getOrAddDisplayExchange(exch).setConnectStatus(cs) );
-
-    socket.on("parameter-updates", (p : Models.ExchangePairMessage<Models.QuotingParameters>) =>
-        getOrAddDisplayExchange(p.exchange).getOrAddDisplayPair(p.pair).updateParameters(p.data));
-
-    socket.on('active-changed', (b : Models.ExchangePairMessage<boolean>) => {
-        getOrAddDisplayExchange(b.exchange).getOrAddDisplayPair(b.pair).active.update(b.data);
-    });
-
-
-    socket.on("disconnect", () => {
-        $scope.exchanges = {};
-    });
-
-    $log.info("started exchanges");
-};
-
-var exchangeDirective = () : ng.IDirective => {
-    return {
-        restrict: "E",
-        templateUrl: "exchange.html"
-    }
-};
-
-angular.module('exchangesDirective', ['ui.bootstrap', 'sharedDirectives'])
-       .controller('ExchangesController', ExchangesController)
-       .directive("exchanges", exchangeDirective);
+angular.module('exchangesDirective', ['ui.bootstrap', 'pairDirective', 'sharedDirectives'])
+       .directive("exchanges", () => {
+            return {
+                restrict: "E",
+                scope: {context: "@"},
+                templateUrl: "exchange.html"
+            }
+        });

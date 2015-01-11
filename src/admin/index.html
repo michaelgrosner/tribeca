@@ -78,7 +78,9 @@
         </div>
 
         <div class="container-fluid">
-            <exchanges></exchanges>
+            <div ng-repeat="exch in exchanges">
+                <exchanges context="{{ exch }}"></exchanges>
+            </div>
 
             <div class="row">
                 <order-list></order-list>

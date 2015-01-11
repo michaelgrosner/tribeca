@@ -5,6 +5,8 @@
 import angular = require("angular");
 import Models = require("../common/models");
 import moment = require("moment");
+import Exchange = require("./exchange");
+import OrderList = require("./orderlist");
 import Messaging = require("../common/messaging");
 
 module Client {
@@ -13,6 +15,9 @@ module Client {
         connected : boolean;
         order : Models.OrderRequestFromUI;
         submitOrder : () => void;
+
+        exchanges : Exchange.DisplayExchangeInformation[];
+        orderlist : OrderList.OrderList;
     }
 
     class DisplayOrder {
@@ -49,22 +54,50 @@ module Client {
 
     var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
         $scope.connected = false;
+        $scope.orderlist = new OrderList.OrderList($log, socket);
+        $scope.exchanges = [];
+
+        var onConnect = () => {
+            $log.debug("onConnect");
+            $scope.connected = true;
+            $scope.exchanges = [];
+            $scope.orderlist = new OrderList.OrderList($log, socket);
+        };
+
+        var onAdvert = (pa : Models.ProductAdvertisement) => {
+            $log.debug("onAdvert", pa);
+            $scope.orderlist.subscribe(pa);
+
+            var getExchInfo = () : Exchange.DisplayExchangeInformation => {
+                for (var i = 0; i < $scope.exchanges.length; i++) {
+                    if ($scope.exchanges[i].exchange === pa.exchange)
+                        return $scope.exchanges[i];
+                }
+
+                $log.info("adding new exchange", Models.Exchange[pa.exchange]);
+                return new Exchange.DisplayExchangeInformation($log, pa.exchange, socket);
+            };
+
+            getExchInfo().getOrAddDisplayPair(pa.pair);
+        };
+
+        var onDisconnect = () => {
+            $scope.connected = false;
+            $scope.exchanges.forEach(x => x.dispose());
+            $scope.exchanges = [];
+            $scope.orderlist.dispose();
+            $scope.orderlist = null;
+        };
+
+        new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
+                .registerConnectHandler(onConnect)
+                .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
+                .registerDisconnectedHandler(onDisconnect);
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);
         };
         $timeout(refresh_timer, 250);
-
-        socket.on("hello", (env) => {
-            $scope.env = env;
-            $scope.connected = true;
-            $log.info("connected");
-        });
-
-        socket.on("disconnect", () => {
-            $scope.connected = false;
-            $log.warn("disconnected");
-        });
 
         $scope.order = new DisplayOrder();
         $scope.submitOrder = () => {

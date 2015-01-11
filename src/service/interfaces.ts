@@ -1,7 +1,9 @@
 /// <reference path="../common/models.ts" />
+/// <reference path="../common/messaging.ts" />
 
 import Utils = require("./utils");
 import Models = require("../common/models");
+import Messaging = require("../common/messaging");
 
 export interface IExchangeDetailsGateway {
     name() : string;
@@ -41,7 +43,6 @@ export interface IBroker {
     MarketData : Utils.Evt<Models.Market>;
     currentBook : Models.Market;
 
-    name() : string;
     makeFee() : number;
     takeFee() : number;
     exchange() : Models.Exchange;
@@ -54,9 +55,8 @@ export interface IBroker {
     allOrderStates() : Array<Models.OrderStatusReport>;
     cancelOpenOrders() : void;
 
-    // todo: think about it, should fill reports inc/decrement positions? does it matter?
-    getPosition(currency : Models.Currency) : Models.ExchangeCurrencyPosition;
-    PositionUpdate : Utils.Evt<Models.ExchangeCurrencyPosition>;
+    getPosition(currency : Models.Currency) : Models.CurrencyPosition;
+    PositionUpdate : Utils.Evt<Models.CurrencyPosition>;
 
     connectStatus : Models.ConnectivityStatus;
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
@@ -66,7 +66,11 @@ export class Repository<T> {
     constructor(private _name : string,
                 private _validator : (a : T) => boolean,
                 private _paramsEqual : (a : T, b : T) => boolean,
-                defaultParameter : T) {
+                defaultParameter : T,
+                private _rec : Messaging.IReceive<T>,
+                private _pub : Messaging.IPublish<T>) {
+        _pub.registerSnapshot(() => [this.latest]);
+        _rec.registerReceiver(this.updateParameters);
         this._latest = defaultParameter;
     }
 
@@ -84,6 +88,7 @@ export class Repository<T> {
             this._latest = newParams;
             this._log("Changed parameters %j", this.latest);
             this.NewParameters.trigger();
+            this._pub.publish(this.latest);
         }
     };
 }

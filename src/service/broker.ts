@@ -67,18 +67,18 @@ export class OrderStatusPersister {
 export class ExchangeBroker implements Interfaces.IBroker {
     private _log : Utils.Logger;
 
-    PositionUpdate = new Utils.Evt<Models.ExchangeCurrencyPosition>();
-    private _currencies : { [currency : number] : Models.ExchangeCurrencyPosition } = {};
-    public getPosition(currency : Models.Currency) : Models.ExchangeCurrencyPosition {
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
+    public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
         return this._currencies[currency];
     }
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
-            var newRpt = rpt.toExchangeReport(this.exchange());
-            this._currencies[rpt.currency] = newRpt;
-            this.PositionUpdate.trigger(newRpt);
-            this._log("New currency report: %s", newRpt);
+            this._currencies[rpt.currency] = rpt;
+            this.PositionUpdate.trigger(rpt);
+            this._log("New currency report: %s", rpt);
+            this._positionPublisher.publish(rpt);
         }
     };
 
@@ -247,11 +247,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._baseGateway.takeFee();
     }
 
-
-    name() : string {
-        return this._baseGateway.name();
-    }
-
     exchange() : Models.Exchange {
         return this._baseGateway.exchange();
     }
@@ -315,6 +310,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
             this._connectStatus = newStatus;
             this._log("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[cs],
                 Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
+            this._connectivityPublisher.publish(this.connectStatus);
         }
     };
 
@@ -329,11 +325,19 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _posGateway : Interfaces.IPositionGateway,
                 private _persister : OrderStatusPersister,
                 private _marketPublisher : Messaging.IPublish<Models.Market>,
-                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>) {
+                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
+                private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
+                private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
         _orderStatusPublisher.registerSnapshot(() => this.allOrderStates());
+        _positionPublisher.registerSnapshot(() => [
+            this.getPosition(Models.Currency.BTC),
+            this.getPosition(Models.Currency.USD),
+            this.getPosition(Models.Currency.LTC)
+        ]);
+        _connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 

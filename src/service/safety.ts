@@ -1,18 +1,21 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="../common/messaging.ts" />
 
 import Config = require("./config");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import Messaging = require("../common/messaging");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
-    constructor() {
+    constructor(pub : Messaging.IPublish<Models.SafetySettings>,
+                rec : Messaging.IReceive<Models.SafetySettings>) {
         super("ssr",
             (s : Models.SafetySettings) => s.tradesPerMinute > 0,
             (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0,
-            new Models.SafetySettings(2)
+            new Models.SafetySettings(2), rec, pub
         );
     }
 }
