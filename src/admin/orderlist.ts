@@ -9,6 +9,15 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
 
+interface OrderListScope extends ng.IScope {
+    order_statuses : DisplayOrderStatusReport[];
+    cancel_replace_model : Models.ReplaceRequestFromUI;
+    cancel : (o : DisplayOrderStatusReport) => void;
+    cancel_replace : (o : DisplayOrderStatusReport) => void;
+
+    gridOptions : any;
+}
+
 class DisplayOrderStatusReport {
     orderId : string;
     time : string;
@@ -94,47 +103,60 @@ class DisplayOrderStatusReport {
                     data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
  */
 
-export class OrderList {
-    public order_statuses : DisplayOrderStatusReport[] = [];
-    public gridOptions : any;
-    private _subscribers : { [hash : string] : Messaging.ISubscribe<Models.OrderStatusReport>} = {};
 
-    constructor(private $log : ng.ILogService, private socket : SocketIOClient.Socket) {
-        this.gridOptions = {
-            data: 'order_statuses',
-            showGroupPanel: true,
-            primaryKey: 'orderId',
-            groupsCollapsedByDefault: true,
-            enableColumnResize: true,
-            sortInfo: {fields: ['time'], directions: ['desc']},
-            columnDefs: [
-                {width: 140, field:'time', displayName:'time'},
-                {width: 100, field:'orderId', displayName:'id'},
-                {width: 35, field:'version', displayName:'v'},
-                {width: 60, field:'exchange', displayName:'exch'},
-                {width: 60, field:'pair', displayName:'pair'},
-                {width: 150, field:'orderStatus', displayName:'status'},
-                {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
-                {width: 60, field:'quantity', displayName:'qty'},
-                {width: 50, field:'side', displayName:'side'},
-                {width: 50, field:'orderType', displayName:'type'},
-                {width: 50, field:'timeInForce', displayName:'tif'},
-                {width: 35, field:'computationalLatency', displayName:'lat'},
-                {width: 60, field:'lastQuantity', displayName:'lQty'},
-                {width: 65, field:'lastPrice', displayName:'lPx', cellFilter: 'currency'},
-                {width: 60, field:'leavesQuantity', displayName:'lvQty'},
-                {width: 60, field:'cumQuantity', displayName:'cum'},
-                {width: 65, field:'averagePrice', displayName:'avg', cellFilter: 'currency'},
-                {width: 40, field:'liquidity', displayName:'liq'},
-                {width: "*", field:'rejectMessage', displayName:'msg'}
-            ]
-        };
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+    $scope.cancel_replace_model = {price: null, quantity: null};
+    $scope.order_statuses = [];
+    $scope.gridOptions = {
+        data: 'order_statuses',
+        showGroupPanel: true,
+        primaryKey: 'orderId',
+        groupsCollapsedByDefault: true,
+        enableColumnResize: true,
+        sortInfo: {fields: ['time'], directions: ['desc']},
+        columnDefs: [
+            {width: 140, field:'time', displayName:'time'},
+            {width: 100, field:'orderId', displayName:'id'},
+            {width: 35, field:'version', displayName:'v'},
+            {width: 60, field:'exchange', displayName:'exch'},
+            {width: 60, field:'pair', displayName:'pair'},
+            {width: 150, field:'orderStatus', displayName:'status'},
+            {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
+            {width: 60, field:'quantity', displayName:'qty'},
+            {width: 50, field:'side', displayName:'side'},
+            {width: 50, field:'orderType', displayName:'type'},
+            {width: 50, field:'timeInForce', displayName:'tif'},
+            {width: 35, field:'computationalLatency', displayName:'lat'},
+            {width: 60, field:'lastQuantity', displayName:'lQty'},
+            {width: 65, field:'lastPrice', displayName:'lPx', cellFilter: 'currency'},
+            {width: 60, field:'leavesQuantity', displayName:'lvQty'},
+            {width: 60, field:'cumQuantity', displayName:'cum'},
+            {width: 65, field:'averagePrice', displayName:'avg', cellFilter: 'currency'},
+            {width: 40, field:'liquidity', displayName:'liq'},
+            {width: "*", field:'rejectMessage', displayName:'msg'}
+        ]
+    };
 
-        $log.info("started orderlist");
-    }
+    $scope.cancel = (o : DisplayOrderStatusReport) => {
+        socket.emit("cancel-order", o.osr);
+    };
 
-    public subscribe = (pa : Models.ProductAdvertisement) => {
-        if (typeof this._subscribers[JSON.stringify(pa)] !== "undefined") return;
+    $scope.cancel_replace = (o : DisplayOrderStatusReport) => {
+        socket.emit("cancel-replace", o.osr, $scope.cancel_replace_model);
+    };
+
+    var addOrderRpt = (o : Models.OrderStatusReport) => {
+        for (var i = $scope.order_statuses.length - 1; i >= 0; i--) {
+            if ($scope.order_statuses[i].orderId === o.orderId) {
+                $scope.order_statuses[i].updateWith(o);
+                return;
+            }
+        }
+
+        $scope.order_statuses.push(new DisplayOrderStatusReport(o));
+    };
+
+    /*        if (typeof this._subscribers[JSON.stringify(pa)] !== "undefined") return;
 
         var filterFunc = () => {
             this.order_statuses = this.order_statuses.filter(
@@ -147,37 +169,25 @@ export class OrderList {
         this._subscribers[JSON.stringify(pa)] = new Messaging.Subscriber(topic, this.socket, this.$log.info)
             .registerConnectHandler(filterFunc)
             .registerDisconnectedHandler(filterFunc)
-            .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));
-    };
+            .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));*/
 
-    private addOrderRpt = (o : Models.OrderStatusReport) => {
-        for (var i = this.order_statuses.length - 1; i >= 0; i--) {
-            if (this.order_statuses[i].orderId === o.orderId) {
-                this.order_statuses[i].updateWith(o);
-                return;
-            }
-        }
+    var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(Models.Exchange.HitBtc, pair, Messaging.Topics.OrderStatusReports);
+    new Messaging.Subscriber(topic, socket, $log.info)
+        .registerConnectHandler(() => $scope.order_statuses.length = 0)
+        .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
+        .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
-        this.order_statuses.push(new DisplayOrderStatusReport(o));
-    };
+    $log.info("started orderlist");
+};
 
-    public dispose = () => {
-        angular.forEach(this._subscribers, (v, k) => v.disconnect());
-        this._subscribers = {};
-    };
-
-    public cancel_replace_model = {price: null, quantity: null};
-
-    public cancel = (o : DisplayOrderStatusReport) => this.socket.emit("cancel-order", o.osr);
-
-    public cancel_replace = (o : DisplayOrderStatusReport) => this.socket.emit("cancel-replace", o.osr, this.cancel_replace_model);
-}
+var orderListDirective = () : ng.IDirective => {
+    return {
+        restrict: "E",
+        templateUrl: "orderlist.html"
+    }
+};
 
 angular.module('orderListDirective', ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
-       .directive("orderList", () => {
-            return {
-                restrict: "E",
-                scope: {},
-                templateUrl: "orderlist.html"
-            }
-        });
+       .controller('OrderListController', OrderListController)
+       .directive("orderList", orderListDirective);
