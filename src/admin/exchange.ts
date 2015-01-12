@@ -89,12 +89,3 @@ export class DisplayExchangeInformation {
         return newPair;
     };
 }
-
-angular.module('exchangesDirective', ['ui.bootstrap', 'pairDirective', 'sharedDirectives'])
-       .directive("exchanges", () => {
-            return {
-                restrict: "E",
-                scope: {exch: "@"},
-                templateUrl: "exchange.html"
-            }
-        });

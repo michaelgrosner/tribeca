@@ -110,6 +110,6 @@ module Client {
         $log.info("started client");
     };
 
-    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'exchangesDirective', 'sharedDirectives'])
+    angular.module('projectApp', ['ui.bootstrap', 'orderListDirective', 'sharedDirectives'])
            .controller('uiCtrl', uiCtrl)
 }

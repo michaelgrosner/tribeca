@@ -196,12 +196,3 @@ export class DisplayPair {
         this.quotingParameters.update(p);
     };
 }
-
-angular.module('pairDirective', ['ui.bootstrap', 'sharedDirectives'])
-       .directive("pair", () => {
-            return {
-                restrict: "E",
-                scope: {exch: "@"},
-                templateUrl: "pair.html"
-            }
-        });
