@@ -14,7 +14,6 @@ module Client {
         env : string;
         connected : boolean;
         order : Models.OrderRequestFromUI;
-        submitOrder : () => void;
 
         exchanges : Exchange.DisplayExchangeInformation[];
     }
@@ -43,30 +42,33 @@ module Client {
             return names;
         }
 
-        constructor() {
+        private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
+        constructor(socket : SocketIOClientStatic) {
             this.availableExchanges = DisplayOrder.getNames(Models.Exchange);
             this.availableSides = DisplayOrder.getNames(Models.Side);
             this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
             this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
+
+            this._fire = new Messaging.Fire<Models.OrderRequestFromUI>(Messaging.Topics.SubmitNewOrder, socket);
         }
+
+        public submit = () => {
+            this._fire.fire(new Models.OrderRequestFromUI(this.exchange,
+                this.side, this.price, this.quantity, this.timeInForce, this.orderType));
+        };
     }
 
-    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClientStatic) => {
         $scope.connected = false;
-        //$scope.orderlist = new OrderList.OrderList($log, socket);
         $scope.exchanges = [];
+        $scope.order = new DisplayOrder(socket);
 
         var onConnect = () => {
-            $log.debug("onConnect");
             $scope.connected = true;
             $scope.exchanges = [];
-            //$scope.orderlist = new OrderList.OrderList($log, socket);
         };
 
         var onAdvert = (pa : Models.ProductAdvertisement) => {
-            $log.debug("onAdvert", pa);
-            //$scope.orderlist.subscribe(pa);
-
             var getExchInfo = () : Exchange.DisplayExchangeInformation => {
                 for (var i = 0; i < $scope.exchanges.length; i++) {
                     if ($scope.exchanges[i].exchange === pa.exchange)
@@ -86,8 +88,6 @@ module Client {
             $scope.connected = false;
             $scope.exchanges.forEach(x => x.dispose());
             $scope.exchanges = [];
-            //$scope.orderlist.dispose();
-            //$scope.orderlist = null;
         };
 
         new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
@@ -99,13 +99,6 @@ module Client {
             $timeout(refresh_timer, 250);
         };
         $timeout(refresh_timer, 250);
-
-        $scope.order = new DisplayOrder();
-        $scope.submitOrder = () => {
-            var o = $scope.order;
-            socket.emit("submit-order",
-                new Models.OrderRequestFromUI(o.exchange, o.side, o.price, o.quantity, o.timeInForce, o.orderType));
-        };
 
         $log.info("started client");
     };

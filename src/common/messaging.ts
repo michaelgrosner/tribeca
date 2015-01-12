@@ -210,6 +210,7 @@ export class Topics {
     static ProductAdvertisement = "pa";
     static Position = "pos";
     static ExchangeConnectivity = "ec";
+    static SubmitNewOrder = "sno";
 }
 
 export module ExchangePairMessaging {
