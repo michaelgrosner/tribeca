@@ -11,10 +11,6 @@ import Messaging = require("../common/messaging");
 
 interface OrderListScope extends ng.IScope {
     order_statuses : DisplayOrderStatusReport[];
-    cancel_replace_model : Models.ReplaceRequestFromUI;
-    cancel : (o : DisplayOrderStatusReport) => void;
-    cancel_replace : (o : DisplayOrderStatusReport) => void;
-
     gridOptions : any;
 }
 
@@ -41,7 +37,8 @@ class DisplayOrderStatusReport {
     version : number;
     trackable : string;
 
-    constructor(public osr : Models.OrderStatusReport) {
+    constructor(public osr : Models.OrderStatusReport,
+                private _fireCxl : Messaging.IFire<Models.OrderStatusReport>) {
         this.pair = Models.Currency[osr.pair.base] + "/" + Models.Currency[osr.pair.quote];
         this.orderId = osr.orderId;
         this.exchange = Models.Exchange[osr.exchange];
@@ -84,28 +81,15 @@ class DisplayOrderStatusReport {
         };
         return Models.OrderStatus[o.orderStatus] + endingModifier(o);
     }
+
+    public cancel = () => {
+        this._fireCxl.fire(this.osr);
+    };
 }
 
-/*
-        <th>cxl</th>
-        <th>c-r</th>
-    </tr>
-    <tr ng-repeat="o in order_statuses|orderBy:'-timeSortable' track by o.trackable">
-        <td>
-            <button type="button"
-                    class="btn btn-danger btn-xs"
-                    ng-click="cancel(o)"><span class="glyphicon glyphicon-remove"></span></button></td>
-        <td>
-            <button type="button"
-                    class="btn btn-warning btn-xs"
-                    id="cancel_replace_form"
-                    mypopover popover-template="cancel_replace_form.html"
-                    data-placement="left"><span class="glyphicon glyphicon-refresh"></span></button></td>
- */
-
-
 var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
-    $scope.cancel_replace_model = {price: null, quantity: null};
+    var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket);
+
     $scope.order_statuses = [];
     $scope.gridOptions = {
         data: 'order_statuses',
@@ -133,16 +117,9 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
             {width: 60, field:'cumQuantity', displayName:'cum'},
             {width: 65, field:'averagePrice', displayName:'avg', cellFilter: 'currency'},
             {width: 40, field:'liquidity', displayName:'liq'},
-            {width: "*", field:'rejectMessage', displayName:'msg'}
+            {width: "*", field:'rejectMessage', displayName:'msg'},
+            {width: 40, field:'osr', displayName:'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>'},
         ]
-    };
-
-    $scope.cancel = (o : DisplayOrderStatusReport) => {
-        socket.emit("cancel-order", o.osr);
-    };
-
-    $scope.cancel_replace = (o : DisplayOrderStatusReport) => {
-        socket.emit("cancel-replace", o.osr, $scope.cancel_replace_model);
     };
 
     var addOrderRpt = (o : Models.OrderStatusReport) => {
@@ -153,7 +130,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
             }
         }
 
-        $scope.order_statuses.push(new DisplayOrderStatusReport(o));
+        $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
     /*        if (typeof this._subscribers[JSON.stringify(pa)] !== "undefined") return;
@@ -172,7 +149,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
             .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));*/
 
     var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
-    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(Models.Exchange.HitBtc, pair, Messaging.Topics.OrderStatusReports);
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(Models.Exchange.Null, pair, Messaging.Topics.OrderStatusReports);
     new Messaging.Subscriber(topic, socket, $log.info)
         .registerConnectHandler(() => $scope.order_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)

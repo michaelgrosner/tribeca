@@ -211,6 +211,7 @@ export class Topics {
     static Position = "pos";
     static ExchangeConnectivity = "ec";
     static SubmitNewOrder = "sno";
+    static CancelOrder = "cxl";
 }
 
 export module ExchangePairMessaging {

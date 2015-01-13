@@ -83,19 +83,22 @@ var getReciever = <T>(topic : string) => {
     return new Messaging.Receiver<T>(wrappedTopic, io, Utils.log("tribeca:messaging"));
 };
 
-var safetySettingsReciever = getReciever(Messaging.Topics.SafetySettings);
-var activeReciever = getReciever(Messaging.Topics.ActiveChange);
-var quotingParametersReciever = getReciever(Messaging.Topics.QuotingParametersChange);
+var safetySettingsReceiver = getReciever(Messaging.Topics.SafetySettings);
+var activeReceiver = getReciever(Messaging.Topics.ActiveChange);
+var quotingParametersReceiver = getReciever(Messaging.Topics.QuotingParametersChange);
+var submitOrderReceiver = getReciever(Messaging.Topics.SubmitNewOrder);
+var cancelOrderReceiver = getReciever(Messaging.Topics.CancelOrder);
 
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg,
-    persister, marketDataPublisher, orderStatusPublisher, positionPublisher, connectivity);
+    persister, marketDataPublisher, orderStatusPublisher, positionPublisher, connectivity,
+    submitOrderReceiver, cancelOrderReceiver);
 
-var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReciever);
+var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
 
-var active = new Agent.ActiveRepository(safeties, activePublisher, activeReciever);
-var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReciever);
+var active = new Agent.ActiveRepository(safeties, activePublisher, activeReceiver);
+var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver);
 
 var quoter = new Quoter.Quoter(broker);
 

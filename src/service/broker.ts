@@ -328,7 +328,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>,
-                private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>) {
+                private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
+                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
@@ -344,6 +345,10 @@ export class ExchangeBroker implements Interfaces.IBroker {
             var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                 o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
             this.sendOrder(order);
+        });
+        _cancelOrderReciever.registerReceiver(o => {
+            this._log("got new cancel req %o", o);
+            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()))
         });
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());

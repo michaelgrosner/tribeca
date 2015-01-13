@@ -20,13 +20,7 @@ export class UI {
         this._io.on('connection', sock => {
             sock.emit("hello", this._env);
 
-            // TODO: if i ever truly go to multi-server, these would need to be filtered. ideally client-side to the right server
-            sock.on("submit-order", (o : Models.OrderRequestFromUI) => {
-                this._log("got new order", o);
-                var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
-                this._broker.sendOrder(order);
-            });
+
 
             sock.on("cancel-order", (o : Models.OrderStatusReport) => {
                 this._log("got new cancel req %o", o);
