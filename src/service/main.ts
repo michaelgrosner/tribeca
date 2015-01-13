@@ -1,6 +1,5 @@
 /// <reference path="hitbtc.ts" />
 /// <reference path="okcoin.ts" />
-/// <reference path="ui.ts" />
 /// <reference path="arbagent.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
@@ -13,7 +12,6 @@ import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
 import Messaging = require("../common/messaging");
-import UI = require("./ui");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
@@ -103,7 +101,6 @@ var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublishe
 var quoter = new Quoter.Quoter(broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
-var ui = new UI.UI(env, broker, io);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
