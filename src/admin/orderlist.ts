@@ -8,6 +8,7 @@ import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
+import Shared = require("./shared_directives");
 
 interface OrderListScope extends ng.IScope {
     order_statuses : DisplayOrderStatusReport[];
@@ -87,7 +88,8 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
+                           socket : SocketIOClient.Socket, productListings : Shared.ProductListingRegistrar) => {
     var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket);
 
     $scope.order_statuses = [];
@@ -133,27 +135,26 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
-    /*        if (typeof this._subscribers[JSON.stringify(pa)] !== "undefined") return;
-
+    var onAdvert = (pa : Models.ProductAdvertisement) => {
         var filterFunc = () => {
-            this.order_statuses = this.order_statuses.filter(
+            $scope.order_statuses = $scope.order_statuses.filter(
                 o => o.osr.exchange !== pa.exchange &&
                      o.osr.pair.base !== pa.pair.base &&
                      o.osr.pair.quote !== pa.pair.quote);
         };
 
         var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(pa.exchange, pa.pair, Messaging.Topics.OrderStatusReports);
-        this._subscribers[JSON.stringify(pa)] = new Messaging.Subscriber(topic, this.socket, this.$log.info)
+        var sub = new Messaging.Subscriber(topic, socket, $log.info)
             .registerConnectHandler(filterFunc)
             .registerDisconnectedHandler(filterFunc)
-            .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));*/
+            .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
-    var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
-    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(Models.Exchange.Null, pair, Messaging.Topics.OrderStatusReports);
-    new Messaging.Subscriber(topic, socket, $log.info)
-        .registerConnectHandler(() => $scope.order_statuses.length = 0)
-        .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
-        .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
+        $log.info("adding new exchange/pair to order list", pa);
+    };
+
+    productListings.registerOnConnect(() => $scope.order_statuses.length = 0);
+    productListings.registerOnAdvert(onAdvert);
+    productListings.registerOnDisconnect(() => $scope.order_statuses.length = 0);
 
     $log.info("started orderlist");
 };

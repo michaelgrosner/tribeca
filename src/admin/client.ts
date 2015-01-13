@@ -8,6 +8,7 @@ import moment = require("moment");
 import Exchange = require("./exchange");
 import OrderList = require("./orderlist");
 import Messaging = require("../common/messaging");
+import Shared = require("./shared_directives");
 
 module Client {
     interface MainWindowScope extends ng.IScope {
@@ -58,7 +59,8 @@ module Client {
         };
     }
 
-    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService, socket : SocketIOClientStatic) => {
+    var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService,
+                  socket : SocketIOClientStatic, productListings : Shared.ProductListingRegistrar) => {
         $scope.connected = false;
         $scope.exchanges = [];
         $scope.order = new DisplayOrder(socket);
@@ -90,10 +92,9 @@ module Client {
             $scope.exchanges = [];
         };
 
-        new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
-                .registerConnectHandler(onConnect)
-                .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-                .registerDisconnectedHandler(onDisconnect);
+        productListings.registerOnConnect(onConnect);
+        productListings.registerOnAdvert(onAdvert);
+        productListings.registerOnDisconnect(onDisconnect);
 
         var refresh_timer = () => {
             $timeout(refresh_timer, 250);

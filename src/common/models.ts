@@ -315,3 +315,7 @@ export class ExchangePairMessage<T> {
 export class ProductAdvertisement {
     constructor(public exchange : Exchange, public pair : CurrencyPair) { }
 }
+
+export function productAdvertisementsEqual(a : ProductAdvertisement, b : ProductAdvertisement) {
+    return a.exchange === b.exchange && a.pair.base === b.pair.base && a.pair.quote === b.pair.quote;
+}

@@ -111,7 +111,6 @@ export class Subscriber<T> implements ISubscribe<T> {
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
         if (this._incrementalHandler === null) {
-            this._log("registered incremental handler for topic", this.topic);
             this._incrementalHandler = incrementalHandler;
         }
         else {
@@ -119,7 +118,6 @@ export class Subscriber<T> implements ISubscribe<T> {
         }
 
         if (this._snapshotHandler === null) {
-            this._log("registered snapshot handler for topic", this.topic);
             this._snapshotHandler = snapshotHandler;
         }
         else {
@@ -131,7 +129,6 @@ export class Subscriber<T> implements ISubscribe<T> {
 
     public registerDisconnectedHandler = (handler : () => void) => {
         if (this._disconnectHandler === null) {
-            this._log("registered disconnect handler for topic", this.topic);
             this._disconnectHandler = handler;
         }
         else {
@@ -143,7 +140,6 @@ export class Subscriber<T> implements ISubscribe<T> {
 
     public registerConnectHandler = (handler : () => void) => {
         if (this._connectHandler === null) {
-            this._log("registered connect handler for topic", this.topic);
             this._connectHandler = handler;
         }
         else {
