@@ -21,6 +21,7 @@ import path = require("path");
 import express = require('express');
 
 var mainLog = Utils.log("tribeca:main");
+var messagingLog = Utils.log("tribeca:messaging");
 
 var app = express();
 var http = (<any>require('http')).Server(app);
@@ -70,7 +71,7 @@ var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingPara
 
 var getExchangePublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(gateway.base.exchange(), topic);
-    return new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
+    return new Messaging.Publisher<T>(wrappedTopic, io, null, messagingLog);
 };
 
 var positionPublisher = getExchangePublisher(Messaging.Topics.Position);
@@ -78,14 +79,14 @@ var connectivity = getExchangePublisher(Messaging.Topics.ExchangeConnectivity);
 
 var getReciever = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
-    return new Messaging.Receiver<T>(wrappedTopic, io, Utils.log("tribeca:messaging"));
+    return new Messaging.Receiver<T>(wrappedTopic, io, messagingLog);
 };
 
 var safetySettingsReceiver = getReciever(Messaging.Topics.SafetySettings);
 var activeReceiver = getReciever(Messaging.Topics.ActiveChange);
 var quotingParametersReceiver = getReciever(Messaging.Topics.QuotingParametersChange);
-var submitOrderReceiver = getReciever(Messaging.Topics.SubmitNewOrder);
-var cancelOrderReceiver = getReciever(Messaging.Topics.CancelOrder);
+var submitOrderReceiver = new Messaging.Receiver(Messaging.Topics.SubmitNewOrder, io, messagingLog);
+var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, io, messagingLog);
 
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg,

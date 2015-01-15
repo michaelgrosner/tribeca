@@ -101,11 +101,11 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
-            {width: 140, field:'time', displayName:'time'},
+            {width: 150, field:'time', displayName:'time'},
             {width: 100, field:'orderId', displayName:'id'},
             {width: 35, field:'version', displayName:'v'},
             {width: 60, field:'exchange', displayName:'exch'},
-            {width: 60, field:'pair', displayName:'pair'},
+            {width: 80, field:'pair', displayName:'pair'},
             {width: 150, field:'orderStatus', displayName:'status'},
             {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 60, field:'quantity', displayName:'qty'},
@@ -120,7 +120,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
             {width: 65, field:'averagePrice', displayName:'avg', cellFilter: 'currency'},
             {width: 40, field:'liquidity', displayName:'liq'},
             {width: "*", field:'rejectMessage', displayName:'msg'},
-            {width: 40, field:'osr', displayName:'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>'},
+            {width: 40, displayName:'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>'},
         ]
     };
 

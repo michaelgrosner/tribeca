@@ -11,6 +11,7 @@ import mongodb = require('mongodb');
 import Q = require("q");
 import momentjs = require('moment');
 import Interfaces = require("./interfaces");
+import shortId = require("shortid");
 
 export class OrderStatusPersister {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
@@ -112,8 +113,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
     _exchIdsToClientIds : { [exchId: string] : string} = {};
 
     private static generateOrderId = () => {
-        // use moment.js?
-        return new Date().getTime().toString(32)
+        return shortId.generate();
     };
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
@@ -342,6 +342,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
         _connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
         _submittedOrderReciever.registerReceiver(o => {
             this._log("got new order", o);
+            if (!Models.currencyPairEqual(o.pair, this.pair)) return;
+            this._log("processing new order", o);
             var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                 o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
             this.sendOrder(order);

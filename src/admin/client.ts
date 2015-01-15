@@ -14,9 +14,16 @@ module Client {
     interface MainWindowScope extends ng.IScope {
         env : string;
         connected : boolean;
-        order : Models.OrderRequestFromUI;
+        order : DisplayOrder;
 
         exchanges : Exchange.DisplayExchangeInformation[];
+    }
+
+    class DisplayPair {
+        public displayName : string;
+        constructor(public pair : Models.CurrencyPair) {
+            this.displayName = Models.Currency[pair.base] + "/" + Models.Currency[pair.quote];
+        }
     }
 
     class DisplayOrder {
@@ -26,11 +33,13 @@ module Client {
         quantity : number;
         timeInForce : string;
         orderType : string;
+        pair : DisplayPair;
 
         availableExchanges : string[];
         availableSides : string[];
         availableTifs : string[];
         availableOrderTypes : string[];
+        availablePairs : DisplayPair[] = [];
 
         private static getNames<T>(enumObject : T) {
             var names : string[] = [];
@@ -55,7 +64,16 @@ module Client {
 
         public submit = () => {
             this._fire.fire(new Models.OrderRequestFromUI(this.exchange,
-                this.side, this.price, this.quantity, this.timeInForce, this.orderType));
+                this.side, this.price, this.quantity, this.timeInForce, this.orderType, this.pair.pair));
+        };
+
+        public addNewPair = (p : Models.CurrencyPair) => {
+            for (var i = 0; i < this.availablePairs.length; i++) {
+                if (Models.currencyPairEqual(this.availablePairs[i].pair, p))
+                    return;
+            }
+
+            this.availablePairs.push(new DisplayPair(p));
         };
     }
 
@@ -71,6 +89,8 @@ module Client {
         };
 
         var onAdvert = (pa : Models.ProductAdvertisement) => {
+            $scope.order.addNewPair(pa.pair);
+
             var getExchInfo = () : Exchange.DisplayExchangeInformation => {
                 for (var i = 0; i < $scope.exchanges.length; i++) {
                     if ($scope.exchanges[i].exchange === pa.exchange)

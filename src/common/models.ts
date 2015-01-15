@@ -231,7 +231,8 @@ export class OrderRequestFromUI {
         public price : number,
         public quantity : number,
         public timeInForce : string,
-        public orderType : string) {}
+        public orderType : string,
+        public pair : CurrencyPair) {}
 }
 
 export interface ReplaceRequestFromUI {
@@ -294,6 +295,10 @@ export class CurrencyPair {
     }
 }
 
+export function currencyPairEqual(a : CurrencyPair, b : CurrencyPair) : boolean {
+    return a.base === b.base && a.quote === b.quote;
+}
+
 export enum QuotingMode { Top, Mid }
 
 export class QuotingParameters {
@@ -317,5 +322,5 @@ export class ProductAdvertisement {
 }
 
 export function productAdvertisementsEqual(a : ProductAdvertisement, b : ProductAdvertisement) {
-    return a.exchange === b.exchange && a.pair.base === b.pair.base && a.pair.quote === b.pair.quote;
+    return a.exchange === b.exchange && currencyPairEqual(a.pair, b.pair);
 }

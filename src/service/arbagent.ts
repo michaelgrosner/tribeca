@@ -45,7 +45,6 @@ export class QuoteGenerator {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
     public latestFairValue : Models.FairValue = null;
     public latestQuote : Models.TwoSidedQuote = null;
-    public latestDecision : Models.TradingDecision = null;
 
     constructor(private _quoter : Quoter.Quoter,
                 private _broker : Interfaces.IBroker,
@@ -197,12 +196,10 @@ export class QuoteGenerator {
         var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
         var bidAction = this._quoter.updateQuote(new Models.Timestamped(bidQt, t));
 
-        this.latestDecision = new Models.TradingDecision(bidAction, askAction);
-
+        var latestDecision = new Models.TradingDecision(bidAction, askAction);
         var fv = this.latestFairValue;
-
         this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
-                this.latestDecision.toString(), quote.toString(), fv.price,
+                latestDecision.toString(), quote.toString(), fv.price,
                 fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
                 fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
                 fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
