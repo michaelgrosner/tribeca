@@ -27,14 +27,7 @@ var app = express();
 var http = (<any>require('http')).Server(app);
 var io = require('socket.io')(http);
 
-var adminPath = path.join(__dirname, "..", "admin", "admin");
-app.get('/', (req, res) => {
-    res.sendFile(path.join(adminPath, "index.html"));
-});
-app.use(express.static(adminPath));
-app.use(express.static(path.join(__dirname, "..", "admin", "common")));
-app.use(express.static(path.join(__dirname, "..", "admin")));
-app.use(express.static(path.join(__dirname, "..", "admin")));
+app.use(express.static(path.join(__dirname, "static")));
 http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
 var env = process.env.TRIBECA_MODE;

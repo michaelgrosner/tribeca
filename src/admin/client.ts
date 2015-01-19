@@ -124,6 +124,6 @@ module Client {
         $log.info("started client");
     };
 
-    angular.module('projectApp', ['ui.bootstrap', 'ngGrid', 'orderListDirective', 'sharedDirectives'])
+    angular.module('projectApp', ['ui.bootstrap', 'ngGrid', 'orderListDirective', 'marketTradeDirective', 'sharedDirectives'])
            .controller('uiCtrl', uiCtrl)
 }

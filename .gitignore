@@ -1,7 +1,8 @@
+bower*
+.DS_Store
 node_modules
 typings
 *.js.map
-*.js
 *.idea
 .baseDir.ts
 tribeca/

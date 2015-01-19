@@ -81,66 +81,6 @@ class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySetting
     }
 }
 
-class MarketTradeViewModel {
-    price : number;
-    size : number;
-    time : Date;
-    displayTime : string;
-    qA : number;
-    qB : number;
-    qAz : number;
-    qBz : number;
-
-    constructor(trade : Models.MarketTrade) {
-        this.price = trade.price;
-        this.size = trade.size;
-
-        var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
-        this.time = parsedTime.toDate();
-        this.displayTime = Models.toUtcFormattedTime(parsedTime);
-
-        if (trade.quote != null) {
-            this.qA = trade.quote.ask.price;
-            this.qAz = trade.quote.ask.size;
-            this.qB = trade.quote.bid.price;
-            this.qBz = trade.quote.bid.size;
-        }
-    }
-}
-
-class MarketTradeGrid {
-    marketTrades : MarketTradeViewModel[] = [];
-    gridOptions : any;
-
-    constructor(subscriber : Messaging.ISubscribe<Models.MarketTrade>, private $log : ng.ILogService) {
-        subscriber
-            .registerSubscriber(this.addNewMarketTrade, x => x.forEach(this.addNewMarketTrade))
-            .registerDisconnectedHandler(() => this.marketTrades.length = 0);
-
-        this.gridOptions = {
-            data: 'marketTrades',
-            showGroupPanel: false,
-            groupsCollapsedByDefault: true,
-            enableColumnResize: true,
-            sortInfo: {fields: ['time'], directions: ['desc']},
-            columnDefs: [
-                {width: 150, field:'displayTime', displayName:'t'},
-                {width: 100, field:'price', displayName:'px'},
-                {width: 35, field:'size', displayName:'sz'},
-                {width: 60, field:'qBz', displayName:'qBz'},
-                {width: 80, field:'qB', displayName:'qB'},
-                {width: 150, field:'qA', displayName:'qA'},
-                {width: 65, field:'qAz', displayName:'qAz'}
-            ]
-        };
-    }
-
-    private addNewMarketTrade = (u : Models.MarketTrade) => {
-        this.$log.info(u);
-        this.marketTrades.push(new MarketTradeViewModel(u));
-    };
-}
-
 export class DisplayPair {
     name : string;
     base : string;
@@ -160,11 +100,10 @@ export class DisplayPair {
     active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
     safetySettings : DisplaySafetySettingsParameters;
-    marketTrades : MarketTradeGrid;
 
     private _subscribers : Messaging.ISubscribe<any>[] = [];
 
-    constructor(private exch : Models.Exchange,
+    constructor(public exch : Models.Exchange,
                 public pair : Models.CurrencyPair,
                 log : ng.ILogService,
                 io : any) {
@@ -192,9 +131,6 @@ export class DisplayPair {
         makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
             .registerSubscriber(this.updateFairValue, qs => qs.forEach(this.updateFairValue))
             .registerDisconnectedHandler(this.clearFairValue);
-
-        var marketTradeSubscriber = makeSubscriber<Models.MarketTrade>(Messaging.Topics.MarketTrade);
-        this.marketTrades = new MarketTradeGrid(marketTradeSubscriber, log);
 
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
@@ -260,3 +196,91 @@ export class DisplayPair {
         this.quotingParameters.update(p);
     };
 }
+
+// ===============
+
+class MarketTradeViewModel {
+    price : number;
+    size : number;
+    time : Date;
+    displayTime : string;
+    qA : number;
+    qB : number;
+    qAz : number;
+    qBz : number;
+
+    constructor(trade : Models.MarketTrade) {
+        this.price = trade.price;
+        this.size = trade.size;
+
+        var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
+        this.time = parsedTime.toDate();
+        this.displayTime = Models.toUtcFormattedTime(parsedTime);
+
+        if (trade.quote != null) {
+            this.qA = trade.quote.ask.price;
+            this.qAz = trade.quote.ask.size;
+            this.qB = trade.quote.bid.price;
+            this.qBz = trade.quote.bid.size;
+        }
+    }
+}
+
+interface MarketTradeScope extends ng.IScope {
+    marketTrades : MarketTradeViewModel[];
+    marketTradeOptions : Object;
+    exch : Models.Exchange;
+    pair : Models.CurrencyPair;
+}
+
+var MarketTradeGrid = ($scope : MarketTradeScope,
+                       $log : ng.ILogService,
+                       socket : any) => {
+    $scope.marketTrades = [];
+    $scope.marketTradeOptions  = {
+        data: 'marketTrades',
+        showGroupPanel: false,
+        groupsCollapsedByDefault: true,
+        enableColumnResize: true,
+        sortInfo: {fields: ['time'], directions: ['desc']},
+        columnDefs: [
+            {width: 150, field:'displayTime', displayName:'t'},
+            {width: 100, field:'price', displayName:'px'},
+            {width: 35, field:'size', displayName:'sz'},
+            {width: 60, field:'qBz', displayName:'qBz'},
+            {width: 80, field:'qB', displayName:'qB'},
+            {width: 150, field:'qA', displayName:'qA'},
+            {width: 65, field:'qAz', displayName:'qAz'}
+        ]
+    };
+
+    var addNewMarketTrade = (u : Models.MarketTrade) => {
+        $log.info(u);
+        $scope.marketTrades.push(new MarketTradeViewModel(u));
+    };
+
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.MarketTrade);
+    new Messaging.Subscriber<Models.MarketTrade>(topic, socket, $log.info)
+            .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
+            .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
+
+    $log.info("starting market trade grid for", $scope.pair, Models.Exchange[$scope.exch]);
+};
+
+angular
+    .module("marketTradeDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .directive("marketTradeGrid", () => {
+        var template = '<div><div style="height: 150px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
+
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            template: template,
+            controller: MarketTradeGrid,
+            scope: {
+              exch: '=',
+              pair: '='
+            }
+          }
+    });
