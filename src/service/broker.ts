@@ -256,13 +256,14 @@ export class ExchangeBroker implements Interfaces.IBroker {
     }
 
     // TOOD: is this event needed?
-    MarketTrade = new Utils.Evt<Models.MarketSide>();
-    public marketTrades : Models.MarketSide[];
+    MarketTrade = new Utils.Evt<Models.MarketTrade>();
+    public marketTrades : Models.MarketTrade[] = [];
 
     private handleNewMarketTrade = (u : Models.MarketSide) => {
-        this.marketTrades.push(u);
-        this.MarketTrade.trigger(u);
-        this._marketTradePublisher.publish(u);
+        var t = new Models.MarketTrade(u.price, u.size, u.time, null);
+        this.marketTrades.push(t);
+        this.MarketTrade.trigger(t);
+        this._marketTradePublisher.publish(t);
     };
 
     MarketData = new Utils.Evt<Models.Market>();
@@ -340,7 +341,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _marketTradePublisher : Messaging.IPublish<Models.MarketSide>) {
+                private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);

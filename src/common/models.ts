@@ -9,7 +9,9 @@ export class Timestamped<T> {
 }
 
 export class MarketSide {
-    constructor(public price: number, public size: number) { }
+    constructor(public price : number,
+                public size : number,
+                public time? : Moment) { }
 
     public toString() {
         return "px="+this.price+";size="+this.size;
@@ -30,6 +32,13 @@ export class Market {
     public toString() {
         return "asks: [" + this.asks.join(";") + "] bids: [" + this.bids.join(";") + "]";
     }
+}
+
+export class MarketTrade {
+    constructor(public price : number,
+                public size : number,
+                public time : Moment,
+                public quote : TwoSidedQuote) {}
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }

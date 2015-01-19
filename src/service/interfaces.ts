@@ -18,7 +18,7 @@ export interface IGateway {
 
 export interface IMarketDataGateway extends IGateway {
     MarketData : Utils.Evt<Models.Market>;
-    MarketTrade : Utils.Evt<Models.MarketSide>;
+    MarketTrade : Utils.Evt<Models.MarketTrade>;
 }
 
 export interface IOrderEntryGateway extends IGateway {

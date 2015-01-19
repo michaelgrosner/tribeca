@@ -81,6 +81,34 @@ class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySetting
     }
 }
 
+class MarketTradeViewModel {
+    price : number;
+    size : number;
+    time : Date;
+    displayTime : string;
+
+    constructor(trade : Models.MarketTrade) {
+        this.price = trade.price;
+        this.size = trade.size;
+        this.time = trade.time.toDate();
+        this.displayTime = Models.toUtcFormattedTime(trade.time);
+    }
+}
+
+class MarketTradeGrid {
+    marketTrades : MarketTradeViewModel[] = [];
+
+    constructor(subscriber : Messaging.ISubscribe<Models.MarketTrade>) {
+        subscriber
+            .registerSubscriber(this.addNewMarketTrade, x => x.forEach(this.addNewMarketTrade))
+            .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+    }
+
+    private addNewMarketTrade = (u : Models.MarketTrade) => {
+        this.marketTrades.push(new MarketTradeViewModel(u));
+    };
+}
+
 export class DisplayPair {
     name : string;
     base : string;
@@ -100,6 +128,7 @@ export class DisplayPair {
     active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
     safetySettings : DisplaySafetySettingsParameters;
+    marketTrades : MarketTradeGrid;
 
     private _subscribers : Messaging.ISubscribe<any>[] = [];
 
@@ -131,6 +160,9 @@ export class DisplayPair {
         makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
             .registerSubscriber(this.updateFairValue, qs => qs.forEach(this.updateFairValue))
             .registerDisconnectedHandler(this.clearFairValue);
+
+        var marketTradeSubscriber = makeSubscriber<Models.MarketTrade>(Messaging.Topics.MarketTrade);
+        this.marketTrades = new MarketTradeGrid(marketTradeSubscriber);
 
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
