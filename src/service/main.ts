@@ -68,6 +68,7 @@ var orderStatusPublisher = getEnginePublisher(Messaging.Topics.OrderStatusReport
 var safetySettingsPublisher = getEnginePublisher(Messaging.Topics.SafetySettings);
 var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
 var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
+var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
 
 var getExchangePublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(gateway.base.exchange(), topic);
@@ -91,7 +92,7 @@ var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, i
 var persister = new Broker.OrderStatusPersister();
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg,
     persister, marketDataPublisher, orderStatusPublisher, positionPublisher, connectivity,
-    submitOrderReceiver, cancelOrderReceiver);
+    submitOrderReceiver, cancelOrderReceiver, marketTradePublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);

@@ -18,6 +18,7 @@ export interface IGateway {
 
 export interface IMarketDataGateway extends IGateway {
     MarketData : Utils.Evt<Models.Market>;
+    MarketTrade : Utils.Evt<Models.MarketSide>;
 }
 
 export interface IOrderEntryGateway extends IGateway {
@@ -42,6 +43,9 @@ export class CombinedGateway {
 export interface IBroker {
     MarketData : Utils.Evt<Models.Market>;
     currentBook : Models.Market;
+
+    MarketTrade : Utils.Evt<Models.MarketSide>;
+    marketTrades : Models.MarketSide[];
 
     makeFee() : number;
     takeFee() : number;

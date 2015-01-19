@@ -110,6 +110,7 @@ interface CancelReject {
 
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
+    MarketTrade = new Utils.Evt<Models.MarketSide>();
     _marketDataWs : ws;
 
     private _hasProcessedSnapshot = false;

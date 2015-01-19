@@ -106,6 +106,9 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    // TODO
+    MarketTrade = new Utils.Evt<Models.MarketSide>();
+
     private onDepth = (prettyMegan : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = prettyMegan.data;
 

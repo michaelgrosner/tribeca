@@ -208,6 +208,7 @@ export class Topics {
     static ExchangeConnectivity = "ec";
     static SubmitNewOrder = "sno";
     static CancelOrder = "cxl";
+    static MarketTrade = "mt";
 }
 
 export module ExchangePairMessaging {

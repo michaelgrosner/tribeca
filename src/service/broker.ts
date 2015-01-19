@@ -255,6 +255,16 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._pair;
     }
 
+    // TOOD: is this event needed?
+    MarketTrade = new Utils.Evt<Models.MarketSide>();
+    public marketTrades : Models.MarketSide[];
+
+    private handleNewMarketTrade = (u : Models.MarketSide) => {
+        this.marketTrades.push(u);
+        this.MarketTrade.trigger(u);
+        this._marketTradePublisher.publish(u);
+    };
+
     MarketData = new Utils.Evt<Models.Market>();
     _currentBook : Models.Market = null;
 
@@ -329,7 +339,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
+                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
+                private _marketTradePublisher : Messaging.IPublish<Models.MarketSide>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
@@ -352,6 +363,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
             this._log("got new cancel req %o", o);
             this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()))
         });
+        _marketTradePublisher.registerSnapshot(() => this.marketTrades);
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
@@ -360,6 +372,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
             if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
             this.onConnect(Models.GatewayType.MarketData, s);
         });
+        this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
         this._oeGateway.ConnectChanged.on(s => {

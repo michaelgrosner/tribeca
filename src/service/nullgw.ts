@@ -50,23 +50,28 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
 class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    MarketTrade = new Utils.Evt<Models.MarketSide>();
 
     constructor() {
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
         setInterval(() => this.MarketData.trigger(this.generateMarketData()), 500);
+        setInterval(() => this.MarketTrade.trigger(this.genSingleLevel()), 500);
     }
 
+    private genSingleLevel = () => new Models.MarketSide(Math.random(), Math.random());
+
     private generateMarketData = () => {
-        var genSingleLevel = () => new Models.MarketSide(Math.random(), Math.random());
         var genSide = () => {
             var s = [];
             for (var x = 0; x < 5; x++) {
-                s.push(genSingleLevel());
+                s.push(this.genSingleLevel());
             }
             return s;
         };
         return new Models.Market(genSide(), genSide(), Utils.date());
-    }
+    };
+
+
 }
 
 class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
