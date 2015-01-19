@@ -97,7 +97,7 @@
                                 </button>
                             </div>
 
-                            <div class="col-md-7">
+                            <div class="col-md-5">
                                 <table class="table table-bordered table-condensed container">
                                     <tr class="active row">
                                         <th>qBz</th>
@@ -122,6 +122,11 @@
                                         <td>{{ pair.qAskSz|number:2 }}</td>
                                     </tr>
                                 </table>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div style="height: 200px" class="table table-striped table-hover table-condensed"
+                                     ng-grid="pair.marketTrades.gridOptions"></div>
                             </div>
 
                             <div class="col-md-2">

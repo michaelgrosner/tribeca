@@ -86,25 +86,57 @@ class MarketTradeViewModel {
     size : number;
     time : Date;
     displayTime : string;
+    qA : number;
+    qB : number;
+    qAz : number;
+    qBz : number;
 
     constructor(trade : Models.MarketTrade) {
         this.price = trade.price;
         this.size = trade.size;
-        this.time = trade.time.toDate();
-        this.displayTime = Models.toUtcFormattedTime(trade.time);
+
+        var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
+        this.time = parsedTime.toDate();
+        this.displayTime = Models.toUtcFormattedTime(parsedTime);
+
+        if (trade.quote != null) {
+            this.qA = trade.quote.ask.price;
+            this.qAz = trade.quote.ask.size;
+            this.qB = trade.quote.bid.price;
+            this.qBz = trade.quote.bid.size;
+        }
     }
 }
 
 class MarketTradeGrid {
     marketTrades : MarketTradeViewModel[] = [];
+    gridOptions : any;
 
-    constructor(subscriber : Messaging.ISubscribe<Models.MarketTrade>) {
+    constructor(subscriber : Messaging.ISubscribe<Models.MarketTrade>, private $log : ng.ILogService) {
         subscriber
             .registerSubscriber(this.addNewMarketTrade, x => x.forEach(this.addNewMarketTrade))
             .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+
+        this.gridOptions = {
+            data: 'marketTrades',
+            showGroupPanel: false,
+            groupsCollapsedByDefault: true,
+            enableColumnResize: true,
+            sortInfo: {fields: ['time'], directions: ['desc']},
+            columnDefs: [
+                {width: 150, field:'displayTime', displayName:'t'},
+                {width: 100, field:'price', displayName:'px'},
+                {width: 35, field:'size', displayName:'sz'},
+                {width: 60, field:'qBz', displayName:'qBz'},
+                {width: 80, field:'qB', displayName:'qB'},
+                {width: 150, field:'qA', displayName:'qA'},
+                {width: 65, field:'qAz', displayName:'qAz'}
+            ]
+        };
     }
 
     private addNewMarketTrade = (u : Models.MarketTrade) => {
+        this.$log.info(u);
         this.marketTrades.push(new MarketTradeViewModel(u));
     };
 }
@@ -162,7 +194,7 @@ export class DisplayPair {
             .registerDisconnectedHandler(this.clearFairValue);
 
         var marketTradeSubscriber = makeSubscriber<Models.MarketTrade>(Messaging.Topics.MarketTrade);
-        this.marketTrades = new MarketTradeGrid(marketTradeSubscriber);
+        this.marketTrades = new MarketTradeGrid(marketTradeSubscriber, log);
 
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
