@@ -27,7 +27,7 @@ var app = express();
 var http = (<any>require('http')).Server(app);
 var io = require('socket.io')(http);
 
-app.use(express.static(path.join(__dirname, "static")));
+app.use(express.static(path.join(__dirname, "admin")));
 http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
 var env = process.env.TRIBECA_MODE;

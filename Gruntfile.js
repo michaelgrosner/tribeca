@@ -4,7 +4,7 @@ module.exports = function (grunt) {
     var commonFiles = "src/common/*.ts";
     var serviceFiles = ["src/service/**/*.ts", commonFiles];
     var adminFiles = ["src/admin/**/*.ts", commonFiles];
-    var html = "src/admin/*.html";
+    var html = "src/static/**";
 
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
@@ -45,7 +45,7 @@ module.exports = function (grunt) {
 
             admin: {
                 src: adminFiles,
-                outDir: 'tribeca/admin',
+                outDir: 'tribeca/service/admin/js',
                 options: {
                     module: 'amd'
                 }
@@ -55,10 +55,9 @@ module.exports = function (grunt) {
         copy: {
             main: {
                 expand: true,
-                flatten: true,
-                cwd: "src/admin/",
-                src: "*.html",
-                dest: "tribeca/admin/admin/"
+                cwd: "src/static",
+                src: "**",
+                dest: "tribeca/service/admin"
             }
         }
     });
