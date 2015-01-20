@@ -40,12 +40,14 @@ export class CombinedGateway {
         public base : IExchangeDetailsGateway) { }
 }
 
+export interface IMarketTradeBroker {
+    MarketTrade : Utils.Evt<Models.MarketSide>;
+    marketTrades : Models.MarketSide[];
+}
+
 export interface IMarketDataBroker {
     MarketData : Utils.Evt<Models.Market>;
     currentBook : Models.Market;
-
-    MarketTrade : Utils.Evt<Models.MarketSide>;
-    marketTrades : Models.MarketSide[];
 }
 
 export interface IOrderBroker {

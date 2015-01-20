@@ -11,6 +11,7 @@ import OkCoin = require("./okcoin");
 import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
+import MarketTrades = require("./markettrades");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 import Utils = require("./utils");
@@ -86,7 +87,7 @@ var persister = new Broker.OrderStatusPersister();
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, persister, orderStatusPublisher, submitOrderReceiver, cancelOrderReceiver);
-var marketDataBroker = new Broker.MarketDataBroker(broker, gateway.md, marketDataPublisher, marketTradePublisher);
+var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker);
@@ -97,6 +98,8 @@ var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublishe
 var quoter = new Quoter.Quoter(orderBroker, broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
+
+var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, quoteGenerator);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

@@ -91,38 +91,40 @@
                                 </button>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <table class="table table-bordered table-condensed container">
                                     <tr class="active row">
-                                        <th>qBz</th>
-                                        <th>qB</th>
+                                        <th></th>
                                         <th>bidSz</th>
                                         <th>bidPx</th>
                                         <th>FV</th>
                                         <th>askPx</th>
                                         <th>askSz</th>
-                                        <th>qA</th>
-                                        <th>qAz</th>
                                     </tr>
                                     <tr class="active row">
-                                        <td>{{ pair.qBidSz|number:2 }}</td>
-                                        <td>{{ pair.qBidPx|number:2 }}</td>
+                                        <td>mkt</td>
                                         <td>{{ pair.bidSize|number:2 }}</td>
                                         <td>{{ pair.bid|number:2 }}</td>
-                                        <td>{{ pair.fairValue|number:2 }}</td>
+                                        <td></td>
                                         <td>{{ pair.ask|number:2 }}</td>
                                         <td>{{ pair.askSize|number:2 }}</td>
+                                    </tr>
+                                    <tr class="active row">
+                                        <td>tq</td>
+                                        <td>{{ pair.qBidSz|number:2 }}</td>
+                                        <td>{{ pair.qBidPx|number:2 }}</td>
+                                        <td>{{ pair.fairValue|number:2 }}</td>
                                         <td>{{ pair.qAskPx|number:2 }}</td>
                                         <td>{{ pair.qAskSz|number:2 }}</td>
                                     </tr>
                                 </table>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <market-trade-grid exch="pair.exch" pair="pair.pair"></market-trade-grid>
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <form class="form-horizontal" novalidate>
                                     <div class="form-group" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
@@ -138,7 +140,6 @@
                                             <div class="input-group-addon">width</div>
                                             <input class="form-control input-sm"
                                                    type="number"
-                                                   style="width: 90px"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.width">
                                         </div>
@@ -149,7 +150,6 @@
                                             <div class="input-group-addon">size</div>
                                             <input class="form-control input-sm"
                                                    type="number"
-                                                   style="width: 90px"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.size">
                                         </div>
@@ -160,13 +160,12 @@
                                 </form>
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <form class="form-horizontal" novalidate>
                                     <div class="form-group">
                                         <div class="input-group">
                                             <div class="input-group-addon">t/sec</div>
                                             <input ng-class="pair.safetySettings.pending ? 'has-warning form-control input-sm' : 'has-success form-control input-sm'"
-                                                   style="width: 90px"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.safetySettings.display.tradesPerMinute">

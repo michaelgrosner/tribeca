@@ -66,20 +66,6 @@ export class OrderStatusPersister {
 }
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
-    private _log : Utils.Logger;
-
-    // TOOD: is this event needed?
-    MarketTrade = new Utils.Evt<Models.MarketTrade>();
-    public get marketTrades() { return this._marketTrades; }
-
-    private _marketTrades : Models.MarketTrade[] = [];
-    private handleNewMarketTrade = (u : Models.MarketSide) => {
-        var t = new Models.MarketTrade(u.price, u.size, u.time, null);
-        this.marketTrades.push(t);
-        this.MarketTrade.trigger(t);
-        this._marketTradePublisher.publish(t);
-    };
-
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook() : Models.Market { return this._currentBook; }
 
@@ -115,22 +101,16 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
         this._marketPublisher.publish(this.currentBook);
     };
 
-    constructor(private _baseBroker : Interfaces.IBroker,
-                private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,
-                private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>) {
+    constructor(private _mdGateway : Interfaces.IMarketDataGateway,
+                private _marketPublisher : Messaging.IPublish<Models.Market>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
-        _marketTradePublisher.registerSnapshot(() => this.marketTrades);
-
-        this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
             if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
         });
-        this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
     }
 }
 
