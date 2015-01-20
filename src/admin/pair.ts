@@ -251,11 +251,11 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
             {width: 75, field:'displayTime', displayName:'t'},
-            {width: 40, field:'price', displayName:'px'},
+            {width: 50, field:'price', displayName:'px'},
             {width: 40, field:'size', displayName:'sz'},
             {width: 40, field:'qBz', displayName:'qBz'},
-            {width: 40, field:'qB', displayName:'qB'},
-            {width: 40, field:'qA', displayName:'qA'},
+            {width: 50, field:'qB', displayName:'qB'},
+            {width: 50, field:'qA', displayName:'qA'},
             {width: 40, field:'qAz', displayName:'qAz'}
         ]
     };

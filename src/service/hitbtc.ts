@@ -13,6 +13,8 @@ import NullGateway = require("./nullgw");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import io = require("socket.io-client");
+import moment = require("moment");
 
 var _lotMultiplier = 100.0;
 
@@ -108,6 +110,11 @@ interface CancelReject {
     timestamp : number;
 }
 
+interface MarketTrade {
+    price : number;
+    amount : number;
+}
+
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.MarketSide>();
@@ -181,6 +188,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
     };
 
+    _tradesClient : SocketIOClient.Socket;
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcMD");
     constructor(config : Config.IConfigProvider) {
         this._marketDataWs = new ws(config.GetString("HitBtcMarketDataUrl"));
@@ -188,11 +196,27 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._marketDataWs.on('message', this.onMessage);
         this._marketDataWs.on("error", this._log);
 
+        this._tradesClient = io.connect(config.GetString("HitBtcPullUrl") + ":8081/trades/BTCUSD");
+        this._tradesClient.on("trade", (t : MarketTrade) => new Models.MarketSide(t.price, t.amount, Utils.date()));
+
         request.get(
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/orderbook")},
             (err, body, resp) => {
                 this.onMarketDataSnapshotFullRefresh(resp, Utils.date());
             });
+
+        request.get(
+            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/trades"),
+             qs: {from: 0, by: "trade_id", sort: 'desc', start_index: 0, max_results: 100}},
+            (err, body, resp) => {
+                JSON.parse(body.body).trades.forEach(t => {
+                    var price = parseFloat(t[1]);
+                    var size = parseFloat(t[2]);
+                    var time = moment(t[3]);
+
+                    this.MarketTrade.trigger(new Models.MarketSide(price, size, time));
+                });
+            })
     }
 }
 
