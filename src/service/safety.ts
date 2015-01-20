@@ -26,7 +26,7 @@ export class SafetySettingsManager {
     private _trades : Models.OrderStatusReport[] = [];
     public SafetySettingsViolated = new Utils.Evt();
 
-    constructor(private _repo : SafetySettingsRepository, private _broker : Interfaces.IBroker) {
+    constructor(private _repo : SafetySettingsRepository, private _broker : Interfaces.IOrderBroker) {
         _repo.NewParameters.on(() => this.onNewParameters);
         _broker.OrderUpdate.on(this.onOrderUpdate);
     }

@@ -47,7 +47,8 @@ export class QuoteGenerator {
     public latestQuote : Models.TwoSidedQuote = null;
 
     constructor(private _quoter : Quoter.Quoter,
-                private _broker : Interfaces.IBroker,
+                private _baseBroker : Interfaces.IBroker,
+                private _broker : Interfaces.IMarketDataBroker,
                 private _qlParamRepo : QuotingParametersRepository,
                 private _safeties : Safety.SafetySettingsManager,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
@@ -183,8 +184,8 @@ export class QuoteGenerator {
         var askQt : Models.Quote = null;
 
         if (this._activeRepo.latest
-                && this.hasEnoughPosition(this._broker.pair.base, quote.ask.size)
-                && this.hasEnoughPosition(this._broker.pair.quote, quote.bid.size*quote.bid.price)) {
+                && this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size)
+                && this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price)) {
             bidQt = quote.bid;
             askQt = quote.ask;
         }
@@ -211,7 +212,7 @@ export class QuoteGenerator {
     }
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
-        var pos = this._broker.getPosition(cur);
+        var pos = this._baseBroker.getPosition(cur);
         return pos != null && pos.amount > minAmt;
     };
 }

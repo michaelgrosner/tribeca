@@ -16,9 +16,10 @@ export class Quoter {
     private _bidQuoter : ExchangeQuoter;
     private _askQuoter : ExchangeQuoter;
 
-    constructor(broker : Interfaces.IBroker) {
-        this._bidQuoter = new ExchangeQuoter(broker);
-        this._askQuoter = new ExchangeQuoter(broker);
+    constructor(broker : Interfaces.IOrderBroker,
+                exchBroker : Interfaces.IBroker) {
+        this._bidQuoter = new ExchangeQuoter(broker, exchBroker);
+        this._askQuoter = new ExchangeQuoter(broker, exchBroker);
     }
 
     public updateQuote = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
@@ -47,13 +48,10 @@ export class ExchangeQuoter {
 
     public quotesSent : QuoteOrder[] = [];
 
-    constructor(private _broker : Interfaces.IBroker) {
-        this._exchange = this._broker.exchange();
+    constructor(private _broker : Interfaces.IOrderBroker,
+                private _exchBroker : Interfaces.IBroker) {
+        this._exchange = _exchBroker.exchange();
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
-    }
-
-    public get exchange() {
-        return this._broker.exchange();
     }
 
     private handleOrderUpdate = (o : Models.OrderStatusReport) => {
@@ -71,7 +69,7 @@ export class ExchangeQuoter {
     };
 
     public updateQuote = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
-        if (this._broker.connectStatus !== Models.ConnectivityStatus.Connected)
+        if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
         switch (q.data.type) {

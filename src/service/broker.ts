@@ -65,23 +65,77 @@ export class OrderStatusPersister {
     }
 }
 
-export class ExchangeBroker implements Interfaces.IBroker {
+export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     private _log : Utils.Logger;
 
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-    private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
-    public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
-        return this._currencies[currency];
-    }
+    // TOOD: is this event needed?
+    MarketTrade = new Utils.Evt<Models.MarketTrade>();
+    public get marketTrades() { return this._marketTrades; }
 
-    private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
-        if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
-            this._currencies[rpt.currency] = rpt;
-            this.PositionUpdate.trigger(rpt);
-            this._log("New currency report: %s", rpt);
-            this._positionPublisher.publish(rpt);
-        }
+    private _marketTrades : Models.MarketTrade[] = [];
+    private handleNewMarketTrade = (u : Models.MarketSide) => {
+        var t = new Models.MarketTrade(u.price, u.size, u.time, null);
+        this.marketTrades.push(t);
+        this.MarketTrade.trigger(t);
+        this._marketTradePublisher.publish(t);
     };
+
+    MarketData = new Utils.Evt<Models.Market>();
+    public get currentBook() : Models.Market { return this._currentBook; }
+
+    private _currentBook : Models.Market = null;
+    private handleMarketData = (book : Models.Market) => {
+        var bids : Models.MarketSide[] = [];
+        var asks : Models.MarketSide[] = [];
+        var isDupe = true;
+        for (var i = 0; i < 5; i++) {
+            var bid = book.bids[i];
+            var ask = book.asks[i];
+
+            bids.push(bid);
+            asks.push(ask);
+
+            if (isDupe) {
+                if (this.currentBook !== null) {
+                    if (!Models.marketSideEquals(bid, this.currentBook.bids[i]) ||
+                        !Models.marketSideEquals(ask, this.currentBook.asks[i])) {
+                        isDupe = false;
+                    }
+                }
+                else {
+                    isDupe = false;
+                }
+            }
+        }
+
+        if (isDupe) return;
+
+        this._currentBook = new Models.Market(bids, asks, book.time);
+        this.MarketData.trigger(this.currentBook);
+        this._marketPublisher.publish(this.currentBook);
+    };
+
+    constructor(private _baseBroker : Interfaces.IBroker,
+                private _mdGateway : Interfaces.IMarketDataGateway,
+                private _marketPublisher : Messaging.IPublish<Models.Market>,
+                private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>) {
+        var msgLog = Utils.log("tribeca:messaging:marketdata");
+
+        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+        _marketTradePublisher.registerSnapshot(() => this.marketTrades);
+
+        this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);
+
+        this._mdGateway.MarketData.on(this.handleMarketData);
+        this._mdGateway.ConnectChanged.on(s => {
+            if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
+        });
+        this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
+    }
+}
+
+export class OrderBroker implements Interfaces.IOrderBroker {
+    private _log : Utils.Logger;
 
     cancelOpenOrders() : void {
         for (var k in this._allOrders) {
@@ -117,14 +171,14 @@ export class ExchangeBroker implements Interfaces.IBroker {
     };
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
-        var orderId = ExchangeBroker.generateOrderId();
-        var exch = this.exchange();
+        var orderId = OrderBroker.generateOrderId();
+        var exch = this._baseBroker.exchange();
         var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
         var rpt : Models.OrderStatusReport = {
-            pair: this.pair,
+            pair: this._baseBroker.pair,
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
@@ -164,7 +218,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
     cancelOrder = (cancel : Models.OrderCancel) => {
         var rpt = _.last(this._allOrders[cancel.origOrderId]);
-        var cxl = new Models.BrokeredCancel(cancel.origOrderId, ExchangeBroker.generateOrderId(), rpt.side, rpt.exchangeId);
+        var cxl = new Models.BrokeredCancel(cancel.origOrderId, OrderBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         var sent = this._oeGateway.cancelOrder(cxl);
 
         var rpt : Models.OrderStatusReport = {
@@ -239,6 +293,63 @@ export class ExchangeBroker implements Interfaces.IBroker {
         this._orderStatusPublisher.publish(o);
     };
 
+    constructor(private _baseBroker : Interfaces.IBroker,
+                private _oeGateway : Interfaces.IOrderEntryGateway,
+                private _persister : OrderStatusPersister,
+                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
+                private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
+                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
+        var msgLog = Utils.log("tribeca:messaging:orders");
+
+        _orderStatusPublisher.registerSnapshot(() => this.allOrderStates());
+        _submittedOrderReciever.registerReceiver(o => {
+            this._log("got new order", o);
+            if (!Models.currencyPairEqual(o.pair, this._baseBroker.pair)) return;
+            this._log("processing new order", o);
+            var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
+                o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
+            this.sendOrder(order);
+        });
+        _cancelOrderReciever.registerReceiver(o => {
+            this._log("got new cancel req %o", o);
+            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()))
+        });
+
+        this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);
+
+        this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
+
+        this._persister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
+            _.each(osrs, osr => {
+                this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
+
+                if (!this._allOrders.hasOwnProperty(osr.orderId))
+                    this._allOrders[osr.orderId] = [osr];
+                else
+                    this._allOrders[osr.orderId].push(osr);
+            });
+        });
+    }
+}
+
+export class ExchangeBroker implements Interfaces.IBroker {
+    private _log : Utils.Logger;
+
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
+    public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
+        return this._currencies[currency];
+    }
+
+    private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
+        if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
+            this._currencies[rpt.currency] = rpt;
+            this.PositionUpdate.trigger(rpt);
+            this._log("New currency report: %s", rpt);
+            this._positionPublisher.publish(rpt);
+        }
+    };
+
     makeFee() : number {
         return this._baseGateway.makeFee();
     }
@@ -254,55 +365,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
     public get pair() {
         return this._pair;
     }
-
-    // TOOD: is this event needed?
-    MarketTrade = new Utils.Evt<Models.MarketTrade>();
-    public marketTrades : Models.MarketTrade[] = [];
-
-    private handleNewMarketTrade = (u : Models.MarketSide) => {
-        var t = new Models.MarketTrade(u.price, u.size, u.time, null);
-        this.marketTrades.push(t);
-        this.MarketTrade.trigger(t);
-        this._marketTradePublisher.publish(t);
-    };
-
-    MarketData = new Utils.Evt<Models.Market>();
-    _currentBook : Models.Market = null;
-
-    public get currentBook() : Models.Market {
-        return this._currentBook;
-    }
-
-    private handleMarketData = (book : Models.Market) => {
-        var bids : Models.MarketSide[] = [];
-        var asks : Models.MarketSide[] = [];
-        var isDupe = true;
-        for (var i = 0; i < 5; i++) {
-            var bid = book.bids[i];
-            var ask = book.asks[i];
-
-            bids.push(bid);
-            asks.push(ask);
-
-            if (isDupe) {
-                if (this.currentBook !== null) {
-                    if (!Models.marketSideEquals(bid, this.currentBook.bids[i]) ||
-                        !Models.marketSideEquals(ask, this.currentBook.asks[i])) {
-                        isDupe = false;
-                    }
-                }
-                else {
-                    isDupe = false;
-                }
-            }
-        }
-
-        if (isDupe) return;
-
-        this._currentBook = new Models.Market(bids, asks, book.time);
-        this.MarketData.trigger(this.currentBook);
-        this._marketPublisher.publish(this.currentBook);
-    };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private mdConnected = Models.ConnectivityStatus.Disconnected;
@@ -334,63 +396,27 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _persister : OrderStatusPersister,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,
-                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
-                private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>,
-                private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>) {
+                private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
-
-        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
-        _orderStatusPublisher.registerSnapshot(() => this.allOrderStates());
-        _positionPublisher.registerSnapshot(() => [
-            this.getPosition(Models.Currency.BTC),
-            this.getPosition(Models.Currency.USD),
-            this.getPosition(Models.Currency.LTC)
-        ]);
-        _connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
-        _submittedOrderReciever.registerReceiver(o => {
-            this._log("got new order", o);
-            if (!Models.currencyPairEqual(o.pair, this.pair)) return;
-            this._log("processing new order", o);
-            var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
-            this.sendOrder(order);
-        });
-        _cancelOrderReciever.registerReceiver(o => {
-            this._log("got new cancel req %o", o);
-            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()))
-        });
-        _marketTradePublisher.registerSnapshot(() => this.marketTrades);
 
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
-        this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
-            if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
             this.onConnect(Models.GatewayType.MarketData, s);
         });
-        this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
 
-        this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
         this._oeGateway.ConnectChanged.on(s => {
             this.onConnect(Models.GatewayType.OrderEntry, s)
         });
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
-        this._persister.getLatestStatuses(1000, this.exchange(), _pair).then(osrs => {
-            _.each(osrs, osr => {
-                this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
-
-                if (!this._allOrders.hasOwnProperty(osr.orderId))
-                    this._allOrders[osr.orderId] = [osr];
-                else
-                    this._allOrders[osr.orderId].push(osr);
-            });
-        });
+        this._positionPublisher.registerSnapshot(() => [
+            this.getPosition(Models.Currency.BTC),
+            this.getPosition(Models.Currency.USD),
+            this.getPosition(Models.Currency.LTC)
+        ]);
+        this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
 }

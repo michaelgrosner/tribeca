@@ -40,24 +40,28 @@ export class CombinedGateway {
         public base : IExchangeDetailsGateway) { }
 }
 
-export interface IBroker {
+export interface IMarketDataBroker {
     MarketData : Utils.Evt<Models.Market>;
     currentBook : Models.Market;
 
     MarketTrade : Utils.Evt<Models.MarketSide>;
     marketTrades : Models.MarketSide[];
+}
 
-    makeFee() : number;
-    takeFee() : number;
-    exchange() : Models.Exchange;
-    pair : Models.CurrencyPair;
-
+export interface IOrderBroker {
     sendOrder(order : Models.SubmitNewOrder) : Models.SentOrder;
     cancelOrder(cancel : Models.OrderCancel);
     replaceOrder(replace : Models.CancelReplaceOrder) : Models.SentOrder;
     OrderUpdate : Utils.Evt<Models.OrderStatusReport>;
     allOrderStates() : Array<Models.OrderStatusReport>;
     cancelOpenOrders() : void;
+}
+
+export interface IBroker {
+    makeFee() : number;
+    takeFee() : number;
+    exchange() : Models.Exchange;
+    pair : Models.CurrencyPair;
 
     getPosition(currency : Models.Currency) : Models.CurrencyPosition;
     PositionUpdate : Utils.Evt<Models.CurrencyPosition>;

@@ -83,26 +83,27 @@ var submitOrderReceiver = new Messaging.Receiver(Messaging.Topics.SubmitNewOrder
 var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, io, messagingLog);
 
 var persister = new Broker.OrderStatusPersister();
-var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg,
-    persister, marketDataPublisher, orderStatusPublisher, positionPublisher, connectivity,
-    submitOrderReceiver, cancelOrderReceiver, marketTradePublisher);
+
+var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
+var orderBroker = new Broker.OrderBroker(broker, gateway.oe, persister, orderStatusPublisher, submitOrderReceiver, cancelOrderReceiver);
+var marketDataBroker = new Broker.MarketDataBroker(broker, gateway.md, marketDataPublisher, marketTradePublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
-var safeties = new Safety.SafetySettingsManager(safetyRepo, broker);
+var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker);
 
 var active = new Agent.ActiveRepository(safeties, activePublisher, activeReceiver);
 var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver);
 
-var quoter = new Quoter.Quoter(broker);
+var quoter = new Quoter.Quoter(orderBroker, broker);
 
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
         mainLog("Terminating", e, e.stack);
     else
         mainLog("Terminating [no stack]");
-    broker.cancelOpenOrders();
+    orderBroker.cancelOpenOrders();
     process.exit();
 };
 process.on("uncaughtException", exitHandler);
