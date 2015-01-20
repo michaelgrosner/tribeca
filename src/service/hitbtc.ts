@@ -184,20 +184,30 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    private onOpen = () => {
-        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+    private onConnectionStatusChange = () => {
+        if (this._marketDataWs.readyState === ws.OPEN && (<any>this._tradesClient).connected) {
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+        }
+        else {
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+        }
     };
 
     _tradesClient : SocketIOClient.Socket;
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcMD");
     constructor(config : Config.IConfigProvider) {
         this._marketDataWs = new ws(config.GetString("HitBtcMarketDataUrl"));
-        this._marketDataWs.on('open', this.onOpen);
+        this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
-        this._marketDataWs.on("error", this._log);
+        this._marketDataWs.on("error", this.onConnectionStatusChange);
 
-        this._tradesClient = io.connect(config.GetString("HitBtcPullUrl") + ":8081/trades/BTCUSD");
-        this._tradesClient.on("trade", (t : MarketTrade) => new Models.MarketSide(t.price, t.amount, Utils.date()));
+        this._log("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
+        this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
+        this._tradesClient.on("connect", this.onConnectionStatusChange);
+        this._tradesClient.on("trade", (t : MarketTrade) => {
+            this.MarketTrade.trigger(new Models.MarketSide(t.price, t.amount, Utils.date()));
+        });
+        this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/orderbook")},
