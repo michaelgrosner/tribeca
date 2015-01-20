@@ -100,6 +100,8 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
+        rowHeight: 20,
+        headerRowHeight: 20,
         columnDefs: [
             {width: 150, field:'time', displayName:'time'},
             {width: 100, field:'orderId', displayName:'id'},

@@ -210,19 +210,23 @@ class MarketTradeViewModel {
     qBz : number;
 
     constructor(trade : Models.MarketTrade) {
-        this.price = trade.price;
-        this.size = trade.size;
+        this.price = MarketTradeViewModel.round(trade.price);
+        this.size = MarketTradeViewModel.round(trade.size);
 
         var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.time = parsedTime.toDate();
-        this.displayTime = Models.toUtcFormattedTime(parsedTime);
+        this.displayTime = parsedTime.format('HH:mm:ss,SSS');
 
         if (trade.quote != null) {
-            this.qA = trade.quote.ask.price;
-            this.qAz = trade.quote.ask.size;
-            this.qB = trade.quote.bid.price;
-            this.qBz = trade.quote.bid.size;
+            this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
+            this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
+            this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
+            this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
         }
+    }
+
+    private static round(num : number) {
+        return Math.round(num * 100) / 100;
     }
 }
 
@@ -240,17 +244,19 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
     $scope.marketTradeOptions  = {
         data: 'marketTrades',
         showGroupPanel: false,
+        rowHeight: 20,
+        headerRowHeight: 20,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
         sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
-            {width: 150, field:'displayTime', displayName:'t'},
-            {width: 100, field:'price', displayName:'px'},
-            {width: 35, field:'size', displayName:'sz'},
-            {width: 60, field:'qBz', displayName:'qBz'},
-            {width: 80, field:'qB', displayName:'qB'},
-            {width: 150, field:'qA', displayName:'qA'},
-            {width: 65, field:'qAz', displayName:'qAz'}
+            {width: 75, field:'displayTime', displayName:'t'},
+            {width: 40, field:'price', displayName:'px'},
+            {width: 40, field:'size', displayName:'sz'},
+            {width: 40, field:'qBz', displayName:'qBz'},
+            {width: 40, field:'qB', displayName:'qB'},
+            {width: 40, field:'qA', displayName:'qA'},
+            {width: 40, field:'qAz', displayName:'qAz'}
         ]
     };
 
