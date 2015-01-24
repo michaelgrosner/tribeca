@@ -16,8 +16,11 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     public get marketTrades() { return this._marketTrades; }
 
     private _marketTrades : Models.MarketTrade[] = [];
-    private handleNewMarketTrade = (u : Models.MarketSide) => {
-        var t = new Models.MarketTrade(u.price, u.size, u.time, this._quoteGenerator.latestQuote);
+    private handleNewMarketTrade = (u : Models.GatewayMarketTrade) => {
+        var qt = u.onStartup ? null : this._quoteGenerator.latestQuote;
+        var mkt = u.onStartup ? null : this._mdBroker.currentBook;
+
+        var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt);
         this.marketTrades.push(t);
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
@@ -25,6 +28,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
                 private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>,
+                private _mdBroker : Interfaces.IMarketDataBroker,
                 private _quoteGenerator : Agent.QuoteGenerator) {
         _marketTradePublisher.registerSnapshot(() => this.marketTrades);
         this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);

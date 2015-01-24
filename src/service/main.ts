@@ -99,7 +99,7 @@ var quoter = new Quoter.Quoter(orderBroker, broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
 
-var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, quoteGenerator);
+var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker, quoteGenerator);
 
 var exitHandler = e => {
     if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))

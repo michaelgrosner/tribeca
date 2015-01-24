@@ -63,23 +63,44 @@ export class QuoteGenerator {
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
         var rgq = this._quoter.quotesSent(s);
+        var rgq_len = rgq.length;
 
-        return mkts.filter(m => {
-            for (var j = 0; j < rgq.length; j++) {
-                var q : Models.Quote = rgq[j].quote;
-                if (Math.abs(q.price - m.price) < .01 && Math.abs(q.size - m.size) < .01)  {
-                    return false;
+        var i = 0;
+        var j = 0;
+        while (true) {
+
+        }
+
+        var filteredMkts : Models.MarketSide[] = [];
+        for (var i = 0; i < mkts.length; i++) {
+            var m = mkts[i];
+
+            if (rgq_len === 0)
+                filteredMkts.push(m);
+            else {
+                for (var j = 0; j < rgq_len; j++) {
+                    var q : Models.Quote = rgq[j].quote;
+
+                    if (Math.abs(q.price - m.price) < .01) {
+                        var residualSize = m.size - q.size;
+                        if (Math.abs(residualSize) > .01) {
+                            filteredMkts.push(new Models.MarketSide(m.price, residualSize));
+                        }
+                    }
+                    else {
+                        filteredMkts.push(m);
+                    }
                 }
             }
-            return true;
-        });
+        }
+        return filteredMkts;
     };
 
     private recalcFairValue = (mkt : Models.Market) => {
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
-        var midLevel = n => (ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
+        var midLevel = n => (ask[n].price + bid[n].price)/2.0; //(ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
         var fv = midLevel(0);
 
         this.latestFairValue = new Models.FairValue(fv, new Models.Market(bid, ask, mkt.time));
@@ -100,10 +121,20 @@ export class QuoteGenerator {
         var width = params.width;
 
         var bidPx = fv.mkt.bids[0].price;
+
+        if (fv.mkt.bids[0].size > .2) {
+            bidPx += .01;
+        }
+
         var minBid = fv.price - width / 2.0;
         bidPx = Math.min(minBid, bidPx);
 
         var askPx = fv.mkt.asks[0].price;
+
+        if (fv.mkt.asks[0].size > .2) {
+            askPx -= .01;
+        }
+
         var minAsk = fv.price + width / 2.0;
         askPx = Math.max(minAsk, askPx);
 
@@ -170,7 +201,7 @@ export class QuoteGenerator {
         var previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
-        return Math.abs(newQ.price - previousQ.price) < .05 ? previousQ : newQ;
+        return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
     }
 
     private sendQuote = (t : Moment) : void => {

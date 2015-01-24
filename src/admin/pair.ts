@@ -204,10 +204,16 @@ class MarketTradeViewModel {
     size : number;
     time : Date;
     displayTime : string;
+
     qA : number;
     qB : number;
     qAz : number;
     qBz : number;
+
+    mA : number;
+    mB : number;
+    mAz : number;
+    mBz : number;
 
     constructor(trade : Models.MarketTrade) {
         this.price = MarketTradeViewModel.round(trade.price);
@@ -222,6 +228,13 @@ class MarketTradeViewModel {
             this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
             this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
             this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
+        }
+
+        if (trade.market != null) {
+            this.mA = MarketTradeViewModel.round(trade.market.asks[0].price);
+            this.mAz = MarketTradeViewModel.round(trade.market.asks[0].size);
+            this.mB = MarketTradeViewModel.round(trade.market.bids[0].price);
+            this.mBz = MarketTradeViewModel.round(trade.market.bids[0].size);
         }
     }
 
@@ -256,7 +269,11 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
             {width: 40, field:'qBz', displayName:'qBz'},
             {width: 50, field:'qB', displayName:'qB'},
             {width: 50, field:'qA', displayName:'qA'},
-            {width: 40, field:'qAz', displayName:'qAz'}
+            {width: 40, field:'qAz', displayName:'qAz'},
+            {width: 40, field:'mBz', displayName:'mBz'},
+            {width: 50, field:'mB', displayName:'mB'},
+            {width: 50, field:'mA', displayName:'mA'},
+            {width: 40, field:'mAz', displayName:'mAz'}
         ]
     };
 
