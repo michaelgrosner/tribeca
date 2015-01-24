@@ -65,12 +65,6 @@ export class QuoteGenerator {
         var rgq = this._quoter.quotesSent(s);
         var rgq_len = rgq.length;
 
-        var i = 0;
-        var j = 0;
-        while (true) {
-
-        }
-
         var filteredMkts : Models.MarketSide[] = [];
         for (var i = 0; i < mkts.length; i++) {
             var m = mkts[i];
