@@ -10,46 +10,76 @@
 
     <title>tribeca [{{ env }}]</title>
 </head>
-<body>
 
-    <script type="text/ng-template" id="order_form.html">
-        <form style="margin: 20px" class="form-horizontal" novalidate role="form">
-            <div class="form-group">
-                <label>pair</label>
-                <select class="form-control input-sm"
-                        ng-model="order.pair"
-                        ng-options="x as x.displayName for x in order.availablePairs"></select>
-            </div>
-            <div class="form-group">
-                <label>Exchange</label>
-                <select class="form-control input-sm" ng-model="order.exchange" ng-options="x for x in order.availableExchanges"></select>
-            </div>
-            <div class="form-group">
-                <label>Side</label>
-                <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
-            </div>
-            <div class="form-group">
-                <label>Price</label>
-                <input class="form-control input-sm" type="number" ng-model="order.price" />
-            </div>
-            <div class="form-group">
-                <label>Size</label>
-                <input class="form-control input-sm" type="number" ng-model="order.quantity" />
-            </div>
-            <div class="form-group">
-                <label>TIF</label>
-                <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
-            </div>
-            <div class="form-group">
-                <label>Type</label>
-                <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
-            </div>
-            <button type="button"
-                    class="btn btn-success"
-                    onclick="$('#order_form').popover('hide');"
-                    ng-click="order.submitOrder()">Submit</button>
-        </form>
-    </script>
+<script type="text/ng-template" id="market_display.html">
+    <table class="table table-hover table-bordered table-condensed">
+        <tr class="active">
+            <th></th>
+            <th>bidSz</th>
+            <th>bidPx</th>
+            <th>FV</th>
+            <th>askPx</th>
+            <th>askSz</th>
+        </tr>
+        <tr class="active">
+            <td>q</td>
+            <td>{{ qBidSz|number:2 }}</td>
+            <td ng-class="bidClass">{{ qBidPx|number:2 }}</td>
+            <td>{{ fairValue|number:2 }}</td>
+            <td ng-class="askClass">{{ qAskPx|number:2 }}</td>
+            <td>{{ qAskSz|number:2 }}</td>
+        </tr>
+        <tr class="active" ng-repeat="level in levels">
+            <td>mkt{{ $index }}</td>
+            <td>{{ level.bidSize|number:2 }}</td>
+            <td>{{ level.bidPrice|number:2 }}</td>
+            <td></td>
+            <td>{{ level.askPrice|number:2 }}</td>
+            <td>{{ level.askSize|number:2 }}</td>
+        </tr>
+    </table>
+</script>
+
+<script type="text/ng-template" id="order_form.html">
+    <form style="margin: 20px" class="form-horizontal" novalidate role="form">
+        <div class="form-group">
+            <label>pair</label>
+            <select class="form-control input-sm"
+                    ng-model="order.pair"
+                    ng-options="x as x.displayName for x in order.availablePairs"></select>
+        </div>
+        <div class="form-group">
+            <label>Exchange</label>
+            <select class="form-control input-sm" ng-model="order.exchange" ng-options="x for x in order.availableExchanges"></select>
+        </div>
+        <div class="form-group">
+            <label>Side</label>
+            <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
+        </div>
+        <div class="form-group">
+            <label>Price</label>
+            <input class="form-control input-sm" type="number" ng-model="order.price" />
+        </div>
+        <div class="form-group">
+            <label>Size</label>
+            <input class="form-control input-sm" type="number" ng-model="order.quantity" />
+        </div>
+        <div class="form-group">
+            <label>TIF</label>
+            <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
+        </div>
+        <div class="form-group">
+            <label>Type</label>
+            <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
+        </div>
+        <button type="button"
+                class="btn btn-success"
+                onclick="$('#order_form').popover('hide');"
+                ng-click="order.submitOrder()">Submit</button>
+    </form>
+</script>
+
+<body>
 
     <div ng-if="!connected">
         Not connected
@@ -92,32 +122,7 @@
                             </div>
 
                             <div class="col-md-3">
-                                <table class="table table-bordered table-condensed container">
-                                    <tr class="active row">
-                                        <th></th>
-                                        <th>bidSz</th>
-                                        <th>bidPx</th>
-                                        <th>FV</th>
-                                        <th>askPx</th>
-                                        <th>askSz</th>
-                                    </tr>
-                                    <tr class="active row">
-                                        <td>mkt</td>
-                                        <td>{{ pair.bidSize|number:2 }}</td>
-                                        <td>{{ pair.bid|number:2 }}</td>
-                                        <td></td>
-                                        <td>{{ pair.ask|number:2 }}</td>
-                                        <td>{{ pair.askSize|number:2 }}</td>
-                                    </tr>
-                                    <tr class="active row">
-                                        <td>tq</td>
-                                        <td>{{ pair.qBidSz|number:2 }}</td>
-                                        <td>{{ pair.qBidPx|number:2 }}</td>
-                                        <td>{{ pair.fairValue|number:2 }}</td>
-                                        <td>{{ pair.qAskPx|number:2 }}</td>
-                                        <td>{{ pair.qAskSz|number:2 }}</td>
-                                    </tr>
-                                </table>
+                                <market-quoting-grid exch="pair.exch" pair="pair.pair"></market-quoting-grid>
                             </div>
 
                             <div class="col-md-4">

@@ -86,17 +86,6 @@ export class DisplayPair {
     base : string;
     quote : string;
 
-    bidSize : number;
-    bid : number;
-    askSize : number;
-    ask : number;
-
-    qBidPx : number;
-    qBidSz : number;
-    qAskPx : number;
-    qAskSz : number;
-    fairValue : number;
-
     active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
     safetySettings : DisplaySafetySettingsParameters;
@@ -112,25 +101,13 @@ export class DisplayPair {
             var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
             var subscriber = new Messaging.Subscriber<T>(wrappedTopic, io, log.info);
             this._subscribers.push(subscriber);
-            return  subscriber;
+            return subscriber;
         };
 
         var makeFire = <T>(topic : string) => {
             var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
             return new Messaging.Fire<T>(wrappedTopic, io);
         };
-
-        makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
-            .registerSubscriber(this.updateMarket, ms => ms.forEach(this.updateMarket))
-            .registerDisconnectedHandler(this.clearMarket);
-
-        makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
-            .registerSubscriber(this.updateQuote, qs => qs.forEach(this.updateQuote))
-            .registerDisconnectedHandler(this.clearQuote);
-
-        makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
-            .registerSubscriber(this.updateFairValue, qs => qs.forEach(this.updateFairValue))
-            .registerDisconnectedHandler(this.clearFairValue);
 
         this.quote = Models.Currency[pair.quote];
         this.base = Models.Currency[pair.base];
@@ -156,46 +133,141 @@ export class DisplayPair {
         this._subscribers.forEach(s => s.disconnect());
     };
 
-    private clearMarket = () => {
-        this.bidSize = null;
-        this.bid = null;
-        this.ask = null;
-        this.askSize = null;
-    };
-
-    public updateMarket = (update : Models.Market) => {
-        this.bidSize = update.bids[0].size;
-        this.bid = update.bids[0].price;
-        this.ask = update.asks[0].price;
-        this.askSize = update.asks[0].size;
-    };
-
-    public updateQuote = (quote : Models.TwoSidedQuote) => {
-        this.qBidPx = quote.bid.price;
-        this.qBidSz = quote.bid.size;
-        this.qAskPx = quote.ask.price;
-        this.qAskSz = quote.ask.size;
-    };
-
-    public clearQuote = () => {
-        this.qBidPx = null;
-        this.qBidSz = null;
-        this.qAskPx = null;
-        this.qAskSz = null;
-    };
-
-    public updateFairValue = (fv : Models.FairValue) => {
-        this.fairValue = fv.price;
-    };
-
-    public clearFairValue = () => {
-        this.fairValue = null;
-    };
-
     public updateParameters = (p : Models.QuotingParameters) => {
         this.quotingParameters.update(p);
     };
 }
+
+// ===============
+
+class Level {
+    bidPrice : number;
+    bidSize : number;
+    askPrice : number;
+    askSize : number;
+}
+
+interface MarketQuotingScope extends ng.IScope {
+    levels : Level[];
+    qBidSz : number;
+    qBidPx : number;
+    fairValue : number;
+    qAskPx : number;
+    qAskSz : number;
+
+    bidClass : string;
+    askClass : string;
+
+    exch : Models.Exchange;
+    pair : Models.CurrencyPair;
+}
+
+var MarketQuotingController = ($scope : MarketQuotingScope,
+                               $log : ng.ILogService,
+                               socket : any) => {
+    var clearMarket = () => {
+        $scope.levels = [];
+    };
+    clearMarket();
+
+    var updateMarket = (update : Models.Market) => {
+        for (var i = 0; i < update.asks.length; i++) {
+            if (angular.isUndefined($scope.levels[i]))
+                $scope.levels[i] = new Level();
+            $scope.levels[i].askPrice = update.asks[i].price;
+            $scope.levels[i].askSize = update.asks[i].size;
+        }
+
+        for (var i = 0; i < update.bids.length; i++) {
+            if (angular.isUndefined($scope.levels[i]))
+                $scope.levels[i] = new Level();
+            $scope.levels[i].bidPrice = update.bids[i].price;
+            $scope.levels[i].bidSize = update.bids[i].size;
+        }
+
+        updateQuoteClass();
+    };
+
+    var updateQuote = (quote : Models.TwoSidedQuote) => {
+        $scope.qBidPx = quote.bid.price;
+        $scope.qBidSz = quote.bid.size;
+        $scope.qAskPx = quote.ask.price;
+        $scope.qAskSz = quote.ask.size;
+        updateQuoteClass();
+    };
+
+    var updateQuoteClass = () => {
+        if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
+            if ($scope.qBidPx >= $scope.levels[0].bidPrice - 0.001) {
+                $scope.bidClass = 'success';
+            }
+            else {
+                $scope.bidClass = 'warning';
+            }
+
+            if ($scope.qAskPx <= $scope.levels[0].askPrice + 0.001) {
+                $scope.askClass = 'success';
+            }
+            else {
+                $scope.askClass = 'warning';
+            }
+        }
+    };
+
+    var clearQuote = () => {
+        $scope.qBidPx = null;
+        $scope.qBidSz = null;
+        $scope.qAskPx = null;
+        $scope.qAskSz = null;
+    };
+
+    var updateFairValue = (fv : Models.FairValue) => {
+        $scope.fairValue = fv.price;
+    };
+
+    var clearFairValue = () => {
+        $scope.fairValue = null;
+    };
+
+    var _subscribers = [];
+    var makeSubscriber = <T>(topic : string) => {
+        var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, topic);
+        var subscriber = new Messaging.Subscriber<T>(wrappedTopic, socket, $log.info);
+        _subscribers.push(subscriber);
+        return subscriber;
+    };
+
+    makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
+        .registerSubscriber(updateMarket, ms => ms.forEach(updateMarket))
+        .registerDisconnectedHandler(clearMarket);
+
+    makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
+        .registerSubscriber(updateQuote, qs => qs.forEach(updateQuote))
+        .registerDisconnectedHandler(clearQuote);
+
+    makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
+        .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))
+        .registerDisconnectedHandler(clearFairValue);
+
+    $log.info("starting market quoting grid for", $scope.pair, Models.Exchange[$scope.exch]);
+};
+
+angular
+    .module("marketQuotingDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .directive("marketQuotingGrid", () => {
+
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            templateUrl: "market_display.html",
+            controller: MarketQuotingController,
+            scope: {
+              exch: '=',
+              pair: '='
+            }
+          }
+    });
 
 // ===============
 

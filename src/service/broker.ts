@@ -71,25 +71,32 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
 
     private _currentBook : Models.Market = null;
     private handleMarketData = (book : Models.Market) => {
+        var bids : Models.MarketSide[] = [];
+        var asks : Models.MarketSide[] = [];
         var isDupe = true;
-        for (var i = 0; i < 5 && isDupe; i++) {
+        for (var i = 0; i < 5; i++) {
             var bid = book.bids[i];
             var ask = book.asks[i];
 
-            if (this.currentBook !== null) {
-                if (!Models.marketSideEquals(bid, this.currentBook.bids[i]) ||
-                    !Models.marketSideEquals(ask, this.currentBook.asks[i])) {
+            bids.push(bid);
+            asks.push(ask);
+
+            if (isDupe) {
+                if (this.currentBook !== null) {
+                    if (!Models.marketSideEquals(bid, this.currentBook.bids[i]) ||
+                        !Models.marketSideEquals(ask, this.currentBook.asks[i])) {
+                        isDupe = false;
+                    }
+                }
+                else {
                     isDupe = false;
                 }
-            }
-            else {
-                isDupe = false;
             }
         }
 
         if (isDupe) return;
 
-        this._currentBook = book;
+        this._currentBook = new Models.Market(bids, asks, book.time);
         this.MarketData.trigger(this.currentBook);
         this._marketPublisher.publish(this.currentBook);
     };
