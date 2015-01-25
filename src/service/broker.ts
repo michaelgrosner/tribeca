@@ -20,7 +20,7 @@ export class OrderStatusPersister {
         var deferred = Q.defer<Models.OrderStatusReport[]>();
         this._db.then(db => {
             var selector : Models.OrderStatusReport = {exchange: exchange, pair: pair};
-            db.collection('osr').find(selector, {}, {sort: "time", limit: last}, (err, docs) => {
+            db.collection('osr').find(selector, {}, {sort: {"time": -1}, limit: last}, (err, docs) => {
                 if (err) deferred.reject(err);
                 else {
                     docs.toArray((err, arr) => {
