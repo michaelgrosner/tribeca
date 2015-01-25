@@ -63,31 +63,25 @@ export class QuoteGenerator {
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
         var rgq = this._quoter.quotesSent(s);
-        var rgq_len = rgq.length;
 
-        var filteredMkts : Models.MarketSide[] = [];
+        var copiedMkts = [];
         for (var i = 0; i < mkts.length; i++) {
-            var m = mkts[i];
+            copiedMkts.push(new Models.MarketSide(mkts[i].price, mkts[i].size))
+        }
 
-            if (rgq_len === 0)
-                filteredMkts.push(m);
-            else {
-                for (var j = 0; j < rgq_len; j++) {
-                    var q : Models.Quote = rgq[j].quote;
+        for (var j = 0; j < rgq.length; j++) {
+            var q = rgq[j].quote;
 
-                    if (Math.abs(q.price - m.price) < .01) {
-                        var residualSize = m.size - q.size;
-                        if (Math.abs(residualSize) > .01) {
-                            filteredMkts.push(new Models.MarketSide(m.price, residualSize));
-                        }
-                    }
-                    else {
-                        filteredMkts.push(m);
-                    }
+            for (var i = 0; i < copiedMkts.length; i++) {
+                var m = copiedMkts[i];
+
+                if (Math.abs(q.price - m.price) < .01) {
+                    copiedMkts[i].size = m.size - q.size;
                 }
             }
         }
-        return filteredMkts;
+
+        return copiedMkts.filter(m => m.size > 0.001);
     };
 
     private recalcFairValue = (mkt : Models.Market) => {
