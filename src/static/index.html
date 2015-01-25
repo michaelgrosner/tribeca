@@ -110,13 +110,12 @@
         <div class="container-fluid">
             <div ng-repeat="exch in exchanges">
                 <div>
-                    <div ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                    <div style="padding: 5px" ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                         <p><b>{{ exch.name }}</b> :: USD: {{ exch.usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
 
                         <div class="row" ng-repeat="pair in exch.pairs">
-                            <div class="col-md-1 center-block">
-                                <button ng-class="pair.active.getClass()"
-                                        ng-click="pair.active.submit()">
+                            <div class="col-md-1 text-center">
+                                <button ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
                                     {{ pair.name }}
                                 </button>
                             </div>
