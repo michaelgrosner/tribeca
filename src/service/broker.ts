@@ -28,11 +28,8 @@ export class OrderStatusPersister {
                             deferred.reject(err);
                         }
                         else {
-                            var cvtArr = _.map(arr, x => {
-                                x.time = momentjs(x.time);
-                                return x;
-                            });
-                            deferred.resolve(cvtArr);
+                            _.forEach(arr, x => x.time = momentjs(x.time));
+                            deferred.resolve(arr.reverse());
                         }
                     });
                 }
