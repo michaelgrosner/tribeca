@@ -21,7 +21,7 @@
             <th>askPx</th>
             <th>askSz</th>
         </tr>
-        <tr class="active">
+        <tr class="info">
             <td>q</td>
             <td>{{ qBidSz|number:2 }}</td>
             <td ng-class="bidClass">{{ qBidPx|number:2 }}</td>
@@ -32,9 +32,9 @@
         <tr class="active" ng-repeat="level in levels">
             <td>mkt{{ $index }}</td>
             <td>{{ level.bidSize|number:2 }}</td>
-            <td>{{ level.bidPrice|number:2 }}</td>
+            <td ng-class="bidClass[$index]">{{ level.bidPrice|number:2 }}</td>
             <td></td>
-            <td>{{ level.askPrice|number:2 }}</td>
+            <td ng-class="askClass[$index]">{{ level.askPrice|number:2 }}</td>
             <td>{{ level.askSize|number:2 }}</td>
         </tr>
     </table>
