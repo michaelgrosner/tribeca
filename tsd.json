@@ -16,6 +16,9 @@
     },
     "knockout/knockout.d.ts": {
       "commit": "6ee44e03b86604f1188020a365281890140e4b9b"
+    },
+    "compression/compression.d.ts": {
+      "commit": "b3324f69165309a3ea2bd02fd10e97841bf07c83"
     }
   }
 }

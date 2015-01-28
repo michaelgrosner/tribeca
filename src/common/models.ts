@@ -316,9 +316,11 @@ export function currencyPairEqual(a : CurrencyPair, b : CurrencyPair) : boolean 
 }
 
 export enum QuotingMode { Top, Mid }
+export enum FairValueModel { BBO, wBBO }
 
 export class QuotingParameters {
-    constructor(public width : number, public size : number, public mode : QuotingMode) {}
+    constructor(public width : number, public size : number,
+                public mode : QuotingMode, public fvModel : FairValueModel) {}
 }
 
 export class SafetySettings {

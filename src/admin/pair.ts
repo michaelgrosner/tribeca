@@ -62,15 +62,26 @@ class QuotingButtonViewModel extends FormViewModel<boolean> {
 
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableQuotingModes = [];
+    availableFvModels = [];
 
     constructor(sub : Messaging.ISubscribe<Models.QuotingParameters>,
                 fire : Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null), sub, fire);
 
-        var modes = [Models.QuotingMode.Mid, Models.QuotingMode.Top];
-        this.availableQuotingModes = modes.map(m => {
-            return {'str': Models.QuotingMode[m], 'val': m};
-        })
+        this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
+        this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
+    }
+
+    private static getMapping<T>(enumObject : T) {
+        var names = [];
+        for (var mem in enumObject) {
+            if (!enumObject.hasOwnProperty(mem)) continue;
+            var val = parseInt(mem, 10);
+            if (val >= 0) {
+                names.push({'str': enumObject[mem], 'val': val});
+            }
+        }
+        return names;
     }
 }
 

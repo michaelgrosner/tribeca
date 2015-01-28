@@ -16,8 +16,8 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
                 rec : Messaging.IReceive<Models.QuotingParameters>) {
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
-            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode,
-            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top), rec, pub);
+            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode || a.fvModel !== b.fvModel,
+            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top, Models.FairValueModel.wBBO), rec, pub);
 
     }
 }
@@ -38,8 +38,6 @@ class GeneratedQuote {
     constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
 }
 
-enum RecalcRequest { FairValue, Quote, TradingDecision }
-
 // computes a quote based off my quoting parameters
 export class QuoteGenerator {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
@@ -54,11 +52,12 @@ export class QuoteGenerator {
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _fvPublisher : Messaging.IPublish<Models.FairValue>,
                 private _activeRepo : ActiveRepository) {
-        _broker.MarketData.on(() => this.recalcMarkets(RecalcRequest.FairValue, _broker.currentBook.time));
-        _qlParamRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.Quote, Utils.date()));
+        _broker.MarketData.on(() => this.recalcMarkets(_broker.currentBook.time));
+        _qlParamRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
+        _activeRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
+
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
-        _activeRepo.NewParameters.on(() => this.recalcMarkets(RecalcRequest.TradingDecision, Utils.date()));
     }
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
@@ -84,12 +83,22 @@ export class QuoteGenerator {
         return copiedMkts.filter(m => m.size > 0.001);
     };
 
+    private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+        switch (model) {
+            case Models.FairValueModel.BBO:
+                return (ask.price + bid.price)/2.0;
+            case Models.FairValueModel.wBBO:
+                return (ask.price*ask.size + bid.price*bid.size) / (ask.size + bid.size);
+            default:
+                throw new Error(Models.FairValueModel[model]);
+        }
+    }
+
     private recalcFairValue = (mkt : Models.Market) => {
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
-        var midLevel = n => (ask[n].price + bid[n].price)/2.0; //(ask[n].price*ask[n].size + bid[n].price*bid[n].size) / (ask[n].size + bid[n].size);
-        var fv = midLevel(0);
+        var fv = QuoteGenerator.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel);
 
         this.latestFairValue = new Models.FairValue(fv, new Models.Market(bid, ask, mkt.time));
         return true;
@@ -172,13 +181,13 @@ export class QuoteGenerator {
         return true;
     };
 
-    private recalcMarkets = (req : RecalcRequest, t : Moment) => {
+    private recalcMarkets = (t : Moment) => {
         var mkt = this._broker.currentBook;
         if (mkt == null) return;
 
-        var updateFv = req > RecalcRequest.FairValue || this.recalcFairValue(mkt);
-        var updateQuote = req > RecalcRequest.Quote || (updateFv && this.recalcQuote(t));
-        var sentQuote = req > RecalcRequest.TradingDecision || (updateQuote && this.sendQuote(t));
+        var updateFv = this.recalcFairValue(mkt);
+        var updateQuote = (updateFv && this.recalcQuote(t));
+        var sentQuote = (updateQuote && this.sendQuote(t));
 
         if (updateFv) this._fvPublisher.publish(this.latestFairValue);
         if (updateQuote) this._quotePublisher.publish(this.latestQuote);
