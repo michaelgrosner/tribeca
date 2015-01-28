@@ -156,6 +156,9 @@ class Level {
     bidSize : number;
     askPrice : number;
     askSize : number;
+
+    bidClass : string;
+    askClass : string;
 }
 
 interface MarketQuotingScope extends ng.IScope {
@@ -166,9 +169,6 @@ interface MarketQuotingScope extends ng.IScope {
     qAskPx : number;
     qAskSz : number;
 
-    bidClass : string[];
-    askClass : string[];
-
     exch : Models.Exchange;
     pair : Models.CurrencyPair;
 }
@@ -178,8 +178,6 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
                                socket : any) => {
     var clearMarket = () => {
         $scope.levels = [];
-        $scope.bidClass = [];
-        $scope.askClass = [];
     };
     clearMarket();
 
@@ -212,20 +210,21 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     var updateQuoteClass = () => {
         if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
             for (var i = 0; i < $scope.levels.length; i++) {
-                if (Math.abs($scope.qBidPx - $scope.levels[i].bidPrice) < 1e-3) {
-                    $scope.bidClass[i] = 'success';
+                var level = $scope.levels[i];
+                if (Math.abs($scope.qBidPx - level.bidPrice) < 1e-3) {
+                    level.bidClass = 'success';
                 }
                 else {
-                    $scope.bidClass[i] = 'active';
+                    level.bidClass = 'active';
                 }
             }
 
             for (var i = 0; i < $scope.levels.length; i++) {
                 if (Math.abs($scope.qAskPx - $scope.levels[i].askPrice) < 1e-3) {
-                    $scope.askClass[i] = 'success';
+                    level.askClass = 'success';
                 }
                 else {
-                    $scope.askClass[i] = 'active';
+                    level.askClass = 'active';
                 }
             }
         }
