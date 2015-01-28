@@ -20,6 +20,7 @@ import Quoter = require("./quoter");
 import Safety = require("./safety");
 import path = require("path");
 import express = require('express');
+import compression = require("compression");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -28,6 +29,7 @@ var app = express();
 var http = (<any>require('http')).Server(app);
 var io = require('socket.io')(http);
 
+app.use(<any>compression());
 app.use(express.static(path.join(__dirname, "admin")));
 http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
