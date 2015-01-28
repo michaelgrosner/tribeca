@@ -356,7 +356,6 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
     };
 
     var addNewMarketTrade = (u : Models.MarketTrade) => {
-        $log.info(u);
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
