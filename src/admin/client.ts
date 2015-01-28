@@ -53,18 +53,20 @@ module Client {
         }
 
         private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
-        constructor(socket : SocketIOClientStatic) {
+        constructor(socket : SocketIOClientStatic, private _log : ng.ILogService) {
             this.availableExchanges = DisplayOrder.getNames(Models.Exchange);
             this.availableSides = DisplayOrder.getNames(Models.Side);
             this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
             this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
 
-            this._fire = new Messaging.Fire<Models.OrderRequestFromUI>(Messaging.Topics.SubmitNewOrder, socket);
+            this._fire = new Messaging.Fire<Models.OrderRequestFromUI>(Messaging.Topics.SubmitNewOrder, socket, _log.info);
         }
 
         public submit = () => {
-            this._fire.fire(new Models.OrderRequestFromUI(this.exchange,
-                this.side, this.price, this.quantity, this.timeInForce, this.orderType, this.pair.pair));
+            var msg = new Models.OrderRequestFromUI(this.exchange,
+                this.side, this.price, this.quantity, this.timeInForce, this.orderType, this.pair.pair);
+            this._log.info("submitting order", msg);
+            this._fire.fire(msg);
         };
 
         public addNewPair = (p : Models.CurrencyPair) => {
@@ -81,7 +83,7 @@ module Client {
                   socket : SocketIOClientStatic, productListings : Shared.ProductListingRegistrar) => {
         $scope.connected = false;
         $scope.exchanges = [];
-        $scope.order = new DisplayOrder(socket);
+        $scope.order = new DisplayOrder(socket, $log);
 
         var onConnect = () => {
             $scope.connected = true;

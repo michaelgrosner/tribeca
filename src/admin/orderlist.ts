@@ -90,7 +90,7 @@ class DisplayOrderStatusReport {
 
 var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
                            socket : SocketIOClient.Socket, productListings : Shared.ProductListingRegistrar) => {
-    var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket);
+    var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket, $log.info);
 
     $scope.order_statuses = [];
     $scope.gridOptions = {

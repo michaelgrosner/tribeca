@@ -157,8 +157,10 @@ export interface IFire<T> {
 export class Fire<T> implements IFire<T> {
     private _io : any;
 
-    constructor(private topic : string, io : any) {
-        this._io = io("/"+this.topic)
+    constructor(private topic : string, io : any, _log : (...args: any[]) => void) {
+        this._io = io("/"+this.topic);
+        this._io.on("connect", () => _log("Fire connected to", this.topic));
+        this._io.on("disconnect", () => _log("Fire disconnected to", this.topic));
     }
 
     public fire = (msg : T) : void => {

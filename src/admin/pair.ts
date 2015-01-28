@@ -106,7 +106,7 @@ export class DisplayPair {
 
         var makeFire = <T>(topic : string) => {
             var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
-            return new Messaging.Fire<T>(wrappedTopic, io);
+            return new Messaging.Fire<T>(wrappedTopic, io, log.info);
         };
 
         this.quote = Models.Currency[pair.quote];
