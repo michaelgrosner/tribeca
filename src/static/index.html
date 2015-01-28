@@ -166,10 +166,10 @@
 
                             <div class="col-md-1">
                                 <form class="form-horizontal" novalidate>
-                                    <div class="form-group">
+                                    <div class="form-group" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
-                                            <div class="input-group-addon">t/sec</div>
-                                            <input ng-class="pair.safetySettings.pending ? 'has-warning form-control input-sm' : 'has-success form-control input-sm'"
+                                            <div class="input-group-addon">t/min</div>
+                                            <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.safetySettings.display.tradesPerMinute">
