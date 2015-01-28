@@ -192,6 +192,9 @@ export class QuoteGenerator {
         return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
     }
 
+    private static _bidStopQuote = new Models.Quote(Models.QuoteAction.Cancel, Models.Side.Bid);
+    private static _askStopQuote = new Models.Quote(Models.QuoteAction.Cancel, Models.Side.Ask);
+
     private sendQuote = (t : Moment) : void => {
         var quote = this.latestQuote;
 
@@ -199,18 +202,17 @@ export class QuoteGenerator {
             return;
         }
 
-        var bidQt : Models.Quote = null;
-        var askQt : Models.Quote = null;
+        var bidQt : Models.Quote = QuoteGenerator._bidStopQuote;
+        var askQt : Models.Quote = QuoteGenerator._askStopQuote;
 
-        if (this._activeRepo.latest
-                && this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size)
-                && this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price)) {
-            bidQt = quote.bid;
-            askQt = quote.ask;
-        }
-        else {
-            bidQt = QuoteGenerator.ConvertToStopQuote(quote.ask);
-            askQt = QuoteGenerator.ConvertToStopQuote(quote.bid);
+        if (this._activeRepo.latest) {
+            if (this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size)) {
+                askQt = quote.ask;
+            }
+
+            if (this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price)) {
+                bidQt = quote.bid;
+            }
         }
 
         var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
