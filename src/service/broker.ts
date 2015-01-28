@@ -128,19 +128,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
     }
 
-    allOrderStates() : Array<Models.OrderStatusReport> {
-        var os : Array<Models.OrderStatusReport> = [];
-        for (var k in this._allOrders) {
-            var e = this._allOrders[k];
-            for (var i = 0; i < e.length; i++) {
-                os.push(e[i]);
-            }
-        }
-        return os;
-    }
-
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
+    _allOrdersFlat : Models.OrderStatusReport[] = [];
     _exchIdsToClientIds : { [exchId: string] : string} = {};
 
     private static generateOrderId = () => {
@@ -262,6 +252,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
         this._allOrders[osr.orderId].push(o);
+        this._allOrdersFlat.push(o);
 
         this.OrderUpdate.trigger(o);
 
@@ -278,7 +269,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
-        _orderStatusPublisher.registerSnapshot(() => this.allOrderStates());
+        _orderStatusPublisher.registerSnapshot(() => this._allOrdersFlat);
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log("got new order", o);
             if (!Models.currencyPairEqual(o.pair, this._baseBroker.pair) || this._baseBroker.exchange() !== Models.Exchange[o.exchange]) return;
@@ -304,6 +295,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                     this._allOrders[osr.orderId] = [osr];
                 else
                     this._allOrders[osr.orderId].push(osr);
+
+                this._allOrdersFlat.push(osr);
             });
         });
     }
