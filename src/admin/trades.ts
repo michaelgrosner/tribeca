@@ -62,7 +62,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         ]
     };
 
-    var addTrade = t => $scope.trade_statuses.push(t);
+    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
 
     var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.Trades);
     var sub = new Messaging.Subscriber(topic, socket, $log.info)
