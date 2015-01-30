@@ -212,16 +212,14 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
             var tol = .005;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
+
                 if (Math.abs($scope.qBidPx - level.bidPrice) < tol) {
                     level.bidClass = 'success';
                 }
                 else {
                     level.bidClass = 'active';
                 }
-            }
 
-            for (var i = 0; i < $scope.levels.length; i++) {
-                var level = $scope.levels[i];
                 if (Math.abs($scope.qAskPx - level.askPrice) < tol) {
                     level.askClass = 'success';
                 }
