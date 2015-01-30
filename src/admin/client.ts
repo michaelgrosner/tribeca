@@ -7,6 +7,7 @@ import Models = require("../common/models");
 import moment = require("moment");
 import Exchange = require("./exchange");
 import OrderList = require("./orderlist");
+import Trades = require("./trades");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 
@@ -126,6 +127,14 @@ module Client {
         $log.info("started client");
     };
 
-    angular.module('projectApp', ['ui.bootstrap', 'ngGrid', 'orderListDirective', 'marketQuotingDirective', 'marketTradeDirective', 'sharedDirectives'])
+    var requires = ['ui.bootstrap',
+                    'ngGrid',
+                    'orderListDirective',
+                    'tradeListDirective',
+                    'marketQuotingDirective',
+                    'marketTradeDirective',
+                    'sharedDirectives'];
+
+    angular.module('projectApp', requires)
            .controller('uiCtrl', uiCtrl)
 }

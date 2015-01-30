@@ -12,55 +12,7 @@ import Q = require("q");
 import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import shortId = require("shortid");
-
-export class OrderStatusPersister {
-     _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
-
-    public getLatestStatuses = (last : number, exchange : Models.Exchange, pair : Models.CurrencyPair) : Q.Promise<Models.OrderStatusReport[]> => {
-        var deferred = Q.defer<Models.OrderStatusReport[]>();
-        this._db.then(db => {
-            var selector : Models.OrderStatusReport = {exchange: exchange, pair: pair};
-            db.collection('osr').find(selector, {}, {sort: {"time": -1}, limit: last}, (err, docs) => {
-                if (err) deferred.reject(err);
-                else {
-                    docs.toArray((err, arr) => {
-                        if (err) {
-                            deferred.reject(err);
-                        }
-                        else {
-                            _.forEach(arr, x => x.time = momentjs(x.time));
-                            deferred.resolve(arr.reverse());
-                        }
-                    });
-                }
-            });
-        }).done();
-
-        return deferred.promise;
-    };
-
-    public persist = (report : Models.OrderStatusReport) => {
-        var rpt : any = report;
-        rpt.time = rpt.time.toISOString();
-        this._db.then(db => db.collection('osr').insert(rpt, (err, res) => {
-            if (err)
-                this._log("Unable to insert order %s; %o", report.orderId, err);
-        })).done();
-    };
-
-    _db : Q.Promise<mongodb.Db>;
-    constructor() {
-        var deferred = Q.defer<mongodb.Db>();
-        mongodb.MongoClient.connect('mongodb://localhost:27017/tribeca', (err, db) => {
-            if (err) deferred.reject(err);
-            else {
-                deferred.resolve(db);
-                this._log("Successfully connected to DB");
-            }
-        });
-        this._db = deferred.promise;
-    }
-}
+import Persister = require("./persister");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -132,6 +84,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
     _allOrdersFlat : Models.OrderStatusReport[] = [];
     _exchIdsToClientIds : { [exchId: string] : string} = {};
+    _trades : Models.Trade[] = [];
 
     private static generateOrderId = () => {
         return shortId.generate();
@@ -257,19 +210,27 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.OrderUpdate.trigger(o);
 
         this._log("applied gw update -> %s", o);
-        this._persister.persist(o);
+        this._orderPersister.persist(o);
         this._orderStatusPublisher.publish(o);
+
+        if (osr.lastQuantity > 0) {
+            this._tradePublisher.publish(new Models.Trade(shortId.generate(), o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side))
+        }
     };
 
     constructor(private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _persister : OrderStatusPersister,
+                private _orderPersister : Persister.OrderStatusPersister,
+                private _tradePersister : Persister.TradePersister,
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
+                private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
         _orderStatusPublisher.registerSnapshot(() => this._allOrdersFlat);
+        _tradePublisher.registerSnapshot(() => this._trades);
+
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log("got new order", o);
             if (!Models.currencyPairEqual(o.pair, this._baseBroker.pair) || this._baseBroker.exchange() !== Models.Exchange[o.exchange]) return;
@@ -287,7 +248,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        this._persister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
+        this._orderPersister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
             _.each(osrs, osr => {
                 this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
@@ -298,6 +259,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
                 this._allOrdersFlat.push(osr);
             });
+        });
+
+        this._tradePersister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(trades => {
+            _.each(trades, t => this._trades.push(t));
         });
     }
 }

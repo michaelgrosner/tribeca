@@ -21,6 +21,7 @@ import Safety = require("./safety");
 import path = require("path");
 import express = require('express');
 import compression = require("compression");
+import Persister = require("./persister");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -61,6 +62,7 @@ var quotePublisher = getEnginePublisher<Models.TwoSidedQuote>(Messaging.Topics.Q
 var fvPublisher = getEnginePublisher(Messaging.Topics.FairValue);
 var marketDataPublisher = getEnginePublisher(Messaging.Topics.MarketData);
 var orderStatusPublisher = getEnginePublisher(Messaging.Topics.OrderStatusReports);
+var tradePublisher = getEnginePublisher(Messaging.Topics.Trades);
 var safetySettingsPublisher = getEnginePublisher(Messaging.Topics.SafetySettings);
 var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
 var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
@@ -85,10 +87,13 @@ var quotingParametersReceiver = getReciever(Messaging.Topics.QuotingParametersCh
 var submitOrderReceiver = new Messaging.Receiver(Messaging.Topics.SubmitNewOrder, io, messagingLog);
 var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, io, messagingLog);
 
-var persister = new Broker.OrderStatusPersister();
+var db = Persister.loadDb();
+var orderPersister = new Persister.OrderStatusPersister(db);
+var tradesPersister = new Persister.TradePersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
-var orderBroker = new Broker.OrderBroker(broker, gateway.oe, persister, orderStatusPublisher, submitOrderReceiver, cancelOrderReceiver);
+var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);

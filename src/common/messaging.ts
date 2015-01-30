@@ -29,9 +29,11 @@ export class Publisher<T> implements IPublish<T> {
 
             this._log("awaiting client snapshot requests on topic", topic);
             s.on(Prefixes.SUBSCRIBE, () => {
-                var snapshot = this._snapshot();
-                this._log("socket", s.id, "asking for snapshot on topic", topic);
-                s.emit(Prefixes.SNAPSHOT, snapshot);
+                if (this._snapshot !== null) {
+                    var snapshot = this._snapshot();
+                    this._log("socket", s.id, "asking for snapshot on topic", topic);
+                    s.emit(Prefixes.SNAPSHOT, snapshot);
+                }
             });
         });
     }
@@ -211,6 +213,7 @@ export class Topics {
     static SubmitNewOrder = "sno";
     static CancelOrder = "cxl";
     static MarketTrade = "mt";
+    static Trades = "t";
 }
 
 export module ExchangePairMessaging {

@@ -231,6 +231,17 @@ export class OrderStatusReportImpl implements OrderStatusReport {
     }
 }
 
+export class Trade {
+    constructor(
+        public tradeId : string,
+        public time : Moment,
+        public exchange : Exchange,
+        public pair : CurrencyPair,
+        public price : number,
+        public quantity : number,
+        public side : Side) {}
+}
+
 export class CurrencyPosition {
     constructor(public amount : number,
                 public currency : Currency) {}

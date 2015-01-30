@@ -29,6 +29,7 @@ require.config({
     }
 });
 
-require(["angular", 'ngGrid', "./client", 'ui.bootstrap', './orderlist', './exchange', './shared_directives', './pair'], () => {
+require(["angular", 'ngGrid', "./client", 'ui.bootstrap', './orderlist',
+         './exchange', './shared_directives', './pair', './trades'], () => {
     angular.bootstrap(document, ["projectApp"]);
 });
