@@ -214,7 +214,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
-            this._tradePublisher.publish(new Models.Trade(shortId.generate(), o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side))
+            var trade = new Models.Trade(shortId.generate(), o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side);
+            this._tradePublisher.publish(trade);
+            this._tradePersister.persist(trade);
         }
     };
 
