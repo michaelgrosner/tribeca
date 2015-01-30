@@ -209,9 +209,10 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
 
     var updateQuoteClass = () => {
         if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
+            var tol = .005;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
-                if (Math.abs($scope.qBidPx - level.bidPrice) < 1e-3) {
+                if (Math.abs($scope.qBidPx - level.bidPrice) < tol) {
                     level.bidClass = 'success';
                 }
                 else {
@@ -220,7 +221,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
             }
 
             for (var i = 0; i < $scope.levels.length; i++) {
-                if (Math.abs($scope.qAskPx - $scope.levels[i].askPrice) < 1e-3) {
+                if (Math.abs($scope.qAskPx - $scope.levels[i].askPrice) < tol) {
                     level.askClass = 'success';
                 }
                 else {
