@@ -53,7 +53,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 100, field:'time', displayName:'time'},
+            {width: 120, field:'time', displayName:'time'},
             //{width: 60, field:'exchange', displayName:'exch'},
             //{width: 80, field:'pair', displayName:'pair'},
             {width: 45, field:'price', displayName:'px', cellFilter: 'currency'},
@@ -74,7 +74,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
 };
 
 var tradeListDirective = () : ng.IDirective => {
-    var template = '<div><div ng-grid="gridOptions"></div></div>';
+    var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
 
     return {
         template: template,

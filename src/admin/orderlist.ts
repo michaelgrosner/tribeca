@@ -104,12 +104,12 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 150, field:'time', displayName:'time'},
-            {width: 100, field:'orderId', displayName:'id'},
+            {width: 120, field:'time', displayName:'time'},
+            {width: 90, field:'orderId', displayName:'id'},
             {width: 35, field:'version', displayName:'v'},
             //{width: 60, field:'exchange', displayName:'exch'},
             //{width: 80, field:'pair', displayName:'pair'},
-            {width: 150, field:'orderStatus', displayName:'status'},
+            {width: 120, field:'orderStatus', displayName:'status'},
             {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 60, field:'quantity', displayName:'qty'},
             {width: 50, field:'side', displayName:'side'},
@@ -148,7 +148,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
 };
 
 var orderListDirective = () : ng.IDirective => {
-    var template = '<div><div ng-grid="gridOptions"></div></div>';
+    var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
 
     return {
         template: template,

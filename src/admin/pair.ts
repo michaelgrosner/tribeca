@@ -380,7 +380,7 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
 angular
     .module("marketTradeDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
     .directive("marketTradeGrid", () => {
-        var template = '<div><div style="height: 150px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
+        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
 
         return {
             restrict: 'E',
