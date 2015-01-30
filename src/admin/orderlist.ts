@@ -12,6 +12,8 @@ import Shared = require("./shared_directives");
 
 interface OrderListScope extends ng.IScope {
     order_statuses : DisplayOrderStatusReport[];
+    exch : Models.Exchange;
+    pair : Models.CurrencyPair;
     gridOptions : any;
 }
 
@@ -88,8 +90,7 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
-                           socket : SocketIOClient.Socket, productListings : Shared.ProductListingRegistrar) => {
+var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
     var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket, $log.info);
 
     $scope.order_statuses = [];
@@ -137,34 +138,28 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService,
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
-    var onAdvert = (pa : Models.ProductAdvertisement) => {
-        var filterFunc = () => {
-            $scope.order_statuses = $scope.order_statuses.filter(
-                o => o.osr.exchange !== pa.exchange &&
-                     o.osr.pair.base !== pa.pair.base &&
-                     o.osr.pair.quote !== pa.pair.quote);
-        };
-
-        var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(pa.exchange, pa.pair, Messaging.Topics.OrderStatusReports);
-        var sub = new Messaging.Subscriber(topic, socket, $log.info)
-            .registerConnectHandler(filterFunc)
-            .registerDisconnectedHandler(filterFunc)
-            .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
-
-        $log.info("adding new exchange/pair to order list", pa);
-    };
-
-    productListings.registerOnConnect(() => $scope.order_statuses.length = 0);
-    productListings.registerOnAdvert(onAdvert);
-    productListings.registerOnDisconnect(() => $scope.order_statuses.length = 0);
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.OrderStatusReports);
+    var sub = new Messaging.Subscriber(topic, socket, $log.info)
+        .registerConnectHandler(() => $scope.order_statuses.length = 0)
+        .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
+        .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
     $log.info("started orderlist");
 };
 
 var orderListDirective = () : ng.IDirective => {
+    var template = '<div><div ng-grid="gridOptions"></div></div>';
+
     return {
+        template: template,
         restrict: "E",
-        templateUrl: "orderlist.html"
+        replace: true,
+        transclude: false,
+        controller: OrderListController,
+        scope: {
+          exch: '=',
+          pair: '='
+        }
     }
 };
 
