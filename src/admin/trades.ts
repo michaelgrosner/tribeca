@@ -53,7 +53,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 120, field:'time', displayName:'time'},
+            {width: "*", field:'time', displayName:'t'},
             //{width: 60, field:'exchange', displayName:'exch'},
             //{width: 80, field:'pair', displayName:'pair'},
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
@@ -62,19 +62,13 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         ]
     };
 
-    var addTrade = t => {
-        $log.info("new trade", t);
-        $scope.trade_statuses.push(new DisplayTrade(t));
-    };
+    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
 
     var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.Trades);
     var sub = new Messaging.Subscriber(topic, socket, $log.info)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
-        .registerSubscriber(addTrade, trades => {
-            $log.info("handling snapshot", trades);
-            trades.forEach(addTrade);
-        });
+        .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
     $log.info("started tradeslist");
 };

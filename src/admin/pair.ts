@@ -351,7 +351,7 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         enableColumnResize: true,
         sortInfo: {fields: ['displayTime'], directions: ['desc']},
         columnDefs: [
-            {width: 75, field:'displayTime', displayName:'t'},
+            {width: "*", field:'displayTime', displayName:'t'},
             {width: 50, field:'price', displayName:'px'},
             {width: 40, field:'size', displayName:'sz'},
             {width: 40, field:'qBz', displayName:'qBz'},
