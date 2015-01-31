@@ -237,10 +237,6 @@ export class QuoteGenerator {
 
     };
 
-    private static ConvertToStopQuote(q : Models.Quote) {
-        return new Models.Quote(Models.QuoteAction.Cancel, q.side);
-    }
-
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
         var pos = this._baseBroker.getPosition(cur);
         return pos != null && pos.amount > minAmt;

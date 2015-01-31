@@ -6,9 +6,16 @@
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.css">
 
-     <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js" data-main="/js/admin/require-config.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js" data-main="/js/admin/require-config.js"></script>
 
     <title>tribeca [{{ env }}]</title>
+
+    <style>
+        .row {
+            margin-left: 0;
+            margin-right: 0
+        }
+    </style>
 </head>
 
 <script type="text/ng-template" id="market_display.html">
@@ -111,88 +118,98 @@
             <div ng-repeat="exch in exchanges">
                 <div>
                     <div style="padding: 5px" ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
-                        <p><b>{{ exch.name }}</b> :: USD: {{ exch.usdPosition|currency:undefined:3 }}, BTC: {{ exch.btcPosition|currency:"B":3 }}, LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
-
                         <div class="row" ng-repeat="pair in exch.pairs">
                             <div class="row">
                                 <div class="col-md-1 text-center">
                                     <button ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
                                         {{ pair.name }}
                                     </button>
+
+                                    <p><h3>{{ exch.name }}</h3></p>
+                                    <p>USD: {{ exch.usdPosition|currency:undefined:3 }}</p>
+                                    <p>BTC: {{ exch.btcPosition|currency:"B":3 }}</p>
+                                    <p>LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
                                 </div>
 
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <market-quoting-grid exch="pair.exch" pair="pair.pair"></market-quoting-grid>
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <market-trade-grid exch="pair.exch" pair="pair.pair"></market-trade-grid>
-                                </div>
-
-                                <div class="col-md-1">
-                                    <form class="form-horizontal" novalidate>
-                                        <div class="form-group" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                            <div class="input-group">
-                                                <div class="input-group-addon">mode</div>
-                                                <select class="form-control input-sm"
-                                                        ng-model="pair.quotingParameters.display.mode"
-                                                        ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                            <div class="input-group">
-                                                <div class="input-group-addon">fvMd</div>
-                                                <select class="form-control input-sm"
-                                                        ng-model="pair.quotingParameters.display.fvModel"
-                                                        ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                            <div class="input-group">
-                                                <div class="input-group-addon">width</div>
-                                                <input class="form-control input-sm"
-                                                       type="number"
-                                                       onClick="this.select()"
-                                                       ng-model="pair.quotingParameters.display.width">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                            <div class="input-group">
-                                                <div class="input-group-addon">size</div>
-                                                <input class="form-control input-sm"
-                                                       type="number"
-                                                       onClick="this.select()"
-                                                       ng-model="pair.quotingParameters.display.size">
-                                            </div>
-                                        </div>
-
-                                        <input class="btn btn-default btn-xs" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                        <input class="btn btn-default btn-xs" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
-                                    </form>
-                                </div>
-
-                                <div class="col-md-1">
-                                    <form class="form-horizontal" novalidate>
-                                        <div class="form-group" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
-                                            <div class="input-group">
-                                                <div class="input-group-addon">t/min</div>
-                                                <input class="form-control input-sm"
-                                                       type="number"
-                                                       onClick="this.select()"
-                                                       ng-model="pair.safetySettings.display.tradesPerMinute">
-                                            </div>
-                                        </div>
-
-                                        <input class="btn btn-default btn-xs" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
-                                        <input class="btn btn-default btn-xs" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
-                                    </form>
                                 </div>
 
                                 <div class="col-md-3">
                                     <trade-list exch="pair.exch" pair="pair.pair"></trade-list>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <form class="form-inline" novalidate>
+                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">mode</div>
+                                                    <select class="form-control input-sm"
+                                                            ng-model="pair.quotingParameters.display.mode"
+                                                            ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">fvMd</div>
+                                                    <select class="form-control input-sm"
+                                                            ng-model="pair.quotingParameters.display.fvModel"
+                                                            ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">width</div>
+                                                    <input class="form-control input-sm"
+                                                           type="number"
+                                                           onClick="this.select()"
+                                                           ng-model="pair.quotingParameters.display.width">
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">size</div>
+                                                    <input class="form-control input-sm"
+                                                           type="number"
+                                                           onClick="this.select()"
+                                                           ng-model="pair.quotingParameters.display.size">
+                                                </div>
+                                            </div>
+
+                                            <input class="btn btn-default btn col-xs-1" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                                            <input class="btn btn-default btn col-xs-1" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                                        </form>
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-3">
+                                    <form class="form-inline" novalidate>
+                                        <div class="row">
+                                            <div class="form-group" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">t/min</div>
+                                                    <input class="form-control input-sm"
+                                                           type="number"
+                                                           onClick="this.select()"
+                                                           ng-model="pair.safetySettings.display.tradesPerMinute">
+                                                </div>
+                                            </div>
+
+                                            <input class="btn btn-default btn" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
+                                            <input class="btn btn-default btn" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
 

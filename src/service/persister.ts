@@ -9,7 +9,7 @@ import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
 import Q = require("q");
-import momentjs = require('moment');
+import moment = require('moment');
 import Interfaces = require("./interfaces");
 
 export function loadDb() {
@@ -62,19 +62,22 @@ export class Persister<T> {
         private _saver : (T) => void) {}
 }
 
+function timeLoader(x) {
+    x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
+}
+
+function timeSaver(rpt) {
+    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toISOString();
+}
 
 export class OrderStatusPersister extends Persister<Models.OrderStatusReport> {
     constructor(db : Q.Promise<mongodb.Db>) {
-        var loader = rpt => rpt.time = rpt.time.toISOString();
-        var saver = x => x.time = momentjs(x.time);
-        super(db, "osr", saver, loader);
+        super(db, "osr", timeLoader, timeSaver);
     }
 }
 
 export class TradePersister extends Persister<Models.Trade> {
     constructor(db : Q.Promise<mongodb.Db>) {
-        var loader = rpt => rpt.time = rpt.time.toISOString();
-        var saver = x => x.time = momentjs(x.time);
-        super(db, "trades", saver, loader);
+        super(db, "trades", timeLoader, timeSaver);
     }
 }

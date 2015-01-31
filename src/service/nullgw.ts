@@ -10,7 +10,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     sendOrder(order : Models.BrokeredOrder) : Models.OrderGatewayActionReport {
-        setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working), 10);
+        setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working, order), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }
 
@@ -24,13 +24,24 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         return this.sendOrder(replace);
     }
 
-    private trigger(orderId : string, status : Models.OrderStatus) {
+    private trigger(orderId : string, status : Models.OrderStatus, order : Models.BrokeredOrder = null) {
         var rpt : Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: status,
             time: Utils.date()
         };
         this.OrderUpdate.trigger(rpt);
+
+        if (status === Models.OrderStatus.Working) {
+            var rpt : Models.OrderStatusReport = {
+                orderId: orderId,
+                orderStatus: status,
+                time: Utils.date(),
+                lastQuantity: order.quantity,
+                lastPrice: order.price
+            };
+            setTimeout(() => this.OrderUpdate.trigger(rpt), 1000);
+        }
     }
 
     constructor() {
