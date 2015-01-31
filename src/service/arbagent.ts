@@ -83,7 +83,7 @@ export class QuoteGenerator {
         return copiedMkts.filter(m => m.size > 0.001);
     };
 
-    private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+    private static ComputeFVUnrounded(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
         switch (model) {
             case Models.FairValueModel.BBO:
                 return (ask.price + bid.price)/2.0;
@@ -92,6 +92,11 @@ export class QuoteGenerator {
             default:
                 throw new Error(Models.FairValueModel[model]);
         }
+    }
+
+    private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+        var unrounded = QuoteGenerator.ComputeFVUnrounded(ask, bid, model);
+        return Utils.roundFloat(unrounded);
     }
 
     private recalcFairValue = (mkt : Models.Market) => {
@@ -138,11 +143,20 @@ export class QuoteGenerator {
         return new GeneratedQuote(bidPx, params.size, askPx, params.size);
     }
 
-    private static computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeQuoteUnrounded(fv : Models.FairValue, params : Models.QuotingParameters) {
         switch (params.mode) {
             case Models.QuotingMode.Mid: return QuoteGenerator.computeMidQuote(fv, params);
             case Models.QuotingMode.Top: return QuoteGenerator.computeTopQuote(fv, params);
         }
+    }
+
+    private static computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+        var unrounded = QuoteGenerator.computeQuoteUnrounded(fv, params);
+
+        unrounded.bidPx = Utils.roundFloat(unrounded.bidPx - .001);
+        unrounded.askPx = Utils.roundFloat(unrounded.askPx + .001);
+
+        return unrounded;
     }
 
     private recalcQuote = (t : Moment) => {
