@@ -150,8 +150,21 @@ export class QuoteGenerator {
         }
     }
 
-    private static computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var unrounded = QuoteGenerator.computeQuoteUnrounded(fv, params);
+
+        // should only make
+        var mktBestAsk = this._broker.currentBook.asks[0];
+        if (unrounded.bidPx > mktBestAsk) {
+            this._log("bid %d would cross with mkt ask %d, backing off", unrounded.bidPx, mktBestAsk);
+            unrounded.bidPx = mktBestAsk - .01;
+        }
+
+        var mktBestBid = this._broker.currentBook.bids[0];
+        if (unrounded.askPx < mktBestBid) {
+            this._log("ask %d would cross with mkt bid %d, backing off", unrounded.askPx, mktBestBid);
+            unrounded.askPx = mktBestBid - .01;
+        }
 
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx - .001);
         unrounded.askPx = Utils.roundFloat(unrounded.askPx + .001);
@@ -163,7 +176,7 @@ export class QuoteGenerator {
         var fv = this.latestFairValue;
         if (fv == null) return false;
 
-        var genQt = QuoteGenerator.computeQuote(fv, this._qlParamRepo.latest);
+        var genQt = this.computeQuote(fv, this._qlParamRepo.latest);
 
         var buildQuote = (s, px, sz) => new Models.Quote(Models.QuoteAction.New, s, px, sz);
 
