@@ -257,7 +257,7 @@ export class QuoteGenerator {
         if (QuoteGenerator.shouldLogDescision(askAction) ||
                 QuoteGenerator.shouldLogDescision(bidAction)) {
             var fv = this.latestFairValue;
-            this._log("New trading decision: bidAction=%d,askAction=%d; quote: %s, fv: %d, tAsk0: %s, " +
+            this._log("New trading decision: bidAction=%s,askAction=%s; quote: %s, fv: %d, tAsk0: %s, " +
                       "tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
                     Models.QuoteSent[bidAction], Models.QuoteSent[askAction], quote.toString(), fv.price,
                     fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
@@ -267,7 +267,7 @@ export class QuoteGenerator {
     };
 
     private static shouldLogDescision(a : Models.QuoteSent) {
-        return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate;
+        return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
     }
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {

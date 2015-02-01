@@ -28,7 +28,7 @@ export class Persister<T> {
         var deferred = Q.defer<T[]>();
         this._db.then(db => {
             var selector = {exchange: exchange, pair: pair};
-            db.collection(this._dbName).find(selector, {}, {sort: {"time": -1}}, (err, docs) => {
+            db.collection(this._dbName).find(selector, (err, docs) => {
                 if (err) deferred.reject(err);
                 else {
                     docs.toArray((err, arr) => {
@@ -37,7 +37,7 @@ export class Persister<T> {
                         }
                         else {
                             _.forEach(arr, this._loader);
-                            deferred.resolve(arr.reverse());
+                            deferred.resolve(arr);
                         }
                     });
                 }
