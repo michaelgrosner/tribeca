@@ -56,6 +56,8 @@ export interface IOrderBroker {
     replaceOrder(replace : Models.CancelReplaceOrder) : Models.SentOrder;
     OrderUpdate : Utils.Evt<Models.OrderStatusReport>;
     cancelOpenOrders() : void;
+
+    Trade : Utils.Evt<Models.Trade>;
 }
 
 export interface IBroker {

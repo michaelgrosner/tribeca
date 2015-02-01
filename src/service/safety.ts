@@ -23,15 +23,15 @@ export class SafetySettingsRepository extends Interfaces.Repository<Models.Safet
 export class SafetySettingsManager {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
 
-    private _trades : Models.OrderStatusReport[] = [];
+    private _trades : Models.Trade[] = [];
     public SafetySettingsViolated = new Utils.Evt();
 
     constructor(private _repo : SafetySettingsRepository, private _broker : Interfaces.IOrderBroker) {
         _repo.NewParameters.on(() => this.onNewParameters);
-        _broker.OrderUpdate.on(this.onOrderUpdate);
+        _broker.Trade.on(this.onOrderUpdate);
     }
 
-    private static isOlderThanOneMinute(o : Models.OrderStatusReport) {
+    private static isOlderThanOneMinute(o : Models.Trade) {
         var now = Utils.date();
         return Math.abs(now.diff(o.time)) > 1000*60;
     }
@@ -45,9 +45,8 @@ export class SafetySettingsManager {
         }
     };
 
-    private onOrderUpdate = (u : Models.OrderStatusReport) => {
-        if (typeof u.lastQuantity === "undefined" || u.lastQuantity === undefined) return;
-        if (u.lastQuantity <= 0 || SafetySettingsManager.isOlderThanOneMinute(u)) return;
+    private onOrderUpdate = (u : Models.Trade) => {
+        if (SafetySettingsManager.isOlderThanOneMinute(u)) return;
         this._trades.push(u);
 
         this.recalculateSafeties();

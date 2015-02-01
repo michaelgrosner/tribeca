@@ -84,6 +84,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
     _allOrdersFlat : Models.OrderStatusReport[] = [];
     _exchIdsToClientIds : { [exchId: string] : string} = {};
+
+    Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
 
     private static generateOrderId = () => {
@@ -211,6 +213,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         if (osr.lastQuantity > 0) {
             var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side);
+            this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
             this._trades.push(trade);
