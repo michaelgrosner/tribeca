@@ -26,6 +26,7 @@ class DisplayTrade {
     price : number;
     quantity : number;
     side : string;
+    value : number;
     //liquidity : string;
 
     constructor(public trade : Models.Trade) {
@@ -38,6 +39,7 @@ class DisplayTrade {
         this.timeSortable = parsedTime.toDate();
         this.price = trade.price;
         this.quantity = trade.quantity;
+        this.value = Math.abs(trade.price * trade.quantity);
     }
 }
 
@@ -58,7 +60,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
             //{width: 80, field:'pair', displayName:'pair'},
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
-            {width: 35, field:'side', displayName:'side'}
+            {width: 35, field:'side', displayName:'side'},
+            {width: 35, field:'value', displayName:'val'}
         ]
     };
 

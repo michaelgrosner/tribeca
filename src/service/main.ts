@@ -108,13 +108,13 @@ var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, 
 
 var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker, quoteGenerator);
 
-var exitHandler = e => {
-    if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
-        mainLog("Terminating", e, e.stack);
-    else
-        mainLog("Terminating [no stack]");
-    orderBroker.cancelOpenOrders();
-    process.exit();
-};
-process.on("uncaughtException", exitHandler);
-process.on("SIGINT", exitHandler);
+["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
+    process.on(reason, (e?) => {
+        if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
+            mainLog("Terminating %s :: %s %s", reason, e, e.stack);
+        else
+            mainLog("Terminating %s [no err/stack]", reason);
+        orderBroker.cancelOpenOrders();
+        process.exit();
+    });
+});
