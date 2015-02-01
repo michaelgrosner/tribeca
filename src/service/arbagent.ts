@@ -254,15 +254,21 @@ export class QuoteGenerator {
         var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
         var bidAction = this._quoter.updateQuote(new Models.Timestamped(bidQt, t));
 
-        var latestDecision = new Models.TradingDecision(bidAction, askAction);
-        var fv = this.latestFairValue;
-        this._log("New trading decision: %s; quote: %s, fv: %d, tAsk0: %s, tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
-                latestDecision.toString(), quote.toString(), fv.price,
-                fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
-                fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
-                fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
-
+        if (QuoteGenerator.shouldLogDescision(askAction) ||
+                QuoteGenerator.shouldLogDescision(bidAction)) {
+            var fv = this.latestFairValue;
+            this._log("New trading decision: bidAction=%d,askAction=%d; quote: %s, fv: %d, tAsk0: %s, " +
+                      "tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
+                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], quote.toString(), fv.price,
+                    fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
+                    fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
+                    fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
+        }
     };
+
+    private static shouldLogDescision(a : Models.QuoteSent) {
+        return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate;
+    }
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
         var pos = this._baseBroker.getPosition(cur);

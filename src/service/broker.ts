@@ -163,11 +163,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         if (typeof orderChain === "undefined") {
-            var keys = [];
-            for (var k in this._allOrders)
-                if (this._allOrders.hasOwnProperty(k))
-                    keys.push(k);
-            this._log("ERROR: cannot find orderId from %o, existing: %o", osr, keys);
+            this._log("ERROR: cannot find orderId from %o", osr);
         }
 
         var orig : Models.OrderStatusReport = _.last(orderChain);
@@ -231,8 +227,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
-        _orderStatusPublisher.registerSnapshot(() => this._allOrdersFlat);
-        _tradePublisher.registerSnapshot(() => this._trades);
+        _orderStatusPublisher.registerSnapshot(() => _.last(this._allOrdersFlat, 1000));
+        _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log("got new order", o);
@@ -251,7 +247,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        this._orderPersister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
+        this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
             _.each(osrs, osr => {
                 this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
@@ -262,10 +258,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
                 this._allOrdersFlat.push(osr);
             });
+
+            this._log("loaded %d osrs from %d orders", this._allOrdersFlat.length, Object.keys(this._allOrders).length);
         });
 
-        this._tradePersister.getLatestStatuses(1000, this._baseBroker.exchange(), this._baseBroker.pair).then(trades => {
+        this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair).then(trades => {
             _.each(trades, t => this._trades.push(t));
+            this._log("loaded %d trades", this._trades.length);
         });
     }
 }

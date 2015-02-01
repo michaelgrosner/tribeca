@@ -272,14 +272,6 @@ export class FairValue {
                 public mkt : Market) {}
 }
 
-export class TradingDecision {
-    constructor(public bidAction : QuoteSent, public askAction : QuoteSent) {}
-
-    public toString() {
-        return "bidAction=" + QuoteSent[this.bidAction] + ",askAction=" + QuoteSent[this.askAction];
-    }
-}
-
 export enum QuoteAction { New, Cancel }
 export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnsentDelete, UnableToSend }
 
