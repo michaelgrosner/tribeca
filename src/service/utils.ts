@@ -6,13 +6,22 @@ export var date = momentjs.utc;
 
 import util = require("util");
 import winston = require("winston");
-winston.add(winston.transports.File, { filename: 'tribeca.log', timestamp: false, json: false });
+winston.add(winston.transports.DailyRotateFile, {
+        handleExceptions: true,
+        exitOnError: false,
+        filename: 'tribeca.log',
+        timestamp: false,
+        json: false
+    }
+);
+
 export var log = (name : string) => {
     return (...msg : any[]) => {
         var head = util.format.bind(this, Models.toUtcFormattedTime(date()) + "\t[" + name + "]\t" + msg.shift());
         winston.info(head.apply(this, msg));
     };
 };
+
 export interface Logger { (...arg : any[]) : void;}
 
 export class Evt<T> {
