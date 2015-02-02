@@ -1,12 +1,15 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="broker.ts" />
 /// <reference path="../common/messaging.ts" />
 
+import util = require("util");
 import Config = require("./config");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import Broker = require("./broker");
 import Messaging = require("../common/messaging");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
@@ -26,7 +29,9 @@ export class SafetySettingsManager {
     private _trades : Models.Trade[] = [];
     public SafetySettingsViolated = new Utils.Evt();
 
-    constructor(private _repo : SafetySettingsRepository, private _broker : Interfaces.IOrderBroker) {
+    constructor(private _repo : SafetySettingsRepository,
+                private _broker : Interfaces.IOrderBroker,
+                private _messages : Broker.MessagesPubisher) {
         _repo.NewParameters.on(() => this.onNewParameters);
         _broker.Trade.on(this.onOrderUpdate);
     }
@@ -40,7 +45,9 @@ export class SafetySettingsManager {
         this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThanOneMinute(o));
 
         if (this._trades.length >= this._repo.latest.tradesPerMinute) {
-            this._log("NTrades/Sec safety setting violated! %d trades", this._trades.length);
+            var msg = util.format("NTrades/Sec safety setting violated! %d trades", this._trades.length);
+            this._log(msg);
+            this._messages.publish(msg);
             this.SafetySettingsViolated.trigger();
         }
     };

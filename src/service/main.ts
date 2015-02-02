@@ -5,6 +5,7 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 
+import Utils = require("./utils");
 import Config = require("./config");
 import HitBtc = require("./hitbtc");
 import OkCoin = require("./okcoin");
@@ -14,7 +15,6 @@ import Agent = require("./arbagent");
 import MarketTrades = require("./markettrades");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
-import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
@@ -67,6 +67,10 @@ var safetySettingsPublisher = getEnginePublisher(Messaging.Topics.SafetySettings
 var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
 var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
 var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
+var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
+
+var messages = new Broker.MessagesPubisher(messagesPublisher);
+messages.publish("start up");
 
 var getExchangePublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(gateway.base.exchange(), topic);
@@ -97,7 +101,7 @@ var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tra
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
-var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker);
+var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
 
 var active = new Agent.ActiveRepository(safeties, activePublisher, activeReceiver);
 var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver);

@@ -14,6 +14,20 @@ import Interfaces = require("./interfaces");
 import shortId = require("shortid");
 import Persister = require("./persister");
 
+export class MessagesPubisher {
+    private _storedMessages : Models.Message[] = [];
+
+    constructor(private _wrapped : Messaging.IPublish<Models.Message>) {
+        _wrapped.registerSnapshot(() => _.last(this._storedMessages, 500));
+    }
+
+    public publish = (text : string) => {
+        var message = new Models.Message(text, Utils.date());
+        this._wrapped.publish(message);
+        this._storedMessages.push(message);
+    };
+}
+
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook() : Models.Market { return this._currentBook; }

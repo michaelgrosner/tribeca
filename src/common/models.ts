@@ -345,3 +345,7 @@ export class ProductAdvertisement {
 export function productAdvertisementsEqual(a : ProductAdvertisement, b : ProductAdvertisement) {
     return a.exchange === b.exchange && currencyPairEqual(a.pair, b.pair);
 }
+
+export class Message {
+    constructor(public text : string, public time : Moment) {}
+}

@@ -394,3 +394,72 @@ angular
             }
           }
     });
+
+// ==================
+
+class MessageViewModel {
+    text : string;
+    time : Date;
+    displayTime : string;
+
+    constructor(message : Models.Message) {
+        var parsedTime = (moment.isMoment(message.time) ? message.time : moment(message.time));
+        this.displayTime = parsedTime.format('HH:mm:ss,SSS');
+        this.time = parsedTime.toDate();
+        this.text = message.text;
+    }
+}
+
+interface MessageLoggerScope extends ng.IScope {
+    messages : MessageViewModel[];
+    messageOptions : Object;
+    exch : Models.Exchange;
+    pair : Models.CurrencyPair;
+}
+
+var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, socket : any) => {
+    $scope.messages = [];
+    $scope.messageOptions  = {
+        data: 'messages',
+        showGroupPanel: false,
+        rowHeight: 20,
+        headerRowHeight: 0,
+        groupsCollapsedByDefault: true,
+        enableColumnResize: true,
+        sortInfo: {fields: ['displayTime'], directions: ['desc']},
+        columnDefs: [
+            {width: 90, field:'displayTime', displayName:'t'},
+            {width: "*", field:'text', displayName:'text'}
+        ]
+    };
+
+    var addNewMessage = (u : Models.Message) => {
+        $scope.messages.push(new MessageViewModel(u));
+    };
+
+    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.Message);
+    new Messaging.Subscriber<Models.Message>(topic, socket, $log.info)
+            .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
+            .registerDisconnectedHandler(() => $scope.messages.length = 0);
+
+    $log.info("starting message grid for", $scope.pair, Models.Exchange[$scope.exch]);
+};
+
+angular
+    .module("messagesDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .directive("messagesGrid", () => {
+        var template = '<div><div class="table table-striped table-hover table-condensed" ng-grid="messageOptions"></div></div>';
+
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            template: template,
+            controller: MessagesController,
+            scope: {
+              exch: '=',
+              pair: '='
+            }
+          }
+    });
+
