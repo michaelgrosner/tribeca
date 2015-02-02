@@ -155,15 +155,15 @@ export class QuoteGenerator {
 
         // should only make
         var mktBestAsk = this._broker.currentBook.asks[0].price;
-        if (unrounded.bidPx - 0.01 >= mktBestAsk) {
+        if (unrounded.bidPx + 0.01 >= mktBestAsk) {
             this._log("bid %d would cross with mkt ask %d, backing off", unrounded.bidPx, mktBestAsk);
             unrounded.bidPx = mktBestAsk - .01;
         }
 
         var mktBestBid = this._broker.currentBook.bids[0].price;
-        if (unrounded.askPx + 0.01 <= mktBestBid) {
+        if (unrounded.askPx - 0.01 <= mktBestBid) {
             this._log("ask %d would cross with mkt bid %d, backing off", unrounded.askPx, mktBestBid);
-            unrounded.askPx = mktBestBid - .01;
+            unrounded.askPx = mktBestBid + .01;
         }
 
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx - .001);
