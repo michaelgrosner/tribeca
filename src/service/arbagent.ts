@@ -10,6 +10,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
+import util = require("util");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
@@ -257,14 +258,19 @@ export class QuoteGenerator {
         if (QuoteGenerator.shouldLogDescision(askAction) ||
                 QuoteGenerator.shouldLogDescision(bidAction)) {
             var fv = this.latestFairValue;
-            this._log("New trading decision: bidAction=%s,askAction=%s; quote: %s, fv: %d, tAsk0: %s, " +
-                      "tBid0: %s, tAsk1: %s, tBid1: %s, tAsk2: %s, tBid2: %s",
-                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], quote.toString(), fv.price,
-                    fv.mkt.asks[0].toString(), fv.mkt.bids[0].toString(),
-                    fv.mkt.asks[1].toString(), fv.mkt.bids[1].toString(),
-                    fv.mkt.asks[2].toString(), fv.mkt.bids[2].toString());
+            var lm = this._broker.currentBook;
+            this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:[%d %d - %d %d] %s %s %s",
+                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], fv.price,
+                    quote.bid.size, quote.bid.price, quote.ask.price, quote.ask.size,
+                    QuoteGenerator.fmtLevel(0, lm.bids, lm.asks),
+                    QuoteGenerator.fmtLevel(1, lm.bids, lm.asks),
+                    QuoteGenerator.fmtLevel(2, lm.bids, lm.asks));
         }
     };
+
+    private static fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
+        return util.format("mkt%d:[%d %d - %d %d]", n, bids[n].size, bids[n].price, asks[n].price, asks[n].size);
+    }
 
     private static shouldLogDescision(a : Models.QuoteSent) {
         return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
