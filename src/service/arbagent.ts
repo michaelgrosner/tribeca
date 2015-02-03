@@ -167,6 +167,10 @@ export class QuoteGenerator {
             unrounded.askPx = mktBestBid + .01;
         }
 
+        if (unrounded.askPx < unrounded.bidPx) {
+            throw new Error("crossing quotes! ending");
+        }
+
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx - .001);
         unrounded.askPx = Utils.roundFloat(unrounded.askPx + .001);
 
@@ -179,27 +183,8 @@ export class QuoteGenerator {
 
         var genQt = this.computeQuote(fv, this._qlParamRepo.latest);
 
-        var buildQuote = (s, px, sz) => new Models.Quote(Models.QuoteAction.New, s, px, sz);
-
-        var checkCrossedQuotes = (oppSide : Models.Side, q : Models.Quote) => {
-            var doesQuoteCross = oppSide === Models.Side.Bid
-                ? (a : Models.Quote, b : Models.Quote) => a.price > b.price
-                : (a : Models.Quote, b : Models.Quote) => a.price < b.price;
-
-            var qs = this._quoter.quotesSent(oppSide);
-            for (var qi = 0; qi < qs.length; qi++) {
-                if (doesQuoteCross(qs[qi].quote, q)) return qs[qi].quote;
-            }
-            return q;
-        };
-
-        var getQuote = (s, px, sz) => {
-            var oppoSide = s === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
-            return checkCrossedQuotes(oppoSide, buildQuote(s, px, sz));
-        };
-
-        var newBidQuote = getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
-        var newAskQuote = getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
+        var newBidQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Bid, genQt.bidPx, genQt.bidSz);
+        var newAskQuote = new Models.Quote(Models.QuoteAction.New, Models.Side.Ask, genQt.askPx, genQt.askSz);
 
         this.latestQuote = new Models.TwoSidedQuote(
             QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
