@@ -290,8 +290,7 @@ angular
 class MarketTradeViewModel {
     price : number;
     size : number;
-    time : Date;
-    displayTime : string;
+    time : Moment;
 
     qA : number;
     qB : number;
@@ -306,10 +305,7 @@ class MarketTradeViewModel {
     constructor(trade : Models.MarketTrade) {
         this.price = MarketTradeViewModel.round(trade.price);
         this.size = MarketTradeViewModel.round(trade.size);
-
-        var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
-        this.time = parsedTime.toDate();
-        this.displayTime = parsedTime.format('HH:mm:ss,SSS');
+        this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
 
         if (trade.quote != null) {
             this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
@@ -349,9 +345,9 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         headerRowHeight: 20,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['displayTime'], directions: ['desc']},
+        sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
-            {width: "*", field:'displayTime', displayName:'t'},
+            {width: "*", field:'time', displayName:'t', cellFilter: "momentShortDate"},
             {width: 50, field:'price', displayName:'px'},
             {width: 40, field:'size', displayName:'sz'},
             {width: 40, field:'qBz', displayName:'qBz'},
@@ -399,13 +395,10 @@ angular
 
 class MessageViewModel {
     text : string;
-    time : Date;
-    displayTime : string;
+    time : Moment;
 
     constructor(message : Models.Message) {
-        var parsedTime = (moment.isMoment(message.time) ? message.time : moment(message.time));
-        this.displayTime = parsedTime.format('HH:mm:ss,SSS');
-        this.time = parsedTime.toDate();
+        this.time = (moment.isMoment(message.time) ? message.time : moment(message.time));
         this.text = message.text;
     }
 }
@@ -426,9 +419,9 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, so
         headerRowHeight: 0,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['displayTime'], directions: ['desc']},
+        sortInfo: {fields: ['time'], directions: ['desc']},
         columnDefs: [
-            {width: 90, field:'displayTime', displayName:'t'},
+            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
             {width: "*", field:'text', displayName:'text'}
         ]
     };

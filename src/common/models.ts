@@ -334,6 +334,10 @@ export function toUtcFormattedTime(t : Moment) {
     return t.format('M/D/YY HH:mm:ss,SSS');
 }
 
+export function toShortTimeString(t : Moment) {
+    return t.format('HH:mm:ss,SSS');
+}
+
 export class ExchangePairMessage<T> {
     constructor(public exchange : Exchange, public pair : CurrencyPair, public data : T) { }
 }

@@ -19,10 +19,7 @@ interface OrderListScope extends ng.IScope {
 
 class DisplayOrderStatusReport {
     orderId : string;
-    time : string;
-    timeSortable : Date;
-    exchange : string;
-    pair : string;
+    time : Moment;
     orderStatus : string;
     price : number;
     quantity : number;
@@ -42,17 +39,13 @@ class DisplayOrderStatusReport {
 
     constructor(public osr : Models.OrderStatusReport,
                 private _fireCxl : Messaging.IFire<Models.OrderStatusReport>) {
-        this.pair = Models.Currency[osr.pair.base] + "/" + Models.Currency[osr.pair.quote];
         this.orderId = osr.orderId;
-        this.exchange = Models.Exchange[osr.exchange];
         this.side = Models.Side[osr.side];
         this.updateWith(osr);
     }
 
     public updateWith = (osr : Models.OrderStatusReport) => {
-        var parsedTime = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
-        this.time = Models.toUtcFormattedTime(parsedTime);
-        this.timeSortable = parsedTime.toDate();
+        this.time = (moment.isMoment(osr.time) ? osr.time : moment(osr.time));
         this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
         this.price = osr.price;
         this.quantity = osr.quantity;
@@ -104,11 +97,9 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 120, field:'time', displayName:'time'},
+            {width: 120, field:'time', displayName:'time', cellFilter: "momentFullDate"},
             {width: 90, field:'orderId', displayName:'id'},
             {width: 35, field:'version', displayName:'v'},
-            //{width: 60, field:'exchange', displayName:'exch'},
-            //{width: 80, field:'pair', displayName:'pair'},
             {width: 120, field:'orderStatus', displayName:'status'},
             {width: 65, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 60, field:'quantity', displayName:'qty'},

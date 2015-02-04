@@ -19,24 +19,16 @@ interface TradesScope extends ng.IScope {
 
 class DisplayTrade {
     tradeId : string;
-    time : string;
-    timeSortable : Date;
-    exchange : string;
-    pair : string;
+    time : Moment;
     price : number;
     quantity : number;
     side : string;
     value : number;
-    //liquidity : string;
 
     constructor(public trade : Models.Trade) {
-        this.pair = Models.Currency[trade.pair.base] + "/" + Models.Currency[trade.pair.quote];
         this.tradeId = trade.tradeId;
-        this.exchange = Models.Exchange[trade.exchange];
         this.side = Models.Side[trade.side];
-        var parsedTime = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
-        this.time = Models.toUtcFormattedTime(parsedTime);
-        this.timeSortable = parsedTime.toDate();
+        this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = Math.abs(trade.price * trade.quantity);
@@ -55,9 +47,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: "*", field:'time', displayName:'t'},
-            //{width: 60, field:'exchange', displayName:'exch'},
-            //{width: 80, field:'pair', displayName:'pair'},
+            {width: "*", field:'time', displayName:'t', cellFilter: 'momentFullDate'},
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},

@@ -95,4 +95,6 @@ angular.module('sharedDirectives', ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
        .factory("socket", () => io)
-       .factory("productListings", productListings);
+       .factory("productListings", productListings)
+       .filter("momentFullDate", () => Models.toUtcFormattedTime)
+       .filter("momentShortDate", () => Models.toShortTimeString);
