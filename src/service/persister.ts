@@ -26,9 +26,9 @@ export class Persister<T> {
 
     public load = (exchange : Models.Exchange, pair : Models.CurrencyPair) : Q.Promise<T[]> => {
         var deferred = Q.defer<T[]>();
-        this._db.then(db => {
+        this.collection.then(coll => {
             var selector = {exchange: exchange, pair: pair};
-            db.collection(this._dbName).find(selector, (err, docs) => {
+            coll.find(selector, (err, docs) => {
                 if (err) deferred.reject(err);
                 else {
                     docs.toArray((err, arr) => {
@@ -49,17 +49,22 @@ export class Persister<T> {
 
     public persist = (report : T) => {
         this._saver(report);
-        this._db.then(db => db.collection(this._dbName).insert(report, (err, res) => {
-            if (err)
-                this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
-        })).done();
+        this.collection.then(coll => {
+            coll.insert(report, err => {
+                if (err)
+                    this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
+            });
+        }).done();
     };
 
+    collection : Q.Promise<mongodb.Collection>;
     constructor(
-        private _db : Q.Promise<mongodb.Db>,
-        private _dbName : string,
-        private _loader : (any) => void,
-        private _saver : (T) => void) {}
+            db : Q.Promise<mongodb.Db>,
+            private _dbName : string,
+            private _loader : (any) => void,
+            private _saver : (T) => void) {
+        this.collection = db.then(db => db.collection(this._dbName));
+    }
 }
 
 function timeLoader(x) {
