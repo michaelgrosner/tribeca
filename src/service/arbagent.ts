@@ -286,6 +286,6 @@ export class QuoteGenerator {
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
         var pos = this._baseBroker.getPosition(cur);
-        return pos != null && pos.amount > minAmt;
+        return pos != null && pos.amount > minAmt * 2;
     };
 }
