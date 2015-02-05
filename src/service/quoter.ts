@@ -64,7 +64,7 @@ export class ExchangeQuoter {
                     this._activeQuote = null;
                 }
 
-                setTimeout(() => { this.quotesSent = this.quotesSent.filter(q => q.orderId !== o.orderId) }, 500);
+                setTimeout(() => { this.quotesSent = this.quotesSent.filter(q => q.orderId !== o.orderId) }, 100);
         }
     };
 

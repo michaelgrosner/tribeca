@@ -75,7 +75,7 @@ export class QuoteGenerator {
             for (var i = 0; i < copiedMkts.length; i++) {
                 var m = copiedMkts[i];
 
-                if (Math.abs(q.price - m.price) < .01) {
+                if (Math.abs(q.price - m.price) < .005) {
                     copiedMkts[i].size = m.size - q.size;
                 }
             }
