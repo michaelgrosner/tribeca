@@ -264,7 +264,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair).then(osrs => {
+        this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 25000).then(osrs => {
             _.each(osrs, osr => {
                 this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
@@ -279,7 +279,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._log("loaded %d osrs from %d orders", this._allOrdersFlat.length, Object.keys(this._allOrders).length);
         });
 
-        this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair).then(trades => {
+        this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 10000).then(trades => {
             _.each(trades, t => this._trades.push(t));
             this._log("loaded %d trades", this._trades.length);
         });

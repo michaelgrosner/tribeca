@@ -24,11 +24,12 @@ export function loadDb() {
 export class Persister<T> {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
-    public load = (exchange : Models.Exchange, pair : Models.CurrencyPair) : Q.Promise<T[]> => {
+    public load = (exchange : Models.Exchange, pair : Models.CurrencyPair, limit : number = null) : Q.Promise<T[]> => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             var selector = {exchange: exchange, pair: pair};
-            coll.find(selector, (err, docs) => {
+            var options = (limit !== null ? {limit: limit}: {});
+            coll.find(selector, options, (err, docs) => {
                 if (err) deferred.reject(err);
                 else {
                     docs.toArray((err, arr) => {
