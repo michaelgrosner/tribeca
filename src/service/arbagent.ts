@@ -179,35 +179,8 @@ export class QuoteGenerator {
 
         var genQt = this.computeQuote(fv, this._qlParamRepo.latest);
 
-        var checkCrossedQuotes = (side : Models.Side, px : number) : boolean => {
-            var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
-
-            var doesQuoteCross = oppSide === Models.Side.Bid
-                ? (a, b) => a.price >= b
-                : (a, b) => a.price <= b;
-
-            var qs = this._quoter.quotesSent(oppSide);
-            for (var qi = 0; qi < qs.length; qi++) {
-                if (doesQuoteCross(qs[qi].quote, px)) {
-                    this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %d",
-                        px, Models.Side[oppSide], qs[qi].quote.price);
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        var getQuote = (s, px, sz) => {
-            if (checkCrossedQuotes(s, px)) {
-                return s === Models.Side.Bid ? QuoteGenerator._bidStopQuote : QuoteGenerator._askStopQuote;
-            }
-            else {
-                return new Models.Quote(Models.QuoteAction.New, s, px, sz);
-            }
-        };
-
-        var newBidQuote = getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
-        var newAskQuote = getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
+        var newBidQuote = this.getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
+        var newAskQuote = this.getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
 
         this.latestQuote = new Models.TwoSidedQuote(
             QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
@@ -215,6 +188,33 @@ export class QuoteGenerator {
         );
 
         return true;
+    };
+
+    private checkCrossedQuotes = (side : Models.Side, px : number) : boolean => {
+        var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
+
+        var doesQuoteCross = oppSide === Models.Side.Bid
+            ? (a, b) => a.price >= b
+            : (a, b) => a.price <= b;
+
+        var qs = this._quoter.quotesSent(oppSide);
+        for (var qi = 0; qi < qs.length; qi++) {
+            if (doesQuoteCross(qs[qi].quote, px)) {
+                this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %d",
+                    px, Models.Side[oppSide], qs[qi].quote.price);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    private getQuote = (s, px, sz) : Models.Quote => {
+        if (this.checkCrossedQuotes(s, px)) {
+            return s === Models.Side.Bid ? QuoteGenerator._bidStopQuote : QuoteGenerator._askStopQuote;
+        }
+        else {
+            return new Models.Quote(Models.QuoteAction.New, s, px, sz);
+        }
     };
 
     private recalcMarkets = (t : Moment) => {
