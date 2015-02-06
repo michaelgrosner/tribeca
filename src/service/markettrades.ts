@@ -9,6 +9,7 @@ import Utils = require("./utils");
 import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import Agent = require("./arbagent");
+import _ = require("lodash");
 
 export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     // TOOD: is this event needed?
@@ -30,7 +31,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
                 private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>,
                 private _mdBroker : Interfaces.IMarketDataBroker,
                 private _quoteGenerator : Agent.QuoteGenerator) {
-        _marketTradePublisher.registerSnapshot(() => this.marketTrades);
+        _marketTradePublisher.registerSnapshot(() => _.last(this.marketTrades, 50));
         this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
     }
 }
