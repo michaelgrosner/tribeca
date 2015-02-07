@@ -19,7 +19,7 @@
 </head>
 
 <script type="text/ng-template" id="market_display.html">
-    <table class="table table-hover table-bordered table-condensed">
+    <table class="table table-hover table-bordered table-condensed table-responsive">
         <tr class="active">
             <th></th>
             <th>bidSz</th>
@@ -120,36 +120,37 @@
                     <div style="padding: 5px" ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                         <div class="row" ng-repeat="pair in exch.pairs">
                             <div class="row">
-                                <div class="col-md-1 text-center">
-                                    <button ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
-                                        {{ pair.name }}
-                                    </button>
+                                <div class="col-md-1 col-xs-12 text-center">
+                                    <div class="row">
+                                        <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
+                                            {{ pair.name }}
+                                        </button>
 
-                                    <p><h3>{{ exch.name }}</h3></p>
-                                    <p>USD: {{ exch.usdPosition|currency:undefined:3 }}</p>
-                                    <p>BTC: {{ exch.btcPosition|currency:"B":3 }}</p>
-                                    <p>LTC: {{ exch.ltcPosition|currency:"B":3 }}</p>
+                                        <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch.name }}</h4>
+                                        <h4 class="col-md-12 col-xs-3"><small>USD: {{ exch.usdPosition|currency:undefined:3 }}</small></h4>
+                                        <h4 class="col-md-12 col-xs-3"><small>BTC: {{ exch.btcPosition|currency:"B":3 }}</small></h4>
+                                    </div>
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-3 col-xs-6">
                                     <market-quoting-grid exch="pair.exch" pair="pair.pair"></market-quoting-grid>
                                     <messages-grid exch="pair.exch" pair="pair.pair"></messages-grid>
                                 </div>
 
-                                <div class="col-md-5">
-                                    <market-trade-grid exch="pair.exch" pair="pair.pair"></market-trade-grid>
+                                <div class="col-md-3 col-xs-6">
+                                    <trade-list exch="pair.exch" pair="pair.pair"></trade-list>
                                 </div>
 
-                                <div class="col-md-3">
-                                    <trade-list exch="pair.exch" pair="pair.pair"></trade-list>
+                                <div class="col-md-5 col-xs-12">
+                                    <market-trade-grid exch="pair.exch" pair="pair.pair"></market-trade-grid>
                                 </div>
                             </div>
 
                             <div class="row">
-                                <div class="col-md-9">
+                                <div class="col-md-9 col-xs-12">
                                     <div class="row">
-                                        <form class="form-inline" novalidate>
-                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <form novalidate>
+                                            <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                                 <div class="input-group">
                                                     <div class="input-group-addon">mode</div>
                                                     <select class="form-control input-sm"
@@ -158,7 +159,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                            <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                                 <div class="input-group">
                                                     <div class="input-group-addon">fvMd</div>
                                                     <select class="form-control input-sm"
@@ -167,7 +168,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                            <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                                 <div class="input-group">
                                                     <div class="input-group-addon">width</div>
                                                     <input class="form-control input-sm"
@@ -177,7 +178,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="form-group col-xs-2" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                            <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                                 <div class="input-group">
                                                     <div class="input-group-addon">size</div>
                                                     <input class="form-control input-sm"
@@ -187,17 +188,17 @@
                                                 </div>
                                             </div>
 
-                                            <input class="btn btn-default btn col-xs-1" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                            <input class="btn btn-default btn col-xs-1" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                                            <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                                            <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
                                         </form>
                                     </div>
 
                                 </div>
 
-                                <div class="col-md-3">
-                                    <form class="form-inline" novalidate>
+                                <div class="col-md-3 col-xs-12">
+                                    <form novalidate>
                                         <div class="row">
-                                            <div class="form-group" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                            <div class="form-group col-md-8 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
                                                 <div class="input-group">
                                                     <div class="input-group-addon">t/min</div>
                                                     <input class="form-control input-sm"
@@ -207,15 +208,15 @@
                                                 </div>
                                             </div>
 
-                                            <input class="btn btn-default btn" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
-                                            <input class="btn btn-default btn" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
+                                            <input class="btn btn-default btn btn btn col-md-2 col-xs-6" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
+                                            <input class="btn btn-default btn btn btn col-md-2 col-xs-6" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
                                         </div>
                                     </form>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-12">
+                            <div class="row table-responsive">
+                                <div class="col-md-12 col-xs-12">
                                     <order-list exch="pair.exch" pair="pair.pair"></order-list>
                                 </div>
                             </div>
