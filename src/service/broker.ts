@@ -13,6 +13,7 @@ import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import shortId = require("shortid");
 import Persister = require("./persister");
+import util = require("util");
 
 export class MessagesPubisher {
     private _storedMessages : Models.Message[] = [];
