@@ -97,7 +97,7 @@ var tradesPersister = new Persister.TradePersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver);
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver, app);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
