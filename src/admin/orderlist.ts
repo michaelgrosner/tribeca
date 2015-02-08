@@ -121,11 +121,14 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
     var addOrderRpt = (o : Models.OrderStatusReport) => {
         for (var i = $scope.order_statuses.length - 1; i >= 0; i--) {
             var existing = $scope.order_statuses[i];
-            if (existing.version < o.version && existing.orderId === o.orderId) {
-                existing.updateWith(o);
+
+            if (existing.orderId === o.orderId) {
+                if (existing.version < o.version) {
+                    existing.updateWith(o);
+                }
                 return;
             }
-        }
+        };
 
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
