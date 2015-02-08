@@ -179,7 +179,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         if (typeof orderChain === "undefined") {
-            this._log("ERROR: cannot find orderId from %o", osr);
+            this._log("ERROR: cannot find orderId from %s", util.inspect(osr));
+            return;
         }
 
         var orig : Models.OrderStatusReport = _.last(orderChain);
