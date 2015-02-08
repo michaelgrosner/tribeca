@@ -26,23 +26,30 @@ export class Persister<T> {
 
     public load = (exchange : Models.Exchange, pair : Models.CurrencyPair, limit : number = null) : Q.Promise<T[]> => {
         var deferred = Q.defer<T[]>();
+
+        var selector = {exchange: exchange, pair: pair};
+
         this.collection.then(coll => {
-            var selector = {exchange: exchange, pair: pair};
-            var options = (limit !== null ? {limit: limit}: {});
-            coll.find(selector, options, (err, docs) => {
+            coll.count(selector, (err, count) => {
                 if (err) deferred.reject(err);
                 else {
-                    docs.toArray((err, arr) => {
-                        if (err) {
-                            deferred.reject(err);
-                        }
+                    var options = (limit !== null ? {limit: limit, skip: Math.max(count - limit, 0)}: {});
+
+                    coll.find(selector, options, (err, docs) => {
+                        if (err) deferred.reject(err);
                         else {
-                            _.forEach(arr, this._loader);
-                            deferred.resolve(arr);
+                            docs.toArray((err, arr) => {
+                                if (err) deferred.reject(err);
+                                else {
+                                    _.forEach(arr, this._loader);
+                                    deferred.resolve(arr);
+                                }
+                            })
                         }
-                    });
+                    })
                 }
             });
+
         }).done();
 
         return deferred.promise;

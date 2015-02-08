@@ -167,8 +167,8 @@ export class QuoteGenerator {
             unrounded.askPx = mktBestBid + .01;
         }
 
-        unrounded.bidPx = Utils.roundFloat(unrounded.bidPx - .001);
-        unrounded.askPx = Utils.roundFloat(unrounded.askPx + .001);
+        unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
+        unrounded.askPx = Utils.roundFloat(unrounded.askPx);
 
         return unrounded;
     }
