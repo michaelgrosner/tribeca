@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.css">
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js" data-main="/js/admin/require-config.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <title>tribeca [{{ env }}]</title>
 
@@ -132,12 +133,12 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3 col-xs-6">
+                                <div class="col-md-3 col-xs-12">
                                     <market-quoting-grid exch="pair.exch" pair="pair.pair"></market-quoting-grid>
                                     <messages-grid exch="pair.exch" pair="pair.pair"></messages-grid>
                                 </div>
 
-                                <div class="col-md-3 col-xs-6">
+                                <div class="col-md-3 col-xs-12">
                                     <trade-list exch="pair.exch" pair="pair.pair"></trade-list>
                                 </div>
 
