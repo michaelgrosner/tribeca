@@ -79,8 +79,10 @@ class DisplayOrder {
     };
 }
 
-var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng.ILogService,
-              socket : SocketIOClientStatic, productListings : Shared.ProductListingRegistrar) => {
+var uiCtrl = ($scope : MainWindowScope,
+              $timeout : ng.ITimeoutService,
+              $log : ng.ILogService,
+              socket : SocketIOClientStatic) => {
     $scope.connected = false;
     $scope.exchanges = [];
     $scope.order = new DisplayOrder(socket, $log);
@@ -114,9 +116,10 @@ var uiCtrl = ($scope : MainWindowScope, $timeout : ng.ITimeoutService, $log : ng
         $scope.exchanges = [];
     };
 
-    productListings.registerOnConnect(onConnect);
-    productListings.registerOnAdvert(onAdvert);
-    productListings.registerOnDisconnect(onDisconnect);
+    new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
+        .registerConnectHandler(onConnect)
+        .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
+        .registerDisconnectedHandler(onDisconnect);
 
     var refresh_timer = () => {
         $timeout(refresh_timer, 250);
