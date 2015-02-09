@@ -50,7 +50,7 @@ var getExch = () : Interfaces.CombinedGateway => {
 var gateway = getExch();
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
-var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair);
+var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair, Config.Environment[config.environment()]);
 new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
 var getEnginePublisher = <T>(topic : string) => {

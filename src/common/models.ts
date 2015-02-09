@@ -343,7 +343,7 @@ export class ExchangePairMessage<T> {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange : Exchange, public pair : CurrencyPair) { }
+    constructor(public exchange : Exchange, public pair : CurrencyPair, public environment : string) { }
 }
 
 export function productAdvertisementsEqual(a : ProductAdvertisement, b : ProductAdvertisement) {

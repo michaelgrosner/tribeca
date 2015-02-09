@@ -93,6 +93,7 @@ var uiCtrl = ($scope : MainWindowScope,
     };
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
+        $scope.env = pa.environment;
         $scope.order.addNewPair(pa.pair);
 
         var getExchInfo = () : Exchange.DisplayExchangeInformation => {
