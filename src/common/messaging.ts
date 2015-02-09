@@ -27,7 +27,6 @@ export class Publisher<T> implements IPublish<T> {
                 this._log("socket", s.id, "disconnected for Publisher", topic);
             });
 
-            this._log("awaiting client snapshot requests on topic", topic);
             s.on(Prefixes.SUBSCRIBE, () => {
                 if (this._snapshot !== null) {
                     var snapshot = this._snapshot();
@@ -98,7 +97,7 @@ export class Subscriber<T> implements ISubscribe<T> {
     };
 
     private onSnapshot = (msgs : T[]) => {
-        this._log("handling snapshot for", this.topic);
+        this._log("handling snapshot for", this.topic, "nMsgs:", msgs.length);
         if (this._snapshotHandler !== null)
             this._snapshotHandler(msgs);
     };
