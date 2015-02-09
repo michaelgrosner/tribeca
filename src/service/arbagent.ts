@@ -123,18 +123,20 @@ export class QuoteGenerator {
     private static computeTopQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
 
-        var bidPx = fv.mkt.bids[0].price;
+        var topBid = (fv.mkt.bids[0].size > 0.02 ? fv.mkt.bids[0] : fv.mkt.bids[1]);
+        var bidPx = topBid.price;
 
-        if (fv.mkt.bids[0].size > .2) {
+        if (topBid.size > .2) {
             bidPx += .01;
         }
 
         var minBid = fv.price - width / 2.0;
         bidPx = Math.min(minBid, bidPx);
 
-        var askPx = fv.mkt.asks[0].price;
+        var topAsk = (fv.mkt.asks[0].size > 0.02 ? fv.mkt.asks[0] : fv.mkt.asks[1]);
+        var askPx = topAsk.price;
 
-        if (fv.mkt.asks[0].size > .2) {
+        if (topAsk.size > .2) {
             askPx -= .01;
         }
 
