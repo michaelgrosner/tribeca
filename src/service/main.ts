@@ -94,6 +94,7 @@ var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, i
 var db = Persister.loadDb();
 var orderPersister = new Persister.OrderStatusPersister(db);
 var tradesPersister = new Persister.TradePersister(db);
+var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
@@ -110,7 +111,7 @@ var quoter = new Quoter.Quoter(orderBroker, broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
 
-var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker, quoteGenerator);
+var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker, quoteGenerator, broker, mktTradePersister);
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {

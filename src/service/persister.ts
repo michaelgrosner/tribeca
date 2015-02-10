@@ -33,7 +33,10 @@ export class Persister<T> {
             coll.count(selector, (err, count) => {
                 if (err) deferred.reject(err);
                 else {
-                    var options = (limit !== null ? {limit: limit, skip: Math.max(count - limit, 0)}: {});
+
+                    var options : any = {};
+                    if (limit !== null) options.limit = limit;
+                    if (count !== 0) options.skip = Math.max(count - limit, 0);
 
                     coll.find(selector, options, (err, docs) => {
                         if (err) deferred.reject(err);
@@ -75,11 +78,11 @@ export class Persister<T> {
     }
 }
 
-function timeLoader(x) {
+export function timeLoader(x) {
     x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
 }
 
-function timeSaver(rpt) {
+export function timeSaver(rpt) {
     rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toISOString();
 }
 

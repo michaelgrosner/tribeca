@@ -314,11 +314,14 @@ class MarketTradeViewModel {
             this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
         }
 
-        if (trade.market != null) {
-            this.mA = MarketTradeViewModel.round(trade.market.asks[0].price);
-            this.mAz = MarketTradeViewModel.round(trade.market.asks[0].size);
-            this.mB = MarketTradeViewModel.round(trade.market.bids[0].price);
-            this.mBz = MarketTradeViewModel.round(trade.market.bids[0].size);
+        if (trade.ask != null) {
+            this.mA = MarketTradeViewModel.round(trade.ask.price);
+            this.mAz = MarketTradeViewModel.round(trade.ask.size);
+        }
+
+        if (trade.bid != null) {
+            this.mB = MarketTradeViewModel.round(trade.bid.price);
+            this.mBz = MarketTradeViewModel.round(trade.bid.size);
         }
     }
 

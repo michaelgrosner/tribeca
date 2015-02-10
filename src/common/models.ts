@@ -45,7 +45,8 @@ export class MarketTrade {
                 public size : number,
                 public time : Moment,
                 public quote : TwoSidedQuote,
-                public market : Market) {}
+                public bid : MarketSide,
+                public ask : MarketSide) {}
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
