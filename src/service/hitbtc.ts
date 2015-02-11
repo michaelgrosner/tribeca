@@ -5,7 +5,7 @@
 
 import Config = require("./config");
 import crypto = require('crypto');
-import ws = require('ws');
+import WebSocket = require('ws');
 import request = require('request');
 import url = require("url");
 import querystring = require("querystring");
@@ -118,7 +118,7 @@ interface MarketTrade {
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.MarketSide>();
-    _marketDataWs : ws;
+    _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
     private _lastBids : { [px: number]: number} = {};
@@ -185,7 +185,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private onConnectionStatusChange = () => {
-        if (this._marketDataWs.readyState === ws.OPEN && (<any>this._tradesClient).connected) {
+        if (this._marketDataWs.readyState === WebSocket.OPEN && (<any>this._tradesClient).connected) {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         else {
@@ -196,10 +196,18 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     _tradesClient : SocketIOClient.Socket;
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcMD");
     constructor(config : Config.IConfigProvider) {
-        this._marketDataWs = new ws(config.GetString("HitBtcMarketDataUrl"));
+        this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
-        this._marketDataWs.on("error", this.onConnectionStatusChange);
+        this._marketDataWs.on("close", (code, msg) => {
+            this.onConnectionStatusChange();
+            this._log("close code=%d msg=%s", code, msg);
+        });
+        this._marketDataWs.on("error", err => {
+            this.onConnectionStatusChange();
+            this._log("error %s", err);
+            throw err;
+        });
 
         this._log("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
         this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
@@ -232,7 +240,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-    _orderEntryWs : ws;
+    _orderEntryWs : WebSocket;
 
     _nonce = 1;
 
@@ -373,9 +381,29 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    private onConnectionStatusChange = () => {
+        if (this._orderEntryWs.readyState === WebSocket.OPEN) {
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+        }
+        else {
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+        }
+    };
+
     private onOpen = () => {
         this.sendAuth("Login", {});
-        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+        this.onConnectionStatusChange();
+    };
+
+    private onClosed = (code, msg) => {
+        this.onConnectionStatusChange();
+        this._log("close code=%d msg=%s", code, msg);
+    };
+
+    private onError = (err : Error) => {
+        this.onConnectionStatusChange();
+        this._log("error %s", err);
+        throw err;
     };
 
     private onMessage = (raw : string) => {
@@ -404,10 +432,11 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(config : Config.IConfigProvider) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
-        this._orderEntryWs = new ws(config.GetString("HitBtcOrderEntryUrl"));
+        this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
         this._orderEntryWs.on('open', this.onOpen);
         this._orderEntryWs.on('message', this.onMessage);
-        this._orderEntryWs.on("error", this._log);
+        this._orderEntryWs.on("close", this.onClosed);
+        this._orderEntryWs.on("error", this.onError);
     }
 }
 
