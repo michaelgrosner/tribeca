@@ -252,6 +252,14 @@ export class CurrencyPosition {
     }
 }
 
+export class PositionReport {
+    constructor(public baseAmount : number,
+                public quoteAmount : number,
+                public value : number,
+                public pair : CurrencyPair,
+                public exch : Exchange) {}
+}
+
 export class OrderRequestFromUI {
     constructor(
         public exchange : string,

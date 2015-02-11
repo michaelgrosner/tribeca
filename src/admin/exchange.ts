@@ -15,11 +15,13 @@ export class DisplayExchangeInformation {
     name : string;
     pairs : Pair.DisplayPair[] = [];
 
-    usdPosition : number;
-    btcPosition : number;
-    ltcPosition : number;
+    baseCurrency : string;
+    basePosition : number;
+    quoteCurrency : string;
+    quotePosition : number;
+    value : number;
 
-    private _positionSubscriber : Messaging.ISubscribe<Models.CurrencyPosition>;
+    private _positionSubscriber : Messaging.ISubscribe<Models.PositionReport>;
     private _connectivitySubscriber : Messaging.ISubscribe<Models.ConnectivityStatus>;
 
     constructor(private _log : ng.ILogService,
@@ -53,24 +55,20 @@ export class DisplayExchangeInformation {
     };
 
     private clearPosition = () => {
-        this.usdPosition = null;
-        this.btcPosition = null;
-        this.ltcPosition = null;
+        this.baseCurrency = null;
+        this.quoteCurrency = null;
+
+        this.basePosition = null;
+        this.quotePosition = null;
+        this.value = null;
     };
 
-    private updatePosition = (position : Models.CurrencyPosition) => {
-        if (position === null) return;
-        switch (position.currency) {
-            case Models.Currency.BTC:
-                this.btcPosition = position.amount;
-                break;
-            case Models.Currency.USD:
-                this.usdPosition = position.amount;
-                break;
-            case Models.Currency.LTC:
-                this.ltcPosition = position.amount;
-                break;
-        }
+    private updatePosition = (position : Models.PositionReport) => {
+        this.baseCurrency = Models.Currency[position.pair.base];
+        this.quoteCurrency = Models.Currency[position.pair.quote];
+        this.basePosition = position.baseAmount;
+        this.quotePosition = position.quoteAmount;
+        this.value = position.value;
     };
 
     public getOrAddDisplayPair = (pair : Models.CurrencyPair) : Pair.DisplayPair => {

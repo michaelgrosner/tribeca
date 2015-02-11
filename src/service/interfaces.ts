@@ -62,7 +62,6 @@ export interface IOrderBroker {
 
 export interface IPositionBroker {
     getPosition(currency : Models.Currency) : Models.CurrencyPosition;
-    PositionUpdate : Utils.Evt<Models.CurrencyPosition>;
 }
 
 export interface IBroker {

@@ -307,15 +307,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 }
 
-class PositionReport {
-    constructor(public baseAmount : number,
-                public quoteAmount : number,
-                public value : number,
-                public pair : Models.CurrencyPair,
-                public exch : Models.Exchange) {}
-}
-
-export class PositionPersister extends Persister.Persister<PositionReport> {
+export class PositionPersister extends Persister.Persister<Models.PositionReport> {
     constructor(db) {
         super(db, "pos", Persister.timeLoader, Persister.timeSaver);
     }
@@ -324,7 +316,7 @@ export class PositionPersister extends Persister.Persister<PositionReport> {
 export class PositionBroker implements Interfaces.IPositionBroker {
     private _log : Utils.Logger;
 
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    private _report : Models.PositionReport = null;
     private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
     public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
         return this._currencies[currency];
@@ -333,9 +325,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
             this._currencies[rpt.currency] = rpt;
-            this.PositionUpdate.trigger(rpt);
-            this._log("New currency report: %s", rpt);
-            this._positionPublisher.publish(rpt);
 
             var basePosition = this.getPosition(this._base.pair.base);
             var quotePosition = this.getPosition(this._base.pair.quote);
@@ -347,27 +336,25 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             var quoteAmount = quotePosition.amount;
             var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
             var value = baseAmount + quoteAmount / mid;
-            var positionReport = new PositionReport(baseAmount, quoteAmount, value, this._base.pair, this._base.exchange());
+            var positionReport = new Models.PositionReport(baseAmount, quoteAmount, value, this._base.pair, this._base.exchange());
 
             this._log("New position report: %j", positionReport);
+            this._report = positionReport;
+            this._positionPublisher.publish(positionReport);
             this._positionPersister.persist(positionReport);
         }
     };
 
     constructor(private _base : Interfaces.IBroker,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
-                private _positionPersister : Persister.Persister<PositionReport>,
+                private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
+                private _positionPersister : Persister.Persister<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._log = Utils.log("tribeca:exchangebroker:position");
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
-        this._positionPublisher.registerSnapshot(() => [
-            this.getPosition(Models.Currency.BTC),
-            this.getPosition(Models.Currency.USD),
-            this.getPosition(Models.Currency.LTC)
-        ]);
+        this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
     }
 }
 
