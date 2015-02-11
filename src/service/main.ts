@@ -82,14 +82,14 @@ var getExchangePublisher = <T>(topic : string) => {
 var positionPublisher = getExchangePublisher(Messaging.Topics.Position);
 var connectivity = getExchangePublisher(Messaging.Topics.ExchangeConnectivity);
 
-var getReciever = <T>(topic : string) => {
+var getReceiver = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
     return new Messaging.Receiver<T>(wrappedTopic, io, messagingLog);
 };
 
-var safetySettingsReceiver = getReciever(Messaging.Topics.SafetySettings);
-var activeReceiver = getReciever(Messaging.Topics.ActiveChange);
-var quotingParametersReceiver = getReciever(Messaging.Topics.QuotingParametersChange);
+var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
+var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
+var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
 var submitOrderReceiver = new Messaging.Receiver(Messaging.Topics.SubmitNewOrder, io, messagingLog);
 var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, io, messagingLog);
 
