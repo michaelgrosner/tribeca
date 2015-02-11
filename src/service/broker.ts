@@ -307,7 +307,21 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 }
 
-export class ExchangeBroker implements Interfaces.IBroker {
+class PositionReport {
+    constructor(public baseAmount : number,
+                public quoteAmount : number,
+                public value : number,
+                public pair : Models.CurrencyPair,
+                public exch : Models.Exchange) {}
+}
+
+export class PositionPersister extends Persister.Persister<PositionReport> {
+    constructor(db) {
+        super(db, "pos", Persister.timeLoader, Persister.timeSaver);
+    }
+}
+
+export class PositionBroker implements Interfaces.IPositionBroker {
     private _log : Utils.Logger;
 
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
@@ -322,8 +336,43 @@ export class ExchangeBroker implements Interfaces.IBroker {
             this.PositionUpdate.trigger(rpt);
             this._log("New currency report: %s", rpt);
             this._positionPublisher.publish(rpt);
+
+            var basePosition = this.getPosition(this._base.pair.base);
+            var quotePosition = this.getPosition(this._base.pair.quote);
+
+            if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || this._mdBroker.currentBook === null)
+                return;
+
+            var baseAmount = basePosition.amount;
+            var quoteAmount = quotePosition.amount;
+            var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
+            var value = baseAmount + quoteAmount / mid;
+            var positionReport = new PositionReport(baseAmount, quoteAmount, value, this._base.pair, this._base.exchange());
+
+            this._log("New position report: %j", positionReport);
+            this._positionPersister.persist(positionReport);
         }
     };
+
+    constructor(private _base : Interfaces.IBroker,
+                private _posGateway : Interfaces.IPositionGateway,
+                private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
+                private _positionPersister : Persister.Persister<PositionReport>,
+                private _mdBroker : Interfaces.IMarketDataBroker) {
+        this._log = Utils.log("tribeca:exchangebroker:position");
+
+        this._posGateway.PositionUpdate.on(this.onPositionUpdate);
+
+        this._positionPublisher.registerSnapshot(() => [
+            this.getPosition(Models.Currency.BTC),
+            this.getPosition(Models.Currency.USD),
+            this.getPosition(Models.Currency.LTC)
+        ]);
+    }
+}
+
+export class ExchangeBroker implements Interfaces.IBroker {
+    private _log : Utils.Logger;
 
     makeFee() : number {
         return this._baseGateway.makeFee();
@@ -371,7 +420,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Messaging.IPublish<Models.CurrencyPosition>,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
@@ -385,13 +433,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
             this.onConnect(Models.GatewayType.OrderEntry, s)
         });
 
-        this._posGateway.PositionUpdate.on(this.onPositionUpdate);
-
-        this._positionPublisher.registerSnapshot(() => [
-            this.getPosition(Models.Currency.BTC),
-            this.getPosition(Models.Currency.USD),
-            this.getPosition(Models.Currency.LTC)
-        ]);
         this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
 }

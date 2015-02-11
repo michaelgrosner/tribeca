@@ -60,14 +60,16 @@ export interface IOrderBroker {
     Trade : Utils.Evt<Models.Trade>;
 }
 
+export interface IPositionBroker {
+    getPosition(currency : Models.Currency) : Models.CurrencyPosition;
+    PositionUpdate : Utils.Evt<Models.CurrencyPosition>;
+}
+
 export interface IBroker {
     makeFee() : number;
     takeFee() : number;
     exchange() : Models.Exchange;
     pair : Models.CurrencyPair;
-
-    getPosition(currency : Models.Currency) : Models.CurrencyPosition;
-    PositionUpdate : Utils.Evt<Models.CurrencyPosition>;
 
     connectStatus : Models.ConnectivityStatus;
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;

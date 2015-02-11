@@ -95,11 +95,13 @@ var db = Persister.loadDb();
 var orderPersister = new Persister.OrderStatusPersister(db);
 var tradesPersister = new Persister.TradePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
+var positionPersister = new Broker.PositionPersister(db);
 
-var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, positionPublisher, connectivity);
+var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
     tradePublisher, submitOrderReceiver, cancelOrderReceiver, app);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
+var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
@@ -109,9 +111,11 @@ var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublishe
 
 var quoter = new Quoter.Quoter(orderBroker, broker);
 
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher, fvPublisher, active);
+var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
+    fvPublisher, active, positionBroker);
 
-var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker, quoteGenerator, broker, mktTradePersister);
+var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
+    quoteGenerator, broker, mktTradePersister);
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {

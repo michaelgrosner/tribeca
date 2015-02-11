@@ -71,7 +71,7 @@ class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false);
 
-    private genSingleLevel = () => new Models.MarketSide(Math.random(), Math.random());
+    private genSingleLevel = () => new Models.MarketSide(200 + 100*Math.random(), Math.random());
 
     private generateMarketData = () => {
         var genSide = () => {

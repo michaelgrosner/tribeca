@@ -52,7 +52,8 @@ export class QuoteGenerator {
                 private _safeties : Safety.SafetySettingsManager,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _fvPublisher : Messaging.IPublish<Models.FairValue>,
-                private _activeRepo : ActiveRepository) {
+                private _activeRepo : ActiveRepository,
+                private _positionBroker : Interfaces.IPositionBroker) {
         _broker.MarketData.on(() => this.recalcMarkets(_broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
         _activeRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
@@ -287,7 +288,7 @@ export class QuoteGenerator {
     }
 
     private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
-        var pos = this._baseBroker.getPosition(cur);
+        var pos = this._positionBroker.getPosition(cur);
         return pos != null && pos.amount > minAmt * 2;
     };
 }
