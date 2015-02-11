@@ -244,8 +244,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _httpApp : express.Application) {
+                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
         _orderStatusPublisher.registerSnapshot(() => _.last(this._allOrdersFlat, 1000));
@@ -286,23 +285,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 10000).then(trades => {
             _.each(trades, t => this._trades.push(t));
             this._log("loaded %d trades", this._trades.length);
-        });
-
-        _httpApp.get("/data/:type", (req : express.Request, res : express.Response) => {
-            var data = null;
-            if (req.params.type === "trades")
-                data = <any>this._trades;
-            if (req.params.type === "orders_flat")
-                data = <any>this._allOrdersFlat;
-            if (req.params.type === "orders")
-                data = <any>this._allOrders;
-
-            var max = req.param("max", null);
-            if (max !== null) {
-                data = _.last(data, parseInt(max));
-            }
-
-            res.json(data);
         });
     }
 }

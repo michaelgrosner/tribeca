@@ -22,6 +22,7 @@ import path = require("path");
 import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
+import Web = require("./web");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -53,9 +54,10 @@ var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair, Config.Environment[config.environment()]);
 new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
-var getEnginePublisher = <T>(topic : string) => {
+var getEnginePublisher = <T>(topic : string) : Messaging.IPublish<T> => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
-    return new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
+    var socketIoPublisher = new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
+    return new Web.HttpPublisher<T>(topic, socketIoPublisher, app);
 };
 
 var quotePublisher = getEnginePublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
@@ -99,7 +101,7 @@ var positionPersister = new Broker.PositionPersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver, app);
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
 var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 

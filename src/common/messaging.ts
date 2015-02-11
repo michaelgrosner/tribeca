@@ -16,9 +16,12 @@ export interface IPublish<T> {
 
 export class Publisher<T> implements IPublish<T> {
     private _io : any;
+    private _snapshot : () => T[] = null;
     constructor(private topic : string, io : any,
-                private _snapshot : () => T[] = null,
+                snapshot : () => T[] = null,
                 private _log : (...args: any[]) => void = console.log) {
+        this.registerSnapshot(snapshot);
+
         this._io = io.of("/"+this.topic);
         this._io.on("connection", s => {
             this._log("socket", s.id, "connected for Publisher", topic);
