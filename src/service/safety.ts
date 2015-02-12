@@ -11,23 +11,30 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import Messaging = require("../common/messaging");
+import momentjs = require('moment');
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
     constructor(pub : Messaging.IPublish<Models.SafetySettings>,
                 rec : Messaging.IReceive<Models.SafetySettings>) {
         super("ssr",
-            (s : Models.SafetySettings) => s.tradesPerMinute > 0,
-            (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0,
-            new Models.SafetySettings(2), rec, pub
+            (s : Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
+            (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0 && Math.abs(a.coolOffMinutes - b.coolOffMinutes) >= 0,
+            new Models.SafetySettings(4, 5), rec, pub
         );
     }
 }
 
-export class SafetySettingsManager {
+interface QuotesEnabledCondition {
+    canEnable : boolean;
+}
+
+export class SafetySettingsManager implements QuotesEnabledCondition {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
 
     private _trades : Models.Trade[] = [];
     public SafetySettingsViolated = new Utils.Evt();
+    public SafetyViolationCleared = new Utils.Evt();
+    canEnable : boolean = true;
 
     constructor(private _repo : SafetySettingsRepository,
                 private _broker : Interfaces.IOrderBroker,
@@ -44,11 +51,20 @@ export class SafetySettingsManager {
     private recalculateSafeties = () => {
         this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThanOneMinute(o));
 
-        if (this._trades.length >= this._repo.latest.tradesPerMinute) {
-            var msg = util.format("NTrades/Sec safety setting violated! %d trades", this._trades.length);
+        if (this._trades.length === this._repo.latest.tradesPerMinute) {
+            this.SafetySettingsViolated.trigger();
+            this.canEnable = false;
+
+            var coolOffMinutes = momentjs.duration(this._repo.latest.coolOffMinutes, 'minutes');
+            var msg = util.format("NTrades/Sec safety setting violated! %d trades. Re-enabling in %s.",
+                this._trades.length, coolOffMinutes.humanize());
             this._log(msg);
             this._messages.publish(msg);
-            this.SafetySettingsViolated.trigger();
+
+            setTimeout(() => {
+                this.canEnable = true;
+                this.SafetyViolationCleared.trigger();
+            }, coolOffMinutes.asMilliseconds());
         }
     };
 

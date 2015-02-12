@@ -95,12 +95,12 @@ export class Repository<T> {
     }
 
     public updateParameters = (newParams : T) => {
-        if (!this._validator(newParams)) return;
-        if (this._paramsEqual(newParams, this._latest)) {
+        if (this._validator(newParams) && this._paramsEqual(newParams, this._latest)) {
             this._latest = newParams;
             this._log("Changed parameters %j", this.latest);
             this.NewParameters.trigger();
-            this._pub.publish(this.latest);
         }
+
+        this._pub.publish(this.latest);
     };
 }

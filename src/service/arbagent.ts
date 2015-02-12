@@ -18,7 +18,7 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
             (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode || a.fvModel !== b.fvModel,
-            new Models.QuotingParameters(.5, .01, Models.QuotingMode.Top, Models.FairValueModel.wBBO), rec, pub);
+            new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO), rec, pub);
 
     }
 }
@@ -28,10 +28,11 @@ export class ActiveRepository extends Interfaces.Repository<boolean> {
                 pub : Messaging.IPublish<boolean>,
                 rec : Messaging.IReceive<boolean>) {
         super("active",
-            (p : boolean) => true,
+            (p : boolean) => _safeties.canEnable,
             (a : boolean, b : boolean) => a !== b,
             false, rec, pub);
         _safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
+        _safeties.SafetyViolationCleared.on(() => this.updateParameters(true));
     }
 }
 
