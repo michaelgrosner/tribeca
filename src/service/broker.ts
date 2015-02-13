@@ -67,7 +67,8 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     };
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>) {
+                private _marketPublisher : Messaging.IPublish<Models.Market>,
+                private _messages : MessagesPubisher) {
         var msgLog = Utils.log("tribeca:messaging:marketdata");
 
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
@@ -75,6 +76,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
             if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
+            _messages.publish("MD gw " + Models.ConnectivityStatus[s]);
         });
     }
 }
@@ -244,7 +246,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>) {
+                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
+                private _messages : MessagesPubisher) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
         _orderStatusPublisher.registerSnapshot(() => _.last(this._allOrdersFlat, 1000));
@@ -285,6 +288,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 10000).then(trades => {
             _.each(trades, t => this._trades.push(t));
             this._log("loaded %d trades", this._trades.length);
+        });
+
+        this._oeGateway.ConnectChanged.on(s => {
+            _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
         });
     }
 }

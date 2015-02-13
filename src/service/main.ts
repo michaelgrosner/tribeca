@@ -101,8 +101,8 @@ var positionPersister = new Broker.PositionPersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver);
-var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher);
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages);
+var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
 var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
