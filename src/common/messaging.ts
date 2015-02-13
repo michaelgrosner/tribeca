@@ -111,6 +111,7 @@ export class Subscriber<T> implements ISubscribe<T> {
         this._io.off("disconnect", this.onDisconnect);
         this._io.off(Prefixes.MESSAGE, this.onIncremental);
         this._io.off(Prefixes.SNAPSHOT, this.onSnapshot);
+        this._io.disconnect();
     };
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
