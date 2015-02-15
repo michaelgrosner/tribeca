@@ -33,12 +33,20 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         var mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
         var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0]);
+
+        if (u.onStartup) {
+            for (var i = 0; i < this.marketTrades.length; i++) {
+                var existing = this.marketTrades[i];
+                var dt = Math.abs(existing.time.diff(u.time, 'minutes'));
+                if (Math.abs(existing.size - u.size) < 1e-4 && Math.abs(existing.price - u.price) < 1e-4 && dt < 1)
+                    return;
+            }
+        }
+
         this.marketTrades.push(t);
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
-        
-        if (!u.onStartup)
-            this._persister.persist(new Models.ExchangePairMessage(this._base.exchange(), this._base.pair, t));
+        this._persister.persist(new Models.ExchangePairMessage(this._base.exchange(), this._base.pair, t));
     };
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
