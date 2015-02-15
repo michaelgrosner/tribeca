@@ -365,3 +365,12 @@ export function productAdvertisementsEqual(a : ProductAdvertisement, b : Product
 export class Message {
     constructor(public text : string, public time : Moment) {}
 }
+
+export enum ExternalValuationSource { Winkdex }
+
+export class ExternalValuationUpdate {
+    constructor(
+        public value : number,
+        public time : Moment,
+        public source : ExternalValuationSource) {}
+}
