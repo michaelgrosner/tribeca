@@ -15,6 +15,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
+var SortedArray = require("collections/sorted-array");
 
 var _lotMultiplier = 100.0;
 
@@ -121,8 +122,21 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
-    private _lastBids : { [px: number]: number} = {};
-    private _lastAsks : { [px: number]: number} = {};
+
+    private static Eq(a : Models.MarketSide, b : Models.MarketSide) { return Math.abs(a.price - b.price) < 1e-4; }
+
+    private static AskCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
+        if (HitBtcMarketDataGateway.Eq(a, b)) return 0;
+        return a.price > b.price ? 1 : -1;
+    };
+
+    private static BidCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
+        if (HitBtcMarketDataGateway.Eq(a, b)) return 0;
+        return a.price > b.price ? -1 : 1;
+    };
+
+    private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
+    private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
         if (msg.symbol != "BTCUSD" || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -130,35 +144,38 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
         if (msg.symbol != "BTCUSD") return;
+        this._lastAsks.clear();
+        this._lastBids.clear();
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
         this._hasProcessedSnapshot = true;
     };
 
     private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Moment) => {
-        var ordBids = HitBtcMarketDataGateway._applyIncrementals(bids, this._lastBids, (a, b) => a.price > b.price ? -1 : 1);
-        var ordAsks = HitBtcMarketDataGateway._applyIncrementals(asks, this._lastAsks, (a, b) => a.price > b.price ? 1 : -1);
+        var ordBids = HitBtcMarketDataGateway.applyIncrementals(bids, this._lastBids);
+        var ordAsks = HitBtcMarketDataGateway.applyIncrementals(asks, this._lastAsks);
 
         this.MarketData.trigger(new Models.Market(ordBids, ordAsks, t));
     };
 
-    private static _applyIncrementals(incomingUpdates : Update[],
-                                      side : { [px: number]: number},
-                                      cmp : (p1 : Models.MarketSide, p2 : Models.MarketSide) => number) {
+    private static applyIncrementals(incomingUpdates : Update[], side : any) {
         for (var i = 0; i < incomingUpdates.length; i++) {
             var u : Update = incomingUpdates[i];
+            var ms = new Models.MarketSide(u.price, u.size / _lotMultiplier);
             if (u.size == 0) {
-                delete side[u.price];
+                side.delete(ms);
             }
             else {
-                side[u.price] = u.size;
+                var existing = side.get(ms);
+                if (existing !== undefined) {
+                    existing.size = ms.size;
+                }
+                else {
+                    side.push(ms);
+                }
             }
         }
 
-        var kvps : Models.MarketSide[] = [];
-        for (var px in side) {
-            kvps.push(new Models.MarketSide(parseFloat(px), side[px] / _lotMultiplier));
-        }
-        return kvps.sort(cmp);
+        return side.slice(0, 5);
     }
 
     private onMessage = (raw : string) => {

@@ -16,19 +16,32 @@ describe('HitBtc', function () {
                 { price: 238.56, size: 25 }
             ];
 
+            var eq = function(a, b) {
+                return a.price === b.price;
+            };
+
             var cmp  = function(a, b) {
                 if (a.price === b.price) return 0;
                 return a.price > b.price ? 1 : -1
             };
 
-            var lastBids = new SortedArray([], null, cmp);
+            var lastBids = new SortedArray([], eq, cmp);
 
             for (var i = 0; i < incoming.length; i++) {
                 lastBids.push(incoming[i]);
             }
 
-            console.log(util.inspect(lastBids, true, 500, true));
+            console.log("before", util.inspect(lastBids.array, true, 500, true));
 
+            lastBids.delete({price: 239.67, size: 0});
+
+            console.log("delete", util.inspect(lastBids.array, true, 500, true));
+
+            lastBids.add(incoming[2]);
+
+            console.log("final", util.inspect(lastBids.array, true, 500, true));
+
+            console.log(lastBids.slice(0, 3));
             assert(lastBids.has(incoming[0]));
         })
     });
