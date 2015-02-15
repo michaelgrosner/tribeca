@@ -128,8 +128,8 @@
                                         </button>
 
                                         <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch.name }}</h4>
-                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.quoteCurrency }}: {{ exch.quotePosition|currency:undefined:3 }}</small></h4>
-                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.baseCurrency }}: {{ exch.basePosition|currency:"B":3 }}</small></h4>
+                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.quoteCurrency }}: {{ exch.quotePosition|currency:undefined:3 }} ({{ exch.quoteHeldPosition|currency:undefined:3 }})</small></h4>
+                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.baseCurrency }}: {{ exch.basePosition|currency:"B":3 }} ({{ exch.baseHeldPosition|currency:"B":3 }})</small></h4>
                                         <h4 class="col-md-12 col-xs-2"><small>Value: {{ exch.value|currency:"B":3 }}</small></h4>
                                     </div>
                                 </div>

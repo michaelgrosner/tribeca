@@ -490,7 +490,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                     rpts.forEach(r => {
                         var currency = HitBtcPositionGateway.convertCurrency(r.currency_code);
                         if (currency == null) return;
-                        var position = new Models.CurrencyPosition(r.cash, currency);
+                        var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
                         this.PositionUpdate.trigger(position);
                     });
                 }

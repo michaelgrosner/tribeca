@@ -301,12 +301,13 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     private trigger = () => {
         this._http.post("userinfo.do", {}, msg => {
             var funds = (<any>msg.data).info.funds.free;
+            var held = (<any>msg.data).info.funds.freezed;
 
             for (var currencyName in funds) {
                 if (!funds.hasOwnProperty(currencyName)) continue;
                 var val = funds[currencyName];
 
-                var pos = new Models.CurrencyPosition(parseFloat(val), OkCoinPositionGateway.convertCurrency(currencyName));
+                var pos = new Models.CurrencyPosition(parseFloat(val), held, OkCoinPositionGateway.convertCurrency(currencyName));
                 this.PositionUpdate.trigger(pos);
             }
         });

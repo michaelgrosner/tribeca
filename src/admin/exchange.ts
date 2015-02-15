@@ -19,6 +19,8 @@ export class DisplayExchangeInformation {
     basePosition : number;
     quoteCurrency : string;
     quotePosition : number;
+    baseHeldPosition : number;
+    quoteHeldPosition : number;
     value : number;
 
     private _positionSubscriber : Messaging.ISubscribe<Models.PositionReport>;
@@ -57,9 +59,10 @@ export class DisplayExchangeInformation {
     private clearPosition = () => {
         this.baseCurrency = null;
         this.quoteCurrency = null;
-
         this.basePosition = null;
         this.quotePosition = null;
+        this.baseHeldPosition = null;
+        this.quoteHeldPosition = null;
         this.value = null;
     };
 
@@ -68,6 +71,8 @@ export class DisplayExchangeInformation {
         this.quoteCurrency = Models.Currency[position.pair.quote];
         this.basePosition = position.baseAmount;
         this.quotePosition = position.quoteAmount;
+        this.baseHeldPosition = position.baseHeldAmount;
+        this.quoteHeldPosition = position.quoteHeldAmount;
         this.value = position.value;
     };
 

@@ -245,6 +245,7 @@ export class Trade {
 
 export class CurrencyPosition {
     constructor(public amount : number,
+                public heldAmount : number,
                 public currency : Currency) {}
 
     public toString() {
@@ -255,6 +256,8 @@ export class CurrencyPosition {
 export class PositionReport {
     constructor(public baseAmount : number,
                 public quoteAmount : number,
+                public baseHeldAmount : number,
+                public quoteHeldAmount : number,
                 public value : number,
                 public pair : CurrencyPair,
                 public exch : Exchange) {}

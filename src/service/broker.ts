@@ -324,8 +324,9 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             var baseAmount = basePosition.amount;
             var quoteAmount = quotePosition.amount;
             var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
-            var value = baseAmount + quoteAmount / mid;
-            var positionReport = new Models.PositionReport(baseAmount, quoteAmount, value, this._base.pair, this._base.exchange());
+            var value = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
+            var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
+                quotePosition.heldAmount, value, this._base.pair, this._base.exchange());
 
             this._log("New position report: %j", positionReport);
             this._report = positionReport;
