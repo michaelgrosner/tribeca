@@ -74,6 +74,13 @@ var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
 var messages = new Broker.MessagesPubisher(messagesPublisher);
 messages.publish("start up");
 
+var getHttpPublisher = <T>(topic : string) : Web.StandaloneHttpPublisher<T> => {
+    return new Web.StandaloneHttpPublisher<T>(topic, app);
+};
+
+var tradeHttpPublisher = getHttpPublisher("trades");
+var latencyHttpPublisher = getHttpPublisher("latency");
+
 var getExchangePublisher = <T>(topic : string) => {
     var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(gateway.base.exchange(), topic);
     return new Messaging.Publisher<T>(wrappedTopic, io, null, messagingLog);
@@ -101,7 +108,7 @@ var positionPersister = new Broker.PositionPersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages);
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
 var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 

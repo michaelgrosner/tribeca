@@ -14,7 +14,7 @@ import Interfaces = require("./interfaces");
 import shortId = require("shortid");
 import Persister = require("./persister");
 import util = require("util");
-import express = require("express");
+import Web = require("web");
 
 export class MessagesPubisher {
     private _storedMessages : Models.Message[] = [];
@@ -247,11 +247,15 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _messages : MessagesPubisher) {
+                private _messages : MessagesPubisher,
+                private _tradeHttp : Web.StandaloneHttpPublisher<Models.Trade>,
+                private _latencyHttp : Web.StandaloneHttpPublisher<number>) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
         _orderStatusPublisher.registerSnapshot(() => _.last(this._allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
+        _tradeHttp.registerSnapshot(() => this._trades);
+        _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log("got new order", o);
