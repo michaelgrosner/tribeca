@@ -14,11 +14,11 @@ import Interfaces = require("./interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
-import events = module("events");
 var CoinbaseExchange = require("coinbase-exchange");
 
-var key = "8ac44274479da86e3bca6bc5ab841058";
-var secret = "5H+Lnu/Op9nTJy1qUkvlpTnQvbA5ChGmyrXTQk/W5luS31eACAXAEEB4wnl1i/QxKTW0IuaJzqPMCXusIm7CMw==";
+var passphrase = "h9g47GcHDC8GHx48Hner";
+var key = "6c945837d033823150e9e543642b2aeb";
+var secret = "H/6BPPfJtkZRjiIDSEaRpluFqkN0B+o1FThT5iufWEtSr+xahT2NN4V+m1GYvKCn/DYCYzt8fbcrf4E5DQ1JNw==";
 
 interface StateChange {
     old : string;
@@ -107,7 +107,8 @@ interface CoinbaseBookStorage {
     asks : { [id : string] : CoinbaseEntry };
 }
 
-interface CoinbaseOrderBook extends events.EventEmitter {
+interface CoinbaseOrderBook {
+    on(event: string, cb: Function) : CoinbaseOrderBook;
     on(event: 'statechange', cb: (data : StateChange) => void) : CoinbaseOrderBook;
     on(event: 'received', cd: (msg : CoinbaseReceived) => void) : CoinbaseOrderBook;
     on(event: 'open', cd: (msg : CoinbaseOpen) => void) : CoinbaseOrderBook;
@@ -168,9 +169,12 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
-    _client : CoinbaseOrderBook;
     constructor(private _client : CoinbaseOrderBook) {
         this._client.on("statechange", s => this.ConnectChanged.trigger(convertConnectivityStatus(s)));
+
+        ["received", "open", "done", "match", "change"].forEach(s => {
+            this._client.on(s, r => this._log(s, ": ", r));
+        });
     }
 }
 
@@ -178,6 +182,18 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
+        this._authClient.cancel(cancel.exchangeId, (err? : Error) => {
+            if (err) {
+                var status : Models.OrderStatusReport = {
+                    orderId: cancel.clientOrderId,
+                    rejectMessage: err.message,
+                    orderStatus: Models.OrderStatus.Rejected,
+                    cancelRejected: true,
+                    time: Utils.date()
+                };
+                this.OrderUpdate.trigger(status);
+            }
+        });
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
@@ -187,21 +203,41 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+        var func;
+        if (order.side === Models.Side.Bid) func = this._authClient.buy;
+        else if (order.side === Models.Side.Ask) func = this._authClient.sell;
+
+        func(order, (err? : Error, resp? : any, ack? : CoinbaseOrderAck) => {
+            if (err) {
+                var status : Models.OrderStatusReport = {
+                    orderId: order.orderId,
+                    rejectMessage: err.message,
+                    orderStatus: Models.OrderStatus.Rejected,
+                    time: Utils.date()
+                };
+                this.OrderUpdate.trigger(status);
+            }
+            else if (ack) {
+                // pick this up off real-time feed
+            }
+            else {
+                this._log("something went wrong with sending order %j", order);
+            }
+        });
+
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    private onExecutionReport = (tsMsg : Models.Timestamped<ExecutionReport>) => {
+    /*private onExecutionReport = (tsMsg : Models.Timestamped<ExecutionReport>) => {
         this.OrderUpdate.trigger(status);
-    };
-
-    private onCancelReject = (tsMsg : Models.Timestamped<CancelReject>) => {
-        this.OrderUpdate.trigger(status);
-    };
+    };*/
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
-    constructor(private _authClient : CoinbaseAuthenticatedClient) {}
+    constructor(
+        private _orderBook : CoinbaseOrderBook,
+        private _authClient : CoinbaseAuthenticatedClient) {}
 }
 
 
@@ -210,7 +246,9 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {
-
+        this._authClient.getAccounts((err? : Error, resp? : any, data? : CoinbaseAccountInformation[]) => {
+            this._log(data);
+        });
     };
 
     constructor(private _authClient : CoinbaseAuthenticatedClient) {
@@ -238,19 +276,19 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class Coinbase extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
+        var orderbook = new CoinbaseExchange.OrderBook();
+        var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
+
         var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orderbook, authClient)
             : new NullGateway.NullOrderGateway();
 
         var positionGateway = config.environment() == Config.Environment.Dev ?
             new NullGateway.NullPositionGateway() :
-            new CoinbasePositionGateway(config);
-
-        var orderbook = new CoinbaseExchange.OrderBook();
-        var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
+            new CoinbasePositionGateway(authClient);
 
         super(
-            new CoinbaseMarketDataGateway(config),
+            new CoinbaseMarketDataGateway(orderbook),
             orderGateway,
             positionGateway,
             new CoinbaseBaseGateway());

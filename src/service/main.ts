@@ -9,6 +9,7 @@ import Utils = require("./utils");
 import Config = require("./config");
 import HitBtc = require("./hitbtc");
 import OkCoin = require("./okcoin");
+import Coinbase = require("./coinbase");
 import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
@@ -44,6 +45,7 @@ var getExch = () : Interfaces.CombinedGateway => {
     switch (ex) {
         case "hitbtc": return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
         case "okcoin": return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+        case "coinbase": return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config));
         case "null": return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
     }
@@ -124,7 +126,7 @@ var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublishe
 var quoter = new Quoter.Quoter(orderBroker, broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
-    fvPublisher, active, positionBroker, externalBroker);
+    fvPublisher, active, positionBroker, externalBroker, safetyRepo);
 
 var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
     quoteGenerator, broker, mktTradePersister);
