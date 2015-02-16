@@ -12,18 +12,27 @@ import express = require("express");
 import request = require('request');
 
 export interface IValuationGateway {
+    Source : Models.ExternalValuationSource;
     ValueChanged : Utils.Evt<number>;
 }
 
 export class WinkdexGateway implements IValuationGateway {
+    private _log : Utils.Logger = Utils.log("tribeca:winkdex");
+
+    public get Source() { return Models.ExternalValuationSource.Winkdex }
     ValueChanged = new Utils.Evt<number>();
 
     private poll = () => {
         request.get(
             {url: "https://winkdex.com/api/v0/price"},
-            (err, body, resp) => {
-                var price = JSON.parse(body).price / 100.0;
-                this.ValueChanged.trigger(price);
+            (err, body) => {
+                if (err) {
+                    this._log("error trying to get winkdex value %s", err);
+                }
+                else {
+                    var price = JSON.parse(body).price / 100.0;
+                    this.ValueChanged.trigger(price);
+                }
             });
     };
 
@@ -35,21 +44,21 @@ export class WinkdexGateway implements IValuationGateway {
 export class ExternalValuationSource {
     private _log : Utils.Logger = Utils.log("tribeca:evs");
 
-    ValueChanged = new Utils.Evt<number>();
-    private _value : number = null;
+    ValueChanged = new Utils.Evt<Models.ExternalValuationUpdate>();
+    private _value : Models.ExternalValuationUpdate = null;
     public get Value() { return this._value; }
 
     private handleValueChanged = (v : number) => {
-        if (this._value !== v) {
-            this._value = v;
-            this.ValueChanged.trigger(v);
-            this._pub.publish(new Models.ExternalValuationUpdate(this.Value, Utils.date(), this._source));
-            this._log("%s value changed: %d", Models.ExternalValuationSource[this._source], this.Value)
+        if (this._value.value !== v) {
+            var update = new Models.ExternalValuationUpdate(v, Utils.date(), this._gateway.Source);
+            this._value = update;
+            this.ValueChanged.trigger(update);
+            this._pub.publish(update);
+            this._log("%s value changed: %d", Models.ExternalValuationSource[this._gateway.Source], this.Value)
         }
     };
 
     constructor(private _gateway : IValuationGateway,
-                private _source : Models.ExternalValuationSource,
                 private _pub : Messaging.IPublish<Models.ExternalValuationUpdate>) {
         _gateway.ValueChanged.on(this.handleValueChanged);
     }

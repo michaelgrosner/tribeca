@@ -10,6 +10,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
+import Winkdex = require("./winkdex");
 import util = require("util");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
@@ -54,7 +55,9 @@ export class QuoteGenerator {
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _fvPublisher : Messaging.IPublish<Models.FairValue>,
                 private _activeRepo : ActiveRepository,
-                private _positionBroker : Interfaces.IPositionBroker) {
+                private _positionBroker : Interfaces.IPositionBroker,
+                private _evs : Winkdex.ExternalValuationSource) {
+        _evs.ValueChanged.on(() => this.recalcMarkets(_evs.Value.time))
         _broker.MarketData.on(() => this.recalcMarkets(_broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
         _activeRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));

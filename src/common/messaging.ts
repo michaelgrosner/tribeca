@@ -218,6 +218,7 @@ export class Topics {
     static MarketTrade = "mt";
     static Trades = "t";
     static Message = "msg";
+    static ExternalValuation = "ev";
 }
 
 export module ExchangePairMessaging {

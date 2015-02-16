@@ -23,6 +23,7 @@ import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
 import Web = require("./web");
+import Winkdex = require("./winkdex");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -70,6 +71,7 @@ var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
 var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
 var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
 var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
+var externalValuationPublisher = getEnginePublisher(Messaging.Topics.ExternalValuation);
 
 var messages = new Broker.MessagesPubisher(messagesPublisher);
 messages.publish("start up");
@@ -111,6 +113,7 @@ var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tra
     tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
 var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);
 
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
@@ -121,7 +124,7 @@ var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublishe
 var quoter = new Quoter.Quoter(orderBroker, broker);
 
 var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
-    fvPublisher, active, positionBroker);
+    fvPublisher, active, positionBroker, externalBroker);
 
 var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
     quoteGenerator, broker, mktTradePersister);
