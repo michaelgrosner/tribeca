@@ -136,7 +136,7 @@ var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTra
         if (!(typeof e === 'undefined') && e.hasOwnProperty('stack'))
             mainLog("Terminating %s :: %s %s", reason, e, e.stack);
         else
-            mainLog("Terminating %s [no err/stack]", reason);
+            mainLog("Terminating %s [no err/stack] %j", reason, e);
         orderBroker.cancelOpenOrders();
         process.exit();
     });

@@ -217,16 +217,14 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onOpen = (msg : CoinbaseOpen, t : Moment) => {
-        this._log("onOpen %j", msg);
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
         this.addToOrderBook(storage, price, convertSize(msg.remaining_size), msg.order_id);
-        this.onOrderBookChanged(t);
+        this.onOrderBookChanged(t, side, price);
     };
 
     private onDone = (msg : CoinbaseDone, t : Moment) => {
-        this._log("onDone %j", msg);
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
@@ -247,11 +245,10 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             storage.delete(price);
         }
 
-        this.onOrderBookChanged(t);
+        this.onOrderBookChanged(t, side, price);
     };
 
     private onMatch = (msg : CoinbaseMatch, t : Moment) => {
-        this._log("onMatch %j", msg);
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
@@ -271,13 +268,12 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             makerStorage.delete(price);
         }
 
-        this.onOrderBookChanged(t);
+        this.onOrderBookChanged(t, side, price);
 
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false));
     };
 
     private onChange = (msg : CoinbaseChange, t : Moment) => {
-        this._log("onChange %j", msg);
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
@@ -296,29 +292,43 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         priceLevelStorage.orders[msg.order_id] = newSize;
         priceLevelStorage.marketUpdate.size -= (oldSize - newSize);
 
-        this.onOrderBookChanged(t);
+        this.onOrderBookChanged(t, side, price);
     };
 
-    private onOrderBookChanged = (t : Moment) => {
-        this._log("onOrderBookChanged");
-        var bids = _.map(this._bids.store.slice(0, 5), s => s.value.marketUpdate);
-        var asks = _.map(this._asks.store.slice(0, 5), s => s.value.marketUpdate);
-        this.MarketData.trigger(new Models.Market(bids, asks, t));
+    private _cachedBids : Models.MarketSide[] = null;
+    private _cachedAsks : Models.MarketSide[] = null;
+
+    private reevalBids = () => {
+        this._cachedBids = _.map(this._bids.store.slice(0, 5), s => s.value.marketUpdate);
+    };
+
+    private reevalAsks = () => {
+        this._cachedAsks = _.map(this._asks.store.slice(0, 5), s => s.value.marketUpdate);
+    };
+
+    private onOrderBookChanged = (t : Moment, side : Models.Side, price : number) => {
+        if (side === Models.Side.Bid) {
+            if (price < _.last(this._cachedBids).price) return;
+            else this.reevalBids();
+        }
+
+        if (side === Models.Side.Ask) {
+            if (price > _.last(this._cachedAsks).price) return;
+            else this.reevalAsks();
+        }
+
+        this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, t));
     };
 
     private onStateChange = (s : StateChange, t : Moment) => {
         var status = convertConnectivityStatus(s);
-        this._log("onStateChange", Models.ConnectivityStatus[status]);
 
         if (status === Models.ConnectivityStatus.Connected) {
-            this._log("snapshot start");
             var add = (st, u) =>
                 this.addToOrderBook(st, convertPrice(u.price), convertSize(u.size), u.id);
 
             _.forEach(this._client.book.asks, a => add(this._asks, a));
             _.forEach(this._client.book.bids, b => add(this._bids, b));
-
-            this._log("snapshot done");
         }
         else {
             this._asks.clear();
@@ -326,7 +336,10 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
 
         this.ConnectChanged.trigger(status);
-        this.onOrderBookChanged(t)
+
+        this.reevalBids();
+        this.reevalAsks();
+        this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, t));
     };
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");

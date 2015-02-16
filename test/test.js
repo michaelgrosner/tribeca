@@ -2,7 +2,7 @@ var assert = require("assert");
 var util = require("util");
 var SortedArray = require("collections/sorted-array");
 var _ = require("lodash");
-
+var request = require("request");
 
 describe('HitBtc', function () {
     describe('map', function () {
@@ -46,3 +46,25 @@ describe('HitBtc', function () {
         })
     });
 });
+
+describe("Winkdex", function() {
+    it("should work", function(done) {
+        request.get(
+            {url: "https://winkdex.com/api/v0/price"},
+            function (err, body, res) {
+                if (err) {
+                    this._log("error trying to get winkdex value %s", err);
+                }
+                else {
+                    try {
+                        var price = JSON.parse(res).price / 100.0;
+                        console.log(price);
+                        done();
+                    }
+                    catch (e) {
+                        this._log("error handling winkdex value %s %j %j", e, body, res);
+                    }
+                }
+            });
+    });
+})
