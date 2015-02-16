@@ -197,9 +197,9 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _bids : any = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.BidCmp);
     private _asks : any = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.AskCmp);
 
-    private getStorage = (msg : CoinbaseBase) : any => {
-        if (msg.side === "buy") return this._bids;
-        if (msg.side === "sell") return this._asks;
+    private getStorage = (side : Models.Side) : any => {
+        if (side === Models.Side.Bid) return this._bids;
+        if (side === Models.Side.Ask) return this._asks;
     };
 
     private addToOrderBook = (storage : any, price : number, size : number, order_id : string) => {
@@ -218,14 +218,18 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private onOpen = (msg : CoinbaseOpen, t : Moment) => {
         this._log("onOpen %j", msg);
-        var storage = this.getStorage(msg);
-        this.addToOrderBook(storage, convertPrice(msg.price), convertSize(msg.remaining_size), msg.order_id);
+        var price = convertPrice(msg.price);
+        var side = convertSide(msg);
+        var storage = this.getStorage(side);
+        this.addToOrderBook(storage, price, convertSize(msg.remaining_size), msg.order_id);
         this.onOrderBookChanged(t);
     };
 
     private onDone = (msg : CoinbaseDone, t : Moment) => {
         this._log("onDone %j", msg);
-        var storage = this.getStorage(msg);
+        var price = convertPrice(msg.price);
+        var side = convertSide(msg);
+        var storage = this.getStorage(side);
 
         var priceLevelStorage = storage.get(convertPrice(msg.price));
 
@@ -240,7 +244,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         delete priceLevelStorage.orders[msg.order_id];
 
         if (_.isEmpty(priceLevelStorage.orders)) {
-            storage.delete(msg.price);
+            storage.delete(price);
         }
 
         this.onOrderBookChanged(t);
@@ -250,7 +254,8 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._log("onMatch %j", msg);
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
-        var makerStorage = this.getStorage(msg);
+        var side = convertSide(msg);
+        var makerStorage = this.getStorage(side);
 
         var priceLevelStorage = makerStorage.get(price);
 
@@ -263,7 +268,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             delete priceLevelStorage.orders[msg.maker_order_id];
 
         if (_.isEmpty(priceLevelStorage.orders)) {
-            makerStorage.delete(msg.price);
+            makerStorage.delete(price);
         }
 
         this.onOrderBookChanged(t);
@@ -273,7 +278,9 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private onChange = (msg : CoinbaseChange, t : Moment) => {
         this._log("onChange %j", msg);
-        var storage = this.getStorage(msg);
+        var price = convertPrice(msg.price);
+        var side = convertSide(msg);
+        var storage = this.getStorage(side);
 
         var priceLevelStorage : PriceLevel = storage.get(convertPrice(msg.price));
 
@@ -288,7 +295,6 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
         priceLevelStorage.orders[msg.order_id] = newSize;
         priceLevelStorage.marketUpdate.size -= (oldSize - newSize);
-
 
         this.onOrderBookChanged(t);
     };
