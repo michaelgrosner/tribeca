@@ -14,7 +14,9 @@ import Interfaces = require("./interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
+import _ = require('lodash');
 var CoinbaseExchange = require("coinbase-exchange");
+var SortedArrayMap = require("collections/sorted-array-map");
 
 var passphrase = "h9g47GcHDC8GHx48Hner";
 var key = "6c945837d033823150e9e543642b2aeb";
@@ -25,6 +27,12 @@ interface StateChange {
     new : string;
 }
 
+interface CoinbaseBase {
+    type: string;
+    side: string; // "buy"/"sell"
+    sequence : number;
+}
+
 // A valid order has been received and is now active. This message is emitted for every single valid order as soon as
 // the matching engine receives it whether it fills immediately or not.
 // The received message does not indicate a resting order on the order book. It simply indicates a new incoming order
@@ -32,36 +40,27 @@ interface StateChange {
 // they are able to begin being filled (taker behavior). Self-trade prevention may also trigger change messages to
 // follow if the order size needs to be adjusted. Orders which are not fully filled or canceled due to self-trade
 // prevention result in an open message and become resting orders on the order book.
-interface CoinbaseReceived {
-    type : string; // received
-    sequence : number;
+interface CoinbaseReceived extends CoinbaseBase {
     order_id: string; // guid
     size: string; // "0.00"
     price: string; // "0.00"
-    side: string; // "buy"/"sell"
 }
 
 // The order is now open on the order book. This message will only be sent for orders which are not fully filled
 // immediately. remaining_size will indicate how much of the order is unfilled and going on the book.
-interface CoinbaseOpen {
-    type: string; // "open",
-    sequence: number;
+interface CoinbaseOpen extends CoinbaseBase {
     order_id: string; // guid
-    price: number;
-    remaining_size: number;
-    side: string;
+    price: string;
+    remaining_size: string;
 }
 
 // The order is no longer on the order book. Sent for all orders for which there was a received message.
-// This message can result from an order being canceled or filled. There will be no more messages for this order_id a
-// fter a done message. remaining_size indicates how much of the order went unfilled; this will be 0 for filled orders.
-interface CoinbaseDone {
-    type: string; // done
-    sequence: number;
+// This message can result from an order being canceled or filled. There will be no more messages for this order_id
+// after a done message. remaining_size indicates how much of the order went unfilled; this will be 0 for filled orders.
+interface CoinbaseDone extends CoinbaseBase {
     price: string;
     order_id: string;
     reason: string; // "filled"??
-    side: string;
     remaining_size: string;
 }
 
@@ -69,30 +68,24 @@ interface CoinbaseDone {
 // being received and the maker order is a resting order on the book. The side field indicates the maker order side.
 // If the side is sell this indicates the maker was a sell order and the match is considered an up-tick. A buy side
 // match is a down-tick.
-interface CoinbaseMatch {
-    type: string; // "match"
+interface CoinbaseMatch extends CoinbaseBase {
     trade_id: number; //": 10,
-    sequence: number;
     maker_order_id: string;
     taker_order_id: string;
     time: string; // "2014-11-07T08:19:27.028459Z",
     size: string;
     price: string;
-    side: string;
 }
 
 // An order has changed in size. This is the result of self-trade prevention adjusting the order size.
 // Orders can only decrease in size. change messages are sent anytime an order changes in size;
 // this includes resting orders (open) as well as received but not yet open.
-interface CoinbaseChange {
-    type: string; //"change",
-    sequence: number;
+interface CoinbaseChange extends CoinbaseBase {
     order_id: string;
     time: string;
     new_size: string;
     old_size: string;
     price: string;
-    side: string;
 }
 
 interface CoinbaseEntry {
@@ -152,7 +145,7 @@ interface CoinbaseRESTTrade {
 interface CoinbaseAuthenticatedClient {
     buy(order : CoinbaseOrder, cb: (err? : Error, response? : any, ack? : CoinbaseOrderAck) => void);
     sell(order : CoinbaseOrder, cb: (err? : Error, response? : any, ack? : CoinbaseOrderAck) => void);
-    cancel(id : string, cb: (err? : Error, response? : any) => void);
+    cancelOrder(id : string, cb: (err? : Error, response? : any) => void);
     getOrders(cb: (err? : Error, response? : any, ack? : CoinbaseOpen[]) => void);
     getProductTrades(product : string, cb: (err? : Error, response? : any, ack? : CoinbaseRESTTrade[]) => void);
     getAccounts(cb: (err? : Error, response? : any, info? : CoinbaseAccountInformation[]) => void);
@@ -163,18 +156,120 @@ function convertConnectivityStatus(s : StateChange) {
     return s.new === "processing" ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected;
 }
 
+function convertSide(msg : CoinbaseBase) : Models.Side {
+    return msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
+}
+
+function convertPrice(pxStr : string) {
+    return parseFloat(pxStr);
+}
+
+function convertSize(szStr : string) {
+    return parseFloat(szStr);
+}
+
+function convertTime(time : string) {
+    return moment(time);
+}
+
+class PriceLevel {
+    orders : { [id: string]: number} = {};
+    marketUpdate = new Models.MarketSide(0, 0);
+}
+
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.MarketSide>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    private static Eq = (a, b) => a.price === b.price;
+
+    private static BidCmp = (a, b) => {
+        if (CoinbaseMarketDataGateway.Eq(a, b)) return 0;
+        return a.price > b.price ? 1 : -1
+    };
+
+    private static AskCmp = (a, b) => {
+        if (CoinbaseMarketDataGateway.Eq(a, b)) return 0;
+        return a.price > b.price ? -1 : 1
+    };
+
+    private _bids = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.BidCmp);
+    private _asks = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.AskCmp);
+
+    private getStorage = (msg : CoinbaseBase) : any => {
+        if (msg.side === "buy") return this._bids;
+        if (msg.side === "sell") return this._asks;
+    };
+
+    private onOpen = (msg : CoinbaseOpen, t : Moment) => {
+        var storage = this.getStorage(msg);
+
+        var priceLevelStorage = storage.get(msg.price);
+        if (typeof priceLevelStorage === "undefined") {
+            var pl = new PriceLevel();
+            pl.marketUpdate.price = convertPrice(msg.price);
+            priceLevelStorage = pl;
+            storage.set(msg.price, pl);
+        }
+
+        var size = convertSize(msg.remaining_size);
+        priceLevelStorage.marketUpdate.size += size;
+        priceLevelStorage.orders[msg.order_id] = size;
+
+        this.onOrderBookChanged(t);
+    };
+
+    private onDone = (msg : CoinbaseDone, t : Moment) => {
+        var storage = this.getStorage(msg);
+
+        if (msg.reason === "canceled") {
+            var priceLevelStorage = storage.get(msg.price);
+
+            var orderSize = priceLevelStorage.orders[msg.order_id];
+            if (typeof priceLevelStorage === "undefined" || typeof orderSize === "undefined") {
+                this._log("cannot find order book order %j to cancel!", msg);
+                return;
+            }
+
+            priceLevelStorage.marketUpdate.size -= orderSize;
+            delete priceLevelStorage.orders[msg.order_id];
+
+            if (_.isEmpty(priceLevelStorage.orders)) {
+                storage.delete(msg.price);
+            }
+
+            this.onOrderBookChanged(t);
+        }
+    };
+
+    private onMatch = (msg : CoinbaseMatch, t : Moment) => {
+        var storage = this.getStorage(msg);
+
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(convertPrice(msg.price), convertSize(msg.size),
+            convertTime(msg.time), false));
+    };
+
+    private onChange = (msg : CoinbaseChange, t : Moment) => {
+        var storage = this.getStorage(msg);
+        this.onOrderBookChanged(t);
+    };
+
+    private onOrderBookChanged = (t : Moment) => {
+        this.MarketData.trigger(new Models.Market(null, null, t));
+    };
+
+    private onStateChange = (s : StateChange) => {
+        this.ConnectChanged.trigger(convertConnectivityStatus(s));
+    };
+
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
     constructor(private _client : CoinbaseOrderBook) {
-        this._client.on("statechange", s => this.ConnectChanged.trigger(convertConnectivityStatus(s)));
-
-        ["received", "open", "done", "match", "change"].forEach(s => {
-            this._client.on(s, r => this._log(s, ": ", r));
-        });
+        this._client.on("statechange", this.onStateChange);
+        this._client.on("open", m => this.onOpen(m, Utils.date()));
+        this._client.on("done", m => this.onDone(m, Utils.date()));
+        this._client.on("match", m => this.onMatch(m, Utils.date()));
+        this._client.on("change", m => this.onChange(m, Utils.date()));
     }
 }
 
@@ -182,7 +277,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this._authClient.cancel(cancel.exchangeId, (err? : Error) => {
+        this._authClient.cancelOrder(cancel.exchangeId, (err? : Error) => {
             if (err) {
                 var status : Models.OrderStatusReport = {
                     orderId: cancel.clientOrderId,
