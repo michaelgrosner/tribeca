@@ -26,13 +26,18 @@ export class WinkdexGateway implements IValuationGateway {
     private poll = () => {
         request.get(
             {url: "https://winkdex.com/api/v0/price"},
-            (err, body) => {
+            (err, body, res) => {
                 if (err) {
                     this._log("error trying to get winkdex value %s", err);
                 }
                 else {
-                    var price = JSON.parse(body).price / 100.0;
-                    this.ValueChanged.trigger(price);
+                    try {
+                        var price = body.price / 100.0;
+                        this.ValueChanged.trigger(price);
+                    }
+                    catch (e) {
+                        this._log("error trying to get winkdex value %s %s %s", e, body, res);
+                    }
                 }
             });
     };

@@ -182,90 +182,150 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.MarketSide>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    private static Eq = (a, b) => a.price === b.price;
+    private static Eq = (a, b) => Math.abs(a - b) < 1e-4;
 
     private static BidCmp = (a, b) => {
         if (CoinbaseMarketDataGateway.Eq(a, b)) return 0;
-        return a.price > b.price ? 1 : -1
+        return a > b ? -1 : 1
     };
 
     private static AskCmp = (a, b) => {
         if (CoinbaseMarketDataGateway.Eq(a, b)) return 0;
-        return a.price > b.price ? -1 : 1
+        return a > b ? 1 : -1
     };
 
-    private _bids = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.BidCmp);
-    private _asks = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.AskCmp);
+    private _bids : any = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.BidCmp);
+    private _asks : any = new SortedArrayMap([], CoinbaseMarketDataGateway.Eq, CoinbaseMarketDataGateway.AskCmp);
 
     private getStorage = (msg : CoinbaseBase) : any => {
         if (msg.side === "buy") return this._bids;
         if (msg.side === "sell") return this._asks;
     };
 
-    private onOpen = (msg : CoinbaseOpen, t : Moment) => {
-        var storage = this.getStorage(msg);
+    private addToOrderBook = (storage : any, price : number, size : number, order_id : string) => {
+        var priceLevelStorage : PriceLevel = storage.get(price);
 
-        var priceLevelStorage = storage.get(msg.price);
         if (typeof priceLevelStorage === "undefined") {
             var pl = new PriceLevel();
-            pl.marketUpdate.price = convertPrice(msg.price);
+            pl.marketUpdate.price = price;
             priceLevelStorage = pl;
-            storage.set(msg.price, pl);
+            storage.set(price, pl);
         }
 
-        var size = convertSize(msg.remaining_size);
         priceLevelStorage.marketUpdate.size += size;
-        priceLevelStorage.orders[msg.order_id] = size;
+        priceLevelStorage.orders[order_id] = size;
+    };
 
+    private onOpen = (msg : CoinbaseOpen, t : Moment) => {
+        this._log("onOpen %j", msg);
+        var storage = this.getStorage(msg);
+        this.addToOrderBook(storage, convertPrice(msg.price), convertSize(msg.remaining_size), msg.order_id);
         this.onOrderBookChanged(t);
     };
 
     private onDone = (msg : CoinbaseDone, t : Moment) => {
+        this._log("onDone %j", msg);
         var storage = this.getStorage(msg);
 
-        if (msg.reason === "canceled") {
-            var priceLevelStorage = storage.get(msg.price);
+        var priceLevelStorage = storage.get(convertPrice(msg.price));
 
-            var orderSize = priceLevelStorage.orders[msg.order_id];
-            if (typeof priceLevelStorage === "undefined" || typeof orderSize === "undefined") {
-                this._log("cannot find order book order %j to cancel!", msg);
-                return;
-            }
+        if (typeof priceLevelStorage === "undefined")
+            return;
 
-            priceLevelStorage.marketUpdate.size -= orderSize;
-            delete priceLevelStorage.orders[msg.order_id];
+        var orderSize = priceLevelStorage.orders[msg.order_id];
+        if (typeof orderSize === "undefined")
+            return;
 
-            if (_.isEmpty(priceLevelStorage.orders)) {
-                storage.delete(msg.price);
-            }
+        priceLevelStorage.marketUpdate.size -= orderSize;
+        delete priceLevelStorage.orders[msg.order_id];
 
-            this.onOrderBookChanged(t);
+        if (_.isEmpty(priceLevelStorage.orders)) {
+            storage.delete(msg.price);
         }
+
+        this.onOrderBookChanged(t);
     };
 
     private onMatch = (msg : CoinbaseMatch, t : Moment) => {
-        var storage = this.getStorage(msg);
+        this._log("onMatch %j", msg);
+        var price = convertPrice(msg.price);
+        var size = convertSize(msg.size);
+        var makerStorage = this.getStorage(msg);
 
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(convertPrice(msg.price), convertSize(msg.size),
-            convertTime(msg.time), false));
+        var priceLevelStorage = makerStorage.get(price);
+
+        if (typeof priceLevelStorage === "undefined")
+            return;
+
+        priceLevelStorage.marketUpdate.size -= size;
+
+        if (priceLevelStorage.orders[msg.maker_order_id] === 0)
+            delete priceLevelStorage.orders[msg.maker_order_id];
+
+        if (_.isEmpty(priceLevelStorage.orders)) {
+            makerStorage.delete(msg.price);
+        }
+
+        this.onOrderBookChanged(t);
+
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false));
     };
 
     private onChange = (msg : CoinbaseChange, t : Moment) => {
+        this._log("onChange %j", msg);
         var storage = this.getStorage(msg);
+
+        var priceLevelStorage : PriceLevel = storage.get(convertPrice(msg.price));
+
+        if (typeof priceLevelStorage === "undefined")
+            return;
+
+        var oldSize = priceLevelStorage.orders[msg.order_id];
+        if (typeof oldSize === "undefined")
+            return;
+
+        var newSize = convertSize(msg.new_size);
+
+        priceLevelStorage.orders[msg.order_id] = newSize;
+        priceLevelStorage.marketUpdate.size -= (oldSize - newSize);
+
+
         this.onOrderBookChanged(t);
     };
 
     private onOrderBookChanged = (t : Moment) => {
-        this.MarketData.trigger(new Models.Market(null, null, t));
+        this._log("onOrderBookChanged");
+        var bids = _.map(this._bids.store.slice(0, 5), s => s.value.marketUpdate);
+        var asks = _.map(this._asks.store.slice(0, 5), s => s.value.marketUpdate);
+        this.MarketData.trigger(new Models.Market(bids, asks, t));
     };
 
-    private onStateChange = (s : StateChange) => {
-        this.ConnectChanged.trigger(convertConnectivityStatus(s));
+    private onStateChange = (s : StateChange, t : Moment) => {
+        var status = convertConnectivityStatus(s);
+        this._log("onStateChange", Models.ConnectivityStatus[status]);
+
+        if (status === Models.ConnectivityStatus.Connected) {
+            this._log("snapshot start");
+            var add = (st, u) =>
+                this.addToOrderBook(st, convertPrice(u.price), convertSize(u.size), u.id);
+
+            _.forEach(this._client.book.asks, a => add(this._asks, a));
+            _.forEach(this._client.book.bids, b => add(this._bids, b));
+
+            this._log("snapshot done");
+        }
+        else {
+            this._asks.clear();
+            this._bids.clear();
+        }
+
+        this.ConnectChanged.trigger(status);
+        this.onOrderBookChanged(t)
     };
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
     constructor(private _client : CoinbaseOrderBook) {
-        this._client.on("statechange", this.onStateChange);
+        this._client.on("statechange", m => this.onStateChange(m, Utils.date()));
         this._client.on("open", m => this.onOpen(m, Utils.date()));
         this._client.on("done", m => this.onDone(m, Utils.date()));
         this._client.on("match", m => this.onMatch(m, Utils.date()));
@@ -347,7 +407,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     };
 
     constructor(private _authClient : CoinbaseAuthenticatedClient) {
-        setInterval(this.onTick, 15000);
+        //setInterval(this.onTick, 15000);
     }
 }
 
@@ -374,9 +434,11 @@ export class Coinbase extends Interfaces.CombinedGateway {
         var orderbook = new CoinbaseExchange.OrderBook();
         var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
 
-        var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
+        /*var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orderbook, authClient)
-            : new NullGateway.NullOrderGateway();
+            : new NullGateway.NullOrderGateway();*/
+
+        var orderGateway = new NullGateway.NullOrderGateway();
 
         var positionGateway = config.environment() == Config.Environment.Dev ?
             new NullGateway.NullPositionGateway() :

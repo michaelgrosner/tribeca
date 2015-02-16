@@ -107,6 +107,8 @@ export class QuoteGenerator {
     }
 
     private recalcFairValue = (mkt : Models.Market) => {
+        if (mkt.bids.length < 1 || mkt.asks.length < 1) return false;
+
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
@@ -193,6 +195,7 @@ export class QuoteGenerator {
         if (fv == null) return false;
 
         var genQt = this.computeQuote(fv, this._qlParamRepo.latest);
+        if (genQt === null) return false;
 
         var newBidQuote = this.getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
         var newAskQuote = this.getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
