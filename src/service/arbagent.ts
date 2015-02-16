@@ -56,7 +56,8 @@ export class QuoteGenerator {
                 private _fvPublisher : Messaging.IPublish<Models.FairValue>,
                 private _activeRepo : ActiveRepository,
                 private _positionBroker : Interfaces.IPositionBroker,
-                private _evs : Winkdex.ExternalValuationSource) {
+                private _evs : Winkdex.ExternalValuationSource,
+                private _safetyParams : Safety.SafetySettingsRepository) {
         _evs.ValueChanged.on(() => this.recalcMarkets(_evs.Value.time))
         _broker.MarketData.on(() => this.recalcMarkets(_broker.currentBook.time));
         _qlParamRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
@@ -160,6 +161,13 @@ export class QuoteGenerator {
 
     private computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var unrounded = QuoteGenerator.computeQuoteUnrounded(fv, params);
+
+        if (this._evs.Value === null) return null;
+        var eFV = this._evs.Value.value;
+        var megan = this._safetyParams.latest.maxEvDivergence;
+
+        if (unrounded.bidPx > eFV + megan) unrounded.bidPx = eFV + megan;
+        if (unrounded.askPx < eFV - megan) unrounded.askPx = eFV - megan;
 
         // should only make
         var mktBestAsk = this._broker.currentBook.asks[0].price;
