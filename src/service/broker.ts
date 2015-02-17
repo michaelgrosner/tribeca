@@ -318,7 +318,11 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             var basePosition = this.getPosition(this._base.pair.base);
             var quotePosition = this.getPosition(this._base.pair.quote);
 
-            if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || this._mdBroker.currentBook === null)
+            if (typeof basePosition === "undefined" 
+                || typeof quotePosition === "undefined" 
+                || this._mdBroker.currentBook === null
+                || this._mdBroker.currentBook.bids.length === 0
+                || this._mdBroker.currentBook.asks.length === 0)
                 return;
 
             var baseAmount = basePosition.amount;
