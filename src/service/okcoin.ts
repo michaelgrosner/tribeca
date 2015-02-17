@@ -146,28 +146,15 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.BrokeredCancel} = {};
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
-        if (typeof cancel.exchangeId !== "undefined") {
-            this.sendCancel(cancel.exchangeId, cancel);
-        }
-        else {
-            this._cancelsWaitingForExchangeOrderId[cancel.clientOrderId] = cancel;
-            this._log("Registered %s for late deletion", cancel.clientOrderId);
-        }
-
-        return new Models.OrderGatewayActionReport(Utils.date());
-    };
-
-    private sendCancel = (exchangeId : string, cancel : Models.BrokeredCancel) => {
         var c = {
             symbol: "BTC/USD",
             origOrderId: cancel.clientOrderId,
-            origExchOrderId: exchangeId,
+            origExchOrderId: cancel.exchangeId,
             side: cancel.side == Models.Side.Bid ? "buy" : "sell"
         };
         this._socket.sendEvent("Cxl", c);
+        return new Models.OrderGatewayActionReport(Utils.date());
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
@@ -199,14 +186,6 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onMessage = (tsMsg : Models.Timestamped<OkCoinExecutionReport>) => {
         var t = tsMsg.time;
         var msg : OkCoinExecutionReport = tsMsg.data;
-
-        // cancel any open orders waiting for oid
-        if (this._cancelsWaitingForExchangeOrderId.hasOwnProperty(msg.orderId)) {
-            var cancel = this._cancelsWaitingForExchangeOrderId[msg.orderId];
-            this.sendCancel(msg.exchangeId, cancel);
-            this._log("Deleting %s late, oid: %s", cancel.clientOrderId, msg.orderId);
-            delete this._cancelsWaitingForExchangeOrderId[msg.orderId];
-        }
 
         var orderStatus = OkCoinOrderEntryGateway.getStatus(msg.orderStatus);
         var status : Models.OrderStatusReport = {

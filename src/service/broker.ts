@@ -74,9 +74,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-    _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
-    _allOrdersFlat : Models.OrderStatusReport[] = [];
-    _exchIdsToClientIds : { [exchId: string] : string} = {};
+    private _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
+    private _allOrdersFlat : Models.OrderStatusReport[] = [];
+    private _exchIdsToClientIds : { [exchId: string] : string} = {};
+    private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.OrderCancel} = {};
 
     Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
@@ -133,6 +134,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     cancelOrder = (cancel : Models.OrderCancel) => {
         var rpt = _.last(this._allOrders[cancel.origOrderId]);
+        
+        if (!this._oeGateway.cancelsByClientOrderId) {
+            // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
+            if (typeof rpt.exchangeId === "undefined") {
+                this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
+                this._log("Registered %s for late deletion", rpt.orderId);
+                return;
+            }
+        }
+
         var cxl = new Models.BrokeredCancel(cancel.origOrderId, OrderBroker.generateOrderId(), rpt.side, rpt.exchangeId);
         var sent = this._oeGateway.cancelOrder(cxl);
 
@@ -198,6 +209,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
         this._allOrders[osr.orderId].push(o);
         this._allOrdersFlat.push(o);
+
+        // cancel any open orders waiting for oid
+        if (!this._oeGateway.cancelsByClientOrderId 
+                && typeof o.exchangeId !== "undefined" 
+                && this._cancelsWaitingForExchangeOrderId.hasOwnProperty(o.orderId)) {
+            this._log("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            delete this._cancelsWaitingForExchangeOrderId[o.orderId];
+            var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
+            this.cancelOrder(cancel);
+        }
 
         this.OrderUpdate.trigger(o);
 
