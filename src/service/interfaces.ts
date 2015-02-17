@@ -26,6 +26,7 @@ export interface IOrderEntryGateway extends IGateway {
     cancelOrder(cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport;
     replaceOrder(replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport;
     OrderUpdate : Utils.Evt<Models.OrderStatusReport>;
+    cancelsByClientOrderId : boolean;
 }
 
 export interface IPositionGateway {

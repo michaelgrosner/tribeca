@@ -259,6 +259,8 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     _orderEntryWs : WebSocket;
 
+    public get cancelsByClientOrderId() { return true; }
+
     _nonce = 1;
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {

@@ -9,6 +9,8 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    public cancelsByClientOrderId = true;
+
     sendOrder(order : Models.BrokeredOrder) : Models.OrderGatewayActionReport {
         setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working, order), 10);
         return new Models.OrderGatewayActionReport(Utils.date());

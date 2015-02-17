@@ -131,6 +131,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    public cancelsByClientOrderId = false;
+
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var o = {
             id: order.orderId,

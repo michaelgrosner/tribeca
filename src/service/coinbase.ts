@@ -407,6 +407,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };*/
 
+    public cancelsByClientOrderId = false;
+
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
