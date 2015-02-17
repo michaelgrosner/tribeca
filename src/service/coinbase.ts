@@ -129,7 +129,7 @@ interface CoinbaseOrderAck {
 interface CoinbaseAccountInformation {
     id : string;
     balance : string;
-    holds : string;
+    hold : string;
     available : string;
     currency : string;
 }
@@ -229,7 +229,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         var side = convertSide(msg);
         var storage = this.getStorage(side);
 
-        var priceLevelStorage = storage.get(convertPrice(msg.price));
+        var priceLevelStorage = storage.get(price);
 
         if (typeof priceLevelStorage === "undefined")
             return;
@@ -260,8 +260,9 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             return;
 
         priceLevelStorage.marketUpdate.size -= size;
+        priceLevelStorage.orders[msg.maker_order_id] -= size;
 
-        if (priceLevelStorage.orders[msg.maker_order_id] === 0)
+        if (priceLevelStorage.orders[msg.maker_order_id] < 1e-4)
             delete priceLevelStorage.orders[msg.maker_order_id];
 
         if (_.isEmpty(priceLevelStorage.orders)) {
@@ -421,12 +422,17 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 
     private onTick = () => {
         this._authClient.getAccounts((err? : Error, resp? : any, data? : CoinbaseAccountInformation[]) => {
-            this._log(data);
+            _.forEach(data, d => {
+                var c = d.currency === "BTC" ? Models.Currency.BTC : Models.Currency.USD;
+                var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
+                this.PositionUpdate.trigger(rpt);
+            });
         });
     };
 
     constructor(private _authClient : CoinbaseAuthenticatedClient) {
-        //setInterval(this.onTick, 15000);
+        setInterval(this.onTick, 15000);
+        this.onTick();
     }
 }
 
