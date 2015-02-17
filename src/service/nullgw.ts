@@ -60,7 +60,7 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
+export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();

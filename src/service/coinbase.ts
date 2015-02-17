@@ -124,6 +124,7 @@ interface CoinbaseOrder {
 
 interface CoinbaseOrderAck {
     id : string;
+    message? : string;
 }
 
 interface CoinbaseAccountInformation {
@@ -378,15 +379,11 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        var func;
-        if (order.side === Models.Side.Bid) func = this._authClient.buy;
-        else if (order.side === Models.Side.Ask) func = this._authClient.sell;
-
-        func(order, (err? : Error, resp? : any, ack? : CoinbaseOrderAck) => {
-            if (err) {
+        var cb = (err? : Error, resp? : any, ack? : CoinbaseOrderAck) => {
+            if (err || typeof ack.message !== "undefined") {
                 var status : Models.OrderStatusReport = {
                     orderId: order.orderId,
-                    rejectMessage: err.message,
+                    rejectMessage: (ack || err).message,
                     orderStatus: Models.OrderStatus.Rejected,
                     time: Utils.date()
                 };
@@ -398,14 +395,22 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             else {
                 this._log("something went wrong with sending order %j", order);
             }
-        });
+        };
+
+        var o : CoinbaseOrder = {
+            client_oid : order.orderId,
+            size : order.quantity.toString(),
+            price : order.price.toString(),
+            product_id : "BTC-USD"
+        };
+
+        if (order.side === Models.Side.Bid) 
+            this._authClient.buy(o, cb);
+        else if (order.side === Models.Side.Ask) 
+            this._authClient.sell(o, cb);
 
         return new Models.OrderGatewayActionReport(Utils.date());
     };
-
-    /*private onExecutionReport = (tsMsg : Models.Timestamped<ExecutionReport>) => {
-        this.OrderUpdate.trigger(status);
-    };*/
 
     public cancelsByClientOrderId = false;
 
@@ -461,18 +466,20 @@ export class Coinbase extends Interfaces.CombinedGateway {
         var orderbook = new CoinbaseExchange.OrderBook();
         var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
 
-        /*var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
+        var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orderbook, authClient)
-            : new NullGateway.NullOrderGateway();*/
-
-        var orderGateway = new NullGateway.NullOrderGateway();
+            : new NullGateway.NullOrderGateway();
 
         var positionGateway = config.environment() == Config.Environment.Dev ?
             new NullGateway.NullPositionGateway() :
             new CoinbasePositionGateway(authClient);
 
+        var mdGateway = config.environment() == Config.Environment.Dev ?
+            <Interfaces.IMarketDataGateway>new NullGateway.NullMarketDataGateway() :
+            new CoinbaseMarketDataGateway(orderbook);
+
         super(
-            new CoinbaseMarketDataGateway(orderbook),
+            mdGateway,
             orderGateway,
             positionGateway,
             new CoinbaseBaseGateway());
