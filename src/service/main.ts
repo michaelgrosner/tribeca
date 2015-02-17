@@ -40,6 +40,8 @@ http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
 
+var orderCache = new Broker.OrderStateCache();
+
 var getExch = () : Interfaces.CombinedGateway => {
     var ex = process.env.EXCHANGE.toLowerCase();
     switch (ex) {
@@ -112,7 +114,7 @@ var positionPersister = new Broker.PositionPersister(db);
 
 var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
 var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher);
+    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, orderCache);
 var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
 var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);

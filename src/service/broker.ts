@@ -56,13 +56,19 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     }
 }
 
+export class OrderStateCache {
+    public allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
+    public allOrdersFlat : Models.OrderStatusReport[] = [];
+    public exchIdsToClientIds : { [exchId: string] : string} = {};
+}
+
 export class OrderBroker implements Interfaces.IOrderBroker {
     private _log : Utils.Logger;
 
     cancelOpenOrders() : void {
-        for (var k in this._allOrders) {
-            if (!this._allOrders.hasOwnProperty(k)) continue;
-            var e : Models.OrderStatusReport = _.last(this._allOrders[k]);
+        for (var k in this._orderCache.allOrders) {
+            if (!this._orderCache.allOrders.hasOwnProperty(k)) continue;
+            var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
 
             switch (e.orderStatus) {
                 case Models.OrderStatus.New:
@@ -74,9 +80,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-    private _allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
-    private _allOrdersFlat : Models.OrderStatusReport[] = [];
-    private _exchIdsToClientIds : { [exchId: string] : string} = {};
     private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.OrderCancel} = {};
 
     Trade = new Utils.Evt<Models.Trade>();
@@ -112,7 +115,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
-        var rpt = _.last(this._allOrders[replace.origOrderId]);
+        var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
             replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
 
@@ -132,7 +135,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     cancelOrder = (cancel : Models.OrderCancel) => {
-        var rpt = _.last(this._allOrders[cancel.origOrderId]);
+        var rpt = _.last(this._orderCache.allOrders[cancel.origOrderId]);
         
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
@@ -161,14 +164,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orig = osr;
         }
         else {
-            var orderChain = this._allOrders[osr.orderId];
+            var orderChain = this._orderCache.allOrders[osr.orderId];
 
             if (typeof orderChain === "undefined") {
                 // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
-                var secondChance = this._exchIdsToClientIds[osr.exchangeId];
+                var secondChance = this._orderCache.exchIdsToClientIds[osr.exchangeId];
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
-                    orderChain = this._allOrders[secondChance];
+                    orderChain = this._orderCache.allOrders[secondChance];
                 }
             }
 
@@ -239,14 +242,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
+        this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
-        if (!this._allOrders.hasOwnProperty(osr.orderId))
-            this._allOrders[osr.orderId] = [osr];
+        if (!this._orderCache.allOrders.hasOwnProperty(osr.orderId))
+            this._orderCache.allOrders[osr.orderId] = [osr];
         else
-            this._allOrders[osr.orderId].push(osr);
+            this._orderCache.allOrders[osr.orderId].push(osr);
 
-        this._allOrdersFlat.push(osr);
+        this._orderCache.allOrdersFlat.push(osr);
     };
 
     constructor(private _baseBroker : Interfaces.IBroker,
@@ -259,13 +262,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
                 private _messages : MessagesPubisher,
                 private _tradeHttp : Web.StandaloneHttpPublisher<Models.Trade>,
-                private _latencyHttp : Web.StandaloneHttpPublisher<number>) {
+                private _latencyHttp : Web.StandaloneHttpPublisher<number>,
+                private _orderCache : OrderStateCache) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
-        _orderStatusPublisher.registerSnapshot(() => _.last(this._allOrdersFlat, 1000));
+        _orderStatusPublisher.registerSnapshot(() => _.last(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
         _tradeHttp.registerSnapshot(() => this._trades);
-        _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
+        _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._orderCache.allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log("got new order", o);
@@ -286,7 +290,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 25000).then(osrs => {
             _.each(osrs, this.addOrderStatusToMemory);
-            this._log("loaded %d osrs from %d orders", this._allOrdersFlat.length, Object.keys(this._allOrders).length);
+            this._log("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
         });
 
         this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 10000).then(trades => {
