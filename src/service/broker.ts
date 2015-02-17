@@ -106,7 +106,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             exchange: exch,
             computationalLatency: sent.sentTime.diff(order.generatedTime),
             rejectMessage: order.msg};
-        this._allOrders[rpt.orderId] = [rpt];
         this.onOrderUpdate(rpt);
 
         return new Models.SentOrder(rpt.orderId);
@@ -157,23 +156,29 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {
-        var orderChain = this._allOrders[osr.orderId];
+        var orig : Models.OrderStatusReport;
+        if (osr.orderStatus === Models.OrderStatus.New) {
+            orig = osr;
+        }
+        else {
+            var orderChain = this._allOrders[osr.orderId];
 
-        if (typeof orderChain === "undefined") {
-            // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
-            var secondChance = this._exchIdsToClientIds[osr.exchangeId];
-            if (typeof secondChance !== "undefined") {
-                osr.orderId = secondChance;
-                orderChain = this._allOrders[secondChance];
+            if (typeof orderChain === "undefined") {
+                // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
+                var secondChance = this._exchIdsToClientIds[osr.exchangeId];
+                if (typeof secondChance !== "undefined") {
+                    osr.orderId = secondChance;
+                    orderChain = this._allOrders[secondChance];
+                }
             }
-        }
 
-        if (typeof orderChain === "undefined") {
-            this._log("ERROR: cannot find orderId from %s", util.inspect(osr));
-            return;
-        }
+            if (typeof orderChain === "undefined") {
+                this._log("ERROR: cannot find orderId from %s", util.inspect(osr));
+                return;
+            }
 
-        var orig : Models.OrderStatusReport = _.last(orderChain);
+            orig = _.last(orderChain);
+        }
 
         var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
@@ -206,9 +211,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             osr.cancelRejected
         );
 
-        this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
-        this._allOrders[osr.orderId].push(o);
-        this._allOrdersFlat.push(o);
+        this.addOrderStatusToMemory(o);
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId 
@@ -233,6 +236,17 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._tradePersister.persist(trade);
             this._trades.push(trade);
         }
+    };
+
+    private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
+        this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
+
+        if (!this._allOrders.hasOwnProperty(osr.orderId))
+            this._allOrders[osr.orderId] = [osr];
+        else
+            this._allOrders[osr.orderId].push(osr);
+
+        this._allOrdersFlat.push(osr);
     };
 
     constructor(private _baseBroker : Interfaces.IBroker,
@@ -271,17 +285,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
         this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 25000).then(osrs => {
-            _.each(osrs, osr => {
-                this._exchIdsToClientIds[osr.exchangeId] = osr.orderId;
-
-                if (!this._allOrders.hasOwnProperty(osr.orderId))
-                    this._allOrders[osr.orderId] = [osr];
-                else
-                    this._allOrders[osr.orderId].push(osr);
-
-                this._allOrdersFlat.push(osr);
-            });
-
+            _.each(osrs, this.addOrderStatusToMemory);
             this._log("loaded %d osrs from %d orders", this._allOrdersFlat.length, Object.keys(this._allOrders).length);
         });
 
