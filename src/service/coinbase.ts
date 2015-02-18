@@ -15,7 +15,6 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
-import Broker = require('./broker');
 var CoinbaseExchange = require("coinbase-exchange");
 var SortedArrayMap = require("collections/sorted-array-map");
 
@@ -435,7 +434,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
     constructor(
-        private _orderData : Broker.OrderStateCache,
+        private _orderData : Interfaces.IOrderStateCache,
         private _orderBook : CoinbaseOrderBook,
         private _authClient : CoinbaseAuthenticatedClient) {
 
@@ -487,12 +486,12 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, orders : Interfaces.IOrderStateCache) {
         var orderbook = new CoinbaseExchange.OrderBook();
         var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
 
         var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orderbook, authClient)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orders, orderbook, authClient)
             : new NullGateway.NullOrderGateway();
 
         var positionGateway = config.environment() == Config.Environment.Dev ?

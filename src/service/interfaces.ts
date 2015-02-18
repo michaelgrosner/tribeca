@@ -65,6 +65,12 @@ export interface IPositionBroker {
     getPosition(currency : Models.Currency) : Models.CurrencyPosition;
 }
 
+export interface IOrderStateCache {
+    allOrders : { [orderId: string]: Models.OrderStatusReport[] };
+    allOrdersFlat : Models.OrderStatusReport[];
+    exchIdsToClientIds : { [exchId: string] : string};
+}
+
 export interface IBroker {
     makeFee() : number;
     takeFee() : number;

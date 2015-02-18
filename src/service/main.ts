@@ -47,7 +47,7 @@ var getExch = () : Interfaces.CombinedGateway => {
     switch (ex) {
         case "hitbtc": return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
         case "okcoin": return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
-        case "coinbase": return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config));
+        case "coinbase": return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache));
         case "null": return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
     }
