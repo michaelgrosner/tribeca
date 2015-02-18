@@ -15,6 +15,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
+import Broker = require('./broker');
 var CoinbaseExchange = require("coinbase-exchange");
 var SortedArrayMap = require("collections/sorted-array-map");
 
@@ -391,6 +392,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             }
             else if (ack) {
                 // pick this up off real-time feed
+                this._log("REST ack %j", ack);
             }
             else {
                 this._log("something went wrong with sending order %j", order);
@@ -416,10 +418,33 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    /*private onOpen = (msg : CoinbaseBase, t : Moment, ordStatus : Models.OrderStatus) => { 
+        var status : Models.OrderStatusReport = {
+            exchangeId: msg.order_id,
+            orderId: msg.client_oid,
+            orderStatus: ordStatus,
+            time: t,
+            rejectMessage: msg.orderRejectReason,
+            lastQuantity: msg.lastQuantity > 0 ? msg.lastQuantity / _lotMultiplier : undefined,
+            lastPrice: msg.lastQuantity > 0 ? msg.lastPrice : undefined,
+            leavesQuantity: ordStatus == Models.OrderStatus.Working ? msg.leavesQuantity / _lotMultiplier : undefined,
+            cumQuantity: msg.cumQuantity / _lotMultiplier,
+            averagePrice: msg.averagePrice
+        };
+    };*/
+
      _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
     constructor(
+        private _orderData : Broker.OrderStateCache,
         private _orderBook : CoinbaseOrderBook,
-        private _authClient : CoinbaseAuthenticatedClient) {}
+        private _authClient : CoinbaseAuthenticatedClient) {
+
+        /*this._orderBook.on("received", m)
+        this._orderBook.on("open", m => this.onOpen(m, Utils.date()));
+        this._orderBook.on("done", m => this.onDone(m, Utils.date()));
+        this._orderBook.on("match", m => this.onMatch(m, Utils.date()));
+        this._orderBook.on("change", m => this.onChange(m, Utils.date()));*/
+    }
 }
 
 
