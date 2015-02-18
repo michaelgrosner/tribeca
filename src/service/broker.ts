@@ -178,8 +178,17 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orig = _.last(orderChain);
         }
 
-        var cumQuantity = osr.cumQuantity || orig.cumQuantity;
         var quantity = osr.quantity || orig.quantity;
+        var leavesQuantity = osr.leavesQuantity || orig.leavesQuantity;
+
+        var cumQuantity : number = undefined;
+        if (typeof osr.lastQuantity !== "undefined" && typeof osr.cumQuantity === "undefined") {
+            cumQuantity = quantity - leavesQuantity + osr.lastQuantity;
+        }
+        else if (typeof osr.cumQuantity !== "undefined") {
+            cumQuantity = osr.cumQuantity || orig.cumQuantity;
+        }
+
         var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
         var o = new Models.OrderStatusReportImpl(
@@ -196,10 +205,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             osr.time || Utils.date(),
             osr.lastQuantity,
             osr.lastPrice,
-            cumQuantity > 0 ? osr.leavesQuantity || orig.leavesQuantity : undefined,
+            leavesQuantity,
             cumQuantity,
             cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
-            osr.liquidity,
+            osr.liquidity || orig.liquidity,
             osr.exchange || orig.exchange,
             osr.computationalLatency,
             (typeof orig.version === "undefined") ? 0 : orig.version + 1,
