@@ -178,38 +178,40 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orig = _.last(orderChain);
         }
 
-        var quantity = osr.quantity || orig.quantity;
-        var leavesQuantity = osr.leavesQuantity || orig.leavesQuantity;
+        var getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
+
+        var quantity = getOrFallback(osr.quantity, orig.quantity);
+        var leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
 
         var cumQuantity : number = undefined;
-        if (typeof osr.lastQuantity !== "undefined" && typeof osr.cumQuantity === "undefined") {
-            cumQuantity = quantity - leavesQuantity + osr.lastQuantity;
+        if (typeof osr.cumQuantity !== "undefined") {
+            cumQuantity = getOrFallback(osr.cumQuantity, orig.cumQuantity);
         }
-        else if (typeof osr.cumQuantity !== "undefined") {
-            cumQuantity = osr.cumQuantity || orig.cumQuantity;
+        else {
+            cumQuantity = getOrFallback(orig.cumQuantity, 0) + getOrFallback(osr.lastQuantity, 0);
         }
 
         var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
         var o = new Models.OrderStatusReportImpl(
-            osr.pair || orig.pair,
-            osr.side || orig.side,
+            getOrFallback(osr.pair, orig.pair),
+            getOrFallback(osr.side, orig.side),
             quantity,
-            osr.type || orig.type,
-            osr.price || orig.price,
-            osr.timeInForce || orig.timeInForce,
-            osr.orderId || orig.orderId,
-            osr.exchangeId || orig.exchangeId,
-            osr.orderStatus || orig.orderStatus,
+            getOrFallback(osr.type, orig.type),
+            getOrFallback(osr.price, orig.price),
+            getOrFallback(osr.timeInForce, orig.timeInForce),
+            getOrFallback(osr.orderId, orig.orderId),
+            getOrFallback(osr.exchangeId, orig.exchangeId),
+            getOrFallback(osr.orderStatus, orig.orderStatus),
             osr.rejectMessage,
-            osr.time || Utils.date(),
+            getOrFallback(osr.time, Utils.date()),
             osr.lastQuantity,
             osr.lastPrice,
             leavesQuantity,
             cumQuantity,
             cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
-            osr.liquidity || orig.liquidity,
-            osr.exchange || orig.exchange,
+            getOrFallback(osr.liquidity, orig.liquidity),
+            getOrFallback(osr.exchange, orig.exchange),
             osr.computationalLatency,
             (typeof orig.version === "undefined") ? 0 : orig.version + 1,
             partiallyFilled,
@@ -225,8 +227,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 && typeof o.exchangeId !== "undefined" 
                 && this._cancelsWaitingForExchangeOrderId.hasOwnProperty(o.orderId)) {
             this._log("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
-            delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
+            delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
         }
 

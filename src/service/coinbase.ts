@@ -452,8 +452,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof msg.client_oid === "undefined" || !this._orderData.allOrders.hasOwnProperty(msg.client_oid))
             return;
 
-        this._log("onReceived %j", msg);
-
         var t = Utils.date();
         var status : Models.OrderStatusReport = {
             exchangeId: msg.order_id,
@@ -522,7 +520,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderStatus: Models.OrderStatus.Working,
             time: t,
             lastQuantity: convertSize(msg.size),
-            lastPrice: convertPrice(msg.price)
+            lastPrice: convertPrice(msg.price),
+            liquidity: liq
         };
 
         this.OrderUpdate.trigger(status);

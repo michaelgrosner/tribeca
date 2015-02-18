@@ -205,9 +205,9 @@ export class OrderStatusReportImpl implements OrderStatusReport {
 
         components.push("orderId="+this.orderId);
         components.push("time="+this.time.format('M/d/YY h:mm:ss,SSS'));
-        if (this.exchangeId != null) components.push("exchangeId="+this.exchangeId);
+        if (typeof this.exchangeId !== "undefined") components.push("exchangeId="+this.exchangeId);
         components.push("pair="+Currency[this.pair.base] + "/" + Currency[this.pair.quote]);
-        if (this.exchange != null) components.push("exchange="+Exchange[this.exchange]);
+        if (typeof this.exchange !== "undefined") components.push("exchange="+Exchange[this.exchange]);
         components.push("orderStatus="+OrderStatus[this.orderStatus]);
         if (this.partiallyFilled) components.push("partiallyFilled");
         if (this.pendingCancel) components.push("pendingCancel");
@@ -219,14 +219,14 @@ export class OrderStatusReportImpl implements OrderStatusReport {
         components.push("tif="+TimeInForce[this.timeInForce]);
         components.push("type="+OrderType[this.type]);
         components.push("version="+this.version);
-        if (this.rejectMessage) components.push(this.rejectMessage);
-        if (this.computationalLatency != null) components.push("computationalLatency="+this.computationalLatency);
-        if (this.lastQuantity != null) components.push("lastQuantity="+this.lastQuantity);
-        if (this.lastPrice != null) components.push("lastPrice="+this.lastPrice);
-        if (this.leavesQuantity != null) components.push("leavesQuantity="+this.leavesQuantity);
-        if (this.cumQuantity != null) components.push("cumQuantity="+this.cumQuantity);
-        if (this.averagePrice != null) components.push("averagePrice="+this.averagePrice);
-        if (this.liquidity != null) components.push("liquidity="+Liquidity[this.liquidity]);
+        if (typeof this.rejectMessage !== "undefined") components.push(this.rejectMessage);
+        if (typeof this.computationalLatency !== "undefined") components.push("computationalLatency="+this.computationalLatency);
+        if (typeof this.lastQuantity !== "undefined") components.push("lastQuantity="+this.lastQuantity);
+        if (typeof this.lastPrice !== "undefined") components.push("lastPrice="+this.lastPrice);
+        if (typeof this.leavesQuantity !== "undefined") components.push("leavesQuantity="+this.leavesQuantity);
+        if (typeof this.cumQuantity !== "undefined") components.push("cumQuantity="+this.cumQuantity);
+        if (typeof this.averagePrice !== "undefined") components.push("averagePrice="+this.averagePrice);
+        if (typeof this.liquidity !== "undefined") components.push("liquidity="+Liquidity[this.liquidity]);
 
         return components.join(";");
     }
