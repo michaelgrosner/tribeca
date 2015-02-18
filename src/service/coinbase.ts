@@ -15,6 +15,8 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
+
+var uuid = require('node-uuid');
 var CoinbaseExchange = require("coinbase-exchange");
 var SortedArrayMap = require("collections/sorted-array-map");
 
@@ -357,6 +359,10 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
+    generateClientOrderId = () : string => {
+        return uuid.v1();
+    }
+
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         this._authClient.cancelOrder(cancel.exchangeId, (err? : Error) => {
             if (err) {
@@ -417,6 +423,11 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    private onStateChange = (s : StateChange) => {
+        var status = convertConnectivityStatus(s);
+        this.ConnectChanged.trigger(status);
+    };
+
     /*private onOpen = (msg : CoinbaseBase, t : Moment, ordStatus : Models.OrderStatus) => { 
         var status : Models.OrderStatusReport = {
             exchangeId: msg.order_id,
@@ -437,6 +448,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         private _orderData : Interfaces.IOrderStateCache,
         private _orderBook : CoinbaseOrderBook,
         private _authClient : CoinbaseAuthenticatedClient) {
+
+        this._orderBook.on("statechange", this.onStateChange);
 
         /*this._orderBook.on("received", m)
         this._orderBook.on("open", m => this.onOpen(m, Utils.date()));

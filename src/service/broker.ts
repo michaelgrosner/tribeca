@@ -11,7 +11,6 @@ import mongodb = require('mongodb');
 import Q = require("q");
 import momentjs = require('moment');
 import Interfaces = require("./interfaces");
-import shortId = require("shortid");
 import Persister = require("./persister");
 import util = require("util");
 import Web = require("web");
@@ -56,7 +55,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     }
 }
 
-export class OrderStateCache {
+export class OrderStateCache implements Interfaces.IOrderStateCache {
     public allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
     public allOrdersFlat : Models.OrderStatusReport[] = [];
     public exchIdsToClientIds : { [exchId: string] : string} = {};
@@ -85,12 +84,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
 
-    private static generateOrderId = () => {
-        return shortId.generate();
-    };
-
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
-        var orderId = OrderBroker.generateOrderId();
+        var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
         var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
 
@@ -146,7 +141,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        var cxl = new Models.BrokeredCancel(cancel.origOrderId, OrderBroker.generateOrderId(), rpt.side, rpt.exchangeId);
+        var cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
         var sent = this._oeGateway.cancelOrder(cxl);
 
         var rpt : Models.OrderStatusReport = {

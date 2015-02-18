@@ -15,6 +15,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
+var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
 
 var _lotMultiplier = 100.0;
@@ -259,7 +260,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     _orderEntryWs : WebSocket;
 
-    public get cancelsByClientOrderId() { return true; }
+    public cancelsByClientOrderId = true;
 
     _nonce = 1;
 
@@ -444,6 +445,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             throw e;
         }
     };
+
+    generateClientOrderId = () => {
+        return shortId.generate();
+    }
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;

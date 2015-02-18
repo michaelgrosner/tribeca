@@ -15,6 +15,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
     channel : string;
@@ -130,6 +131,10 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+
+    generateClientOrderId = () => {
+        return shortId.generate();
+    }
 
     public cancelsByClientOrderId = false;
 
