@@ -4,10 +4,13 @@ var crypto = require('crypto');
 import _ = require('lodash');
 import request = require('request');
 
+var HttpsAgent = require('agentkeepalive').HttpsAgent;
 var EventEmitter = require('events').EventEmitter;
 import WebSocket = require('ws');
 
-export var PublicClient = function(apiURI) {
+var keepaliveAgent = new HttpsAgent();
+
+export var PublicClient = function(apiURI? : string) {
   var self = this;
   self.apiURI = apiURI || 'https://api.exchange.coinbase.com';
 };
@@ -59,6 +62,7 @@ PublicClient.prototype = new function() {
       'json': true,
     });
     self.addHeaders(opts);
+    opts.agent = keepaliveAgent;
     request(opts, self.makeRequestCallback(callback));
   };
 
@@ -144,6 +148,7 @@ _.assign(AuthenticatedClient.prototype, new function() {
     if (opts.body && (typeof opts.body !== 'string')) {
       opts.body = JSON.stringify(opts.body);
     }
+    opts.agent = keepaliveAgent;
     var timestamp = Date.now() / 1000;
     var what = timestamp + method + relativeURI + (opts.body || '');
     var key = new Buffer(self.b64secret, 'base64');

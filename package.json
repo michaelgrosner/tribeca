@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "agentkeepalive": "^1.2.0",
     "angularjs": "^0.0.1",
     "collections": "^1.2.1",
     "compression": "^1.3.0",
