@@ -17,7 +17,7 @@ import WebSocket = require('ws');
 import _ = require('lodash');
 
 var uuid = require('node-uuid');
-var CoinbaseExchange = require("coinbase-exchange");
+import CoinbaseExchange = require("./coinbase-api");
 var SortedArrayMap = require("collections/sorted-array-map");
 
 var passphrase = "h9g47GcHDC8GHx48Hner";
