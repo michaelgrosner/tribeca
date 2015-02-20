@@ -15,6 +15,8 @@ winston.add(winston.transports.DailyRotateFile, {
     }
 );
 
+export var errorLog = winston.error;
+
 export var log = (name : string) => {
     return (...msg : any[]) => {
         var head = util.format.bind(this, Models.toUtcFormattedTime(date()) + "\t[" + name + "]\t" + msg.shift());
