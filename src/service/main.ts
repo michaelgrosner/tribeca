@@ -135,7 +135,7 @@ var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTra
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
-        Utils.errorLog("Terminating!", e, e.stack, () => {
+        Utils.errorLog("Terminating!", reason, e, e.stack, () => {
             process.exit(1);
         });
     });

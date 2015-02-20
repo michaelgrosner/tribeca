@@ -194,16 +194,24 @@ export class QuoteGenerator {
         var fv = this.latestFairValue;
         if (fv == null) return false;
 
-        var genQt = this.computeQuote(fv, this._qlParamRepo.latest);
-        if (genQt === null) return false;
+        var genQt;
+        try {
+            genQt = this.computeQuote(fv, this._qlParamRepo.latest);
 
-        var newBidQuote = this.getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
-        var newAskQuote = this.getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
+            if (genQt === null) return false;
 
-        this.latestQuote = new Models.TwoSidedQuote(
-            QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
-            QuoteGenerator.quotesAreSame(newAskQuote, this.latestQuote, t => t.ask)
-        );
+            var newBidQuote = this.getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
+            var newAskQuote = this.getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
+
+            this.latestQuote = new Models.TwoSidedQuote(
+                QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
+                QuoteGenerator.quotesAreSame(newAskQuote, this.latestQuote, t => t.ask)
+            );
+        }
+        catch (e) {
+            this.latestQuote = new Models.TwoSidedQuote(QuoteGenerator._bidStopQuote, QuoteGenerator._askStopQuote);
+            this._log("exception while generating quote! stopping until MD can recalc a real quote.", e, e.stack);
+        }
 
         return true;
     };
@@ -227,7 +235,7 @@ export class QuoteGenerator {
     };
 
     private getQuote = (s, px, sz) : Models.Quote => {
-        if (this.checkCrossedQuotes(s, px)) {
+        if (this.checkCrossedQuotes(s, px) || px === null || sz === null) {
             return s === Models.Side.Bid ? QuoteGenerator._bidStopQuote : QuoteGenerator._askStopQuote;
         }
         else {
