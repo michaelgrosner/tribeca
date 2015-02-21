@@ -309,15 +309,22 @@ _.assign(OrderBook.prototype, new function() {
     }
     var oldState = self.state;
     self.state = newState;
+
+    if (self.fail_count > 9)
+      throw "Tried to reconnect 10 times. Giving up."
+
     if (self.state === self.STATES.error) {
       self.fail_count += 1;
       self.socket.close();
-      setTimeout(() => self.connect(), 500);
+      setTimeout(() => self.connect(), 5000);
     }
-    else {
+    else if (self.state === self.STATES.processing) {
       self.fail_count = 0;
     }
-    self.emit('statechange', {'old': oldState, 'new': newState});
+
+    var sc = {'old': oldState, 'new': newState};
+    coinbaseLog("statechange: ", sc);
+    self.emit('statechange', sc);
   };
 
   prototype.onOpen = function() {

@@ -390,20 +390,25 @@ export class ExchangeBroker implements Interfaces.IBroker {
     private oeConnected = Models.ConnectivityStatus.Disconnected;
     private _connectStatus = Models.ConnectivityStatus.Disconnected;
     public onConnect = (gwType : Models.GatewayType, cs : Models.ConnectivityStatus) => {
-        if (gwType == Models.GatewayType.MarketData) this.mdConnected = cs;
-        if (gwType == Models.GatewayType.OrderEntry) this.oeConnected = cs;
+        if (gwType === Models.GatewayType.MarketData) {
+            if (this.mdConnected === cs) return;
+            this.mdConnected = cs;
+        } 
 
-        var newStatus = this.mdConnected == Models.ConnectivityStatus.Connected && this.oeConnected == Models.ConnectivityStatus.Connected
+        if (gwType === Models.GatewayType.OrderEntry) {
+            if (this.oeConnected === cs) return;
+            this.oeConnected = cs;
+        }
+
+        var newStatus = this.mdConnected === Models.ConnectivityStatus.Connected && this.oeConnected === Models.ConnectivityStatus.Connected
             ? Models.ConnectivityStatus.Connected
             : Models.ConnectivityStatus.Disconnected;
 
-        if (newStatus !== this._connectStatus) {
-            this.ConnectChanged.trigger(newStatus);
-            this._connectStatus = newStatus;
-            this._log("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[cs],
-                Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
-            this._connectivityPublisher.publish(this.connectStatus);
-        }
+        this.ConnectChanged.trigger(newStatus);
+        this._connectStatus = newStatus;
+        this._log("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[this._connectStatus],
+            Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
+        this._connectivityPublisher.publish(this.connectStatus);
     };
 
     public get connectStatus() : Models.ConnectivityStatus {
