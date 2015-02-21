@@ -114,7 +114,7 @@ export class QuoteGenerator {
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
-        if (typeof ask === "undefined" || typeof bid === "undefined") 
+        if (ask.length === 0 || bid.length === 0) 
             return false;
 
         var fv = QuoteGenerator.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel);
