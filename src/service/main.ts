@@ -20,6 +20,7 @@ import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
 import path = require("path");
+import Q = require("q");
 import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
@@ -54,13 +55,18 @@ var getExch = () : Interfaces.CombinedGateway => {
 };
 
 var gateway = getExch();
+var exchange = gateway.base.exchange();
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var advert = new Models.ProductAdvertisement(gateway.base.exchange(), pair, Config.Environment[config.environment()]);
 new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
+var getEngineTopic = (topic : string) : string => {
+    return Messaging.ExchangePairMessaging.wrapExchangePairTopic(exchange, pair, topic);
+};
+
 var getEnginePublisher = <T>(topic : string) : Messaging.IPublish<T> => {
-    var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
+    var wrappedTopic = getEngineTopic(topic);
     var socketIoPublisher = new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
     return new Web.HttpPublisher<T>(topic, socketIoPublisher, app);
 };
@@ -96,8 +102,7 @@ var positionPublisher = getExchangePublisher(Messaging.Topics.Position);
 var connectivity = getExchangePublisher(Messaging.Topics.ExchangeConnectivity);
 
 var getReceiver = <T>(topic : string) => {
-    var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(gateway.base.exchange(), pair, topic);
-    return new Messaging.Receiver<T>(wrappedTopic, io, messagingLog);
+    return new Messaging.Receiver<T>(getEngineTopic(topic), io, messagingLog);
 };
 
 var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
@@ -111,27 +116,46 @@ var orderPersister = new Persister.OrderStatusPersister(db);
 var tradesPersister = new Persister.TradePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
+var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
+var paramsPersister = new Persister.RepositoryPersister(db, 
+    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO), 
+    getEngineTopic(Messaging.Topics.QuotingParametersChange));
 
-var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
-var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-    tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, orderCache);
-var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
-var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
-var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);
+Q.all([
+    orderPersister.load(exchange, pair, 25000),
+    tradesPersister.load(exchange, pair, 10000),
+    mktTradePersister.load(exchange, pair, 100),
+    safetyPersister.loadLatest(),
+    paramsPersister.loadLatest()
+]).spread((initOrders : Models.OrderStatusReport[], 
+           initTrades : Models.Trade[], 
+           initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[], 
+           initSafety : Models.SafetySettings, 
+           initParams : Models.QuotingParameters) => {
 
-var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
-var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
+    var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
+    var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
+        tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, 
+        orderCache, initOrders, initTrades);
+    var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
+    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+    var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);
 
-var active = new Agent.ActiveRepository(safeties, broker, activePublisher, activeReceiver);
-var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver);
+    var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
+    safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
+    var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
 
-var quoter = new Quoter.Quoter(orderBroker, broker);
+    var active = new Agent.ActiveRepository(safeties, broker, activePublisher, activeReceiver);
+    var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
+    paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
+    var quoter = new Quoter.Quoter(orderBroker, broker);
 
-var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
-    fvPublisher, active, positionBroker, externalBroker, safetyRepo);
+    var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
+        fvPublisher, active, positionBroker, externalBroker, safetyRepo);
 
-var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
-    quoteGenerator, broker, mktTradePersister);
+    var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
+        quoteGenerator, broker, mktTradePersister, initMktTrades);
+}).done();
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {

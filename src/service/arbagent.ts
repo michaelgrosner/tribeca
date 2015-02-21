@@ -12,14 +12,16 @@ import Quoter = require("./quoter");
 import Safety = require("./safety");
 import Winkdex = require("./winkdex");
 import util = require("util");
+import _ = require("lodash");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
-                rec : Messaging.IReceive<Models.QuotingParameters>) {
+                rec : Messaging.IReceive<Models.QuotingParameters>,
+                initParam : Models.QuotingParameters) {
         super("qpr",
             (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
-            (a : Models.QuotingParameters, b : Models.QuotingParameters) => Math.abs(a.width - b.width) > 1e-4 || Math.abs(a.size - b.size) > 1e-4 || a.mode !== b.mode || a.fvModel !== b.fvModel,
-            new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO), rec, pub);
+            (a : Models.QuotingParameters, b : Models.QuotingParameters) => !_.isEqual(a, b),
+            initParam, rec, pub);
 
     }
 }
@@ -30,7 +32,7 @@ export class ActiveRepository extends Interfaces.Repository<boolean> {
                 pub : Messaging.IPublish<boolean>,
                 rec : Messaging.IReceive<boolean>) {
         super("active",
-            (p : boolean) => safeties.canEnable,
+            (p : boolean) => safeties.canEnable && broker.connectStatus === Models.ConnectivityStatus.Connected,
             (a : boolean, b : boolean) => a !== b,
             false, rec, pub);
         safeties.SafetySettingsViolated.on(() => this.updateParameters(false));

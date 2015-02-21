@@ -12,14 +12,16 @@ import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import Messaging = require("../common/messaging");
 import momentjs = require('moment');
+import _ = require("lodash");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
     constructor(pub : Messaging.IPublish<Models.SafetySettings>,
-                rec : Messaging.IReceive<Models.SafetySettings>) {
+                rec : Messaging.IReceive<Models.SafetySettings>,
+                initParam : Models.SafetySettings) {
         super("ssr",
             (s : Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
-            (a : Models.SafetySettings, b : Models.SafetySettings) => Math.abs(a.tradesPerMinute - b.tradesPerMinute) >= 0 && Math.abs(a.coolOffMinutes - b.coolOffMinutes) >= 0,
-            new Models.SafetySettings(4, 5, 4), rec, pub
+            (a : Models.SafetySettings, b : Models.SafetySettings) => !_.isEqual(a, b),
+            initParam, rec, pub
         );
     }
 }

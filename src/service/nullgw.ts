@@ -72,8 +72,8 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     constructor() {
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
-        setInterval(() => this.MarketData.trigger(this.generateMarketData()), 500);
-        setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 5000);
+        setInterval(() => this.MarketData.trigger(this.generateMarketData()), 5000);
+        setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
     private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false);

@@ -269,7 +269,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _messages : MessagesPubisher,
                 private _tradeHttp : Web.StandaloneHttpPublisher<Models.Trade>,
                 private _latencyHttp : Web.StandaloneHttpPublisher<number>,
-                private _orderCache : OrderStateCache) {
+                private _orderCache : OrderStateCache,
+                initOrders : Models.OrderStatusReport[],
+                initTrades : Models.Trade[]) {
         var msgLog = Utils.log("tribeca:messaging:orders");
 
         _orderStatusPublisher.registerSnapshot(() => _.last(this._orderCache.allOrdersFlat, 1000));
@@ -294,15 +296,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        this._orderPersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 25000).then(osrs => {
-            _.each(osrs, this.addOrderStatusToMemory);
-            this._log("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
-        });
+        _.each(initOrders, this.addOrderStatusToMemory);
+        this._log("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
 
-        this._tradePersister.load(this._baseBroker.exchange(), this._baseBroker.pair, 10000).then(trades => {
-            _.each(trades, t => this._trades.push(t));
-            this._log("loaded %d trades", this._trades.length);
-        });
+        _.each(initTrades, t => this._trades.push(t));
+        this._log("loaded %d trades", this._trades.length);
 
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);

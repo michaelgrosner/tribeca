@@ -21,6 +21,55 @@ export function loadDb() {
     return deferred.promise;
 }
 
+export function timeLoader(x) {
+    x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
+}
+
+export function timeSaver(rpt) {
+    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toISOString();
+}
+
+export class RepositoryPersister<T> {
+     _log : Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
+
+    public loadLatest = () : Q.Promise<T> => {
+        var deferred = Q.defer<T>();
+
+        this.collection.then(coll => {
+            coll.find({}, {fields: {_id: 0}}).limit(1).sort({$natural:-1}).toArray((err, arr) => {
+                if (err) {
+                    deferred.reject(err);
+                }
+                else if (arr.length === 0) {
+                    deferred.resolve(this._defaultParameter);
+                }
+                else {
+                    deferred.resolve(arr[0]);
+                }
+            });
+        }).done();
+
+        return deferred.promise;
+    };
+
+    public persist = (report : T) => {
+        this.collection.then(coll => {
+            coll.insert(report, err => {
+                if (err)
+                    this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
+            });
+        }).done();
+    };
+
+    collection : Q.Promise<mongodb.Collection>;
+    constructor(
+            db : Q.Promise<mongodb.Db>,
+            private _defaultParameter : T,
+            private _dbName : string) {
+        this.collection = db.then(db => db.collection(this._dbName));
+    }
+}
+
 export class Persister<T> {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
@@ -76,14 +125,6 @@ export class Persister<T> {
             private _saver : (T) => void) {
         this.collection = db.then(db => db.collection(this._dbName));
     }
-}
-
-export function timeLoader(x) {
-    x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
-}
-
-export function timeSaver(rpt) {
-    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toISOString();
 }
 
 export class OrderStatusPersister extends Persister<Models.OrderStatusReport> {

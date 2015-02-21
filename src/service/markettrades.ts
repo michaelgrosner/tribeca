@@ -55,12 +55,11 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
                 private _mdBroker : Interfaces.IMarketDataBroker,
                 private _quoteGenerator : Agent.QuoteGenerator,
                 private _base : Broker.ExchangeBroker,
-                private _persister : MarketTradePersister) {
+                private _persister : MarketTradePersister,
+                initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[]) {
 
-        _persister.load(_base.exchange(), _base.pair, 100).then(ts => {
-            this._log("loaded %d market trades", ts.length);
-            ts.forEach(t => this.marketTrades.push(t.data));
-        });
+        initMkTrades.forEach(t => this.marketTrades.push(t.data));
+        this._log("loaded %d market trades", this.marketTrades.length);
 
         _marketTradePublisher.registerSnapshot(() => _.last(this.marketTrades, 50));
         this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);

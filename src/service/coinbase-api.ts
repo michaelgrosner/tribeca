@@ -286,6 +286,7 @@ _.assign(OrderBook.prototype, new function() {
   };
 
   prototype.connect = function() {
+    coinbaseLog("Starting connect");
     var self = this;
     if (self.socket) {
       self.socket.close();
@@ -318,7 +319,7 @@ _.assign(OrderBook.prototype, new function() {
     if (self.fail_count > 9)
       throw "Tried to reconnect 10 times. Giving up."
 
-    if (self.state === self.STATES.error) {
+    if (self.state === self.STATES.error || self.state === self.STATES.closed) {
       self.fail_count += 1;
       self.socket.close();
       setTimeout(() => self.connect(), 5000);
