@@ -106,11 +106,16 @@ export class QuoteGenerator {
         return Utils.roundFloat(unrounded);
     }
 
+    // i should really stop quoting when false
     private recalcFairValue = (mkt : Models.Market) => {
-        if (mkt.bids.length < 1 || mkt.asks.length < 1) return false;
+        if (mkt.bids.length < 1 || mkt.asks.length < 1) 
+            return false;
 
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
+
+        if (typeof ask === "undefined" || typeof bid === "undefined") 
+            return false;
 
         var fv = QuoteGenerator.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel);
 
