@@ -64,7 +64,10 @@ export class OrderStateCache implements Interfaces.IOrderStateCache {
 export class OrderBroker implements Interfaces.IOrderBroker {
     private _log : Utils.Logger;
 
-    cancelOpenOrders() : void {
+    cancelOpenOrders() : Q.Promise<number> {
+        var deferred = Q.defer<number>();
+
+        var lateCancels : {[id: string] : boolean} = {}
         for (var k in this._orderCache.allOrders) {
             if (!this._orderCache.allOrders.hasOwnProperty(k)) continue;
             var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
@@ -73,9 +76,25 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 case Models.OrderStatus.New:
                 case Models.OrderStatus.Working:
                     this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, Utils.date()));
+                    lateCancels[e.orderId] = false;
                     break;
             }
         }
+
+        if (_.isEmpty(_.keys(lateCancels))) {
+            deferred.resolve(0);
+        }
+
+        this.OrderUpdate.on(o => {
+            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working) 
+                return;
+
+            lateCancels[e.orderId] = true;
+            if (_.every(_.values(lateCancels)))
+                deferred.resolve(_.size(lateCancels));
+        });
+
+        return deferred.promise;
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();

@@ -155,12 +155,23 @@ Q.all([
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quoteGenerator, broker, mktTradePersister, initMktTrades);
-}).done();
 
-["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-    process.on(reason, (e?) => {
-        Utils.errorLog("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined), () => {
-            process.exit(1);
+    ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
+        process.on(reason, (e?) => {
+            Utils.errorLog("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined), () => {
+                orderBroker.cancelOpenOrders().then(n_cancelled => {
+                    Utils.errorLog("Cancelled all", n_cancelled, "open orders", () => { 
+                        process.exit(0) 
+                    });
+                }).done();
+
+                setTimeout(() => {
+                    Utils.errorLog("Could not cancel all open orders!", () => { 
+                        process.exit(2) 
+                    });
+                }, 2000);
+            });
         });
     });
-});
+
+}).done();
