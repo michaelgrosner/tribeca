@@ -259,12 +259,6 @@ export var OrderBook = function(productID, websocketURI) {
   self.productID = productID || 'BTC-USD';
   self.websocketURI = websocketURI || 'wss://ws-feed.exchange.coinbase.com';
   self.state = self.STATES.closed;
-  self.queue = [];
-  self.book = {
-    'sequence': -1,
-    'bids': {},
-    'asks': {},
-  };
   self.fail_count = 0;
   self.connect();
 };
@@ -281,11 +275,22 @@ _.assign(OrderBook.prototype, new function() {
     'error': 'error',
   };
 
+  prototype.clear_book = function() {
+    var self = this;
+    self.queue = [];
+    self.book = {
+      'sequence': -1,
+      'bids': {},
+      'asks': {},
+    };
+  };
+
   prototype.connect = function() {
     var self = this;
     if (self.socket) {
       self.socket.close();
     }
+    self.clear_book();
     self.socket = new WebSocket(self.websocketURI);
     self.socket.on('message', self.onMessage.bind(self));
     self.socket.on('open', self.onOpen.bind(self));
