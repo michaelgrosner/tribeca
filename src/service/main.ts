@@ -122,7 +122,7 @@ var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGate
 var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver);
 var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
 
-var active = new Agent.ActiveRepository(safeties, activePublisher, activeReceiver);
+var active = new Agent.ActiveRepository(safeties, broker, activePublisher, activeReceiver);
 var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver);
 
 var quoter = new Quoter.Quoter(orderBroker, broker);
@@ -135,7 +135,7 @@ var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTra
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
-        Utils.errorLog("Terminating!", reason, e, e.stack, () => {
+        Utils.errorLog("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined), () => {
             process.exit(1);
         });
     });

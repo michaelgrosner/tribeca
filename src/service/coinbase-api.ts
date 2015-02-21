@@ -1,12 +1,15 @@
 var util = require('util');
 var crypto = require('crypto');
 
+import Utils = require("./utils");
 import _ = require('lodash');
 import request = require('request');
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;
 var EventEmitter = require('events').EventEmitter;
 import WebSocket = require('ws');
+
+var coinbaseLog = Utils.log("tribeca:gateway:coinbase-api");
 
 var keepaliveAgent = new HttpsAgent();
 
@@ -52,9 +55,6 @@ PublicClient.prototype = new function() {
     if (!callback && (opts instanceof Function)) {
       callback = opts;
       opts = {};
-    }
-    if (!callback) {
-      throw "Must supply a callback."
     }
     _.assign(opts, {
       'method': method.toUpperCase(),
@@ -136,9 +136,6 @@ _.assign(AuthenticatedClient.prototype, new function() {
     if (!callback && (opts instanceof Function)) {
       callback = opts;
       opts = {};
-    }
-    if (!callback) {
-      throw "Must supply a callback"
     }
     var relativeURI = self.makeRelativeURI(uriParts);
     _.assign(opts, {
@@ -268,6 +265,7 @@ export var OrderBook = function(productID, websocketURI) {
     'bids': {},
     'asks': {},
   };
+  self.fail_count = 0;
   self.connect();
 };
 
@@ -312,8 +310,13 @@ _.assign(OrderBook.prototype, new function() {
     var oldState = self.state;
     self.state = newState;
     if (self.state === self.STATES.error) {
+      self.fail_count += 1;
       self.socket.close();
-    };
+      setTimeout(() => self.connect(), 500);
+    }
+    else {
+      self.fail_count = 0;
+    }
     self.emit('statechange', {'old': oldState, 'new': newState});
   };
 
@@ -378,11 +381,11 @@ _.assign(OrderBook.prototype, new function() {
     }, function(err, response, body) {
       if (err) {
         self.changeState(self.STATES.error);
-        throw "Failed to load snapshot: " + err;
+        coinbaseLog("Failed to load snapshot: " + err);
       }
       if (response.statusCode !== 200) {
         self.changeState(self.STATES.error);
-        throw "Failed to load snapshot: " + response.statusCode;
+        coinbaseLog("Failed to load snapshot: " + response.statusCode);
       }
       load(JSON.parse(body));
     });
@@ -396,7 +399,7 @@ _.assign(OrderBook.prototype, new function() {
     }
     if (message.sequence != self.book.sequence + 1) {
       self.changeState(self.STATES.error);
-      throw "Received message out of order, expected " + self.book.sequence + " but got " + message.sequence;
+      coinbaseLog("Received message out of order, expected", self.book.sequence, "but got", message.sequence);
     }
     self.book.sequence = message.sequence;
 

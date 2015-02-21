@@ -25,16 +25,23 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
 }
 
 export class ActiveRepository extends Interfaces.Repository<boolean> {
-    constructor(private _safeties : Safety.SafetySettingsManager,
+    constructor(safeties : Safety.SafetySettingsManager,
+                broker : Interfaces.IBroker,
                 pub : Messaging.IPublish<boolean>,
                 rec : Messaging.IReceive<boolean>) {
         super("active",
-            (p : boolean) => _safeties.canEnable,
+            (p : boolean) => safeties.canEnable,
             (a : boolean, b : boolean) => a !== b,
             false, rec, pub);
-        _safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
-        _safeties.SafetyViolationCleared.on(() => this.updateParameters(true));
+        safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
+        safeties.SafetyViolationCleared.on(() => this.updateParameters(true));
+        broker.ConnectChanged.on(this.onDisconnect);
     }
+
+    private onDisconnect = (cs : Models.ConnectivityStatus) => {
+        if (cs === Models.ConnectivityStatus.Disconnected)
+            this.updateParameters(false);
+    };
 }
 
 class GeneratedQuote {
