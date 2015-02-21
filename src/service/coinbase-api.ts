@@ -117,7 +117,7 @@ PublicClient.prototype = new function() {
   };
 };
 
-export var AuthenticatedClient = function(key, b64secret, passphrase, apiURI) {
+export var AuthenticatedClient = function(key : string, b64secret : string, passphrase : string, apiURI?: string) {
   var self = this;
   PublicClient.call(self, apiURI);
   self.key = key;
@@ -252,7 +252,7 @@ _.assign(AuthenticatedClient.prototype, new function() {
 
 });
 
-export var OrderBook = function(productID, websocketURI) {
+export var OrderBook = function(productID? : string, websocketURI? : string) {
   var self = this;
   EventEmitter.call(self);
 

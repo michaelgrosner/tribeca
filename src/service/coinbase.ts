@@ -322,7 +322,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             else this.reevalAsks();
         }
 
-        this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, t));
+        this.raiseMarketData(t);
     };
 
     private onStateChange = (s : StateChange, t : Moment) => {
@@ -344,7 +344,19 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
         this.reevalBids();
         this.reevalAsks();
-        this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, t));
+        this.raiseMarketData(t);
+    };
+
+    private raiseMarketData = (t : Moment) => {
+        if (typeof this._cachedBids[0] !== "undefined" && typeof this._cachedAsks[0] !== "undefined") {
+            if (this._cachedBids[0].price > this._cachedAsks[0].price) {
+                this._log("WARNING: crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
+                this._client.changeState('error');
+                return;
+            }
+
+            this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, t));
+        }
     };
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
