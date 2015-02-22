@@ -50,9 +50,21 @@ class GeneratedQuote {
     constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
 }
 
+function timeOrDefault(x : Models.ITimestamped) : Moment {
+    if (typeof x !== "undefined" && typeof x.time !== "undefined")
+        return x.time;
+    return Utils.date();
+}
+
 export class MarketFiltration {
-    public latestFilteredMarket : Models.Market = null;
+    private _latest : Models.Market = null;
     public FilteredMarketChanged = new Utils.Evt<Models.Market>();
+
+    public get latestFilteredMarket() { return this._latest; }
+    public set latestFilteredMarket(val : Models.Market) {
+        this._latest = val;
+        this.FilteredMarketChanged.trigger();
+    }
 
     constructor(private _quoter : Quoter.Quoter,
                 private _broker : Interfaces.IMarketDataBroker) {
@@ -64,7 +76,6 @@ export class MarketFiltration {
 
         if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1)  {
             this.latestFilteredMarket = null;
-            this.FilteredMarketChanged.trigger();
             return;
         }
 
@@ -72,7 +83,6 @@ export class MarketFiltration {
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
-        this.FilteredMarketChanged.trigger();
     };
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
@@ -102,7 +112,7 @@ export class MarketFiltration {
 export class FairValueEngine {
     public FairValueChanged = new Utils.Evt<Models.FairValue>();
 
-    private _latest = Models.FairValue = null;
+    private _latest : Models.FairValue = null;
     public get latestFairValue() { return this._latest; }
     public set latestFairValue(val : Models.FairValue) {
         if (_.isEqual(val, this._latest)) return;
@@ -115,8 +125,8 @@ export class FairValueEngine {
     constructor(private _filtration : MarketFiltration,
                 private _qlParamRepo : QuotingParametersRepository, // should not co-mingle these settings
                 private _fvPublisher : Messaging.IPublish<Models.FairValue>) {
-        _qlParamRepo.NewParameters.on(this.recalcFairValue);
-        _filtration.FilteredMarketChanged.on(this.recalcFairValue);
+        _qlParamRepo.NewParameters.on(() => this.recalcFairValue(Utils.date()));
+        _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(timeOrDefault(_filtration.latestFilteredMarket)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
     }
 
@@ -152,7 +162,8 @@ export class FairValueEngine {
             return;
         }
 
-        this.latestFairValue = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel));
+        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
+        this.latestFairValue = fv;
     };
 }
 
@@ -161,7 +172,7 @@ export class QuotingEngine {
 
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
-    private _latest = Models.TwoSidedQuote = null;
+    private _latest : Models.TwoSidedQuote = null;
     public get latestQuote() { return this._latest; }
     public set latestQuote(val : Models.TwoSidedQuote) {
         if (_.isEqual(val, this._latest)) return;
@@ -178,10 +189,10 @@ export class QuotingEngine {
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _broker : Interfaces.IMarketDataBroker,
                 private _evs : Winkdex.ExternalValuationSource) {
-        _fvEngine.FairValueChanged.on(this.recalcQuote);  // or should i listen to _broker.MarketData???
-        _evs.ValueChanged.on(this.recalcQuote);
-        _qlParamRepo.NewParameters.on(this.recalcQuote);
-        _safetyParams.NewParameters.on(this.recalcQuote);
+        _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
+        _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
+        _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
+        _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
 
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
     }
@@ -288,7 +299,8 @@ export class QuotingEngine {
 
         this.latestQuote = new Models.TwoSidedQuote(
             QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask)
+            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
+            t
         );
     };
 
@@ -316,16 +328,13 @@ export class QuoteSender {
     constructor(private _quotingEngine : QuotingEngine, 
                 private _statusPublisher : Messaging.IPublish<Models.TwoSidedQuoteStatus>,
                 private _quoter : Quoter.Quoter,
-                private _baseBroker : Interfaces.IBroker,
-                private _qlParamRepo : QuotingParametersRepository,
-                private _safeties : Safety.SafetySettingsManager,
+                private _pair : Models.CurrencyPair,
                 private _activeRepo : ActiveRepository,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _fv : FairValueEngine,
-                private _broker : Interfaces.IMarketDataBroker,
-                private _safetyParams : Safety.SafetySettingsRepository) {
+                private _broker : Interfaces.IMarketDataBroker) {
         _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
-        _quotingEngine.QuoteChanged.on(() => this.sendQuote());
+        _quotingEngine.QuoteChanged.on(() => this.sendQuote(timeOrDefault(_quotingEngine.latestQuote)));
 
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }
@@ -355,11 +364,11 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size) && this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)) {
+            if (this.hasEnoughPosition(this._pair.base, quote.ask.size) && !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
-            if (this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price) && this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)) {
+            if (this.hasEnoughPosition(this._pair.quote, quote.bid.size*quote.bid.price) && !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)) {
                 bidStatus = Models.QuoteStatus.Live;
             }
         }

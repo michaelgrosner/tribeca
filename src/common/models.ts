@@ -1,6 +1,10 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
-export class Timestamped<T> {
+export interface ITimestamped {
+    time : Moment;
+}
+
+export class Timestamped<T> implements ITimestamped {
     constructor(public data : T, public time : Moment) {}
 
     public toString() {
@@ -17,7 +21,7 @@ export class MarketSide {
     }
 }
 
-export class GatewayMarketTrade {
+export class GatewayMarketTrade implements ITimestamped {
     constructor(public price : number,
                 public size : number,
                 public time : Moment,
@@ -29,7 +33,7 @@ export function marketSideEquals(t : MarketSide, other : MarketSide, tol : numbe
     return Math.abs(t.price - other.price) > tol && Math.abs(t.size - other.size) > tol;
 }
 
-export class Market {
+export class Market implements ITimestamped {
     constructor(
         public bids : MarketSide[],
         public asks : MarketSide[],
@@ -40,7 +44,7 @@ export class Market {
     }
 }
 
-export class MarketTrade {
+export class MarketTrade implements ITimestamped {
     constructor(public price : number,
                 public size : number,
                 public time : Moment,
@@ -173,7 +177,7 @@ export interface OrderStatusReport {
     cancelRejected? : boolean;
 }
 
-export class OrderStatusReportImpl implements OrderStatusReport {
+export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
     constructor(
         public pair : CurrencyPair,
         public side : Side,
@@ -232,7 +236,7 @@ export class OrderStatusReportImpl implements OrderStatusReport {
     }
 }
 
-export class Trade {
+export class Trade implements ITimestamped {
     constructor(
         public tradeId : string,
         public time : Moment,
@@ -280,7 +284,7 @@ export interface ReplaceRequestFromUI {
     quantity : number;
 }
 
-export class FairValue {
+export class FairValue implements ITimestamped {
     constructor(public price : number, public time : Moment) {}
 }
 
@@ -296,7 +300,7 @@ export class Quote {
     }
 }
 
-export class TwoSidedQuote {
+export class TwoSidedQuote implements ITimestamped {
     constructor(public bid : Quote, public ask : Quote, public time : Moment) {}
 }
 
@@ -352,13 +356,13 @@ export function productAdvertisementsEqual(a : ProductAdvertisement, b : Product
     return a.exchange === b.exchange && currencyPairEqual(a.pair, b.pair);
 }
 
-export class Message {
+export class Message implements ITimestamped {
     constructor(public text : string, public time : Moment) {}
 }
 
 export enum ExternalValuationSource { Winkdex }
 
-export class ExternalValuationUpdate {
+export class ExternalValuationUpdate implements ITimestamped {
     constructor(
         public value : number,
         public time : Moment,

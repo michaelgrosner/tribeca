@@ -169,6 +169,9 @@ interface MarketQuotingScope extends ng.IScope {
     qAskPx : number;
     qAskSz : number;
 
+    bidIsLive : boolean;
+    askIsLive : boolean;
+
     exch : Models.Exchange;
     pair : Models.CurrencyPair;
 }
@@ -207,20 +210,26 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         updateQuoteClass();
     };
 
+    var updateQuoteStatus = (status : Models.TwoSidedQuoteStatus) => {
+        $scope.bidIsLive = (status.bidStatus === Models.QuoteStatus.Live);
+        $scope.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
+        updateQuoteClass();
+    };
+
     var updateQuoteClass = () => {
         if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
             var tol = .005;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
 
-                if (Math.abs($scope.qBidPx - level.bidPrice) < tol) {
+                if (Math.abs($scope.qBidPx - level.bidPrice) < tol && $scope.bidIsLive) {
                     level.bidClass = 'success';
                 }
                 else {
                     level.bidClass = 'active';
                 }
 
-                if (Math.abs($scope.qAskPx - level.askPrice) < tol) {
+                if (Math.abs($scope.qAskPx - level.askPrice) < tol && $scope.askIsLive) {
                     level.askClass = 'success';
                 }
                 else {
@@ -245,6 +254,11 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.fairValue = null;
     };
 
+    var clearQuoteStatus = () => {
+        $scope.bidStatus = Models.QuoteStatus.Held;
+        $scope.askStatus = Models.QuoteStatus.Held;
+    };
+
     var _subscribers = [];
     var makeSubscriber = <T>(topic : string) => {
         var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, topic);
@@ -260,6 +274,10 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
         .registerSubscriber(updateQuote, qs => qs.forEach(updateQuote))
         .registerDisconnectedHandler(clearQuote);
+
+    makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus)
+        .registerSubscriber(updateQuoteStatus, qs => qs.forEach(updateQuoteStatus))
+        .registerDisconnectedHandler(clearQuoteStatus);
 
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
         .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))

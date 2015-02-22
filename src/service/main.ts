@@ -101,6 +101,7 @@ Q.all([
     var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
     var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
     var externalValuationPublisher = getEnginePublisher(Messaging.Topics.ExternalValuation);
+    var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
 
     var messages = new Broker.MessagesPubisher(messagesPublisher);
     messages.publish("start up");
@@ -161,11 +162,13 @@ Q.all([
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
     var quoter = new Quoter.Quoter(orderBroker, broker);
 
-    var quoteGenerator = new Agent.QuoteGenerator(quoter, broker, marketDataBroker, paramsRepo, safeties, quotePublisher,
-        fvPublisher, active, positionBroker, externalBroker, safetyRepo);
+    var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
+    var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher);
+    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, externalBroker);
+    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
-        quoteGenerator, broker, mktTradePersister, initMktTrades);
+        quotingEngine, broker, mktTradePersister, initMktTrades);
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {

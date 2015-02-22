@@ -219,6 +219,7 @@ export class Topics {
     static Trades = "t";
     static Message = "msg";
     static ExternalValuation = "ev";
+    static QuoteStatus = "qs";
 }
 
 export module ExchangePairMessaging {

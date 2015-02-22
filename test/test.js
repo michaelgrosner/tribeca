@@ -3,6 +3,25 @@ var util = require("util");
 var SortedArray = require("collections/sorted-array");
 var _ = require("lodash");
 var request = require("request");
+var moment = require("moment");
+
+describe("equality", function() {
+    it("should not compare times", function() {
+        var t1 = moment.utc();
+        var t2 = t1.add(1, 's');
+
+        var u1 = {value: 1, time: t1};
+        var u2 = {value: 1, time: t2};
+
+        assert(_.isEqual(u1, u2));
+
+        var u3 = {value: 2, time: t2};
+        assert(!_.isEqual(u1, u3));
+
+        assert(_.isEqual(t1, t1));
+        assert(_.isEqual(t1, t2)); // a little scary
+    });
+});
 
 describe('HitBtc', function () {
     describe('map', function () {
@@ -46,25 +65,3 @@ describe('HitBtc', function () {
         })
     });
 });
-
-describe("Winkdex", function() {
-    it("should work", function(done) {
-        request.get(
-            {url: "https://winkdex.com/api/v0/price"},
-            function (err, body, res) {
-                if (err) {
-                    this._log("error trying to get winkdex value %s", err);
-                }
-                else {
-                    try {
-                        var price = JSON.parse(res).price / 100.0;
-                        console.log(price);
-                        done();
-                    }
-                    catch (e) {
-                        this._log("error handling winkdex value %s %j %j", e, body, res);
-                    }
-                }
-            });
-    });
-})
