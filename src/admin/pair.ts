@@ -255,8 +255,8 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     };
 
     var clearQuoteStatus = () => {
-        $scope.bidStatus = Models.QuoteStatus.Held;
-        $scope.askStatus = Models.QuoteStatus.Held;
+        $scope.bidIsLive = false;
+        $scope.askIsLive = false;
     };
 
     var _subscribers = [];
