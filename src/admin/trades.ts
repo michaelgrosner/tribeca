@@ -47,7 +47,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 110, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
+            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},

@@ -409,6 +409,7 @@ export class QuoteSender {
     };
 
     private fmtQuoteSide(q : Models.TwoSidedQuote) {
+        if (q == null) return "[no quote]";
         return util.format("q:[%d %d - %d %d]", 
             (q.bid == null ? null : q.bid.size), 
             (q.bid == null ? null : q.bid.price), 
