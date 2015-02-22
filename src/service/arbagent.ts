@@ -51,8 +51,12 @@ class GeneratedQuote {
 }
 
 function timeOrDefault(x : Models.ITimestamped) : Moment {
+    if (x === null)
+        return Utils.date();
+
     if (typeof x !== "undefined" && typeof x.time !== "undefined")
         return x.time;
+    
     return Utils.date();
 }
 
