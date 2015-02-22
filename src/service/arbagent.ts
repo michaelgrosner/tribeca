@@ -398,17 +398,30 @@ export class QuoteSender {
         if (this.shouldLogDescision(askAction) || this.shouldLogDescision(bidAction)) {
             var fv = this._fv.latestFairValue;
             var lm = this._broker.currentBook;
-            this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:[%d %d - %d %d] %s %s %s",
-                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], fv.price,
-                    quote.bid.size, quote.bid.price, quote.ask.price, quote.ask.size,
+            this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
+                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], 
+                    (fv == null ? null : fv.price),
+                    this.fmtQuoteSide(quote),
                     this.fmtLevel(0, lm.bids, lm.asks),
                     this.fmtLevel(1, lm.bids, lm.asks),
                     this.fmtLevel(2, lm.bids, lm.asks));
         }
     };
 
+    private fmtQuoteSide(q : Models.TwoSidedQuote) {
+        return util.format("q:[%d %d - %d %d]", 
+            (q.bid == null ? null : q.bid.size), 
+            (q.bid == null ? null : q.bid.price), 
+            (q.ask == null ? null : q.ask.price), 
+            (q.ask == null ? null : q.ask.size));
+    }
+
     private fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
-        return util.format("mkt%d:[%d %d - %d %d]", n, bids[n].size, bids[n].price, asks[n].price, asks[n].size);
+        return util.format("mkt%d:[%d %d - %d %d]", n, 
+            (typeof bids[n] === "undefined" ? null : bids[n].size), 
+            (typeof bids[n] === "undefined" ? null : bids[n].price), 
+            (typeof asks[n] === "undefined" ? null : asks[n].price),
+            (typeof asks[n] === "undefined" ? null : asks[n].size));
     }
 
     private shouldLogDescision(a : Models.QuoteSent) {
