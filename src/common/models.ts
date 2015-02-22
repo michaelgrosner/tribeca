@@ -240,7 +240,8 @@ export class Trade {
         public pair : CurrencyPair,
         public price : number,
         public quantity : number,
-        public side : Side) {}
+        public side : Side,
+        public value : number) {}
 }
 
 export class CurrencyPosition {

@@ -31,7 +31,7 @@ class DisplayTrade {
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
-        this.value = Math.abs(trade.price * trade.quantity);
+        this.value = trade.value;
     }
 }
 
@@ -47,11 +47,11 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: "*", field:'time', displayName:'t', cellFilter: 'momentFullDate'},
+            {width: 110, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},
-            {width: 50, field:'value', displayName:'val', cellFilter: 'currency'}
+            {width: 50, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
         ]
     };
 
