@@ -184,7 +184,28 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     };
     clearMarket();
 
+    var clearQuote = () => {
+        $scope.qBidPx = null;
+        $scope.qBidSz = null;
+        $scope.qAskPx = null;
+        $scope.qAskSz = null;
+    };
+
+    var clearFairValue = () => {
+        $scope.fairValue = null;
+    };
+
+    var clearQuoteStatus = () => {
+        $scope.bidIsLive = false;
+        $scope.askIsLive = false;
+    };
+
     var updateMarket = (update : Models.Market) => {
+        if (update == null) {
+            clearMarket();
+            return;
+        }
+
         for (var i = 0; i < update.asks.length; i++) {
             if (angular.isUndefined($scope.levels[i]))
                 $scope.levels[i] = new Level();
@@ -203,6 +224,11 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     };
 
     var updateQuote = (quote : Models.TwoSidedQuote) => {
+        if (quote == null) {
+            clearQuote();
+            return;
+        }
+
         $scope.qBidPx = quote.bid.price;
         $scope.qBidSz = quote.bid.size;
         $scope.qAskPx = quote.ask.price;
@@ -211,6 +237,11 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     };
 
     var updateQuoteStatus = (status : Models.TwoSidedQuoteStatus) => {
+        if (status == null) {
+            clearQuoteStatus();
+            return;
+        }
+
         $scope.bidIsLive = (status.bidStatus === Models.QuoteStatus.Live);
         $scope.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
         updateQuoteClass();
@@ -237,26 +268,15 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
                 }
             }
         }
-    };
-
-    var clearQuote = () => {
-        $scope.qBidPx = null;
-        $scope.qBidSz = null;
-        $scope.qAskPx = null;
-        $scope.qAskSz = null;
-    };
+    };    
 
     var updateFairValue = (fv : Models.FairValue) => {
+        if (fv == null) {
+            clearFairValue();
+            return;
+        }
+
         $scope.fairValue = fv.price;
-    };
-
-    var clearFairValue = () => {
-        $scope.fairValue = null;
-    };
-
-    var clearQuoteStatus = () => {
-        $scope.bidIsLive = false;
-        $scope.askIsLive = false;
     };
 
     var _subscribers = [];
