@@ -18,16 +18,25 @@ export class Quoter {
 
     constructor(broker : Interfaces.IOrderBroker,
                 exchBroker : Interfaces.IBroker) {
-        this._bidQuoter = new ExchangeQuoter(broker, exchBroker);
-        this._askQuoter = new ExchangeQuoter(broker, exchBroker);
+        this._bidQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Bid);
+        this._askQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Ask);
     }
 
-    public updateQuote = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
-        switch (q.data.side) {
+    public updateQuote = (q : Models.Timestamped<Models.Quote>, side : Models.Side) : Models.QuoteSent => {
+        switch (side) {
             case Models.Side.Ask:
                 return this._askQuoter.updateQuote(q);
             case Models.Side.Bid:
                 return this._bidQuoter.updateQuote(q);
+        }
+    };
+
+    public cancelQuote = (s : Models.Timestamped<Models.Side>) : Models.QuoteSent => {
+        switch (s.data) {
+            case Models.Side.Ask:
+                return this._askQuoter.cancelQuote(s.time);
+            case Models.Side.Bid:
+                return this._bidQuoter.cancelQuote(s.time);
         }
     };
 
@@ -49,7 +58,8 @@ export class ExchangeQuoter {
     public quotesSent : QuoteOrder[] = [];
 
     constructor(private _broker : Interfaces.IOrderBroker,
-                private _exchBroker : Interfaces.IBroker) {
+                private _exchBroker : Interfaces.IBroker,
+                private _side : Models.Side) {
         this._exchange = _exchBroker.exchange();
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
     }
@@ -72,24 +82,24 @@ export class ExchangeQuoter {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
-        switch (q.data.type) {
-            case Models.QuoteAction.New:
-                if (this._activeQuote !== null) {
-                    if (this._activeQuote.quote.equals(q.data)) {
-                        return Models.QuoteSent.UnsentDuplicate;
-                    }
-                    return this.modify(q);
-                }
-                return this.start(q);
-            case Models.QuoteAction.Cancel:
-                return this.stop(q);
-            default:
-                throw new Error("Unknown QuoteAction " + Models.QuoteAction[q.data.type]);
+        if (this._activeQuote !== null) {
+            if (this._activeQuote.quote.equals(q.data)) {
+                return Models.QuoteSent.UnsentDuplicate;
+            }
+            return this.modify(q);
         }
+        return this.start(q);
+    };
+
+    public cancelQuote = (t : Moment) : Models.QuoteSent => {
+        if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
+            return Models.QuoteSent.UnableToSend;
+
+        return this.stop(t);
     };
 
     private modify = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
-        this.stop(q);
+        this.stop(q.time);
         this.start(q);
         return Models.QuoteSent.Modify;
     };
@@ -100,7 +110,7 @@ export class ExchangeQuoter {
             return Models.QuoteSent.UnsentDuplicate;
         }
 
-        var newOrder = new Models.SubmitNewOrder(q.data.side, q.data.size, Models.OrderType.Limit,
+        var newOrder = new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             q.data.price, Models.TimeInForce.GTC, this._exchange, q.time);
         var sent = this._broker.sendOrder(newOrder);
 
@@ -111,12 +121,12 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stop = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
+    private stop = (t : Moment) : Models.QuoteSent => {
         if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDelete;
         }
 
-        var cxl = new Models.OrderCancel(this._activeQuote.orderId, this._exchange, q.time);
+        var cxl = new Models.OrderCancel(this._activeQuote.orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
         this._activeQuote = null;
         return Models.QuoteSent.Delete;

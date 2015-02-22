@@ -29,7 +29,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
 
     private _marketTrades : Models.MarketTrade[] = [];
     private handleNewMarketTrade = (u : Models.GatewayMarketTrade) => {
-        var qt = u.onStartup ? null : this._quoteGenerator.latestQuote;
+        var qt = u.onStartup ? null : this._quoteEngine.latestQuote;
         var mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
         var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0]);
@@ -53,7 +53,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
                 private _marketTradePublisher : Messaging.IPublish<Models.MarketTrade>,
                 private _mdBroker : Interfaces.IMarketDataBroker,
-                private _quoteGenerator : Agent.QuoteGenerator,
+                private _quoteEngine : Agent.QuotingEngine,
                 private _base : Broker.ExchangeBroker,
                 private _persister : MarketTradePersister,
                 initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[]) {

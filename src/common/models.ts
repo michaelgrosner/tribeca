@@ -281,42 +281,29 @@ export interface ReplaceRequestFromUI {
 }
 
 export class FairValue {
-    constructor(public price : number,
-                public mkt : Market) {}
+    constructor(public price : number, public time : Moment) {}
 }
 
 export enum QuoteAction { New, Cancel }
 export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnsentDelete, UnableToSend }
 
 export class Quote {
-    constructor(public type : QuoteAction,
-                public side : Side,
-                public price : number = null,
-                public size : number = null) {}
+    constructor(public price : number,
+                public size : number) {}
 
     public equals(other : Quote, tol : number = 1e-3) {
-        return this.type == other.type
-            && this.side == other.side
-            && Math.abs(this.price - other.price) < tol
-            && Math.abs(this.size - other.size) < tol;
-    }
-
-    public toString() {
-        if (this.type == QuoteAction.New) {
-            return "px="+this.price+";sz="+this.size;
-        }
-        else {
-            return "del";
-        }
+        return Math.abs(this.price - other.price) < tol && Math.abs(this.size - other.size) < tol;
     }
 }
 
 export class TwoSidedQuote {
-    constructor(public bid : Quote, public ask : Quote) {}
+    constructor(public bid : Quote, public ask : Quote, public time : Moment) {}
+}
 
-    public toString() {
-        return "bid=[" + this.bid + "]; ask=[" + this.ask + "]";
-    }
+export enum QuoteStatus { Live, Held }
+
+export class TwoSidedQuoteStatus {
+    constructor(public bidStatus : QuoteStatus, public askStatus : QuoteStatus) {}
 }
 
 export class CurrencyPair {

@@ -50,31 +50,30 @@ class GeneratedQuote {
     constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
 }
 
-// computes a quote based off my quoting parameters
-export class QuoteGenerator {
-    private _log : Utils.Logger = Utils.log("tribeca:qg");
-    public latestFairValue : Models.FairValue = null;
-    public latestQuote : Models.TwoSidedQuote = null;
+export class MarketFiltration {
+    public latestFilteredMarket : Models.Market = null;
+    public FilteredMarketChanged = new Utils.Evt<Models.Market>();
 
     constructor(private _quoter : Quoter.Quoter,
-                private _baseBroker : Interfaces.IBroker,
-                private _broker : Interfaces.IMarketDataBroker,
-                private _qlParamRepo : QuotingParametersRepository,
-                private _safeties : Safety.SafetySettingsManager,
-                private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
-                private _fvPublisher : Messaging.IPublish<Models.FairValue>,
-                private _activeRepo : ActiveRepository,
-                private _positionBroker : Interfaces.IPositionBroker,
-                private _evs : Winkdex.ExternalValuationSource,
-                private _safetyParams : Safety.SafetySettingsRepository) {
-        _evs.ValueChanged.on(() => this.recalcMarkets(_evs.Value.time))
-        _broker.MarketData.on(() => this.recalcMarkets(_broker.currentBook.time));
-        _qlParamRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
-        _activeRepo.NewParameters.on(() => this.recalcMarkets(Utils.date()));
-
-        _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
-        _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+                private _broker : Interfaces.IMarketDataBroker) {
+        _broker.MarketData.on(this.filterFullMarket);
     }
+
+    private filterFullMarket = () => {
+        var mkt = this._broker.currentBook;
+
+        if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1)  {
+            this.latestFilteredMarket = null;
+            this.FilteredMarketChanged.trigger();
+            return;
+        }
+
+        var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
+        var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
+
+        this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
+        this.FilteredMarketChanged.trigger();
+    };
 
     private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
         var rgq = this._quoter.quotesSent(s);
@@ -98,6 +97,28 @@ export class QuoteGenerator {
 
         return copiedMkts.filter(m => m.size > 0.001);
     };
+}
+
+export class FairValueEngine {
+    public FairValueChanged = new Utils.Evt<Models.FairValue>();
+
+    private _latest = Models.FairValue = null;
+    public get latestFairValue() { return this._latest; }
+    public set latestFairValue(val : Models.FairValue) {
+        if (_.isEqual(val, this._latest)) return;
+
+        this._latest = val;
+        this.FairValueChanged.trigger();
+        this._fvPublisher.publish(this._latest);
+    }
+
+    constructor(private _filtration : MarketFiltration,
+                private _qlParamRepo : QuotingParametersRepository, // should not co-mingle these settings
+                private _fvPublisher : Messaging.IPublish<Models.FairValue>) {
+        _qlParamRepo.NewParameters.on(this.recalcFairValue);
+        _filtration.FilteredMarketChanged.on(this.recalcFairValue);
+        _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+    }
 
     private static ComputeFVUnrounded(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
         switch (model) {
@@ -111,28 +132,61 @@ export class QuoteGenerator {
     }
 
     private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
-        var unrounded = QuoteGenerator.ComputeFVUnrounded(ask, bid, model);
+        var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
         return Utils.roundFloat(unrounded);
     }
 
-    // i should really stop quoting when false
-    private recalcFairValue = (mkt : Models.Market) => {
-        if (mkt.bids.length < 1 || mkt.asks.length < 1) 
-            return false;
+    private recalcFairValue = (t : Moment) => {
+        var mkt = this._filtration.latestFilteredMarket;
 
-        var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
-        var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
+        if (mkt == null) {
+            this.latestFairValue = null;
+            return;
+        }
 
-        if (ask.length === 0 || bid.length === 0) 
-            return false;
+        var bid = mkt.bids;
+        var ask = mkt.asks;
 
-        var fv = QuoteGenerator.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel);
+        if (ask.length < 1 || bid.length < 1) {
+            this.latestFairValue = null;
+            return;
+        }
 
-        this.latestFairValue = new Models.FairValue(fv, new Models.Market(bid, ask, mkt.time));
-        return true;
+        this.latestFairValue = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel));
     };
+}
 
-    private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+export class QuotingEngine {
+    private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
+
+    public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
+
+    private _latest = Models.TwoSidedQuote = null;
+    public get latestQuote() { return this._latest; }
+    public set latestQuote(val : Models.TwoSidedQuote) {
+        if (_.isEqual(val, this._latest)) return;
+
+        this._latest = val;
+        this.QuoteChanged.trigger();
+        this._quotePublisher.publish(this._latest);
+    }
+
+    constructor(private _filteredMarkets : MarketFiltration,
+                private _fvEngine : FairValueEngine,
+                private _qlParamRepo : QuotingParametersRepository,
+                private _safetyParams : Safety.SafetySettingsRepository,
+                private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
+                private _broker : Interfaces.IMarketDataBroker,
+                private _evs : Winkdex.ExternalValuationSource) {
+        _fvEngine.FairValueChanged.on(this.recalcQuote);  // or should i listen to _broker.MarketData???
+        _evs.ValueChanged.on(this.recalcQuote);
+        _qlParamRepo.NewParameters.on(this.recalcQuote);
+        _safetyParams.NewParameters.on(this.recalcQuote);
+
+        _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
+    }
+
+    private computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
         var size = params.size;
 
@@ -142,10 +196,11 @@ export class QuoteGenerator {
         return new GeneratedQuote(bidPx, size, askPx, size);
     }
 
-    private static computeTopQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private computeTopQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
 
-        var topBid = (fv.mkt.bids[0].size > 0.02 ? fv.mkt.bids[0] : fv.mkt.bids[1]);
+        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
+        if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
         var bidPx = topBid.price;
 
         if (topBid.size > .2) {
@@ -155,7 +210,8 @@ export class QuoteGenerator {
         var minBid = fv.price - width / 2.0;
         bidPx = Math.min(minBid, bidPx);
 
-        var topAsk = (fv.mkt.asks[0].size > 0.02 ? fv.mkt.asks[0] : fv.mkt.asks[1]);
+        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
+        if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
         var askPx = topAsk.price;
 
         if (topAsk.size > .2) {
@@ -168,20 +224,20 @@ export class QuoteGenerator {
         return new GeneratedQuote(bidPx, params.size, askPx, params.size);
     }
 
-    private static computeQuoteUnrounded(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue) {
+        var params = this._qlParamRepo.latest;
         switch (params.mode) {
-            case Models.QuotingMode.Mid: return QuoteGenerator.computeMidQuote(fv, params);
-            case Models.QuotingMode.Top: return QuoteGenerator.computeTopQuote(fv, params);
+            case Models.QuotingMode.Mid: return this.computeMidQuote(fv, params);
+            case Models.QuotingMode.Top: return this.computeTopQuote(filteredMkt, fv, params);
         }
     }
 
-    private computeQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
-        var unrounded = QuoteGenerator.computeQuoteUnrounded(fv, params);
+    private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue, extFv : Models.ExternalValuationUpdate) {
+        var unrounded = this.computeQuoteUnrounded(filteredMkt, fv);
 
-        if (this._evs.Value === null) return null;
-        var eFV = this._evs.Value.value;
         var megan = this._safetyParams.latest.maxEvDivergence;
 
+        var eFV = extFv.value;
         if (unrounded.bidPx > eFV + megan) unrounded.bidPx = eFV + megan;
         if (unrounded.askPx < eFV - megan) unrounded.askPx = eFV - megan;
 
@@ -205,30 +261,74 @@ export class QuoteGenerator {
     }
 
     private recalcQuote = (t : Moment) => {
-        var fv = this.latestFairValue;
-        if (fv == null) return false;
-
-        var genQt;
-        try {
-            genQt = this.computeQuote(fv, this._qlParamRepo.latest);
-
-            if (genQt === null) return false;
-
-            var newBidQuote = this.getQuote(Models.Side.Bid, genQt.bidPx, genQt.bidSz);
-            var newAskQuote = this.getQuote(Models.Side.Ask, genQt.askPx, genQt.askSz);
-
-            this.latestQuote = new Models.TwoSidedQuote(
-                QuoteGenerator.quotesAreSame(newBidQuote, this.latestQuote, t => t.bid),
-                QuoteGenerator.quotesAreSame(newAskQuote, this.latestQuote, t => t.ask)
-            );
-        }
-        catch (e) {
-            this.latestQuote = new Models.TwoSidedQuote(QuoteGenerator._bidStopQuote, QuoteGenerator._askStopQuote);
-            this._log("exception while generating quote! stopping until MD can recalc a real quote.", e, e.stack);
+        var fv = this._fvEngine.latestFairValue;
+        if (fv == null) {
+            this.latestQuote = null;
+            return;
         }
 
-        return true;
+        var filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        if (filteredMkt == null) {
+            this.latestQuote = null;
+            return;
+        }
+
+        var extVal = this._evs.Value;
+        if (extVal == null) {
+            this.latestQuote = null;
+            return;
+        }
+
+        var genQt = this.computeQuote(filteredMkt, fv, extVal);
+
+        if (genQt === null) {
+            this.latestQuote = null;
+            return;
+        }
+
+        this.latestQuote = new Models.TwoSidedQuote(
+            QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
+            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask)
+        );
     };
+
+    private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
+        if (prevTwoSided == null) return newQ;
+        var previousQ = sideGetter(prevTwoSided);
+        if (previousQ == null && newQ != null) return newQ;
+        if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
+        return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
+    }
+}
+
+export class QuoteSender {
+    private _log : Utils.Logger = Utils.log("tribeca:quotesender");
+
+    private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
+    public get latestStatus() { return this._latest; }
+    public set latestStatus(val : Models.TwoSidedQuoteStatus) {
+        if (_.isEqual(val, this._latest)) return;
+
+        this._latest = val;
+        this._statusPublisher.publish(this._latest);
+    }
+    
+    constructor(private _quotingEngine : QuotingEngine, 
+                private _statusPublisher : Messaging.IPublish<Models.TwoSidedQuoteStatus>,
+                private _quoter : Quoter.Quoter,
+                private _baseBroker : Interfaces.IBroker,
+                private _qlParamRepo : QuotingParametersRepository,
+                private _safeties : Safety.SafetySettingsManager,
+                private _activeRepo : ActiveRepository,
+                private _positionBroker : Interfaces.IPositionBroker,
+                private _fv : FairValueEngine,
+                private _broker : Interfaces.IMarketDataBroker,
+                private _safetyParams : Safety.SafetySettingsRepository) {
+        _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
+        _quotingEngine.QuoteChanged.on(() => this.sendQuote());
+
+        _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
+    }
 
     private checkCrossedQuotes = (side : Models.Side, px : number) : boolean => {
         var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
@@ -248,79 +348,57 @@ export class QuoteGenerator {
         return false;
     };
 
-    private getQuote = (s, px, sz) : Models.Quote => {
-        if (this.checkCrossedQuotes(s, px) || px === null || sz === null) {
-            return s === Models.Side.Bid ? QuoteGenerator._bidStopQuote : QuoteGenerator._askStopQuote;
+    private sendQuote = (t : Moment) : void => {
+        var quote = this._quotingEngine.latestQuote;
+
+        var askStatus = Models.QuoteStatus.Held;
+        var bidStatus = Models.QuoteStatus.Held;
+
+        if (quote !== null && this._activeRepo.latest) {
+            if (this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size) && this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)) {
+                askStatus = Models.QuoteStatus.Live;
+            }
+
+            if (this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price) && this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)) {
+                bidStatus = Models.QuoteStatus.Live;
+            }
+        }
+
+        var askAction : Models.QuoteSent;
+        if (askStatus === Models.QuoteStatus.Live) {
+            askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
         }
         else {
-            return new Models.Quote(Models.QuoteAction.New, s, px, sz);
-        }
-    };
-
-    private recalcMarkets = (t : Moment) => {
-        var mkt = this._broker.currentBook;
-        if (mkt == null) return;
-
-        var updateFv = this.recalcFairValue(mkt);
-        var updateQuote = (updateFv && this.recalcQuote(t));
-        var sentQuote = (updateQuote && this.sendQuote(t));
-
-        if (updateFv) this._fvPublisher.publish(this.latestFairValue);
-        if (updateQuote) this._quotePublisher.publish(this.latestQuote);
-    };
-
-    private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
-        if (prevTwoSided == null) return newQ;
-        var previousQ = sideGetter(prevTwoSided);
-        if (previousQ == null && newQ != null) return newQ;
-        if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
-        return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
-    }
-
-    private static _bidStopQuote = new Models.Quote(Models.QuoteAction.Cancel, Models.Side.Bid);
-    private static _askStopQuote = new Models.Quote(Models.QuoteAction.Cancel, Models.Side.Ask);
-
-    private sendQuote = (t : Moment) : void => {
-        var quote = this.latestQuote;
-
-        if (quote === null) {
-            return;
+            askAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
         }
 
-        var bidQt : Models.Quote = QuoteGenerator._bidStopQuote;
-        var askQt : Models.Quote = QuoteGenerator._askStopQuote;
-
-        if (this._activeRepo.latest) {
-            if (this.hasEnoughPosition(this._baseBroker.pair.base, quote.ask.size)) {
-                askQt = quote.ask;
-            }
-
-            if (this.hasEnoughPosition(this._baseBroker.pair.quote, quote.bid.size*quote.bid.price)) {
-                bidQt = quote.bid;
-            }
+        var bidAction : Models.QuoteSent;
+        if (bidStatus === Models.QuoteStatus.Live) {
+            bidAction = this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
+        }
+        else {
+            bidAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));
         }
 
-        var askAction = this._quoter.updateQuote(new Models.Timestamped(askQt, t));
-        var bidAction = this._quoter.updateQuote(new Models.Timestamped(bidQt, t));
+        this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
 
-        if (QuoteGenerator.shouldLogDescision(askAction) ||
-                QuoteGenerator.shouldLogDescision(bidAction)) {
-            var fv = this.latestFairValue;
+        if (this.shouldLogDescision(askAction) || this.shouldLogDescision(bidAction)) {
+            var fv = this._fv.latestFairValue;
             var lm = this._broker.currentBook;
             this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:[%d %d - %d %d] %s %s %s",
                     Models.QuoteSent[bidAction], Models.QuoteSent[askAction], fv.price,
                     quote.bid.size, quote.bid.price, quote.ask.price, quote.ask.size,
-                    QuoteGenerator.fmtLevel(0, lm.bids, lm.asks),
-                    QuoteGenerator.fmtLevel(1, lm.bids, lm.asks),
-                    QuoteGenerator.fmtLevel(2, lm.bids, lm.asks));
+                    this.fmtLevel(0, lm.bids, lm.asks),
+                    this.fmtLevel(1, lm.bids, lm.asks),
+                    this.fmtLevel(2, lm.bids, lm.asks));
         }
     };
 
-    private static fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
+    private fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
         return util.format("mkt%d:[%d %d - %d %d]", n, bids[n].size, bids[n].price, asks[n].price, asks[n].size);
     }
 
-    private static shouldLogDescision(a : Models.QuoteSent) {
+    private shouldLogDescision(a : Models.QuoteSent) {
         return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
     }
 
