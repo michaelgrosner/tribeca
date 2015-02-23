@@ -353,8 +353,8 @@ export class QuoteSender {
         var qs = this._quoter.quotesSent(oppSide);
         for (var qi = 0; qi < qs.length; qi++) {
             if (doesQuoteCross(qs[qi].quote, px)) {
-                this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %d",
-                    px, Models.Side[oppSide], qs[qi].quote.price);
+                this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %j",
+                    px, Models.Side[oppSide], qs[qi]);
                 return true;
             }
         }

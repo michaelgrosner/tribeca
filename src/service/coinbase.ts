@@ -127,6 +127,7 @@ interface CoinbaseOrder {
 
 interface CoinbaseOrderAck {
     id : string;
+    error? : string;
     message? : string;
 }
 
@@ -417,13 +418,13 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var t = Utils.date();
 
             if (ack == null || typeof ack.id === "undefined") {
-                this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, resp, ack);
+                this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
             }
 
-            if (err || typeof ack.message !== "undefined") {
+            if (err || typeof ack.message !== "undefined" || typeof ack.error !== "undefined") {
                 status = {
                     orderId: order.orderId,
-                    rejectMessage: (ack || err).message,
+                    rejectMessage: (typeof ack.error !== "undefined" ? ack.error : (ack || err).message),
                     orderStatus: Models.OrderStatus.Rejected,
                     time: t
                 };
