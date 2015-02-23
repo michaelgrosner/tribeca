@@ -416,6 +416,10 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var status : Models.OrderStatusReport
             var t = Utils.date();
 
+            if (ack == null || typeof ack.id === "undefined") {
+                this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, resp, ack);
+            }
+
             if (err || typeof ack.message !== "undefined") {
                 status = {
                     orderId: order.orderId,
