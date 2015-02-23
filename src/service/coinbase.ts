@@ -378,14 +378,14 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this._authClient.cancelOrder(cancel.exchangeId, (err? : Error) => {
+        this._authClient.cancelOrder(cancel.exchangeId, (err? : Error, resp? : any, ack? : CoinbaseOrderAck) => {
             var status : Models.OrderStatusReport
             var t = Utils.date();
 
-            if (err) {
+            if (err || (ack && typeof ack.message !== "undefined" || typeof ack.error !== "undefined")) {
                 status = {
                     orderId: cancel.clientOrderId,
-                    rejectMessage: err.message,
+                    rejectMessage: (typeof ack.error !== "undefined" ? ack.error : (ack || err).message),
                     orderStatus: Models.OrderStatus.Rejected,
                     cancelRejected: true,
                     time: t,
