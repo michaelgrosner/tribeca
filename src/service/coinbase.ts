@@ -382,10 +382,19 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var status : Models.OrderStatusReport
             var t = Utils.date();
 
-            if (err || (ack && typeof ack.message !== "undefined" || typeof ack.error !== "undefined")) {
+            var msg = null;
+            if (err) {
+                if (err.message) msg = err.message;
+            }
+            else if (ack != null) {
+                if (ack.message) msg = ack.message;
+                if (ack.error) msg = ack.error;
+            }
+
+            if (msg !== null) {
                 status = {
                     orderId: cancel.clientOrderId,
-                    rejectMessage: (typeof ack.error !== "undefined" ? ack.error : (ack || err).message),
+                    rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Rejected,
                     cancelRejected: true,
                     time: t,
@@ -421,10 +430,19 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
             }
 
-            if (err || typeof ack.message !== "undefined" || typeof ack.error !== "undefined") {
+            var msg = null;
+            if (err) {
+                if (err.message) msg = err.message;
+            }
+            else if (ack != null) {
+                if (ack.message) msg = ack.message;
+                if (ack.error) msg = ack.error;
+            }
+
+            if (msg !== null) {
                 status = {
                     orderId: order.orderId,
-                    rejectMessage: (typeof ack.error !== "undefined" ? ack.error : (ack || err).message),
+                    rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Rejected,
                     time: t
                 };
