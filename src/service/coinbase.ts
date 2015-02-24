@@ -390,9 +390,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 if (ack.message) msg = ack.message;
                 if (ack.error) msg = ack.error;
             }
-            else if (ack == null) {
-                msg = "No ack provided!!"
-            }
 
             if (msg !== null) {
                 status = {
