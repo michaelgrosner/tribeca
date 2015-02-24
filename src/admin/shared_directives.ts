@@ -46,6 +46,30 @@ var bindOnce = () => {
     }
 };
 
+export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
+    private _wrapped : Messaging.ISubscribe<T>;
+
+    constructor(private _scope : ng.IScope, topic : string, io : any, log : (...args: any[]) => void) {
+        this._wrapped = new Messaging.Subscriber<T>(topic, io, log);
+    }
+
+    public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
+        return this._wrapped.registerSubscriber(
+            x => this._scope.$evalAsync(() => incrementalHandler(x)), 
+            xs => this._scope.$evalAsync(() => snapshotHandler(xs)))
+    }
+
+    public registerDisconnectedHandler = (handler : () => void) => {
+        return this._wrapped.registerDisconnectedHandler(() => this._scope.$evalAsync(handler));
+    }
+
+    public registerConnectHandler = (handler : () => void) => { 
+        return this._wrapped.registerConnectHandler(() => this._scope.$evalAsync(handler));
+    }
+
+    public disconnect = () => this._wrapped.disconnect();
+}
+
 angular.module('sharedDirectives', ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
