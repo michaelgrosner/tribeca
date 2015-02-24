@@ -4,6 +4,8 @@ var crypto = require('crypto');
 import Utils = require("./utils");
 import _ = require('lodash');
 import request = require('request');
+import Models = require("../common/models");
+import moment = require("moment");
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;
 var EventEmitter = require('events').EventEmitter;
@@ -344,13 +346,14 @@ _.assign(OrderBook.prototype, new function() {
     self.changeState(self.STATES.closed);
   };
 
-  prototype.onMessage = function(datastr) {
+  prototype.onMessage = function(datastr : string) {
+    var t = Utils.date();
     var self = this;
     var data = JSON.parse(datastr);
     if (self.state !== self.STATES.processing) {
       self.queue.push(data);
     } else {
-      self.processMessage(data);
+      self.processMessage(data, t);
     }
   };
 
@@ -404,7 +407,7 @@ _.assign(OrderBook.prototype, new function() {
     });
   };
 
-  prototype.processMessage = function(message) {
+  prototype.processMessage = function(message, t : Moment) {
     var self = this;
     if (message.sequence <= self.book.sequence) {
       self.emit('ignored', message);
@@ -416,6 +419,6 @@ _.assign(OrderBook.prototype, new function() {
     }
     self.book.sequence = message.sequence;
 
-    self.emit(message.type, message);
+    self.emit(message.type, new Models.Timestamped(message, t));
   };
 });

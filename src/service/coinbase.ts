@@ -106,12 +106,12 @@ interface CoinbaseBookStorage {
 interface CoinbaseOrderBook {
     on(event: string, cb: Function) : CoinbaseOrderBook;
     on(event: 'statechange', cb: (data : StateChange) => void) : CoinbaseOrderBook;
-    on(event: 'received', cd: (msg : CoinbaseReceived) => void) : CoinbaseOrderBook;
-    on(event: 'open', cd: (msg : CoinbaseOpen) => void) : CoinbaseOrderBook;
-    on(event: 'done', cd: (msg : CoinbaseDone) => void) : CoinbaseOrderBook;
-    on(event: 'match', cd: (msg : CoinbaseMatch) => void) : CoinbaseOrderBook;
-    on(event: 'change', cd: (msg : CoinbaseChange) => void) : CoinbaseOrderBook;
-    on(event: 'error', cd: (msg : Error) => void) : CoinbaseOrderBook;
+    on(event: 'received', cd: (msg : Models.Timestamped<CoinbaseReceived>) => void) : CoinbaseOrderBook;
+    on(event: 'open', cd: (msg : Models.Timestamped<CoinbaseOpen>) => void) : CoinbaseOrderBook;
+    on(event: 'done', cd: (msg : Models.Timestamped<CoinbaseDone>) => void) : CoinbaseOrderBook;
+    on(event: 'match', cd: (msg : Models.Timestamped<CoinbaseMatch>) => void) : CoinbaseOrderBook;
+    on(event: 'change', cd: (msg : Models.Timestamped<CoinbaseChange>) => void) : CoinbaseOrderBook;
+    on(event: 'error', cd: (msg : Models.Timestamped<Error>) => void) : CoinbaseOrderBook;
 
     state : string;
     book : CoinbaseBookStorage;
@@ -362,11 +362,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
     constructor(private _client : CoinbaseOrderBook) {
-        this._client.on("statechange", m => this.onStateChange(m, Utils.date()));
-        this._client.on("open", m => this.onOpen(m, Utils.date()));
-        this._client.on("done", m => this.onDone(m, Utils.date()));
-        this._client.on("match", m => this.onMatch(m, Utils.date()));
-        this._client.on("change", m => this.onChange(m, Utils.date()));
+        this._client.on("statechange", m => this.onStateChange(m.data, m.time));
+        this._client.on("open", m => this.onOpen(m.data, m.time));
+        this._client.on("done", m => this.onDone(m.data, m.time));
+        this._client.on("match", m => this.onMatch(m.data, m.time));
+        this._client.on("change", m => this.onChange(m.data, m.time));
     }
 }
 
@@ -490,23 +490,24 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.ConnectChanged.trigger(status);
     };
 
-    private onReceived = (msg : CoinbaseReceived) => { 
+    private onReceived = (tsMsg : Models.Timestamped<CoinbaseReceived>) => { 
+        var msg = tsMsg.data;
         if (typeof msg.client_oid === "undefined" || !this._orderData.allOrders.hasOwnProperty(msg.client_oid))
             return;
 
-        var t = Utils.date();
         var status : Models.OrderStatusReport = {
             exchangeId: msg.order_id,
             orderId: msg.client_oid,
             orderStatus: Models.OrderStatus.Working,
-            time: t,
+            time: tsMsg.time,
             leavesQuantity: convertSize(msg.size)
         };
 
         this.OrderUpdate.trigger(status);
     };
 
-    private onOpen = (msg : CoinbaseOpen) => { 
+    private onOpen = (tsMsg : Models.Timestamped<CoinbaseOpen>) => { 
+        var msg = tsMsg.data;
         var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
         if (typeof orderId === "undefined")
             return;
@@ -515,19 +516,18 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var status : Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
-            time: t,
+            time: tsMsg.time,
             leavesQuantity: convertSize(msg.remaining_size)
         };
 
         this.OrderUpdate.trigger(status);
     };
 
-    private onDone = (msg : CoinbaseDone) => { 
+    private onDone = (tsMsg : Models.Timestamped<CoinbaseDone>) => { 
+        var msg = tsMsg.data;
         var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
         if (typeof orderId === "undefined")
             return;
-
-        var t = Utils.date();
 
         var ordStatus = msg.reason === "filled" 
             ? Models.OrderStatus.Complete 
@@ -536,14 +536,15 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var status : Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: ordStatus,
-            time: t,
+            time: tsMsg.time,
             leavesQuantity: 0
         };
 
         this.OrderUpdate.trigger(status);
     };
 
-    private onMatch = (msg : CoinbaseMatch) => { 
+    private onMatch = (tsMsg : Models.Timestamped<CoinbaseMatch>) => { 
+        var msg = tsMsg.data;
         var liq : Models.Liquidity = Models.Liquidity.Make;
         var client_oid = this._orderData.exchIdsToClientIds[msg.maker_order_id];
 
@@ -555,12 +556,10 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof client_oid === "undefined") 
             return;
 
-        var t = Utils.date();
-
         var status : Models.OrderStatusReport = {
             orderId: client_oid,
             orderStatus: Models.OrderStatus.Working,
-            time: t,
+            time: tsMsg.time,
             lastQuantity: convertSize(msg.size),
             lastPrice: convertPrice(msg.price),
             liquidity: liq
@@ -569,17 +568,16 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    private onChange = (msg : CoinbaseChange) => { 
+    private onChange = (tsMsg : Models.Timestamped<CoinbaseChange>) => { 
+        var msg = tsMsg.data;
         var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
         if (typeof orderId === "undefined")
             return;
 
-        var t = Utils.date();
-
         var status : Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
-            time: t,
+            time: tsMsg.time,
             quantity: convertSize(msg.new_size)
         };
 
