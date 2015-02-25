@@ -119,7 +119,7 @@ export class FairValueEngine {
     private _latest : Models.FairValue = null;
     public get latestFairValue() { return this._latest; }
     public set latestFairValue(val : Models.FairValue) {
-        if (_.isEqual(val, this._latest)) return;
+        if (this._latest != null && Math.abs(this._latest.price - val.price) < 0.02) return;
 
         this._latest = val;
         this.FairValueChanged.trigger();
