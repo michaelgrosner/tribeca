@@ -221,6 +221,41 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         priceLevelStorage.orders[order_id] = size;
     };
 
+    private onReceived = (msg : CoinbaseReceived, t : Moment) => {
+        var price = convertPrice(msg.price);
+        var size = convertSize(msg.size);
+        var side = convertSide(msg);
+
+        var otherSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
+        var storage = this.getStorage(otherSide);
+
+        var changed = false;
+        var remaining_size = size;
+        for (var i = 0; i < storage.store.length; i++) {
+            if (remaining_size <= 0) return;
+
+            var kvp = storage.store.array[i];
+            var price_level = kvp.key;
+
+            if (side === Models.Side.Bid && price < price_level) break;
+            if (side === Models.Side.Ask && price > price_level) break;
+
+            var level_size = kvp.value.marketUpdate.size;
+
+            if (level_size <= remaining_size) {
+                storage.delete(price_level);
+                remaining_size -= level_size;
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            if (otherSide === Models.Side.Bid) this.reevalBids();
+            if (otherSide === Models.Side.Ask) this.reevalAsks();
+            this.raiseMarketData(t);
+        }
+    }
+
     private onOpen = (msg : CoinbaseOpen, t : Moment) => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
@@ -257,24 +292,23 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
-        var makerStorage = this.getStorage(side);
 
+        var makerStorage = this.getStorage(side);
         var priceLevelStorage = makerStorage.get(price);
 
-        if (typeof priceLevelStorage === "undefined")
-            return;
+        if (typeof priceLevelStorage !== "undefined") {
+            priceLevelStorage.marketUpdate.size -= size;
+            priceLevelStorage.orders[msg.maker_order_id] -= size;
 
-        priceLevelStorage.marketUpdate.size -= size;
-        priceLevelStorage.orders[msg.maker_order_id] -= size;
+            if (priceLevelStorage.orders[msg.maker_order_id] < 1e-4)
+                delete priceLevelStorage.orders[msg.maker_order_id];
 
-        if (priceLevelStorage.orders[msg.maker_order_id] < 1e-4)
-            delete priceLevelStorage.orders[msg.maker_order_id];
+            if (_.isEmpty(priceLevelStorage.orders)) {
+                makerStorage.delete(price);
+            }
 
-        if (_.isEmpty(priceLevelStorage.orders)) {
-            makerStorage.delete(price);
+            this.onOrderBookChanged(t, side, price);
         }
-
-        this.onOrderBookChanged(t, side, price);
 
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false));
     };
@@ -326,7 +360,8 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.raiseMarketData(t);
     };
 
-    private onStateChange = (s : StateChange, t : Moment) => {
+    private onStateChange = (s : StateChange) => {
+        var t = Utils.date();
         var status = convertConnectivityStatus(s);
 
         if (status === Models.ConnectivityStatus.Connected) {
@@ -362,7 +397,8 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
     constructor(private _client : CoinbaseOrderBook) {
-        this._client.on("statechange", m => this.onStateChange(m.data, m.time));
+        this._client.on("statechange", m => this.onStateChange(m));
+        this._client.on("received", m => this.onReceived(m.data, m.time));
         this._client.on("open", m => this.onOpen(m.data, m.time));
         this._client.on("done", m => this.onDone(m.data, m.time));
         this._client.on("match", m => this.onMatch(m.data, m.time));
@@ -648,13 +684,8 @@ export class Coinbase extends Interfaces.CombinedGateway {
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orders, orderbook, authClient)
             : new NullGateway.NullOrderGateway();
 
-        var positionGateway = config.environment() == Config.Environment.Dev ?
-            new NullGateway.NullPositionGateway() :
-            new CoinbasePositionGateway(authClient);
-
-        var mdGateway = config.environment() == Config.Environment.Dev ?
-            <Interfaces.IMarketDataGateway>new NullGateway.NullMarketDataGateway() :
-            new CoinbaseMarketDataGateway(orderbook);
+        var positionGateway = new CoinbasePositionGateway(authClient);
+        var mdGateway = new CoinbaseMarketDataGateway(orderbook);
 
         super(
             mdGateway,
