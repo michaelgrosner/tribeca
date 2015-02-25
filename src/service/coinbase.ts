@@ -222,7 +222,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onReceived = (msg : CoinbaseReceived, t : Moment) => {
-        /*var price = convertPrice(msg.price);
+        var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
 
@@ -253,7 +253,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (otherSide === Models.Side.Bid) this.reevalBids();
             if (otherSide === Models.Side.Ask) this.reevalAsks();
             this.raiseMarketData(t);
-        }*/
+        }
     }
 
     private onOpen = (msg : CoinbaseOpen, t : Moment) => {
