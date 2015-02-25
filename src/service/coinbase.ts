@@ -314,6 +314,8 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onChange = (msg : CoinbaseChange, t : Moment) => {
+        this._log("onChange", msg);
+
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
