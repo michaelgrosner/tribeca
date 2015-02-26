@@ -5,7 +5,7 @@
 require.config({
     paths: {
         'jquery': '//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min',
-        'angular': '//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular',
+        'angular': '//ajax.googleapis.com/ajax/libs/angularjs/1.3.10/angular',
         'socket.io-client': '//cdn.socket.io/socket.io-1.1.0',
         'bootstrap': '/js/bootstrap.min',
         'moment': '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min',
