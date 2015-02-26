@@ -73,10 +73,11 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.env = pa.environment;
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
-        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $log, subscriberFactory, fireFactory);
+        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $scope, $log, subscriberFactory, fireFactory);
     };
 
-    var reset = () => {
+    var reset = (reason : string) => {
+        $log.info("reset", reason);
         $scope.connected = false;
         $scope.pair_name = null;
         $scope.exch_name = null;
@@ -85,18 +86,12 @@ var uiCtrl = ($scope : MainWindowScope,
             $scope.pair.dispose();
         $scope.pair = null;
     };
+    reset("startup");
 
-    subscriberFactory.getSubscriber(Messaging.Topics.ProductAdvertisement)
-        .registerConnectHandler(reset)
+    subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-        .registerDisconnectedHandler(reset);
+        .registerDisconnectedHandler(() => reset("disconnect"));
 
-    var refresh_timer = () => {
-        $timeout(refresh_timer, 250);
-    };
-    $timeout(refresh_timer, 250);
-
-    reset();
     $log.info("started client");
 };
 

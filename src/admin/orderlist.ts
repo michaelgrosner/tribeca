@@ -134,7 +134,7 @@ var OrderListController = ($scope : OrderListScope,
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
-    var sub = subscriberFactory.getSubscriber(Messaging.Topics.OrderStatusReports)
+    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.OrderStatusReports)
         .registerConnectHandler(() => $scope.order_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));

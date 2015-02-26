@@ -106,6 +106,7 @@ export class DisplayPair {
 
     constructor(public exch : Models.Exchange,
                 public pair : Models.CurrencyPair,
+                public scope : ng.IScope,
                 log : ng.ILogService,
                 subscriberFactory : Shared.SubscriberFactory,
                 fireFactory : Shared.FireFactory) {
@@ -114,21 +115,21 @@ export class DisplayPair {
             this.connected = cs == Models.ConnectivityStatus.Connected;
         };
 
-        var connectivitySubscriber = subscriberFactory.getSubscriber(Messaging.Topics.ExchangeConnectivity)
+        var connectivitySubscriber = subscriberFactory.getSubscriber(scope, Messaging.Topics.ExchangeConnectivity)
             .registerSubscriber(setConnectStatus, cs => cs.forEach(setConnectStatus));
 
         this.active = new QuotingButtonViewModel(
-            subscriberFactory.getSubscriber(Messaging.Topics.ActiveChange),
+            subscriberFactory.getSubscriber(scope, Messaging.Topics.ActiveChange),
             fireFactory.getFire(Messaging.Topics.ActiveChange)
         );
 
         this.quotingParameters = new DisplayQuotingParameters(
-            subscriberFactory.getSubscriber(Messaging.Topics.QuotingParametersChange),
+            subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange),
             fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
         );
 
         this.safetySettings = new DisplaySafetySettingsParameters(
-            subscriberFactory.getSubscriber(Messaging.Topics.SafetySettings),
+            subscriberFactory.getSubscriber(scope, Messaging.Topics.SafetySettings),
             fireFactory.getFire(Messaging.Topics.SafetySettings)
         );
     }
@@ -269,19 +270,19 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.fairValue = fv.price;
     };
 
-    subscriberFactory.getSubscriber<Models.Market>(Messaging.Topics.MarketData)
+    subscriberFactory.getSubscriber<Models.Market>($scope, Messaging.Topics.MarketData)
         .registerSubscriber(updateMarket, ms => ms.forEach(updateMarket))
         .registerDisconnectedHandler(clearMarket);
 
-    subscriberFactory.getSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
+    subscriberFactory.getSubscriber<Models.TwoSidedQuote>($scope, Messaging.Topics.Quote)
         .registerSubscriber(updateQuote, qs => qs.forEach(updateQuote))
         .registerDisconnectedHandler(clearQuote);
 
-    subscriberFactory.getSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus)
+    subscriberFactory.getSubscriber<Models.TwoSidedQuoteStatus>($scope, Messaging.Topics.QuoteStatus)
         .registerSubscriber(updateQuoteStatus, qs => qs.forEach(updateQuoteStatus))
         .registerDisconnectedHandler(clearQuoteStatus);
 
-    subscriberFactory.getSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
+    subscriberFactory.getSubscriber<Models.FairValue>($scope, Messaging.Topics.FairValue)
         .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))
         .registerDisconnectedHandler(clearFairValue);
 
@@ -382,7 +383,7 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
-    subscriberFactory.getSubscriber(Messaging.Topics.MarketTrade)
+    subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
             .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
             .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
@@ -440,7 +441,7 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, su
         $scope.messages.push(new MessageViewModel(u));
     };
 
-    subscriberFactory.getSubscriber(Messaging.Topics.Message)
+    subscriberFactory.getSubscriber($scope, Messaging.Topics.Message)
             .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
             .registerDisconnectedHandler(() => $scope.messages.length = 0);
 

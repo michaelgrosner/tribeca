@@ -57,8 +57,8 @@ export class FireFactory {
 export class SubscriberFactory {
     constructor(private socket : any, private $log : ng.ILogService) {}
 
-    public getSubscriber = <T>(topic : string) : Messaging.ISubscribe<T> => {
-        return new Messaging.Subscriber<T>(topic, this.socket, this.$log.info);
+    public getSubscriber = <T>(scope : ng.IScope, topic : string) : Messaging.ISubscribe<T> => {
+        return new EvalAsyncSubscriber<T>(scope, topic, this.socket, this.$log.info);
     }
 }
 

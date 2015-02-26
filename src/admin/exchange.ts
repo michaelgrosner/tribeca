@@ -42,7 +42,7 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         $scope.value = position.value;
     };
 
-    var positionSubscriber = subscriberFactory.getSubscriber(Messaging.Topics.Position)
+    var positionSubscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.Position)
         .registerDisconnectedHandler(clearPosition)
         .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
 

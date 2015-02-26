@@ -57,7 +57,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 
     var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
 
-    var sub = subscriberFactory.getSubscriber(Messaging.Topics.Trades)
+    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
