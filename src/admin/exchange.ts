@@ -10,10 +10,8 @@ import moment = require("moment");
 import Messaging = require("../common/messaging");
 import Pair = require("./pair");
 
-export class DisplayExchangeInformation {
-    connected : boolean;
-    name : string;
-    pairs : Pair.DisplayPair[] = [];
+interface PositionScope extends ng.IScope {
+    exch : Models.Exchange;
 
     baseCurrency : string;
     basePosition : number;
@@ -22,8 +20,63 @@ export class DisplayExchangeInformation {
     baseHeldPosition : number;
     quoteHeldPosition : number;
     value : number;
+}
 
-    private _positionSubscriber : Messaging.ISubscribe<Models.PositionReport>;
+var PositionController = ($scope : PositionScope, $log : ng.ILogService, socket : any) => {
+    var clearPosition = () => {
+        $scope.baseCurrency = null;
+        $scope.quoteCurrency = null;
+        $scope.basePosition = null;
+        $scope.quotePosition = null;
+        $scope.baseHeldPosition = null;
+        $scope.quoteHeldPosition = null;
+        $scope.value = null;
+    };
+
+    var updatePosition = (position : Models.PositionReport) => {
+        $scope.baseCurrency = Models.Currency[position.pair.base];
+        $scope.quoteCurrency = Models.Currency[position.pair.quote];
+        $scope.basePosition = position.baseAmount;
+        $scope.quotePosition = position.quoteAmount;
+        $scope.baseHeldPosition = position.baseHeldAmount;
+        $scope.quoteHeldPosition = position.quoteHeldAmount;
+        $scope.value = position.value;
+    };
+
+    var makeSubscriber = <T>(topic : string) => {
+        var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic($scope.exch, topic);
+        return new Messaging.Subscriber<T>(wrappedTopic, socket, $log.info);
+    };
+
+    var positionSubscriber = makeSubscriber(Messaging.Topics.Position)
+        .registerDisconnectedHandler(clearPosition)
+        .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
+
+    $log.info("starting position grid for", Models.Exchange[$scope.exch]);
+};
+
+angular
+    .module("positionDirective", ['ui.bootstrap', 'sharedDirectives'])
+    .directive("positionGrid", () => {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            templateUrl: "positions.html",
+            controller: PositionController,
+            scope: {
+              exch: '=',
+            }
+          }
+    });
+
+// ===============================
+
+export class DisplayExchangeInformation {
+    connected : boolean;
+    name : string;
+    pairs : Pair.DisplayPair[] = [];
+
     private _connectivitySubscriber : Messaging.ISubscribe<Models.ConnectivityStatus>;
 
     constructor(private _log : ng.ILogService,
@@ -35,10 +88,6 @@ export class DisplayExchangeInformation {
             return new Messaging.Subscriber<T>(wrappedTopic, _io, _log.info);
         };
 
-        this._positionSubscriber = makeSubscriber(Messaging.Topics.Position)
-            .registerDisconnectedHandler(this.clearPosition)
-            .registerSubscriber(this.updatePosition, us => us.forEach(this.updatePosition));
-
         this._connectivitySubscriber = makeSubscriber(Messaging.Topics.ExchangeConnectivity)
             .registerSubscriber(this.setConnectStatus, cs => cs.forEach(this.setConnectStatus));
 
@@ -46,7 +95,6 @@ export class DisplayExchangeInformation {
     }
 
     public dispose = () => {
-        this._positionSubscriber.disconnect();
         this._connectivitySubscriber.disconnect();
         this.pairs.forEach(p => p.dispose());
         this.pairs.length = 0;
@@ -54,26 +102,6 @@ export class DisplayExchangeInformation {
 
     private setConnectStatus = (cs : Models.ConnectivityStatus) => {
         this.connected = cs == Models.ConnectivityStatus.Connected;
-    };
-
-    private clearPosition = () => {
-        this.baseCurrency = null;
-        this.quoteCurrency = null;
-        this.basePosition = null;
-        this.quotePosition = null;
-        this.baseHeldPosition = null;
-        this.quoteHeldPosition = null;
-        this.value = null;
-    };
-
-    private updatePosition = (position : Models.PositionReport) => {
-        this.baseCurrency = Models.Currency[position.pair.base];
-        this.quoteCurrency = Models.Currency[position.pair.quote];
-        this.basePosition = position.baseAmount;
-        this.quotePosition = position.quoteAmount;
-        this.baseHeldPosition = position.baseHeldAmount;
-        this.quoteHeldPosition = position.quoteHeldAmount;
-        this.value = position.value;
     };
 
     public getOrAddDisplayPair = (pair : Models.CurrencyPair) : Pair.DisplayPair => {

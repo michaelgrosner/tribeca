@@ -87,6 +87,20 @@
     </form>
 </script>
 
+<script type="text/ng-template" id="positions.html">
+    <div>
+        <h4 class="col-md-12 col-xs-2"><small>
+            {{ quoteCurrency }}: {{ quotePosition|currency:undefined:3 }} ({{ quoteHeldPosition|currency:undefined:3 }})
+        </small></h4>
+        <h4 class="col-md-12 col-xs-2"><small>
+            {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
+        </small></h4>
+        <h4 class="col-md-12 col-xs-2"><small>
+            Value: {{ value|currency:"B":3 }}
+        </small></h4>
+    </div>
+</script>
+
 <body>
 
     <div ng-if="!connected">
@@ -128,9 +142,7 @@
                                         </button>
 
                                         <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch.name }}</h4>
-                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.quoteCurrency }}: {{ exch.quotePosition|currency:undefined:3 }} ({{ exch.quoteHeldPosition|currency:undefined:3 }})</small></h4>
-                                        <h4 class="col-md-12 col-xs-2"><small>{{ exch.baseCurrency }}: {{ exch.basePosition|currency:"B":3 }} ({{ exch.baseHeldPosition|currency:"B":3 }})</small></h4>
-                                        <h4 class="col-md-12 col-xs-2"><small>Value: {{ exch.value|currency:"B":3 }}</small></h4>
+                                        <position-grid exch="pair.exch"></position-grid>
                                     </div>
                                 </div>
 
