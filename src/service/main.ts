@@ -45,10 +45,11 @@ var getExchange = () : Models.Exchange => {
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
     }
 };
+
 var exchange = getExchange();
 
 var getEngineTopic = (topic : string) : string => {
-    return Messaging.ExchangePairMessaging.wrapExchangePairTopic(exchange, pair, topic);
+    return topic;
 };
 
 var db = Persister.loadDb();
@@ -114,8 +115,7 @@ Q.all([
     var latencyHttpPublisher = getHttpPublisher("latency");
 
     var getExchangePublisher = <T>(topic : string) => {
-        var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangeTopic(exchange, topic);
-        return new Messaging.Publisher<T>(wrappedTopic, io, null, messagingLog);
+        return new Messaging.Publisher<T>(topic, io, null, messagingLog);
     };
 
     var positionPublisher = getExchangePublisher(Messaging.Topics.Position);

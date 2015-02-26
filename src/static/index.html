@@ -51,16 +51,6 @@
 <script type="text/ng-template" id="order_form.html">
     <form style="margin: 20px" class="form-horizontal" novalidate role="form">
         <div class="form-group">
-            <label>pair</label>
-            <select class="form-control input-sm"
-                    ng-model="order.pair"
-                    ng-options="x as x.displayName for x in order.availablePairs"></select>
-        </div>
-        <div class="form-group">
-            <label>Exchange</label>
-            <select class="form-control input-sm" ng-model="order.exchange" ng-options="x for x in order.availableExchanges"></select>
-        </div>
-        <div class="form-group">
             <label>Side</label>
             <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
         </div>
@@ -130,130 +120,126 @@
         </div>
 
         <div class="container-fluid">
-            <div ng-repeat="exch in exchanges">
-                <div>
-                    <div style="padding: 5px" ng-class="exch.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
-                        <div class="row" ng-repeat="pair in exch.pairs">
+            <div>
+                <div style="padding: 5px" ng-class="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                    <div class="row">
+                        <div class="col-md-1 col-xs-12 text-center">
                             <div class="row">
-                                <div class="col-md-1 col-xs-12 text-center">
-                                    <div class="row">
-                                        <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
-                                            {{ pair.name }}
-                                        </button>
+                                <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
+                                    {{ pair_name }}
+                                </button>
 
-                                        <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch.name }}</h4>
-                                        <position-grid exch="pair.exch"></position-grid>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-3 col-xs-12">
-                                    <market-quoting-grid exch="pair.exch" pair="pair.pair"></market-quoting-grid>
-                                    <messages-grid exch="pair.exch" pair="pair.pair"></messages-grid>
-                                </div>
-
-                                <div class="col-md-3 col-xs-12">
-                                    <trade-list exch="pair.exch" pair="pair.pair"></trade-list>
-                                </div>
-
-                                <div class="col-md-5 col-xs-12">
-                                    <market-trade-grid exch="pair.exch" pair="pair.pair"></market-trade-grid>
-                                </div>
+                                <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
+                                <position-grid></position-grid>
                             </div>
+                        </div>
 
+                        <div class="col-md-3 col-xs-12">
+                            <market-quoting-grid></market-quoting-grid>
+                            <messages-grid></messages-grid>
+                        </div>
+
+                        <div class="col-md-3 col-xs-12">
+                            <trade-list></trade-list>
+                        </div>
+
+                        <div class="col-md-5 col-xs-12">
+                            <market-trade-grid></market-trade-grid>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 col-xs-12">
                             <div class="row">
-                                <div class="col-md-6 col-xs-12">
-                                    <div class="row">
-                                        <form novalidate>
-                                            <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">mode</div>
-                                                    <select class="form-control input-sm"
-                                                            ng-model="pair.quotingParameters.display.mode"
-                                                            ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">fvMd</div>
-                                                    <select class="form-control input-sm"
-                                                            ng-model="pair.quotingParameters.display.fvModel"
-                                                            ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">width</div>
-                                                    <input class="form-control input-sm"
-                                                           type="number"
-                                                           onClick="this.select()"
-                                                           ng-model="pair.quotingParameters.display.width">
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">size</div>
-                                                    <input class="form-control input-sm"
-                                                           type="number"
-                                                           onClick="this.select()"
-                                                           ng-model="pair.quotingParameters.display.size">
-                                                </div>
-                                            </div>
-
-                                            <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                            <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
-                                        </form>
-                                    </div>
-
-                                </div>
-
-                                <div class="col-md-6 col-xs-12">
-                                    <form novalidate>
-                                        <div class="row">
-                                            <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">t/min</div>
-                                                    <input class="form-control input-sm"
-                                                           type="number"
-                                                           onClick="this.select()"
-                                                           ng-model="pair.safetySettings.display.tradesPerMinute">
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">coolMin</div>
-                                                    <input class="form-control input-sm"
-                                                           type="number"
-                                                           onClick="this.select()"
-                                                           ng-model="pair.safetySettings.display.coolOffMinutes">
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
-                                                <div class="input-group">
-                                                    <div class="input-group-addon">maxEvDiv</div>
-                                                    <input class="form-control input-sm"
-                                                           type="number"
-                                                           onClick="this.select()"
-                                                           ng-model="pair.safetySettings.display.maxEvDivergence">
-                                                </div>
-                                            </div>
-
-                                            <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
-                                            <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
+                                <form novalidate>
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">mode</div>
+                                            <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.mode"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
                                         </div>
-                                    </form>
-                                </div>
+                                    </div>
+
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">fvMd</div>
+                                            <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.fvModel"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">width</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.width">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">size</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.size">
+                                        </div>
+                                    </div>
+
+                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                                </form>
                             </div>
 
-                            <div class="row table-responsive">
-                                <div class="col-md-12 col-xs-12">
-                                    <order-list exch="pair.exch" pair="pair.pair"></order-list>
+                        </div>
+
+                        <div class="col-md-6 col-xs-12">
+                            <form novalidate>
+                                <div class="row">
+                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">t/min</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.safetySettings.display.tradesPerMinute">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">coolMin</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.safetySettings.display.coolOffMinutes">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">maxEvDiv</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.safetySettings.display.maxEvDivergence">
+                                        </div>
+                                    </div>
+
+                                    <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
+                                    <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
                                 </div>
-                            </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row table-responsive">
+                        <div class="col-md-12 col-xs-12">
+                            <order-list></order-list>
                         </div>
                     </div>
                 </div>

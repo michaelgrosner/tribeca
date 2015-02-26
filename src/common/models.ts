@@ -270,13 +270,11 @@ export class PositionReport {
 
 export class OrderRequestFromUI {
     constructor(
-        public exchange : string,
         public side : string,
         public price : number,
         public quantity : number,
         public timeInForce : string,
-        public orderType : string,
-        public pair : CurrencyPair) {}
+        public orderType : string) {}
 }
 
 export interface ReplaceRequestFromUI {

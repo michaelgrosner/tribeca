@@ -221,13 +221,3 @@ export class Topics {
     static ExternalValuation = "ev";
     static QuoteStatus = "qs";
 }
-
-export module ExchangePairMessaging {
-    export function wrapExchangePairTopic(exch : Models.Exchange, pair : Models.CurrencyPair, topic : string) {
-        return exch + "." + pair.base + "/" + pair.quote + "." + topic;
-    }
-
-    export function wrapExchangeTopic(exch : Models.Exchange, topic : string) {
-        return exch + "." + topic;
-    }
-}

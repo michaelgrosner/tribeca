@@ -12,8 +12,6 @@ import Shared = require("./shared_directives");
 
 interface OrderListScope extends ng.IScope {
     order_statuses : DisplayOrderStatusReport[];
-    exch : Models.Exchange;
-    pair : Models.CurrencyPair;
     gridOptions : any;
 }
 
@@ -133,8 +131,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
-    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.OrderStatusReports);
-    var sub = new Messaging.Subscriber(topic, socket, $log.info)
+    var sub = new Messaging.Subscriber(Messaging.Topics.OrderStatusReports, socket, $log.info)
         .registerConnectHandler(() => $scope.order_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
@@ -150,11 +147,7 @@ var orderListDirective = () : ng.IDirective => {
         restrict: "E",
         replace: true,
         transclude: false,
-        controller: OrderListController,
-        scope: {
-          exch: '=',
-          pair: '='
-        }
+        controller: OrderListController
     }
 };
 

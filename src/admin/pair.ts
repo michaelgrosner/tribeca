@@ -94,8 +94,8 @@ class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySetting
 
 export class DisplayPair {
     name : string;
-    base : string;
-    quote : string;
+    exch_name : string;
+    connected : boolean;
 
     active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
@@ -109,20 +109,27 @@ export class DisplayPair {
                 io : any) {
 
         var makeSubscriber = <T>(topic : string) => {
-            var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
-            var subscriber = new Messaging.Subscriber<T>(wrappedTopic, io, log.info);
+            var subscriber = new Messaging.Subscriber<T>(topic, io, log.info);
             this._subscribers.push(subscriber);
             return subscriber;
         };
 
         var makeFire = <T>(topic : string) => {
-            var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic(exch, pair, topic);
-            return new Messaging.Fire<T>(wrappedTopic, io, log.info);
+            return new Messaging.Fire<T>(topic, io, log.info);
         };
 
-        this.quote = Models.Currency[pair.quote];
-        this.base = Models.Currency[pair.base];
-        this.name = this.base + "/" + this.quote;
+        var makeSubscriber2 = <T>(topic : string) => {
+            var subscriber = new Messaging.Subscriber<T>(topic, io, log.info);
+            this._subscribers.push(subscriber);
+            return subscriber;
+        };
+
+        var setConnectStatus = (cs : Models.ConnectivityStatus) => {
+            this.connected = cs == Models.ConnectivityStatus.Connected;
+        };
+
+        var connectivitySubscriber = makeSubscriber2(Messaging.Topics.ExchangeConnectivity)
+            .registerSubscriber(setConnectStatus, cs => cs.forEach(setConnectStatus));
 
         this.active = new QuotingButtonViewModel(
             makeSubscriber(Messaging.Topics.ActiveChange),
@@ -171,9 +178,6 @@ interface MarketQuotingScope extends ng.IScope {
 
     bidIsLive : boolean;
     askIsLive : boolean;
-
-    exch : Models.Exchange;
-    pair : Models.CurrencyPair;
 }
 
 var MarketQuotingController = ($scope : MarketQuotingScope,
@@ -281,8 +285,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
 
     var _subscribers = [];
     var makeSubscriber = <T>(topic : string) => {
-        var wrappedTopic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, topic);
-        var subscriber = new Messaging.Subscriber<T>(wrappedTopic, socket, $log.info);
+        var subscriber = new Messaging.Subscriber<T>(topic, socket, $log.info);
         _subscribers.push(subscriber);
         return subscriber;
     };
@@ -303,7 +306,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))
         .registerDisconnectedHandler(clearFairValue);
 
-    $log.info("starting market quoting grid for", $scope.pair, Models.Exchange[$scope.exch]);
+    $log.info("starting market quoting grid");
 };
 
 angular
@@ -315,11 +318,7 @@ angular
             replace: true,
             transclude: false,
             templateUrl: "market_display.html",
-            controller: MarketQuotingController,
-            scope: {
-              exch: '=',
-              pair: '='
-            }
+            controller: MarketQuotingController
           }
     });
 
@@ -371,8 +370,6 @@ class MarketTradeViewModel {
 interface MarketTradeScope extends ng.IScope {
     marketTrades : MarketTradeViewModel[];
     marketTradeOptions : Object;
-    exch : Models.Exchange;
-    pair : Models.CurrencyPair;
 }
 
 var MarketTradeGrid = ($scope : MarketTradeScope,
@@ -406,12 +403,11 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
-    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.MarketTrade);
-    new Messaging.Subscriber<Models.MarketTrade>(topic, socket, $log.info)
+    new Messaging.Subscriber<Models.MarketTrade>(Messaging.Topics.MarketTrade, socket, $log.info)
             .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
             .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
-    $log.info("starting market trade grid for", $scope.pair, Models.Exchange[$scope.exch]);
+    $log.info("starting market trade grid");
 };
 
 angular
@@ -424,11 +420,7 @@ angular
             replace: true,
             transclude: false,
             template: template,
-            controller: MarketTradeGrid,
-            scope: {
-              exch: '=',
-              pair: '='
-            }
+            controller: MarketTradeGrid
           }
     });
 
@@ -447,8 +439,6 @@ class MessageViewModel {
 interface MessageLoggerScope extends ng.IScope {
     messages : MessageViewModel[];
     messageOptions : Object;
-    exch : Models.Exchange;
-    pair : Models.CurrencyPair;
 }
 
 var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, socket : any) => {
@@ -471,12 +461,11 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, so
         $scope.messages.push(new MessageViewModel(u));
     };
 
-    var topic = Messaging.ExchangePairMessaging.wrapExchangePairTopic($scope.exch, $scope.pair, Messaging.Topics.Message);
-    new Messaging.Subscriber<Models.Message>(topic, socket, $log.info)
+    new Messaging.Subscriber<Models.Message>(Messaging.Topics.Message, socket, $log.info)
             .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
             .registerDisconnectedHandler(() => $scope.messages.length = 0);
 
-    $log.info("starting message grid for", $scope.pair, Models.Exchange[$scope.exch]);
+    $log.info("starting message grid");
 };
 
 angular
@@ -489,11 +478,7 @@ angular
             replace: true,
             transclude: false,
             template: template,
-            controller: MessagesController,
-            scope: {
-              exch: '=',
-              pair: '='
-            }
+            controller: MessagesController
           }
     });
 

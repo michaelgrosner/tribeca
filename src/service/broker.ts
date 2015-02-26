@@ -309,11 +309,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._orderCache.allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
-            this._log("got new order", o);
-            if (!Models.currencyPairEqual(o.pair, this._baseBroker.pair) || this._baseBroker.exchange() !== Models.Exchange[o.exchange]) return;
-            this._log("processing new order", o);
             var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                o.price, Models.TimeInForce[o.timeInForce], Models.Exchange[o.exchange], Utils.date());
+                o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), Utils.date());
             this.sendOrder(order);
         });
         _cancelOrderReciever.registerReceiver(o => {

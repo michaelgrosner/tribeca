@@ -10,36 +10,27 @@ import OrderList = require("./orderlist");
 import Trades = require("./trades");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
+import Pair = require("./pair");
 
 interface MainWindowScope extends ng.IScope {
     env : string;
     connected : boolean;
     order : DisplayOrder;
-
-    exchanges : Exchange.DisplayExchangeInformation[];
-}
-
-class DisplayPair {
-    public displayName : string;
-    constructor(public pair : Models.CurrencyPair) {
-        this.displayName = Models.Currency[pair.base] + "/" + Models.Currency[pair.quote];
-    }
+    pair : Pair.DisplayPair;
+    exch_name : string;
+    pair_name : string;
 }
 
 class DisplayOrder {
-    exchange : string;
     side : string;
     price : number;
     quantity : number;
     timeInForce : string;
     orderType : string;
-    pair : DisplayPair;
 
-    availableExchanges : string[];
     availableSides : string[];
     availableTifs : string[];
     availableOrderTypes : string[];
-    availablePairs : DisplayPair[] = [];
 
     private static getNames<T>(enumObject : T) {
         var names : string[] = [];
@@ -54,7 +45,6 @@ class DisplayOrder {
 
     private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
     constructor(socket : SocketIOClientStatic, private _log : ng.ILogService) {
-        this.availableExchanges = DisplayOrder.getNames(Models.Exchange);
         this.availableSides = DisplayOrder.getNames(Models.Side);
         this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
         this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
@@ -63,19 +53,9 @@ class DisplayOrder {
     }
 
     public submit = () => {
-        var msg = new Models.OrderRequestFromUI(this.exchange,
-            this.side, this.price, this.quantity, this.timeInForce, this.orderType, this.pair.pair);
+        var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
         this._log.info("submitting order", msg);
         this._fire.fire(msg);
-    };
-
-    public addNewPair = (p : Models.CurrencyPair) => {
-        for (var i = 0; i < this.availablePairs.length; i++) {
-            if (Models.currencyPairEqual(this.availablePairs[i].pair, p))
-                return;
-        }
-
-        this.availablePairs.push(new DisplayPair(p));
     };
 }
 
@@ -83,50 +63,39 @@ var uiCtrl = ($scope : MainWindowScope,
               $timeout : ng.ITimeoutService,
               $log : ng.ILogService,
               socket : SocketIOClientStatic) => {
-    $scope.connected = false;
-    $scope.exchanges = [];
     $scope.order = new DisplayOrder(socket, $log);
-
-    var onConnect = () => {
-        $scope.connected = true;
-        $scope.exchanges = [];
-    };
+    $scope.pair = null;
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
+        $log.info("advert", pa);
+        $scope.connected = true;
         $scope.env = pa.environment;
-        $scope.order.addNewPair(pa.pair);
-
-        var getExchInfo = () : Exchange.DisplayExchangeInformation => {
-            for (var i = 0; i < $scope.exchanges.length; i++) {
-                if ($scope.exchanges[i].exchange === pa.exchange)
-                    return $scope.exchanges[i];
-            }
-
-            $log.info("adding new exchange", Models.Exchange[pa.exchange]);
-            var exch = new Exchange.DisplayExchangeInformation($log, pa.exchange, socket);
-            $scope.exchanges.push(exch);
-            return exch;
-        };
-
-        getExchInfo().getOrAddDisplayPair(pa.pair);
+        $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+        $scope.exch_name = Models.Exchange[pa.exchange];
+        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $log, socket);
     };
 
-    var onDisconnect = () => {
+    var reset = () => {
         $scope.connected = false;
-        $scope.exchanges.forEach(x => x.dispose());
-        $scope.exchanges = [];
+        $scope.pair_name = null;
+        $scope.exch_name = null;
+
+        if ($scope.pair !== null)
+            $scope.pair.dispose();
+        $scope.pair = null;
     };
 
     new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
-        .registerConnectHandler(onConnect)
+        .registerConnectHandler(reset)
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-        .registerDisconnectedHandler(onDisconnect);
+        .registerDisconnectedHandler(reset);
 
     var refresh_timer = () => {
         $timeout(refresh_timer, 250);
     };
     $timeout(refresh_timer, 250);
 
+    reset();
     $log.info("started client");
 };
 
