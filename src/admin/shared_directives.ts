@@ -46,6 +46,22 @@ var bindOnce = () => {
     }
 };
 
+export class FireFactory {
+    constructor(private socket : any, private $log : ng.ILogService) {}
+
+    public getFire = <T>(topic : string) : Messaging.IFire<T> => {
+        return new Messaging.Fire<T>(topic, this.socket, this.$log.info);
+    }
+}
+
+export class SubscriberFactory {
+    constructor(private socket : any, private $log : ng.ILogService) {}
+
+    public getSubscriber = <T>(topic : string) : Messaging.ISubscribe<T> => {
+        return new Messaging.Subscriber<T>(topic, this.socket, this.$log.info);
+    }
+}
+
 export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     private _wrapped : Messaging.ISubscribe<T>;
 
@@ -74,5 +90,7 @@ angular.module('sharedDirectives', ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
        .factory("socket", () => io)
+       .service("subscriberFactory", SubscriberFactory)
+       .service("fireFactory", FireFactory)
        .filter("momentFullDate", () => Models.toUtcFormattedTime)
        .filter("momentShortDate", () => Models.toShortTimeString);

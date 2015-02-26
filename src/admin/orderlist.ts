@@ -81,8 +81,11 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
-    var fireCxl = new Messaging.Fire<Models.OrderStatusReport>(Messaging.Topics.CancelOrder, socket, $log.info);
+var OrderListController = ($scope : OrderListScope, 
+                           $log : ng.ILogService, 
+                           subscriberFactory : Shared.SubscriberFactory,
+                           fireFactory : Shared.FireFactory) => {
+    var fireCxl = fireFactory.getFire(Messaging.Topics.CancelOrder);
 
     $scope.order_statuses = [];
     $scope.gridOptions = {
@@ -131,7 +134,7 @@ var OrderListController = ($scope : OrderListScope, $log : ng.ILogService, socke
         $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
-    var sub = new Messaging.Subscriber(Messaging.Topics.OrderStatusReports, socket, $log.info)
+    var sub = subscriberFactory.getSubscriber(Messaging.Topics.OrderStatusReports)
         .registerConnectHandler(() => $scope.order_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));

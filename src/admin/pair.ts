@@ -8,6 +8,7 @@ import Models = require("../common/models");
 import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
+import Shared = require("./shared_directives");
 
 class FormViewModel<T> {
     master : T;
@@ -106,44 +107,29 @@ export class DisplayPair {
     constructor(public exch : Models.Exchange,
                 public pair : Models.CurrencyPair,
                 log : ng.ILogService,
-                io : any) {
-
-        var makeSubscriber = <T>(topic : string) => {
-            var subscriber = new Messaging.Subscriber<T>(topic, io, log.info);
-            this._subscribers.push(subscriber);
-            return subscriber;
-        };
-
-        var makeFire = <T>(topic : string) => {
-            return new Messaging.Fire<T>(topic, io, log.info);
-        };
-
-        var makeSubscriber2 = <T>(topic : string) => {
-            var subscriber = new Messaging.Subscriber<T>(topic, io, log.info);
-            this._subscribers.push(subscriber);
-            return subscriber;
-        };
+                subscriberFactory : Shared.SubscriberFactory,
+                fireFactory : Shared.FireFactory) {
 
         var setConnectStatus = (cs : Models.ConnectivityStatus) => {
             this.connected = cs == Models.ConnectivityStatus.Connected;
         };
 
-        var connectivitySubscriber = makeSubscriber2(Messaging.Topics.ExchangeConnectivity)
+        var connectivitySubscriber = subscriberFactory.getSubscriber(Messaging.Topics.ExchangeConnectivity)
             .registerSubscriber(setConnectStatus, cs => cs.forEach(setConnectStatus));
 
         this.active = new QuotingButtonViewModel(
-            makeSubscriber(Messaging.Topics.ActiveChange),
-            makeFire(Messaging.Topics.ActiveChange)
+            subscriberFactory.getSubscriber(Messaging.Topics.ActiveChange),
+            fireFactory.getFire(Messaging.Topics.ActiveChange)
         );
 
         this.quotingParameters = new DisplayQuotingParameters(
-            makeSubscriber(Messaging.Topics.QuotingParametersChange),
-            makeFire(Messaging.Topics.QuotingParametersChange)
+            subscriberFactory.getSubscriber(Messaging.Topics.QuotingParametersChange),
+            fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
         );
 
         this.safetySettings = new DisplaySafetySettingsParameters(
-            makeSubscriber(Messaging.Topics.SafetySettings),
-            makeFire(Messaging.Topics.SafetySettings)
+            subscriberFactory.getSubscriber(Messaging.Topics.SafetySettings),
+            fireFactory.getFire(Messaging.Topics.SafetySettings)
         );
     }
 
@@ -182,7 +168,7 @@ interface MarketQuotingScope extends ng.IScope {
 
 var MarketQuotingController = ($scope : MarketQuotingScope,
                                $log : ng.ILogService,
-                               socket : any) => {
+                               subscriberFactory : Shared.SubscriberFactory) => {
     var clearMarket = () => {
         $scope.levels = [];
     };
@@ -283,26 +269,19 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.fairValue = fv.price;
     };
 
-    var _subscribers = [];
-    var makeSubscriber = <T>(topic : string) => {
-        var subscriber = new Messaging.Subscriber<T>(topic, socket, $log.info);
-        _subscribers.push(subscriber);
-        return subscriber;
-    };
-
-    makeSubscriber<Models.Market>(Messaging.Topics.MarketData)
+    subscriberFactory.getSubscriber<Models.Market>(Messaging.Topics.MarketData)
         .registerSubscriber(updateMarket, ms => ms.forEach(updateMarket))
         .registerDisconnectedHandler(clearMarket);
 
-    makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
+    subscriberFactory.getSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote)
         .registerSubscriber(updateQuote, qs => qs.forEach(updateQuote))
         .registerDisconnectedHandler(clearQuote);
 
-    makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus)
+    subscriberFactory.getSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus)
         .registerSubscriber(updateQuoteStatus, qs => qs.forEach(updateQuoteStatus))
         .registerDisconnectedHandler(clearQuoteStatus);
 
-    makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
+    subscriberFactory.getSubscriber<Models.FairValue>(Messaging.Topics.FairValue)
         .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))
         .registerDisconnectedHandler(clearFairValue);
 
@@ -374,7 +353,7 @@ interface MarketTradeScope extends ng.IScope {
 
 var MarketTradeGrid = ($scope : MarketTradeScope,
                        $log : ng.ILogService,
-                       socket : any) => {
+                       subscriberFactory : Shared.SubscriberFactory) => {
     $scope.marketTrades = [];
     $scope.marketTradeOptions  = {
         data: 'marketTrades',
@@ -403,7 +382,7 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
-    new Messaging.Subscriber<Models.MarketTrade>(Messaging.Topics.MarketTrade, socket, $log.info)
+    subscriberFactory.getSubscriber(Messaging.Topics.MarketTrade)
             .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
             .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
@@ -441,7 +420,7 @@ interface MessageLoggerScope extends ng.IScope {
     messageOptions : Object;
 }
 
-var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, socket : any) => {
+var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
     $scope.messages = [];
     $scope.messageOptions  = {
         data: 'messages',
@@ -461,7 +440,7 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, so
         $scope.messages.push(new MessageViewModel(u));
     };
 
-    new Messaging.Subscriber<Models.Message>(Messaging.Topics.Message, socket, $log.info)
+    subscriberFactory.getSubscriber(Messaging.Topics.Message)
             .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
             .registerDisconnectedHandler(() => $scope.messages.length = 0);
 

@@ -35,7 +35,7 @@ class DisplayTrade {
     }
 }
 
-var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket : SocketIOClient.Socket) => {
+var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
     $scope.trade_statuses = [];
     $scope.gridOptions = {
         data: 'trade_statuses',
@@ -57,7 +57,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, socket 
 
     var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
 
-    var sub = new Messaging.Subscriber(Messaging.Topics.Trades, socket, $log.info)
+    var sub = subscriberFactory.getSubscriber(Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));

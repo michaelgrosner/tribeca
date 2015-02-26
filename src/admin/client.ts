@@ -44,12 +44,12 @@ class DisplayOrder {
     }
 
     private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
-    constructor(socket : SocketIOClientStatic, private _log : ng.ILogService) {
+    constructor(fireFactory : Shared.FireFactory, private _log : ng.ILogService) {
         this.availableSides = DisplayOrder.getNames(Models.Side);
         this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
         this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
 
-        this._fire = new Messaging.Fire<Models.OrderRequestFromUI>(Messaging.Topics.SubmitNewOrder, socket, _log.info);
+        this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
     }
 
     public submit = () => {
@@ -62,8 +62,9 @@ class DisplayOrder {
 var uiCtrl = ($scope : MainWindowScope,
               $timeout : ng.ITimeoutService,
               $log : ng.ILogService,
-              socket : SocketIOClientStatic) => {
-    $scope.order = new DisplayOrder(socket, $log);
+              subscriberFactory : Shared.SubscriberFactory,
+              fireFactory : Shared.FireFactory) => {
+    $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
@@ -72,7 +73,7 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.env = pa.environment;
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
-        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $log, socket);
+        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $log, subscriberFactory, fireFactory);
     };
 
     var reset = () => {
@@ -85,7 +86,7 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.pair = null;
     };
 
-    new Messaging.Subscriber<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, socket, $log.info)
+    subscriberFactory.getSubscriber(Messaging.Topics.ProductAdvertisement)
         .registerConnectHandler(reset)
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
         .registerDisconnectedHandler(reset);

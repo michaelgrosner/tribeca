@@ -9,6 +9,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
 import Pair = require("./pair");
+import Shared = require("./shared_directives");
 
 interface PositionScope extends ng.IScope {
     baseCurrency : string;
@@ -20,7 +21,7 @@ interface PositionScope extends ng.IScope {
     value : number;
 }
 
-var PositionController = ($scope : PositionScope, $log : ng.ILogService, socket : any) => {
+var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
     var clearPosition = () => {
         $scope.baseCurrency = null;
         $scope.quoteCurrency = null;
@@ -41,11 +42,7 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, socket 
         $scope.value = position.value;
     };
 
-    var makeSubscriber = <T>(topic : string) => {
-        return new Messaging.Subscriber<T>(topic, socket, $log.info);
-    };
-
-    var positionSubscriber = makeSubscriber(Messaging.Topics.Position)
+    var positionSubscriber = subscriberFactory.getSubscriber(Messaging.Topics.Position)
         .registerDisconnectedHandler(clearPosition)
         .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
 
