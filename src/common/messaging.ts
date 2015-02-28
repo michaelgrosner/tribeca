@@ -71,7 +71,7 @@ export class Subscriber<T> implements ISubscribe<T> {
     constructor(private topic : string, io : any,
                 private _log : (...args: any[]) => void = console.log) {
         this._log("creating subscriber to", this.topic);
-        this._io = io("/"+this.topic, {forceNew: true});
+        this._io = io("/"+this.topic, {forceNew: true, transports: ['websocket']});
         this._io.on("connect", this.onConnect);
         this._io.on("disconnect", this.onDisconnect);
         this._io.on(Prefixes.MESSAGE, this.onIncremental);
@@ -163,7 +163,7 @@ export class Fire<T> implements IFire<T> {
     private _io : any;
 
     constructor(private topic : string, io : any, _log : (...args: any[]) => void) {
-        this._io = io("/"+this.topic, {forceNew: true});
+        this._io = io("/"+this.topic, {forceNew: true, transports: ['websocket']});
         this._io.on("connect", () => _log("Fire connected to", this.topic));
         this._io.on("disconnect", () => _log("Fire disconnected to", this.topic));
     }

@@ -119,24 +119,29 @@ var OrderListController = ($scope : OrderListScope,
         ]
     };
 
+    var idsToIndex = {};
     var addOrderRpt = (o : Models.OrderStatusReport) => {
-        for (var i = $scope.order_statuses.length - 1; i >= 0; i--) {
-            var existing = $scope.order_statuses[i];
-
-            if (existing.orderId === o.orderId) {
-                if (existing.version < o.version) {
-                    existing.updateWith(o);
-                }
-                return;
+        var idx = idsToIndex[o.orderId];
+        if (typeof idx === "undefined") {
+            idsToIndex[o.orderId] = $scope.order_statuses.length;
+            $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
+        }
+        else {
+            var existing = $scope.order_statuses[idx];
+            if (existing.version < o.version) {
+                existing.updateWith(o);
             }
-        };
+        }
+    };
 
-        $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
+    var clear = () => {
+        $scope.order_statuses.length = 0;
+        idsToIndex = {};
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.OrderStatusReports)
-        .registerConnectHandler(() => $scope.order_statuses.length = 0)
-        .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
+        .registerConnectHandler(clear)
+        .registerDisconnectedHandler(clear)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
     $scope.$on('$destroy', () => {
