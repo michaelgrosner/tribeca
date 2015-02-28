@@ -46,7 +46,12 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         .registerDisconnectedHandler(clearPosition)
         .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
 
-    $log.info("starting position grid");
+    $scope.$on('$destroy', () => {
+        positionSubscriber.disconnect();
+        $log.info("destroy position grid");
+    });
+
+    $log.info("started position grid");
 };
 
 angular

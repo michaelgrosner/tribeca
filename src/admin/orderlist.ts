@@ -139,7 +139,12 @@ var OrderListController = ($scope : OrderListScope,
         .registerDisconnectedHandler(() => $scope.order_statuses.length = 0)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
-    $log.info("started orderlist");
+    $scope.$on('$destroy', () => {
+        sub.disconnect();
+        $log.info("destroy order list");
+    });
+
+    $log.info("started order list");
 };
 
 var orderListDirective = () : ng.IDirective => {

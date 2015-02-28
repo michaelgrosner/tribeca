@@ -88,9 +88,14 @@ var uiCtrl = ($scope : MainWindowScope,
     };
     reset("startup");
 
-    subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
+    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
         .registerDisconnectedHandler(() => reset("disconnect"));
+
+    $scope.$on('$destroy', () => {
+        sub.disconnect();
+        $log.info("destroy client");
+    });
 
     $log.info("started client");
 };

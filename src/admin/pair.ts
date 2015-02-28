@@ -117,21 +117,28 @@ export class DisplayPair {
 
         var connectivitySubscriber = subscriberFactory.getSubscriber(scope, Messaging.Topics.ExchangeConnectivity)
             .registerSubscriber(setConnectStatus, cs => cs.forEach(setConnectStatus));
+        this._subscribers.push(connectivitySubscriber);
 
+        var activeSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.ActiveChange);
         this.active = new QuotingButtonViewModel(
-            subscriberFactory.getSubscriber(scope, Messaging.Topics.ActiveChange),
+            activeSub,
             fireFactory.getFire(Messaging.Topics.ActiveChange)
         );
+        this._subscribers.push(activeSub);
 
+        var qpSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange);
         this.quotingParameters = new DisplayQuotingParameters(
-            subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange),
+            qpSub,
             fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
         );
+        this._subscribers.push(qpSub);
 
+        var ssPub = subscriberFactory.getSubscriber(scope, Messaging.Topics.SafetySettings);
         this.safetySettings = new DisplaySafetySettingsParameters(
-            subscriberFactory.getSubscriber(scope, Messaging.Topics.SafetySettings),
+            ssPub,
             fireFactory.getFire(Messaging.Topics.SafetySettings)
         );
+        this._subscribers.push(ssPub);
     }
 
     public dispose = () => {
@@ -162,6 +169,7 @@ interface MarketQuotingScope extends ng.IScope {
     fairValue : number;
     qAskPx : number;
     qAskSz : number;
+    extVal : number;
 
     bidIsLive : boolean;
     askIsLive : boolean;
@@ -189,6 +197,10 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     var clearQuoteStatus = () => {
         $scope.bidIsLive = false;
         $scope.askIsLive = false;
+    };
+
+    var clearExtVal = () => {
+        $scope.extVal = null;
     };
 
     var updateMarket = (update : Models.Market) => {
@@ -270,23 +282,36 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.fairValue = fv.price;
     };
 
-    subscriberFactory.getSubscriber<Models.Market>($scope, Messaging.Topics.MarketData)
-        .registerSubscriber(updateMarket, ms => ms.forEach(updateMarket))
-        .registerDisconnectedHandler(clearMarket);
+    var updateExtVal = (ev : Models.ExternalValuationUpdate) => {
+        if (ev == null) {
+            clearExtVal();
+            return;
+        }
 
-    subscriberFactory.getSubscriber<Models.TwoSidedQuote>($scope, Messaging.Topics.Quote)
-        .registerSubscriber(updateQuote, qs => qs.forEach(updateQuote))
-        .registerDisconnectedHandler(clearQuote);
+        $scope.extVal = ev.value;
+    };
 
-    subscriberFactory.getSubscriber<Models.TwoSidedQuoteStatus>($scope, Messaging.Topics.QuoteStatus)
-        .registerSubscriber(updateQuoteStatus, qs => qs.forEach(updateQuoteStatus))
-        .registerDisconnectedHandler(clearQuoteStatus);
+    var subscribers = [];
 
-    subscriberFactory.getSubscriber<Models.FairValue>($scope, Messaging.Topics.FairValue)
-        .registerSubscriber(updateFairValue, qs => qs.forEach(updateFairValue))
-        .registerDisconnectedHandler(clearFairValue);
+    var makeSubscriber = <T>(topic : string, updateFn, clearFn) => {
+        var sub = subscriberFactory.getSubscriber<T>($scope, topic)
+            .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
+            .registerDisconnectedHandler(clearFn);
+        subscribers.push(sub);
+    };
 
-    $log.info("starting market quoting grid");
+    makeSubscriber<Models.Market>(Messaging.Topics.MarketData, updateMarket, clearMarket);
+    makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote, updateQuote, clearQuote);
+    makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, updateQuoteStatus, clearQuoteStatus);
+    makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
+    makeSubscriber<Models.ExternalValuationUpdate>(Messaging.Topics.ExternalValuation, updateExtVal, clearExtVal);
+
+    $scope.$on('$destroy', () => {
+        subscribers.forEach(d => d.disconnect());
+        $log.info("destroy market quoting grid");
+    });
+
+    $log.info("started market quoting grid");
 };
 
 angular
@@ -383,11 +408,16 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
-    subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
+    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
             .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
             .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
-    $log.info("starting market trade grid");
+    $scope.$on('$destroy', () => {
+        sub.disconnect();
+        $log.info("destroy market trade grid");
+    });
+
+    $log.info("started market trade grid");
 };
 
 angular
@@ -441,11 +471,16 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, su
         $scope.messages.push(new MessageViewModel(u));
     };
 
-    subscriberFactory.getSubscriber($scope, Messaging.Topics.Message)
+    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Message)
             .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
             .registerDisconnectedHandler(() => $scope.messages.length = 0);
 
-    $log.info("starting message grid");
+    $scope.$on('$destroy', () => {
+        sub.disconnect();
+        $log.info("destroy message grid");
+    });
+
+    $log.info("started message grid");
 };
 
 angular

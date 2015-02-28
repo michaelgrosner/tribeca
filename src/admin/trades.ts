@@ -62,7 +62,12 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
-    $log.info("started tradeslist");
+    $scope.$on('$destroy', () => {
+        sub.disconnect();
+        $log.info("destroy trades list");
+    });
+
+    $log.info("started trades list");
 };
 
 var tradeListDirective = () : ng.IDirective => {
