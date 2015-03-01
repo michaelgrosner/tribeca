@@ -107,6 +107,28 @@ export class Persister<T> {
         return deferred.promise;
     };
 
+    public loadAll = () : Q.Promise<T[]> => {
+        var deferred = Q.defer<T[]>();
+
+        this.collection.then(coll => {
+            coll.find({}, {"_id": 0}, (err, docs) => {
+                if (err) deferred.reject(err);
+                else {
+                    docs.toArray((err, arr) => {
+                        if (err) deferred.reject(err);
+                        else {
+                            _.forEach(arr, this._loader);
+                            deferred.resolve(arr);
+                        }
+                    })
+                }
+            })
+
+        }).done();
+
+        return deferred.promise;
+    };
+
     public persist = (report : T) => {
         this._saver(report);
         this.collection.then(coll => {

@@ -9,6 +9,7 @@ import Utils = require("./utils");
 import _ = require("lodash");
 import util = require("util");
 import express = require("express");
+import Q = require("q");
 
 export class HttpPublisher<T> implements Messaging.IPublish<T> {
     private _snapshot : () => T[] = null;
@@ -41,27 +42,32 @@ export class HttpPublisher<T> implements Messaging.IPublish<T> {
 }
 
 export class StandaloneHttpPublisher<T> {
-    private _snapshot : () => T[] = null;
+    private _snapshot : () => T[]|Q.Promise<T[]> = null;
 
     constructor(
             private route : string,
             private _httpApp : express.Application,
-            snapshot : () => T[] = null) {
+            snapshot : () => T[]|Q.Promise<T[]> = null) {
         this.registerSnapshot(snapshot);
 
         _httpApp.get("/data/" + route, (req : express.Request, res : express.Response) => {
-            var data = this._snapshot();
-
-            var max = req.param("max", null);
-            if (max !== null) {
-                data = _.last(data, parseInt(max));
+            var handler = (d : T[]) => {
+                var max = req.param("max", null);
+                d = _.last(d, parseInt(max));
+                res.json(d);
             }
 
-            res.json(data);
+            var data : T[]|Q.Promise<T[]> = this._snapshot();
+            if (!data.then) {
+                handler(data);
+            }
+            else {
+                data.then(handler);
+            }
         });
     }
 
-    public registerSnapshot = (generator : () => T[]) =>  {
+    public registerSnapshot = (generator : () => T[]|Q.Promise<T[]>) =>  {
         this._snapshot = generator;
     }
 }

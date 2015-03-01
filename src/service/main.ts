@@ -111,8 +111,9 @@ Q.all([
         return new Web.StandaloneHttpPublisher<T>(topic, app);
     };
 
-    var tradeHttpPublisher = getHttpPublisher("trades");
-    var latencyHttpPublisher = getHttpPublisher("latency");
+    var tradeHttpPublisher = getHttpPublisher<Models.Trade>("trades");
+    var latencyHttpPublisher = getHttpPublisher<number>("latency");
+    var positionHttpPublisher = getHttpPublisher<Models.PositionReport>("position");
 
     var getExchangePublisher = <T>(topic : string) => {
         return new Messaging.Publisher<T>(topic, io, null, messagingLog);
@@ -150,7 +151,7 @@ Q.all([
         tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, 
         orderCache, initOrders, initTrades);
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
-    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);
     var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);
 
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);

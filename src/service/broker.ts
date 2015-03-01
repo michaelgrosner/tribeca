@@ -381,12 +381,14 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.Persister<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker) {
+                private _mdBroker : Interfaces.IMarketDataBroker,
+                private _positionHttp : Web.StandaloneHttpPublisher<Models.PositionReport>) {
         this._log = Utils.log("tribeca:exchangebroker:position");
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
         this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
+        this._positionHttp.registerSnapshot(this._positionPersister.loadAll);
     }
 }
 
