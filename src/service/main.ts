@@ -165,7 +165,7 @@ Q.all([
 
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher);
-    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, externalBroker);
+    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, orderBroker, externalBroker);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,

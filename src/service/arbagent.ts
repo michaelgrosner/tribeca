@@ -194,11 +194,13 @@ export class QuotingEngine {
                 private _safetyParams : Safety.SafetySettingsRepository,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _broker : Interfaces.IMarketDataBroker,
+                private _orderBroker : Interfaces.IOrderBroker,
                 private _evs : Winkdex.ExternalValuationSource) {
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
         _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
+        _orderBroker.Trade.on(t => this.recalcQuote(Utils.date()));
 
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
     }
