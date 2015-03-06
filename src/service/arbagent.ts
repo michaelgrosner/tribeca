@@ -196,7 +196,11 @@ export class QuotingEngine {
                 private _broker : Interfaces.IMarketDataBroker,
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _evs : Winkdex.ExternalValuationSource) {
-        _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
+        //_fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
+        _filteredMarkets.FilteredMarketChanged.on(() => {
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Join) 
+                this.recalcQuote(timeOrDefault(_filteredMarkets.latestFilteredMarket))
+        });
         _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
@@ -243,11 +247,32 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, params.size, askPx, params.size);
     }
 
+    private computeJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+        var width = params.width;
+
+        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
+        if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
+        var bidPx = topBid.price;
+
+        var minBid = fv.price - width / 2.0;
+        bidPx = Math.min(minBid, bidPx);
+
+        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
+        if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
+        var askPx = topAsk.price;
+
+        var maxAsk = fv.price + width / 2.0;
+        askPx = Math.max(maxAsk, askPx);
+
+        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
+    }
+
     private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue) {
         var params = this._qlParamRepo.latest;
         switch (params.mode) {
             case Models.QuotingMode.Mid: return this.computeMidQuote(fv, params);
             case Models.QuotingMode.Top: return this.computeTopQuote(filteredMkt, fv, params);
+            case Models.QuotingMode.Join: return this.computeJoinQuote(filteredMkt, fv, params);
         }
     }
 
