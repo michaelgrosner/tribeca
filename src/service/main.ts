@@ -114,6 +114,7 @@ Q.all([
     var tradeHttpPublisher = getHttpPublisher<Models.Trade>("trades");
     var latencyHttpPublisher = getHttpPublisher<number>("latency");
     var positionHttpPublisher = getHttpPublisher<Models.PositionReport>("position");
+    var osrHttpPublisher = getHttpPublisher<Models.OrderStatusReport>("new_orders");
 
     var getExchangePublisher = <T>(topic : string) => {
         return new Messaging.Publisher<T>(topic, io, null, messagingLog);
@@ -148,7 +149,7 @@ Q.all([
 
     var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
     var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-        tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, 
+        tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, osrHttpPublisher,
         orderCache, initOrders, initTrades);
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
     var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);

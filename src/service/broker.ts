@@ -298,6 +298,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _messages : MessagesPubisher,
                 private _tradeHttp : Web.StandaloneHttpPublisher<Models.Trade>,
                 private _latencyHttp : Web.StandaloneHttpPublisher<number>,
+                private _osrHttp : Web.StandaloneHttpPublisher<Models.OrderStatusReport>,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
@@ -306,6 +307,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _orderStatusPublisher.registerSnapshot(() => _.last(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
         _tradeHttp.registerSnapshot(() => this._trades);
+        _osrHttp.registerSnapshot(() => _.where(this._orderCache.allOrdersFlat, o => o.orderStatus === Models.OrderStatus.New));
         _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._orderCache.allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
