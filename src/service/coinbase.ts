@@ -654,7 +654,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     };
 
     constructor(private _authClient : CoinbaseAuthenticatedClient) {
-        setInterval(this.onTick, 15000);
+        setInterval(this.onTick, 7500);
         this.onTick();
     }
 }

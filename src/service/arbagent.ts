@@ -188,19 +188,17 @@ export class QuotingEngine {
         this._quotePublisher.publish(this._latest);
     }
 
-    constructor(private _filteredMarkets : MarketFiltration,
+    constructor(private _pair : Models.CurrencyPair,
+                private _filteredMarkets : MarketFiltration,
                 private _fvEngine : FairValueEngine,
                 private _qlParamRepo : QuotingParametersRepository,
                 private _safetyParams : Safety.SafetySettingsRepository,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _broker : Interfaces.IMarketDataBroker,
                 private _orderBroker : Interfaces.IOrderBroker,
-                private _evs : Winkdex.ExternalValuationSource) {
-        //_fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
-        _filteredMarkets.FilteredMarketChanged.on(() => {
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Join) 
-                this.recalcQuote(timeOrDefault(_filteredMarkets.latestFilteredMarket))
-        });
+                private _evs : Winkdex.ExternalValuationSource,
+                private _positionBroker : Interfaces.IPositionBroker) {
+        _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
         _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
@@ -267,8 +265,7 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, params.size, askPx, params.size);
     }
 
-    private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue) {
-        var params = this._qlParamRepo.latest;
+    private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
         switch (params.mode) {
             case Models.QuotingMode.Mid: return this.computeMidQuote(fv, params);
             case Models.QuotingMode.Top: return this.computeTopQuote(filteredMkt, fv, params);
@@ -277,13 +274,25 @@ export class QuotingEngine {
     }
 
     private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue, extFv : Models.ExternalValuationUpdate) {
-        var unrounded = this.computeQuoteUnrounded(filteredMkt, fv);
+        var params = this._qlParamRepo.latest;
+        var unrounded = this.computeQuoteUnrounded(filteredMkt, fv, params);
 
-        var megan = this._safetyParams.latest.maxEvDivergence;
+        var safetyParams = this._safetyParams.latest;
+        var megan = safetyParams.maxEvDivergence;
 
         var eFV = extFv.value;
         if (unrounded.bidPx > eFV + megan) unrounded.bidPx = eFV + megan;
         if (unrounded.askPx < eFV - megan) unrounded.askPx = eFV - megan;
+
+        var latestPosition = this._positionBroker.getPosition(this._pair.base);
+        if (typeof latestPosition === "undefined") return null;
+        var tPos = latestPosition.heldAmount + latestPosition.amount;
+        if (tPos < params.targetBasePosition - params.positionDivergence) {
+            unrounded.askPx += 20; // TODO: revisit! throw away?
+        }
+        if (tPos > params.targetBasePosition + params.positionDivergence) {
+            unrounded.bidPx -= 20; // TODO: revisit! throw away?
+        }
 
         // should only make
         var mktBestAsk = this._broker.currentBook.asks[0].price;
@@ -300,6 +309,9 @@ export class QuotingEngine {
 
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
         unrounded.askPx = Utils.roundFloat(unrounded.askPx);
+
+        unrounded.bidPx = Math.max(0, unrounded.bidPx);
+        unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx)
 
         return unrounded;
     }

@@ -149,10 +149,10 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 col-xs-12">
+                        <div class="col-md-12 col-xs-12">
                             <div class="row">
                                 <form novalidate>
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">mode</div>
                                             <select class="form-control input-sm"
@@ -170,7 +170,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">width</div>
                                             <input class="form-control input-sm"
@@ -180,13 +180,33 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-3 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">size</div>
                                             <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.size">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">tbp</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.targetBasePosition">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">pDiv</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.positionDivergence">
                                         </div>
                                     </div>
 
@@ -197,7 +217,7 @@
 
                         </div>
 
-                        <div class="col-md-6 col-xs-12">
+                        <div class="col-md-12 col-xs-12">
                             <form novalidate>
                                 <div class="row">
                                     <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
