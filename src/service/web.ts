@@ -42,22 +42,25 @@ export class HttpPublisher<T> implements Messaging.IPublish<T> {
 }
 
 export class StandaloneHttpPublisher<T> {
-    private _snapshot : () => T[]|Q.Promise<T[]> = null;
+    private _snapshot : (limit? : number) => T[]|Q.Promise<T[]> = null;
 
     constructor(
             private route : string,
             private _httpApp : express.Application,
-            snapshot : () => T[]|Q.Promise<T[]> = null) {
+            snapshot : (limit? : number) => T[]|Q.Promise<T[]> = null) {
         this.registerSnapshot(snapshot);
 
         _httpApp.get("/data/" + route, (req : express.Request, res : express.Response) => {
+            var rawMax = req.param("max", null);
+            var max = (rawMax === null ? null : parseInt(rawMax));
+
             var handler = (d : T[]) => {
-                var max = req.param("max", null);
-                d = _.last(d, parseInt(max));
+                if (max !== null)
+                    d = _.last(d, max);
                 res.json(d);
             }
 
-            var data : T[]|Q.Promise<T[]> = this._snapshot();
+            var data : T[]|Q.Promise<T[]> = this._snapshot(max);
             if (!data.then) {
                 handler(data);
             }
@@ -67,7 +70,7 @@ export class StandaloneHttpPublisher<T> {
         });
     }
 
-    public registerSnapshot = (generator : () => T[]|Q.Promise<T[]>) =>  {
+    public registerSnapshot = (generator : (limit? : number) => T[]|Q.Promise<T[]>) =>  {
         this._snapshot = generator;
     }
 }

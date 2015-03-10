@@ -128,7 +128,9 @@ export class FairValueEngine {
         this._latest = val;
         this.FairValueChanged.trigger();
         this._fvPublisher.publish(this._latest);
-        this._fvPersister.persist(this._latest);
+        
+        if (this._latest !== null)
+            this._fvPersister.persist(this._latest);
     }
 
     constructor(private _filtration : MarketFiltration,

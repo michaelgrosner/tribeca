@@ -74,9 +74,16 @@ export class Persister<T> {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
     public load = (exchange : Models.Exchange, pair : Models.CurrencyPair, limit : number = null) : Q.Promise<T[]> => {
-        var deferred = Q.defer<T[]>();
-
         var selector = {exchange: exchange, pair: pair};
+        return this.loadInternal(selector, limit);
+    };
+
+    public loadAll = (limit? : number) : Q.Promise<T[]> => {
+        return this.loadInternal({}, limit);
+    };
+
+    private loadInternal = (selector : any, limit? : number) => {
+        var deferred = Q.defer<T[]>();
 
         this.collection.then(coll => {
             coll.count(selector, (err, count) => {
@@ -101,28 +108,6 @@ export class Persister<T> {
                     })
                 }
             });
-
-        }).done();
-
-        return deferred.promise;
-    };
-
-    public loadAll = () : Q.Promise<T[]> => {
-        var deferred = Q.defer<T[]>();
-
-        this.collection.then(coll => {
-            coll.find({}, {"_id": 0}, (err, docs) => {
-                if (err) deferred.reject(err);
-                else {
-                    docs.toArray((err, arr) => {
-                        if (err) deferred.reject(err);
-                        else {
-                            _.forEach(arr, this._loader);
-                            deferred.resolve(arr);
-                        }
-                    })
-                }
-            })
 
         }).done();
 
