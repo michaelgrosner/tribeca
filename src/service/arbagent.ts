@@ -13,6 +13,8 @@ import Safety = require("./safety");
 import Winkdex = require("./winkdex");
 import util = require("util");
 import _ = require("lodash");
+import Persister = require("./persister");
+import Web = require("web");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
@@ -126,14 +128,18 @@ export class FairValueEngine {
         this._latest = val;
         this.FairValueChanged.trigger();
         this._fvPublisher.publish(this._latest);
+        this._fvPersister.persist(this._latest);
     }
 
     constructor(private _filtration : MarketFiltration,
                 private _qlParamRepo : QuotingParametersRepository, // should not co-mingle these settings
-                private _fvPublisher : Messaging.IPublish<Models.FairValue>) {
+                private _fvPublisher : Messaging.IPublish<Models.FairValue>,
+                private _fvHttpPublisher : Web.StandaloneHttpPublisher<Models.FairValue>,
+                private _fvPersister : Persister.FairValuePersister) {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(Utils.date()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(timeOrDefault(_filtration.latestFilteredMarket)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+        _fvHttpPublisher.registerSnapshot(this._fvPersister.loadAll);
     }
 
     private static ComputeFVUnrounded(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {

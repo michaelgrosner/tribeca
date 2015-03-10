@@ -160,3 +160,9 @@ export class TradePersister extends Persister<Models.Trade> {
         super(db, "trades", timeLoader, timeSaver);
     }
 }
+
+export class FairValuePersister extends Persister<Models.FairValue> {
+    constructor(db : Q.Promise<mongodb.Db>) {
+        super(db, "fv", timeLoader, timeSaver);
+    }
+}

@@ -55,6 +55,7 @@ var getEngineTopic = (topic : string) : string => {
 var db = Persister.loadDb();
 var orderPersister = new Persister.OrderStatusPersister(db);
 var tradesPersister = new Persister.TradePersister(db);
+var fairValuePersister = new Persister.FairValuePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
@@ -115,6 +116,7 @@ Q.all([
     var latencyHttpPublisher = getHttpPublisher<number>("latency");
     var positionHttpPublisher = getHttpPublisher<Models.PositionReport>("position");
     var osrHttpPublisher = getHttpPublisher<Models.OrderStatusReport>("new_orders");
+    var fvHttpPublisher = getHttpPublisher<Models.FairValue>("fair_value");
 
     var getExchangePublisher = <T>(topic : string) => {
         return new Messaging.Publisher<T>(topic, io, null, messagingLog);
@@ -165,7 +167,7 @@ Q.all([
     var quoter = new Quoter.Quoter(orderBroker, broker);
 
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
-    var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher);
+    var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
     var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, 
         orderBroker, externalBroker, positionBroker);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);

@@ -439,7 +439,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     leavesQuantity: 0
                 };
 
-                if (msg === "You have exceeded your request rate of 5 r/s.") {
+                if (msg === "You have exceeded your request rate of 5 r/s." || msg === "BadRequest") {
                     setTimeout(() => this.cancelOrder(cancel), 500);
                 }
                 
