@@ -181,6 +181,12 @@ export class FairValueEngine {
     };
 }
 
+export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
+    constructor() {}
+    latest : number = null;
+    Updated = new Utils.Evt<any>();
+}
+
 export class QuotingEngine {
     private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
 
@@ -205,13 +211,14 @@ export class QuotingEngine {
                 private _broker : Interfaces.IMarketDataBroker,
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _evs : Winkdex.ExternalValuationSource,
-                private _positionBroker : Interfaces.IPositionBroker) {
+                private _positionBroker : Interfaces.IPositionBroker,
+                private _ewma : Interfaces.IEwmaCalculator) {
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
         _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _orderBroker.Trade.on(t => this.recalcQuote(Utils.date()));
-
+        _ewma.Updated.on(() => this.recalcQuote(Utils.date()));
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
     }
 
@@ -284,6 +291,16 @@ export class QuotingEngine {
     private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue, extFv : Models.ExternalValuationUpdate) {
         var params = this._qlParamRepo.latest;
         var unrounded = this.computeQuoteUnrounded(filteredMkt, fv, params);
+
+        if (params.ewmaProtection !== null && this._ewma.latest !== null) {
+            if (this._ewma.latest > unrounded.askPx) {
+                unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
+            }
+
+            if (this._ewma.latest < unrounded.bidPx) {
+                unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
+            }
+        }
 
         var safetyParams = this._safetyParams.latest;
         var megan = safetyParams.maxEvDivergence;

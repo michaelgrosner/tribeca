@@ -82,6 +82,11 @@ export interface IBroker {
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
 }
 
+export interface IEwmaCalculator {
+    latest : number;
+    Updated : Utils.Evt<any>;
+}
+
 export class Repository<T> {
     constructor(private _name : string,
                 private _validator : (a : T) => boolean,

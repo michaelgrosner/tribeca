@@ -392,7 +392,7 @@ _.assign(OrderBook.prototype, new function() {
     };
 
     request({
-      'url': 'https://api.exchange.coinbase.com/products/BTC-USD/book?level=3',
+      'url': self.apiURI + '/products/BTC-USD/book?level=3',
       'headers': {'User-Agent': 'coinbase-node-client'},
     }, function(err, response, body) {
       if (err) {

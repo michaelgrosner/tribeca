@@ -60,7 +60,7 @@ var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
 var paramsPersister = new Persister.RepositoryPersister(db, 
-    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8), 
+    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, null), 
     getEngineTopic(Messaging.Topics.QuotingParametersChange));
 
 Q.all([
@@ -168,8 +168,9 @@ Q.all([
 
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
+    var emptyEwma = new Agent.EmptyEWMACalculator();
     var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, 
-        orderBroker, externalBroker, positionBroker);
+        orderBroker, externalBroker, positionBroker, emptyEwma);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,

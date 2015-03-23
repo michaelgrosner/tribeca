@@ -20,10 +20,6 @@ var uuid = require('node-uuid');
 import CoinbaseExchange = require("./coinbase-api");
 var SortedArrayMap = require("collections/sorted-array-map");
 
-var passphrase = "h9g47GcHDC8GHx48Hner";
-var key = "6c945837d033823150e9e543642b2aeb";
-var secret = "H/6BPPfJtkZRjiIDSEaRpluFqkN0B+o1FThT5iufWEtSr+xahT2NN4V+m1GYvKCn/DYCYzt8fbcrf4E5DQ1JNw==";
-
 interface StateChange {
     old : string;
     new : string;
@@ -679,8 +675,9 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class Coinbase extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, orders : Interfaces.IOrderStateCache) {
-        var orderbook = new CoinbaseExchange.OrderBook();
-        var authClient = new CoinbaseExchange.AuthenticatedClient(key, secret, passphrase);
+        var orderbook = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"));
+        var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"), 
+            config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
         var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orders, orderbook, authClient)
