@@ -190,7 +190,7 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
 export class EWMACalculator implements Interfaces.IEwmaCalculator {
     private _log : Utils.Logger = Utils.log("tribeca:ewma");
 
-    constructor(private _fv : FairValueEngine, private _alpha : number = -0.95) {
+    constructor(private _fv : FairValueEngine, private _alpha : number = .095) {
         setInterval(this.onTick, 10*1000);
         this.onTick();
     }
@@ -204,11 +204,12 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
         }
 
         var value : number = fv.price;
-        if (this._latest == null) {
+        if (this._latest === null) {
             this.setLatest(value);
         }
         else {
-            this.setLatest(this._latest + this._alpha * (value - this._latest));
+            var newVal = this._alpha * value + (1 - this._alpha) * this._latest;
+            this.setLatest(newVal);
         }
     };
 
