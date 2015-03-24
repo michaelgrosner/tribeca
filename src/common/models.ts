@@ -330,7 +330,7 @@ export class QuotingParameters {
                 public fvModel : FairValueModel,
                 public targetBasePosition : number,
                 public positionDivergence : number,
-                public ewmaProtection : number) {}
+                public ewmaProtection : boolean) {}
 }
 
 export class SafetySettings {

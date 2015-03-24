@@ -675,7 +675,7 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class Coinbase extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, orders : Interfaces.IOrderStateCache) {
-        var orderbook = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"));
+        var orderbook = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"));
         var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"), 
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 

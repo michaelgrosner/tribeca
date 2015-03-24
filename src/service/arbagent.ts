@@ -187,6 +187,45 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
     Updated = new Utils.Evt<any>();
 }
 
+export class EWMACalculator implements Interfaces.IEwmaCalculator {
+    private _log : Utils.Logger = Utils.log("tribeca:ewma");
+
+    constructor(private _fv : FairValueEngine, private _alpha : number = 20.0) {
+        setInterval(this.onTick, 10*1000);
+        this.onTick();
+    }
+
+    private onTick = () => {
+        var fv = this._fv.latestFairValue;
+
+        if (fv === null) {
+            this._log("Unable to compute EMWA value");
+            return;
+        }
+
+        var value : number = fv.price;
+        if (this._latest == null) {
+            this.setLatest(value);
+        }
+        else {
+            this.setLatest(this._latest + this._alpha * (value - this._latest));
+        }
+    };
+
+    private _latest : number = null;
+    public get latest() { return this._latest; }
+    private setLatest = (v : number) => {
+        if (Math.abs(v - this._latest) > 1e-3) {
+            this._latest = v;
+            this.Updated.trigger();
+
+            this._log("New EMWA value: %d", this._latest);
+        }
+    };
+
+    Updated = new Utils.Evt<any>();
+}
+
 export class QuotingEngine {
     private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
 
@@ -292,7 +331,7 @@ export class QuotingEngine {
         var params = this._qlParamRepo.latest;
         var unrounded = this.computeQuoteUnrounded(filteredMkt, fv, params);
 
-        if (params.ewmaProtection !== null && this._ewma.latest !== null) {
+        if (params.ewmaProtection && this._ewma.latest !== null) {
             if (this._ewma.latest > unrounded.askPx) {
                 unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
             }

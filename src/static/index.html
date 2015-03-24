@@ -16,6 +16,12 @@
             margin-left: 0;
             margin-right: 0
         }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -152,7 +158,7 @@
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
                                 <form novalidate>
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">mode</div>
                                             <select class="form-control input-sm"
@@ -170,7 +176,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">width</div>
                                             <input class="form-control input-sm"
@@ -180,7 +186,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">size</div>
                                             <input class="form-control input-sm"
@@ -200,13 +206,22 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">pDiv</div>
                                             <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.positionDivergence">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">ewma?</div>
+                                            <input class="form-control input-sm"
+                                                   type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.ewmaProtection">
                                         </div>
                                     </div>
 

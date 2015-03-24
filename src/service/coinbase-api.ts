@@ -17,6 +17,7 @@ var keepaliveAgent = new HttpsAgent();
 
 export var PublicClient = function(apiURI? : string) {
   var self = this;
+  console.log("starting coinbase public client, apiURI = ", apiURI);
   self.apiURI = apiURI || 'https://api.exchange.coinbase.com';
 };
 
@@ -254,12 +255,13 @@ _.assign(AuthenticatedClient.prototype, new function() {
 
 });
 
-export var OrderBook = function(productID? : string, websocketURI? : string) {
+export var OrderBook = function(productID : string, websocketURI : string, restURI : string) {
   var self = this;
   EventEmitter.call(self);
 
   self.productID = productID || 'BTC-USD';
   self.websocketURI = websocketURI || 'wss://ws-feed.exchange.coinbase.com';
+  self.restURI = restURI;
   self.state = self.STATES.closed;
   self.fail_count = 0;
   self.connect();
@@ -392,7 +394,7 @@ _.assign(OrderBook.prototype, new function() {
     };
 
     request({
-      'url': self.apiURI + '/products/BTC-USD/book?level=3',
+      'url': self.restURI + '/products/BTC-USD/book?level=3',
       'headers': {'User-Agent': 'coinbase-node-client'},
     }, function(err, response, body) {
       if (err) {

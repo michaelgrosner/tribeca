@@ -67,7 +67,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 
     constructor(sub : Messaging.ISubscribe<Models.QuotingParameters>,
                 fire : Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
