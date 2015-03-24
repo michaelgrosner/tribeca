@@ -190,7 +190,7 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
 export class EWMACalculator implements Interfaces.IEwmaCalculator {
     private _log : Utils.Logger = Utils.log("tribeca:ewma");
 
-    constructor(private _fv : FairValueEngine, private _alpha : number = 20.0) {
+    constructor(private _fv : FairValueEngine, private _alpha : number = -0.95) {
         setInterval(this.onTick, 10*1000);
         this.onTick();
     }
