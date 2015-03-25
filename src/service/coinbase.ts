@@ -337,11 +337,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _cachedAsks : Models.MarketSide[] = null;
 
     private reevalBids = () => {
-        this._cachedBids = _.map(this._bids.store.slice(0, 5), s => s.value.marketUpdate);
+        this._cachedBids = _.map(this._bids.store.slice(0, 5), s => (<any>s).value.marketUpdate);
     };
 
     private reevalAsks = () => {
-        this._cachedAsks = _.map(this._asks.store.slice(0, 5), s => s.value.marketUpdate);
+        this._cachedAsks = _.map(this._asks.store.slice(0, 5), s => (<any>s).value.marketUpdate);
     };
 
     private onOrderBookChanged = (t : Moment, side : Models.Side, price : number) => {
@@ -385,7 +385,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         if (typeof this._cachedBids[0] !== "undefined" && typeof this._cachedAsks[0] !== "undefined") {
             if (this._cachedBids[0].price > this._cachedAsks[0].price) {
                 this._log("WARNING: crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
-                this._client.changeState('error');
+                (<any>this._client).changeState('error');
                 return;
             }
 

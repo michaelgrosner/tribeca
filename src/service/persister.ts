@@ -26,7 +26,7 @@ export function timeLoader(x) {
 }
 
 export function timeSaver(rpt) {
-    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toISOString();
+    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toDate();
 }
 
 export class RepositoryPersister<T> {

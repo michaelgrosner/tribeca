@@ -58,10 +58,11 @@ export class StandaloneHttpPublisher<T> {
                 if (max !== null)
                     d = _.last(d, max);
                 res.json(d);
-            }
+            };
 
             var data : T[]|Q.Promise<T[]> = this._snapshot(max);
-            if (!data.then) {
+
+            if (data instanceof Array) {
                 handler(data);
             }
             else {
