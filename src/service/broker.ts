@@ -67,9 +67,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     cancelOpenOrders() : Q.Promise<number> {
         var deferred = Q.defer<number>();
 
-        var lateCancels : {[id: string] : boolean} = {}
+        var lateCancels : {[id: string] : boolean} = {};
         for (var k in this._orderCache.allOrders) {
-            if (!this._orderCache.allOrders.hasOwnProperty(k)) continue;
+            if (!(k in this._orderCache.allOrders)) continue;
             var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
 
             switch (e.orderStatus) {
@@ -244,7 +244,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
                 && typeof o.exchangeId !== "undefined"
-                && this._cancelsWaitingForExchangeOrderId.hasOwnProperty(o.orderId)) {
+                && o.orderId in this._cancelsWaitingForExchangeOrderId) {
             this._log("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
@@ -279,7 +279,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
-        if (!this._orderCache.allOrders.hasOwnProperty(osr.orderId))
+        if (!(osr.orderId in this._orderCache.allOrders))
             this._orderCache.allOrders[osr.orderId] = [osr];
         else
             this._orderCache.allOrders[osr.orderId].push(osr);

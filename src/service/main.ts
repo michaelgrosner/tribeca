@@ -108,7 +108,7 @@ Q.all([
     var messages = new Broker.MessagesPubisher(messagesPublisher);
     messages.publish("start up");
 
-    var getHttpPublisher = <T>(topic : string) : Web.StandaloneHttpPublisher<T> => {
+    var getHttpPublisher = <T>(topic : string) => {
         return new Web.StandaloneHttpPublisher<T>(topic, app);
     };
 
