@@ -86,7 +86,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         this.OrderUpdate.on(o => {
-            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working) 
+            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
                 return;
 
             lateCancels[e.orderId] = true;
@@ -150,7 +150,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     cancelOrder = (cancel : Models.OrderCancel) => {
         var rpt = _.last(this._orderCache.allOrders[cancel.origOrderId]);
-        
+
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
@@ -242,8 +242,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.addOrderStatusToMemory(o);
 
         // cancel any open orders waiting for oid
-        if (!this._oeGateway.cancelsByClientOrderId 
-                && typeof o.exchangeId !== "undefined" 
+        if (!this._oeGateway.cancelsByClientOrderId
+                && typeof o.exchangeId !== "undefined"
                 && this._cancelsWaitingForExchangeOrderId.hasOwnProperty(o.orderId)) {
             this._log("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
@@ -358,8 +358,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             var basePosition = this.getPosition(this._base.pair.base);
             var quotePosition = this.getPosition(this._base.pair.quote);
 
-            if (typeof basePosition === "undefined" 
-                || typeof quotePosition === "undefined" 
+            if (typeof basePosition === "undefined"
+                || typeof quotePosition === "undefined"
                 || this._mdBroker.currentBook === null
                 || this._mdBroker.currentBook.bids.length === 0
                 || this._mdBroker.currentBook.asks.length === 0)
@@ -421,7 +421,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
         if (gwType === Models.GatewayType.MarketData) {
             if (this.mdConnected === cs) return;
             this.mdConnected = cs;
-        } 
+        }
 
         if (gwType === Models.GatewayType.OrderEntry) {
             if (this.oeConnected === cs) return;

@@ -324,9 +324,9 @@ export enum QuotingMode { Top, Mid, Join }
 export enum FairValueModel { BBO, wBBO }
 
 export class QuotingParameters {
-    constructor(public width : number, 
+    constructor(public width : number,
                 public size : number,
-                public mode : QuotingMode, 
+                public mode : QuotingMode,
                 public fvModel : FairValueModel,
                 public targetBasePosition : number,
                 public positionDivergence : number,

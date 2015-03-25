@@ -81,8 +81,8 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListController = ($scope : OrderListScope, 
-                           $log : ng.ILogService, 
+var OrderListController = ($scope : OrderListScope,
+                           $log : ng.ILogService,
                            subscriberFactory : Shared.SubscriberFactory,
                            fireFactory : Shared.FireFactory) => {
     var fireCxl = fireFactory.getFire(Messaging.Topics.CancelOrder);

@@ -58,7 +58,7 @@ function timeOrDefault(x : Models.ITimestamped) : Moment {
 
     if (typeof x !== "undefined" && typeof x.time !== "undefined")
         return x.time;
-    
+
     return Utils.date();
 }
 
@@ -121,14 +121,14 @@ export class FairValueEngine {
     private _latest : Models.FairValue = null;
     public get latestFairValue() { return this._latest; }
     public set latestFairValue(val : Models.FairValue) {
-        if (this._latest != null 
+        if (this._latest != null
                 && val != null
                 && Math.abs(this._latest.price - val.price) < 0.02) return;
 
         this._latest = val;
         this.FairValueChanged.trigger();
         this._fvPublisher.publish(this._latest);
-        
+
         if (this._latest !== null)
             this._fvPersister.persist(this._latest);
     }
@@ -434,8 +434,8 @@ export class QuoteSender {
         this._latest = val;
         this._statusPublisher.publish(this._latest);
     }
-    
-    constructor(private _quotingEngine : QuotingEngine, 
+
+    constructor(private _quotingEngine : QuotingEngine,
                 private _statusPublisher : Messaging.IPublish<Models.TwoSidedQuoteStatus>,
                 private _quoter : Quoter.Quoter,
                 private _pair : Models.CurrencyPair,
@@ -505,7 +505,7 @@ export class QuoteSender {
             var fv = this._fv.latestFairValue;
             var lm = this._broker.currentBook;
             this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
-                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction], 
+                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
                     (fv == null ? null : fv.price),
                     this.fmtQuoteSide(quote),
                     this.fmtLevel(0, lm.bids, lm.asks),
@@ -516,17 +516,17 @@ export class QuoteSender {
 
     private fmtQuoteSide(q : Models.TwoSidedQuote) {
         if (q == null) return "[no quote]";
-        return util.format("q:[%d %d - %d %d]", 
-            (q.bid == null ? null : q.bid.size), 
-            (q.bid == null ? null : q.bid.price), 
-            (q.ask == null ? null : q.ask.price), 
+        return util.format("q:[%d %d - %d %d]",
+            (q.bid == null ? null : q.bid.size),
+            (q.bid == null ? null : q.bid.price),
+            (q.ask == null ? null : q.ask.price),
             (q.ask == null ? null : q.ask.size));
     }
 
     private fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
-        return util.format("mkt%d:[%d %d - %d %d]", n, 
+        return util.format("mkt%d:[%d %d - %d %d]", n,
             (typeof bids[n] === "undefined" ? null : bids[n].size), 
-            (typeof bids[n] === "undefined" ? null : bids[n].price), 
+            (typeof bids[n] === "undefined" ? null : bids[n].price),
             (typeof asks[n] === "undefined" ? null : asks[n].price),
             (typeof asks[n] === "undefined" ? null : asks[n].size));
     }

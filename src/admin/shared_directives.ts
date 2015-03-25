@@ -71,7 +71,7 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
         return this._wrapped.registerSubscriber(
-            x => this._scope.$evalAsync(() => incrementalHandler(x)), 
+            x => this._scope.$evalAsync(() => incrementalHandler(x)),
             xs => this._scope.$evalAsync(() => snapshotHandler(xs)))
     }
 
@@ -79,7 +79,7 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
         return this._wrapped.registerDisconnectedHandler(() => this._scope.$evalAsync(handler));
     }
 
-    public registerConnectHandler = (handler : () => void) => { 
+    public registerConnectHandler = (handler : () => void) => {
         return this._wrapped.registerConnectHandler(() => this._scope.$evalAsync(handler));
     }
 

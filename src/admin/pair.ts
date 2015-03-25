@@ -271,7 +271,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
                 }
             }
         }
-    };    
+    };
 
     var updateFairValue = (fv : Models.FairValue) => {
         if (fv == null) {
@@ -496,4 +496,3 @@ angular
             controller: MessagesController
           }
     });
-
