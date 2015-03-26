@@ -72,6 +72,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             if (!(k in this._orderCache.allOrders)) continue;
             var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
 
+            if (e.pendingCancel) continue;
+
             switch (e.orderStatus) {
                 case Models.OrderStatus.New:
                 case Models.OrderStatus.Working:
