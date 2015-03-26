@@ -58,6 +58,7 @@ var tradesPersister = new Persister.TradePersister(db);
 var fairValuePersister = new Persister.FairValuePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
+var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), getEngineTopic(Messaging.Topics.ActiveChange));
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
 var paramsPersister = new Persister.RepositoryPersister(db, 
@@ -68,12 +69,14 @@ Q.all([
     orderPersister.load(exchange, pair, 25000),
     tradesPersister.load(exchange, pair, 10000),
     mktTradePersister.load(exchange, pair, 100),
+    messagesPersister.loadAll(50),
     safetyPersister.loadLatest(),
     paramsPersister.loadLatest(),
     activePersister.loadLatest()
 ]).spread((initOrders : Models.OrderStatusReport[], 
            initTrades : Models.Trade[], 
-           initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[], 
+           initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[],
+           initMsgs : Models.Message[],
            initSafety : Models.SafetySettings, 
            initParams : Models.QuotingParameters,
            initActive : Models.SerializedQuotesActive) => {
@@ -108,7 +111,7 @@ Q.all([
     var externalValuationPublisher = getEnginePublisher(Messaging.Topics.ExternalValuation);
     var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
 
-    var messages = new Broker.MessagesPubisher(messagesPublisher);
+    var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
 
     var getHttpPublisher = <T>(topic : string) => {

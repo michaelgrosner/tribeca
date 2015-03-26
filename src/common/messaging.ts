@@ -181,7 +181,7 @@ export class Receiver<T> implements IReceive<T> {
     private _handler : (msg : T) => void = null;
     constructor(private topic : string, io : any,
                 private _log : (...args: any[]) => void = console.log) {
-        io.of("/"+this.topic).on("connection", s => {
+        io.of("/"+this.topic).on("connection", (s : any) => {
             this._log("socket", s.id, "connected for Receiver", topic);
             s.on(Prefixes.MESSAGE, msg => {
                 if (this._handler !== null)

@@ -157,3 +157,10 @@ export class FairValuePersister extends Persister<Models.FairValue> {
         super(db, "fv", timeLoader, timeSaver);
     }
 }
+
+export class MessagesPersister extends Persister<Models.Message> {
+    constructor(db : Q.Promise<mongodb.Db>) {
+        super(db, "msg", timeLoader, timeSaver);
+    }
+}
+

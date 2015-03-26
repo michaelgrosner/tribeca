@@ -18,13 +18,17 @@ import Web = require("web");
 export class MessagesPubisher {
     private _storedMessages : Models.Message[] = [];
 
-    constructor(private _wrapped : Messaging.IPublish<Models.Message>) {
-        _wrapped.registerSnapshot(() => _.last(this._storedMessages, 500));
+    constructor(private _persister : Persister.Persister<Models.Message>,
+                initMsgs : Models.Message[],
+                private _wrapped : Messaging.IPublish<Models.Message>) {
+        _.forEach(initMsgs, m => this._storedMessages.push(m));
+        _wrapped.registerSnapshot(() => _.last(this._storedMessages, 50));
     }
 
     public publish = (text : string) => {
         var message = new Models.Message(text, Utils.date());
         this._wrapped.publish(message);
+        this._persister.persist(message);
         this._storedMessages.push(message);
     };
 }

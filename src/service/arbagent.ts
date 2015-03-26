@@ -29,6 +29,8 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
 }
 
 export class ActiveRepository extends Interfaces.Repository<boolean> {
+    private _savedQuotingMode : boolean;
+
     constructor(startQuoting : boolean,
                 safeties : Safety.SafetySettingsManager,
                 broker : Interfaces.IBroker,
@@ -38,15 +40,19 @@ export class ActiveRepository extends Interfaces.Repository<boolean> {
               (p : boolean) => safeties.canEnable && broker.connectStatus === Models.ConnectivityStatus.Connected,
               (a : boolean, b : boolean) => a !== b,
               startQuoting, rec, pub);
+        this._savedQuotingMode = this.latest;
 
         safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
         safeties.SafetyViolationCleared.on(() => this.updateParameters(true));
-        broker.ConnectChanged.on(this.onDisconnect);
+        broker.ConnectChanged.on(this.onConnectChanged);
     }
 
-    private onDisconnect = (cs : Models.ConnectivityStatus) => {
+    private onConnectChanged = (cs : Models.ConnectivityStatus) => {
+        this._savedQuotingMode = this.latest;
         if (cs === Models.ConnectivityStatus.Disconnected)
             this.updateParameters(false);
+        if (this._savedQuotingMode && cs === Models.ConnectivityStatus.Connected)
+            this.updateParameters(true);
     };
 }
 
