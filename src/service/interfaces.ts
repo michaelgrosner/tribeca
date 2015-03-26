@@ -88,18 +88,20 @@ export interface IEwmaCalculator {
 }
 
 export class Repository<T> {
+    private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
+
     constructor(private _name : string,
                 private _validator : (a : T) => boolean,
                 private _paramsEqual : (a : T, b : T) => boolean,
                 defaultParameter : T,
                 private _rec : Messaging.IReceive<T>,
                 private _pub : Messaging.IPublish<T>) {
+        this._log("Starting parameter:", defaultParameter);
         _pub.registerSnapshot(() => [this.latest]);
         _rec.registerReceiver(this.updateParameters);
         this._latest = defaultParameter;
     }
 
-    private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
     NewParameters = new Utils.Evt();
 
     private _latest : T;

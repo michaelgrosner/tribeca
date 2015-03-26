@@ -29,14 +29,16 @@ export class QuotingParametersRepository extends Interfaces.Repository<Models.Qu
 }
 
 export class ActiveRepository extends Interfaces.Repository<boolean> {
-    constructor(safeties : Safety.SafetySettingsManager,
+    constructor(startQuoting : boolean,
+                safeties : Safety.SafetySettingsManager,
                 broker : Interfaces.IBroker,
                 pub : Messaging.IPublish<boolean>,
                 rec : Messaging.IReceive<boolean>) {
         super("active",
-            (p : boolean) => safeties.canEnable && broker.connectStatus === Models.ConnectivityStatus.Connected,
-            (a : boolean, b : boolean) => a !== b,
-            false, rec, pub);
+              (p : boolean) => safeties.canEnable && broker.connectStatus === Models.ConnectivityStatus.Connected,
+              (a : boolean, b : boolean) => a !== b,
+              startQuoting, rec, pub);
+
         safeties.SafetySettingsViolated.on(() => this.updateParameters(false));
         safeties.SafetyViolationCleared.on(() => this.updateParameters(true));
         broker.ConnectChanged.on(this.onDisconnect);

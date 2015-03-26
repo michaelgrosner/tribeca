@@ -304,6 +304,10 @@ export class TwoSidedQuote implements ITimestamped {
 
 export enum QuoteStatus { Live, Held }
 
+export class SerializedQuotesActive {
+    constructor(public active : boolean, public time : Moment) {}
+}
+
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus : QuoteStatus, public askStatus : QuoteStatus) {}
 }

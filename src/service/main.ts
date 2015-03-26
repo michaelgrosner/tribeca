@@ -58,6 +58,7 @@ var tradesPersister = new Persister.TradePersister(db);
 var fairValuePersister = new Persister.FairValuePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
+var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), getEngineTopic(Messaging.Topics.ActiveChange));
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
 var paramsPersister = new Persister.RepositoryPersister(db, 
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, null), 
@@ -68,12 +69,14 @@ Q.all([
     tradesPersister.load(exchange, pair, 10000),
     mktTradePersister.load(exchange, pair, 100),
     safetyPersister.loadLatest(),
-    paramsPersister.loadLatest()
+    paramsPersister.loadLatest(),
+    activePersister.loadLatest()
 ]).spread((initOrders : Models.OrderStatusReport[], 
            initTrades : Models.Trade[], 
            initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[], 
            initSafety : Models.SafetySettings, 
-           initParams : Models.QuotingParameters) => {
+           initParams : Models.QuotingParameters,
+           initActive : Models.SerializedQuotesActive) => {
 
     var app = express();
     var http = (<any>require('http')).Server(app);
@@ -161,7 +164,9 @@ Q.all([
     safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
     var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
 
-    var active = new Agent.ActiveRepository(safeties, broker, activePublisher, activeReceiver);
+    var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
+    var active = new Agent.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
+
     var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
     var quoter = new Quoter.Quoter(orderBroker, broker);
@@ -178,6 +183,11 @@ Q.all([
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {
+
+            var a = new Models.SerializedQuotesActive(active.latest, Utils.date());
+            mainLog("setting active to", a);
+            activePersister.persist(a);
+
             Utils.errorLog("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined), () => {
                 orderBroker.cancelOpenOrders().then(n_cancelled => {
                     Utils.errorLog("Cancelled all", n_cancelled, "open orders", () => { 

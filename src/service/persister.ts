@@ -44,7 +44,10 @@ export class RepositoryPersister<T> {
                     deferred.resolve(this._defaultParameter);
                 }
                 else {
-                    deferred.resolve(arr[0]);
+                    var v = arr[0];
+                    if (v.hasOwnProperty("time"))
+                        timeLoader(v);
+                    deferred.resolve(v);
                 }
             });
         }).done();
@@ -54,7 +57,10 @@ export class RepositoryPersister<T> {
 
     public persist = (report : T) => {
         this.collection.then(coll => {
-            coll.insert(report, err => {
+            var v = report;
+            if (v.hasOwnProperty("time"))
+                timeSaver(v);
+            coll.insert(v, err => {
                 if (err)
                     this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
             });
