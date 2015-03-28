@@ -73,7 +73,7 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.env = pa.environment;
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
-        $scope.pair = new Pair.DisplayPair(pa.exchange, pa.pair, $scope, $log, subscriberFactory, fireFactory);
+        $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
     };
 
     var reset = (reason : string) => {

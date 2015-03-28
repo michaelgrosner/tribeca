@@ -89,13 +89,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
     constructor(sub : Messaging.ISubscribe<Models.SafetySettings>,
                 fire : Messaging.IFire<Models.SafetySettings>) {
-        super(new Models.SafetySettings(null, null), sub, fire);
+        super(new Models.SafetySettings(null, null, null), sub, fire);
     }
 }
 
 export class DisplayPair {
     name : string;
-    exch_name : string;
     connected : boolean;
 
     active : QuotingButtonViewModel;
@@ -104,10 +103,7 @@ export class DisplayPair {
 
     private _subscribers : Messaging.ISubscribe<any>[] = [];
 
-    constructor(public exch : Models.Exchange,
-                public pair : Models.CurrencyPair,
-                public scope : ng.IScope,
-                log : ng.ILogService,
+    constructor(public scope : ng.IScope,
                 subscriberFactory : Shared.SubscriberFactory,
                 fireFactory : Shared.FireFactory) {
 

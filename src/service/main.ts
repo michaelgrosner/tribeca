@@ -25,9 +25,16 @@ import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
 import Web = require("./web");
+import util = require('util');
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
+
+["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
+    process.on(reason, (e?) => {
+        Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
+    });
+});
 
 var env = process.env.TRIBECA_MODE;
 var config = new Config.ConfigProvider(env);
@@ -59,7 +66,7 @@ var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), getEngineTopic(Messaging.Topics.ActiveChange));
-var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5), getEngineTopic(Messaging.Topics.SafetySettings));
+var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), getEngineTopic(Messaging.Topics.SafetySettings));
 var paramsPersister = new Persister.RepositoryPersister(db, 
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, null), 
     getEngineTopic(Messaging.Topics.QuotingParametersChange));
@@ -189,19 +196,17 @@ Q.all([
             mainLog("setting active to", a);
             activePersister.persist(a);
 
-            Utils.errorLog("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined), () => {
-                orderBroker.cancelOpenOrders().then(n_cancelled => {
-                    Utils.errorLog("Cancelled all", n_cancelled, "open orders", () => { 
-                        process.exit(0) 
-                    });
-                }).done();
+            orderBroker.cancelOpenOrders().then(n_cancelled => {
+                Utils.errorLog(util.format("Cancelled all", n_cancelled, "open orders"), () => {
+                    process.exit(0)
+                });
+            }).done();
 
-                setTimeout(() => {
-                    Utils.errorLog("Could not cancel all open orders!", () => { 
-                        process.exit(2) 
-                    });
-                }, 2000);
-            });
+            setTimeout(() => {
+                Utils.errorLog("Could not cancel all open orders!", () => {
+                    process.exit(2)
+                });
+            }, 2000);
         });
     });
 

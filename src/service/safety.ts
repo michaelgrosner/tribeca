@@ -42,22 +42,23 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
                 private _broker : Interfaces.IOrderBroker,
                 private _messages : Broker.MessagesPubisher) {
         _repo.NewParameters.on(() => this.onNewParameters);
-        _broker.Trade.on(this.onOrderUpdate);
+        _broker.Trade.on(this.onTrade);
     }
 
-    private static isOlderThanOneMinute(o : Models.Trade) {
+    private static isOlderThan(o: Models.Trade, settings: Models.SafetySettings) {
         var now = Utils.date();
-        return Math.abs(now.diff(o.time)) > 1000*60;
+        return Math.abs(now.diff(o.time)) > (1000*settings.tradeRateSeconds);
     }
 
     private recalculateSafeties = () => {
-        this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThanOneMinute(o));
+        var settings = this._repo.latest;
+        this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThan(o, settings));
 
-        if (this._trades.length === this._repo.latest.tradesPerMinute) {
+        if (this._trades.length === settings.tradesPerMinute) {
             this.SafetySettingsViolated.trigger();
             this.canEnable = false;
 
-            var coolOffMinutes = momentjs.duration(this._repo.latest.coolOffMinutes, 'minutes');
+            var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
             var msg = util.format("NTrades/Sec safety setting violated! %d trades. Re-enabling in %s.",
                 this._trades.length, coolOffMinutes.humanize());
             this._log(msg);
@@ -70,8 +71,8 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
         }
     };
 
-    private onOrderUpdate = (u : Models.Trade) => {
-        if (SafetySettingsManager.isOlderThanOneMinute(u)) return;
+    private onTrade = (u : Models.Trade) => {
+        if (SafetySettingsManager.isOlderThan(u, this._repo.latest)) return;
         this._trades.push(u);
 
         this.recalculateSafeties();

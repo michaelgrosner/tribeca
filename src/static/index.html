@@ -237,11 +237,21 @@
                                 <div class="row">
                                     <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
-                                            <div class="input-group-addon">t/min</div>
+                                            <div class="input-group-addon">trds</div>
                                             <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.safetySettings.display.tradesPerMinute">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">/sec</div>
+                                            <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.safetySettings.display.tradeRateSeconds">
                                         </div>
                                     </div>
 

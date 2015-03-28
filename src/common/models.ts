@@ -339,6 +339,7 @@ export class QuotingParameters {
 
 export class SafetySettings {
     constructor(public tradesPerMinute : number,
+                public tradeRateSeconds : number,
                 public coolOffMinutes : number) {}
 }
 
