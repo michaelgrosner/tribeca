@@ -89,7 +89,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
     constructor(sub : Messaging.ISubscribe<Models.SafetySettings>,
                 fire : Messaging.IFire<Models.SafetySettings>) {
-        super(new Models.SafetySettings(null, null, null), sub, fire);
+        super(new Models.SafetySettings(null, null), sub, fire);
     }
 }
 

@@ -339,8 +339,7 @@ export class QuotingParameters {
 
 export class SafetySettings {
     constructor(public tradesPerMinute : number,
-                public coolOffMinutes : number,
-                public maxEvDivergence : number) {}
+                public coolOffMinutes : number) {}
 }
 
 export function toUtcFormattedTime(t : Moment) {

@@ -25,7 +25,6 @@ import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
 import Web = require("./web");
-import Winkdex = require("./winkdex");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -60,7 +59,7 @@ var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), getEngineTopic(Messaging.Topics.ActiveChange));
-var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5, 4), getEngineTopic(Messaging.Topics.SafetySettings));
+var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 5), getEngineTopic(Messaging.Topics.SafetySettings));
 var paramsPersister = new Persister.RepositoryPersister(db, 
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, null), 
     getEngineTopic(Messaging.Topics.QuotingParametersChange));
@@ -161,7 +160,6 @@ Q.all([
         orderCache, initOrders, initTrades);
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
     var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);
-    var externalBroker = new Winkdex.ExternalValuationSource(new Winkdex.WinkdexGateway(), externalValuationPublisher);
 
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
     safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
@@ -178,7 +176,7 @@ Q.all([
     var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
     var emptyEwma = new Agent.EWMACalculator(fvEngine);
     var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, 
-        orderBroker, externalBroker, positionBroker, emptyEwma);
+        orderBroker, positionBroker, emptyEwma);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,

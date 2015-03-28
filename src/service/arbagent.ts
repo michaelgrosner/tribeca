@@ -10,7 +10,6 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
-import Winkdex = require("./winkdex");
 import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
@@ -258,11 +257,9 @@ export class QuotingEngine {
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _broker : Interfaces.IMarketDataBroker,
                 private _orderBroker : Interfaces.IOrderBroker,
-                private _evs : Winkdex.ExternalValuationSource,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _ewma : Interfaces.IEwmaCalculator) {
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
-        _evs.ValueChanged.on(() => this.recalcQuote(timeOrDefault(_evs.Value)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _orderBroker.Trade.on(t => this.recalcQuote(Utils.date()));
@@ -336,7 +333,7 @@ export class QuotingEngine {
         }
     }
 
-    private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue, extFv : Models.ExternalValuationUpdate) {
+    private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue) {
         var params = this._qlParamRepo.latest;
         var unrounded = this.computeQuoteUnrounded(filteredMkt, fv, params);
 
@@ -349,13 +346,6 @@ export class QuotingEngine {
                 unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
             }
         }
-
-        var safetyParams = this._safetyParams.latest;
-        var megan = safetyParams.maxEvDivergence;
-
-        var eFV = extFv.value;
-        if (unrounded.bidPx > eFV + megan) unrounded.bidPx = eFV + megan;
-        if (unrounded.askPx < eFV - megan) unrounded.askPx = eFV - megan;
 
         var latestPosition = this._positionBroker.getPosition(this._pair.base);
         if (typeof latestPosition === "undefined") return null;
@@ -402,13 +392,7 @@ export class QuotingEngine {
             return;
         }
 
-        var extVal = this._evs.Value;
-        if (extVal == null) {
-            this.latestQuote = null;
-            return;
-        }
-
-        var genQt = this.computeQuote(filteredMkt, fv, extVal);
+        var genQt = this.computeQuote(filteredMkt, fv);
 
         if (genQt === null) {
             this.latestQuote = null;
