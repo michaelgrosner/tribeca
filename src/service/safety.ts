@@ -33,15 +33,17 @@ interface QuotesEnabledCondition {
 export class SafetySettingsManager implements QuotesEnabledCondition {
     private _log : Utils.Logger = Utils.log("tribeca:qg");
 
-    private _trades : Models.Trade[] = [];
+    private _buys : Models.Trade[] = [];
+    private _sells : Models.Trade[] = [];
+
     public SafetySettingsViolated = new Utils.Evt();
     public SafetyViolationCleared = new Utils.Evt();
     canEnable : boolean = true;
 
-    constructor(private _repo : SafetySettingsRepository,
-                private _broker : Interfaces.IOrderBroker,
-                private _qlParams : Interfaces.Repository<Models.QuotingParameters>,
-                private _messages : Broker.MessagesPubisher) {
+    constructor(private _repo : Interfaces.IRepository<Models.SafetySettings>,
+                private _broker : Interfaces.ITradeBroker,
+                private _qlParams : Interfaces.IRepository<Models.QuotingParameters>,
+                private _messages : Interfaces.IPublishMessages) {
         _repo.NewParameters.on(_ => this.onNewParameters());
         _qlParams.NewParameters.on(_ => this.onNewParameters());
         _broker.Trade.on(this.onTrade);
@@ -54,9 +56,8 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
     private recalculateSafeties = () => {
         var settings = this._repo.latest;
-        this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThan(o, settings));
 
-        var val = _.reduce(this._trades, (sum, t : Models.Trade) => t.quantity, 0) / this._qlParams.latest.size;
+        var val = this.computeQtyLimit(settings);
 
         if (val >= settings.tradesPerMinute) {
             this.SafetySettingsViolated.trigger();
@@ -74,9 +75,53 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
         }
     };
 
-    private onTrade = (u : Models.Trade) => {
+    private computeQtyLimit = (settings: Models.SafetySettings) => {
+        var orderTrades = (input : Models.Trade[], direction : number) : Models.Trade[] => {
+            return _.chain(input)
+                .filter(o => !SafetySettingsManager.isOlderThan(o, settings))
+                .sortBy((t : Models.Trade) => direction*t.price)
+                .value();
+        };
+
+        this._buys = orderTrades(this._buys, -1);
+        this._sells = orderTrades(this._sells, 1);
+
+        // don't count good trades against safety
+        while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
+            var sell = _.last(this._sells);
+            var buy = _.last(this._buys);
+            if (sell.price >= buy.price) {
+                if (Math.abs(sell.quantity - buy.quantity) < 1e-4) {
+                    this._buys.pop();
+                    this._sells.pop();
+                }
+                else if (sell.quantity > buy.quantity) {
+                    this._buys.pop();
+                    buy.quantity -= sell.quantity;
+                }
+                else {
+                    sell.quantity -= buy.quantity;
+                    this._sells.pop();
+                }
+            }
+            else {
+                break;
+            }
+        }
+
+        return this._buys.concat(this._sells).reduce((sum, t) => t.quantity, 0) / this._qlParams.latest.size;
+    };
+
+    private onTrade = (ut : Models.Trade) => {
+        var u = _.cloneDeep(ut);
         if (SafetySettingsManager.isOlderThan(u, this._repo.latest)) return;
-        this._trades.push(u);
+
+        if (u.side === Models.Side.Ask) {
+            this._sells.push(u);
+        }
+        else if (u.side === Models.Side.Bid) {
+            this._buys.push(u);
+        }
 
         this.recalculateSafeties();
     };

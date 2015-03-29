@@ -52,14 +52,16 @@ export interface IMarketDataBroker {
     currentBook : Models.Market;
 }
 
-export interface IOrderBroker {
+export interface ITradeBroker {
+    Trade : Utils.Evt<Models.Trade>;
+}
+
+export interface IOrderBroker extends ITradeBroker {
     sendOrder(order : Models.SubmitNewOrder) : Models.SentOrder;
     cancelOrder(cancel : Models.OrderCancel);
     replaceOrder(replace : Models.CancelReplaceOrder) : Models.SentOrder;
     OrderUpdate : Utils.Evt<Models.OrderStatusReport>;
     cancelOpenOrders() : void;
-
-    Trade : Utils.Evt<Models.Trade>;
 }
 
 export interface IPositionBroker {
@@ -87,7 +89,12 @@ export interface IEwmaCalculator {
     Updated : Utils.Evt<any>;
 }
 
-export class Repository<T> {
+export interface IRepository<T> {
+    NewParameters : Utils.Evt<any>;
+    latest : T;
+}
+
+export class Repository<T> implements IRepository<T> {
     private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
 
     constructor(private _name : string,
@@ -118,4 +125,8 @@ export class Repository<T> {
 
         this._pub.publish(this.latest);
     };
+}
+
+export interface IPublishMessages {
+    publish(text : string) : void;
 }

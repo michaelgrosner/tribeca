@@ -15,7 +15,7 @@ import Persister = require("./persister");
 import util = require("util");
 import Web = require("web");
 
-export class MessagesPubisher {
+export class MessagesPubisher implements Interfaces.IPublishMessages {
     private _storedMessages : Models.Message[] = [];
 
     constructor(private _persister : Persister.Persister<Models.Message>,
