@@ -109,7 +109,7 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
             }
         }
 
-        return this._buys.concat(this._sells).reduce((sum, t) => t.quantity, 0) / this._qlParams.latest.size;
+        return this._buys.concat(this._sells).reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
     };
 
     private onTrade = (ut : Models.Trade) => {
