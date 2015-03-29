@@ -13,6 +13,7 @@ import _ = require("lodash");
 import P = require("./persister");
 import Broker = require("./broker");
 import mongodb = require('mongodb');
+import Web = require("./web");
 
 export class MarketTradePersister extends P.Persister<Models.ExchangePairMessage<Models.MarketTrade>> {
     constructor(db : Q.Promise<mongodb.Db>) {
@@ -56,7 +57,9 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
                 private _quoteEngine : Agent.QuotingEngine,
                 private _base : Broker.ExchangeBroker,
                 private _persister : MarketTradePersister,
-                initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[]) {
+                initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[],
+                webPub : Web.StandaloneHttpPublisher<Models.MarketTrade>) {
+        webPub.registerSnapshot(n => _persister.loadAll(n).then(mts => _.map(mts, x => x.data)));
 
         initMkTrades.forEach(t => this.marketTrades.push(t.data));
         this._log("loaded %d market trades", this.marketTrades.length);

@@ -129,6 +129,7 @@ Q.all([
     var positionHttpPublisher = getHttpPublisher<Models.PositionReport>("position");
     var osrHttpPublisher = getHttpPublisher<Models.OrderStatusReport>("new_orders");
     var fvHttpPublisher = getHttpPublisher<Models.FairValue>("fair_value");
+    var marketTradesHttpPublisher = getHttpPublisher<Models.MarketTrade>("market_trades");
 
     var getExchangePublisher = <T>(topic : string) => {
         return new Messaging.Publisher<T>(topic, io, null, messagingLog);
@@ -187,7 +188,7 @@ Q.all([
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
-        quotingEngine, broker, mktTradePersister, initMktTrades);
+        quotingEngine, broker, mktTradePersister, initMktTrades, marketTradesHttpPublisher);
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {
