@@ -168,17 +168,17 @@ Q.all([
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
     var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);
 
+    var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
+    paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
+
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
     safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
-    var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, messages);
+    var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, paramsRepo, messages);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
     var active = new Agent.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
 
-    var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
-    paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
     var quoter = new Quoter.Quoter(orderBroker, broker);
-
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
     var emptyEwma = new Agent.EWMACalculator(fvEngine);

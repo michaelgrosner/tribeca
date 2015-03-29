@@ -40,8 +40,10 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
     constructor(private _repo : SafetySettingsRepository,
                 private _broker : Interfaces.IOrderBroker,
+                private _qlParams : Interfaces.Repository<Models.QuotingParameters>,
                 private _messages : Broker.MessagesPubisher) {
-        _repo.NewParameters.on(() => this.onNewParameters);
+        _repo.NewParameters.on(_ => this.onNewParameters());
+        _qlParams.NewParameters.on(_ => this.onNewParameters());
         _broker.Trade.on(this.onTrade);
     }
 
@@ -54,13 +56,14 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
         var settings = this._repo.latest;
         this._trades = this._trades.filter(o => !SafetySettingsManager.isOlderThan(o, settings));
 
-        if (this._trades.length === settings.tradesPerMinute) {
+        var val = _.reduce(this._trades, (sum, t : Models.Trade) => t.quantity, 0) / this._qlParams.latest.size;
+
+        if (val >= settings.tradesPerMinute) {
             this.SafetySettingsViolated.trigger();
             this.canEnable = false;
 
             var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
-            var msg = util.format("NTrades/Sec safety setting violated! %d trades. Re-enabling in %s.",
-                this._trades.length, coolOffMinutes.humanize());
+            var msg = util.format("Trd vol safety violated (%d), waiting %s.", val, coolOffMinutes.humanize());
             this._log(msg);
             this._messages.publish(msg);
 
