@@ -76,33 +76,26 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
     };
 
     private computeQtyLimit = (settings: Models.SafetySettings) => {
-        var orderTrades = (input : Models.Trade[], direction : number) : Models.Trade[] => {
+        var orderTrades = (input : Models.Trade[]) : Models.Trade[] => {
             return _.chain(input)
-                .filter(o => !SafetySettingsManager.isOlderThan(o, settings))
-                .sortBy((t : Models.Trade) => direction*t.price)
-                .value();
+                    .filter(o => !SafetySettingsManager.isOlderThan(o, settings))
+                    .sortBy((t : Models.Trade) => t.price)
+                    .value();
         };
 
-        this._buys = orderTrades(this._buys, -1);
-        this._sells = orderTrades(this._sells, 1);
+        this._buys = orderTrades(this._buys);
+        this._sells = orderTrades(this._sells);
 
         // don't count good trades against safety
         while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
             var sell = _.last(this._sells);
             var buy = _.last(this._buys);
             if (sell.price >= buy.price) {
-                if (Math.abs(sell.quantity - buy.quantity) < 1e-4) {
-                    this._buys.pop();
-                    this._sells.pop();
-                }
-                else if (sell.quantity > buy.quantity) {
-                    this._buys.pop();
-                    buy.quantity -= sell.quantity;
-                }
-                else {
-                    sell.quantity -= buy.quantity;
-                    this._sells.pop();
-                }
+                buy.quantity -= sell.quantity;
+                sell.quantity -= buy.quantity;
+
+                if (buy.quantity < 1e-4) this._buys.pop();
+                if (sell.quantity < 1e-4) this._sells.pop();
             }
             else {
                 break;
