@@ -35,6 +35,7 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
     private _buys: Models.Trade[] = [];
     private _sells: Models.Trade[] = [];
+    private _previousVal = 0.0;
 
     public SafetySettingsViolated = new Utils.Evt();
     public SafetyViolationCleared = new Utils.Evt();
@@ -59,7 +60,8 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
         var val = this.computeQtyLimit(settings);
 
-        if (val >= settings.tradesPerMinute) {
+        if (val >= settings.tradesPerMinute && val > this._previousVal) {
+            this._previousVal = val;
             this.SafetySettingsViolated.trigger();
             this.canEnable = false;
 
