@@ -114,7 +114,6 @@ Q.all([
     var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
     var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
     var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
-    var externalValuationPublisher = getEnginePublisher(Messaging.Topics.ExternalValuation);
     var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
 
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
