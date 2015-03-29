@@ -15,12 +15,12 @@ import momentjs = require('moment');
 import _ = require("lodash");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
-    constructor(pub : Messaging.IPublish<Models.SafetySettings>,
-                rec : Messaging.IReceive<Models.SafetySettings>,
-                initParam : Models.SafetySettings) {
+    constructor(pub: Messaging.IPublish<Models.SafetySettings>,
+                rec: Messaging.IReceive<Models.SafetySettings>,
+                initParam: Models.SafetySettings) {
         super("ssr",
-            (s : Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
-            (a : Models.SafetySettings, b : Models.SafetySettings) => !_.isEqual(a, b),
+            (s: Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
+            (a: Models.SafetySettings, b: Models.SafetySettings) => !_.isEqual(a, b),
             initParam, rec, pub
         );
     }
@@ -31,19 +31,19 @@ interface QuotesEnabledCondition {
 }
 
 export class SafetySettingsManager implements QuotesEnabledCondition {
-    private _log : Utils.Logger = Utils.log("tribeca:qg");
+    private _log: Utils.Logger = Utils.log("tribeca:qg");
 
-    private _buys : Models.Trade[] = [];
-    private _sells : Models.Trade[] = [];
+    private _buys: Models.Trade[] = [];
+    private _sells: Models.Trade[] = [];
 
     public SafetySettingsViolated = new Utils.Evt();
     public SafetyViolationCleared = new Utils.Evt();
-    canEnable : boolean = true;
+    canEnable: boolean = true;
 
-    constructor(private _repo : Interfaces.IRepository<Models.SafetySettings>,
-                private _broker : Interfaces.ITradeBroker,
-                private _qlParams : Interfaces.IRepository<Models.QuotingParameters>,
-                private _messages : Interfaces.IPublishMessages) {
+    constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
+                private _broker: Interfaces.ITradeBroker,
+                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
+                private _messages: Interfaces.IPublishMessages) {
         _repo.NewParameters.on(_ => this.onNewParameters());
         _qlParams.NewParameters.on(_ => this.onNewParameters());
         _broker.Trade.on(this.onTrade);
@@ -51,7 +51,7 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
     private static isOlderThan(o: Models.Trade, settings: Models.SafetySettings) {
         var now = Utils.date();
-        return Math.abs(now.diff(o.time)) > (1000*settings.tradeRateSeconds);
+        return Math.abs(now.diff(o.time)) > (1000 * settings.tradeRateSeconds);
     }
 
     private recalculateSafeties = () => {
@@ -76,15 +76,15 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
     };
 
     private computeQtyLimit = (settings: Models.SafetySettings) => {
-        var orderTrades = (input : Models.Trade[]) : Models.Trade[] => {
+        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[] => {
             return _.chain(input)
                     .filter(o => !SafetySettingsManager.isOlderThan(o, settings))
-                    .sortBy((t : Models.Trade) => t.price)
+                    .sortBy((t: Models.Trade) => direction * t.price)
                     .value();
         };
 
-        this._buys = orderTrades(this._buys);
-        this._sells = orderTrades(this._sells);
+        this._buys = orderTrades(this._buys, -1);
+        this._sells = orderTrades(this._sells, 1);
 
         // don't count good trades against safety
         while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
@@ -105,7 +105,7 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
         return this._buys.concat(this._sells).reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
     };
 
-    private onTrade = (ut : Models.Trade) => {
+    private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
         if (SafetySettingsManager.isOlderThan(u, this._repo.latest)) return;
 
