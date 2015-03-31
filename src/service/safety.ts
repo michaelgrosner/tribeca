@@ -30,59 +30,60 @@ interface QuotesEnabledCondition {
     canEnable : boolean;
 }
 
-export class SafetySettingsManager implements QuotesEnabledCondition {
-    private _log: Utils.Logger = Utils.log("tribeca:qg");
+export class SafetyCalculator {
+    private _log: Utils.Logger = Utils.log("tribeca:sc");
+
+    NewValue = new Utils.Evt();
+
+    private _latest : number = null;
+    public get latest() { return this._latest; }
+    public set latest(val : number) {
+        if (!this._latest || Math.abs(val - this._latest) > 1e-3) {
+            this._latest = val;
+            this.NewValue.trigger(this._latest);
+
+            this._log("New safety value: ", this._latest);
+        }
+    }
 
     private _buys: Models.Trade[] = [];
     private _sells: Models.Trade[] = [];
-    private _previousVal = 0.0;
-
-    public SafetySettingsViolated = new Utils.Evt();
-    public SafetyViolationCleared = new Utils.Evt();
-    canEnable: boolean = true;
 
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
                 private _broker: Interfaces.ITradeBroker,
-                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
-                private _messages: Interfaces.IPublishMessages) {
-        _repo.NewParameters.on(_ => this.onNewParameters());
-        _qlParams.NewParameters.on(_ => this.onNewParameters());
+                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>) {
+        _repo.NewParameters.on(_ => this.computeQtyLimit());
+        _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);
     }
+
+    private onTrade = (ut: Models.Trade) => {
+        var u = _.cloneDeep(ut);
+        if (SafetyCalculator.isOlderThan(u, this._repo.latest)) return;
+
+        if (u.side === Models.Side.Ask) {
+            this._sells.push(u);
+        }
+        else if (u.side === Models.Side.Bid) {
+            this._buys.push(u);
+        }
+
+        this.computeQtyLimit();
+    };
 
     private static isOlderThan(o: Models.Trade, settings: Models.SafetySettings) {
         var now = Utils.date();
         return Math.abs(now.diff(o.time)) > (1000 * settings.tradeRateSeconds);
     }
 
-    private recalculateSafeties = () => {
+    private computeQtyLimit = () => {
         var settings = this._repo.latest;
 
-        var val = this.computeQtyLimit(settings);
-
-        if (val >= settings.tradesPerMinute && val > this._previousVal) {
-            this._previousVal = val;
-            this.SafetySettingsViolated.trigger();
-            this.canEnable = false;
-
-            var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
-            var msg = util.format("Trd vol safety violated (%d), waiting %s.", val, coolOffMinutes.humanize());
-            this._log(msg);
-            this._messages.publish(msg);
-
-            setTimeout(() => {
-                this.canEnable = true;
-                this.SafetyViolationCleared.trigger();
-            }, coolOffMinutes.asMilliseconds());
-        }
-    };
-
-    private computeQtyLimit = (settings: Models.SafetySettings) => {
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[] => {
             return _.chain(input)
-                    .filter(o => !SafetySettingsManager.isOlderThan(o, settings))
-                    .sortBy((t: Models.Trade) => direction * t.price)
-                    .value();
+                .filter(o => !SafetyCalculator.isOlderThan(o, settings))
+                .sortBy((t: Models.Trade) => direction * t.price)
+                .value();
         };
 
         this._buys = orderTrades(this._buys, -1);
@@ -104,24 +105,44 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
             }
         }
 
-        return this._buys.concat(this._sells).reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
+        this.latest = this._buys.concat(this._sells).reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
     };
+}
 
-    private onTrade = (ut: Models.Trade) => {
-        var u = _.cloneDeep(ut);
-        if (SafetySettingsManager.isOlderThan(u, this._repo.latest)) return;
+export class SafetySettingsManager implements QuotesEnabledCondition {
+    private _log: Utils.Logger = Utils.log("tribeca:qg");
 
-        if (u.side === Models.Side.Ask) {
-            this._sells.push(u);
+    private _previousVal = 0.0;
+
+    public SafetySettingsViolated = new Utils.Evt();
+    public SafetyViolationCleared = new Utils.Evt();
+    canEnable: boolean = true;
+
+    constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
+                private _safetyCalculator: SafetyCalculator,
+                private _messages: Interfaces.IPublishMessages) {
+        _safetyCalculator.NewValue.on(() => this.recalculateSafeties());
+        _repo.NewParameters.on(() => this.recalculateSafeties());
+    }
+
+    private recalculateSafeties = () => {
+        var val = this._safetyCalculator.latest;
+        var settings = this._repo.latest;
+
+        if (val >= settings.tradesPerMinute && val > this._previousVal && this.canEnable) {
+            this._previousVal = val;
+            this.SafetySettingsViolated.trigger();
+            this.canEnable = false;
+
+            var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
+            var msg = util.format("Trd vol safety violated (%d), waiting %s.", val, coolOffMinutes.humanize());
+            this._log(msg);
+            this._messages.publish(msg);
+
+            setTimeout(() => {
+                this.canEnable = true;
+                this.SafetyViolationCleared.trigger();
+            }, coolOffMinutes.asMilliseconds());
         }
-        else if (u.side === Models.Side.Bid) {
-            this._buys.push(u);
-        }
-
-        this.recalculateSafeties();
-    };
-
-    private onNewParameters = () => {
-        this.recalculateSafeties();
     };
 }

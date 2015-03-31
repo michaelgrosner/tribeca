@@ -173,7 +173,8 @@ Q.all([
 
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
     safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
-    var safeties = new Safety.SafetySettingsManager(safetyRepo, orderBroker, paramsRepo, messages);
+    var safetyCalculator = new Safety.SafetyCalculator(safetyRepo, orderBroker, paramsRepo);
+    var safeties = new Safety.SafetySettingsManager(safetyRepo, safetyCalculator, messages);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
     var active = new Agent.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
