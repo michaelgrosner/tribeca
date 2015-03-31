@@ -325,11 +325,31 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, params.size, askPx, params.size);
     }
 
+    private computeInverseJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+        var width = params.width;
+
+        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
+        if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
+        var bidPx = topBid.price;
+
+        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
+        if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
+        var askPx = topAsk.price;
+
+        if (Math.abs(askPx - bidPx) > width) {
+            askPx = askPx + width;
+            bidPx = bidPx - width;
+        }
+
+        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
+    }
+
     private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
         switch (params.mode) {
             case Models.QuotingMode.Mid: return this.computeMidQuote(fv, params);
             case Models.QuotingMode.Top: return this.computeTopQuote(filteredMkt, fv, params);
             case Models.QuotingMode.Join: return this.computeJoinQuote(filteredMkt, fv, params);
+            case Models.QuotingMode.InverseJoin: return this.computeInverseJoinQuote(filteredMkt, fv, params);
         }
     }
 

@@ -324,7 +324,7 @@ export function currencyPairEqual(a : CurrencyPair, b : CurrencyPair) : boolean 
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join }
+export enum QuotingMode { Top, Mid, Join, InverseJoin }
 export enum FairValueModel { BBO, wBBO }
 
 export class QuotingParameters {
