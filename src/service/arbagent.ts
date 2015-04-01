@@ -257,7 +257,7 @@ export class QuotingEngine {
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _ewma : Interfaces.IEwmaCalculator) {
-        _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));  // or should i listen to _broker.MarketData???
+        _fvEngine.FairValueChanged.on(() => this.recalcQuote(timeOrDefault(_fvEngine.latestFairValue)));
         _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
         _orderBroker.Trade.on(t => this.recalcQuote(Utils.date()));
@@ -288,40 +288,42 @@ export class QuotingEngine {
     }
 
     private static computeTopJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
-        var width = params.width;
-
         var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
 
         if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
             genQt.bidPx += .01;
         }
 
-        var minBid = fv.price - width / 2.0;
+        var minBid = fv.price - params.width / 2.0;
         genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
         if (params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
             genQt.askPx -= .01;
         }
 
-        var minAsk = fv.price + width / 2.0;
+        var minAsk = fv.price + params.width / 2.0;
         genQt.askPx = Math.max(minAsk, genQt.askPx);
 
         return genQt;
     }
 
     private static computeInverseJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
-        var width = params.width;
-
         var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
 
         var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
-        if (mktWidth > width) {
+        if (mktWidth > params.width) {
             genQt.askPx += params.width;
             genQt.bidPx -= params.width;
         }
-        else if (width/2.0 > mktWidth) {
-            genQt.askPx = fv.price + width / 2.0;
-            genQt.bidPx = fv.price - width / 2.0;
+
+        if (params.mode === Models.QuotingMode.InverseTop) {
+            if (genQt.bidSz > .2) genQt.bidPx += .01;
+            if (genQt.askSz > .2) genQt.askPx -= .01;
+        }
+
+        if (mktWidth < .4) {
+            genQt.askPx = fv.price + .2;
+            genQt.bidPx = fv.price - .2;
         }
 
         return new GeneratedQuote(genQt.bidPx, params.size, genQt.askPx, params.size);
@@ -335,6 +337,7 @@ export class QuotingEngine {
             case Models.QuotingMode.Join:
                 return QuotingEngine.computeTopJoinQuote(filteredMkt, fv, params);
             case Models.QuotingMode.InverseJoin:
+            case Models.QuotingMode.InverseTop:
                 return QuotingEngine.computeInverseJoinQuote(filteredMkt, fv, params);
         }
     }
