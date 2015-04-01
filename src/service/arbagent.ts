@@ -321,9 +321,9 @@ export class QuotingEngine {
             if (genQt.askSz > .2) genQt.askPx -= .01;
         }
 
-        if (mktWidth < .4) {
-            genQt.askPx = fv.price + .2;
-            genQt.bidPx = fv.price - .2;
+        if (mktWidth < .04) {
+            genQt.askPx = fv.price + .02;
+            genQt.bidPx = fv.price - .02;
         }
 
         return new GeneratedQuote(genQt.bidPx, params.size, genQt.askPx, params.size);
