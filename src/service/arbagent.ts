@@ -235,8 +235,6 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
 }
 
 export class QuotingEngine {
-    private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
-
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
     private _latest : Models.TwoSidedQuote = null;
@@ -267,7 +265,7 @@ export class QuotingEngine {
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
     }
 
-    private computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
         var size = params.size;
 
@@ -277,85 +275,73 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, size, askPx, size);
     }
 
-    private computeTopQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
-        var width = params.width;
-
+    private static getQuoteAtTopOfMarket(filteredMkt : Models.Market) : GeneratedQuote {
         var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
         if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
         var bidPx = topBid.price;
-
-        if (topBid.size > .2) {
-            bidPx += .01;
-        }
-
-        var minBid = fv.price - width / 2.0;
-        bidPx = Math.min(minBid, bidPx);
 
         var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
         if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
         var askPx = topAsk.price;
 
-        if (topAsk.size > .2) {
-            askPx -= .01;
+        return new GeneratedQuote(bidPx, topBid.size, askPx, topAsk.size);
+    }
+
+    private static computeTopJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+        var width = params.width;
+
+        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
+
+        if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
+            genQt.bidPx += .01;
+        }
+
+        var minBid = fv.price - width / 2.0;
+        genQt.bidPx = Math.min(minBid, genQt.bidPx);
+
+        if (params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
+            genQt.askPx -= .01;
         }
 
         var minAsk = fv.price + width / 2.0;
-        askPx = Math.max(minAsk, askPx);
+        genQt.askPx = Math.max(minAsk, genQt.askPx);
 
-        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
+        return genQt;
     }
 
-    private computeJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeInverseJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
         var width = params.width;
 
-        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
-        if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
-        var bidPx = topBid.price;
+        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
 
-        var minBid = fv.price - width / 2.0;
-        bidPx = Math.min(minBid, bidPx);
-
-        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
-        if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
-        var askPx = topAsk.price;
-
-        var maxAsk = fv.price + width / 2.0;
-        askPx = Math.max(maxAsk, askPx);
-
-        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
-    }
-
-    private computeInverseJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
-        var width = params.width;
-
-        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
-        if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
-        var bidPx = topBid.price;
-
-        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
-        if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
-        var askPx = topAsk.price;
-
-        if (Math.abs(askPx - bidPx) > width) {
-            askPx = askPx + width;
-            bidPx = bidPx - width;
+        var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
+        if (mktWidth > width) {
+            genQt.askPx += params.width;
+            genQt.bidPx -= params.width;
+        }
+        else if (width/2.0 > mktWidth) {
+            genQt.askPx = fv.price + width / 2.0;
+            genQt.bidPx = fv.price - width / 2.0;
         }
 
-        return new GeneratedQuote(bidPx, params.size, askPx, params.size);
+        return new GeneratedQuote(genQt.bidPx, params.size, genQt.askPx, params.size);
     }
 
-    private computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
         switch (params.mode) {
-            case Models.QuotingMode.Mid: return this.computeMidQuote(fv, params);
-            case Models.QuotingMode.Top: return this.computeTopQuote(filteredMkt, fv, params);
-            case Models.QuotingMode.Join: return this.computeJoinQuote(filteredMkt, fv, params);
-            case Models.QuotingMode.InverseJoin: return this.computeInverseJoinQuote(filteredMkt, fv, params);
+            case Models.QuotingMode.Mid:
+                return QuotingEngine.computeMidQuote(fv, params);
+            case Models.QuotingMode.Top:
+            case Models.QuotingMode.Join:
+                return QuotingEngine.computeTopJoinQuote(filteredMkt, fv, params);
+            case Models.QuotingMode.InverseJoin:
+                return QuotingEngine.computeInverseJoinQuote(filteredMkt, fv, params);
         }
     }
 
     private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue) {
         var params = this._qlParamRepo.latest;
-        var unrounded = this.computeQuoteUnrounded(filteredMkt, fv, params);
+        var unrounded = QuotingEngine.computeQuoteUnrounded(filteredMkt, fv, params);
 
         if (params.ewmaProtection && this._ewma.latest !== null) {
             if (this._ewma.latest > unrounded.askPx) {
