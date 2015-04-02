@@ -304,6 +304,9 @@ export class QuotingEngine {
         var minAsk = fv.price + params.width / 2.0;
         genQt.askPx = Math.max(minAsk, genQt.askPx);
 
+        genQt.bidSz = params.size;
+        genQt.askSz = params.size;
+
         return genQt;
     }
 
@@ -326,7 +329,10 @@ export class QuotingEngine {
             genQt.bidPx = fv.price - .02;
         }
 
-        return new GeneratedQuote(genQt.bidPx, params.size, genQt.askPx, params.size);
+        genQt.bidSz = params.size;
+        genQt.askSz = params.size;
+
+        return genQt;
     }
 
     private static computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
