@@ -76,7 +76,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
         setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
-    private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false);
+    private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
 
     private genSingleLevel = () => new Models.MarketSide(200 + 100*Math.random(), Math.random());
 

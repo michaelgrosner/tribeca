@@ -33,7 +33,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         var qt = u.onStartup ? null : this._quoteEngine.latestQuote;
         var mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
-        var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0]);
+        var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
 
         if (u.onStartup) {
             for (var i = 0; i < this.marketTrades.length; i++) {

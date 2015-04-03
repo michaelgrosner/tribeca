@@ -306,7 +306,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.onOrderBookChanged(t, side, price);
         }
 
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false));
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false, side));
     };
 
     private onChange = (msg : CoinbaseChange, t : Moment) => {

@@ -231,7 +231,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
         this._tradesClient.on("connect", this.onConnectionStatusChange);
         this._tradesClient.on("trade", (t : MarketTrade) => {
-            this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false));
+            this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, null));
         });
         this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
@@ -250,7 +250,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
                     var size = parseFloat(t[2]);
                     var time = moment(t[3]);
 
-                    this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, time, true));
+                    this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, time, true, null));
                 });
             })
     }
