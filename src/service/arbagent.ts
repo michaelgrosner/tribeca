@@ -436,7 +436,8 @@ export class QuoteSender {
                 private _activeRepo : ActiveRepository,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _fv : FairValueEngine,
-                private _broker : Interfaces.IMarketDataBroker) {
+                private _broker : Interfaces.IMarketDataBroker,
+                private _details : Interfaces.IBroker) {
         _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
         _quotingEngine.QuoteChanged.on(() => this.sendQuote(timeOrDefault(_quotingEngine.latestQuote)));
 
@@ -468,11 +469,13 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (this.hasEnoughPosition(this._pair.base, quote.ask.size) && !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)) {
+            if (this.hasEnoughPosition(this._pair.base, quote.ask.size) &&
+                    (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
-            if (this.hasEnoughPosition(this._pair.quote, quote.bid.size*quote.bid.price) && !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)) {
+            if (this.hasEnoughPosition(this._pair.quote, quote.bid.size * quote.bid.price) &&
+                    (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
                 bidStatus = Models.QuoteStatus.Live;
             }
         }

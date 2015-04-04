@@ -10,6 +10,8 @@ export interface IExchangeDetailsGateway {
     makeFee() : number;
     takeFee() : number;
     exchange() : Models.Exchange;
+
+    hasSelfTradePrevention : boolean;
 }
 
 export interface IGateway {
@@ -82,6 +84,8 @@ export interface IBroker {
 
     connectStatus : Models.ConnectivityStatus;
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
+
+    hasSelfTradePrevention : boolean;
 }
 
 export interface IEwmaCalculator {

@@ -403,6 +403,10 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 export class ExchangeBroker implements Interfaces.IBroker {
     private _log : Utils.Logger;
 
+    public get hasSelfTradePrevention() {
+        return this._baseGateway.hasSelfTradePrevention;
+    }
+
     makeFee() : number {
         return this._baseGateway.makeFee();
     }

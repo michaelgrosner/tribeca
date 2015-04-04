@@ -656,6 +656,10 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 }
 
 class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
+    public get hasSelfTradePrevention() {
+        return true;
+    }
+
     exchange() : Models.Exchange {
         return Models.Exchange.Coinbase;
     }
