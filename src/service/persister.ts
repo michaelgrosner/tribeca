@@ -96,7 +96,7 @@ export class Persister<T> {
                 if (err) deferred.reject(err);
                 else {
 
-                    var options : any = {};
+                    var options : any = {fields: {_id: 0}};
                     if (limit !== null) options.limit = limit;
                     if (count !== 0) options.skip = Math.max(count - limit, 0);
 
