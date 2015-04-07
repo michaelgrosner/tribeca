@@ -91,6 +91,11 @@ Q.all([
     var http = (<any>require('http')).Server(app);
     var io = require('socket.io')(http);
 
+    var basicAuth = require('basic-auth-connect');
+
+    var isFullUser = (username, password) => username === "mgrosner" && password === "password";
+    app.use(basicAuth(isFullUser));
+
     app.use(<any>compression());
     app.use(express.static(path.join(__dirname, "admin")));
     http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
