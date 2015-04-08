@@ -188,7 +188,7 @@ Q.all([
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
     var emptyEwma = new Agent.EWMACalculator(fvEngine);
-    var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher, marketDataBroker, 
+    var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
         orderBroker, positionBroker, emptyEwma);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
 

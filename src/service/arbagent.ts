@@ -211,13 +211,11 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
         }
 
         var value : number = fv.price;
-        if (this._latest === null) {
-            this.setLatest(value);
+        if (this._latest !== null) {
+            value = this._alpha * value + (1 - this._alpha) * this._latest;
         }
-        else {
-            var newVal = this._alpha * value + (1 - this._alpha) * this._latest;
-            this.setLatest(newVal);
-        }
+
+        this.setLatest(value);
     };
 
     private _latest : number = null;
@@ -253,7 +251,6 @@ export class QuotingEngine {
                 private _qlParamRepo : QuotingParametersRepository,
                 private _safetyParams : Safety.SafetySettingsRepository,
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
-                private _broker : Interfaces.IMarketDataBroker,
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _ewma : Interfaces.IEwmaCalculator) {
