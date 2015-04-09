@@ -320,8 +320,8 @@ _.assign(OrderBook.prototype, new function () {
         var oldState = self.state;
         self.state = newState;
 
-        if (self.fail_count > 9)
-            throw "Tried to reconnect 10 times. Giving up."
+        if (self.fail_count > 3)
+            throw "Tried to reconnect 4 times. Giving up.";
 
         if (self.state === self.STATES.error || self.state === self.STATES.closed) {
             self.fail_count += 1;
