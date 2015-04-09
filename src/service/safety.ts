@@ -94,8 +94,12 @@ export class SafetyCalculator {
             var sell = _.last(this._sells);
             var buy = _.last(this._buys);
             if (sell.price >= buy.price) {
-                buy.quantity -= sell.quantity;
-                sell.quantity -= buy.quantity;
+
+                var sellQty = sell.quantity;
+                var buyQty = buy.quantity;
+
+                buy.quantity -= sellQty;
+                sell.quantity -= buyQty;
 
                 if (buy.quantity < 1e-4) this._buys.pop();
                 if (sell.quantity < 1e-4) this._sells.pop();

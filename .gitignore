@@ -6,3 +6,5 @@ typings
 *.idea
 .baseDir.ts
 tribeca/
+*.log.*
+test/src
