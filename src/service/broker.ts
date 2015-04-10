@@ -442,8 +442,9 @@ export class ExchangeBroker implements Interfaces.IBroker {
             ? Models.ConnectivityStatus.Connected
             : Models.ConnectivityStatus.Disconnected;
 
-        this.ConnectChanged.trigger(newStatus);
         this._connectStatus = newStatus;
+        this.ConnectChanged.trigger(newStatus);
+
         this._log("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[this._connectStatus],
             Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
         this._connectivityPublisher.publish(this.connectStatus);

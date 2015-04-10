@@ -198,7 +198,7 @@ Q.all([
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {
 
-            var a = new Models.SerializedQuotesActive(active.latest, Utils.date());
+            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, Utils.date());
             mainLog("setting active to", a);
             activePersister.persist(a);
 

@@ -18,6 +18,11 @@ export interface IGateway {
     ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
 }
 
+export interface IBrokerConnectivity {
+    connectStatus : Models.ConnectivityStatus;
+    ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
+}
+
 export interface IMarketDataGateway extends IGateway {
     MarketData : Utils.Evt<Models.Market>;
     MarketTrade : Utils.Evt<Models.GatewayMarketTrade>;
@@ -76,14 +81,11 @@ export interface IOrderStateCache {
     exchIdsToClientIds : { [exchId: string] : string};
 }
 
-export interface IBroker {
+export interface IBroker extends IBrokerConnectivity {
     makeFee() : number;
     takeFee() : number;
     exchange() : Models.Exchange;
     pair : Models.CurrencyPair;
-
-    connectStatus : Models.ConnectivityStatus;
-    ConnectChanged : Utils.Evt<Models.ConnectivityStatus>;
 
     hasSelfTradePrevention : boolean;
 }
@@ -101,6 +103,8 @@ export interface IRepository<T> {
 export class Repository<T> implements IRepository<T> {
     private _log : Utils.Logger = Utils.log("tribeca:"+this._name);
 
+    NewParameters = new Utils.Evt();
+
     constructor(private _name : string,
                 private _validator : (a : T) => boolean,
                 private _paramsEqual : (a : T, b : T) => boolean,
@@ -112,8 +116,6 @@ export class Repository<T> implements IRepository<T> {
         _rec.registerReceiver(this.updateParameters);
         this._latest = defaultParameter;
     }
-
-    NewParameters = new Utils.Evt();
 
     private _latest : T;
     public get latest() : T {

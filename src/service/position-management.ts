@@ -22,7 +22,7 @@ class RegularFairValue {
 export class RegularFairValuePersister {
     private _diffTime = moment.duration(10, 'minutes');
 
-    constructor(private _persister: Persister.Persister<RegularFairValue>,
+    constructor(private _persister: Persister.IPersist<RegularFairValue>,
                 private _fvAgent: Agent.FairValueEngine,
                 initialValues: RegularFairValue[]) {
         if (!_.any(initialValues)) {

@@ -26,10 +26,6 @@ export class SafetySettingsRepository extends Interfaces.Repository<Models.Safet
     }
 }
 
-interface QuotesEnabledCondition {
-    canEnable : boolean;
-}
-
 export class SafetyCalculator {
     private _log: Utils.Logger = Utils.log("tribeca:sc");
 
@@ -113,13 +109,19 @@ export class SafetyCalculator {
     };
 }
 
-export class SafetySettingsManager implements QuotesEnabledCondition {
+export interface ISafetyManager {
+    SafetySettingsViolated : Utils.Evt<any>;
+    SafetyViolationCleared : Utils.Evt<any>;
+    canEnable : boolean;
+}
+
+export class SafetySettingsManager implements ISafetyManager {
     private _log: Utils.Logger = Utils.log("tribeca:qg");
 
     private _previousVal = 0.0;
 
-    public SafetySettingsViolated = new Utils.Evt();
-    public SafetyViolationCleared = new Utils.Evt();
+    public SafetySettingsViolated = new Utils.Evt<any>();
+    public SafetyViolationCleared = new Utils.Evt<any>();
     canEnable: boolean = true;
 
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
@@ -135,8 +137,8 @@ export class SafetySettingsManager implements QuotesEnabledCondition {
 
         if (val >= settings.tradesPerMinute && val > this._previousVal && this.canEnable) {
             this._previousVal = val;
-            this.SafetySettingsViolated.trigger();
             this.canEnable = false;
+            this.SafetySettingsViolated.trigger();
 
             var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
             var msg = util.format("Trd vol safety violated (%d), waiting %s.", val, coolOffMinutes.humanize());

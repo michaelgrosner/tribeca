@@ -9,11 +9,13 @@ import Models = require("../src/common/models");
 import Moment = require("moment");
 
 class StubSafetyRepo implements Interfaces.IRepository<Models.SafetySettings> {
+    updateParameters(newParams: Models.SafetySettings): void {}
     NewParameters = new Utils.Evt();
     latest : Models.SafetySettings;
 }
 
 class StubQLRepo implements Interfaces.IRepository<Models.QuotingParameters> {
+    updateParameters(newParams: Models.QuotingParameters): void {}
     NewParameters = new Utils.Evt();
     latest : Models.QuotingParameters;
 }
