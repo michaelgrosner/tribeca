@@ -29,7 +29,11 @@ export function timeSaver(rpt) {
     rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toDate();
 }
 
-export class RepositoryPersister<T> {
+export interface IPersist<T> {
+    persist(data : T) : void;
+}
+
+export class RepositoryPersister<T> implements IPersist<T> {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = () : Q.Promise<T> => {
@@ -76,7 +80,7 @@ export class RepositoryPersister<T> {
     }
 }
 
-export class Persister<T> {
+export class Persister<T> implements IPersist<T> {
      _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
     public load = (exchange : Models.Exchange, pair : Models.CurrencyPair, limit : number = null) : Q.Promise<T[]> => {
