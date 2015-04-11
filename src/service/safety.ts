@@ -146,6 +146,7 @@ export class SafetySettingsManager implements ISafetyManager {
             this._messages.publish(msg);
 
             setTimeout(() => {
+                this._previousVal = 0.0;
                 this.canEnable = true;
                 this.SafetyViolationCleared.trigger();
             }, coolOffMinutes.asMilliseconds());
