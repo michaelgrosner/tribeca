@@ -19,6 +19,7 @@ import Active = require("./active-state");
 import FairValue = require("./fair-value");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
+import PositionManagement = require("./position-management");
 
 class GeneratedQuote {
     constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
@@ -86,13 +87,17 @@ export class QuotingEngine {
                 private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _positionBroker : Interfaces.IPositionBroker,
-                private _ewma : Interfaces.IEwmaCalculator) {
+                private _ewma : Interfaces.IEwmaCalculator,
+                private _positionManager : PositionManagement.PositionManager) {
+        var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
+
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
-        _qlParamRepo.NewParameters.on(() => this.recalcQuote(Utils.date()));
-        _safetyParams.NewParameters.on(() => this.recalcQuote(Utils.date()));
-        _orderBroker.Trade.on(t => this.recalcQuote(Utils.date()));
-        _ewma.Updated.on(() => this.recalcQuote(Utils.date()));
+        _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
+        _safetyParams.NewParameters.on(recalcWithoutInputTime);
+        _orderBroker.Trade.on(recalcWithoutInputTime);
+        _ewma.Updated.on(recalcWithoutInputTime);
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
+        _positionManager.NewTargetPosition.on(recalcWithoutInputTime);
     }
 
     private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {

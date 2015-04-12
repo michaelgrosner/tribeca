@@ -3,21 +3,19 @@
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
 
-import Config = require("./config");
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
 import Statistics = require("./statistics");
-import Safety = require("./safety");
 import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
 import Agent = require("./arbagent");
 import mongodb = require('mongodb');
 import FairValue = require("./fair-value");
+import moment = require("moment");
 
-class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
+export class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
     constructor(db : Q.Promise<mongodb.Db>) {
         super(db, "rfv", Persister.timeLoader, Persister.timeSaver);
     }
@@ -39,7 +37,7 @@ export class PositionManager {
                 private _data: Models.RegularFairValue[],
                 private _shortEwma : Statistics.IComputeStatistics,
                 private _longEwma : Statistics.IComputeStatistics) {
-        var lastTime = (this._data !== null || _.any(_data)) ? _.last(this._data).time : null;
+        var lastTime = (this._data !== null && _.any(_data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(this.updateEwmaValues, moment.duration(10, 'minutes'), lastTime);
     }
 
@@ -60,8 +58,8 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._log("recalculated regular fair value, short:", newShort, "long:", newLong,
-            "target:", this._latest, "currentFv:", fv.price);
+        this._log("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", Utils.roundFloat(newLong),
+            "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
         this._persister.persist(rfv);

@@ -8,8 +8,9 @@ export class EwmaStatisticCalculator implements IComputeStatistics {
     private _latest : number = null;
     public get latest() { return this._latest; }
 
-    initialize(seedData: number[]): void {
-        this._latest = _.last(seedData);
+    initialize(seedData: number[]): IComputeStatistics {
+        seedData.forEach(this.addNewValue);
+        return this;
     }
 
     addNewValue(value: number): number {

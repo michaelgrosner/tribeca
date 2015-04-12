@@ -5,6 +5,12 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 
+import _ = require("lodash");
+import Q = require("q");
+import path = require("path");
+import express = require('express');
+import util = require('util');
+
 import Utils = require("./utils");
 import Config = require("./config");
 import HitBtc = require("./hitbtc");
@@ -19,17 +25,15 @@ import Models = require("../common/models");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
-import path = require("path");
-import Q = require("q");
-import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
 import Active = require("./active-state");
 import FairValue = require("./fair-value");
 import Web = require("./web");
-import util = require('util');
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
+import PositionManagement = require("./position-management");
+import Statistics = require("./statistics");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -74,6 +78,7 @@ var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySet
 var paramsPersister = new Persister.RepositoryPersister(db, 
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, null), 
     getEngineTopic(Messaging.Topics.QuotingParametersChange));
+var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
 
 Q.all([
     orderPersister.load(exchange, pair, 25000),
@@ -82,14 +87,16 @@ Q.all([
     messagesPersister.loadAll(50),
     safetyPersister.loadLatest(),
     paramsPersister.loadLatest(),
-    activePersister.loadLatest()
+    activePersister.loadLatest(),
+    rfvPersister.loadAll(50)
 ]).spread((initOrders : Models.OrderStatusReport[], 
            initTrades : Models.Trade[], 
            initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[],
            initMsgs : Models.Message[],
            initSafety : Models.SafetySettings, 
            initParams : Models.QuotingParameters,
-           initActive : Models.SerializedQuotesActive) => {
+           initActive : Models.SerializedQuotesActive,
+           initRfv : Models.RegularFairValue[]) => {
 
     var app = express();
     var http = (<any>require('http')).Server(app);
@@ -191,9 +198,14 @@ Q.all([
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
-    var emptyEwma = new Agent.EWMACalculator(fvEngine);
+    var ewma = new Agent.EWMACalculator(fvEngine);
+
+    var rfvValues = _.map(initRfv, (r : Models.RegularFairValue) => r.value);
+    var shortEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
+    var longEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
+    var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
     var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
-        orderBroker, positionBroker, emptyEwma);
+        orderBroker, positionBroker, ewma, positionMgr);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
