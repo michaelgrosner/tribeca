@@ -206,7 +206,7 @@ export class QuotingEngine {
 
         var targetBasePosition : number = 0.0;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
-            targetBasePosition = this._positionManager.latestTargetPosition * latestPosition.value;
+            targetBasePosition = ((1+this._positionManager.latestTargetPosition)/2.0) * latestPosition.value;
         }
         else {
             targetBasePosition = params.targetBasePosition;
