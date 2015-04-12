@@ -376,6 +376,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, value, this._base.pair, this._base.exchange());
 
+        if (_.isEqual(this.latestReport, positionReport)) return;
+
         this._log("New position report: %j", positionReport);
         this._report = positionReport;
         this._positionPublisher.publish(positionReport);
