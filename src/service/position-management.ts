@@ -17,11 +17,7 @@ import Agent = require("./arbagent");
 import mongodb = require('mongodb');
 import FairValue = require("./fair-value");
 
-class RegularFairValue {
-    constructor(public time: Moment, public value: number) {}
-}
-
-class RegularFairValuePersister extends Persister.Persister<RegularFairValue> {
+class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
     constructor(db : Q.Promise<mongodb.Db>) {
         super(db, "rfv", Persister.timeLoader, Persister.timeSaver);
     }
@@ -38,9 +34,9 @@ export class PositionManager {
     }
 
     private _timer : RegularTimer;
-    constructor(private _persister: Persister.IPersist<RegularFairValue>,
+    constructor(private _persister: Persister.IPersist<Models.RegularFairValue>,
                 private _fvAgent: FairValue.FairValueEngine,
-                private _data: RegularFairValue[],
+                private _data: Models.RegularFairValue[],
                 private _shortEwma : Statistics.IComputeStatistics,
                 private _longEwma : Statistics.IComputeStatistics) {
         var lastTime = (this._data !== null || _.any(_data)) ? _.last(this._data).time : null;
@@ -52,7 +48,7 @@ export class PositionManager {
         if (fv === null)
             return;
 
-        var rfv = new RegularFairValue(Utils.date(), fv.price);
+        var rfv = new Models.RegularFairValue(Utils.date(), fv.price);
 
         var newShort = this._shortEwma.addNewValue(fv.price);
         var newLong = this._longEwma.addNewValue(fv.price);
@@ -64,7 +60,8 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._log("recalculated regular fair value, short:", newShort, "long:", newLong, "currentFv:", fv.price);
+        this._log("recalculated regular fair value, short:", newShort, "long:", newLong,
+            "target:", this._latest, "currentFv:", fv.price);
 
         this._data.push(rfv);
         this._persister.persist(rfv);

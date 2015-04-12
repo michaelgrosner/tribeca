@@ -351,18 +351,10 @@ export class ProductAdvertisement {
     constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string) { }
 }
 
-export function productAdvertisementsEqual(a: ProductAdvertisement, b: ProductAdvertisement) {
-    return a.exchange === b.exchange && currencyPairEqual(a.pair, b.pair);
-}
-
 export class Message implements ITimestamped {
     constructor(public text: string, public time: Moment) {}
 }
 
-export enum ExternalValuationSource { Winkdex }
-
-export class ExternalValuationUpdate implements ITimestamped {
-    constructor(public value: number,
-                public time: Moment,
-                public source: ExternalValuationSource) {}
+export class RegularFairValue {
+    constructor(public time: Moment, public value: number) {}
 }
