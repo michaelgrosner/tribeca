@@ -14,6 +14,7 @@ import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
 import Web = require("web");
+import Statistics = require("./statistics");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
@@ -242,10 +243,7 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
             return;
         }
 
-        var value : number = fv.price;
-        if (this._latest !== null) {
-            value = this._alpha * value + (1 - this._alpha) * this._latest;
-        }
+        var value = Statistics.computeEwma(fv.price, this._latest, this._alpha);
 
         this.setLatest(value);
     };
