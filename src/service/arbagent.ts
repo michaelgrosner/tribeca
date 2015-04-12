@@ -81,8 +81,7 @@ export class QuotingEngine {
         this._quotePublisher.publish(this._latest);
     }
 
-    constructor(private _pair : Models.CurrencyPair,
-                private _filteredMarkets : MarketFiltration.MarketFiltration,
+    constructor(private _filteredMarkets : MarketFiltration.MarketFiltration,
                 private _fvEngine : FairValue.FairValueEngine,
                 private _qlParamRepo : QuotingParameters.QuotingParametersRepository,
                 private _safetyParams : Safety.SafetySettingsRepository,

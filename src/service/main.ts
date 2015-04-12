@@ -204,7 +204,7 @@ Q.all([
     var shortEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
     var longEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
     var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
-    var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
+    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
         orderBroker, positionBroker, ewma, positionMgr);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
 
