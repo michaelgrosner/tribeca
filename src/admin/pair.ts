@@ -64,13 +64,15 @@ class QuotingButtonViewModel extends FormViewModel<boolean> {
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableQuotingModes = [];
     availableFvModels = [];
+    availableAutoPositionModes = [];
 
     constructor(sub : Messaging.ISubscribe<Models.QuotingParameters>,
                 fire : Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
+        this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
     }
 
     private static getMapping<T>(enumObject : T) {
@@ -278,15 +280,6 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.fairValue = fv.price;
     };
 
-    var updateExtVal = (ev : Models.ExternalValuationUpdate) => {
-        if (ev == null) {
-            clearExtVal();
-            return;
-        }
-
-        $scope.extVal = ev.value;
-    };
-
     var subscribers = [];
 
     var makeSubscriber = <T>(topic : string, updateFn, clearFn) => {
@@ -300,7 +293,6 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote, updateQuote, clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, updateQuoteStatus, clearQuoteStatus);
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
-    makeSubscriber<Models.ExternalValuationUpdate>(Messaging.Topics.ExternalValuation, updateExtVal, clearExtVal);
 
     $scope.$on('$destroy', () => {
         subscribers.forEach(d => d.disconnect());

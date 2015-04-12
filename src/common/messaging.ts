@@ -71,7 +71,7 @@ export class Subscriber<T> implements ISubscribe<T> {
     constructor(private topic : string, io : any,
                 private _log : (...args: any[]) => void = console.log) {
         this._log("creating subscriber to", this.topic);
-        this._io = io("/"+this.topic, {forceNew: true, transports: ['websocket']});
+        this._io = io("/"+this.topic, {forceNew: true});
         this._io.on("connect", this.onConnect);
         this._io.on("disconnect", this.onDisconnect);
         this._io.on(Prefixes.MESSAGE, this.onIncremental);

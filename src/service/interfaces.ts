@@ -73,6 +73,7 @@ export interface IOrderBroker extends ITradeBroker {
 
 export interface IPositionBroker {
     getPosition(currency : Models.Currency) : Models.CurrencyPosition;
+    latestReport : Models.PositionReport;
 }
 
 export interface IOrderStateCache {

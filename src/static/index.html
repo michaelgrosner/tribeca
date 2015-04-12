@@ -167,12 +167,21 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
-                                            <div class="input-group-addon">fvMd</div>
+                                            <div class="input-group-addon">fv</div>
                                             <select class="form-control input-sm"
                                                     ng-model="pair.quotingParameters.display.fvModel"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">apMode</div>
+                                            <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.autoPositionMode"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableAutoPositionModes"></select>
                                         </div>
                                     </div>
 

@@ -318,6 +318,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop }
 export enum FairValueModel { BBO, wBBO }
+export enum AutoPositionMode { Off, EwmaBasic }
 
 export class QuotingParameters {
     constructor(public width: number,
@@ -326,7 +327,8 @@ export class QuotingParameters {
                 public fvModel: FairValueModel,
                 public targetBasePosition: number,
                 public positionDivergence: number,
-                public ewmaProtection: boolean) {}
+                public ewmaProtection: boolean,
+                public autoPositionMode: AutoPositionMode) {}
 }
 
 export class SafetySettings {

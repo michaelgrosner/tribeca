@@ -197,13 +197,22 @@ export class QuotingEngine {
             }
         }
 
-        var latestPosition = this._positionBroker.getPosition(this._pair.base);
-        if (typeof latestPosition === "undefined") return null;
-        var tPos = latestPosition.heldAmount + latestPosition.amount;
-        if (tPos < params.targetBasePosition - params.positionDivergence) {
+        var latestPosition = this._positionBroker.latestReport;
+        if (latestPosition === null) return null;
+
+        var targetBasePosition : number = 0.0;
+        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
+            targetBasePosition = this._positionManager.latestTargetPosition * this._positionBroker.latestReport.value;
+        }
+        else {
+            targetBasePosition = params.targetBasePosition;
+        }
+
+        var tPos = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        if (tPos < targetBasePosition - params.positionDivergence) {
             unrounded.askPx += 20; // TODO: revisit! throw away?
         }
-        if (tPos > params.targetBasePosition + params.positionDivergence) {
+        if (tPos > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx -= 20; // TODO: revisit! throw away?
         }
 

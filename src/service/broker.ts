@@ -352,6 +352,10 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     private _log : Utils.Logger;
 
     private _report : Models.PositionReport = null;
+    public get latestReport() : Models.PositionReport {
+        return this._report;
+    }
+
     private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
     public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
         return this._currencies[currency];

@@ -6,6 +6,7 @@
 import Models = require("../common/models");
 import Interfaces = require("./interfaces");
 import Messaging = require("../common/messaging");
+import _ = require("lodash");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
     constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
