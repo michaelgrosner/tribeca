@@ -53,6 +53,9 @@ export class PositionManager {
 
         var newTargetPosition = newShort - newLong;
 
+        if (newTargetPosition > 1) newTargetPosition = 1;
+        if (newTargetPosition < -1) newTargetPosition = -1;
+
         if (Math.abs(newTargetPosition - this._latest) > 1e-2) {
             this._latest = newTargetPosition;
             this.NewTargetPosition.trigger();
