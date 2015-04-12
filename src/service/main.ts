@@ -24,6 +24,7 @@ import Q = require("q");
 import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
+import Active = require("./active-state");
 import Web = require("./web");
 import util = require('util');
 
@@ -182,7 +183,7 @@ Q.all([
     var safeties = new Safety.SafetySettingsManager(safetyRepo, safetyCalculator, messages);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
-    var active = new Agent.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
+    var active = new Active.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
 
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);

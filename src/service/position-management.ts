@@ -20,7 +20,7 @@ class RegularFairValue {
     constructor(public time: Moment, public value: number) {}
 }
 
-class RegularFairValuePersister extends Persister.Persister {
+class RegularFairValuePersister extends Persister.Persister<RegularFairValue> {
     constructor(db : Q.Promise<mongodb.Db>) {
         super(db, "rfv", Persister.timeLoader, Persister.timeSaver);
     }
