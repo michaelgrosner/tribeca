@@ -4,6 +4,16 @@ import Models = require("../common/models");
 import momentjs = require('moment');
 export var date = momentjs.utc;
 
+export function timeOrDefault(x : Models.ITimestamped) : Moment {
+    if (x === null)
+        return date();
+
+    if (typeof x !== "undefined" && typeof x.time !== "undefined")
+        return x.time;
+
+    return date();
+}
+
 import util = require("util");
 import winston = require("winston");
 winston.add(winston.transports.DailyRotateFile, {

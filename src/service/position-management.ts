@@ -15,6 +15,7 @@ import _ = require("lodash");
 import Persister = require("./persister");
 import Agent = require("./arbagent");
 import mongodb = require('mongodb');
+import FairValue = require("./fair-value");
 
 class RegularFairValue {
     constructor(public time: Moment, public value: number) {}
@@ -38,7 +39,7 @@ export class PositionManager {
 
     private _timer : RegularTimer;
     constructor(private _persister: Persister.IPersist<RegularFairValue>,
-                private _fvAgent: Agent.FairValueEngine,
+                private _fvAgent: FairValue.FairValueEngine,
                 private _data: RegularFairValue[],
                 private _shortEwma : Statistics.IComputeStatistics,
                 private _longEwma : Statistics.IComputeStatistics) {

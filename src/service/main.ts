@@ -25,8 +25,11 @@ import express = require('express');
 import compression = require("compression");
 import Persister = require("./persister");
 import Active = require("./active-state");
+import FairValue = require("./fair-value");
 import Web = require("./web");
 import util = require('util');
+import QuotingParameters = require("./quoting-parameters");
+import MarketFiltration = require("./market-filtration");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
@@ -174,7 +177,7 @@ Q.all([
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
     var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);
 
-    var paramsRepo = new Agent.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
+    var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
 
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
@@ -186,8 +189,8 @@ Q.all([
     var active = new Active.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
 
     var quoter = new Quoter.Quoter(orderBroker, broker);
-    var filtration = new Agent.MarketFiltration(quoter, marketDataBroker);
-    var fvEngine = new Agent.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
+    var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
+    var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
     var emptyEwma = new Agent.EWMACalculator(fvEngine);
     var quotingEngine = new Agent.QuotingEngine(pair, filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
         orderBroker, positionBroker, emptyEwma);

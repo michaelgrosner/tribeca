@@ -1,0 +1,85 @@
+/// <reference path="../common/models.ts" />
+/// <reference path="../common/messaging.ts" />
+/// <reference path="config.ts" />
+/// <reference path="utils.ts" />
+
+import Models = require("../common/models");
+import Messaging = require("../common/messaging");
+import Utils = require("./utils");
+import Interfaces = require("./interfaces");
+import Quoter = require("./quoter");
+import Safety = require("./safety");
+import util = require("util");
+import _ = require("lodash");
+import Persister = require("./persister");
+import Web = require("web");
+import Statistics = require("./statistics");
+import Active = require("./active-state");
+import MarketFiltration = require("./market-filtration");
+import QuotingParameters = require("./quoting-parameters");
+
+export class FairValueEngine {
+    public FairValueChanged = new Utils.Evt<Models.FairValue>();
+
+    private _latest : Models.FairValue = null;
+    public get latestFairValue() { return this._latest; }
+    public set latestFairValue(val : Models.FairValue) {
+        if (this._latest != null
+            && val != null
+            && Math.abs(this._latest.price - val.price) < 0.02) return;
+
+        this._latest = val;
+        this.FairValueChanged.trigger();
+        this._fvPublisher.publish(this._latest);
+
+        if (this._latest !== null)
+            this._fvPersister.persist(this._latest);
+    }
+
+    constructor(private _filtration : MarketFiltration.MarketFiltration,
+                private _qlParamRepo : QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
+                private _fvPublisher : Messaging.IPublish<Models.FairValue>,
+                private _fvHttpPublisher : Web.StandaloneHttpPublisher<Models.FairValue>,
+                private _fvPersister : Persister.FairValuePersister) {
+        _qlParamRepo.NewParameters.on(() => this.recalcFairValue(Utils.date()));
+        _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket)));
+        _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+        _fvHttpPublisher.registerSnapshot(this._fvPersister.loadAll);
+    }
+
+    private static ComputeFVUnrounded(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+        switch (model) {
+            case Models.FairValueModel.BBO:
+                return (ask.price + bid.price)/2.0;
+            case Models.FairValueModel.wBBO:
+                return (ask.price*ask.size + bid.price*bid.size) / (ask.size + bid.size);
+            default:
+                throw new Error(Models.FairValueModel[model]);
+        }
+    }
+
+    private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+        var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
+        return Utils.roundFloat(unrounded);
+    }
+
+    private recalcFairValue = (t : Moment) => {
+        var mkt = this._filtration.latestFilteredMarket;
+
+        if (mkt == null) {
+            this.latestFairValue = null;
+            return;
+        }
+
+        var bid = mkt.bids;
+        var ask = mkt.asks;
+
+        if (ask.length < 1 || bid.length < 1) {
+            this.latestFairValue = null;
+            return;
+        }
+
+        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
+        this.latestFairValue = fv;
+    };
+}
