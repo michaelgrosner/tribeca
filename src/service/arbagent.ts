@@ -67,6 +67,8 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
 }
 
 export class QuotingEngine {
+    private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
+
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
     private _latest : Models.TwoSidedQuote = null;
@@ -198,11 +200,14 @@ export class QuotingEngine {
         }
 
         var latestPosition = this._positionBroker.latestReport;
-        if (latestPosition === null) return null;
+        if (latestPosition === null) {
+            this._log("cannot compute a quote since no position report exists!");
+            return null;
+        }
 
         var targetBasePosition : number = 0.0;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
-            targetBasePosition = this._positionManager.latestTargetPosition * this._positionBroker.latestReport.value;
+            targetBasePosition = this._positionManager.latestTargetPosition * latestPosition.value;
         }
         else {
             targetBasePosition = params.targetBasePosition;

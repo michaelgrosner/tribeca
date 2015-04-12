@@ -47,8 +47,6 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
                 private _marketPublisher : Messaging.IPublish<Models.Market>,
                 private _messages : MessagesPubisher) {
-        var msgLog = Utils.log("tribeca:messaging:marketdata");
-
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
@@ -308,8 +306,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        var msgLog = Utils.log("tribeca:messaging:orders");
-
         _orderStatusPublisher.registerSnapshot(() => _.last(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
         _tradeHttp.registerSnapshot(() => this._trades);
@@ -362,31 +358,28 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     }
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
-        if (typeof this._currencies[rpt.currency] === "undefined" || this._currencies[rpt.currency].amount != rpt.amount) {
-            this._currencies[rpt.currency] = rpt;
+        this._currencies[rpt.currency] = rpt;
+        var basePosition = this.getPosition(this._base.pair.base);
+        var quotePosition = this.getPosition(this._base.pair.quote);
 
-            var basePosition = this.getPosition(this._base.pair.base);
-            var quotePosition = this.getPosition(this._base.pair.quote);
+        if (typeof basePosition === "undefined"
+            || typeof quotePosition === "undefined"
+            || this._mdBroker.currentBook === null
+            || this._mdBroker.currentBook.bids.length === 0
+            || this._mdBroker.currentBook.asks.length === 0)
+            return;
 
-            if (typeof basePosition === "undefined"
-                || typeof quotePosition === "undefined"
-                || this._mdBroker.currentBook === null
-                || this._mdBroker.currentBook.bids.length === 0
-                || this._mdBroker.currentBook.asks.length === 0)
-                return;
+        var baseAmount = basePosition.amount;
+        var quoteAmount = quotePosition.amount;
+        var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
+        var value = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
+        var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
+            quotePosition.heldAmount, value, this._base.pair, this._base.exchange());
 
-            var baseAmount = basePosition.amount;
-            var quoteAmount = quotePosition.amount;
-            var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
-            var value = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
-            var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-                quotePosition.heldAmount, value, this._base.pair, this._base.exchange());
-
-            this._log("New position report: %j", positionReport);
-            this._report = positionReport;
-            this._positionPublisher.publish(positionReport);
-            this._positionPersister.persist(positionReport);
-        }
+        this._log("New position report: %j", positionReport);
+        this._report = positionReport;
+        this._positionPublisher.publish(positionReport);
+        this._positionPersister.persist(positionReport);
     };
 
     constructor(private _base : Interfaces.IBroker,
@@ -464,8 +457,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
-        var msgLog = Utils.log("tribeca:messaging:marketdata");
-
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 
         this._mdGateway.ConnectChanged.on(s => {
