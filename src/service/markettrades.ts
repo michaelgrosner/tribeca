@@ -15,9 +15,19 @@ import Broker = require("./broker");
 import mongodb = require('mongodb');
 import Web = require("./web");
 
+var loader = (d : Models.ExchangePairMessage<Models.MarketTrade>) => {
+    P.timeLoader(d.data);
+    P.timeLoader(d.data.quote);
+};
+
+var saver = (d : Models.ExchangePairMessage<Models.MarketTrade>) => {
+    P.timeSaver(d.data);
+    P.timeSaver(d.data.quote);
+};
+
 export class MarketTradePersister extends P.Persister<Models.ExchangePairMessage<Models.MarketTrade>> {
     constructor(db : Q.Promise<mongodb.Db>) {
-        super(db, "mt", d => P.timeLoader(d.data), d => P.timeSaver(d.data));
+        super(db, "mt", loader, saver);
     }
 }
 

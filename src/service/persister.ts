@@ -22,11 +22,13 @@ export function loadDb() {
 }
 
 export function timeLoader(x) {
-    x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
+    if (typeof x.time !== "undefined")
+        x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
 }
 
-export function timeSaver(rpt) {
-    rpt.time = (moment.isMoment(rpt.time) ? rpt.time : moment(rpt.time)).toDate();
+export function timeSaver(x) {
+    if (typeof x.time !== "undefined")
+        x.time = (moment.isMoment(x.time) ? x.time : moment(x.time)).toDate();
 }
 
 export interface IPersist<T> {
