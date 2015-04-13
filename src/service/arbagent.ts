@@ -160,9 +160,9 @@ export class QuotingEngine {
             if (genQt.askSz > .2) genQt.askPx -= .01;
         }
 
-        if (mktWidth < .04) {
-            genQt.askPx = fv.price + .02;
-            genQt.bidPx = fv.price - .02;
+        if (mktWidth < (2.0 * params.width / 3.0)) {
+            genQt.askPx += params.width / 4.0;
+            genQt.bidPx -= params.width / 4.0;
         }
 
         genQt.bidSz = params.size;
