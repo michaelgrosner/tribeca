@@ -131,6 +131,7 @@ Q.all([
     var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
     var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
     var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
+    var targetBasePositionPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
 
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
@@ -201,11 +202,12 @@ Q.all([
     var ewma = new Agent.EWMACalculator(fvEngine);
 
     var rfvValues = _.map(initRfv, (r : Models.RegularFairValue) => r.value);
-    var shortEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
-    var longEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
+    var shortEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
+    var longEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
     var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
+    var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher);
     var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
-        orderBroker, positionBroker, ewma, positionMgr);
+        orderBroker, positionBroker, ewma, tbp);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,

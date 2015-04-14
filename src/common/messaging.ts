@@ -220,4 +220,5 @@ export class Topics {
     static Message = "msg";
     static ExternalValuation = "ev";
     static QuoteStatus = "qs";
+    static TargetBasePosition = "tbp";
 }

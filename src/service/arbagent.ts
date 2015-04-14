@@ -89,7 +89,7 @@ export class QuotingEngine {
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _ewma : Interfaces.IEwmaCalculator,
-                private _positionManager : PositionManagement.PositionManager) {
+                private _positionManager : PositionManagement.TargetBasePositionManager) {
         var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
 
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
@@ -198,25 +198,18 @@ export class QuotingEngine {
             }
         }
 
-        var latestPosition = this._positionBroker.latestReport;
-        if (latestPosition === null) {
+        var targetBasePosition = this._positionManager.latestTargetPosition;
+        if (targetBasePosition === null) {
             this._log("cannot compute a quote since no position report exists!");
             return null;
         }
 
-        var targetBasePosition : number = 0.0;
-        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
-            targetBasePosition = ((1+this._positionManager.latestTargetPosition)/2.0) * latestPosition.value;
-        }
-        else {
-            targetBasePosition = params.targetBasePosition;
-        }
-
-        var tPos = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        if (tPos < targetBasePosition - params.positionDivergence) {
+        var latestPosition = this._positionBroker.latestReport;
+        var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx += 20; // TODO: revisit! throw away?
         }
-        if (tPos > targetBasePosition + params.positionDivergence) {
+        if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx -= 20; // TODO: revisit! throw away?
         }
 

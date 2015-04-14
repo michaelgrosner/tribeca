@@ -14,6 +14,8 @@ import Agent = require("./arbagent");
 import mongodb = require('mongodb');
 import FairValue = require("./fair-value");
 import moment = require("moment");
+import Interfaces = require("./interfaces");
+import QuotingParameters = require("./quoting-parameters");
 
 export class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
     constructor(db : Q.Promise<mongodb.Db>) {
@@ -66,6 +68,49 @@ export class PositionManager {
 
         this._data.push(rfv);
         this._persister.persist(rfv);
+    };
+}
+
+export class TargetBasePositionManager {
+    private _log: Utils.Logger = Utils.log("tribeca:positionmanager");
+
+    public NewTargetPosition = new Utils.Evt();
+
+    private _latest : number = null;
+    public get latestTargetPosition() : number {
+        return this._latest;
+    }
+
+    constructor(private _positionManager : PositionManager,
+                private _params : QuotingParameters.QuotingParametersRepository,
+                private _positionBroker : Interfaces.IPositionBroker,
+                private _wrapped : Messaging.IPublish<number>) {
+        _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
+        _params.NewParameters.on(() => this.recomputeTargetPosition());
+        _positionManager.NewTargetPosition.on(() => this.recomputeTargetPosition());
+    }
+
+    private recomputeTargetPosition = () => {
+        var latestPosition = this._positionBroker.latestReport;
+        var latestTargetPosition = this._positionManager.latestTargetPosition;
+        var params = this._params.latest;
+
+        if (params === null || latestPosition === null || latestTargetPosition === null)
+            return;
+
+        var targetBasePosition : number = params.targetBasePosition;
+        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
+            targetBasePosition = ((1+this._positionManager.latestTargetPosition)/2.0) * latestPosition.value;
+        }
+
+        if (this._latest === null || Math.abs(this._latest - targetBasePosition) > 0.05) {
+            this._latest = targetBasePosition;
+            this.NewTargetPosition.trigger();
+
+            this._wrapped.publish(this.latestTargetPosition);
+
+            this._log("recalculated target base position:", Utils.roundFloat(this._latest));
+        }
     };
 }
 

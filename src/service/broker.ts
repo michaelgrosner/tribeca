@@ -347,6 +347,8 @@ export class PositionPersister extends Persister.Persister<Models.PositionReport
 export class PositionBroker implements Interfaces.IPositionBroker {
     private _log : Utils.Logger;
 
+    public NewReport = new Utils.Evt<Models.PositionReport>();
+
     private _report : Models.PositionReport = null;
     public get latestReport() : Models.PositionReport {
         return this._report;
@@ -380,6 +382,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 
         this._log("New position report: %j", positionReport);
         this._report = positionReport;
+        this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
         this._positionPersister.persist(positionReport);
     };
