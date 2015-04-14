@@ -133,7 +133,7 @@ Q.all([
     var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
     var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
     var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
-    var targetBasePositionPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
+    var targetBasePositionPublisher = getEnginePublisher(Messaging.Topics.TargetBasePosition);
     var tradeSafetyPublisher = getEnginePublisher(Messaging.Topics.TradeSafetyValue);
 
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);

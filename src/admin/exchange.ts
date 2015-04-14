@@ -72,15 +72,18 @@ angular
 // ===================
 
 interface TargetBasePositionScope extends ng.IScope {
-    value : number;
+    targetBasePosition : number;
 }
 
 var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
-    var updatePosition = (value : number) => $scope.value = value;
+    var update = (value : number) => {
+        $scope.targetBasePosition = value;
+    };
+
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TargetBasePosition)
-        .registerDisconnectedHandler(() => $scope.value = null)
-        .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
+        .registerDisconnectedHandler(() => $scope.targetBasePosition = null)
+        .registerSubscriber(update, us => us.forEach(update));
 
     $scope.$on('$destroy', () => {
         subscriber.disconnect();
@@ -93,7 +96,7 @@ var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.
 angular
     .module("targetBasePositionDirective", ['sharedDirectives'])
     .directive("targetBasePosition", () => {
-        var template = '<div>{{ value }}</div>';
+        var template = '<span>{{ targetBasePosition|number:2 }}</span>';
 
         return {
             restrict: 'E',
@@ -107,14 +110,17 @@ angular
 // ===================
 
 interface TradeSafetyScope extends ng.IScope {
-    value : number;
+    tradeSafetyValue : number;
 }
 
 var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
-    var updateValue = (value : number) => $scope.value = value;
+    var updateValue = (value : number) => {
+        $scope.tradeSafetyValue = value;
+    };
+
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
-        .registerDisconnectedHandler(() => $scope.value = null)
+        .registerDisconnectedHandler(() => $scope.tradeSafetyValue = null)
         .registerSubscriber(updateValue, us => us.forEach(updateValue));
 
     $scope.$on('$destroy', () => {
@@ -128,7 +134,7 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
 angular
     .module("tradeSafetyDirective", ['sharedDirectives'])
     .directive("tradeSafety", () => {
-        var template = '<div>{{ value }}</div>';
+        var template = '<span>{{ tradeSafetyValue|number:2 }}</span>';
 
         return {
             restrict: 'E',
