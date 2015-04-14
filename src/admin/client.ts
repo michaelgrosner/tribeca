@@ -108,6 +108,8 @@ var requires = ['ui.bootstrap',
                 'marketTradeDirective',
                 'messagesDirective', 
                 'positionDirective',
+                'targetBasePositionDirective',
+                'tradeSafetyDirective',
                 'sharedDirectives'];
 
 angular.module('projectApp', requires)

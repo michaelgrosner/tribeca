@@ -16,12 +16,18 @@ import mongodb = require('mongodb');
 import Web = require("./web");
 
 var loader = (d : Models.ExchangePairMessage<Models.MarketTrade>) => {
+    if (d.data === null) return;
     P.timeLoader(d.data);
+
+    if (d.data.quote === null) return;
     P.timeLoader(d.data.quote);
 };
 
 var saver = (d : Models.ExchangePairMessage<Models.MarketTrade>) => {
+    if (d.data === null) return;
     P.timeSaver(d.data);
+
+    if (d.data.quote === null) return;
     P.timeSaver(d.data.quote);
 };
 

@@ -68,3 +68,73 @@ angular
             }
           }
     });
+
+// ===================
+
+interface TargetBasePositionScope extends ng.IScope {
+    value : number;
+}
+
+var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+
+    var updatePosition = (value : number) => $scope.value = value;
+    var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TargetBasePosition)
+        .registerDisconnectedHandler(() => $scope.value = null)
+        .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
+
+    $scope.$on('$destroy', () => {
+        subscriber.disconnect();
+        $log.info("destroy target base position");
+    });
+
+    $log.info("started target base position");
+};
+
+angular
+    .module("targetBasePositionDirective", ['sharedDirectives'])
+    .directive("targetBasePosition", () => {
+        var template = '<div>{{ value }}</div>';
+
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            template: template,
+            controller: TargetBasePositionController
+        }
+    });
+
+// ===================
+
+interface TradeSafetyScope extends ng.IScope {
+    value : number;
+}
+
+var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+
+    var updateValue = (value : number) => $scope.value = value;
+    var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
+        .registerDisconnectedHandler(() => $scope.value = null)
+        .registerSubscriber(updateValue, us => us.forEach(updateValue));
+
+    $scope.$on('$destroy', () => {
+        subscriber.disconnect();
+        $log.info("destroy trade safety");
+    });
+
+    $log.info("started trade safety");
+};
+
+angular
+    .module("tradeSafetyDirective", ['sharedDirectives'])
+    .directive("tradeSafety", () => {
+        var template = '<div>{{ value }}</div>';
+
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: false,
+            template: template,
+            controller: TradeSafetyController
+        }
+    });

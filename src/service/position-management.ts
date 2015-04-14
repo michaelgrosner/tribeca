@@ -94,10 +94,9 @@ export class TargetBasePositionManager {
 
     private recomputeTargetPosition = () => {
         var latestPosition = this._positionBroker.latestReport;
-        var latestTargetPosition = this._positionManager.latestTargetPosition;
         var params = this._params.latest;
 
-        if (params === null || latestPosition === null || latestTargetPosition === null)
+        if (params === null || latestPosition === null)
             return;
 
         var targetBasePosition : number = params.targetBasePosition;
