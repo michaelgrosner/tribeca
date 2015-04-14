@@ -146,6 +146,12 @@ export class Persister<T> implements IPersist<T> {
     }
 }
 
+export class BasicPersister<T> extends Persister<T> {
+    constructor(db : Q.Promise<mongodb.Db>, collectionName : string) {
+        super(db, collectionName, timeLoader, timeSaver);
+    }
+}
+
 export class OrderStatusPersister extends Persister<Models.OrderStatusReport> {
     constructor(db : Q.Promise<mongodb.Db>) {
         super(db, "osr", timeLoader, timeSaver);

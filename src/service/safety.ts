@@ -13,6 +13,7 @@ import Broker = require("./broker");
 import Messaging = require("../common/messaging");
 import momentjs = require('moment');
 import _ = require("lodash");
+import Persister = require("./persister");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
     constructor(pub: Messaging.IPublish<Models.SafetySettings>,
@@ -38,6 +39,9 @@ export class SafetyCalculator {
             this._latest = val;
             this.NewValue.trigger(this._latest);
 
+            this._persister.persist(new Models.Timestamped(this._latest, Utils.date()));
+            this._publisher.publish(this._latest);
+
             this._log("New safety value: ", this._latest);
         }
     }
@@ -47,7 +51,10 @@ export class SafetyCalculator {
 
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
                 private _broker: Interfaces.ITradeBroker,
-                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>) {
+                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
+                private _publisher: Messaging.IPublish<number>,
+                private _persister : Persister.BasicPersister<Models.Timestamped<number>>) {
+        _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);

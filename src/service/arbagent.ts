@@ -89,7 +89,7 @@ export class QuotingEngine {
                 private _orderBroker : Interfaces.IOrderBroker,
                 private _positionBroker : Interfaces.IPositionBroker,
                 private _ewma : Interfaces.IEwmaCalculator,
-                private _positionManager : PositionManagement.TargetBasePositionManager) {
+                private _targetPosition : PositionManagement.TargetBasePositionManager) {
         var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
 
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
@@ -98,7 +98,7 @@ export class QuotingEngine {
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
-        _positionManager.NewTargetPosition.on(recalcWithoutInputTime);
+        _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
     }
 
     private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
@@ -198,7 +198,7 @@ export class QuotingEngine {
             }
         }
 
-        var targetBasePosition = this._positionManager.latestTargetPosition;
+        var targetBasePosition = this._targetPosition.latestTargetPosition;
         if (targetBasePosition === null) {
             this._log("cannot compute a quote since no position report exists!");
             return null;

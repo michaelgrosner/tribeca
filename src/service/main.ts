@@ -79,6 +79,8 @@ var paramsPersister = new Persister.RepositoryPersister(db,
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off),
     getEngineTopic(Messaging.Topics.QuotingParametersChange));
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
+var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");
+var tsvPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tsv");
 
 Q.all([
     orderPersister.load(exchange, pair, 25000),
@@ -132,6 +134,7 @@ Q.all([
     var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
     var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
     var targetBasePositionPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
+    var tradeSafetyPublisher = getEnginePublisher(Messaging.Topics.TradeSafetyValue);
 
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
@@ -190,7 +193,7 @@ Q.all([
 
     var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
     safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
-    var safetyCalculator = new Safety.SafetyCalculator(safetyRepo, orderBroker, paramsRepo);
+    var safetyCalculator = new Safety.SafetyCalculator(safetyRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
     var safeties = new Safety.SafetySettingsManager(safetyRepo, safetyCalculator, messages);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
@@ -205,7 +208,7 @@ Q.all([
     var shortEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
     var longEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
     var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
-    var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher);
+    var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
     var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
         orderBroker, positionBroker, ewma, tbp);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);

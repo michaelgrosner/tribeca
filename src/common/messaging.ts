@@ -221,4 +221,5 @@ export class Topics {
     static ExternalValuation = "ev";
     static QuoteStatus = "qs";
     static TargetBasePosition = "tbp";
+    static TradeSafetyValue = "tsv";
 }
