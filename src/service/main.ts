@@ -237,4 +237,16 @@ Q.all([
         });
     });
 
+    // event looped blocked timer
+    var start = process.hrtime();
+    var interval = 100;
+    setInterval(() => {
+        var delta = process.hrtime(start);
+        var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
+        var n = ms - interval;
+        if (n > 25)
+            mainLog("Event looped blocked for " + Utils.roundFloat(n) + "ms");
+        start = process.hrtime();
+    }, interval).unref();
+
 }).done();
