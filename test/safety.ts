@@ -30,8 +30,8 @@ describe("SafetySettings", () => {
         mockSafetyParameters.latest = new Models.SafetySettings(2, 500, 1);
         var mockTradeBroker = new StubTradeBroker();
         var mockQlRepo = new StubQLRepo();
-        mockQlRepo.latest = new Models.QuotingParameters(null, 1, null, null, null, null, null);
-        var safety = new Safety.SafetyCalculator(mockSafetyParameters, mockTradeBroker, mockQlRepo);
+        mockQlRepo.latest = new Models.QuotingParameters(null, 1, null, null, null, null, null, null);
+        var safety = new Safety.SafetyCalculator(mockSafetyParameters, mockTradeBroker, mockQlRepo, {publish: null, registerSnapshot: null}, null);
 
         var tradesInput = [
             ["1", Moment.duration(0, "seconds"), 257.01, .0577, Models.Side.Bid, 14.829],

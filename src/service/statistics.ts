@@ -5,20 +5,19 @@ export interface IComputeStatistics {
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
-    private _latest : number = null;
-    public get latest() { return this._latest; }
+    constructor(private _alpha : number) {}
 
-    initialize(seedData: number[]): IComputeStatistics {
-        seedData.forEach(this.addNewValue);
-        return this;
+    public latest : number = null;
+
+    initialize(seedData: number[]) {
+        for (var i = 0; i < seedData.length; i++)
+            this.addNewValue(seedData[i]);
     }
 
     addNewValue(value: number): number {
-        this._latest = computeEwma(value, this._latest, this._alpha);
-        return this._latest;
+        this.latest = computeEwma(value, this.latest, this._alpha);
+        return this.latest;
     }
-
-    constructor(private _alpha : number) {}
 }
 
 export function computeEwma(newValue: number, previous: number, alpha: number) : number {

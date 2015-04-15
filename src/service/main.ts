@@ -205,8 +205,11 @@ Q.all([
     var ewma = new Agent.EWMACalculator(fvEngine);
 
     var rfvValues = _.map(initRfv, (r : Models.RegularFairValue) => r.value);
-    var shortEwma = new Statistics.EwmaStatisticCalculator(2*.095).initialize(rfvValues);
-    var longEwma = new Statistics.EwmaStatisticCalculator(.095).initialize(rfvValues);
+    var shortEwma = new Statistics.EwmaStatisticCalculator(2*.095);
+    shortEwma.initialize(rfvValues);
+    var longEwma = new Statistics.EwmaStatisticCalculator(.095);
+    longEwma.initialize(rfvValues);
+
     var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
     var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
     var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
@@ -220,7 +223,7 @@ Q.all([
         process.on(reason, (e?) => {
 
             var a = new Models.SerializedQuotesActive(active.savedQuotingMode, Utils.date());
-            mainLog("setting active to", a);
+            mainLog("persisting active to", active.savedQuotingMode);
             activePersister.persist(a);
 
             orderBroker.cancelOpenOrders().then(n_cancelled => {

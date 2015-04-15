@@ -22,6 +22,6 @@ class MockBrokerConnectivity implements Interfaces.IBrokerConnectivity {
 
 describe("ActiveRepository", () => {
     it("Should handle disconnect/reconnects", () => {
-        var activeRepo = new Agent.ActiveRepository(false, new MockSafetyNotifier(), new MockBrokerConnectivity(), null, null);
+        //var activeRepo = new Agent.ActiveRepository(false, new MockSafetyNotifier(), new MockBrokerConnectivity(), null, null);
     });
 });
