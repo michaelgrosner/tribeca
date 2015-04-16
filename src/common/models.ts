@@ -258,7 +258,8 @@ export class PositionReport {
                 public quoteHeldAmount: number,
                 public value: number,
                 public pair: CurrencyPair,
-                public exch: Exchange) {}
+                public exch: Exchange,
+                public time: Moment) {}
 }
 
 export class OrderRequestFromUI {
