@@ -10,44 +10,15 @@ import _ = require("lodash");
 import util = require("util");
 import express = require("express");
 import Q = require("q");
-
-export class HttpPublisher<T> implements Messaging.IPublish<T> {
-    private _snapshot : () => T[] = null;
-
-    constructor(
-            private route : string,
-            private _wrapped : Messaging.IPublish<T>,
-            private _httpApp : express.Application,
-            snapshot : () => T[] = null) {
-        this.registerSnapshot(snapshot);
-
-        _httpApp.get("/data/" + route, (req : express.Request, res : express.Response) => {
-            var data = this._snapshot();
-
-            var max = req.param("max", null);
-            if (max !== null) {
-                data = _.last(data, parseInt(max));
-            }
-
-            res.json(data);
-        });
-    }
-
-    public publish = this._wrapped.publish;
-
-    public registerSnapshot = (generator : () => T[]) =>  {
-        this._snapshot = generator;
-        return this._wrapped.registerSnapshot(generator);
-    }
-}
+import Persister = require("./persister");
 
 export class StandaloneHttpPublisher<T> {
-    private _snapshot : (limit? : number) => T[]|Q.Promise<T[]> = null;
-
     constructor(
+            private _wrapped : Messaging.IPublish<T>,
             private route : string,
             private _httpApp : express.Application,
-            snapshot : (limit? : number) => T[]|Q.Promise<T[]> = null) {
+            private _persister: Persister.Persister<T>,
+            snapshot : () => T[] = null) {
         this.registerSnapshot(snapshot);
 
         _httpApp.get("/data/" + route, (req : express.Request, res : express.Response) => {
@@ -60,18 +31,13 @@ export class StandaloneHttpPublisher<T> {
                 res.json(d);
             };
 
-            var data : T[]|Q.Promise<T[]> = this._snapshot(max);
-
-            if (data instanceof Array) {
-                handler(data);
-            }
-            else {
-                data.then(handler);
-            }
+            _persister.loadAll(max).then(handler);
         });
     }
 
-    public registerSnapshot = (generator : (limit? : number) => T[]|Q.Promise<T[]>) =>  {
-        this._snapshot = generator;
+    public publish = this._wrapped.publish;
+
+    public registerSnapshot = (generator : () => T[]) =>  {
+        return this._wrapped.registerSnapshot(generator);
     }
 }

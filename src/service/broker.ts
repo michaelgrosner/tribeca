@@ -13,7 +13,6 @@ import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
-import Web = require("web");
 
 export class MessagesPubisher implements Interfaces.IPublishMessages {
     private _storedMessages : Models.Message[] = [];
@@ -300,17 +299,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
                 private _messages : MessagesPubisher,
-                private _tradeHttp : Web.StandaloneHttpPublisher<Models.Trade>,
-                private _latencyHttp : Web.StandaloneHttpPublisher<number>,
-                private _osrHttp : Web.StandaloneHttpPublisher<Models.OrderStatusReport>,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
         _orderStatusPublisher.registerSnapshot(() => _.last(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
-        _tradeHttp.registerSnapshot(() => this._trades);
-        _osrHttp.registerSnapshot(() => _.where(this._orderCache.allOrdersFlat, o => o.orderStatus === Models.OrderStatus.New));
-        _latencyHttp.registerSnapshot(() => _.pluck(_.filter(this._orderCache.allOrdersFlat, o => o.computationalLatency !== null), 'computationalLatency'));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
@@ -391,14 +384,12 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.Persister<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker,
-                private _positionHttp : Web.StandaloneHttpPublisher<Models.PositionReport>) {
+                private _mdBroker : Interfaces.IMarketDataBroker) {
         this._log = Utils.log("tribeca:exchangebroker:position");
 
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
 
         this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
-        this._positionHttp.registerSnapshot(this._positionPersister.loadAll);
     }
 }
 

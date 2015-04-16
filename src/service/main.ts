@@ -62,10 +62,6 @@ var getExchange = () : Models.Exchange => {
 
 var exchange = getExchange();
 
-var getEngineTopic = (topic : string) : string => {
-    return topic;
-};
-
 var db = Persister.loadDb();
 var orderPersister = new Persister.OrderStatusPersister(db);
 var tradesPersister = new Persister.TradePersister(db);
@@ -73,11 +69,11 @@ var fairValuePersister = new Persister.FairValuePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
-var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), getEngineTopic(Messaging.Topics.ActiveChange));
-var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), getEngineTopic(Messaging.Topics.SafetySettings));
+var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), Messaging.Topics.ActiveChange);
+var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), Messaging.Topics.SafetySettings);
 var paramsPersister = new Persister.RepositoryPersister(db, 
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off),
-    getEngineTopic(Messaging.Topics.QuotingParametersChange));
+    Messaging.Topics.QuotingParametersChange);
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
 var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");
 var tsvPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tsv");
@@ -116,50 +112,34 @@ Q.all([
     var advert = new Models.ProductAdvertisement(exchange, pair, Config.Environment[config.environment()]);
     new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
-    var getEnginePublisher = <T>(topic : string) : Messaging.IPublish<T> => {
-        var wrappedTopic = getEngineTopic(topic);
-        var socketIoPublisher = new Messaging.Publisher<T>(wrappedTopic, io, null, Utils.log("tribeca:messaging"));
-        return new Web.HttpPublisher<T>(topic, socketIoPublisher, app);
+    var getPublisher = <T>(topic : string, persister: Persister.Persister<T> = null) : Messaging.IPublish<T> => {
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
+        if (persister !== null)
+            return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
+        else
+            return socketIoPublisher;
     };
 
-    var quotePublisher = getEnginePublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
-    var fvPublisher = getEnginePublisher(Messaging.Topics.FairValue);
-    var marketDataPublisher = getEnginePublisher(Messaging.Topics.MarketData);
-    var orderStatusPublisher = getEnginePublisher(Messaging.Topics.OrderStatusReports);
-    var tradePublisher = getEnginePublisher(Messaging.Topics.Trades);
-    var safetySettingsPublisher = getEnginePublisher(Messaging.Topics.SafetySettings);
-    var activePublisher = getEnginePublisher(Messaging.Topics.ActiveChange);
-    var quotingParametersPublisher = getEnginePublisher(Messaging.Topics.QuotingParametersChange);
-    var marketTradePublisher = getEnginePublisher(Messaging.Topics.MarketTrade);
-    var messagesPublisher = getEnginePublisher(Messaging.Topics.Message);
-    var quoteStatusPublisher = getEnginePublisher(Messaging.Topics.QuoteStatus);
-    var targetBasePositionPublisher = getEnginePublisher(Messaging.Topics.TargetBasePosition);
-    var tradeSafetyPublisher = getEnginePublisher(Messaging.Topics.TradeSafetyValue);
+    var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
+    var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
+    var marketDataPublisher = getPublisher(Messaging.Topics.MarketData);
+    var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
+    var tradePublisher = getPublisher(Messaging.Topics.Trades, tradesPersister);
+    var safetySettingsPublisher = getPublisher(Messaging.Topics.SafetySettings);
+    var activePublisher = getPublisher(Messaging.Topics.ActiveChange);
+    var quotingParametersPublisher = getPublisher(Messaging.Topics.QuotingParametersChange);
+    var marketTradePublisher = getPublisher(Messaging.Topics.MarketTrade, mktTradePersister);
+    var messagesPublisher = getPublisher(Messaging.Topics.Message, messagesPersister);
+    var quoteStatusPublisher = getPublisher(Messaging.Topics.QuoteStatus);
+    var targetBasePositionPublisher = getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister);
+    var tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
+    var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
+    var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
 
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
 
-    var getHttpPublisher = <T>(topic : string) => {
-        return new Web.StandaloneHttpPublisher<T>(topic, app);
-    };
-
-    var tradeHttpPublisher = getHttpPublisher<Models.Trade>("trades");
-    var latencyHttpPublisher = getHttpPublisher<number>("latency");
-    var positionHttpPublisher = getHttpPublisher<Models.PositionReport>("position");
-    var osrHttpPublisher = getHttpPublisher<Models.OrderStatusReport>("new_orders");
-    var fvHttpPublisher = getHttpPublisher<Models.FairValue>("fair_value");
-    var marketTradesHttpPublisher = getHttpPublisher<Models.MarketTrade>("market_trades");
-
-    var getExchangePublisher = <T>(topic : string) => {
-        return new Messaging.Publisher<T>(topic, io, null, messagingLog);
-    };
-
-    var positionPublisher = getExchangePublisher(Messaging.Topics.Position);
-    var connectivity = getExchangePublisher(Messaging.Topics.ExchangeConnectivity);
-
-    var getReceiver = <T>(topic : string) => {
-        return new Messaging.Receiver<T>(getEngineTopic(topic), io, messagingLog);
-    };
+    var getReceiver = <T>(topic : string) => new Messaging.Receiver<T>(topic, io, messagingLog);
 
     var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
     var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
@@ -183,10 +163,9 @@ Q.all([
 
     var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
     var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-        tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, tradeHttpPublisher, latencyHttpPublisher, osrHttpPublisher,
-        orderCache, initOrders, initTrades);
+        tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, orderCache, initOrders, initTrades);
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
-    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker, positionHttpPublisher);
+    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
     var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
@@ -201,7 +180,7 @@ Q.all([
 
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
-    var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fvHttpPublisher, fairValuePersister);
+    var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fairValuePersister);
     var ewma = new Agent.EWMACalculator(fvEngine);
 
     var rfvValues = _.map(initRfv, (r : Models.RegularFairValue) => r.value);
@@ -217,7 +196,7 @@ Q.all([
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
-        quotingEngine, broker, mktTradePersister, initMktTrades, marketTradesHttpPublisher);
+        quotingEngine, broker, mktTradePersister, initMktTrades);
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {

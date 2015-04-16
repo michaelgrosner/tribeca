@@ -73,10 +73,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
                 private _quoteEngine : Agent.QuotingEngine,
                 private _base : Broker.ExchangeBroker,
                 private _persister : MarketTradePersister,
-                initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[],
-                webPub : Web.StandaloneHttpPublisher<Models.MarketTrade>) {
-        webPub.registerSnapshot(n => _persister.loadAll(n).then(mts => _.map(mts, x => x.data)));
-
+                initMkTrades : Models.ExchangePairMessage<Models.MarketTrade>[]) {
         initMkTrades.forEach(t => this.marketTrades.push(t.data));
         this._log("loaded %d market trades", this.marketTrades.length);
 
