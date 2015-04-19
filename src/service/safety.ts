@@ -53,7 +53,7 @@ export class SafetyCalculator {
                 private _broker: Interfaces.ITradeBroker,
                 private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
                 private _publisher: Messaging.IPublish<number>,
-                private _persister : Persister.BasicPersister<Models.Timestamped<number>>) {
+                private _persister : Persister.IPersist<Models.Timestamped<number>>) {
         _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());

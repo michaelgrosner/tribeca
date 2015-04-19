@@ -5,7 +5,9 @@ import assert = require("assert");
 import Safety = require("../src/service/safety");
 import Interfaces = require("../src/service/interfaces");
 import Utils = require("../src/service/utils");
+import Persister = require("../src/service/persister");
 import Models = require("../src/common/models");
+import Messaging = require("../src/common/messaging");
 import Moment = require("moment");
 
 class StubSafetyRepo implements Interfaces.IRepository<Models.SafetySettings> {
@@ -24,6 +26,15 @@ class StubTradeBroker implements Interfaces.ITradeBroker {
     Trade = new Utils.Evt<Models.Trade>();
 }
 
+class StubPublisher<T> implements Messaging.IPublish<T> {
+    publish = (p1: T) => {};
+    registerSnapshot = (generator : () => T[]) => this;
+}
+
+class StubPersister<T> implements Persister.IPersist<T> {
+    persist(data: T): void { }
+}
+
 describe("SafetySettings", () => {
     it("Should trigger safety settings", () => {
         var mockSafetyParameters = new StubSafetyRepo();
@@ -31,7 +42,7 @@ describe("SafetySettings", () => {
         var mockTradeBroker = new StubTradeBroker();
         var mockQlRepo = new StubQLRepo();
         mockQlRepo.latest = new Models.QuotingParameters(null, 1, null, null, null, null, null, null);
-        var safety = new Safety.SafetyCalculator(mockSafetyParameters, mockTradeBroker, mockQlRepo, {publish: null, registerSnapshot: null}, null);
+        var safety = new Safety.SafetyCalculator(mockSafetyParameters, mockTradeBroker, mockQlRepo, new StubPublisher(), new StubPersister());
 
         var tradesInput = [
             ["1", Moment.duration(0, "seconds"), 257.01, .0577, Models.Side.Bid, 14.829],
