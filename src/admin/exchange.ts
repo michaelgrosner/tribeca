@@ -64,7 +64,7 @@ angular
             templateUrl: "positions.html",
             controller: PositionController,
             scope: {
-              exch: '=',
+              exch: '='
             }
           }
     });
@@ -110,17 +110,27 @@ angular
 // ===================
 
 interface TradeSafetyScope extends ng.IScope {
+    buySafety: number;
+    sellSafety: number;
     tradeSafetyValue : number;
 }
 
 var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
-    var updateValue = (value : number) => {
-        $scope.tradeSafetyValue = value;
+    var updateValue = (value : Models.TradeSafety) => {
+        $scope.tradeSafetyValue = value.combined;
+        $scope.buySafety = value.buy;
+        $scope.sellSafety = value.sell;
+    };
+
+    var clear = () => {
+        $scope.tradeSafetyValue = null;
+        $scope.buySafety = null;
+        $scope.sellSafety = null;
     };
 
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
-        .registerDisconnectedHandler(() => $scope.tradeSafetyValue = null)
+        .registerDisconnectedHandler(clear)
         .registerSubscriber(updateValue, us => us.forEach(updateValue));
 
     $scope.$on('$destroy', () => {

@@ -32,17 +32,17 @@ export class SafetyCalculator {
 
     NewValue = new Utils.Evt();
 
-    private _latest : number = null;
+    private _latest : Models.TradeSafety = null;
     public get latest() { return this._latest; }
-    public set latest(val : number) {
-        if (!this._latest || Math.abs(val - this._latest) > 1e-3) {
+    public set latest(val : Models.TradeSafety) {
+        if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3) {
             this._latest = val;
-            this.NewValue.trigger(this._latest);
+            this.NewValue.trigger(this.latest);
 
-            this._persister.persist(new Models.Timestamped(this._latest, Utils.date()));
-            this._publisher.publish(this._latest);
+            this._persister.persist(this.latest);
+            this._publisher.publish(this.latest);
 
-            this._log("New safety value: ", this._latest);
+            this._log("New safety value: %j", this.latest);
         }
     }
 
@@ -52,8 +52,8 @@ export class SafetyCalculator {
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
                 private _broker: Interfaces.ITradeBroker,
                 private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
-                private _publisher: Messaging.IPublish<number>,
-                private _persister : Persister.IPersist<Models.Timestamped<number>>) {
+                private _publisher: Messaging.IPublish<Models.TradeSafety>,
+                private _persister : Persister.IPersist<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
@@ -112,7 +112,10 @@ export class SafetyCalculator {
             }
         }
 
-        this.latest = this._buys.concat(this._sells).reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
+        var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
+
+        this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
+            computeSafety(this._buys.concat(this._sells)), Utils.date());
     };
 }
 
@@ -139,7 +142,7 @@ export class SafetySettingsManager implements ISafetyManager {
     }
 
     private recalculateSafeties = () => {
-        var val = this._safetyCalculator.latest;
+        var val = this._safetyCalculator.latest === null ? 0 : this._safetyCalculator.latest.combined;
         var settings = this._repo.latest;
 
         if (val >= settings.tradesPerMinute && val > this._previousVal && this.canEnable) {

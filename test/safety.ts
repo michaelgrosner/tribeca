@@ -10,16 +10,10 @@ import Models = require("../src/common/models");
 import Messaging = require("../src/common/messaging");
 import Moment = require("moment");
 
-class StubSafetyRepo implements Interfaces.IRepository<Models.SafetySettings> {
-    updateParameters(newParams: Models.SafetySettings): void {}
+class StubRepo<T> implements Interfaces.IRepository<T> {
+    updateParameters(newParams: T): void {}
     NewParameters = new Utils.Evt();
-    latest : Models.SafetySettings;
-}
-
-class StubQLRepo implements Interfaces.IRepository<Models.QuotingParameters> {
-    updateParameters(newParams: Models.QuotingParameters): void {}
-    NewParameters = new Utils.Evt();
-    latest : Models.QuotingParameters;
+    latest : T;
 }
 
 class StubTradeBroker implements Interfaces.ITradeBroker {
@@ -37,10 +31,10 @@ class StubPersister<T> implements Persister.IPersist<T> {
 
 describe("SafetySettings", () => {
     it("Should trigger safety settings", () => {
-        var mockSafetyParameters = new StubSafetyRepo();
+        var mockSafetyParameters = new StubRepo<Models.SafetySettings>();
         mockSafetyParameters.latest = new Models.SafetySettings(2, 500, 1);
         var mockTradeBroker = new StubTradeBroker();
-        var mockQlRepo = new StubQLRepo();
+        var mockQlRepo = new StubRepo<Models.QuotingParameters>();
         mockQlRepo.latest = new Models.QuotingParameters(null, 1, null, null, null, null, null, null);
         var safety = new Safety.SafetyCalculator(mockSafetyParameters, mockTradeBroker, mockQlRepo, new StubPublisher(), new StubPersister());
 
@@ -60,6 +54,8 @@ describe("SafetySettings", () => {
             mockTradeBroker.Trade.trigger(t);
         });
 
-        assert(Math.abs(safety.latest - 0.4212) < 1e-4);
+        assert(Math.abs(safety.latest.combined - 0.4212) < 1e-4);
+        assert(Math.abs(safety.latest.buy) < 1e-4);
+        assert(Math.abs(safety.latest.combined - 0.4212) < 1e-4);
     });
 });

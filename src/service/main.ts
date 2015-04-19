@@ -76,7 +76,7 @@ var paramsPersister = new Persister.RepositoryPersister(db,
     Messaging.Topics.QuotingParametersChange);
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
 var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");
-var tsvPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tsv");
+var tsvPersister = new Persister.BasicPersister<Models.TradeSafety>(db, "tsv");
 
 Q.all([
     orderPersister.load(exchange, pair, 25000),

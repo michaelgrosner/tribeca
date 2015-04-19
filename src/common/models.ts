@@ -361,3 +361,10 @@ export class Message implements ITimestamped {
 export class RegularFairValue {
     constructor(public time: Moment, public value: number) {}
 }
+
+export class TradeSafety {
+    constructor(public buy: number,
+                public sell: number,
+                public combined: number,
+                public time: Moment) {}
+}
