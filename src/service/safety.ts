@@ -148,7 +148,7 @@ export class SafetySettingsManager implements ISafetyManager {
             this.SafetySettingsViolated.trigger();
 
             var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
-            var msg = util.format("Trd vol safety violated (%d), waiting %s.", val, coolOffMinutes.humanize());
+            var msg = util.format("Trd vol safety violated (%d), waiting %s.", Utils.roundFloat(val), coolOffMinutes.humanize());
             this._log(msg);
             this._messages.publish(msg);
 
