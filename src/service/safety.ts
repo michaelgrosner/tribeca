@@ -58,6 +58,8 @@ export class SafetyCalculator {
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);
+        
+        setInterval(this.computeQtyLimit, 1000);
     }
 
     private onTrade = (ut: Models.Trade) => {
