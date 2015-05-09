@@ -91,7 +91,6 @@ export class Subscriber<T> implements ISubscribe<T> {
         this._log("disconnected from", this.topic);
         if (this._disconnectHandler !== null)
             this._disconnectHandler();
-        this._io.disconnect();
     };
 
     private onIncremental = (m : T) => {
