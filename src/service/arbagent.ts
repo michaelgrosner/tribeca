@@ -218,6 +218,9 @@ export class QuotingEngine {
 
         unrounded.bidPx = Math.max(0, unrounded.bidPx);
         unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
+        
+        unrounded.askSz = Math.max(0.01, unrounded.askSz);
+        unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
 
         return unrounded;
     }
