@@ -208,9 +208,13 @@ export class QuotingEngine {
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx += 20; // TODO: revisit! throw away?
+            if (params.aggressivePositionRebalancing)
+                unrounded.bidSz = targetBasePosition - totalBasePosition;
         }
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx -= 20; // TODO: revisit! throw away?
+            if (params.aggressivePositionRebalancing)
+                unrounded.askSz = totalBasePosition - targetBasePosition;
         }
 
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
