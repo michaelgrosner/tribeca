@@ -14,18 +14,18 @@ import Persister = require("./persister");
 
 export class StandaloneHttpPublisher<T> {
     constructor(
-            private _wrapped : Messaging.IPublish<T>,
-            private route : string,
-            private _httpApp : express.Application,
-            private _persister: Persister.Persister<T>,
-            snapshot : () => T[] = null) {
+        private _wrapped: Messaging.IPublish<T>,
+        private route: string,
+        private _httpApp: express.Application,
+        private _persister: Persister.Persister<T>,
+        snapshot: () => T[] = null) {
         this.registerSnapshot(snapshot);
 
-        _httpApp.get("/data/" + route, (req : express.Request, res : express.Response) => {
+        _httpApp.get("/data/" + route, (req: express.Request, res: express.Response) => {
             var rawMax = req.param("max", null);
             var max = (rawMax === null ? null : parseInt(rawMax));
 
-            var handler = (d : T[]) => {
+            var handler = (d: T[]) => {
                 if (max !== null)
                     d = _.last(d, max);
                 res.json(d);
@@ -37,7 +37,7 @@ export class StandaloneHttpPublisher<T> {
 
     public publish = this._wrapped.publish;
 
-    public registerSnapshot = (generator : () => T[]) =>  {
+    public registerSnapshot = (generator: () => T[]) => {
         return this._wrapped.registerSnapshot(generator);
     }
 }

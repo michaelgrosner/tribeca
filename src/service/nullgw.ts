@@ -12,27 +12,27 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 
     public cancelsByClientOrderId = true;
 
-    generateClientOrderId = () : string => {
+    generateClientOrderId = (): string => {
         return uuid.v1();
-    } 
+    }
 
-    sendOrder(order : Models.BrokeredOrder) : Models.OrderGatewayActionReport {
+    sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport {
         setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working, order), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }
 
-    cancelOrder(cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport {
+    cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport {
         setTimeout(() => this.trigger(cancel.clientOrderId, Models.OrderStatus.Complete), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }
 
-    replaceOrder(replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport {
+    replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport {
         this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     }
 
-    private trigger(orderId : string, status : Models.OrderStatus, order : Models.BrokeredOrder = null) {
-        var rpt : Models.OrderStatusReport = {
+    private trigger(orderId: string, status: Models.OrderStatus, order: Models.BrokeredOrder = null) {
+        var rpt: Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: status,
             time: Utils.date()
@@ -40,7 +40,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(rpt);
 
         if (status === Models.OrderStatus.Working) {
-            var rpt : Models.OrderStatusReport = {
+            var rpt: Models.OrderStatusReport = {
                 orderId: orderId,
                 orderStatus: status,
                 time: Utils.date(),
@@ -78,7 +78,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
 
-    private genSingleLevel = () => new Models.MarketSide(200 + 100*Math.random(), Math.random());
+    private genSingleLevel = () => new Models.MarketSide(200 + 100 * Math.random(), Math.random());
 
     private generateMarketData = () => {
         var genSide = () => {
@@ -99,19 +99,19 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
         return false;
     }
 
-    name() : string {
+    name(): string {
         return "Null";
     }
 
-    makeFee() : number {
+    makeFee(): number {
         return 0;
     }
 
-    takeFee() : number {
+    takeFee(): number {
         return 0;
     }
 
-    exchange() : Models.Exchange {
+    exchange(): Models.Exchange {
         return Models.Exchange.Null;
     }
 }

@@ -21,9 +21,9 @@ import QuotingParameters = require("./quoting-parameters");
 export class FairValueEngine {
     public FairValueChanged = new Utils.Evt<Models.FairValue>();
 
-    private _latest : Models.FairValue = null;
+    private _latest: Models.FairValue = null;
     public get latestFairValue() { return this._latest; }
-    public set latestFairValue(val : Models.FairValue) {
+    public set latestFairValue(val: Models.FairValue) {
         if (this._latest != null
             && val != null
             && Math.abs(this._latest.price - val.price) < 0.02) return;
@@ -36,32 +36,32 @@ export class FairValueEngine {
             this._fvPersister.persist(this._latest);
     }
 
-    constructor(private _filtration : MarketFiltration.MarketFiltration,
-                private _qlParamRepo : QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
-                private _fvPublisher : Messaging.IPublish<Models.FairValue>,
-                private _fvPersister : Persister.FairValuePersister) {
+    constructor(private _filtration: MarketFiltration.MarketFiltration,
+        private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
+        private _fvPublisher: Messaging.IPublish<Models.FairValue>,
+        private _fvPersister: Persister.FairValuePersister) {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(Utils.date()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
     }
 
-    private static ComputeFVUnrounded(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+    private static ComputeFVUnrounded(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         switch (model) {
             case Models.FairValueModel.BBO:
-                return (ask.price + bid.price)/2.0;
+                return (ask.price + bid.price) / 2.0;
             case Models.FairValueModel.wBBO:
-                return (ask.price*ask.size + bid.price*bid.size) / (ask.size + bid.size);
+                return (ask.price * ask.size + bid.price * bid.size) / (ask.size + bid.size);
             default:
                 throw new Error(Models.FairValueModel[model]);
         }
     }
 
-    private static ComputeFV(ask : Models.MarketSide, bid : Models.MarketSide, model : Models.FairValueModel) {
+    private static ComputeFV(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
         return Utils.roundFloat(unrounded);
     }
 
-    private recalcFairValue = (t : Moment) => {
+    private recalcFairValue = (t: Moment) => {
         var mkt = this._filtration.latestFilteredMarket;
 
         if (mkt == null) {

@@ -18,7 +18,7 @@ import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 
 export class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
-    constructor(db : Q.Promise<mongodb.Db>) {
+    constructor(db: Q.Promise<mongodb.Db>) {
         super(db, "rfv", Persister.timeLoader, Persister.timeSaver);
     }
 }
@@ -28,17 +28,17 @@ export class PositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
-    private _latest : number = null;
-    public get latestTargetPosition() : number {
+    private _latest: number = null;
+    public get latestTargetPosition(): number {
         return this._latest;
     }
 
-    private _timer : RegularTimer;
+    private _timer: RegularTimer;
     constructor(private _persister: Persister.IPersist<Models.RegularFairValue>,
-                private _fvAgent: FairValue.FairValueEngine,
-                private _data: Models.RegularFairValue[],
-                private _shortEwma : Statistics.IComputeStatistics,
-                private _longEwma : Statistics.IComputeStatistics) {
+        private _fvAgent: FairValue.FairValueEngine,
+        private _data: Models.RegularFairValue[],
+        private _shortEwma: Statistics.IComputeStatistics,
+        private _longEwma: Statistics.IComputeStatistics) {
         var lastTime = (this._data !== null && _.any(_data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
     }
@@ -53,7 +53,7 @@ export class PositionManager {
         var newShort = this._shortEwma.addNewValue(fv.price);
         var newLong = this._longEwma.addNewValue(fv.price);
 
-        var newTargetPosition = (newShort - newLong)/2.0;
+        var newTargetPosition = (newShort - newLong) / 2.0;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
@@ -76,16 +76,16 @@ export class TargetBasePositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
-    private _latest : number = null;
-    public get latestTargetPosition() : number {
+    private _latest: number = null;
+    public get latestTargetPosition(): number {
         return this._latest;
     }
 
-    constructor(private _positionManager : PositionManager,
-                private _params : QuotingParameters.QuotingParametersRepository,
-                private _positionBroker : Interfaces.IPositionBroker,
-                private _wrapped : Messaging.IPublish<number>,
-                private _persister : Persister.BasicPersister<Models.Timestamped<number>>) {
+    constructor(private _positionManager: PositionManager,
+        private _params: QuotingParameters.QuotingParametersRepository,
+        private _positionBroker: Interfaces.IPositionBroker,
+        private _wrapped: Messaging.IPublish<number>,
+        private _persister: Persister.BasicPersister<Models.Timestamped<number>>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => this.recomputeTargetPosition());
@@ -99,9 +99,9 @@ export class TargetBasePositionManager {
         if (params === null || latestPosition === null)
             return;
 
-        var targetBasePosition : number = params.targetBasePosition;
+        var targetBasePosition: number = params.targetBasePosition;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
-            targetBasePosition = ((1+this._positionManager.latestTargetPosition)/2.0) * latestPosition.value;
+            targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
         if (this._latest === null || Math.abs(this._latest - targetBasePosition) > 0.05) {
@@ -118,9 +118,9 @@ export class TargetBasePositionManager {
 
 // performs an action every duration apart, even across new instances
 export class RegularTimer {
-    constructor(private _action : () => void,
-                private _diffTime : Duration,
-                lastTime : Moment = null) {
+    constructor(private _action: () => void,
+        private _diffTime: Duration,
+        lastTime: Moment = null) {
         if (lastTime === null) {
             this.startTicking();
         }

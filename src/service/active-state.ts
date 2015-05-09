@@ -11,25 +11,25 @@ import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 
 export class ActiveRepository implements Interfaces.IRepository<boolean> {
-    private _log : Utils.Logger = Utils.log("tribeca:active");
+    private _log: Utils.Logger = Utils.log("tribeca:active");
 
     NewParameters = new Utils.Evt();
 
-    private _savedQuotingMode : boolean = false;
-    public get savedQuotingMode() : boolean {
+    private _savedQuotingMode: boolean = false;
+    public get savedQuotingMode(): boolean {
         return this._savedQuotingMode;
     }
 
-    private _latest : boolean = false;
-    public get latest() : boolean {
+    private _latest: boolean = false;
+    public get latest(): boolean {
         return this._latest;
     }
 
-    constructor(startQuoting : boolean,
-                private _safeties : Safety.ISafetyManager,
-                private _exchangeConnectivity : Interfaces.IBrokerConnectivity,
-                private _pub : Messaging.IPublish<boolean>,
-                private _rec : Messaging.IReceive<boolean>) {
+    constructor(startQuoting: boolean,
+        private _safeties: Safety.ISafetyManager,
+        private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
+        private _pub: Messaging.IPublish<boolean>,
+        private _rec: Messaging.IReceive<boolean>) {
         this._log("Starting saved quoting state: ", startQuoting);
         this._savedQuotingMode = startQuoting;
 
@@ -41,7 +41,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         _exchangeConnectivity.ConnectChanged.on(() => this.updateParameters());
     }
 
-    private handleNewQuotingModeChangeRequest = (v : boolean) => {
+    private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
             this._log("Changed saved quoting state: ", this._savedQuotingMode);
@@ -51,7 +51,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         this._pub.publish(this.latest);
     };
 
-    private reevaluateQuotingMode = () : boolean => {
+    private reevaluateQuotingMode = (): boolean => {
         if (!this._safeties.canEnable) return false;
         if (this._exchangeConnectivity.connectStatus !== Models.ConnectivityStatus.Connected) return false;
         return this._savedQuotingMode;

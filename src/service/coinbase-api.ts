@@ -15,15 +15,15 @@ var coinbaseLog = Utils.log("tribeca:gateway:coinbase-api");
 
 var keepaliveAgent = new HttpsAgent();
 
-export var PublicClient = function (apiURI?: string) {
+export var PublicClient = function(apiURI?: string) {
     var self = this;
     console.log("starting coinbase public client, apiURI = ", apiURI);
     self.apiURI = apiURI || 'https://api.exchange.coinbase.com';
 };
 
-PublicClient.prototype = new function () {
+PublicClient.prototype = new function() {
     var prototype = this;
-    prototype.addHeaders = function (obj, additional) {
+    prototype.addHeaders = function(obj, additional) {
         obj.headers = obj.headers || {};
         return _.assign(obj.headers, {
             'User-Agent': 'coinbase-node-client',
@@ -32,17 +32,17 @@ PublicClient.prototype = new function () {
         }, additional);
     };
 
-    prototype.makeRelativeURI = function (parts) {
+    prototype.makeRelativeURI = function(parts) {
         return '/' + parts.join('/');
     };
 
-    prototype.makeAbsoluteURI = function (relativeURI) {
+    prototype.makeAbsoluteURI = function(relativeURI) {
         var self = this;
         return self.apiURI + relativeURI;
     };
 
-    prototype.makeRequestCallback = function (callback) {
-        return function (err, response, data) {
+    prototype.makeRequestCallback = function(callback) {
+        return function(err, response, data) {
             try {
                 data = JSON.parse(data);
             } catch (e) {
@@ -52,7 +52,7 @@ PublicClient.prototype = new function () {
         };
     };
 
-    prototype.request = function (method, uriParts, opts, callback) {
+    prototype.request = function(method, uriParts, opts, callback) {
         var self = this;
         opts = opts || {};
         if (!callback && (opts instanceof Function)) {
@@ -69,58 +69,58 @@ PublicClient.prototype = new function () {
         request(opts, self.makeRequestCallback(callback));
     };
 
-    _.forEach(['get', 'post', 'put', 'delete'], function (method) {
+    _.forEach(['get', 'post', 'put', 'delete'], function(method) {
         prototype[method] = _.partial(prototype.request, method);
     });
 
-    prototype.getProducts = function (callback) {
+    prototype.getProducts = function(callback) {
         var self = this;
         return prototype.get.call(self, ['products'], callback);
     };
 
-    prototype.getProductOrderBook = function (productID, level, callback) {
+    prototype.getProductOrderBook = function(productID, level, callback) {
         var self = this;
         if (!callback && (level instanceof Function)) {
             callback = level;
             level = null;
         }
-        var opts = level && {'qs': {'level': level}};
+        var opts = level && { 'qs': { 'level': level } };
         return prototype.get.call(
             self, ['products', productID, 'book'], opts, callback);
     };
 
-    prototype.getProductTicker = function (productID, callback) {
+    prototype.getProductTicker = function(productID, callback) {
         var self = this;
         return prototype.get.call(self, ['products', productID, 'ticker'], callback);
     };
 
-    prototype.getProductTrades = function (productID, callback) {
+    prototype.getProductTrades = function(productID, callback) {
         var self = this;
         return prototype.get.call(self, ['products', productID, 'trades'], callback);
     };
 
-    prototype.getProductHistoricRates = function (productID, callback) {
+    prototype.getProductHistoricRates = function(productID, callback) {
         var self = this;
         return prototype.get.call(self, ['products', productID, 'candles'], callback);
     };
 
-    prototype.getProduct24HrStats = function (productID, callback) {
+    prototype.getProduct24HrStats = function(productID, callback) {
         var self = this;
         return prototype.get.call(self, ['products', productID, 'stats'], callback);
     };
 
-    prototype.getCurrencies = function (callback) {
+    prototype.getCurrencies = function(callback) {
         var self = this;
         return prototype.get.call(self, ['currencies'], callback);
     };
 
-    prototype.getTime = function (callback) {
+    prototype.getTime = function(callback) {
         var self = this;
         return prototype.get.call(self, ['time'], callback);
     };
 };
 
-export var AuthenticatedClient = function (key: string, b64secret: string, passphrase: string, apiURI?: string) {
+export var AuthenticatedClient = function(key: string, b64secret: string, passphrase: string, apiURI?: string) {
     var self = this;
     PublicClient.call(self, apiURI);
     self.key = key;
@@ -129,10 +129,10 @@ export var AuthenticatedClient = function (key: string, b64secret: string, passp
 };
 
 util.inherits(AuthenticatedClient, PublicClient);
-_.assign(AuthenticatedClient.prototype, new function () {
+_.assign(AuthenticatedClient.prototype, new function() {
     var prototype = this;
 
-    prototype.request = function (method, uriParts, opts, callback) {
+    prototype.request = function(method, uriParts, opts, callback) {
         var self = this;
         opts = opts || {};
         method = method.toUpperCase();
@@ -163,99 +163,99 @@ _.assign(AuthenticatedClient.prototype, new function () {
         request(opts, self.makeRequestCallback(callback));
     };
 
-    _.forEach(['get', 'post', 'put', 'delete'], function (method) {
+    _.forEach(['get', 'post', 'put', 'delete'], function(method) {
         prototype[method] = _.partial(prototype.request, method);
     });
 
-    prototype.getAccounts = function (callback) {
+    prototype.getAccounts = function(callback) {
         var self = this;
         return prototype.get.call(self, ['accounts'], callback);
     };
 
-    prototype.getAccount = function (accountID, callback) {
+    prototype.getAccount = function(accountID, callback) {
         var self = this;
         return prototype.get.call(self, ['accounts', accountID], callback);
     };
 
-    prototype.getAccountHistory = function (accountID, callback) {
+    prototype.getAccountHistory = function(accountID, callback) {
         var self = this;
         return prototype.get.call(self, ['accounts', accountID, 'ledger'], callback);
     };
 
-    prototype.getAccountHolds = function (accountID, callback) {
+    prototype.getAccountHolds = function(accountID, callback) {
         var self = this;
         return prototype.get.call(self, ['accounts', accountID, 'holds'], callback);
     };
 
-    prototype._placeOrder = function (params, callback) {
+    prototype._placeOrder = function(params, callback) {
         var self = this;
-        _.forEach(['price', 'size', 'side', 'product_id'], function (param) {
+        _.forEach(['price', 'size', 'side', 'product_id'], function(param) {
             if (params[param] === undefined) {
                 throw "`opts` must include param `" + param + "`";
             }
         });
-        var opts = {'body': params};
+        var opts = { 'body': params };
         return prototype.post.call(self, ['orders'], opts, callback);
     };
 
-    prototype.buy = function (params, callback) {
+    prototype.buy = function(params, callback) {
         var self = this;
         params.side = 'buy';
         return self._placeOrder(params, callback);
     };
 
-    prototype.sell = function (params, callback) {
+    prototype.sell = function(params, callback) {
         var self = this;
         params.side = 'sell';
         return self._placeOrder(params, callback);
     };
 
-    prototype.cancelOrder = function (orderID, callback) {
+    prototype.cancelOrder = function(orderID, callback) {
         var self = this;
         return prototype.delete.call(self, ['orders', orderID], callback);
     };
 
-    prototype.getOrders = function (callback) {
+    prototype.getOrders = function(callback) {
         var self = this;
         return prototype.get.call(self, ['orders'], callback);
     };
 
-    prototype.getOrder = function (orderID, callback) {
+    prototype.getOrder = function(orderID, callback) {
         var self = this;
         return prototype.get.call(self, ['orders', orderID], callback);
     };
 
-    prototype.getFills = function (callback) {
+    prototype.getFills = function(callback) {
         var self = this;
         return prototype.get.call(self, ['fills'], callback);
     };
 
-    prototype.deposit = function (params, callback) {
+    prototype.deposit = function(params, callback) {
         var self = this;
         params.type = 'deposit';
         return self._transferFunds(params, callback);
     };
 
-    prototype.withdraw = function (params, callback) {
+    prototype.withdraw = function(params, callback) {
         var self = this;
         params.type = 'withdraw';
         return self._transferFunds(params, callback);
     };
 
-    prototype._transferFunds = function (params, callback) {
+    prototype._transferFunds = function(params, callback) {
         var self = this;
-        _.forEach(['type', 'amount', 'coinbase_account_id'], function (param) {
+        _.forEach(['type', 'amount', 'coinbase_account_id'], function(param) {
             if (params[param] === undefined) {
                 throw "`opts` must include param `" + param + "`";
             }
         });
-        var opts = {'body': params};
+        var opts = { 'body': params };
         return prototype.post.call(self, ['transfers'], opts, callback);
     };
 
 });
 
-export var OrderBook = function (productID: string, websocketURI: string, restURI: string) {
+export var OrderBook = function(productID: string, websocketURI: string, restURI: string) {
     var self = this;
     EventEmitter.call(self);
 
@@ -268,7 +268,7 @@ export var OrderBook = function (productID: string, websocketURI: string, restUR
 };
 
 util.inherits(OrderBook, EventEmitter);
-_.assign(OrderBook.prototype, new function () {
+_.assign(OrderBook.prototype, new function() {
     var prototype = this;
 
     prototype.STATES = {
@@ -279,7 +279,7 @@ _.assign(OrderBook.prototype, new function () {
         'error': 'error',
     };
 
-    prototype.clear_book = function () {
+    prototype.clear_book = function() {
         var self = this;
         self.queue = [];
         self.book = {
@@ -289,7 +289,7 @@ _.assign(OrderBook.prototype, new function () {
         };
     };
 
-    prototype.connect = function () {
+    prototype.connect = function() {
         coinbaseLog("Starting connect");
         var self = this;
         if (self.socket) {
@@ -302,7 +302,7 @@ _.assign(OrderBook.prototype, new function () {
         self.socket.on('close', self.onClose.bind(self));
     };
 
-    prototype.disconnect = function () {
+    prototype.disconnect = function() {
         var self = this;
         if (!self.socket) {
             throw "Could not disconnect (not connected)"
@@ -311,7 +311,7 @@ _.assign(OrderBook.prototype, new function () {
         self.onClose();
     };
 
-    prototype.changeState = function (stateName) {
+    prototype.changeState = function(stateName) {
         var self = this;
         var newState = self.STATES[stateName];
         if (newState === undefined) {
@@ -332,23 +332,23 @@ _.assign(OrderBook.prototype, new function () {
             self.fail_count = 0;
         }
 
-        var sc = {'old': oldState, 'new': newState};
+        var sc = { 'old': oldState, 'new': newState };
         coinbaseLog("statechange: ", sc);
         self.emit('statechange', sc);
     };
 
-    prototype.onOpen = function () {
+    prototype.onOpen = function() {
         var self = this;
         self.changeState(self.STATES.open);
         self.sync();
     };
 
-    prototype.onClose = function () {
+    prototype.onClose = function() {
         var self = this;
         self.changeState(self.STATES.closed);
     };
 
-    prototype.onMessage = function (datastr: string) {
+    prototype.onMessage = function(datastr: string) {
         var t = Utils.date();
         var self = this;
         var data = JSON.parse(datastr);
@@ -359,7 +359,7 @@ _.assign(OrderBook.prototype, new function () {
         }
     };
 
-    prototype.sync = function () {
+    prototype.sync = function() {
         var self = this;
         self.changeState(self.STATES.syncing);
         var subscribeMessage = {
@@ -370,13 +370,13 @@ _.assign(OrderBook.prototype, new function () {
         self.loadSnapshot();
     };
 
-    prototype.loadSnapshot = function (snapshotData) {
+    prototype.loadSnapshot = function(snapshotData) {
         var self = this;
 
-        var load = function (data) {
+        var load = function(data) {
             var i, bid, ask;
-            var convertSnapshotArray = function (array) {
-                return {'price': array[0], 'size': array[1], 'id': array[2]}
+            var convertSnapshotArray = function(array) {
+                return { 'price': array[0], 'size': array[1], 'id': array[2] }
             };
 
             for (i = 0; data.bids && i < data.bids.length; i++) {
@@ -397,23 +397,23 @@ _.assign(OrderBook.prototype, new function () {
 
         request({
             'url': self.restURI + '/products/BTC-USD/book?level=3',
-            'headers': {'User-Agent': 'coinbase-node-client'},
-        }, function (err, response, body) {
-            if (err) {
-                self.changeState(self.STATES.error);
-                coinbaseLog("error: Failed to load snapshot: " + err);
-            }
-            else if (response.statusCode !== 200) {
-                self.changeState(self.STATES.error);
-                coinbaseLog("error: Failed to load snapshot: " + response.statusCode);
-            }
-            else {
-                load(JSON.parse(body));
-            }
-        });
+            'headers': { 'User-Agent': 'coinbase-node-client' },
+        }, function(err, response, body) {
+                if (err) {
+                    self.changeState(self.STATES.error);
+                    coinbaseLog("error: Failed to load snapshot: " + err);
+                }
+                else if (response.statusCode !== 200) {
+                    self.changeState(self.STATES.error);
+                    coinbaseLog("error: Failed to load snapshot: " + response.statusCode);
+                }
+                else {
+                    load(JSON.parse(body));
+                }
+            });
     };
 
-    prototype.processMessage = function (message, t: Moment) {
+    prototype.processMessage = function(message, t: Moment) {
         var self = this;
         if (message.sequence <= self.book.sequence) {
             self.emit('ignored', message);

@@ -32,17 +32,17 @@ export function timeSaver(x) {
 }
 
 export interface IPersist<T> {
-    persist(data : T) : void;
+    persist(data: T): void;
 }
 
 export class RepositoryPersister<T> implements IPersist<T> {
-     _log : Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
+    _log: Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
 
-    public loadLatest = () : Q.Promise<T> => {
+    public loadLatest = (): Q.Promise<T> => {
         var deferred = Q.defer<T>();
 
         this.collection.then(coll => {
-            coll.find({}, {fields: {_id: 0}}).limit(1).sort({$natural:-1}).toArray((err, arr) => {
+            coll.find({}, { fields: { _id: 0 } }).limit(1).sort({ $natural: -1 }).toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
                 }
@@ -61,7 +61,7 @@ export class RepositoryPersister<T> implements IPersist<T> {
         return deferred.promise;
     };
 
-    public persist = (report : T) => {
+    public persist = (report: T) => {
         this.collection.then(coll => {
             var v = report;
             if (v.hasOwnProperty("time"))
@@ -73,28 +73,28 @@ export class RepositoryPersister<T> implements IPersist<T> {
         }).done();
     };
 
-    collection : Q.Promise<mongodb.Collection>;
+    collection: Q.Promise<mongodb.Collection>;
     constructor(
-            db : Q.Promise<mongodb.Db>,
-            private _defaultParameter : T,
-            private _dbName : string) {
+        db: Q.Promise<mongodb.Db>,
+        private _defaultParameter: T,
+        private _dbName: string) {
         this.collection = db.then(db => db.collection(this._dbName));
     }
 }
 
 export class Persister<T> implements IPersist<T> {
-     _log : Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
+    _log: Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
-    public load = (exchange : Models.Exchange, pair : Models.CurrencyPair, limit : number = null) : Q.Promise<T[]> => {
-        var selector = {exchange: exchange, pair: pair};
+    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
+        var selector = { exchange: exchange, pair: pair };
         return this.loadInternal(selector, limit);
     };
 
-    public loadAll = (limit? : number) : Q.Promise<T[]> => {
+    public loadAll = (limit?: number): Q.Promise<T[]> => {
         return this.loadInternal({}, limit);
     };
 
-    private loadInternal = (selector : any, limit? : number) => {
+    private loadInternal = (selector: any, limit?: number) => {
         var deferred = Q.defer<T[]>();
 
         this.collection.then(coll => {
@@ -102,7 +102,7 @@ export class Persister<T> implements IPersist<T> {
                 if (err) deferred.reject(err);
                 else {
 
-                    var options : any = {fields: {_id: 0}};
+                    var options: any = { fields: { _id: 0 } };
                     if (limit !== null) options.limit = limit;
                     if (count !== 0) options.skip = Math.max(count - limit, 0);
 
@@ -126,7 +126,7 @@ export class Persister<T> implements IPersist<T> {
         return deferred.promise;
     };
 
-    public persist = (report : T) => {
+    public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
             coll.insert(report, err => {
@@ -136,42 +136,42 @@ export class Persister<T> implements IPersist<T> {
         }).done();
     };
 
-    collection : Q.Promise<mongodb.Collection>;
+    collection: Q.Promise<mongodb.Collection>;
     constructor(
-            db : Q.Promise<mongodb.Db>,
-            private _dbName : string,
-            private _loader : (any) => void,
-            private _saver : (T) => void) {
+        db: Q.Promise<mongodb.Db>,
+        private _dbName: string,
+        private _loader: (any) => void,
+        private _saver: (T) => void) {
         this.collection = db.then(db => db.collection(this._dbName));
     }
 }
 
 export class BasicPersister<T> extends Persister<T> {
-    constructor(db : Q.Promise<mongodb.Db>, collectionName : string) {
+    constructor(db: Q.Promise<mongodb.Db>, collectionName: string) {
         super(db, collectionName, timeLoader, timeSaver);
     }
 }
 
 export class OrderStatusPersister extends Persister<Models.OrderStatusReport> {
-    constructor(db : Q.Promise<mongodb.Db>) {
+    constructor(db: Q.Promise<mongodb.Db>) {
         super(db, "osr", timeLoader, timeSaver);
     }
 }
 
 export class TradePersister extends Persister<Models.Trade> {
-    constructor(db : Q.Promise<mongodb.Db>) {
+    constructor(db: Q.Promise<mongodb.Db>) {
         super(db, "trades", timeLoader, timeSaver);
     }
 }
 
 export class FairValuePersister extends Persister<Models.FairValue> {
-    constructor(db : Q.Promise<mongodb.Db>) {
+    constructor(db: Q.Promise<mongodb.Db>) {
         super(db, "fv", timeLoader, timeSaver);
     }
 }
 
 export class MessagesPersister extends Persister<Models.Message> {
-    constructor(db : Q.Promise<mongodb.Db>) {
+    constructor(db: Q.Promise<mongodb.Db>) {
         super(db, "msg", timeLoader, timeSaver);
     }
 }

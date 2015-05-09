@@ -22,20 +22,20 @@ import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 
 class GeneratedQuote {
-    constructor(public bidPx : number, public bidSz : number, public askPx : number, public askSz : number) {}
+    constructor(public bidPx: number, public bidSz: number, public askPx: number, public askSz: number) { }
 }
 
 export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
-    constructor() {}
-    latest : number = null;
+    constructor() { }
+    latest: number = null;
     Updated = new Utils.Evt<any>();
 }
 
 export class EWMACalculator implements Interfaces.IEwmaCalculator {
-    private _log : Utils.Logger = Utils.log("tribeca:ewma");
+    private _log: Utils.Logger = Utils.log("tribeca:ewma");
 
-    constructor(private _fv : FairValue.FairValueEngine, private _alpha : number = .095) {
-        setInterval(this.onTick, 10*1000);
+    constructor(private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
+        setInterval(this.onTick, 10 * 1000);
         this.onTick();
     }
 
@@ -52,9 +52,9 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
         this.setLatest(value);
     };
 
-    private _latest : number = null;
+    private _latest: number = null;
     public get latest() { return this._latest; }
-    private setLatest = (v : number) => {
+    private setLatest = (v: number) => {
         if (Math.abs(v - this._latest) > 1e-3) {
             this._latest = v;
             this.Updated.trigger();
@@ -67,13 +67,13 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
 }
 
 export class QuotingEngine {
-    private _log : Utils.Logger = Utils.log("tribeca:quotingengine");
+    private _log: Utils.Logger = Utils.log("tribeca:quotingengine");
 
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
-    private _latest : Models.TwoSidedQuote = null;
+    private _latest: Models.TwoSidedQuote = null;
     public get latestQuote() { return this._latest; }
-    public set latestQuote(val : Models.TwoSidedQuote) {
+    public set latestQuote(val: Models.TwoSidedQuote) {
         if (_.isEqual(val, this._latest)) return;
 
         this._latest = val;
@@ -81,15 +81,15 @@ export class QuotingEngine {
         this._quotePublisher.publish(this._latest);
     }
 
-    constructor(private _filteredMarkets : MarketFiltration.MarketFiltration,
-                private _fvEngine : FairValue.FairValueEngine,
-                private _qlParamRepo : QuotingParameters.QuotingParametersRepository,
-                private _safetyParams : Safety.SafetySettingsRepository,
-                private _quotePublisher : Messaging.IPublish<Models.TwoSidedQuote>,
-                private _orderBroker : Interfaces.IOrderBroker,
-                private _positionBroker : Interfaces.IPositionBroker,
-                private _ewma : Interfaces.IEwmaCalculator,
-                private _targetPosition : PositionManagement.TargetBasePositionManager) {
+    constructor(private _filteredMarkets: MarketFiltration.MarketFiltration,
+        private _fvEngine: FairValue.FairValueEngine,
+        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+        private _safetyParams: Safety.SafetySettingsRepository,
+        private _quotePublisher: Messaging.IPublish<Models.TwoSidedQuote>,
+        private _orderBroker: Interfaces.IOrderBroker,
+        private _positionBroker: Interfaces.IPositionBroker,
+        private _ewma: Interfaces.IEwmaCalculator,
+        private _targetPosition: PositionManagement.TargetBasePositionManager) {
         var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
 
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
@@ -101,7 +101,7 @@ export class QuotingEngine {
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
     }
 
-    private static computeMidQuote(fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeMidQuote(fv: Models.FairValue, params: Models.QuotingParameters) {
         var width = params.width;
         var size = params.size;
 
@@ -111,7 +111,7 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, size, askPx, size);
     }
 
-    private static getQuoteAtTopOfMarket(filteredMkt : Models.Market) : GeneratedQuote {
+    private static getQuoteAtTopOfMarket(filteredMkt: Models.Market): GeneratedQuote {
         var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
         if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
         var bidPx = topBid.price;
@@ -123,7 +123,7 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, topBid.size, askPx, topAsk.size);
     }
 
-    private static computeTopJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
         var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
 
         if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
@@ -146,7 +146,7 @@ export class QuotingEngine {
         return genQt;
     }
 
-    private static computeInverseJoinQuote(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
         var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
 
         var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
@@ -171,7 +171,7 @@ export class QuotingEngine {
         return genQt;
     }
 
-    private static computeQuoteUnrounded(filteredMkt : Models.Market, fv : Models.FairValue, params : Models.QuotingParameters) {
+    private static computeQuoteUnrounded(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
         switch (params.mode) {
             case Models.QuotingMode.Mid:
                 return QuotingEngine.computeMidQuote(fv, params);
@@ -184,7 +184,7 @@ export class QuotingEngine {
         }
     }
 
-    private computeQuote(filteredMkt : Models.Market, fv : Models.FairValue) {
+    private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         var params = this._qlParamRepo.latest;
         var unrounded = QuotingEngine.computeQuoteUnrounded(filteredMkt, fv, params);
 
@@ -222,7 +222,7 @@ export class QuotingEngine {
         return unrounded;
     }
 
-    private recalcQuote = (t : Moment) => {
+    private recalcQuote = (t: Moment) => {
         var fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
@@ -246,10 +246,10 @@ export class QuotingEngine {
             QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
             QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
             t
-        );
+            );
     };
 
-    private static quotesAreSame(newQ : Models.Quote, prevTwoSided : Models.TwoSidedQuote, sideGetter : (q : Models.TwoSidedQuote) => Models.Quote) : Models.Quote {
+    private static quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
         if (prevTwoSided == null) return newQ;
         var previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
@@ -259,33 +259,33 @@ export class QuotingEngine {
 }
 
 export class QuoteSender {
-    private _log : Utils.Logger = Utils.log("tribeca:quotesender");
+    private _log: Utils.Logger = Utils.log("tribeca:quotesender");
 
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
-    public set latestStatus(val : Models.TwoSidedQuoteStatus) {
+    public set latestStatus(val: Models.TwoSidedQuoteStatus) {
         if (_.isEqual(val, this._latest)) return;
 
         this._latest = val;
         this._statusPublisher.publish(this._latest);
     }
 
-    constructor(private _quotingEngine : QuotingEngine,
-                private _statusPublisher : Messaging.IPublish<Models.TwoSidedQuoteStatus>,
-                private _quoter : Quoter.Quoter,
-                private _pair : Models.CurrencyPair,
-                private _activeRepo : Active.ActiveRepository,
-                private _positionBroker : Interfaces.IPositionBroker,
-                private _fv : FairValue.FairValueEngine,
-                private _broker : Interfaces.IMarketDataBroker,
-                private _details : Interfaces.IBroker) {
+    constructor(private _quotingEngine: QuotingEngine,
+        private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
+        private _quoter: Quoter.Quoter,
+        private _pair: Models.CurrencyPair,
+        private _activeRepo: Active.ActiveRepository,
+        private _positionBroker: Interfaces.IPositionBroker,
+        private _fv: FairValue.FairValueEngine,
+        private _broker: Interfaces.IMarketDataBroker,
+        private _details: Interfaces.IBroker,
+        private _safety: Safety.SafetyCalculator) {
         _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
         _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote)));
-
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }
 
-    private checkCrossedQuotes = (side : Models.Side, px : number) : boolean => {
+    private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
         var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
 
         var doesQuoteCross = oppSide === Models.Side.Bid
@@ -303,7 +303,7 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t : Moment) : void => {
+    private sendQuote = (t: Moment): void => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;
@@ -311,17 +311,17 @@ export class QuoteSender {
 
         if (quote !== null && this._activeRepo.latest) {
             if (this.hasEnoughPosition(this._pair.base, quote.ask.size) &&
-                    (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
+                (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
             if (this.hasEnoughPosition(this._pair.quote, quote.bid.size * quote.bid.price) &&
-                    (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
+                (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
                 bidStatus = Models.QuoteStatus.Live;
             }
         }
 
-        var askAction : Models.QuoteSent;
+        var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
             askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
         }
@@ -329,7 +329,7 @@ export class QuoteSender {
             askAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
         }
 
-        var bidAction : Models.QuoteSent;
+        var bidAction: Models.QuoteSent;
         if (bidStatus === Models.QuoteStatus.Live) {
             bidAction = this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
         }
@@ -343,16 +343,16 @@ export class QuoteSender {
             var fv = this._fv.latestFairValue;
             var lm = this._broker.currentBook;
             this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
-                    Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
-                    (fv == null ? null : fv.price),
-                    this.fmtQuoteSide(quote),
-                    this.fmtLevel(0, lm.bids, lm.asks),
-                    this.fmtLevel(1, lm.bids, lm.asks),
-                    this.fmtLevel(2, lm.bids, lm.asks));
+                Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
+                (fv == null ? null : fv.price),
+                this.fmtQuoteSide(quote),
+                this.fmtLevel(0, lm.bids, lm.asks),
+                this.fmtLevel(1, lm.bids, lm.asks),
+                this.fmtLevel(2, lm.bids, lm.asks));
         }
     };
 
-    private fmtQuoteSide(q : Models.TwoSidedQuote) {
+    private fmtQuoteSide(q: Models.TwoSidedQuote) {
         if (q == null) return "[no quote]";
         return util.format("q:[%d %d - %d %d]",
             (q.bid == null ? null : q.bid.size),
@@ -361,19 +361,19 @@ export class QuoteSender {
             (q.ask == null ? null : q.ask.size));
     }
 
-    private fmtLevel(n : number, bids : Models.MarketSide[], asks : Models.MarketSide[]) {
+    private fmtLevel(n: number, bids: Models.MarketSide[], asks: Models.MarketSide[]) {
         return util.format("mkt%d:[%d %d - %d %d]", n,
-            (typeof bids[n] === "undefined" ? null : bids[n].size), 
+            (typeof bids[n] === "undefined" ? null : bids[n].size),
             (typeof bids[n] === "undefined" ? null : bids[n].price),
             (typeof asks[n] === "undefined" ? null : asks[n].price),
             (typeof asks[n] === "undefined" ? null : asks[n].size));
     }
 
-    private shouldLogDescision(a : Models.QuoteSent) {
+    private shouldLogDescision(a: Models.QuoteSent) {
         return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
     }
 
-    private hasEnoughPosition = (cur : Models.Currency, minAmt : number) : boolean => {
+    private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);
         return pos != null && pos.amount > minAmt * 2;
     };

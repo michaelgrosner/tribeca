@@ -17,13 +17,13 @@ import Persister = require("./persister");
 
 export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
     constructor(pub: Messaging.IPublish<Models.SafetySettings>,
-                rec: Messaging.IReceive<Models.SafetySettings>,
-                initParam: Models.SafetySettings) {
+        rec: Messaging.IReceive<Models.SafetySettings>,
+        initParam: Models.SafetySettings) {
         super("ssr",
             (s: Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
             (a: Models.SafetySettings, b: Models.SafetySettings) => !_.isEqual(a, b),
             initParam, rec, pub
-        );
+            );
     }
 }
 
@@ -32,9 +32,9 @@ export class SafetyCalculator {
 
     NewValue = new Utils.Evt();
 
-    private _latest : Models.TradeSafety = null;
+    private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
-    public set latest(val : Models.TradeSafety) {
+    public set latest(val: Models.TradeSafety) {
         if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
@@ -50,10 +50,10 @@ export class SafetyCalculator {
     private _sells: Models.Trade[] = [];
 
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
-                private _broker: Interfaces.ITradeBroker,
-                private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
-                private _publisher: Messaging.IPublish<Models.TradeSafety>,
-                private _persister : Persister.IPersist<Models.TradeSafety>) {
+        private _broker: Interfaces.ITradeBroker,
+        private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
+        private _publisher: Messaging.IPublish<Models.TradeSafety>,
+        private _persister: Persister.IPersist<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
@@ -82,7 +82,7 @@ export class SafetyCalculator {
     private computeQtyLimit = () => {
         var settings = this._repo.latest;
 
-        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[] => {
+        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
                 .filter(o => !SafetyCalculator.isOlderThan(o, settings))
                 .sortBy((t: Models.Trade) => direction * t.price)
@@ -120,9 +120,9 @@ export class SafetyCalculator {
 }
 
 export interface ISafetyManager {
-    SafetySettingsViolated : Utils.Evt<any>;
-    SafetyViolationCleared : Utils.Evt<any>;
-    canEnable : boolean;
+    SafetySettingsViolated: Utils.Evt<any>;
+    SafetyViolationCleared: Utils.Evt<any>;
+    canEnable: boolean;
 }
 
 export class SafetySettingsManager implements ISafetyManager {
@@ -135,8 +135,8 @@ export class SafetySettingsManager implements ISafetyManager {
     canEnable: boolean = true;
 
     constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
-                private _safetyCalculator: SafetyCalculator,
-                private _messages: Interfaces.IPublishMessages) {
+        private _safetyCalculator: SafetyCalculator,
+        private _messages: Interfaces.IPublishMessages) {
         _safetyCalculator.NewValue.on(() => this.recalculateSafeties());
         _repo.NewParameters.on(() => this.recalculateSafeties());
     }

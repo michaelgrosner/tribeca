@@ -1,13 +1,13 @@
 export interface IComputeStatistics {
-    latest : number;
-    initialize(seedData : number[]) : void;
-    addNewValue(value : number) : number;
+    latest: number;
+    initialize(seedData: number[]): void;
+    addNewValue(value: number): number;
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
-    constructor(private _alpha : number) {}
+    constructor(private _alpha: number) { }
 
-    public latest : number = null;
+    public latest: number = null;
 
     initialize(seedData: number[]) {
         for (var i = 0; i < seedData.length; i++)
@@ -20,7 +20,7 @@ export class EwmaStatisticCalculator implements IComputeStatistics {
     }
 }
 
-export function computeEwma(newValue: number, previous: number, alpha: number) : number {
+export function computeEwma(newValue: number, previous: number, alpha: number): number {
     if (previous !== null) {
         return alpha * newValue + (1 - alpha) * previous;
     }

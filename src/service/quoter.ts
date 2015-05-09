@@ -8,21 +8,21 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 
 class QuoteOrder {
-    constructor(public quote : Models.Quote, public orderId : string) {}
+    constructor(public quote: Models.Quote, public orderId: string) { }
 }
 
 // aggregator for quoting
 export class Quoter {
-    private _bidQuoter : ExchangeQuoter;
-    private _askQuoter : ExchangeQuoter;
+    private _bidQuoter: ExchangeQuoter;
+    private _askQuoter: ExchangeQuoter;
 
-    constructor(broker : Interfaces.IOrderBroker,
-                exchBroker : Interfaces.IBroker) {
+    constructor(broker: Interfaces.IOrderBroker,
+        exchBroker: Interfaces.IBroker) {
         this._bidQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Bid);
         this._askQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Ask);
     }
 
-    public updateQuote = (q : Models.Timestamped<Models.Quote>, side : Models.Side) : Models.QuoteSent => {
+    public updateQuote = (q: Models.Timestamped<Models.Quote>, side: Models.Side): Models.QuoteSent => {
         switch (side) {
             case Models.Side.Ask:
                 return this._askQuoter.updateQuote(q);
@@ -31,7 +31,7 @@ export class Quoter {
         }
     };
 
-    public cancelQuote = (s : Models.Timestamped<Models.Side>) : Models.QuoteSent => {
+    public cancelQuote = (s: Models.Timestamped<Models.Side>): Models.QuoteSent => {
         switch (s.data) {
             case Models.Side.Ask:
                 return this._askQuoter.cancelQuote(s.time);
@@ -40,7 +40,7 @@ export class Quoter {
         }
     };
 
-    public quotesSent = (s : Models.Side) => {
+    public quotesSent = (s: Models.Side) => {
         switch (s) {
             case Models.Side.Ask:
                 return this._askQuoter.quotesSent;
@@ -52,19 +52,19 @@ export class Quoter {
 
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
-    private _activeQuote : QuoteOrder = null;
-    private _exchange : Models.Exchange;
+    private _activeQuote: QuoteOrder = null;
+    private _exchange: Models.Exchange;
 
-    public quotesSent : QuoteOrder[] = [];
+    public quotesSent: QuoteOrder[] = [];
 
-    constructor(private _broker : Interfaces.IOrderBroker,
-                private _exchBroker : Interfaces.IBroker,
-                private _side : Models.Side) {
+    constructor(private _broker: Interfaces.IOrderBroker,
+        private _exchBroker: Interfaces.IBroker,
+        private _side: Models.Side) {
         this._exchange = _exchBroker.exchange();
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
     }
 
-    private handleOrderUpdate = (o : Models.OrderStatusReport) => {
+    private handleOrderUpdate = (o: Models.OrderStatusReport) => {
         switch (o.orderStatus) {
             case Models.OrderStatus.Cancelled:
             case Models.OrderStatus.Complete:
@@ -78,7 +78,7 @@ export class ExchangeQuoter {
         }
     };
 
-    public updateQuote = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
+    public updateQuote = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
@@ -91,20 +91,20 @@ export class ExchangeQuoter {
         return this.start(q);
     };
 
-    public cancelQuote = (t : Moment) : Models.QuoteSent => {
+    public cancelQuote = (t: Moment): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
         return this.stop(t);
     };
 
-    private modify = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
+    private modify = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         this.stop(q.time);
         this.start(q);
         return Models.QuoteSent.Modify;
     };
 
-    private start = (q : Models.Timestamped<Models.Quote>) : Models.QuoteSent => {
+    private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         var existing = this._activeQuote;
         if (existing !== null && existing.quote.equals(q.data)) {
             return Models.QuoteSent.UnsentDuplicate;
@@ -121,7 +121,7 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stop = (t : Moment) : Models.QuoteSent => {
+    private stop = (t: Moment): Models.QuoteSent => {
         if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDelete;
         }

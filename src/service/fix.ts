@@ -11,14 +11,14 @@ import Interfaces = require("./interfaces");
 export class FixGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    sendEvent = (evt : string, obj : any) => {
-        this._sock.send(JSON.stringify({evt: evt, obj: obj}));
+    sendEvent = (evt: string, obj: any) => {
+        this._sock.send(JSON.stringify({ evt: evt, obj: obj }));
     };
 
-    _lastHeartbeatTime : Moment = null;
-    _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
-    _log : Utils.Logger = Utils.log("tribeca:gateway:FixBridge");
-    _sock : any;
+    _lastHeartbeatTime: Moment = null;
+    _handlers: { [channel: string]: (newMsg: Models.Timestamped<any>) => void } = {};
+    _log: Utils.Logger = Utils.log("tribeca:gateway:FixBridge");
+    _sock: any;
     constructor() {
         this._sock = zeromq.socket("pair");
         this._sock.connect("ipc:///tmp/tribecafix");
@@ -49,7 +49,7 @@ export class FixGateway {
         }
     };
 
-    private onConnectionStatus = (tsMsg : Models.Timestamped<string>) => {
+    private onConnectionStatus = (tsMsg: Models.Timestamped<string>) => {
         if (tsMsg.data == "Logon") {
             this._lastHeartbeatTime = Utils.date();
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
@@ -62,7 +62,7 @@ export class FixGateway {
         }
     };
 
-    subscribe<T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) {
+    subscribe<T>(channel: string, handler: (newMsg: Models.Timestamped<T>) => void) {
         this._handlers[channel] = handler;
     }
 }

@@ -9,12 +9,12 @@ import Messaging = require("../common/messaging");
 import _ = require("lodash");
 
 export class QuotingParametersRepository extends Interfaces.Repository<Models.QuotingParameters> {
-    constructor(pub : Messaging.IPublish<Models.QuotingParameters>,
-                rec : Messaging.IReceive<Models.QuotingParameters>,
-                initParam : Models.QuotingParameters) {
+    constructor(pub: Messaging.IPublish<Models.QuotingParameters>,
+        rec: Messaging.IReceive<Models.QuotingParameters>,
+        initParam: Models.QuotingParameters) {
         super("qpr",
-            (p : Models.QuotingParameters) => p.size > 0 || p.width > 0,
-            (a : Models.QuotingParameters, b : Models.QuotingParameters) => !_.isEqual(a, b),
+            (p: Models.QuotingParameters) => p.size > 0 || p.width > 0,
+            (a: Models.QuotingParameters, b: Models.QuotingParameters) => !_.isEqual(a, b),
             initParam, rec, pub);
 
     }

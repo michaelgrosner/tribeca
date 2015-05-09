@@ -49,7 +49,7 @@ var config = new Config.ConfigProvider(env);
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 
-var getExchange = () : Models.Exchange => {
+var getExchange = (): Models.Exchange => {
     var ex = process.env.EXCHANGE.toLowerCase();
     switch (ex) {
         case "hitbtc": return Models.Exchange.HitBtc;
@@ -71,7 +71,7 @@ var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), Messaging.Topics.ActiveChange);
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), Messaging.Topics.SafetySettings);
-var paramsPersister = new Persister.RepositoryPersister(db, 
+var paramsPersister = new Persister.RepositoryPersister(db,
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off),
     Messaging.Topics.QuotingParametersChange);
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
@@ -87,14 +87,14 @@ Q.all([
     paramsPersister.loadLatest(),
     activePersister.loadLatest(),
     rfvPersister.loadAll(50)
-]).spread((initOrders : Models.OrderStatusReport[], 
-           initTrades : Models.Trade[], 
-           initMktTrades : Models.ExchangePairMessage<Models.MarketTrade>[],
-           initMsgs : Models.Message[],
-           initSafety : Models.SafetySettings, 
-           initParams : Models.QuotingParameters,
-           initActive : Models.SerializedQuotesActive,
-           initRfv : Models.RegularFairValue[]) => {
+]).spread((initOrders: Models.OrderStatusReport[],
+    initTrades: Models.Trade[],
+    initMktTrades: Models.ExchangePairMessage<Models.MarketTrade>[],
+    initMsgs: Models.Message[],
+    initSafety: Models.SafetySettings,
+    initParams: Models.QuotingParameters,
+    initActive: Models.SerializedQuotesActive,
+    initRfv: Models.RegularFairValue[]) => {
 
     var app = express();
     var http = (<any>require('http')).Server(app);
@@ -112,7 +112,7 @@ Q.all([
     var advert = new Models.ProductAdvertisement(exchange, pair, Config.Environment[config.environment()]);
     new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
 
-    var getPublisher = <T>(topic : string, persister: Persister.Persister<T> = null) : Messaging.IPublish<T> => {
+    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => {
         var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
         if (persister !== null)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
@@ -139,7 +139,7 @@ Q.all([
     var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
 
-    var getReceiver = <T>(topic : string) => new Messaging.Receiver<T>(topic, io, messagingLog);
+    var getReceiver = <T>(topic: string) => new Messaging.Receiver<T>(topic, io, messagingLog);
 
     var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
     var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
@@ -149,7 +149,7 @@ Q.all([
 
     var orderCache = new Broker.OrderStateCache();
 
-    var getExch = () : Interfaces.CombinedGateway => {
+    var getExch = (): Interfaces.CombinedGateway => {
         switch (exchange) {
             case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
             case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
@@ -183,8 +183,8 @@ Q.all([
     var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fairValuePersister);
     var ewma = new Agent.EWMACalculator(fvEngine);
 
-    var rfvValues = _.map(initRfv, (r : Models.RegularFairValue) => r.value);
-    var shortEwma = new Statistics.EwmaStatisticCalculator(2*.095);
+    var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
+    var shortEwma = new Statistics.EwmaStatisticCalculator(2 * .095);
     shortEwma.initialize(rfvValues);
     var longEwma = new Statistics.EwmaStatisticCalculator(.095);
     longEwma.initialize(rfvValues);
@@ -193,7 +193,7 @@ Q.all([
     var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
     var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
         orderBroker, positionBroker, ewma, tbp);
-    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker);
+    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker, safetyCalculator);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quotingEngine, broker, mktTradePersister, initMktTrades);

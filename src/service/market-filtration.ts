@@ -12,24 +12,24 @@ import Quoter = require("./quoter");
 import _ = require("lodash");
 
 export class MarketFiltration {
-    private _latest : Models.Market = null;
+    private _latest: Models.Market = null;
     public FilteredMarketChanged = new Utils.Evt<Models.Market>();
 
     public get latestFilteredMarket() { return this._latest; }
-    public set latestFilteredMarket(val : Models.Market) {
+    public set latestFilteredMarket(val: Models.Market) {
         this._latest = val;
         this.FilteredMarketChanged.trigger();
     }
 
-    constructor(private _quoter : Quoter.Quoter,
-                private _broker : Interfaces.IMarketDataBroker) {
+    constructor(private _quoter: Quoter.Quoter,
+        private _broker: Interfaces.IMarketDataBroker) {
         _broker.MarketData.on(this.filterFullMarket);
     }
 
     private filterFullMarket = () => {
         var mkt = this._broker.currentBook;
 
-        if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1)  {
+        if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1) {
             this.latestFilteredMarket = null;
             return;
         }
@@ -40,7 +40,7 @@ export class MarketFiltration {
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
     };
 
-    private filterMarket = (mkts : Models.MarketSide[], s : Models.Side) : Models.MarketSide[] => {
+    private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {
         var rgq = this._quoter.quotesSent(s);
 
         var copiedMkts = [];
