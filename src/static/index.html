@@ -180,7 +180,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">apMode</div>
                                             <select class="form-control input-sm"
@@ -235,6 +235,15 @@
                                             <input class="form-control input-sm"
                                                    type="checkbox"
                                                    ng-model="pair.quotingParameters.display.ewmaProtection">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">apr?</div>
+                                            <input class="form-control input-sm"
+                                                   type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
                                         </div>
                                     </div>
 

@@ -72,7 +72,7 @@ var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), Messaging.Topics.ActiveChange);
 var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), Messaging.Topics.SafetySettings);
 var paramsPersister = new Persister.RepositoryPersister(db,
-    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off),
+    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false),
     Messaging.Topics.QuotingParametersChange);
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
 var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");

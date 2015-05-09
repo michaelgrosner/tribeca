@@ -329,7 +329,8 @@ export class QuotingParameters {
                 public targetBasePosition: number,
                 public positionDivergence: number,
                 public ewmaProtection: boolean,
-                public autoPositionMode: AutoPositionMode) {}
+                public autoPositionMode: AutoPositionMode,
+                public aggressivePositionRebalancing: boolean) {}
 }
 
 export class SafetySettings {
