@@ -204,20 +204,7 @@ export class QuotingEngine {
             this._log("cannot compute a quote since no position report exists!");
             return null;
         }
-
-        var latestPosition = this._positionBroker.latestReport;
-        var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        if (totalBasePosition < targetBasePosition - params.positionDivergence || this._safeties.latest.sell > params.tradesPerMinute) {
-            unrounded.askPx += 20; // TODO: revisit! throw away?
-            if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = targetBasePosition - totalBasePosition;
-        }
-        if (totalBasePosition > targetBasePosition + params.positionDivergence || this._safeties.latest.buy > params.tradesPerMinute) {
-            unrounded.bidPx -= 20; // TODO: revisit! throw away?
-            if (params.aggressivePositionRebalancing)
-                unrounded.askSz = totalBasePosition - targetBasePosition;
-        }
-
+        
         unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
         unrounded.askPx = Utils.roundFloat(unrounded.askPx);
 
@@ -229,6 +216,21 @@ export class QuotingEngine {
         
         unrounded.askSz = Math.max(0.01, unrounded.askSz);
         unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
+
+        var latestPosition = this._positionBroker.latestReport;
+        var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        if (totalBasePosition < targetBasePosition - params.positionDivergence || this._safeties.latest.sell > params.tradesPerMinute) {
+            unrounded.askPx = null;
+            unrounded.askSz = null;
+            if (params.aggressivePositionRebalancing)
+                unrounded.bidSz = Math.min(3*params.size, targetBasePosition - totalBasePosition);
+        }
+        if (totalBasePosition > targetBasePosition + params.positionDivergence || this._safeties.latest.buy > params.tradesPerMinute) {
+            unrounded.bidPx = null;
+            unrounded.bidSz = null;
+            if (params.aggressivePositionRebalancing)
+                unrounded.askSz = Math.min(3*params.size, totalBasePosition - targetBasePosition);
+        }
 
         return unrounded;
     }
@@ -261,6 +263,7 @@ export class QuotingEngine {
     };
 
     private static quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
+        if (newQ.price === null && newQ.size === null) return null;
         if (prevTwoSided == null) return newQ;
         var previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
@@ -320,17 +323,17 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
+            if (quote.ask !== null && this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
-            if (this.hasEnoughPosition(this._details.pair.quote, quote.bid.size * quote.bid.price) &&
+            if (quote.bid !== null && this.hasEnoughPosition(this._details.pair.quote, quote.bid.size * quote.bid.price) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
                 bidStatus = Models.QuoteStatus.Live;
             }
         }
-
+        
         var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
             askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
