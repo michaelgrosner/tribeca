@@ -70,9 +70,8 @@ var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
 var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), Messaging.Topics.ActiveChange);
-var safetyPersister = new Persister.RepositoryPersister(db, new Models.SafetySettings(4, 60, 5), Messaging.Topics.SafetySettings);
 var paramsPersister = new Persister.RepositoryPersister(db,
-    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false),
+    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300),
     Messaging.Topics.QuotingParametersChange);
 var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
 var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");
@@ -83,7 +82,6 @@ Q.all([
     tradesPersister.load(exchange, pair, 10000),
     mktTradePersister.load(exchange, pair, 100),
     messagesPersister.loadAll(50),
-    safetyPersister.loadLatest(),
     paramsPersister.loadLatest(),
     activePersister.loadLatest(),
     rfvPersister.loadAll(50)
@@ -91,7 +89,6 @@ Q.all([
     initTrades: Models.Trade[],
     initMktTrades: Models.ExchangePairMessage<Models.MarketTrade>[],
     initMsgs: Models.Message[],
-    initSafety: Models.SafetySettings,
     initParams: Models.QuotingParameters,
     initActive: Models.SerializedQuotesActive,
     initRfv: Models.RegularFairValue[]) => {
@@ -170,13 +167,10 @@ Q.all([
     var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
 
-    var safetyRepo = new Safety.SafetySettingsRepository(safetySettingsPublisher, safetySettingsReceiver, initSafety);
-    safetyRepo.NewParameters.on(() => safetyPersister.persist(safetyRepo.latest));
-    var safetyCalculator = new Safety.SafetyCalculator(safetyRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
-    var safeties = new Safety.SafetySettingsManager(safetyRepo, safetyCalculator, messages);
+    var safetyCalculator = new Safety.SafetyCalculator(paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
-    var active = new Active.ActiveRepository(startQuoting, safeties, broker, activePublisher, activeReceiver);
+    var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
@@ -191,9 +185,9 @@ Q.all([
 
     var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
     var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, safetyRepo, quotePublisher,
-        orderBroker, positionBroker, ewma, tbp);
-    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, pair, active, positionBroker, fvEngine, marketDataBroker, broker, safetyCalculator);
+    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, quotePublisher,
+        orderBroker, positionBroker, ewma, tbp, safetyCalculator);
+    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quotingEngine, broker, mktTradePersister, initMktTrades);

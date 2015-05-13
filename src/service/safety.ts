@@ -15,18 +15,6 @@ import momentjs = require('moment');
 import _ = require("lodash");
 import Persister = require("./persister");
 
-export class SafetySettingsRepository extends Interfaces.Repository<Models.SafetySettings> {
-    constructor(pub: Messaging.IPublish<Models.SafetySettings>,
-        rec: Messaging.IReceive<Models.SafetySettings>,
-        initParam: Models.SafetySettings) {
-        super("ssr",
-            (s: Models.SafetySettings) => s.tradesPerMinute > 0 && s.coolOffMinutes > 0,
-            (a: Models.SafetySettings, b: Models.SafetySettings) => !_.isEqual(a, b),
-            initParam, rec, pub
-            );
-    }
-}
-
 export class SafetyCalculator {
     private _log: Utils.Logger = Utils.log("tribeca:sc");
 
@@ -49,7 +37,7 @@ export class SafetyCalculator {
     private _buys: Models.Trade[] = [];
     private _sells: Models.Trade[] = [];
 
-    constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
+    constructor(private _repo: Interfaces.IRepository<Models.QuotingParameters>,
         private _broker: Interfaces.ITradeBroker,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
         private _publisher: Messaging.IPublish<Models.TradeSafety>,
@@ -76,7 +64,7 @@ export class SafetyCalculator {
         this.computeQtyLimit();
     };
 
-    private static isOlderThan(o: Models.Trade, settings: Models.SafetySettings) {
+    private static isOlderThan(o: Models.Trade, settings: Models.QuotingParameters) {
         var now = Utils.date();
         return Math.abs(now.diff(o.time)) > (1000 * settings.tradeRateSeconds);
     }
@@ -118,50 +106,5 @@ export class SafetyCalculator {
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
             computeSafety(this._buys.concat(this._sells)), Utils.date());
-    };
-}
-
-export interface ISafetyManager {
-    SafetySettingsViolated: Utils.Evt<any>;
-    SafetyViolationCleared: Utils.Evt<any>;
-    canEnable: boolean;
-}
-
-export class SafetySettingsManager implements ISafetyManager {
-    private _log: Utils.Logger = Utils.log("tribeca:qg");
-
-    private _previousVal = 0.0;
-
-    public SafetySettingsViolated = new Utils.Evt<any>();
-    public SafetyViolationCleared = new Utils.Evt<any>();
-    canEnable: boolean = true;
-
-    constructor(private _repo: Interfaces.IRepository<Models.SafetySettings>,
-        private _safetyCalculator: SafetyCalculator,
-        private _messages: Interfaces.IPublishMessages) {
-        _safetyCalculator.NewValue.on(() => this.recalculateSafeties());
-        _repo.NewParameters.on(() => this.recalculateSafeties());
-    }
-
-    private recalculateSafeties = () => {
-        var val = this._safetyCalculator.latest === null ? 0 : this._safetyCalculator.latest.combined;
-        var settings = this._repo.latest;
-
-        if (val >= settings.tradesPerMinute && val > this._previousVal && this.canEnable) {
-            this._previousVal = val;
-            this.canEnable = false;
-            this.SafetySettingsViolated.trigger();
-
-            var coolOffMinutes = momentjs.duration(settings.coolOffMinutes, 'minutes');
-            var msg = util.format("Trd vol safety violated (%d), waiting %s.", Utils.roundFloat(val), coolOffMinutes.humanize());
-            this._log(msg);
-            this._messages.publish(msg);
-
-            setTimeout(() => {
-                this._previousVal = 0.0;
-                this.canEnable = true;
-                this.SafetyViolationCleared.trigger();
-            }, coolOffMinutes.asMilliseconds());
-        }
     };
 }

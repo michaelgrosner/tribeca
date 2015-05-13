@@ -26,7 +26,6 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     }
 
     constructor(startQuoting: boolean,
-        private _safeties: Safety.ISafetyManager,
         private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
         private _pub: Messaging.IPublish<boolean>,
         private _rec: Messaging.IReceive<boolean>) {
@@ -35,9 +34,6 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
         _pub.registerSnapshot(() => [this.latest]);
         _rec.registerReceiver(this.handleNewQuotingModeChangeRequest);
-
-        _safeties.SafetySettingsViolated.on(() => this.updateParameters());
-        _safeties.SafetyViolationCleared.on(() => this.updateParameters());
         _exchangeConnectivity.ConnectChanged.on(() => this.updateParameters());
     }
 
@@ -52,7 +48,6 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     };
 
     private reevaluateQuotingMode = (): boolean => {
-        if (!this._safeties.canEnable) return false;
         if (this._exchangeConnectivity.connectStatus !== Models.ConnectivityStatus.Connected) return false;
         return this._savedQuotingMode;
     };

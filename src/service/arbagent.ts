@@ -81,24 +81,25 @@ export class QuotingEngine {
         this._quotePublisher.publish(this._latest);
     }
 
-    constructor(private _filteredMarkets: MarketFiltration.MarketFiltration,
+    constructor(
+        private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _safetyParams: Safety.SafetySettingsRepository,
         private _quotePublisher: Messaging.IPublish<Models.TwoSidedQuote>,
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
         private _ewma: Interfaces.IEwmaCalculator,
-        private _targetPosition: PositionManagement.TargetBasePositionManager) {
+        private _targetPosition: PositionManagement.TargetBasePositionManager,
+        private _safeties: Safety.SafetyCalculator) {
         var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
 
         _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
-        _safetyParams.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
+        _safeties.NewValue.on(recalcWithoutInputTime);
     }
 
     private static computeMidQuote(fv: Models.FairValue, params: Models.QuotingParameters) {
@@ -206,12 +207,12 @@ export class QuotingEngine {
 
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        if (totalBasePosition < targetBasePosition - params.positionDivergence) {
+        if (totalBasePosition < targetBasePosition - params.positionDivergence || this._safeties.latest.sell > params.tradesPerMinute) {
             unrounded.askPx += 20; // TODO: revisit! throw away?
             if (params.aggressivePositionRebalancing)
                 unrounded.bidSz = targetBasePosition - totalBasePosition;
         }
-        if (totalBasePosition > targetBasePosition + params.positionDivergence) {
+        if (totalBasePosition > targetBasePosition + params.positionDivergence || this._safeties.latest.buy > params.tradesPerMinute) {
             unrounded.bidPx -= 20; // TODO: revisit! throw away?
             if (params.aggressivePositionRebalancing)
                 unrounded.askSz = totalBasePosition - targetBasePosition;
@@ -280,16 +281,15 @@ export class QuoteSender {
         this._statusPublisher.publish(this._latest);
     }
 
-    constructor(private _quotingEngine: QuotingEngine,
-        private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
-        private _quoter: Quoter.Quoter,
-        private _pair: Models.CurrencyPair,
-        private _activeRepo: Active.ActiveRepository,
-        private _positionBroker: Interfaces.IPositionBroker,
-        private _fv: FairValue.FairValueEngine,
-        private _broker: Interfaces.IMarketDataBroker,
-        private _details: Interfaces.IBroker,
-        private _safety: Safety.SafetyCalculator) {
+    constructor(
+            private _quotingEngine: QuotingEngine,
+            private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
+            private _quoter: Quoter.Quoter,
+            private _activeRepo: Active.ActiveRepository,
+            private _positionBroker: Interfaces.IPositionBroker,
+            private _fv: FairValue.FairValueEngine,
+            private _broker: Interfaces.IMarketDataBroker,
+            private _details: Interfaces.IBroker) {
         _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
         _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote)));
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
@@ -320,12 +320,12 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (this.hasEnoughPosition(this._pair.base, quote.ask.size) &&
+            if (this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
-            if (this.hasEnoughPosition(this._pair.quote, quote.bid.size * quote.bid.price) &&
+            if (this.hasEnoughPosition(this._details.pair.quote, quote.bid.size * quote.bid.price) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
                 bidStatus = Models.QuoteStatus.Live;
             }

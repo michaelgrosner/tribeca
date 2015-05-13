@@ -144,7 +144,7 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
 angular
     .module("tradeSafetyDirective", ['sharedDirectives'])
     .directive("tradeSafety", () => {
-        var template = '<span>{{ tradeSafetyValue|number:2 }}</span>';
+        var template = '<span>BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
 
         return {
             restrict: 'E',

@@ -115,7 +115,7 @@
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav navbar-right">
                         <li><p class="navbar-text">Target Base Position: <target-base-position></target-base-position></p></li>
-                        <li><p class="navbar-text">Trade Safety: <trade-safety></trade-safety></p></li>
+                        <li><p class="navbar-text"><trade-safety></trade-safety></p></li>
                         <li>
                             <button type="button"
                                     class="btn btn-primary navbar-btn"
@@ -171,7 +171,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">fv</div>
                                             <select class="form-control input-sm"
@@ -180,7 +180,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">apMode</div>
                                             <select class="form-control input-sm"
@@ -189,7 +189,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">width</div>
                                             <input class="form-control input-sm"
@@ -199,7 +199,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">size</div>
                                             <input class="form-control input-sm"
@@ -209,7 +209,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">tbp</div>
                                             <input class="form-control input-sm"
@@ -219,7 +219,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">pDiv</div>
                                             <input class="form-control input-sm"
@@ -229,7 +229,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">ewma?</div>
                                             <input class="form-control input-sm"
@@ -238,7 +238,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="form-group col-md-1 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">apr?</div>
                                             <input class="form-control input-sm"
@@ -246,18 +246,8 @@
                                                    ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
                                         </div>
                                     </div>
-
-                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
-                                </form>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-12 col-xs-12">
-                            <form novalidate>
-                                <div class="row">
-                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                    
+                                    <div class="form-group col-md-2 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">trds</div>
                                             <input class="form-control input-sm"
@@ -267,7 +257,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
+                                    <div class="form-group col-md-2 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
                                         <div class="input-group">
                                             <div class="input-group-addon">/sec</div>
                                             <input class="form-control input-sm"
@@ -277,20 +267,11 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group col-md-3 col-xs-12" ng-class="pair.safetySettings.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">coolMin</div>
-                                            <input class="form-control input-sm"
-                                                   type="number"
-                                                   onClick="this.select()"
-                                                   ng-model="pair.safetySettings.display.coolOffMinutes">
-                                        </div>
-                                    </div>
+                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
+                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
+                                </form>
+                            </div>
 
-                                    <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="button" ng-click="pair.safetySettings.reset()" value="Reset" />
-                                    <input class="btn btn-default btn btn btn col-md-1 col-xs-6" type="submit" ng-click="pair.safetySettings.submit()" value="Save" />
-                                </div>
-                            </form>
                         </div>
                     </div>
 

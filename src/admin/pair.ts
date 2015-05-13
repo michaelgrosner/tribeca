@@ -68,7 +68,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 
     constructor(sub : Messaging.ISubscribe<Models.QuotingParameters>,
                 fire : Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
@@ -88,20 +88,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     }
 }
 
-class DisplaySafetySettingsParameters extends FormViewModel<Models.SafetySettings> {
-    constructor(sub : Messaging.ISubscribe<Models.SafetySettings>,
-                fire : Messaging.IFire<Models.SafetySettings>) {
-        super(new Models.SafetySettings(null, null, null), sub, fire);
-    }
-}
-
 export class DisplayPair {
     name : string;
     connected : boolean;
 
     active : QuotingButtonViewModel;
     quotingParameters : DisplayQuotingParameters;
-    safetySettings : DisplaySafetySettingsParameters;
 
     private _subscribers : Messaging.ISubscribe<any>[] = [];
 
@@ -130,13 +122,6 @@ export class DisplayPair {
             fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
         );
         this._subscribers.push(qpSub);
-
-        var ssPub = subscriberFactory.getSubscriber(scope, Messaging.Topics.SafetySettings);
-        this.safetySettings = new DisplaySafetySettingsParameters(
-            ssPub,
-            fireFactory.getFire(Messaging.Topics.SafetySettings)
-        );
-        this._subscribers.push(ssPub);
     }
 
     public dispose = () => {

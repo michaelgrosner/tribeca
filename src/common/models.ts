@@ -330,13 +330,9 @@ export class QuotingParameters {
                 public positionDivergence: number,
                 public ewmaProtection: boolean,
                 public autoPositionMode: AutoPositionMode,
-                public aggressivePositionRebalancing: boolean) {}
-}
-
-export class SafetySettings {
-    constructor(public tradesPerMinute: number,
-                public tradeRateSeconds: number,
-                public coolOffMinutes: number) {}
+                public aggressivePositionRebalancing: boolean,
+                public tradesPerMinute: number,
+                public tradeRateSeconds: number) {}
 }
 
 export function toUtcFormattedTime(t: Moment) {
