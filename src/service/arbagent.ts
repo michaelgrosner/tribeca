@@ -35,7 +35,7 @@ export class EWMACalculator implements Interfaces.IEwmaCalculator {
     private _log: Utils.Logger = Utils.log("tribeca:ewma");
 
     constructor(private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
-        setInterval(this.onTick, 10 * 1000);
+        setInterval(this.onTick, 60 * 1000);
         this.onTick();
     }
 
@@ -205,31 +205,50 @@ export class QuotingEngine {
             return null;
         }
         
-        unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
-        unrounded.askPx = Utils.roundFloat(unrounded.askPx);
-
-        unrounded.bidPx = Math.max(0, unrounded.bidPx);
-        unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
-        
-        unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
-        unrounded.askSz = Utils.roundFloat(unrounded.askSz);
-        
-        unrounded.askSz = Math.max(0.01, unrounded.askSz);
-        unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
-
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        if (totalBasePosition < targetBasePosition - params.positionDivergence || this._safeties.latest.sell > params.tradesPerMinute) {
+        
+        if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
                 unrounded.bidSz = Math.min(3*params.size, targetBasePosition - totalBasePosition);
         }
-        if (totalBasePosition > targetBasePosition + params.positionDivergence || this._safeties.latest.buy > params.tradesPerMinute) {
+        
+        if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
                 unrounded.askSz = Math.min(3*params.size, totalBasePosition - targetBasePosition);
+        }
+        
+        if (this._safeties.latest.sell > params.tradesPerMinute) {
+            unrounded.askPx = null;
+            unrounded.askSz = null;
+        }
+        if (this._safeties.latest.buy > params.tradesPerMinute) {
+            unrounded.bidPx = null;
+            unrounded.bidSz = null;
+        }
+        
+        if (unrounded.bidPx !== null) {
+            unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
+            unrounded.bidPx = Math.max(0, unrounded.bidPx);
+        }
+        
+        if (unrounded.askPx !== null) {
+            unrounded.askPx = Utils.roundFloat(unrounded.askPx);
+            unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
+        }
+        
+        if (unrounded.askSz !== null) {
+            unrounded.askSz = Utils.roundFloat(unrounded.askSz);
+            unrounded.askSz = Math.max(0.01, unrounded.askSz);
+        }
+        
+        if (unrounded.bidSz !== null) {
+            unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
+            unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
         }
 
         return unrounded;
