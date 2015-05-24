@@ -165,12 +165,20 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.levels = [];
     };
     clearMarket();
-
-    var clearQuote = () => {
+    
+    var clearBid = () => {
         $scope.qBidPx = null;
         $scope.qBidSz = null;
+    };
+    
+    var clearAsk = () => {
         $scope.qAskPx = null;
         $scope.qAskSz = null;
+    };
+
+    var clearQuote = () => {
+        clearBid();
+        clearAsk();
     };
 
     var clearFairValue = () => {
@@ -210,15 +218,27 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     };
 
     var updateQuote = (quote : Models.TwoSidedQuote) => {
-        if (quote == null) {
-            clearQuote();
-            return;
+        if (quote !== null) {
+            if (quote.bid !== null) {
+                $scope.qBidPx = quote.bid.price;
+                $scope.qBidSz = quote.bid.size;
+            }
+            else {
+                clearBid();
+            }
+            
+            if (quote.ask !== null) {
+                $scope.qAskPx = quote.ask.price;
+                $scope.qAskSz = quote.ask.size;
+            }
+            else {
+                clearAsk();
+            }
         }
-
-        $scope.qBidPx = quote.bid.price;
-        $scope.qBidSz = quote.bid.size;
-        $scope.qAskPx = quote.ask.price;
-        $scope.qAskSz = quote.ask.size;
+        else {
+            clearQuote();
+        }
+        
         updateQuoteClass();
     };
 
@@ -323,10 +343,15 @@ class MarketTradeViewModel {
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
 
         if (trade.quote != null) {
-            this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
-            this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
-            this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
-            this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
+            if (trade.quote.ask !== null) {
+                this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
+                this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
+            }
+            
+            if (trade.quote.bid !== null) {
+                this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
+                this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
+            }
         }
 
         if (trade.ask != null) {
