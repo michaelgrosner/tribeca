@@ -409,6 +409,6 @@ export class QuoteSender {
 
     private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);
-        return pos != null && pos.amount > minAmt * 2;
+        return pos != null && pos.amount > minAmt;
     };
 }
