@@ -100,6 +100,8 @@ export class QuotingEngine {
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
+        
+        setInterval(recalcWithoutInputTime, 1000);
     }
 
     private static computeMidQuote(fv: Models.FairValue, params: Models.QuotingParameters) {
