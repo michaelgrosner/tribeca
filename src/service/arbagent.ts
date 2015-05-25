@@ -115,11 +115,11 @@ export class QuotingEngine {
     }
 
     private static getQuoteAtTopOfMarket(filteredMkt: Models.Market): GeneratedQuote {
-        var topBid = (filteredMkt.bids[0].size > 0.02 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
+        var topBid = (filteredMkt.bids[0].size > 0.10 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
         if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
         var bidPx = topBid.price;
 
-        var topAsk = (filteredMkt.asks[0].size > 0.02 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
+        var topAsk = (filteredMkt.asks[0].size > 0.10 ? filteredMkt.asks[0] : filteredMkt.asks[1]);
         if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
         var askPx = topAsk.price;
 
