@@ -34,13 +34,15 @@ export class PositionManager {
     }
 
     private _timer: RegularTimer;
-    constructor(private _persister: Persister.IPersist<Models.RegularFairValue>,
+    constructor(
+        timeProvider: Utils.ITimeProvider,
+        private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _data: Models.RegularFairValue[],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
         var lastTime = (this._data !== null && _.any(_data)) ? _.last(this._data).time : null;
-        this._timer = new RegularTimer(this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
+        this._timer = new RegularTimer(timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
     }
 
     private updateEwmaValues = () => {
@@ -118,7 +120,9 @@ export class TargetBasePositionManager {
 
 // performs an action every duration apart, even across new instances
 export class RegularTimer {
-    constructor(private _action: () => void,
+    constructor(
+        private _timeProvider : Utils.ITimeProvider,
+        private _action: () => void,
         private _diffTime: Duration,
         lastTime: Moment = null) {
         if (lastTime === null) {
@@ -128,7 +132,7 @@ export class RegularTimer {
             var timeout = lastTime.add(_diffTime).diff(Utils.date());
 
             if (timeout > 0) {
-                setTimeout(this.startTicking, timeout)
+                _timeProvider.setTimeout(this.startTicking, moment.duration(timeout));
             }
             else {
                 this.startTicking();
@@ -142,6 +146,6 @@ export class RegularTimer {
 
     private startTicking = () => {
         this.tick();
-        setInterval(this.tick, this._diffTime.asMilliseconds());
+        this._timeProvider.setInterval(this.tick, moment.duration(this._diffTime.asMilliseconds()));
     };
 }

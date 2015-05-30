@@ -33,8 +33,8 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
 export class EWMACalculator implements Interfaces.IEwmaCalculator {
     private _log: Utils.Logger = Utils.log("tribeca:ewma");
 
-    constructor(private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
-        setInterval(this.onTick, 60 * 1000);
+    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
+        _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
         this.onTick();
     }
 
@@ -81,6 +81,7 @@ export class QuotingEngine {
     }
 
     constructor(
+        private _timeProvider: Utils.ITimeProvider,
         private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
@@ -100,7 +101,7 @@ export class QuotingEngine {
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
         
-        setInterval(recalcWithoutInputTime, 1000);
+        _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
     }
 
     private static computeMidQuote(fv: Models.FairValue, params: Models.QuotingParameters) {

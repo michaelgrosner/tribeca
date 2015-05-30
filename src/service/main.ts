@@ -38,6 +38,8 @@ import Statistics = require("./statistics");
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
 
+var timeProvider = new Utils.RealTimeProvider();
+
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
         Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
@@ -167,7 +169,7 @@ Q.all([
     var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
 
-    var safetyCalculator = new Safety.SafetyCalculator(paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
+    var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
     var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
     var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
@@ -175,7 +177,7 @@ Q.all([
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
     var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fairValuePersister);
-    var ewma = new Agent.EWMACalculator(fvEngine);
+    var ewma = new Agent.EWMACalculator(timeProvider, fvEngine);
 
     var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
     var shortEwma = new Statistics.EwmaStatisticCalculator(2 * .095);
@@ -183,9 +185,9 @@ Q.all([
     var longEwma = new Statistics.EwmaStatisticCalculator(.095);
     longEwma.initialize(rfvValues);
 
-    var positionMgr = new PositionManagement.PositionManager(rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
+    var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
     var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-    var quotingEngine = new Agent.QuotingEngine(filtration, fvEngine, paramsRepo, quotePublisher,
+    var quotingEngine = new Agent.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
         orderBroker, positionBroker, ewma, tbp, safetyCalculator);
     var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
@@ -205,11 +207,11 @@ Q.all([
                 });
             }).done();
 
-            setTimeout(() => {
+            timeProvider.setTimeout(() => {
                 Utils.errorLog("Could not cancel all open orders!", () => {
                     process.exit(2)
                 });
-            }, 2000);
+            }, moment.duration(1000));
         });
     });
 
