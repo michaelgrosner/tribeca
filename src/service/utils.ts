@@ -59,3 +59,22 @@ export class Evt<T> {
 export function roundFloat(x: number) {
     return Math.round(x * 100) / 100;
 }
+
+export interface ITimeProvider {
+    utcNow() : Moment;
+    setTimeout(action: () => void, time: Duration);
+    setImmediate(action: () => void);
+    setInterval(action: () => void, time: Duration);
+}
+
+export class RealTimeProvider implements ITimeProvider {
+    constructor() { }
+    
+    utcNow = () => momentjs.utc();
+    
+    setTimeout = (action: () => void, time: Duration) => setTimeout(action, time.asMilliseconds());
+    
+    setImmediate = (action: () => void) => setImmediate(action);
+    
+    setInterval = (action: () => void, time: Duration) => setInterval(action, time.asMilliseconds());
+}
