@@ -336,6 +336,8 @@ class MarketTradeViewModel {
     mB : number;
     mAz : number;
     mBz : number;
+    
+    make_side : string;
 
     constructor(trade : Models.MarketTrade) {
         this.price = MarketTradeViewModel.round(trade.price);
@@ -363,6 +365,8 @@ class MarketTradeViewModel {
             this.mB = MarketTradeViewModel.round(trade.bid.price);
             this.mBz = MarketTradeViewModel.round(trade.bid.size);
         }
+        
+        this.make_side = Models.Side[trade.make_side];
     }
 
     private static round(num : number) {
@@ -391,6 +395,7 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
             {width: 80, field:'time', displayName:'t', cellFilter: "momentShortDate"},
             {width: 50, field:'price', displayName:'px'},
             {width: 40, field:'size', displayName:'sz'},
+            {width: 40, field:'make_side', displayName:'ms'},
             {width: 40, field:'qBz', displayName:'qBz'},
             {width: 50, field:'qB', displayName:'qB'},
             {width: 50, field:'qA', displayName:'qA'},
