@@ -82,7 +82,11 @@ export class RepositoryPersister<T> implements IPersist<T> {
     }
 }
 
-export class Persister<T> implements IPersist<T> {
+export interface ILoadAll<T> {
+    loadAll(limit?: number): Q.Promise<T[]>;
+}
+
+export class Persister<T> implements IPersist<T>, ILoadAll<T> {
     _log: Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
     public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {

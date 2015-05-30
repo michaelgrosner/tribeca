@@ -85,7 +85,7 @@ export class TargetBasePositionManager {
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
         private _wrapped: Messaging.IPublish<number>,
-        private _persister: Persister.BasicPersister<Models.Timestamped<number>>) {
+        private _persister: Persister.IPersist<Models.Timestamped<number>>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => this.recomputeTargetPosition());

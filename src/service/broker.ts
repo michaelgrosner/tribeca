@@ -17,7 +17,7 @@ import util = require("util");
 export class MessagesPubisher implements Interfaces.IPublishMessages {
     private _storedMessages : Models.Message[] = [];
 
-    constructor(private _persister : Persister.Persister<Models.Message>,
+    constructor(private _persister : Persister.IPersist<Models.Message>,
                 initMsgs : Models.Message[],
                 private _wrapped : Messaging.IPublish<Models.Message>) {
         _.forEach(initMsgs, m => this._storedMessages.push(m));
@@ -292,8 +292,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     constructor(private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _orderPersister : Persister.OrderStatusPersister,
-                private _tradePersister : Persister.TradePersister,
+                private _orderPersister : Persister.IPersist<Models.OrderStatusReport>,
+                private _tradePersister : Persister.IPersist<Models.Trade>,
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
@@ -385,7 +385,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     constructor(private _base : Interfaces.IBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
-                private _positionPersister : Persister.Persister<Models.PositionReport>,
+                private _positionPersister : Persister.IPersist<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._log = Utils.log("tribeca:exchangebroker:position");
 

@@ -17,7 +17,7 @@ export class StandaloneHttpPublisher<T> {
         private _wrapped: Messaging.IPublish<T>,
         private route: string,
         private _httpApp: express.Application,
-        private _persister: Persister.Persister<T>,
+        private _persister: Persister.ILoadAll<T>,
         snapshot: () => T[] = null) {
         this.registerSnapshot(snapshot);
 
