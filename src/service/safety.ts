@@ -11,7 +11,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import Messaging = require("../common/messaging");
-import momentjs = require('moment');
+import moment = require('moment');
 import _ = require("lodash");
 import Persister = require("./persister");
 
@@ -54,7 +54,7 @@ export class SafetyCalculator {
 
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
-        if (SafetyCalculator.isOlderThan(u, this._repo.latest)) return;
+        if (this.isOlderThan(u, this._repo.latest)) return;
 
         if (u.side === Models.Side.Ask) {
             this._sells.push(u);
@@ -66,8 +66,8 @@ export class SafetyCalculator {
         this.computeQtyLimit();
     };
 
-    private static isOlderThan(o: Models.Trade, settings: Models.QuotingParameters) {
-        var now = Utils.date();
+    private isOlderThan(o: Models.Trade, settings: Models.QuotingParameters) {
+        var now = this._timeProvider.utcNow();
         return Math.abs(now.diff(o.time)) > (1000 * settings.tradeRateSeconds);
     }
 
@@ -76,7 +76,7 @@ export class SafetyCalculator {
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
-                .filter(o => !SafetyCalculator.isOlderThan(o, settings))
+                .filter(o => !this.isOlderThan(o, settings))
                 .sortBy((t: Models.Trade) => direction * t.price)
                 .value();
         };
@@ -107,6 +107,6 @@ export class SafetyCalculator {
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
-            computeSafety(this._buys.concat(this._sells)), Utils.date());
+            computeSafety(this._buys.concat(this._sells)), this._timeProvider.utcNow());
     };
 }

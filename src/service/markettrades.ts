@@ -6,7 +6,6 @@
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");
-import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import Agent = require("./arbagent");
 import _ = require("lodash");

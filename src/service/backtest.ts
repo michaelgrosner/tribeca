@@ -90,7 +90,7 @@ class BacktestOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
-        return new Models.OrderGatewayActionReport(Utils.date());
+        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
     };
 
     replaceOrder = (replace: Models.BrokeredReplace): Models.OrderGatewayActionReport => {
@@ -99,7 +99,7 @@ class BacktestOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order: Models.BrokeredOrder): Models.OrderGatewayActionReport => {
-        return new Models.OrderGatewayActionReport(Utils.date());
+        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
     };
 
     public cancelsByClientOrderId = false;
@@ -107,7 +107,7 @@ class BacktestOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     _log: Utils.Logger = Utils.log("tribeca:gateway:btOE");
-    constructor() {
+    constructor(private _timeProvider: Utils.ITimeProvider) {
     }
 }
 
@@ -146,8 +146,8 @@ class BacktestBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 export class Backtester extends Interfaces.CombinedGateway {
-    constructor() {
-        var orderGateway = new BacktestOrderEntryGateway();
+    constructor(timeProvider: Utils.ITimeProvider) {
+        var orderGateway = new BacktestOrderEntryGateway(timeProvider);
         var positionGateway = new BacktestPositionGateway();
         var mdGateway = new BacktestMarketDataGateway();
 

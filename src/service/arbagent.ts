@@ -19,6 +19,7 @@ import FairValue = require("./fair-value");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
+import moment = require('moment');
 
 class GeneratedQuote {
     constructor(public bidPx: number, public bidSz: number, public askPx: number, public askSz: number) { }
@@ -91,9 +92,9 @@ export class QuotingEngine {
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
-        var recalcWithoutInputTime = () => this.recalcQuote(Utils.date());
+        var recalcWithoutInputTime = () => this.recalcQuote(_timeProvider.utcNow());
 
-        _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue)));
+        _fvEngine.FairValueChanged.on(() => this.recalcQuote(Utils.timeOrDefault(_fvEngine.latestFairValue, _timeProvider)));
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
@@ -306,6 +307,7 @@ export class QuoteSender {
     }
 
     constructor(
+            private _timeProvider: Utils.ITimeProvider,
             private _quotingEngine: QuotingEngine,
             private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
@@ -314,8 +316,8 @@ export class QuoteSender {
             private _fv: FairValue.FairValueEngine,
             private _broker: Interfaces.IMarketDataBroker,
             private _details: Interfaces.IBroker) {
-        _activeRepo.NewParameters.on(() => this.sendQuote(Utils.date()));
-        _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote)));
+        _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()));
+        _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote, _timeProvider)));
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }
 

@@ -2,16 +2,17 @@
 
 import Models = require("../common/models");
 import momentjs = require('moment');
+
 export var date = momentjs.utc;
 
-export function timeOrDefault(x: Models.ITimestamped): Moment {
+export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): Moment {
     if (x === null)
-        return date();
+        return timeProvider.utcNow();
 
     if (typeof x !== "undefined" && typeof x.time !== "undefined")
         return x.time;
 
-    return date();
+    return timeProvider.utcNow();
 }
 
 import util = require("util");

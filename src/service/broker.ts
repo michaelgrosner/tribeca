@@ -9,7 +9,6 @@ import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
 import Q = require("q");
-import momentjs = require('moment');
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
@@ -17,7 +16,8 @@ import util = require("util");
 export class MessagesPubisher implements Interfaces.IPublishMessages {
     private _storedMessages : Models.Message[] = [];
 
-    constructor(private _persister : Persister.IPersist<Models.Message>,
+    constructor(private _timeProvider: Utils.ITimeProvider,
+                private _persister : Persister.IPersist<Models.Message>,
                 initMsgs : Models.Message[],
                 private _wrapped : Messaging.IPublish<Models.Message>) {
         _.forEach(initMsgs, m => this._storedMessages.push(m));
@@ -25,7 +25,7 @@ export class MessagesPubisher implements Interfaces.IPublishMessages {
     }
 
     public publish = (text : string) => {
-        var message = new Models.Message(text, Utils.date());
+        var message = new Models.Message(text, this._timeProvider.utcNow());
         this._wrapped.publish(message);
         this._persister.persist(message);
         this._storedMessages.push(message);
@@ -78,7 +78,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             switch (e.orderStatus) {
                 case Models.OrderStatus.New:
                 case Models.OrderStatus.Working:
-                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, Utils.date()));
+                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
                     lateCancels[e.orderId] = false;
                     break;
             }
@@ -226,7 +226,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             getOrFallback(osr.exchangeId, orig.exchangeId),
             getOrFallback(osr.orderStatus, orig.orderStatus),
             osr.rejectMessage,
-            getOrFallback(osr.time, Utils.date()),
+            getOrFallback(osr.time, this._timeProvider.utcNow()),
             osr.lastQuantity,
             osr.lastPrice,
             leavesQuantity,
@@ -290,7 +290,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderCache.allOrdersFlat.push(osr);
     };
 
-    constructor(private _baseBroker : Interfaces.IBroker,
+    constructor(private _timeProvider: Utils.ITimeProvider,
+                private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _orderPersister : Persister.IPersist<Models.OrderStatusReport>,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
@@ -307,12 +308,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), Utils.date());
+                o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow());
             this.sendOrder(order);
         });
         _cancelOrderReciever.registerReceiver(o => {
             this._log("got new cancel req %o", o);
-            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, Utils.date()))
+            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()))
         });
 
         this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);
@@ -370,7 +371,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
         var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), Utils.date());
+            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
         if (this._report !== null && Math.abs(positionReport.value - this._report.value) < 2e-2 && Math.abs(baseAmount - this._report.baseAmount) < 2e-2)
             return;
@@ -382,7 +383,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         this._positionPersister.persist(positionReport);
     };
 
-    constructor(private _base : Interfaces.IBroker,
+    constructor(private _timeProvider: Utils.ITimeProvider,
+                private _base : Interfaces.IBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.IPersist<Models.PositionReport>,

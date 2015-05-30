@@ -35,14 +35,14 @@ export class PositionManager {
 
     private _timer: RegularTimer;
     constructor(
-        timeProvider: Utils.ITimeProvider,
+        private _timeProvider: Utils.ITimeProvider,
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _data: Models.RegularFairValue[],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
         var lastTime = (this._data !== null && _.any(_data)) ? _.last(this._data).time : null;
-        this._timer = new RegularTimer(timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
+        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
     }
 
     private updateEwmaValues = () => {
@@ -50,7 +50,7 @@ export class PositionManager {
         if (fv === null)
             return;
 
-        var rfv = new Models.RegularFairValue(Utils.date(), fv.price);
+        var rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
         var newShort = this._shortEwma.addNewValue(fv.price);
         var newLong = this._longEwma.addNewValue(fv.price);
@@ -83,7 +83,9 @@ export class TargetBasePositionManager {
         return this._latest;
     }
 
-    constructor(private _positionManager: PositionManager,
+    constructor(
+        private _timeProvider: Utils.ITimeProvider,
+        private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
         private _wrapped: Messaging.IPublish<number>,
@@ -111,7 +113,7 @@ export class TargetBasePositionManager {
             this.NewTargetPosition.trigger();
 
             this._wrapped.publish(this.latestTargetPosition);
-            this._persister.persist(new Models.Timestamped(this.latestTargetPosition, Utils.date()));
+            this._persister.persist(new Models.Timestamped(this.latestTargetPosition, this._timeProvider.utcNow()));
 
             this._log("recalculated target base position:", Utils.roundFloat(this._latest));
         }
@@ -129,7 +131,7 @@ export class RegularTimer {
             this.startTicking();
         }
         else {
-            var timeout = lastTime.add(_diffTime).diff(Utils.date());
+            var timeout = lastTime.add(_diffTime).diff(_timeProvider.utcNow());
 
             if (timeout > 0) {
                 _timeProvider.setTimeout(this.startTicking, moment.duration(timeout));

@@ -71,7 +71,7 @@ var fairValuePersister = new Persister.FairValuePersister(db);
 var mktTradePersister = new MarketTrades.MarketTradePersister(db);
 var positionPersister = new Broker.PositionPersister(db);
 var messagesPersister = new Persister.MessagesPersister(db);
-var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, Utils.date()), Messaging.Topics.ActiveChange);
+var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, timeProvider.utcNow()), Messaging.Topics.ActiveChange);
 var paramsPersister = new Persister.RepositoryPersister(db,
     new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300),
     Messaging.Topics.QuotingParametersChange);
@@ -135,7 +135,7 @@ Q.all([
     var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
     var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
 
-    var messages = new Broker.MessagesPubisher(messagesPersister, initMsgs, messagesPublisher);
+    var messages = new Broker.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
 
     var getReceiver = <T>(topic: string) => new Messaging.Receiver<T>(topic, io, messagingLog);
@@ -161,22 +161,22 @@ Q.all([
     var gateway = getExch();
 
     var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
-    var orderBroker = new Broker.OrderBroker(broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
+    var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
         tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, orderCache, initOrders, initTrades);
     var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, messages);
-    var positionBroker = new Broker.PositionBroker(broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+    var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
     var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
     paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
 
     var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
-    var startQuoting = (Utils.date().diff(initActive.time, 'minutes') < 3 && initActive.active);
+    var startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
     var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
     var quoter = new Quoter.Quoter(orderBroker, broker);
     var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
-    var fvEngine = new FairValue.FairValueEngine(filtration, paramsRepo, fvPublisher, fairValuePersister);
+    var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
     var ewma = new Agent.EWMACalculator(timeProvider, fvEngine);
 
     var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
@@ -186,10 +186,10 @@ Q.all([
     longEwma.initialize(rfvValues);
 
     var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
-    var tbp = new PositionManagement.TargetBasePositionManager(positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
+    var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
     var quotingEngine = new Agent.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
         orderBroker, positionBroker, ewma, tbp, safetyCalculator);
-    var quoteSender = new Agent.QuoteSender(quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
+    var quoteSender = new Agent.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quotingEngine, broker, mktTradePersister, initMktTrades);
@@ -197,7 +197,7 @@ Q.all([
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {
 
-            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, Utils.date());
+            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
             mainLog("persisting active to", active.savedQuotingMode);
             activePersister.persist(a);
 
