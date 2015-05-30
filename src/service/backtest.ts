@@ -16,8 +16,60 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
 
+var SortedArray = require("collections/sorted-array");
 var uuid = require('node-uuid');
-var SortedArrayMap = require("collections/sorted-array-map");
+
+enum TimedType {
+    Interval,
+    Timeout
+}
+
+class Timed {
+    constructor(
+        public action : () => void, 
+        public time : Moment, 
+        public type : TimedType,
+        public interval : Duration) {}
+}
+
+export class BacktestTimeProvider implements Utils.ITimeProvider {
+    constructor(private _internalTime : Moment) { }
+    
+    utcNow = () => this._internalTime;
+    
+    private _immediates = new Array<() => void>();
+    setImmediate = (action: () => void) => this._immediates.push(action);
+    
+    private _timeouts = new SortedArray(null, null, (a : Timed, b : Timed) => a.time.diff(b.time));
+    setTimeout = (action: () => void, time: Duration) => {
+        this.setAction(action, time, TimedType.Timeout);
+    };
+    
+    setInterval = (action: () => void, time: Duration) => {
+        this.setAction(action, time, TimedType.Interval);
+    };
+    
+    private setAction  = (action: () => void, time: Duration, type : TimedType) => {
+        this._timeouts.push(new Timed(action, this._internalTime.clone().add(time), type, time));
+    };
+    
+    scrollTimeTo = (time : Moment) => {
+        while (this._immediates.length > 0) {
+            this._immediates.pop()();
+        }
+        
+        while (this._timeouts.length > 0 && this._timeouts.min().time.diff(time) > 0) {
+            var evt : Timed = this._timeouts.shift();
+            this._internalTime = evt.time;
+            evt.action();
+            if (evt.type === TimedType.Interval) {
+                this.setAction(evt.action, evt.interval, evt.type);
+            }
+        }
+        
+        this._internalTime = time;
+    };
+}
 
 class BacktestMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
