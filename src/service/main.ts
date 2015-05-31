@@ -10,6 +10,7 @@ import Q = require("q");
 import path = require("path");
 import express = require('express');
 import util = require('util');
+import moment = require("moment");
 
 import Utils = require("./utils");
 import Config = require("./config");
@@ -152,7 +153,7 @@ Q.all([
         switch (exchange) {
             case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
             case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache));
+            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
             case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
