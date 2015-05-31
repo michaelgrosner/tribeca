@@ -16,6 +16,10 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
 
+// only for backtester
+import events = require("events");
+var LineByLineReader = require("line-by-line");
+
 var uuid = require('node-uuid');
 import CoinbaseExchange = require("./coinbase-api");
 var SortedArrayMap = require("collections/sorted-array-map");
@@ -697,3 +701,31 @@ export class Coinbase extends Interfaces.CombinedGateway {
             new CoinbaseBaseGateway());
     }
 }
+
+export class BacktestableCoinbaseOrderBook implements CoinbaseOrderBook {
+    private _emitter = new events.EventEmitter();
+    
+    constructor(private _timeProvider: Utils.IBacktestingTimeProvider) {
+        var hasProcessedFirstLine = false;
+        var lr = new LineByLineReader(process.env.BACKTEST_INPUT);
+        lr.on("line", l => {
+            var msg = JSON.parse(l);
+            if (!hasProcessedFirstLine) {
+                this.book = msg;
+                hasProcessedFirstLine = true;
+            }
+            else {
+                this._timeProvider.scrollTimeTo(moment(msg.time));
+                this._emitter.emit(l.type, new Models.Timestamped(msg, _timeProvider.utcNow()));
+            }
+        });
+    }
+    
+    on = (event: string, cb: Function) : CoinbaseOrderBook => {
+        this._emitter.on(event, cb);
+        return this;
+    };
+    
+    public get state() : string { return "processing"; }
+    public book : CoinbaseBookStorage;
+};

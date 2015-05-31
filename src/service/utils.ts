@@ -68,6 +68,10 @@ export interface ITimeProvider {
     setInterval(action: () => void, time: Duration);
 }
 
+export interface IBacktestingTimeProvider extends ITimeProvider {
+    scrollTimeTo(time : Moment);
+}
+
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
     

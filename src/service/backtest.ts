@@ -32,7 +32,7 @@ class Timed {
         public interval : Duration) {}
 }
 
-export class BacktestTimeProvider implements Utils.ITimeProvider {
+export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     constructor(private _internalTime : Moment) { }
     
     utcNow = () => this._internalTime;
@@ -146,10 +146,15 @@ class BacktestBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 export class Backtester extends Interfaces.CombinedGateway {
-    constructor(timeProvider: Utils.ITimeProvider) {
-        var orderGateway = new BacktestOrderEntryGateway(timeProvider);
-        var positionGateway = new BacktestPositionGateway();
-        var mdGateway = new BacktestMarketDataGateway();
+    constructor(
+            timeProvider: Utils.ITimeProvider,
+            mdGateway: Interfaces.IMarketDataGateway = null,
+            orderGateway: Interfaces.IOrderEntryGateway = null,
+            positionGateway: Interfaces.IPositionGateway = null) {
+                
+        orderGateway = new BacktestOrderEntryGateway(timeProvider);
+        positionGateway = new BacktestPositionGateway();
+        mdGateway = mdGateway || new BacktestMarketDataGateway();
 
         super(
             mdGateway,
