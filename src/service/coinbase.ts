@@ -103,15 +103,15 @@ interface CoinbaseBookStorage {
     asks: { [id: string]: CoinbaseEntry };
 }
 
-interface CoinbaseOrderBook {
-    on(event: string, cb: Function): CoinbaseOrderBook;
-    on(event: 'statechange', cb: (data: StateChange) => void): CoinbaseOrderBook;
-    on(event: 'received', cd: (msg: Models.Timestamped<CoinbaseReceived>) => void): CoinbaseOrderBook;
-    on(event: 'open', cd: (msg: Models.Timestamped<CoinbaseOpen>) => void): CoinbaseOrderBook;
-    on(event: 'done', cd: (msg: Models.Timestamped<CoinbaseDone>) => void): CoinbaseOrderBook;
-    on(event: 'match', cd: (msg: Models.Timestamped<CoinbaseMatch>) => void): CoinbaseOrderBook;
-    on(event: 'change', cd: (msg: Models.Timestamped<CoinbaseChange>) => void): CoinbaseOrderBook;
-    on(event: 'error', cd: (msg: Models.Timestamped<Error>) => void): CoinbaseOrderBook;
+interface CoinbaseOrderEmitter {
+    on(event: string, cb: Function): CoinbaseOrderEmitter;
+    on(event: 'statechange', cb: (data: StateChange) => void): CoinbaseOrderEmitter;
+    on(event: 'received', cd: (msg: Models.Timestamped<CoinbaseReceived>) => void): CoinbaseOrderEmitter;
+    on(event: 'open', cd: (msg: Models.Timestamped<CoinbaseOpen>) => void): CoinbaseOrderEmitter;
+    on(event: 'done', cd: (msg: Models.Timestamped<CoinbaseDone>) => void): CoinbaseOrderEmitter;
+    on(event: 'match', cd: (msg: Models.Timestamped<CoinbaseMatch>) => void): CoinbaseOrderEmitter;
+    on(event: 'change', cd: (msg: Models.Timestamped<CoinbaseChange>) => void): CoinbaseOrderEmitter;
+    on(event: 'error', cd: (msg: Models.Timestamped<Error>) => void): CoinbaseOrderEmitter;
 
     state: string;
     book: CoinbaseBookStorage;
@@ -398,7 +398,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
-    constructor(private _client: CoinbaseOrderBook, private _timeProvider: Utils.ITimeProvider) {
+    constructor(private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("statechange", m => this.onStateChange(m));
         this._client.on("received", m => this.onReceived(m.data, m.time));
         this._client.on("open", m => this.onOpen(m.data, m.time));
@@ -626,7 +626,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
-        private _orderBook: CoinbaseOrderBook,
+        private _orderBook: CoinbaseOrderEmitter,
         private _authClient: CoinbaseAuthenticatedClient) {
 
         this._orderBook.on("statechange", this.onStateChange);
@@ -703,7 +703,7 @@ export class Coinbase extends Interfaces.CombinedGateway {
     }
 }
 
-export class BacktestableCoinbaseOrderBook implements CoinbaseOrderBook {
+export class BacktestableCoinbaseOrderEmitter implements CoinbaseOrderEmitter {
     private _emitter = new events.EventEmitter();
     
     constructor(private _timeProvider: Utils.IBacktestingTimeProvider) {
@@ -722,7 +722,7 @@ export class BacktestableCoinbaseOrderBook implements CoinbaseOrderBook {
         });
     }
     
-    on = (event: string, cb: Function) : CoinbaseOrderBook => {
+    on = (event: string, cb: Function) : CoinbaseOrderEmitter => {
         this._emitter.on(event, cb);
         return this;
     };
