@@ -363,7 +363,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onStateChange = (s: StateChange) => {
-        var t = Utils.date();
+        var t = this._timeProvider.utcNow();
         var status = convertConnectivityStatus(s);
 
         if (status === Models.ConnectivityStatus.Connected) {
@@ -398,7 +398,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
-    constructor(private _client: CoinbaseOrderBook) {
+    constructor(private _client: CoinbaseOrderBook, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("statechange", m => this.onStateChange(m));
         this._client.on("received", m => this.onReceived(m.data, m.time));
         this._client.on("open", m => this.onOpen(m.data, m.time));
@@ -418,7 +418,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
         this._authClient.cancelOrder(cancel.exchangeId, (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             var status: Models.OrderStatusReport
-            var t = Utils.date();
+            var t = this._timeProvider.utcNow();
 
             var msg = null;
             if (err) {
@@ -455,7 +455,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
             this.OrderUpdate.trigger(status);
         });
-        return new Models.OrderGatewayActionReport(Utils.date());
+        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
     };
 
     replaceOrder = (replace: Models.BrokeredReplace): Models.OrderGatewayActionReport => {
@@ -466,7 +466,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     sendOrder = (order: Models.BrokeredOrder): Models.OrderGatewayActionReport => {
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             var status: Models.OrderStatusReport
-            var t = Utils.date();
+            var t = this._timeProvider.utcNow();
 
             if (ack == null || typeof ack.id === "undefined") {
                 this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
@@ -516,7 +516,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         else if (order.side === Models.Side.Ask)
             this._authClient.sell(o, cb);
 
-        return new Models.OrderGatewayActionReport(Utils.date());
+        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
     };
 
     public cancelsByClientOrderId = false;
@@ -550,7 +550,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof orderId === "undefined")
             return;
 
-        var t = Utils.date();
+        var t = this._timeProvider.utcNow();
         var status: Models.OrderStatusReport = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
@@ -624,6 +624,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
     constructor(
+        private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
         private _orderBook: CoinbaseOrderBook,
         private _authClient: CoinbaseAuthenticatedClient) {
@@ -682,17 +683,17 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache) {
-        var orderbook = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"));
+    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider) {
+        var orderbook = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
         var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
         var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(orders, orderbook, authClient)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderbook, authClient)
             : new NullGateway.NullOrderGateway();
 
         var positionGateway = new CoinbasePositionGateway(authClient);
-        var mdGateway = new CoinbaseMarketDataGateway(orderbook);
+        var mdGateway = new CoinbaseMarketDataGateway(orderbook, timeProvider);
 
         super(
             mdGateway,

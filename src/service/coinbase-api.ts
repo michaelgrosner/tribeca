@@ -255,7 +255,7 @@ _.assign(AuthenticatedClient.prototype, new function() {
 
 });
 
-export var OrderBook = function(productID: string, websocketURI: string, restURI: string) {
+export var OrderBook = function(productID: string, websocketURI: string, restURI: string, timeProvider: Utils.ITimeProvider) {
     var self = this;
     EventEmitter.call(self);
 
@@ -264,6 +264,7 @@ export var OrderBook = function(productID: string, websocketURI: string, restURI
     self.restURI = restURI;
     self.state = self.STATES.closed;
     self.fail_count = 0;
+    self.timeProvider = timeProvider;
     self.connect();
 };
 
@@ -349,8 +350,8 @@ _.assign(OrderBook.prototype, new function() {
     };
 
     prototype.onMessage = function(datastr: string) {
-        var t = Utils.date();
         var self = this;
+        var t = self.timeProvider.utcNow();
         var data = JSON.parse(datastr);
         if (self.state !== self.STATES.processing) {
             self.queue.push(data);
