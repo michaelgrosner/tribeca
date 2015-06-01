@@ -1,12 +1,12 @@
-/// <reference path="../../typings/tsd.d.ts" />
-/// <reference path="utils.ts" />
-/// <reference path="../common/models.ts" />
+/// <reference path="../../../typings/tsd.d.ts" />
+/// <reference path="../utils.ts" />
+/// <reference path="../../common/models.ts" />
 
 import zeromq = require("zmq");
-import Models = require("../common/models");
-import Utils = require("./utils");
+import Models = require("../../common/models");
+import Utils = require("../utils");
 import util = require("util");
-import Interfaces = require("./interfaces");
+import Interfaces = require("../interfaces");
 
 export class FixGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();

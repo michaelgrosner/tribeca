@@ -1,9 +1,9 @@
-/// <reference path="utils.ts" />
-/// <reference path="../common/models.ts" />
+/// <reference path="../utils.ts" />
+/// <reference path="../../common/models.ts" />
 
-import Models = require("../common/models");
-import Utils = require("./utils");
-import Interfaces = require("./interfaces");
+import Models = require("../../common/models");
+import Utils = require("../utils");
+import Interfaces = require("../interfaces");
 var uuid = require('node-uuid');
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {

@@ -1,6 +1,6 @@
-/// <reference path="../../typings/tsd.d.ts" />
-/// <reference path="utils.ts" />
-/// <reference path="../common/models.ts" />
+/// <reference path="../../../typings/tsd.d.ts" />
+/// <reference path="../utils.ts" />
+/// <reference path="../../common/models.ts" />
 /// <reference path="fix.ts" />
 /// <reference path="nullgw.ts" />
 
@@ -9,12 +9,12 @@ import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
 import querystring = require("querystring");
-import Config = require("./config");
+import Config = require("../config");
 import Fix = require("./fix");
 import NullGateway = require("./nullgw");
-import Models = require("../common/models");
-import Utils = require("./utils");
-import Interfaces = require("./interfaces");
+import Models = require("../../common/models");
+import Utils = require("../utils");
+import Interfaces = require("../interfaces");
 var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {

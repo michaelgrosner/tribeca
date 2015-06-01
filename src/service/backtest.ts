@@ -1,13 +1,11 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="../common/models.ts" />
-/// <reference path="nullgw.ts" />
 
 import Config = require("./config");
 import request = require('request');
 import url = require("url");
 import querystring = require("querystring");
-import NullGateway = require("./nullgw");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");

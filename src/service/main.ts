@@ -1,6 +1,3 @@
-/// <reference path="hitbtc.ts" />
-/// <reference path="okcoin.ts" />
-/// <reference path="arbagent.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
@@ -12,12 +9,13 @@ import express = require('express');
 import util = require('util');
 import moment = require("moment");
 
+import HitBtc = require("./gateways/hitbtc");
+import OkCoin = require("./gateways/okcoin");
+import Coinbase = require("./gateways/coinbase");
+import NullGw = require("./gateways/nullgw");
+
 import Utils = require("./utils");
 import Config = require("./config");
-import HitBtc = require("./hitbtc");
-import OkCoin = require("./okcoin");
-import Coinbase = require("./coinbase");
-import NullGw = require("./nullgw");
 import Broker = require("./broker");
 import Agent = require("./arbagent");
 import MarketTrades = require("./markettrades");
