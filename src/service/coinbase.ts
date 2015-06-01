@@ -749,32 +749,4 @@ export class Coinbase extends Interfaces.CombinedGateway {
             positionGateway,
             new CoinbaseBaseGateway());
     }
-}
-
-export class BacktestableCoinbaseOrderEmitter implements CoinbaseOrderEmitter {
-    private _emitter = new events.EventEmitter();
-    
-    constructor(private _timeProvider: Utils.IBacktestingTimeProvider) {
-        var hasProcessedFirstLine = false;
-        var lr = new LineByLineReader(process.env.BACKTEST_INPUT);
-        lr.on("line", l => {
-            var msg = JSON.parse(l);
-            if (!hasProcessedFirstLine) {
-                this.book = msg;
-                hasProcessedFirstLine = true;
-            }
-            else {
-                this._timeProvider.scrollTimeTo(moment(msg.time));
-                this._emitter.emit(l.type, new Models.Timestamped(msg, _timeProvider.utcNow()));
-            }
-        });
-    }
-    
-    on = (event: string, cb: Function) : CoinbaseOrderEmitter => {
-        this._emitter.on(event, cb);
-        return this;
-    };
-    
-    public get state() : string { return "processing"; }
-    public book : CoinbaseBookStorage;
 };

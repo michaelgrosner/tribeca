@@ -15,6 +15,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
+import fs = require("fs");
 
 var SortedArray = require("collections/sorted-array");
 var uuid = require('node-uuid');
@@ -71,95 +72,39 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     };
 }
 
-class BacktestMarketDataGateway implements Interfaces.IMarketDataGateway {
+export class RecordingMarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
-    MarketTrade = new Utils.Evt<Models.MarketSide>();
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
-    _log: Utils.Logger = Utils.log("tribeca:gateway:btMD");
-    constructor() {
-        
-    }
-}
-
-class BacktestOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-
-    generateClientOrderId = (): string => {
-        return uuid.v1();
-    }
-
-    cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
-        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
-    };
-
-    replaceOrder = (replace: Models.BrokeredReplace): Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-        return this.sendOrder(replace);
-    };
-
-    sendOrder = (order: Models.BrokeredOrder): Models.OrderGatewayActionReport => {
-        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
-    };
-
-    public cancelsByClientOrderId = false;
-
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
-    _log: Utils.Logger = Utils.log("tribeca:gateway:btOE");
-    constructor(private _timeProvider: Utils.ITimeProvider) {
-    }
-}
-
-
-class BacktestPositionGateway implements Interfaces.IPositionGateway {
-    _log: Utils.Logger = Utils.log("tribeca:gateway:btPG");
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
-    private onTick = () => {
-        // raise positions
-    };
-
-    constructor() {}
-}
-
-class BacktestBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return true;
-    }
-
-    exchange(): Models.Exchange {
-        return Models.Exchange.Null;
-    }
-
-    makeFee(): number {
-        return 0;
-    }
-
-    takeFee(): number {
-        return 0;
-    }
-
-    name(): string {
-        return "Backtest";
-    }
-}
-
-export class Backtester extends Interfaces.CombinedGateway {
+    public get currentBook() : Models.Market { return this._decorated.currentBook; }
+    
     constructor(
-            timeProvider: Utils.ITimeProvider,
-            mdGateway: Interfaces.IMarketDataGateway = null,
-            orderGateway: Interfaces.IOrderEntryGateway = null,
-            positionGateway: Interfaces.IPositionGateway = null) {
-                
-        orderGateway = new BacktestOrderEntryGateway(timeProvider);
-        positionGateway = new BacktestPositionGateway();
-        mdGateway = mdGateway || new BacktestMarketDataGateway();
-
-        super(
-            mdGateway,
-            orderGateway,
-            positionGateway,
-            new BacktestBaseGateway());
+            private _decorated: Interfaces.IMarketDataBroker,
+            private _output: fs.WriteStream) {
+        _decorated.MarketData.on(this.onMarketData);
     }
+    
+    private onMarketData = (mkt: Models.Market) => {
+        this.MarketData.trigger(mkt);
+        this._output.write(JSON.stringify(["MD", mkt]));
+        this._output.write("\n");
+    };
+}
+
+export class RecordingMarketTradeBroker implements Interfaces.IMarketTradeBroker {
+    MarketTrade = new Utils.Evt<Models.MarketTrade>();
+    public get marketTrades() { return this._decorated.marketTrades; }
+    
+    constructor(
+            private _decorated: Interfaces.IMarketTradeBroker,
+            private _output: fs.WriteStream) {
+        _decorated.MarketTrade.on(this.onTrade);
+    }
+    
+    private onTrade = (t: Models.MarketTrade) => {
+        this.MarketTrade.trigger(t);
+        
+        if (Math.abs(t.time.diff(moment.utc())) < 1000) {
+            this._output.write(JSON.stringify(["T", t]));
+            this._output.write("\n");
+        }
+    };
 }

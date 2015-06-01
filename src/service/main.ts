@@ -47,8 +47,7 @@ var timeProvider = new Utils.RealTimeProvider();
     });
 });
 
-var env = process.env.TRIBECA_MODE;
-var config = new Config.ConfigProvider(env);
+var config = new Config.ConfigProvider();
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 
