@@ -101,7 +101,7 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         this.timeProvider.setTimeout(() => {
             var collection = cancel.side === Models.Side.Bid ? this._openBidOrders : this._openAskOrders;
-            _.remove(collection, (b : Models.BrokeredOrder) => b.orderId === cancel.clientOrderId);
+            collection = _.remove(collection, (b : Models.BrokeredOrder) => b.orderId === cancel.clientOrderId);
             this.OrderUpdate.trigger({ orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Cancelled });
         }, moment.duration(3));
         
@@ -115,7 +115,43 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     
     private onMarketData = (market : Models.Market) => {
         this.timeProvider.scrollTimeTo(market.time);
+        
+        this._openAskOrders = this.tryToMatch(this._openAskOrders, market.bids, (a,b) => a<b);
+        this._openBidOrders = this.tryToMatch(this._openBidOrders, market.asks, (b,a) => a<b);
+        
         this.MarketData.trigger(market);
+    };
+    
+    private tryToMatch = (orders: Models.BrokeredOrder[], 
+                          marketSides: Models.MarketSide[], 
+                          cmp: (a: number, b: number) => boolean) => {
+        _.forEach(orders, order => {
+            _.forEach(marketSides, mkt => {
+                if (cmp(mkt.price, order.price) && order.quantity > 0) {
+                    if (mkt.size >= order.quantity) {
+                        this.OrderUpdate.trigger({ 
+                            orderId: order.orderId, 
+                            orderStatus: Models.OrderStatus.Complete, 
+                            lastPrice: mkt.price, 
+                            lastQuantity: order.quantity 
+                        });
+                    }
+                    else {
+                        this.OrderUpdate.trigger({ 
+                            orderId: order.orderId, 
+                            orderStatus: Models.OrderStatus.Working, 
+                            partiallyFilled: true,
+                            lastPrice: mkt.price,
+                            lastQuantity: mkt.size
+                        });
+                    }
+                    
+                    order.quantity -= mkt.size;
+                };
+            });
+        });
+        
+        return _.filter(orders, (o: Models.BrokeredOrder) => o.quantity > 0);
     };
     
     private onMarketTrade = (trade : Models.GatewayMarketTrade) => {
