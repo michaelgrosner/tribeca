@@ -702,8 +702,10 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
         });
     };
 
-    constructor(private _authClient: CoinbaseAuthenticatedClient) {
-        setInterval(this.onTick, 7500);
+    constructor(
+            timeProvider: Utils.ITimeProvider,
+            private _authClient: CoinbaseAuthenticatedClient) {
+        timeProvider.setInterval(this.onTick, moment.duration(7500));
         this.onTick();
     }
 }
@@ -740,7 +742,7 @@ export class Coinbase extends Interfaces.CombinedGateway {
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient)
             : new NullGateway.NullOrderGateway();
 
-        var positionGateway = new CoinbasePositionGateway(authClient);
+        var positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
         var mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(), orderEventEmitter, timeProvider);
 
         super(
