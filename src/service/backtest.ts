@@ -15,6 +15,7 @@ import WebSocket = require('ws');
 import _ = require('lodash');
 import fs = require("fs");
 
+var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
 var uuid = require('node-uuid');
 
@@ -70,39 +71,70 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     };
 }
 
-export class RecordingMarketDataBroker implements Interfaces.IMarketDataBroker {
+export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces.IOrderEntryGateway, Interfaces.IMarketDataGateway {
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    
     MarketData = new Utils.Evt<Models.Market>();
-    public get currentBook() : Models.Market { return this._decorated.currentBook; }
+    MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     
-    constructor(
-            private _decorated: Interfaces.IMarketDataBroker,
-            private _output: fs.WriteStream) {
-        _decorated.MarketData.on(this.onMarketData);
+    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    
+    generateClientOrderId = () => {
+        return "BACKTEST-" + shortId.generate();
     }
-    
-    private onMarketData = (mkt: Models.Market) => {
-        this.MarketData.trigger(mkt);
-        this._output.write(JSON.stringify(["MD", mkt]));
-        this._output.write("\n");
-    };
-}
 
-export class RecordingMarketTradeBroker implements Interfaces.IMarketTradeBroker {
-    MarketTrade = new Utils.Evt<Models.MarketTrade>();
-    public get marketTrades() { return this._decorated.marketTrades; }
+    public cancelsByClientOrderId = true;
     
-    constructor(
-            private _decorated: Interfaces.IMarketTradeBroker,
-            private _output: fs.WriteStream) {
-        _decorated.MarketTrade.on(this.onTrade);
-    }
-    
-    private onTrade = (t: Models.MarketTrade) => {
-        this.MarketTrade.trigger(t);
+    private _openBidOrders : Models.BrokeredOrder[] = [];
+    private _openAskOrders : Models.BrokeredOrder[] = [];
+
+    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+        this.timeProvider.setTimeout(() => {
+            var collection = order.side === Models.Side.Bid ? this._openBidOrders : this._openAskOrders;
+            collection.push(order);
+            this.OrderUpdate.trigger({ orderId: order.orderId, orderStatus: Models.OrderStatus.Working });
+        }, moment.duration(3));
         
-        if (Math.abs(t.time.diff(moment.utc())) < 1000) {
-            this._output.write(JSON.stringify(["T", t]));
-            this._output.write("\n");
-        }
+        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
+
+    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
+        this.timeProvider.setTimeout(() => {
+            var collection = cancel.side === Models.Side.Bid ? this._openBidOrders : this._openAskOrders;
+            _.remove(collection, (b : Models.BrokeredOrder) => b.orderId === cancel.clientOrderId);
+            this.OrderUpdate.trigger({ orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Cancelled });
+        }, moment.duration(3));
+        
+        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
+    };
+
+    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
+        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+        return this.sendOrder(replace);
+    };
+    
+    private onMarketData = (market : Models.Market) => {
+        this.timeProvider.scrollTimeTo(market.time);
+        this.MarketData.trigger(market);
+    };
+    
+    private onMarketTrade = (trade : Models.GatewayMarketTrade) => {
+        this.timeProvider.scrollTimeTo(trade.time);
+        this.MarketTrade.trigger(trade);
+    };
+    
+    private _baseHeld = 0;
+    private _quoteHeld = 0;
+    private _baseAmount = 0;
+    private _quoteAmount = 0;
+    
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    recomputePosition = () => {
+        this.PositionUpdate.trigger(new Models.CurrencyPosition(this._baseAmount, this._baseHeld, Models.Currency.BTC));
+        this.PositionUpdate.trigger(new Models.CurrencyPosition(this._quoteAmount, this._quoteHeld, Models.Currency.USD));
+    };
+    
+    constructor(private timeProvider: Utils.IBacktestingTimeProvider) {
+        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+    }
 }
