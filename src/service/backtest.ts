@@ -187,9 +187,9 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
         return _.indexBy(_.filter(orders, (o: Models.BrokeredOrder) => o.quantity > 0), k => k.orderId);
     };
     
-    private onMarketTrade = (trade : Models.GatewayMarketTrade) => {
+    private onMarketTrade = (trade : Models.MarketTrade) => {
         this.timeProvider.scrollTimeTo(trade.time);
-        this.MarketTrade.trigger(trade);
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
     
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
@@ -202,9 +202,19 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     private _quoteHeld = 0;
     
     constructor(
+            inputData: Array<Models.Market | Models.MarketTrade>,
             private _baseAmount : number,
             private _quoteAmount : number,
             private timeProvider: Utils.IBacktestingTimeProvider) {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+                
+        _(inputData).sortBy(d => d.time).forEach(i => {
+            if (i instanceof Models.Market) {
+                this.onMarketData(i);
+            }
+            else if (i instanceof Models.MarketTrade) {
+                this.onMarketTrade(i);
+            }
+        });
     }
 }
