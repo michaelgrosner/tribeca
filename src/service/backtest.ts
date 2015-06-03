@@ -85,14 +85,24 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
 
     public cancelsByClientOrderId = true;
     
-    private _openBidOrders : Models.BrokeredOrder[] = [];
-    private _openAskOrders : Models.BrokeredOrder[] = [];
+    private _openBidOrders : {[orderId: string]: Models.BrokeredOrder} = {};
+    private _openAskOrders : {[orderId: string]: Models.BrokeredOrder} = {};
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         this.timeProvider.setTimeout(() => {
-            var collection = order.side === Models.Side.Bid ? this._openBidOrders : this._openAskOrders;
-            collection.push(order);
+            if (order.side === Models.Side.Bid) {
+                this._openBidOrders[order.orderId] = order;
+                this._quoteHeld += order.price*order.quantity;
+                this._quoteAmount -= order.price*order.quantity;
+            }
+            else {
+                this._openAskOrders[order.orderId] = order;
+                this._baseHeld += order.quantity;
+                this._baseAmount -= order.quantity;
+            }
+            
             this.OrderUpdate.trigger({ orderId: order.orderId, orderStatus: Models.OrderStatus.Working });
+            this.recomputePosition();
         }, moment.duration(3));
         
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
@@ -100,9 +110,29 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         this.timeProvider.setTimeout(() => {
-            var collection = cancel.side === Models.Side.Bid ? this._openBidOrders : this._openAskOrders;
-            collection = _.remove(collection, (b : Models.BrokeredOrder) => b.orderId === cancel.clientOrderId);
+            if (cancel.side === Models.Side.Bid) {
+                var existing = this._openBidOrders[cancel.clientOrderId];
+                if (typeof existing === "undefined") {
+                    this.OrderUpdate.trigger({orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Rejected});
+                    return;
+                }
+                this._quoteHeld -= existing.price * existing.quantity;
+                this._quoteAmount += existing.price * existing.quantity;
+                delete this._openBidOrders[cancel.clientOrderId];
+            }
+            else {
+                var existing = this._openAskOrders[cancel.clientOrderId];
+                if (typeof existing === "undefined") {
+                    this.OrderUpdate.trigger({orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Rejected});
+                    return;
+                }
+                this._baseHeld -= existing.quantity;
+                this._baseAmount += existing.quantity;
+                delete this._openAskOrders[cancel.clientOrderId];
+            }
+            
             this.OrderUpdate.trigger({ orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Cancelled });
+            this.recomputePosition();
         }, moment.duration(3));
         
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
@@ -116,42 +146,45 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     private onMarketData = (market : Models.Market) => {
         this.timeProvider.scrollTimeTo(market.time);
         
-        this._openAskOrders = this.tryToMatch(this._openAskOrders, market.bids, (a,b) => a<b);
-        this._openBidOrders = this.tryToMatch(this._openBidOrders, market.asks, (b,a) => a<b);
+        this._openAskOrders = this.tryToMatch(_.values(this._openAskOrders), market.bids, Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(_.values(this._openBidOrders), market.asks, Models.Side.Bid);
         
         this.MarketData.trigger(market);
     };
     
-    private tryToMatch = (orders: Models.BrokeredOrder[], 
-                          marketSides: Models.MarketSide[], 
-                          cmp: (a: number, b: number) => boolean) => {
+    private tryToMatch = (orders: Models.BrokeredOrder[], marketSides: Models.MarketSide[], side: Models.Side) => {
+        var cmp = side === Models.Side.Ask ? (m, o) => o < m : (m, o) => o > m;
         _.forEach(orders, order => {
             _.forEach(marketSides, mkt => {
                 if (cmp(mkt.price, order.price) && order.quantity > 0) {
+                    var update : Models.OrderStatusReport = { orderId: order.orderId, lastPrice: order.price };
                     if (mkt.size >= order.quantity) {
-                        this.OrderUpdate.trigger({ 
-                            orderId: order.orderId, 
-                            orderStatus: Models.OrderStatus.Complete, 
-                            lastPrice: mkt.price, 
-                            lastQuantity: order.quantity 
-                        });
+                        update.orderStatus = Models.OrderStatus.Complete;
+                        update.lastQuantity = order.quantity;
                     }
                     else {
-                        this.OrderUpdate.trigger({ 
-                            orderId: order.orderId, 
-                            orderStatus: Models.OrderStatus.Working, 
-                            partiallyFilled: true,
-                            lastPrice: mkt.price,
-                            lastQuantity: mkt.size
-                        });
+                        update.partiallyFilled = true;
+                        update.orderStatus = Models.OrderStatus.Working;
+                        update.lastQuantity = mkt.size;
                     }
+                    this.OrderUpdate.trigger(update);
                     
-                    order.quantity -= mkt.size;
+                    if (side === Models.Side.Bid) {
+                        this._baseAmount += update.lastQuantity;
+                        this._quoteHeld -= (update.lastQuantity*order.price);
+                    }
+                    else {
+                        this._baseHeld -= update.lastQuantity;
+                        this._quoteAmount += (update.lastQuantity*order.price);
+                    }
+                    this.recomputePosition();
+                    
+                    order.quantity -= update.lastQuantity;
                 };
             });
         });
         
-        return _.filter(orders, (o: Models.BrokeredOrder) => o.quantity > 0);
+        return _.indexBy(_.filter(orders, (o: Models.BrokeredOrder) => o.quantity > 0), k => k.orderId);
     };
     
     private onMarketTrade = (trade : Models.GatewayMarketTrade) => {
@@ -159,18 +192,19 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
         this.MarketTrade.trigger(trade);
     };
     
-    private _baseHeld = 0;
-    private _quoteHeld = 0;
-    private _baseAmount = 0;
-    private _quoteAmount = 0;
-    
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
     recomputePosition = () => {
         this.PositionUpdate.trigger(new Models.CurrencyPosition(this._baseAmount, this._baseHeld, Models.Currency.BTC));
         this.PositionUpdate.trigger(new Models.CurrencyPosition(this._quoteAmount, this._quoteHeld, Models.Currency.USD));
     };
     
-    constructor(private timeProvider: Utils.IBacktestingTimeProvider) {
+    private _baseHeld = 0;
+    private _quoteHeld = 0;
+    
+    constructor(
+            private _baseAmount : number,
+            private _quoteAmount : number,
+            private timeProvider: Utils.IBacktestingTimeProvider) {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
     }
 }

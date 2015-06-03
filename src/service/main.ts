@@ -120,7 +120,7 @@ Q.all([
 
     var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
     var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
-    var marketDataPublisher = getPublisher(Messaging.Topics.MarketData);
+    var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
     var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
     var tradePublisher = getPublisher(Messaging.Topics.Trades, tradesPersister);
     var safetySettingsPublisher = getPublisher(Messaging.Topics.SafetySettings);
