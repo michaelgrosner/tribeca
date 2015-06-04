@@ -54,6 +54,11 @@ export class Publisher<T> implements IPublish<T> {
     }
 }
 
+export class NullPublisher<T> implements IPublish<T> {
+    public publish = (msg : T) => {};
+    public registerSnapshot = (generator : () => T[]) => this;
+}
+
 export interface ISubscribe<T> {
     registerSubscriber : (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => ISubscribe<T>;
     registerDisconnectedHandler : (handler : () => void) => ISubscribe<T>;
@@ -174,6 +179,10 @@ export class Fire<T> implements IFire<T> {
 
 export interface IReceive<T> {
     registerReceiver(handler : (msg : T) => void) : void;
+}
+
+export class NullReceiver<T> implements IReceive<T> {
+    registerReceiver = (handler : (msg : T) => void) => {};
 }
 
 export class Receiver<T> implements IReceive<T> {

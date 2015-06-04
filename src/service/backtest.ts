@@ -3,17 +3,13 @@
 /// <reference path="../common/models.ts" />
 
 import Config = require("./config");
-import request = require('request');
-import url = require("url");
-import querystring = require("querystring");
 import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import io = require("socket.io-client");
 import moment = require("moment");
-import WebSocket = require('ws');
 import _ = require('lodash');
 import fs = require("fs");
+import mongo = require("mongodb");
 
 var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
@@ -71,7 +67,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     };
 }
 
-export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces.IOrderEntryGateway, Interfaces.IMarketDataGateway {
+export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.IOrderEntryGateway, Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     
     MarketData = new Utils.Evt<Models.Market>();
@@ -144,8 +140,6 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     };
     
     private onMarketData = (market : Models.Market) => {
-        this.timeProvider.scrollTimeTo(market.time);
-        
         this._openAskOrders = this.tryToMatch(_.values(this._openAskOrders), market.bids, Models.Side.Ask);
         this._openBidOrders = this.tryToMatch(_.values(this._openBidOrders), market.asks, Models.Side.Bid);
         
@@ -188,7 +182,6 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
     };
     
     private onMarketTrade = (trade : Models.MarketTrade) => {
-        this.timeProvider.scrollTimeTo(trade.time);
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
     
@@ -209,6 +202,8 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
                 
         _(inputData).sortBy(d => d.time).forEach(i => {
+            this.timeProvider.scrollTimeTo(i.time);
+            
             if (i instanceof Models.Market) {
                 this.onMarketData(i);
             }
@@ -218,3 +213,42 @@ export class BacktestExchange implements Interfaces.IPositionGateway, Interfaces
         });
     }
 }
+
+class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
+    public get hasSelfTradePrevention() {
+        return false;
+    }
+
+    name(): string {
+        return "Null";
+    }
+
+    makeFee(): number {
+        return 0;
+    }
+
+    takeFee(): number {
+        return 0;
+    }
+
+    exchange(): Models.Exchange {
+        return Models.Exchange.Null;
+    }
+}
+
+export class BacktestParameters {
+    startTime: Moment;
+    endTime: Moment;
+    startingBasePosition: number;
+    startingQuotePosition: number;
+    quotingParameters: Models.QuotingParameters;
+}
+
+export class BacktestExchange extends Interfaces.CombinedGateway {
+    constructor(parameters: BacktestParameters, 
+                inputData: Array<Models.Market | Models.MarketTrade>, 
+                timeProvider: BacktestTimeProvider) {
+        var gw = new BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, timeProvider);
+        super(gw, gw, gw, new BacktestGatewayDetails());
+    }
+};
