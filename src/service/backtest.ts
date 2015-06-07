@@ -10,6 +10,7 @@ import moment = require("moment");
 import _ = require('lodash');
 import fs = require("fs");
 import mongo = require("mongodb");
+import Persister = require("./persister");
 
 var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
@@ -201,7 +202,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             private timeProvider: Utils.IBacktestingTimeProvider) {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
                 
-        _(inputData).sortBy(d => d.time).forEach(i => {
+        _(inputData).forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
             
             if (i instanceof Models.Market) {
@@ -237,15 +238,35 @@ class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 }
 
 export class BacktestParameters {
-    startTime: Moment;
-    endTime: Moment;
     startingBasePosition: number;
     startingQuotePosition: number;
     quotingParameters: Models.QuotingParameters;
 }
 
+export class BacktestPersister<T> implements Persister.IPersist<T> {
+    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
+        return this.loadAll(limit);    
+    };
+    
+    public loadAll = (limit?: number): Q.Promise<T[]> => { 
+        if (this.initialData) {
+            if (limit) {
+                return Q(_.last(this.initialData, limit));
+            }
+            else {
+                return Q(this.initialData);
+            }
+        }
+        return Q([]);
+    };
+    
+    public persist = (report: T) => { };
+    
+    constructor(private initialData: T[] = null) {}
+}
+
 export class BacktestExchange extends Interfaces.CombinedGateway {
-    constructor(parameters: BacktestParameters, 
+    constructor(parameters: BacktestParameters,
                 inputData: Array<Models.Market | Models.MarketTrade>, 
                 timeProvider: BacktestTimeProvider) {
         var gw = new BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, timeProvider);

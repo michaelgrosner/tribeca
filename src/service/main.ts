@@ -8,6 +8,7 @@ import path = require("path");
 import express = require('express');
 import util = require('util');
 import moment = require("moment");
+import fs = require("fs");
 
 import HitBtc = require("./gateways/hitbtc");
 import OkCoin = require("./gateways/okcoin");
@@ -33,11 +34,10 @@ import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
+import Backtest = require("./backtest");
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
-
-var timeProvider = new Utils.RealTimeProvider();
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
@@ -45,22 +45,78 @@ var timeProvider = new Utils.RealTimeProvider();
     });
 });
 
+var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+var orderCache = new Broker.OrderStateCache();
 var config = new Config.ConfigProvider();
 
-var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
-
-var getExchange = (): Models.Exchange => {
-    var ex = process.env.EXCHANGE.toLowerCase();
-    switch (ex) {
-        case "hitbtc": return Models.Exchange.HitBtc;
-        case "okcoin": return Models.Exchange.OkCoin;
-        case "coinbase": return Models.Exchange.Coinbase;
-        case "null": return Models.Exchange.Null;
-        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+if (config.inBacktestMode) {
+    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync("inputData.json", 'utf8'));
+    inputData = _.sortBy(inputData, d => d.time);
+    var parameters : Backtest.BacktestParameters = JSON.parse(fs.readFileSync("backtestParameters.json", 'utf8'));
+    var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time);
+    var exchange = Models.Exchange.Null;
+    var gateway = new Backtest.BacktestExchange(parameters, inputData, <Backtest.BacktestTimeProvider>timeProvider);
+    
+    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => { 
+        return new Messaging.NullPublisher<T>();
     }
-};
+    
+    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
+}
+else {
+    var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
+    
+    var app = express();
+    var http = (<any>require('http')).Server(app);
+    var io = require('socket.io')(http);
 
-var exchange = getExchange();
+    var basicAuth = require('basic-auth-connect');
+
+    var isFullUser = (username, password) => username === "mgrosner" && password === "password";
+    app.use(basicAuth(isFullUser));
+
+    app.use(<any>compression());
+    app.use(express.static(path.join(__dirname, "admin")));
+    http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
+
+    var advert = new Models.ProductAdvertisement(exchange, pair, Config.Environment[config.environment()]);
+    new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
+    
+    var getExchange = (): Models.Exchange => {
+        var ex = process.env.EXCHANGE.toLowerCase();
+        switch (ex) {
+            case "hitbtc": return Models.Exchange.HitBtc;
+            case "okcoin": return Models.Exchange.OkCoin;
+            case "coinbase": return Models.Exchange.Coinbase;
+            case "null": return Models.Exchange.Null;
+            default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+        }
+    };
+    
+    var exchange = getExchange();
+    
+    var getExch = (): Interfaces.CombinedGateway => {
+        switch (exchange) {
+            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
+            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
+            case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
+            default: throw new Error("no gateway provided for exchange " + exchange);
+        }
+    };
+
+    var gateway = getExch();
+    
+    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => {
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
+        if (persister !== null)
+            return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
+        else
+            return socketIoPublisher;
+    };
+    
+    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
+}
 
 var db = Persister.loadDb();
 var orderPersister = new Persister.OrderStatusPersister(db);
@@ -94,31 +150,7 @@ Q.all([
     initActive: Models.SerializedQuotesActive,
     initRfv: Models.RegularFairValue[]) => {
 
-    var app = express();
-    var http = (<any>require('http')).Server(app);
-    var io = require('socket.io')(http);
-
-    var basicAuth = require('basic-auth-connect');
-
-    var isFullUser = (username, password) => username === "mgrosner" && password === "password";
-    app.use(basicAuth(isFullUser));
-
-    app.use(<any>compression());
-    app.use(express.static(path.join(__dirname, "admin")));
-    http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
-
-    var advert = new Models.ProductAdvertisement(exchange, pair, Config.Environment[config.environment()]);
-    new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
-
-    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
-        if (persister !== null)
-            return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
-        else
-            return socketIoPublisher;
-    };
-
-    var quotePublisher = getPublisher<Models.TwoSidedQuote>(Messaging.Topics.Quote);
+    var quotePublisher = getPublisher(Messaging.Topics.Quote);
     var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
     var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
     var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
@@ -137,27 +169,11 @@ Q.all([
     var messages = new Broker.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
     messages.publish("start up");
 
-    var getReceiver = <T>(topic: string) => new Messaging.Receiver<T>(topic, io, messagingLog);
-
     var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
     var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
     var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
-    var submitOrderReceiver = new Messaging.Receiver(Messaging.Topics.SubmitNewOrder, io, messagingLog);
-    var cancelOrderReceiver = new Messaging.Receiver(Messaging.Topics.CancelOrder, io, messagingLog);
-
-    var orderCache = new Broker.OrderStateCache();
-
-    var getExch = (): Interfaces.CombinedGateway => {
-        switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
-            case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
-            default: throw new Error("no gateway provided for exchange " + exchange);
-        }
-    };
-
-    var gateway = getExch();
+    var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
+    var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
 
     var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
     var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
@@ -192,6 +208,8 @@ Q.all([
 
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quotingEngine, broker, mktTradePersister, initMktTrades);
+        
+    if (config.inBacktestMode) return;
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {
