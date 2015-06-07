@@ -243,7 +243,7 @@ export class BacktestParameters {
     quotingParameters: Models.QuotingParameters;
 }
 
-export class BacktestPersister<T> implements Persister.IPersist<T> {
+export class BacktestPersister<T> implements Persister.ILoadAllByExchangeAndPair<T>, Persister.ILoadLatest<T> {
     public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
         return this.loadAll(limit);    
     };
@@ -261,6 +261,11 @@ export class BacktestPersister<T> implements Persister.IPersist<T> {
     };
     
     public persist = (report: T) => { };
+    
+    public loadLatest = (): Q.Promise<T> => {
+        if (this.initialData)
+            return Q(_.last(this.initialData));
+    };
     
     constructor(private initialData: T[] = null) {}
 }

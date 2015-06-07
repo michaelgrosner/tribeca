@@ -36,14 +36,14 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 
-var mainLog = Utils.log("tribeca:main");
-var messagingLog = Utils.log("tribeca:messaging");
-
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
         Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
     });
 });
+
+var mainLog = Utils.log("tribeca:main");
+var messagingLog = Utils.log("tribeca:messaging");
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var orderCache = new Broker.OrderStateCache();
@@ -62,6 +62,14 @@ if (config.inBacktestMode) {
     }
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
+    
+    var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => new Backtest.BacktestPersister<T>();
+    var getMarketTradePersister = () => getPersister<Models.MarketTrade>("mt");
+    
+    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>();
+    
+    var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
+    var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
 }
 else {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
@@ -116,23 +124,33 @@ else {
     };
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
+    
+    var db = config.inBacktestMode ? null : Persister.loadDb();
+    
+    var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
+        new Persister.BasicPersister<T>(db, collectionName);
+    var getMarketTradePersister = () : Persister.ILoadAllByExchangeAndPair<Models.MarketTrade> => new MarketTrades.MarketTradePersister(db);
+        
+    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
+        new Persister.RepositoryPersister<T>(db, defValue, collectionName);
+        
+    var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, timeProvider.utcNow())
+    var startingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300);
 }
 
-var db = Persister.loadDb();
-var orderPersister = new Persister.OrderStatusPersister(db);
-var tradesPersister = new Persister.TradePersister(db);
-var fairValuePersister = new Persister.FairValuePersister(db);
-var mktTradePersister = new MarketTrades.MarketTradePersister(db);
-var positionPersister = new Broker.PositionPersister(db);
-var messagesPersister = new Persister.MessagesPersister(db);
-var activePersister = new Persister.RepositoryPersister(db, new Models.SerializedQuotesActive(false, timeProvider.utcNow()), Messaging.Topics.ActiveChange);
-var paramsPersister = new Persister.RepositoryPersister(db,
-    new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300),
-    Messaging.Topics.QuotingParametersChange);
-var rfvPersister = new PositionManagement.RegularFairValuePersister(db);
-var tbpPersister = new Persister.BasicPersister<Models.Timestamped<number>>(db, "tbp");
-var tsvPersister = new Persister.BasicPersister<Models.TradeSafety>(db, "tsv");
-var marketDataPersister = new Persister.BasicPersister<Models.Market>(db, Messaging.Topics.MarketData);
+var orderPersister = getPersister("osr");
+var tradesPersister = getPersister("trades");
+var fairValuePersister = getPersister("fv");
+var mktTradePersister = getMarketTradePersister();
+var positionPersister = getPersister("pos");
+var messagesPersister = getPersister("msg");
+var rfvPersister = getPersister("rfv");
+var tbpPersister = getPersister("tbp");
+var tsvPersister = getPersister("tsv");
+var marketDataPersister = getPersister(Messaging.Topics.MarketData);
+
+var activePersister = getRepository(startingActive, Messaging.Topics.ActiveChange);
+var paramsPersister = getRepository(startingParameters, Messaging.Topics.QuotingParametersChange);
 
 Q.all([
     orderPersister.load(exchange, pair, 25000),

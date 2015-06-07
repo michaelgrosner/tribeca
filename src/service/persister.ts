@@ -35,7 +35,19 @@ export interface IPersist<T> {
     persist(data: T): void;
 }
 
-export class RepositoryPersister<T> implements IPersist<T> {
+export interface ILoadLatest<T> extends IPersist<T> {
+    loadLatest(): Q.Promise<T>;
+}
+
+export interface ILoadAll<T> extends IPersist<T> {
+    loadAll(limit?: number): Q.Promise<T[]>;
+}
+
+export interface ILoadAllByExchangeAndPair<T> extends ILoadAll<T> {
+    load(exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number): Q.Promise<T[]>;
+}
+
+export class RepositoryPersister<T> implements ILoadLatest<T> {
     _log: Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = (): Q.Promise<T> => {
@@ -82,11 +94,7 @@ export class RepositoryPersister<T> implements IPersist<T> {
     }
 }
 
-export interface ILoadAll<T> {
-    loadAll(limit?: number): Q.Promise<T[]>;
-}
-
-export class Persister<T> implements IPersist<T>, ILoadAll<T> {
+export class Persister<T> implements ILoadAllByExchangeAndPair<T> {
     _log: Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
 
     public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
@@ -155,28 +163,3 @@ export class BasicPersister<T> extends Persister<T> {
         super(db, collectionName, timeLoader, timeSaver);
     }
 }
-
-export class OrderStatusPersister extends Persister<Models.OrderStatusReport> {
-    constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "osr", timeLoader, timeSaver);
-    }
-}
-
-export class TradePersister extends Persister<Models.Trade> {
-    constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "trades", timeLoader, timeSaver);
-    }
-}
-
-export class FairValuePersister extends Persister<Models.FairValue> {
-    constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "fv", timeLoader, timeSaver);
-    }
-}
-
-export class MessagesPersister extends Persister<Models.Message> {
-    constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "msg", timeLoader, timeSaver);
-    }
-}
-
