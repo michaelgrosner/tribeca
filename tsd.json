@@ -19,6 +19,9 @@
     },
     "compression/compression.d.ts": {
       "commit": "b3324f69165309a3ea2bd02fd10e97841bf07c83"
+    },
+    "minimist/minimist.d.ts": {
+      "commit": "2a5858c16563634453533009242b8e0b18521370"
     }
   }
 }

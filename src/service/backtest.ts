@@ -11,6 +11,7 @@ import _ = require('lodash');
 import fs = require("fs");
 import mongo = require("mongodb");
 import Persister = require("./persister");
+import Q = require("q");
 
 var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
@@ -30,14 +31,14 @@ class Timed {
 }
 
 export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
-    constructor(private _internalTime : Moment) { }
+    constructor(private _internalTime : Moment, private _endTime : Moment) { }
     
     utcNow = () => this._internalTime;
     
     private _immediates = new Array<() => void>();
     setImmediate = (action: () => void) => this._immediates.push(action);
     
-    private _timeouts = new SortedArray(null, null, (a : Timed, b : Timed) => a.time.diff(b.time));
+    private _timeouts : Timed[] = [];
     setTimeout = (action: () => void, time: Duration) => {
         this.setAction(action, time, TimedType.Timeout);
     };
@@ -47,7 +48,14 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     };
     
     private setAction  = (action: () => void, time: Duration, type : TimedType) => {
-        this._timeouts.push(new Timed(action, this._internalTime.clone().add(time), type, time));
+        var dueTime = this._internalTime.clone().add(time);
+        
+        if (dueTime.diff(this.utcNow())) {
+            return;
+        }
+        
+        this._timeouts.push(new Timed(action, dueTime, type, time));
+        this._timeouts.sort((a, b) => a.time.diff(b.time));
     };
     
     scrollTimeTo = (time : Moment) => {
@@ -55,7 +63,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
             this._immediates.pop()();
         }
         
-        while (this._timeouts.length > 0 && this._timeouts.min().time.diff(time) > 0) {
+        while (this._timeouts.length > 0 && _.first(this._timeouts).time.diff(time) < 0) {
             var evt : Timed = this._timeouts.shift();
             this._internalTime = evt.time;
             evt.action();

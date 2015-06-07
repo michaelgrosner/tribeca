@@ -9,6 +9,7 @@ import express = require('express');
 import util = require('util');
 import moment = require("moment");
 import fs = require("fs");
+import minimist = require("minimist");
 
 import HitBtc = require("./gateways/hitbtc");
 import OkCoin = require("./gateways/okcoin");
@@ -36,27 +37,38 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 
+var cmdParams = minimist(process.argv.slice(2));
+
+var config = new Config.ConfigProvider(cmdParams);
+
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
         Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
+        
+        if (config.inBacktestMode) process.exit(1);
     });
 });
 
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
 
+mainLog(util.inspect(cmdParams));
+
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var orderCache = new Broker.OrderStateCache();
-var config = new Config.ConfigProvider();
 
 if (config.inBacktestMode) {
-    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync("inputData.json", 'utf8'));
+    // EXCHANGE=null TRIBECA_MODE=dev node main.js backtest --mdFile=/Users/grosner/inputData.json --paramFile=/Users/grosner/parameters.json
+    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(cmdParams['mdFile'], 'utf8'));
+    _.forEach(inputData, d => d.time = moment(d.time));
     inputData = _.sortBy(inputData, d => d.time);
-    var parameters : Backtest.BacktestParameters = JSON.parse(fs.readFileSync("backtestParameters.json", 'utf8'));
-    var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time);
+    
+    var parameters : Backtest.BacktestParameters = JSON.parse(fs.readFileSync(cmdParams['paramFile'], 'utf8'));
+    
+    var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
     var exchange = Models.Exchange.Null;
     var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
-    var gateway = new Backtest.BacktestExchange(gw);
+    var gateway : Interfaces.CombinedGateway = new Backtest.BacktestExchange(gw);
     
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
@@ -67,7 +79,7 @@ if (config.inBacktestMode) {
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => new Backtest.BacktestPersister<T>();
     var getMarketTradePersister = () => getPersister<Models.MarketTrade>("mt");
     
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>();
+    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
     
     var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
     var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
@@ -126,7 +138,7 @@ else {
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
     
-    var db = config.inBacktestMode ? null : Persister.loadDb();
+    var db = Persister.loadDb();
     
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
         new Persister.BasicPersister<T>(db, collectionName);
