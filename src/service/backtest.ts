@@ -50,7 +50,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     private setAction  = (action: () => void, time: Duration, type : TimedType) => {
         var dueTime = this._internalTime.clone().add(time);
         
-        if (dueTime.diff(this.utcNow())) {
+        if (dueTime.diff(this.utcNow()) < 0) {
             return;
         }
         
@@ -59,6 +59,10 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     };
     
     scrollTimeTo = (time : Moment) => {
+        if (time.diff(this.utcNow()) < 0) {
+            throw new Error("Cannot reverse time!");
+        }
+        
         while (this._immediates.length > 0) {
             this._immediates.pop()();
         }
