@@ -55,7 +55,8 @@ if (config.inBacktestMode) {
     var parameters : Backtest.BacktestParameters = JSON.parse(fs.readFileSync("backtestParameters.json", 'utf8'));
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time);
     var exchange = Models.Exchange.Null;
-    var gateway = new Backtest.BacktestExchange(parameters, inputData, <Backtest.BacktestTimeProvider>timeProvider);
+    var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
+    var gateway = new Backtest.BacktestExchange(gw);
     
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
@@ -227,7 +228,10 @@ Q.all([
     var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
         quotingEngine, broker, mktTradePersister, initMktTrades);
         
-    if (config.inBacktestMode) return;
+    if (config.inBacktestMode) {
+        (<Backtest.BacktestExchange>gateway).run();
+        return;
+    }
 
     ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
         process.on(reason, (e?) => {

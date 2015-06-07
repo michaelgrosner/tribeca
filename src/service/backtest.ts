@@ -196,13 +196,15 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     private _quoteHeld = 0;
     
     constructor(
-            inputData: Array<Models.Market | Models.MarketTrade>,
+            private _inputData: Array<Models.Market | Models.MarketTrade>,
             private _baseAmount : number,
             private _quoteAmount : number,
-            private timeProvider: Utils.IBacktestingTimeProvider) {
+            private timeProvider: Utils.IBacktestingTimeProvider) {}
+    
+    public run = () => {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
-                
-        _(inputData).forEach(i => {
+        
+        _(this._inputData).forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
             
             if (i instanceof Models.Market) {
@@ -212,7 +214,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                 this.onMarketTrade(i);
             }
         });
-    }
+    };
 }
 
 class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
@@ -271,10 +273,9 @@ export class BacktestPersister<T> implements Persister.ILoadAllByExchangeAndPair
 }
 
 export class BacktestExchange extends Interfaces.CombinedGateway {
-    constructor(parameters: BacktestParameters,
-                inputData: Array<Models.Market | Models.MarketTrade>, 
-                timeProvider: BacktestTimeProvider) {
-        var gw = new BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, timeProvider);
+    constructor(private gw: BacktestGateway) {
         super(gw, gw, gw, new BacktestGatewayDetails());
     }
+    
+    public run = () => this.gw.run();
 };
