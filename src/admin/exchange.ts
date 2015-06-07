@@ -77,8 +77,8 @@ interface TargetBasePositionScope extends ng.IScope {
 
 var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
-    var update = (value : number) => {
-        $scope.targetBasePosition = value;
+    var update = (value : Models.TargetBasePositionValue) => {
+        $scope.targetBasePosition = value.data;
     };
 
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TargetBasePosition)

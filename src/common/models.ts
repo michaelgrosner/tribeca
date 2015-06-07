@@ -45,7 +45,9 @@ export class Market implements ITimestamped {
 }
 
 export class MarketTrade implements ITimestamped {
-    constructor(public price: number,
+    constructor(public exchange: Exchange,
+                public pair: CurrencyPair,
+                public price: number,
                 public size: number,
                 public time: Moment,
                 public quote: TwoSidedQuote,
@@ -365,4 +367,8 @@ export class TradeSafety {
                 public sell: number,
                 public combined: number,
                 public time: Moment) {}
+}
+
+export class TargetBasePositionValue {
+    constructor(public data: number, public time: Moment) {}
 }

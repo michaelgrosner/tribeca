@@ -202,11 +202,12 @@ export class QuotingEngine {
             }
         }
 
-        var targetBasePosition = this._targetPosition.latestTargetPosition;
-        if (targetBasePosition === null) {
+        var tbp = this._targetPosition.latestTargetPosition;
+        if (tbp === null) {
             this._log("cannot compute a quote since no position report exists!");
             return null;
         }
+        var targetBasePosition = tbp.data;
         
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;

@@ -57,7 +57,7 @@ if (config.inBacktestMode) {
     var exchange = Models.Exchange.Null;
     var gateway = new Backtest.BacktestExchange(parameters, inputData, <Backtest.BacktestTimeProvider>timeProvider);
     
-    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => { 
+    var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
     }
     
@@ -107,7 +107,7 @@ else {
 
     var gateway = getExch();
     
-    var getPublisher = <T>(topic: string, persister: Persister.Persister<T> = null): Messaging.IPublish<T> => {
+    var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => {
         var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
         if (persister !== null)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
@@ -144,7 +144,7 @@ Q.all([
     rfvPersister.loadAll(50)
 ]).spread((initOrders: Models.OrderStatusReport[],
     initTrades: Models.Trade[],
-    initMktTrades: Models.ExchangePairMessage<Models.MarketTrade>[],
+    initMktTrades: Models.MarketTrade[],
     initMsgs: Models.Message[],
     initParams: Models.QuotingParameters,
     initActive: Models.SerializedQuotesActive,

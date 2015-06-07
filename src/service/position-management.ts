@@ -78,8 +78,8 @@ export class TargetBasePositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
-    private _latest: number = null;
-    public get latestTargetPosition(): number {
+    private _latest: Models.TargetBasePositionValue = null;
+    public get latestTargetPosition(): Models.TargetBasePositionValue {
         return this._latest;
     }
 
@@ -88,8 +88,8 @@ export class TargetBasePositionManager {
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
-        private _wrapped: Messaging.IPublish<number>,
-        private _persister: Persister.IPersist<Models.Timestamped<number>>) {
+        private _wrapped: Messaging.IPublish<Models.TargetBasePositionValue>,
+        private _persister: Persister.IPersist<Models.TargetBasePositionValue>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => this.recomputeTargetPosition());
@@ -108,14 +108,14 @@ export class TargetBasePositionManager {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
-        if (this._latest === null || Math.abs(this._latest - targetBasePosition) > 0.05) {
-            this._latest = targetBasePosition;
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.05) {
+            this._latest = new Models.TargetBasePositionValue(targetBasePosition, this._timeProvider.utcNow());
             this.NewTargetPosition.trigger();
 
             this._wrapped.publish(this.latestTargetPosition);
-            this._persister.persist(new Models.Timestamped(this.latestTargetPosition, this._timeProvider.utcNow()));
+            this._persister.persist(this.latestTargetPosition);
 
-            this._log("recalculated target base position:", Utils.roundFloat(this._latest));
+            this._log("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
         }
     };
 }

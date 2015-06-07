@@ -15,6 +15,11 @@ import mongodb = require('mongodb');
 import Web = require("./web");
 
 var loader = (d: Models.ExchangePairMessage<Models.MarketTrade>) => {
+    if (d instanceof Models.MarketTrade) {
+        P.timeLoader(d);
+        return;
+    }
+    
     if (d.data === null) return;
     P.timeLoader(d.data);
 
@@ -23,6 +28,11 @@ var loader = (d: Models.ExchangePairMessage<Models.MarketTrade>) => {
 };
 
 var saver = (d: Models.ExchangePairMessage<Models.MarketTrade>) => {
+    if (d instanceof Models.MarketTrade) {
+        P.timeSaver(d);
+        return;
+    }
+    
     if (d.data === null) return;
     P.timeSaver(d.data);
 
@@ -30,9 +40,9 @@ var saver = (d: Models.ExchangePairMessage<Models.MarketTrade>) => {
     P.timeSaver(d.data.quote);
 };
 
-export class MarketTradePersister extends P.Persister<Models.ExchangePairMessage<Models.MarketTrade>> {
+export class MarketTradePersister extends P.Persister<Models.MarketTrade> {
     constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "mt", loader, saver);
+        super(db, "mt", P.timeLoader, P.timeSaver);
     }
 }
 
@@ -48,7 +58,8 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         var qt = u.onStartup ? null : this._quoteEngine.latestQuote;
         var mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
-        var t = new Models.MarketTrade(u.price, u.size, u.time, qt, mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
+        var t = new Models.MarketTrade(this._base.exchange(), this._base.pair, u.price, u.size, u.time, qt, 
+            mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
 
         if (u.onStartup) {
             for (var i = 0; i < this.marketTrades.length; i++) {
@@ -63,7 +74,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         this.marketTrades.push(t);
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
-        this._persister.persist(new Models.ExchangePairMessage(this._base.exchange(), this._base.pair, t));
+        this._persister.persist(t);
     };
 
     constructor(private _mdGateway: Interfaces.IMarketDataGateway,
@@ -71,9 +82,14 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         private _mdBroker: Interfaces.IMarketDataBroker,
         private _quoteEngine: Agent.QuotingEngine,
         private _base: Broker.ExchangeBroker,
-        private _persister: P.IPersist<Models.ExchangePairMessage<Models.MarketTrade>>,
-        initMkTrades: Models.ExchangePairMessage<Models.MarketTrade>[]) {
-        initMkTrades.forEach(t => this.marketTrades.push(t.data));
+        private _persister: P.IPersist<Models.MarketTrade>,
+        initMkTrades: Array<Models.ExchangePairMessage<Models.MarketTrade> | Models.MarketTrade>) {
+        initMkTrades.forEach(t => {
+            if (t instanceof Models.MarketTrade)
+                this.marketTrades.push(t);
+            else
+                this.marketTrades.push((<any>t).data);
+        });
         this._log("loaded %d market trades", this.marketTrades.length);
 
         _marketTradePublisher.registerSnapshot(() => _.last(this.marketTrades, 50));
