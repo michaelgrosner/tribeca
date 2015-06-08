@@ -226,11 +226,17 @@ export class QuotingEngine {
                 unrounded.askSz = Math.min(3*params.size, totalBasePosition - targetBasePosition);
         }
         
-        if (this._safeties.latest.sell > params.tradesPerMinute) {
+        var safety = this._safeties.latest;
+        if (safety === null) {
+            this._log("cannot compute a quote since trade safety is not yet computed!");
+            return null;
+        }
+        
+        if (safety.sell > params.tradesPerMinute) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
-        if (this._safeties.latest.buy > params.tradesPerMinute) {
+        if (safety.buy > params.tradesPerMinute) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }

@@ -199,7 +199,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
     
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-    recomputePosition = () => {
+    private recomputePosition = () => {
         this.PositionUpdate.trigger(new Models.CurrencyPosition(this._baseAmount, this._baseHeld, Models.Currency.BTC));
         this.PositionUpdate.trigger(new Models.CurrencyPosition(this._quoteAmount, this._quoteHeld, Models.Currency.USD));
     };
@@ -216,14 +216,21 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     public run = () => {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         
+        var hasProcessedMktData = false;
+        
         _(this._inputData).forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
             
-            if (i instanceof Models.Market) {
-                this.onMarketData(i);
+            if (typeof i["make_side"] !== "undefined") {
+                this.onMarketTrade(<Models.MarketTrade>i);
             }
-            else if (i instanceof Models.MarketTrade) {
-                this.onMarketTrade(i);
+            else if (typeof i["bids"] !== "undefined" || typeof i["asks"] !== "undefined") {
+                this.onMarketData(<Models.Market>i);
+                
+                if (!hasProcessedMktData) {
+                    this.recomputePosition();
+                    hasProcessedMktData = true;
+                }
             }
         });
     };
