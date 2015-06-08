@@ -68,7 +68,8 @@ if (config.inBacktestMode) {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
     var exchange = Models.Exchange.Null;
     var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
-    var gateway : Interfaces.CombinedGateway = new Backtest.BacktestExchange(gw);
+    
+    var getExch = (): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
     
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
@@ -126,8 +127,6 @@ else {
         }
     };
 
-    var gateway = getExch();
-    
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => {
         var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
         if (persister !== null)
@@ -205,6 +204,8 @@ Q.all([
     var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
     var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
     var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
+    
+    var gateway = getExch();
 
     var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
     var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
