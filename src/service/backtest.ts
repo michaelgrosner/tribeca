@@ -195,6 +195,9 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
     
     private onMarketTrade = (trade : Models.MarketTrade) => {
+        this._openAskOrders = this.tryToMatch(_.values(this._openAskOrders), [trade], Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(_.values(this._openBidOrders), [trade], Models.Side.Bid);
+        
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
     

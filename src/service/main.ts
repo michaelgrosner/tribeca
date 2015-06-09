@@ -10,6 +10,7 @@ import util = require('util');
 import moment = require("moment");
 import fs = require("fs");
 import minimist = require("minimist");
+import winston = require("winston");
 
 import HitBtc = require("./gateways/hitbtc");
 import OkCoin = require("./gateways/okcoin");
@@ -52,12 +53,13 @@ var config = new Config.ConfigProvider(cmdParams);
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
 
-mainLog(util.inspect(cmdParams));
-
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
 var orderCache = new Broker.OrderStateCache();
 
 if (config.inBacktestMode) {
+    winston.remove(winston.transports.Console);
+    winston.remove(winston.transports.DailyRotateFile);
+    
     // EXCHANGE=null TRIBECA_MODE=dev node main.js backtest --mdFile=/Users/grosner/inputData.json --paramFile=/Users/grosner/parameters.json
     var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(cmdParams['mdFile'], 'utf8'));
     _.forEach(inputData, d => d.time = moment(d.time));
@@ -243,6 +245,7 @@ Q.all([
         
     if (config.inBacktestMode) {
         (<Backtest.BacktestExchange>gateway).run();
+        fs.appendFileSync('backtestResults.txt', JSON.stringify([initParams, positionBroker.latestReport]));
         return;
     }
 
