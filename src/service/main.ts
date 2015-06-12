@@ -291,6 +291,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
             request({url: serverUrl+"/result", 
                      method: 'POST', 
                      json: [initParams, positionBroker.latestReport]}, (err, resp, body) => {});
+                     
+            return;
         }
     
         ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
@@ -334,13 +336,12 @@ var harness = () => {
     if (config.inBacktestMode) {
         console.log("enter backtest mode");
         
-        //winston.remove(winston.transports.Console);
+        winston.remove(winston.transports.Console);
         winston.remove(winston.transports.DailyRotateFile);
         
         request.get(serverUrl+"/inputData", (err, resp, body) => {
             var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(body);
             _.forEach(inputData, d => d.time = moment(d.time));
-            inputData = _.sortBy(inputData, d => d.time);
             
             var getNextSetOfParameters = () => {
                 request.get(serverUrl+"/nextParameters", (err, resp, body) => {

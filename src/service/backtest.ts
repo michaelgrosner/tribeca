@@ -229,11 +229,11 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             }
             else if (typeof i["bids"] !== "undefined" || typeof i["asks"] !== "undefined") {
                 this.onMarketData(<Models.Market>i);
-                
-                if (!hasProcessedMktData) {
-                    this.recomputePosition();
-                    hasProcessedMktData = true;
-                }
+            }
+            
+            if (!hasProcessedMktData) {
+                this.recomputePosition();
+                hasProcessedMktData = true;
             }
         });
     };
