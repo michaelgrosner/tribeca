@@ -11,6 +11,7 @@ import moment = require("moment");
 import fs = require("fs");
 import minimist = require("minimist");
 import winston = require("winston");
+import request = require('request');
 
 import HitBtc = require("./gateways/hitbtc");
 import OkCoin = require("./gateways/okcoin");
@@ -39,12 +40,14 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 
 var cmdParams = minimist(process.argv.slice(2));
+var serverUrl = 'backtestServer' in cmdParams ? cmdParams['backtestServer'] : "http://localhost:5000";
 
 var config = new Config.ConfigProvider(cmdParams);
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
         Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
+        console.log(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
         
         if (config.inBacktestMode) process.exit(1);
     });
@@ -183,7 +186,7 @@ interface SimulationClasses {
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
 
-var runTradingSystem = (classes: SimulationClasses) => {
+var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
     var getPersister = classes.getPersister;
     var orderPersister = getPersister("osr");
     var tradesPersister = getPersister("trades");
@@ -200,7 +203,7 @@ var runTradingSystem = (classes: SimulationClasses) => {
     var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
     
     var exchange = classes.exchange;
-    Q.all([
+    return Q.all([
         orderPersister.load(exchange, pair, 25000),
         tradesPersister.load(exchange, pair, 10000),
         mktTradePersister.load(exchange, pair, 100),
@@ -284,8 +287,10 @@ var runTradingSystem = (classes: SimulationClasses) => {
             
         if (config.inBacktestMode) {
             (<Backtest.BacktestExchange>gateway).run();
-            fs.appendFileSync('backtestResults.txt', JSON.stringify([initParams, positionBroker.latestReport])+"\n");
-            return;
+            
+            request({url: serverUrl+"/result", 
+                     method: 'POST', 
+                     json: [initParams, positionBroker.latestReport]}, (err, resp, body) => {});
         }
     
         ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
@@ -321,33 +326,41 @@ var runTradingSystem = (classes: SimulationClasses) => {
             start = process.hrtime();
         }, interval).unref();
     
-    }).done();
+    });
 
 };
 
 var harness = () => {
     if (config.inBacktestMode) {
-        winston.remove(winston.transports.Console);
+        console.log("enter backtest mode");
+        
+        //winston.remove(winston.transports.Console);
         winston.remove(winston.transports.DailyRotateFile);
         
-        // EXCHANGE=null TRIBECA_MODE=dev node main.js backtest --mdFile=/Users/grosner/inputData.json --paramFile=/Users/grosner/parameters.json
-        var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(cmdParams['mdFile'], 'utf8'));
-        _.forEach(inputData, d => d.time = moment(d.time));
-        inputData = _.sortBy(inputData, d => d.time);
-        
-        var rawParams = 'paramFile' in cmdParams ? fs.readFileSync(cmdParams['paramFile'], 'utf8') : cmdParams['params'];
-        var parameters : Backtest.BacktestParameters|Backtest.BacktestParameters[] = JSON.parse(rawParams);
-        
-        if (parameters instanceof Array) {
-            _.forEach(parameters, p => runTradingSystem(backTestSimulationSetup(inputData, p)));
-        }
-        else {
-            runTradingSystem(backTestSimulationSetup(inputData, <Backtest.BacktestParameters>parameters));
-        }
-        
+        request.get(serverUrl+"/inputData", (err, resp, body) => {
+            var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(body);
+            _.forEach(inputData, d => d.time = moment(d.time));
+            inputData = _.sortBy(inputData, d => d.time);
+            
+            var getNextSetOfParameters = () => {
+                request.get(serverUrl+"/nextParameters", (err, resp, body) => {
+                    var p : string|Backtest.BacktestParameters = JSON.parse(body);
+                    
+                    if (typeof p === "string") {
+                        console.log("done");
+                        process.exit(0);
+                    }
+                    else {
+                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(getNextSetOfParameters);
+                    }
+                });
+            };
+            
+            getNextSetOfParameters();
+        });
     }
     else {
-        runTradingSystem(liveTradingSetup());
+        runTradingSystem(liveTradingSetup()).done();
     }
 };
 

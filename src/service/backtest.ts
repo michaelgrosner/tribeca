@@ -223,7 +223,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         
         _(this._inputData).forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
-            
+           
             if (typeof i["make_side"] !== "undefined") {
                 this.onMarketTrade(<Models.MarketTrade>i);
             }
@@ -301,3 +301,62 @@ export class BacktestExchange extends Interfaces.CombinedGateway {
     
     public run = () => this.gw.run();
 };
+
+// backtest server
+
+import express = require('express');
+import minimist = require("minimist");
+
+var backtestServer = () => {
+    var cmdParams = minimist(process.argv.slice(2));
+    
+    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(cmdParams['mdFile'], 'utf8'));
+    _.forEach(inputData, d => d.time = moment(d.time));
+    inputData = _.sortBy(inputData, d => d.time);
+    var inputJson = JSON.stringify(inputData);
+    
+    var rawParams = 'paramFile' in cmdParams ? fs.readFileSync(cmdParams['paramFile'], 'utf8') : cmdParams['params'];
+    var parameters : BacktestParameters[] = JSON.parse(rawParams);
+    
+    console.log("loaded input data...");
+    
+    var app = express();
+    var bodyParser = require('body-parser');
+    
+    app.use(bodyParser.json());
+    
+    var server = app.listen(5000, () => {
+        var host = server.address().address;
+        var port = server.address().port;
+        
+        console.log('Example app listening at http://%s:%s', host, port);
+    });
+    
+    app.get("/inputData", (req, res) => {
+        res.end(inputJson);
+    });
+    
+    app.get("/nextParameters", (req, res) => {
+        if (_.any(parameters)) {
+            res.json(parameters.shift());
+            console.log("Served parameters ::", parameters.length, "left.");
+            
+            if (!_.any(parameters)) {
+                console.log("Done serving parameters");
+            }
+        }
+        else {
+            res.json("done");
+        }
+    });
+    
+    app.post("/result", (req, res) => {
+        var params = req.body;
+        console.log("Accept backtest results", params);
+        fs.appendFileSync('backtestResults.txt', JSON.stringify(params)+"\n");
+    });
+}
+
+if (process.argv[1].indexOf("backtest.js") > 1) {
+    backtestServer();
+}
