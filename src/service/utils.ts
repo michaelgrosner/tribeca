@@ -2,6 +2,7 @@
 
 import Models = require("../common/models");
 import momentjs = require('moment');
+import events = require("events");
 
 export var date = momentjs.utc;
 
@@ -37,24 +38,19 @@ export var log = (name: string) => {
 
 export interface Logger { (...arg: any[]): void; }
 
+// typesafe wrapper around EventEmitter
 export class Evt<T> {
-    constructor(private handlers: { (data?: T): void; }[] = []) {
-        handlers.forEach(this.on);
-    }
+    private _event = new events.EventEmitter();
 
-    public on(handler: (data?: T) => void) {
-        this.handlers.push(handler);
-    }
+    public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
 
-    public off(handler: (data?: T) => void) {
-        this.handlers = this.handlers.filter(h => h !== handler);
-    }
-
-    public trigger(data?: T) {
-        for (var i = 0; i < this.handlers.length; i++) {
-            this.handlers[i](data);
-        }
-    }
+    public trigger = (data?: T) => this._event.emit("evt", data);
+    
+    public once = (handler: (data?: T) => void) => this._event.once("evt", handler);
+    
+    public setMaxListeners = (max: number) => this._event.setMaxListeners(max);
+    
+    public removeAllListeners = () => this._event.removeAllListeners();
 }
 
 export function roundFloat(x: number) {
