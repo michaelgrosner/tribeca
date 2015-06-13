@@ -9,6 +9,7 @@ import Persister = require("../src/service/persister");
 import Models = require("../src/common/models");
 import Messaging = require("../src/common/messaging");
 import Moment = require("moment");
+import util = require("util");
 
 describe("BacktestTests", () => {
     var timeProvider : Backtest.BacktestTimeProvider;
@@ -92,5 +93,38 @@ describe("BacktestTests", () => {
         assert.equal(nTimes, 3);
         assert.equal(triggeredFirst, true, "1 should be triggered");
         assert.equal(triggeredSecond, true, "2 should be triggered");
+    });
+});
+
+describe("BacktestGatewayTests", () => {
+    it("should read market data", () => {
+        var inputData : Array<Models.Market | Models.MarketTrade> = [
+            new Models.Market([new Models.MarketSide(10, 5)], [new Models.MarketSide(20, 5)], Moment.unix(1)),
+            new Models.Market([new Models.MarketSide(15, 5)], [new Models.MarketSide(20, 5)], Moment.unix(10)),
+        ];
+        
+        var timeProvider = new Backtest.BacktestTimeProvider(Moment.unix(1), Moment.unix(40));
+        var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
+        
+        gateway.MarketData.once(m => {
+            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Null));
+        });
+        
+        var gotTrade = false;
+        gateway.OrderUpdate.on(o => {
+            if (o.orderStatus === Models.OrderStatus.Complete) {
+                gotTrade = true;
+                assert.equal(12, o.lastPrice);
+                assert.equal(3, o.lastQuantity);
+            }
+        });
+        
+        /*gateway.PositionUpdate.on(p => {
+            console.log(Models.Currency[p.currency], p.amount, p.heldAmount);
+        });*/
+        
+        gateway.run();
+        
+        assert(gotTrade === true, "never got trade");
     });
 });
