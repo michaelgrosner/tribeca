@@ -40,7 +40,7 @@ export interface ILoadLatest<T> extends IPersist<T> {
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
-    loadAll(limit?: number): Q.Promise<T[]>;
+    loadAll(limit?: number, start_time?: Moment): Q.Promise<T[]>;
 }
 
 export interface ILoadAllByExchangeAndPair<T> extends ILoadAll<T> {
@@ -102,8 +102,13 @@ export class Persister<T> implements ILoadAllByExchangeAndPair<T> {
         return this.loadInternal(selector, limit);
     };
 
-    public loadAll = (limit?: number): Q.Promise<T[]> => {
-        return this.loadInternal({}, limit);
+    public loadAll = (limit?: number, start_time?: Moment): Q.Promise<T[]> => {
+        var selector = {};
+        if (start_time) {
+            selector["time"] = {$gte: start_time.toDate()};
+        }
+        
+        return this.loadInternal(selector, limit);
     };
 
     private loadInternal = (selector: any, limit?: number) => {
@@ -115,8 +120,11 @@ export class Persister<T> implements ILoadAllByExchangeAndPair<T> {
                 else {
 
                     var options: any = { fields: { _id: 0 } };
-                    if (limit !== null) options.limit = limit;
-                    if (count !== 0) options.skip = Math.max(count - limit, 0);
+                    if (limit !== null) {
+                        options.limit = limit;
+                        if (count !== 0) 
+                            options.skip = Math.max(count - limit, 0);
+                    }
 
                     coll.find(selector, options, (err, docs) => {
                         if (err) deferred.reject(err);

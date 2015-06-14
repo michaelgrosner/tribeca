@@ -11,6 +11,7 @@ import util = require("util");
 import express = require("express");
 import Q = require("q");
 import Persister = require("./persister");
+import Moment = require("moment");
 
 export class StandaloneHttpPublisher<T> {
     constructor(
@@ -22,13 +23,13 @@ export class StandaloneHttpPublisher<T> {
         this.registerSnapshot(snapshot);
         
         _httpApp.get("/data/" + route, (req: express.Request, res: express.Response) => {
-            var getParameter = (pName: string) => {
-                var rawMax = req.param(pName, null);
-                return (rawMax === null ? null : parseInt(rawMax));
+            var getParameter = <T>(pName: string, cvt: (r: string) => T) => {
+                var rawMax : string = req.param(pName, null);
+                return (rawMax === null ? null : cvt(rawMax));
             };
             
-            var max = getParameter("max");
-            var startTime = getParameter("start_time");
+            var max = getParameter<number>("max", r => parseInt(r));
+            var startTime = getParameter<Moment>("start_time", r => Moment(r));
 
             var handler = (d: T[]) => {
                 if (max !== null && max <= d.length)
@@ -36,7 +37,7 @@ export class StandaloneHttpPublisher<T> {
                 res.json(d);
             };
 
-            _persister.loadAll(max).then(handler);
+            _persister.loadAll(max, startTime).then(handler);
         });
     }
 
