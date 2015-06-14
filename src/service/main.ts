@@ -9,7 +9,6 @@ import express = require('express');
 import util = require('util');
 import moment = require("moment");
 import fs = require("fs");
-import minimist = require("minimist");
 import winston = require("winston");
 import request = require('request');
 
@@ -39,10 +38,9 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 
-var cmdParams = minimist(process.argv.slice(2));
-var serverUrl = 'backtestServer' in cmdParams ? cmdParams['backtestServer'] : "http://localhost:5000";
+var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5000";
 
-var config = new Config.ConfigProvider(cmdParams);
+var config = new Config.ConfigProvider();
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {

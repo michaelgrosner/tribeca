@@ -14,7 +14,7 @@ import Persister = require("./persister");
 import Q = require("q");
 
 var shortId = require("shortid");
-var SortedArray = require("collections/sorted-array");
+var Deque = require("collections/deque");
 var uuid = require('node-uuid');
 
 enum TimedType {
@@ -229,11 +229,11 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             }
             else if (typeof i["bids"] !== "undefined" || typeof i["asks"] !== "undefined") {
                 this.onMarketData(<Models.Market>i);
-            }
-            
-            if (!hasProcessedMktData) {
-                this.recomputePosition();
-                hasProcessedMktData = true;
+                
+                if (!hasProcessedMktData) {
+                    this.recomputePosition();
+                    hasProcessedMktData = true;
+                }
             }
         });
     };
@@ -305,17 +305,19 @@ export class BacktestExchange extends Interfaces.CombinedGateway {
 // backtest server
 
 import express = require('express');
-import minimist = require("minimist");
 
 var backtestServer = () => {
-    var cmdParams = minimist(process.argv.slice(2));
+    var mdFile = process.env['MD_FILE'];
+    var paramFile = process.env['PARAM_FILE'];
     
-    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(cmdParams['mdFile'], 'utf8'));
+    console.log("loading backtest data :: mdFile =", mdFile, "paramFile =", paramFile);
+    
+    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(mdFile, 'utf8'));
     _.forEach(inputData, d => d.time = moment(d.time));
     inputData = _.sortBy(inputData, d => d.time);
     var inputJson = JSON.stringify(inputData);
     
-    var rawParams = 'paramFile' in cmdParams ? fs.readFileSync(cmdParams['paramFile'], 'utf8') : cmdParams['params'];
+    var rawParams = fs.readFileSync(paramFile, 'utf8');
     var parameters : BacktestParameters[] = JSON.parse(rawParams);
     
     console.log("loaded input data...");
@@ -329,7 +331,7 @@ var backtestServer = () => {
         var host = server.address().address;
         var port = server.address().port;
         
-        console.log('Example app listening at http://%s:%s', host, port);
+        console.log('Backtest server listening at http://%s:%s', host, port);
     });
     
     app.get("/inputData", (req, res) => {
