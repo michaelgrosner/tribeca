@@ -20,13 +20,18 @@ export class StandaloneHttpPublisher<T> {
         private _persister: Persister.ILoadAll<T>,
         snapshot: () => T[] = null) {
         this.registerSnapshot(snapshot);
-
+        
         _httpApp.get("/data/" + route, (req: express.Request, res: express.Response) => {
-            var rawMax = req.param("max", null);
-            var max = (rawMax === null ? null : parseInt(rawMax));
+            var getParameter = (pName: string) => {
+                var rawMax = req.param(pName, null);
+                return (rawMax === null ? null : parseInt(rawMax));
+            };
+            
+            var max = getParameter("max");
+            var startTime = getParameter("start_time");
 
             var handler = (d: T[]) => {
-                if (max !== null)
+                if (max !== null && max <= d.length)
                     d = _.last(d, max);
                 res.json(d);
             };
