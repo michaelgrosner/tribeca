@@ -11,7 +11,7 @@ import util = require("util");
 import express = require("express");
 import Q = require("q");
 import Persister = require("./persister");
-import Moment = require("moment");
+import moment = require("moment");
 
 export class StandaloneHttpPublisher<T> {
     constructor(
@@ -29,7 +29,7 @@ export class StandaloneHttpPublisher<T> {
             };
             
             var max = getParameter<number>("max", r => parseInt(r));
-            var startTime = getParameter<Moment>("start_time", r => Moment(r));
+            var startTime = getParameter<moment.Moment>("start_time", r => moment(r));
 
             var handler = (d: T[]) => {
                 if (max !== null && max <= d.length)

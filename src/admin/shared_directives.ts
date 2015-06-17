@@ -28,7 +28,7 @@ var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCac
                 html: true,
                 date: scope.date
             };
-            $(element).popover(options).click((e) => {
+            (<any>$(element)).popover(options).click((e) => {
                 e.preventDefault();
             });
         }

@@ -17,7 +17,7 @@ interface OrderListScope extends ng.IScope {
 
 class DisplayOrderStatusReport {
     orderId : string;
-    time : Moment;
+    time : moment.Moment;
     orderStatus : string;
     price : number;
     quantity : number;

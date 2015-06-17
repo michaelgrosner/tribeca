@@ -264,7 +264,7 @@ export class QuotingEngine {
         return unrounded;
     }
 
-    private recalcQuote = (t: Moment) => {
+    private recalcQuote = (t: moment.Moment) => {
         var fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
@@ -346,7 +346,7 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t: Moment): void => {
+    private sendQuote = (t: moment.Moment): void => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;

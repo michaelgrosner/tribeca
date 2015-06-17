@@ -91,7 +91,7 @@ export class ExchangeQuoter {
         return this.start(q);
     };
 
-    public cancelQuote = (t: Moment): Models.QuoteSent => {
+    public cancelQuote = (t: moment.Moment): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
@@ -121,7 +121,7 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stop = (t: Moment): Models.QuoteSent => {
+    private stop = (t: moment.Moment): Models.QuoteSent => {
         if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDelete;
         }

@@ -414,7 +414,7 @@ _.assign(OrderBook.prototype, new function() {
             });
     };
 
-    prototype.processMessage = function(message, t: Moment) {
+    prototype.processMessage = function(message, t: moment.Moment) {
         var self = this;
         if (message.sequence <= self.book.sequence) {
             self.emit('ignored', message);

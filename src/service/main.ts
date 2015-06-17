@@ -201,7 +201,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
     var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
     
     var exchange = classes.exchange;
-    return Q.all([
+    return Q.all<any>([
         orderPersister.load(exchange, pair, 25000),
         tradesPersister.load(exchange, pair, 10000),
         mktTradePersister.load(exchange, pair, 100),

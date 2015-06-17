@@ -40,7 +40,7 @@ export interface ILoadLatest<T> extends IPersist<T> {
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
-    loadAll(limit?: number, start_time?: Moment): Q.Promise<T[]>;
+    loadAll(limit?: number, start_time?: moment.Moment): Q.Promise<T[]>;
 }
 
 export interface ILoadAllByExchangeAndPair<T> extends ILoadAll<T> {
@@ -102,7 +102,7 @@ export class Persister<T> implements ILoadAllByExchangeAndPair<T> {
         return this.loadInternal(selector, limit);
     };
 
-    public loadAll = (limit?: number, start_time?: Moment): Q.Promise<T[]> => {
+    public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = {};
         if (start_time) {
             selector["time"] = {$gte: start_time.toDate()};

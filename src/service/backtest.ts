@@ -25,13 +25,13 @@ enum TimedType {
 class Timed {
     constructor(
         public action : () => void, 
-        public time : Moment, 
+        public time : moment.Moment, 
         public type : TimedType,
-        public interval : Duration) {}
+        public interval : moment.Duration) {}
 }
 
 export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
-    constructor(private _internalTime : Moment, private _endTime : Moment) { }
+    constructor(private _internalTime : moment.Moment, private _endTime : moment.Moment) { }
     
     utcNow = () => this._internalTime;
     
@@ -39,15 +39,15 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     setImmediate = (action: () => void) => this._immediates.push(action);
     
     private _timeouts : Timed[] = [];
-    setTimeout = (action: () => void, time: Duration) => {
+    setTimeout = (action: () => void, time: moment.Duration) => {
         this.setAction(action, time, TimedType.Timeout);
     };
     
-    setInterval = (action: () => void, time: Duration) => {
+    setInterval = (action: () => void, time: moment.Duration) => {
         this.setAction(action, time, TimedType.Interval);
     };
     
-    private setAction  = (action: () => void, time: Duration, type : TimedType) => {
+    private setAction  = (action: () => void, time: moment.Duration, type : TimedType) => {
         var dueTime = this._internalTime.clone().add(time);
         
         if (dueTime.diff(this.utcNow()) < 0) {
@@ -58,7 +58,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
         this._timeouts.sort((a, b) => a.time.diff(b.time));
     };
     
-    scrollTimeTo = (time : Moment) => {
+    scrollTimeTo = (time : moment.Moment) => {
         if (time.diff(this.utcNow()) < 0) {
             throw new Error("Cannot reverse time!");
         }

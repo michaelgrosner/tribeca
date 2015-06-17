@@ -138,12 +138,12 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
     private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
-    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Moment) => {
+    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : moment.Moment) => {
         if (msg.symbol != "BTCUSD" || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
     };
 
-    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Moment) => {
+    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : moment.Moment) => {
         if (msg.symbol != "BTCUSD") return;
         this._lastAsks.clear();
         this._lastBids.clear();
@@ -151,7 +151,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._hasProcessedSnapshot = true;
     };
 
-    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Moment) => {
+    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : moment.Moment) => {
         var ordBids = HitBtcMarketDataGateway.applyIncrementals(bids, this._lastBids);
         var ordAsks = HitBtcMarketDataGateway.applyIncrementals(asks, this._lastAsks);
 
@@ -180,7 +180,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private onMessage = (raw : string) => {
-        var t = Utils.date();
+        var t : moment.Moment = Utils.date();
 
         try {
             var msg = JSON.parse(raw);
@@ -245,7 +245,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/trades"),
              qs: {from: 0, by: "trade_id", sort: 'desc', start_index: 0, max_results: 100}},
             (err, body, resp) => {
-                JSON.parse(body.body).trades.forEach(t => {
+                JSON.parse((<any>body).body).trades.forEach(t => {
                     var price = parseFloat(t[1]);
                     var size = parseFloat(t[2]);
                     var time = moment(t[3]);

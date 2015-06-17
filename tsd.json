@@ -5,23 +5,56 @@
   "path": "typings",
   "bundle": "typings/tsd.d.ts",
   "installed": {
-    "angular-ui-bootstrap/angular-ui-bootstrap.d.ts": {
-      "commit": "16fc1fb8b440e55e88bd1bbb393dcf2e9fb07d22"
-    },
-    "winston/winston.d.ts": {
-      "commit": "72f8dbc007a261561514c2e3f6ba89c232b12dc8"
-    },
-    "react/react.d.ts": {
-      "commit": "6ee44e03b86604f1188020a365281890140e4b9b"
-    },
-    "knockout/knockout.d.ts": {
-      "commit": "6ee44e03b86604f1188020a365281890140e4b9b"
+    "moment/moment.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
     },
     "compression/compression.d.ts": {
-      "commit": "b3324f69165309a3ea2bd02fd10e97841bf07c83"
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
     },
-    "minimist/minimist.d.ts": {
-      "commit": "2a5858c16563634453533009242b8e0b18521370"
+    "winston/winston.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "angular-ui-bootstrap/angular-ui-bootstrap.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "angularjs/angular.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "express/express.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "node/node.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "moment/moment-node.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "socket.io-client/socket.io-client.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "q/Q.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "request/request.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "mongodb/mongodb.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "lodash/lodash.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "form-data/form-data.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "ws/ws.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
+    },
+    "node_zeromq/zmq.d.ts": {
+      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
     }
   }
 }

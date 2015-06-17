@@ -19,7 +19,7 @@ interface TradesScope extends ng.IScope {
 
 class DisplayTrade {
     tradeId : string;
-    time : Moment;
+    time : moment.Moment;
     price : number;
     quantity : number;
     side : string;

@@ -1,12 +1,12 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
 import Models = require("../common/models");
-import momentjs = require('moment');
+import moment = require('moment');
 import events = require("events");
 
-export var date = momentjs.utc;
+export var date = moment.utc;
 
-export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): Moment {
+export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): moment.Moment {
     if (x === null)
         return timeProvider.utcNow();
 
@@ -58,24 +58,24 @@ export function roundFloat(x: number) {
 }
 
 export interface ITimeProvider {
-    utcNow() : Moment;
-    setTimeout(action: () => void, time: Duration);
+    utcNow() : moment.Moment;
+    setTimeout(action: () => void, time: moment.Duration);
     setImmediate(action: () => void);
-    setInterval(action: () => void, time: Duration);
+    setInterval(action: () => void, time: moment.Duration);
 }
 
 export interface IBacktestingTimeProvider extends ITimeProvider {
-    scrollTimeTo(time : Moment);
+    scrollTimeTo(time : moment.Moment);
 }
 
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
     
-    utcNow = () => momentjs.utc();
+    utcNow = () => moment.utc();
     
-    setTimeout = (action: () => void, time: Duration) => setTimeout(action, time.asMilliseconds());
+    setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
     
     setImmediate = (action: () => void) => setImmediate(action);
     
-    setInterval = (action: () => void, time: Duration) => setInterval(action, time.asMilliseconds());
+    setInterval = (action: () => void, time: moment.Duration) => setInterval(action, time.asMilliseconds());
 }

@@ -15,7 +15,7 @@ export class FixGateway {
         this._sock.send(JSON.stringify({ evt: evt, obj: obj }));
     };
 
-    _lastHeartbeatTime: Moment = null;
+    _lastHeartbeatTime: moment.Moment = null;
     _handlers: { [channel: string]: (newMsg: Models.Timestamped<any>) => void } = {};
     _log: Utils.Logger = Utils.log("tribeca:gateway:FixBridge");
     _sock: any;

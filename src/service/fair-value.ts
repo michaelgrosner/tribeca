@@ -17,6 +17,7 @@ import Statistics = require("./statistics");
 import Active = require("./active-state");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
+import moment = require("moment");
 
 export class FairValueEngine {
     public FairValueChanged = new Utils.Evt<Models.FairValue>();
@@ -63,7 +64,7 @@ export class FairValueEngine {
         return Utils.roundFloat(unrounded);
     }
 
-    private recalcFairValue = (t: Moment) => {
+    private recalcFairValue = (t: moment.Moment) => {
         var mkt = this._filtration.latestFilteredMarket;
 
         if (mkt == null) {

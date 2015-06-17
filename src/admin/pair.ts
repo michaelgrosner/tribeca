@@ -325,7 +325,7 @@ angular
 class MarketTradeViewModel {
     price : number;
     size : number;
-    time : Moment;
+    time : moment.Moment;
 
     qA : number;
     qB : number;
@@ -441,7 +441,7 @@ angular
 
 class MessageViewModel {
     text : string;
-    time : Moment;
+    time : moment.Moment;
 
     constructor(message : Models.Message) {
         this.time = (moment.isMoment(message.time) ? message.time : moment(message.time));

@@ -125,8 +125,8 @@ export class RegularTimer {
     constructor(
         private _timeProvider : Utils.ITimeProvider,
         private _action: () => void,
-        private _diffTime: Duration,
-        lastTime: Moment = null) {
+        private _diffTime: moment.Duration,
+        lastTime: moment.Moment = null) {
         if (lastTime === null) {
             this.startTicking();
         }
