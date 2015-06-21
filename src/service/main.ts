@@ -287,9 +287,14 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
         if (config.inBacktestMode) {
             (<Backtest.BacktestExchange>gateway).run();
             
+            var statReport = {
+                nTrades: orderBroker._trades.length,
+                volume: _(orderBroker._trades).sum(s => s.quantity)
+            };
+            
             request({url: serverUrl+"/result", 
                      method: 'POST', 
-                     json: [initParams, positionBroker.latestReport]}, (err, resp, body) => {});
+                     json: [initParams, positionBroker.latestReport, statReport]}, (err, resp, body) => {});
                      
             return;
         }
