@@ -38,7 +38,7 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 
-var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5000";
+var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
 var config = new Config.ConfigProvider();
 
