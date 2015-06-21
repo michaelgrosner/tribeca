@@ -2,7 +2,13 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
 
-import zeromq = require("zmq");
+try {
+    var zeromq = require("zmq");
+}
+catch (e) {
+    console.warn("no zmq could be loaded");
+}
+
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import util = require("util");
