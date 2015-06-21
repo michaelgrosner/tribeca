@@ -115,8 +115,8 @@ export class QuotingEngine {
         return new GeneratedQuote(bidPx, size, askPx, size);
     }
 
-    private static getQuoteAtTopOfMarket(filteredMkt: Models.Market): GeneratedQuote {
-        var topBid = (filteredMkt.bids[0].size > 0.10 ? filteredMkt.bids[0] : filteredMkt.bids[1]);
+    private static getQuoteAtTopOfMarket(filteredMkt: Models.Market, params: Models.QuotingParameters): GeneratedQuote {
+        var topBid = (filteredMkt.bids[0].size > params.stepOverSize ? filteredMkt.bids[0] : filteredMkt.bids[1]);
         if (typeof topBid === "undefined") topBid = filteredMkt.bids[0]; // only guaranteed top level exists
         var bidPx = topBid.price;
 
@@ -128,7 +128,7 @@ export class QuotingEngine {
     }
 
     private static computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
-        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
+        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt, params);
 
         if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
             genQt.bidPx += .01;
@@ -151,7 +151,7 @@ export class QuotingEngine {
     }
 
     private static computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
-        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt);
+        var genQt = QuotingEngine.getQuoteAtTopOfMarket(filteredMkt, params);
 
         var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
         if (mktWidth > params.width) {
@@ -216,14 +216,14 @@ export class QuotingEngine {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(3*params.size, targetBasePosition - totalBasePosition);
+                unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
         }
         
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.askSz = Math.min(3*params.size, totalBasePosition - targetBasePosition);
+                unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
         }
         
         var safety = this._safeties.latest;

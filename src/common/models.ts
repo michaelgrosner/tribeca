@@ -335,7 +335,12 @@ export class QuotingParameters {
                 public autoPositionMode: AutoPositionMode,
                 public aggressivePositionRebalancing: boolean,
                 public tradesPerMinute: number,
-                public tradeRateSeconds: number) {}
+                public tradeRateSeconds: number,
+                public longEwma: number,
+                public shortEwma: number,
+                public quotingEwma: number,
+                public aprMultiplier: number,
+                public stepOverSize: number) {}
 }
 
 export function toUtcFormattedTime(t: moment.Moment) {

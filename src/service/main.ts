@@ -154,7 +154,8 @@ var liveTradingSetup = () => {
         new Persister.RepositoryPersister<T>(db, defValue, collectionName);
         
     var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, timeProvider.utcNow())
-    var startingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300);
+    var startingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
+        Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
     var classes : SimulationClasses = {
         exchange: exchange,
@@ -266,12 +267,12 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
         var quoter = new Quoter.Quoter(orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
-        var ewma = new Agent.EWMACalculator(timeProvider, fvEngine);
+        var ewma = new Agent.EWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
-        var shortEwma = new Statistics.EwmaStatisticCalculator(2 * .095);
+        var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
         shortEwma.initialize(rfvValues);
-        var longEwma = new Statistics.EwmaStatisticCalculator(.095);
+        var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
     
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
