@@ -356,7 +356,7 @@ var harness = () => {
                         process.exit(0);
                     }
                     else {
-                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(getNextSetOfParameters);
+                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(() => getNextSetOfParameters());
                     }
                 });
             };

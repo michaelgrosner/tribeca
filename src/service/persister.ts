@@ -62,7 +62,7 @@ export class RepositoryPersister<T> implements ILoadLatest<T> {
                     deferred.resolve(this._defaultParameter);
                 }
                 else {
-                    var v = arr[0];
+                    var v = <T>_.defaults(arr[0], this._defaultParameter);
                     if (v.hasOwnProperty("time"))
                         timeLoader(v);
                     deferred.resolve(v);

@@ -318,16 +318,21 @@ var backtestServer = () => {
     
     var mdFile = process.env['MD_FILE'];
     var paramFile = process.env['PARAM_FILE'];
+    var savedProgressFile = "nextParameters_saved.txt"
     
     console.log("loading backtest data :: mdFile =", mdFile, "paramFile =", paramFile);
     
-    var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(fs.readFileSync(mdFile, 'utf8'));
+    var inputData : Array<Models.Market | Models.MarketTrade> = eval(fs.readFileSync(mdFile, 'utf8'));
     _.forEach(inputData, d => d.time = moment(d.time));
     inputData = _.sortBy(inputData, d => d.time);
     var inputJson = JSON.stringify(inputData);
     
     var rawParams = fs.readFileSync(paramFile, 'utf8');
     var parameters : BacktestParameters[] = JSON.parse(rawParams);
+    if (fs.existsSync(savedProgressFile)) {
+        var l = parseInt(fs.readFileSync(savedProgressFile, 'utf8'));
+        parameters = _.last(parameters, l);
+    }
     
     console.log("loaded input data...");
     
@@ -350,6 +355,7 @@ var backtestServer = () => {
     app.get("/nextParameters", (req, res) => {
         if (_.any(parameters)) {
             res.json(parameters.shift());
+            fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
             console.log("Served parameters ::", parameters.length, "left.");
             
             if (!_.any(parameters)) {
@@ -358,6 +364,7 @@ var backtestServer = () => {
         }
         else {
             res.json("done");
+            fs.unlinkSync(savedProgressFile);
         }
     });
     
