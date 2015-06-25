@@ -287,14 +287,15 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
         if (config.inBacktestMode) {
             (<Backtest.BacktestExchange>gateway).run();
             
-            var statReport = {
+            var results = [initParams, positionBroker.latestReport, {
                 nTrades: orderBroker._trades.length,
-                volume: _(orderBroker._trades).sum(s => s.quantity)
-            };
+                volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
+            }];
+            console.log("sending back results: ", util.inspect(results));
             
             request({url: serverUrl+"/result", 
                      method: 'POST', 
-                     json: [initParams, positionBroker.latestReport, statReport]}, (err, resp, body) => {});
+                     json: results}, (err, resp, body) => {});
                      
             return;
         }
@@ -356,7 +357,7 @@ var harness = () => {
                         process.exit(0);
                     }
                     else {
-                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(() => getNextSetOfParameters());
+                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(getNextSetOfParameters);
                     }
                 });
             };
