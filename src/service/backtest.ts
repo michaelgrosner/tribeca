@@ -318,7 +318,8 @@ var backtestServer = () => {
     
     var mdFile = process.env['MD_FILE'];
     var paramFile = process.env['PARAM_FILE'];
-    var savedProgressFile = "nextParameters_saved.txt"
+    var savedProgressFile = process.env["PROGRESS_FILE"] || "nextParameters_saved.txt";
+    var backtestResultFile = process.env["RESULT_FILE"] || 'backtestResults.txt';
     
     console.log("loading backtest data :: mdFile =", mdFile, "paramFile =", paramFile);
     
@@ -371,7 +372,7 @@ var backtestServer = () => {
     app.post("/result", (req, res) => {
         var params = req.body;
         console.log("Accept backtest results", params);
-        fs.appendFileSync('backtestResults.txt', JSON.stringify(params)+"\n");
+        fs.appendFileSync(backtestResultFile, JSON.stringify(params)+"\n");
     });
 }
 
