@@ -265,6 +265,7 @@ export class BacktestParameters {
     startingBasePosition: number;
     startingQuotePosition: number;
     quotingParameters: Models.QuotingParameters;
+    id: string;
 }
 
 export class BacktestPersister<T> implements Persister.ILoadAllByExchangeAndPair<T>, Persister.ILoadLatest<T> {
@@ -350,14 +351,20 @@ var backtestServer = () => {
     });
     
     app.get("/inputData", (req, res) => {
+        console.log("Starting inputData download for", req.ip);
         res.end(inputJson);
+        console.log("Ending inputData download for", req.ip);
     });
     
     app.get("/nextParameters", (req, res) => {
         if (_.any(parameters)) {
-            res.json(parameters.shift());
+            var id = parameters.length;
+            var served = parameters.shift();
+            served.id = id.toString();
+            
+            console.log("Serving parameters id =", id, " to", req.ip);
+            res.json(served);
             fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
-            console.log("Served parameters ::", parameters.length, "left.");
             
             if (!_.any(parameters)) {
                 console.log("Done serving parameters");
@@ -365,7 +372,8 @@ var backtestServer = () => {
         }
         else {
             res.json("done");
-            fs.unlinkSync(savedProgressFile);
+            if (fs.existsSync(savedProgressFile))
+                fs.unlinkSync(savedProgressFile);
         }
     });
     

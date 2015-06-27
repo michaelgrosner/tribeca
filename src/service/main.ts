@@ -337,37 +337,72 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
 
 };
 
-var harness = () => {
+var harness = () : Q.Promise<any> => {
     if (config.inBacktestMode) {
         console.log("enter backtest mode");
         
         winston.remove(winston.transports.Console);
         winston.remove(winston.transports.DailyRotateFile);
         
-        request.get(serverUrl+"/inputData", (err, resp, body) => {
-            var inputData : Array<Models.Market | Models.MarketTrade> = JSON.parse(body);
-            _.forEach(inputData, d => d.time = moment(d.time));
-            
-            var getNextSetOfParameters = () => {
-                request.get(serverUrl+"/nextParameters", (err, resp, body) => {
-                    var p : string|Backtest.BacktestParameters = JSON.parse(body);
-                    
-                    if (typeof p === "string") {
-                        console.log("done");
-                        process.exit(0);
-                    }
-                    else {
-                        runTradingSystem(backTestSimulationSetup(inputData, p)).then(getNextSetOfParameters);
-                    }
+        var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
+            var d = Q.defer<any>();
+            request.get(serverUrl+"/"+ep, (err, resp, body) => { 
+                if (err) d.reject(err);
+                else d.resolve(body);
+            });
+            return d.promise;
+        }
+        
+        var inputDataPromise = getFromBacktestServer("inputData").then(body => {
+            var inp : Array<Models.Market | Models.MarketTrade> = JSON.parse(body);
+            _.forEach(inp, d => d.time = moment(d.time));
+            return inp;
+        });
+        
+        var nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
+            var p = <string|Backtest.BacktestParameters>JSON.parse(body);
+            console.log("Recv'd parameters", util.inspect(p));
+            return (typeof p === "string") ? null : p;
+        });
+        
+        var promiseWhile = <T>(body : () => Q.Promise<T>) => {
+            var done = Q.defer<any>();
+        
+            var loop = () => {
+                body().then(possibleResult => {
+                    if (possibleResult === null) return done.resolve(null);
+                    else Q.when(possibleResult, loop, done.reject);
                 });
+            }
+            
+            Q.nextTick(loop);
+            return done.promise;
+        }
+        
+        var runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
+            var singleRun = () => {
+                var runWithParameters = (p : Backtest.BacktestParameters) => {
+                    return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : null;
+                };
+                    
+                return nextParameters().then(runWithParameters);
             };
             
-            getNextSetOfParameters();
-        });
+            return promiseWhile(singleRun);
+        };
+        
+        return inputDataPromise.then(runLoop);
     }
     else {
-        runTradingSystem(liveTradingSetup()).done();
+        return runTradingSystem(liveTradingSetup());
     }
 };
 
-harness();
+harness()
+    .catch(err => {
+        console.error("Caught an error!");
+        console.error(err);
+        if (typeof err.stack !== "undefined")
+            console.error(err.stack);
+    })
+    .done();
