@@ -55,6 +55,9 @@ var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
 
 var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
+var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
+    Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
@@ -153,14 +156,10 @@ var liveTradingSetup = () => {
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
         new Persister.RepositoryPersister<T>(db, defValue, collectionName);
         
-    var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, timeProvider.utcNow())
-    var startingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
-        Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
-
     var classes : SimulationClasses = {
         exchange: exchange,
-        startingActive: startingActive,
-        startingParameters: startingParameters,
+        startingActive: defaultActive,
+        startingParameters: defaultQuotingParameters,
         timeProvider: timeProvider,
         getExch: getExch,
         getReceiver: getReceiver,
@@ -219,6 +218,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         initParams: Models.QuotingParameters,
         initActive: Models.SerializedQuotesActive,
         initRfv: Models.RegularFairValue[]) => {
+            
+        initParams = <Models.QuotingParameters>_.defaults(initParams, defaultQuotingParameters);
+        initActive = <Models.SerializedQuotesActive>(initActive, defaultActive);
     
         var orderCache = new Broker.OrderStateCache();
         var timeProvider = classes.timeProvider;
