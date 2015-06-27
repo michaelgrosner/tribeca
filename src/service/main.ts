@@ -295,7 +295,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             catch (err) {
                 console.error("exception while running backtest!", err.message, err.stack);
                 completedSuccessfully.reject(err);
-                return;
+                return completedSuccessfully.promise;
             }
             
             var results = [initParams, positionBroker.latestReport, {
@@ -306,12 +306,10 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             
             request({url: serverUrl+"/result", 
                      method: 'POST', 
-                     json: results}, (err, resp, body) => {
-                         if (err) completedSuccessfully.reject(err);
-                         else completedSuccessfully.resolve(true);
-                     });
+                     json: results}, (err, resp, body) => { });
                      
-            return;
+            completedSuccessfully.resolve(true);
+            return completedSuccessfully.promise;
         }
     
         ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
@@ -385,7 +383,7 @@ var harness = () : Q.Promise<any> => {
         
             var loop = () => {
                 body().then(possibleResult => {
-                    if (possibleResult === null) return done.resolve(null);
+                    if (!possibleResult) return done.resolve(null);
                     else Q.when(possibleResult, loop, done.reject);
                 });
             }
@@ -397,7 +395,7 @@ var harness = () : Q.Promise<any> => {
         var runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
             var singleRun = () => {
                 var runWithParameters = (p : Backtest.BacktestParameters) => {
-                    return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : null;
+                    return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : false;
                 };
                     
                 return nextParameters().then(runWithParameters);
