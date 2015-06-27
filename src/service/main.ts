@@ -185,7 +185,7 @@ interface SimulationClasses {
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
 
-var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
+var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var getPersister = classes.getPersister;
     var orderPersister = getPersister("osr");
     var tradesPersister = getPersister("trades");
@@ -202,7 +202,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
     var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
     
     var exchange = classes.exchange;
-    return Q.all<any>([
+    var completedSuccessfully = Q.defer<boolean>();
+    
+    Q.all<any>([
         orderPersister.load(exchange, pair, 25000),
         tradesPersister.load(exchange, pair, 10000),
         mktTradePersister.load(exchange, pair, 100),
@@ -285,7 +287,14 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
             quotingEngine, broker, mktTradePersister, initMktTrades);
             
         if (config.inBacktestMode) {
-            (<Backtest.BacktestExchange>gateway).run();
+            try {
+                (<Backtest.BacktestExchange>gateway).run();
+            }
+            catch (err) {
+                console.error("exception while running backtest!", err.message, err.stack);
+                completedSuccessfully.reject(err);
+                return;
+            }
             
             var results = [initParams, positionBroker.latestReport, {
                 nTrades: orderBroker._trades.length,
@@ -295,7 +304,10 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
             
             request({url: serverUrl+"/result", 
                      method: 'POST', 
-                     json: results}, (err, resp, body) => {});
+                     json: results}, (err, resp, body) => {
+                         if (err) completedSuccessfully.reject(err);
+                         else completedSuccessfully.resolve(true);
+                     });
                      
             return;
         }
@@ -309,13 +321,13 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
     
                 orderBroker.cancelOpenOrders().then(n_cancelled => {
                     Utils.errorLog(util.format("Cancelled all", n_cancelled, "open orders"), () => {
-                        process.exit(0)
+                        completedSuccessfully.resolve(true);
                     });
                 }).done();
     
                 timeProvider.setTimeout(() => {
                     Utils.errorLog("Could not cancel all open orders!", () => {
-                        process.exit(2)
+                        completedSuccessfully.resolve(false);
                     });
                 }, moment.duration(1000));
             });
@@ -335,6 +347,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<any> => {
     
     });
 
+    return completedSuccessfully.promise;
 };
 
 var harness = () : Q.Promise<any> => {
