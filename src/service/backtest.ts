@@ -333,9 +333,8 @@ var backtestServer = () => {
     console.log("loaded input data...");
     
     var app = express();
-    var bodyParser = require('body-parser');
-    
-    app.use(bodyParser.json());
+    app.use(require('body-parser').json());
+    app.use(require("compression")());
     
     var server = app.listen(5001, () => {
         var host = server.address().address;
@@ -346,8 +345,10 @@ var backtestServer = () => {
     
     app.get("/inputData", (req, res) => {
         console.log("Starting inputData download for", req.ip);
-        fs.createReadStream(mdFile).pipe(res);
-        console.log("Ending inputData download for", req.ip);
+        res.sendfile(mdFile, (err) => {
+            if (err) console.error("Error while transmitting input data to", req.ip);
+            else console.log("Ending inputData download for", req.ip);
+        });
     });
     
     app.get("/nextParameters", (req, res) => {
