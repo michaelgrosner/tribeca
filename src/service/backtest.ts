@@ -360,9 +360,10 @@ var backtestServer = () => {
         if (_.any(parameters)) {
             var id = parameters.length;
             var served = parameters.shift();
-            served.id = id.toString();
+            if (typeof served["id"] === "undefined") 
+                served.id = id.toString();
             
-            console.log("Serving parameters id =", id, " to", req.ip);
+            console.log("Serving parameters id =", served.id, " to", req.ip);
             res.json(served);
             fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
             
