@@ -367,8 +367,13 @@ var harness = () : Q.Promise<any> => {
         }
         
         var inputDataPromise = getFromBacktestServer("inputData").then(body => {
-            var inp : Array<Models.Market | Models.MarketTrade> = JSON.parse(body);
-            _.forEach(inp, d => d.time = moment(d.time));
+            var inp : Array<Models.Market | Models.MarketTrade> = eval(body);
+            
+            for (var i = 0; i < inp.length; i++) {
+                var d = inp[i];
+                d.time = moment(d.time);
+            }
+            
             return inp;
         });
         

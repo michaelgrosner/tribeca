@@ -323,17 +323,6 @@ var backtestServer = () => {
     var savedProgressFile = process.env["PROGRESS_FILE"] || "nextParameters_saved.txt";
     var backtestResultFile = process.env["RESULT_FILE"] || 'backtestResults.txt';
     
-    console.log("loading backtest data :: mdFile =", mdFile, "paramFile =", paramFile);
-    
-    var inputData : Array<Models.Market | Models.MarketTrade> = eval(fs.readFileSync(mdFile, 'utf8'));
-    _.forEach(inputData, d => d.time = moment(d.time));
-    inputData = _.sortBy(inputData, d => d.time);
-    var inputJson = JSON.stringify(inputData);
-    var inputStream = new stream.Readable();
-    inputStream._read = () => {};
-    inputStream.push(inputJson);
-    inputStream.push(null);
-    
     var rawParams = fs.readFileSync(paramFile, 'utf8');
     var parameters : BacktestParameters[] = JSON.parse(rawParams);
     if (fs.existsSync(savedProgressFile)) {
@@ -357,7 +346,7 @@ var backtestServer = () => {
     
     app.get("/inputData", (req, res) => {
         console.log("Starting inputData download for", req.ip);
-        inputStream.pipe(res);
+        fs.createReadStream(mdFile).pipe(res);
         console.log("Ending inputData download for", req.ip);
     });
     
