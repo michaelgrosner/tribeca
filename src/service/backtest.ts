@@ -12,6 +12,7 @@ import fs = require("fs");
 import mongo = require("mongodb");
 import Persister = require("./persister");
 import Q = require("q");
+import stream = require("stream");
 
 var shortId = require("shortid");
 var Deque = require("collections/deque");
@@ -328,6 +329,10 @@ var backtestServer = () => {
     _.forEach(inputData, d => d.time = moment(d.time));
     inputData = _.sortBy(inputData, d => d.time);
     var inputJson = JSON.stringify(inputData);
+    var inputStream = new stream.Readable();
+    inputStream._read = () => {};
+    inputStream.push(inputJson);
+    inputStream.push(null);
     
     var rawParams = fs.readFileSync(paramFile, 'utf8');
     var parameters : BacktestParameters[] = JSON.parse(rawParams);
@@ -352,7 +357,7 @@ var backtestServer = () => {
     
     app.get("/inputData", (req, res) => {
         console.log("Starting inputData download for", req.ip);
-        res.end(inputJson);
+        inputStream.pipe(res);
         console.log("Ending inputData download for", req.ip);
     });
     

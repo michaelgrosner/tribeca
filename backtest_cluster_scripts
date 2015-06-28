@@ -1,0 +1,4 @@
+cd /home/ubuntu/tribeca/tribeca/service \
+git pull -u origin master \
+grunt compile \
+for n in {1..42}; do EXCHANGE=null TRIBECA_MODE=backtest BACKTEST_SERVER_URL="http://54.175.214.45:5001" forever start -c "node --max_old_space_size=8192" main.js; done \
