@@ -367,7 +367,7 @@ var harness = () : Q.Promise<any> => {
         }
         
         var inputDataPromise = getFromBacktestServer("inputData").then(body => {
-            var inp : Array<Models.Market | Models.MarketTrade> = eval(body);
+            var inp : Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
             
             for (var i = 0; i < inp.length; i++) {
                 var d = inp[i];
@@ -378,7 +378,7 @@ var harness = () : Q.Promise<any> => {
         });
         
         var nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
-            var p = <string|Backtest.BacktestParameters>JSON.parse(body);
+            var p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
             console.log("Recv'd parameters", util.inspect(p));
             return (typeof p === "string") ? null : p;
         });
