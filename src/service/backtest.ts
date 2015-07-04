@@ -345,7 +345,7 @@ var backtestServer = () => {
     
     app.get("/inputData", (req, res) => {
         console.log("Starting inputData download for", req.ip);
-        res.sendfile(mdFile, (err) => {
+        res.sendFile(mdFile, (err) => {
             if (err) console.error("Error while transmitting input data to", req.ip);
             else console.log("Ending inputData download for", req.ip);
         });
