@@ -329,6 +329,9 @@ var backtestServer = () => {
         var l = parseInt(fs.readFileSync(savedProgressFile, 'utf8'));
         parameters = _.last(parameters, l);
     }
+    else if (fs.existsSync(backtestResultFile)) {
+        fs.unlinkSync(backtestResultFile);
+    }
     
     console.log("loaded input data...");
     
