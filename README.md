@@ -77,6 +77,8 @@ of parameters
 
 ### Web UI
 
+![Web UI Preview](http://i.imgur.com/FY4hhp2.png)
+
 Once `tribeca` is up and running, visit port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
 
 ### REST API
