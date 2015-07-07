@@ -4,20 +4,20 @@ RUN apt-get update
 RUN apt-get install -y git 
 RUN apt-get install -y libzmq3-dev
 
-ADD package.json /tmp/package.json
-RUN cd /tmp && npm install
-RUN mkdir -p /opt/app && cp -a /tmp/node_modules /opt/app/
-RUN npm install -g forever grunt-cli tsd
- 
-WORKDIR /opt/app
-ADD src /opt/app/src
-ADD Gruntfile.js /opt/app/
-ADD package.json /opt/app/
-ADD tsd.json /opt/app/
+RUN git clone https://github.com/michaelgrosner/tribeca.git
+
+WORKDIR tribeca
+
+RUN npm install -g grunt-cli tsd
+RUN npm install
 
 RUN tsd reinstall -s
 RUN grunt compile
 
 EXPOSE 3000 5000
 
-CMD bash 
+ENV EXCHANGE null
+ENV TRIBECA_MODE dev
+
+WORKDIR tribeca/service
+RUN node main.js

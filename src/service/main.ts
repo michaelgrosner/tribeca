@@ -47,7 +47,7 @@ var config = new Config.ConfigProvider();
         Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
         console.log(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
         
-        if (config.inBacktestMode) process.exit(1);
+        process.exit(1);
     });
 });
 
@@ -104,7 +104,7 @@ var liveTradingSetup = () => {
 
     var basicAuth = require('basic-auth-connect');
 
-    var isFullUser = (username, password) => username === "mgrosner" && password === "password";
+    var isFullUser = (username, password) => true;
     app.use(basicAuth(isFullUser));
 
     app.use(<any>compression());

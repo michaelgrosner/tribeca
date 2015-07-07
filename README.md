@@ -1,8 +1,10 @@
 # tribeca
 
-`tribeca` is a very low latency cryptocurrency market making trading bot with a full featured web client, backtester, and supports direct connectivity to several large cryptocoin exchanges. It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb.
+`tribeca` is a very low latency cryptocurrency market making trading bot with a full featured web client, backtester, and supports direct connectivity to several large cryptocoin exchanges. On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb.
 
-### Installation
+`tribeca` can be installed "by-hand" or via Docker
+
+### Manual Installation
 
 #### Pre-reqs
 
@@ -10,7 +12,7 @@
 
 2) MongoDB
 
-3) Typescript 1.5
+3) Typescript 1.5 with [tsd](https://github.com/DefinitelyTyped/tsd)
 
 4) Grunt
 
@@ -18,9 +20,9 @@
 
 0) Make sure your machine has all listed pre-reqs 
 
-1) `npm install`
+1) `npm install` and then `tsd reinstall -s`
 
-2) Change any relevant parameters into `config.ts`, like input your exchange API keys
+2) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
 
 3) Compile typescript to javascript via `grunt compile`
 
@@ -29,6 +31,14 @@
 5) Set up parameters to your trading liking in the web admin (http://localhost:3000)
 
 6) Click the "BTC/USD" button in the web admin so it is green to start making markets
+
+### Docker Installation
+
+1) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
+
+2) Setup a mongodb container/instance that our container can access
+
+3) Build and run the included `Dockerfile`
 
 ### Environment variables
 
