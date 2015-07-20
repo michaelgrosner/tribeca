@@ -391,9 +391,9 @@ _.assign(OrderBook.prototype, new function() {
             }
             ;
             self.book.sequence = data.sequence
-            self.queue = [];
             self.changeState(self.STATES.processing);
             _.forEach(self.queue, self.processMessage.bind(self));
+            self.queue = [];
         };
 
         request({
