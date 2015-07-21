@@ -65,9 +65,14 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
             for (var i = 0; i < this.marketTrades.length; i++) {
                 var existing = this.marketTrades[i];
 
-                var dt = Math.abs(existing.time.diff(u.time, 'minutes'));
-                if (Math.abs(existing.size - u.size) < 1e-4 && Math.abs(existing.price - u.price) < 1e-4 && dt < 1)
-                    return;
+                try {
+                    var dt = Math.abs(existing.time.diff(u.time, 'minutes'));
+                    if (Math.abs(existing.size - u.size) < 1e-4 && Math.abs(existing.price - u.price) < 1e-4 && dt < 1)
+                        return;
+                } catch (error) {
+                    // sigh
+                    continue;
+                }
             }
         }
 

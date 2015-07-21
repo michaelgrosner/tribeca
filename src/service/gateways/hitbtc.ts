@@ -15,6 +15,7 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
+import util = require("util");
 var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");
 
@@ -161,7 +162,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     private static applyIncrementals(incomingUpdates : Update[], side : any) {
         for (var i = 0; i < incomingUpdates.length; i++) {
             var u : Update = incomingUpdates[i];
-            var ms = new Models.MarketSide(u.price, u.size / _lotMultiplier);
+            var ms = new Models.MarketSide(parseFloat(<any>u.price), u.size / _lotMultiplier);
             if (u.size == 0) {
                 side.delete(ms);
             }
