@@ -84,3 +84,18 @@ Once `tribeca` is up and running, visit port `3000` of the machine on which it i
 ### REST API
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
+
+
+### TODO
+
+TODO:
+
+1) Create a VM image or something to make deployment much much easier
+
+2) Write up descriptions of all the parameters and their functionality
+
+3) Drop ZMQ/OkCoin component. It doesn't work.
+
+### Donations
+
+If you would like to support this project, please consider donating to 1BDpAKp8qqTA1ASXxK2ekk8b8metHcdTxj
