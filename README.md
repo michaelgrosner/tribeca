@@ -96,6 +96,8 @@ TODO:
 
 3) Drop ZMQ/OkCoin component. It doesn't work.
 
+4) More configurable currency pairs. Not everyone trades BTC/USD
+
 ### Donations
 
 If you would like to support this project, please consider donating to 1BDpAKp8qqTA1ASXxK2ekk8b8metHcdTxj
