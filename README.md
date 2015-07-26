@@ -22,11 +22,11 @@
 
 1) `npm install` and then `tsd reinstall -s`
 
-2) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
+2) Compile typescript to javascript via `grunt compile`
 
-3) Compile typescript to javascript via `grunt compile`
+3) Copy `sample-prod-tribeca.json` or `sample-dev-tribeca.json` into `src/service/tribeca.json`. Modify the various parameters to include API keys and point it to your running mongo instance.
 
-4) Run tribeca via `EXCHANGE={exchange} TRIBECA_MODE={mode} node main.js` -- see later for more explaination on valid exchanges and modes. It may also be prudent to run via a tool like forever.js or supervisor to keep tribeca running after any unexpected crashes.
+4) Run tribeca via `node main.js`. It may also be prudent to run via a tool like forever.js or supervisor to keep tribeca running after any unexpected crashes.
 
 5) Set up parameters to your trading liking in the web admin (http://localhost:3000)
 
@@ -34,33 +34,17 @@
 
 ### Docker Installation
 
-1) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
-
-2) Setup a mongodb container/instance that our container can access
-
-3) Build and run the included `Dockerfile`
+COMING SOON
 
 ### Environment variables
 
-#### EXCHANGE
+#### EXCHANGES
 
-1) `coinbase` - uses the WebSocket API
+1) Coinbase - uses the WebSocket API
 
-2) `hitbtc` - WebSocket + socket.io API
+2) HitBtc - WebSocket + socket.io API
 
-3) `okcoin` - WebSocket API (most likely broken, untested for months)
-
-4) `null` - Test in-memory exchange 
-
-5) FIX - (not included), uses ZeroMQ to communicate to a FIX client which talks FIX to an exchange
-
-#### TRIBECA_MODE
-
-1) `prod`
-
-2) `dev` (when the exchange has a test environment, like Coinbase or HitBtc)
-
-3) `backtest` - advanced mode, also check out included backtest.js for more details
+3) Null - Test in-memory exchange
 
 #### Quoting Parameters
 
@@ -94,9 +78,7 @@ TODO:
 
 2) Write up descriptions of all the parameters and their functionality
 
-3) Drop ZMQ/OkCoin component. It doesn't work.
-
-4) More configurable currency pairs. Not everyone trades BTC/USD
+3) More configurable currency pairs. Not everyone trades BTC/USD
 
 ### Donations
 
