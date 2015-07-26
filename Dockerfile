@@ -15,8 +15,5 @@ RUN grunt compile
 
 EXPOSE 3000 5000
 
-ENV EXCHANGE null
-ENV TRIBECA_MODE dev
-
 WORKDIR tribeca/service
-RUN node main.js
+CMD ["node", "main.js"]

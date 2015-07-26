@@ -114,12 +114,12 @@ var liveTradingSetup = () => {
     new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
     
     var getExchange = (): Models.Exchange => {
-        var ex = process.env.EXCHANGE.toLowerCase();
+        var ex = config.GetString("Exchange").toLowerCase();
         switch (ex) {
             case "hitbtc": return Models.Exchange.HitBtc;
             case "coinbase": return Models.Exchange.Coinbase;
             case "null": return Models.Exchange.Null;
-            default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+            default: throw new Error("unknown configuration variable Exchange " + ex);
         }
     };
     
@@ -144,7 +144,7 @@ var liveTradingSetup = () => {
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
     
-    var db = Persister.loadDb();
+    var db = Persister.loadDb(config);
     
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
         new Persister.BasicPersister<T>(db, collectionName);
