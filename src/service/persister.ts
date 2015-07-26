@@ -11,10 +11,11 @@ import mongodb = require('mongodb');
 import Q = require("q");
 import moment = require('moment');
 import Interfaces = require("./interfaces");
+import Config = require("./config");
 
-export function loadDb() {
+export function loadDb(config : Config.IConfigProvider) {
     var deferred = Q.defer<mongodb.Db>();
-    mongodb.MongoClient.connect('mongodb://localhost:27017/tribeca', (err, db) => {
+    mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
         if (err) deferred.reject(err);
         else deferred.resolve(db);
     });

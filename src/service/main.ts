@@ -13,7 +13,6 @@ import winston = require("winston");
 import request = require('request');
 
 import HitBtc = require("./gateways/hitbtc");
-import OkCoin = require("./gateways/okcoin");
 import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
 
@@ -115,13 +114,12 @@ var liveTradingSetup = () => {
     new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
     
     var getExchange = (): Models.Exchange => {
-        var ex = process.env.EXCHANGE.toLowerCase();
+        var ex = config.GetString("Exchange").toLowerCase();
         switch (ex) {
             case "hitbtc": return Models.Exchange.HitBtc;
-            case "okcoin": return Models.Exchange.OkCoin;
             case "coinbase": return Models.Exchange.Coinbase;
             case "null": return Models.Exchange.Null;
-            default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+            default: throw new Error("unknown configuration variable Exchange " + ex);
         }
     };
     
@@ -130,7 +128,6 @@ var liveTradingSetup = () => {
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
         switch (exchange) {
             case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
             case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
             case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
             default: throw new Error("no gateway provided for exchange " + exchange);
@@ -147,7 +144,7 @@ var liveTradingSetup = () => {
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
     
-    var db = Persister.loadDb();
+    var db = Persister.loadDb(config);
     
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
         new Persister.BasicPersister<T>(db, collectionName);
