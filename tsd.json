@@ -52,9 +52,6 @@
     },
     "ws/ws.d.ts": {
       "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
-    },
-    "node_zeromq/zmq.d.ts": {
-      "commit": "e18e130e2188348070f98d92b98c0ea481c4a086"
     }
   }
 }
