@@ -16,10 +16,6 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
 
-// only for backtester
-import events = require("events");
-var LineByLineReader = require("line-by-line");
-
 var uuid = require('node-uuid');
 import CoinbaseExchange = require("./coinbase-api");
 var SortedArrayMap = require("collections/sorted-array-map");
