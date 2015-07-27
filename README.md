@@ -2,61 +2,37 @@
 
 `tribeca` is a very low latency cryptocurrency market making trading bot with a full featured web client, backtester, and supports direct connectivity to several large cryptocoin exchanges. On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb.
 
-`tribeca` can be installed "by-hand" or via Docker
+### Installation
 
-### Manual Installation
+0) Please install [docker](https://www.docker.com/) for your system before preceeding. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
-#### Pre-reqs
+1) Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
-1) nodejs v0.12 or latest io.js
+2) Copy the repository [Dockerfile](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/Dockerfile) into a text editor. Change the environment variables to input your exchange connectivity information, account information, and mongoDB credentials.
 
-2) MongoDB
+  * EXCHANGE
+  
+    1) `coinbase` - uses the WebSocket API. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
+    
+    2) `hitbtc` - WebSocket + socket.io API. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
+    
+    3) `null` - Test in-memory exchange. No exchange-specific config needed.
+    
+  * TRIBECA_MODE
+  
+    1) `prod`
+    
+    2) `dev`
+    
+  * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
-3) Typescript 1.5 with [tsd](https://github.com/DefinitelyTyped/tsd)
+3) Save the Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
-4) Grunt
+4) Run the container `docker run -p 3000:3000 --link tribeca-mongo:mongo --name tribeca -d tribeca`. If you run `docker ps`, you should see tribeca and mongo containers running.
 
-#### Steps
+5) Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows, replace "localhost" with the address returned by `boot2docker ip`.
 
-0) Make sure your machine has all listed pre-reqs 
-
-1) `npm install` and then `tsd reinstall -s`
-
-2) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
-
-3) Compile typescript to javascript via `grunt compile`
-
-4) Run tribeca via `EXCHANGE={exchange} TRIBECA_MODE={mode} node main.js` -- see later for more explaination on valid exchanges and modes. It may also be prudent to run via a tool like forever.js or supervisor to keep tribeca running after any unexpected crashes.
-
-5) Set up parameters to your trading liking in the web admin (http://localhost:3000)
-
-6) Click the "BTC/USD" button in the web admin so it is green to start making markets
-
-### Docker Installation
-
-1) Change any relevant parameters into `src/service/config.ts`, like input your exchange API keys
-
-2) Setup a mongodb container/instance that our container can access
-
-3) Build and run the included `Dockerfile`
-
-### Environment variables
-
-#### EXCHANGE
-
-1) `coinbase` - uses the WebSocket API
-
-2) `hitbtc` - WebSocket + socket.io API
-
-3) `null` - Test in-memory exchange
-
-#### TRIBECA_MODE
-
-1) `prod`
-
-2) `dev` (when the exchange has a test environment, like Coinbase or HitBtc)
-
-3) `backtest` - advanced mode, also check out included backtest.js for more details
+6) Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 
 #### Quoting Parameters
 
@@ -86,13 +62,9 @@ Tribeca also exposes a REST API of all it's data. It's all the same data you wou
 
 TODO:
 
-1) Create a VM image or something to make deployment much much easier
+1) Write up descriptions of all the parameters and their functionality
 
-2) Write up descriptions of all the parameters and their functionality
-
-3) Drop ZMQ/OkCoin component. It doesn't work.
-
-4) More configurable currency pairs. Not everyone trades BTC/USD
+2) More configurable currency pairs. Not everyone trades BTC/USD
 
 ### Donations
 

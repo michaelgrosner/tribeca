@@ -110,11 +110,11 @@ var liveTradingSetup = () => {
     app.use(express.static(path.join(__dirname, "admin")));
     http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
-    var advert = new Models.ProductAdvertisement(exchange, pair, Config.Environment[config.environment()]);
+    var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
     new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
     
     var getExchange = (): Models.Exchange => {
-        var ex = process.env.EXCHANGE.toLowerCase();
+        var ex = config.GetString("EXCHANGE").toLowerCase();
         switch (ex) {
             case "hitbtc": return Models.Exchange.HitBtc;
             case "coinbase": return Models.Exchange.Coinbase;
@@ -144,7 +144,7 @@ var liveTradingSetup = () => {
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
     
-    var db = Persister.loadDb();
+    var db = Persister.loadDb(config);
     
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
         new Persister.BasicPersister<T>(db, collectionName);

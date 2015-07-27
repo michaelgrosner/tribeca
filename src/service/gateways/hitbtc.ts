@@ -567,7 +567,7 @@ export class HitBtc extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.
-        var positionGateway = config.environment() == Config.Environment.Dev ?
+        var positionGateway = config.GetString("HitBtcPullUrl").indexOf("demo") ?
             new NullGateway.NullPositionGateway() :
             new HitBtcPositionGateway(config);
 
