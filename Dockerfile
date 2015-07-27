@@ -7,7 +7,7 @@ RUN git clone https://github.com/michaelgrosner/tribeca.git
 
 WORKDIR tribeca
 
-RUN npm install -g grunt-cli tsd
+RUN npm install -g grunt-cli tsd forever
 RUN npm install
 
 RUN tsd reinstall -s
@@ -51,4 +51,4 @@ ENV HitBtcOrderDestination HitBtc
 #ENV CoinbaseWebsocketUrl wss://ws-feed.exchange.coinbase.com
 
 WORKDIR tribeca/service
-CMD ["node", "main.js"]
+CMD ["forever", "main.js"]

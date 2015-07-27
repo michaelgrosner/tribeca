@@ -4,9 +4,9 @@
 
 ### Installation
 
-0) Installation is acheived using [docker](https://www.docker.com/). Please install docker for your system before preceeding. Mac only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
+0) Please install [docker](https://www.docker.com/) for your system before preceeding. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
-1) Set up mongodb. If you do not have a mongo container already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo` will get you started.
+1) Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
 2) Copy the repository [Dockerfile](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/Dockerfile) into a text editor. Change the environment variables to input your exchange connectivity information, account information, and mongoDB credentials.
 
@@ -24,15 +24,15 @@
     
     2) `dev`
     
-  * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL.
+  * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
 3) Save the Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
-4) Run the container `docker run -p 3000:3000 --name tribeca -d tribeca`. If you run `docker ps`, you should see tribeca and mongo containers running.
+4) Run the container `docker run -p 3000:3000 --link tribeca-mongo:mongo --name tribeca -d tribeca`. If you run `docker ps`, you should see tribeca and mongo containers running.
 
-5) Open your browser to http://localhost:3000. Set up parameters to your trading liking.
+5) Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows, replace "localhost" with the address returned by `boot2docker ip`.
 
-6) Click the "BTC/USD" button in the web admin so it is green to start making markets
+6) Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 
 #### Quoting Parameters
 
