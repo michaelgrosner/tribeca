@@ -5,6 +5,8 @@ import Utils = require("./utils");
 import _ = require("lodash");
 
 class ProdConfig {
+    public static get MongoDbUrl(): string { return "mongodb://mongo-tribeca:27017/tribeca"; }
+    
     public static get HitBtcPullUrl(): string { return "http://api.hitbtc.com"; }
     public static get HitBtcOrderEntryUrl(): string { return "wss://api.hitbtc.com:8080"; }
     public static get HitBtcMarketDataUrl(): string { return 'ws://api.hitbtc.com:80'; }
@@ -23,6 +25,8 @@ class ProdConfig {
 }
 
 class DebugConfig {
+    public static get MongoDbUrl(): string { return "mongodb://mongo-tribeca:27017/tribeca"; }
+    
     public static get HitBtcPullUrl(): string { return "http://demo-api.hitbtc.com"; }
     public static get HitBtcOrderEntryUrl(): string { return "ws://demo-api.hitbtc.com:8080"; }
     public static get HitBtcMarketDataUrl(): string { return 'ws://demo-api.hitbtc.com:80'; }

@@ -144,7 +144,7 @@ var liveTradingSetup = () => {
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
     
-    var db = Persister.loadDb();
+    var db = Persister.loadDb(config);
     
     var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
         new Persister.BasicPersister<T>(db, collectionName);
