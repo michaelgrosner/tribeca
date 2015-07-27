@@ -1,8 +1,7 @@
 FROM node:0.12.4
 RUN apt-get update
 
-RUN apt-get install -y git 
-RUN apt-get install -y libzmq3-dev
+RUN apt-get install -y git
 
 RUN git clone https://github.com/michaelgrosner/tribeca.git
 
