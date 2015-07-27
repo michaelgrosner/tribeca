@@ -48,11 +48,7 @@
 
 2) `hitbtc` - WebSocket + socket.io API
 
-3) `okcoin` - WebSocket API (most likely broken, untested for months)
-
-4) `null` - Test in-memory exchange 
-
-5) FIX - (not included), uses ZeroMQ to communicate to a FIX client which talks FIX to an exchange
+3) `null` - Test in-memory exchange
 
 #### TRIBECA_MODE
 
