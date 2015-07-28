@@ -13,16 +13,37 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import util = require("util");
 import _ = require('lodash');
+import Q = require("q");
 
-class OrderBook {
+var shortId = require("shortid");
+
+interface OrderBook {
 	bids : [number, number][];
 	asks : [number, number][];
 }
 
-class Ticker {
+interface Ticker {
 	id : string;
 	amount : number;
 	price : number;
+}
+
+interface NewOrderAck {
+    id: string;
+    datetime: string;
+    type: number; //  buy or sell (0 - buy; 1 - sell)
+    price: number;
+    amount: number;
+}
+
+interface Transaction {
+    datetime: string,
+    id: string,
+    type: number, //(0 - deposit; 1 - withdrawal; 2 - market trade)
+    usd: number,
+    btc: number;
+    fee: number;
+    order_id: number;
 }
 
 class PusherClient<T> {
@@ -122,16 +143,41 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 }
 
+class BitstampAuthenticatedClient {
+    private _nonce;
+    
+    constructor(private baseUrl: string, private _apiKey: string, private _secret: string) {
+        
+    }
+    
+    public sendAuthenticated = <TRequest, TResponse>(endpoint: string, req : TRequest) : Q.Promise<TResponse> => {
+        var defer = Q.defer<TResponse>();
+        request.post(this.baseUrl + "/" + endpoint, {}, (err, resp, body) => {
+            if (err) defer.reject(err);
+            else defer.resolve(<TResponse>(<any>resp));
+        });
+        return defer.promise;
+    }; 
+}
+
 class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     
     public cancelsByClientOrderId = false;
 
-    private _nonce; // strictly monotonic -- use unix time
-
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        // send cancel
+        this._client.sendAuthenticated<{}, boolean>("cancel_order", {id: cancel.exchangeId}).then(ack => {
+            if (ack) this.OrderUpdate.trigger({
+                exchangeId: cancel.exchangeId, 
+                orderStatus: Models.OrderStatus.Cancelled
+            });
+            else this.OrderUpdate.trigger({
+                exchangeId: cancel.exchangeId, 
+                orderStatus: Models.OrderStatus.Rejected, 
+                cancelRejected: true
+            });
+        }).done();
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
@@ -141,19 +187,26 @@ class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        // send order
+        var side = order.side === Models.Side.Bid ? "buy" : "sell";
+        this._client.sendAuthenticated<{}, NewOrderAck>(side, {amount: order.quantity, price: order.price}).then(ack => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId, 
+                exchangeId: ack.id, 
+                orderStatus: Models.OrderStatus.Working
+            });
+        }).done();
         return new Models.OrderGatewayActionReport(Utils.date());
     };
     
-    generateClientOrderId = () : string => { 
-        return "something";
-    };
+    generateClientOrderId = () : string => shortId.generate();
 
-    // handle order status
+    private downloadOrderStatuses = () => {
+        this._client.sendAuthenticated("order_status", )
+    };
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampOE");
     
-    constructor(config : Config.IConfigProvider) {
+    constructor(private _client : BitstampAuthenticatedClient, config : Config.IConfigProvider) {
         
     }
 }
@@ -162,7 +215,7 @@ class BitstampPositionGateway implements Interfaces.IPositionGateway {
     _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    constructor(config : Config.IConfigProvider) {
+    constructor(client : BitstampAuthenticatedClient, config : Config.IConfigProvider) {
         
     }
 }
@@ -191,8 +244,9 @@ class BitstampBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class Bitstamp extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
-        var orderGateway = new BitstampEntryGateway(config);
-        var positionGateway = new BitstampPositionGateway(config);
+        var client = new BitstampAuthenticatedClient(config);
+        var orderGateway = new BitstampEntryGateway(client, config);
+        var positionGateway = new BitstampPositionGateway(client, config);
         var marketDataGateway = new BitstampMarketDataGateway(config);
         super(
             marketDataGateway,
