@@ -17,12 +17,11 @@ export class ConfigProvider implements IConfigProvider {
     private _config: { [key: string]: string } = {};
 
     constructor() {
-        if (process.env.hasOwnProperty("TRIBECA_BACKTEST_MODE")) {
-            this.inBacktestMode = process.env["TRIBECA_BACKTEST_MODE"] === "true";
-        }
+        this.inBacktestMode = (process.env["TRIBECA_BACKTEST_MODE"] || "false") === "true";
         
-        if (process.env.hasOwnProperty("TRIBECA_CONFIG_FILE")) {
-            this._config = JSON.parse(fs.readFileSync(process.env["TRIBECA_CONFIG_FILE"], "utf-8"));
+        var configFile = process.env["TRIBECA_CONFIG_FILE"] || "tribeca.json";
+        if (fs.existsSync(configFile)) {
+            this._config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
         }
     }
 

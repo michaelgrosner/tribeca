@@ -110,9 +110,6 @@ var liveTradingSetup = () => {
     app.use(express.static(path.join(__dirname, "admin")));
     http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
-    var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
-    new Messaging.Publisher<Models.ProductAdvertisement>(Messaging.Topics.ProductAdvertisement, io, () => [advert]).publish(advert);
-    
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
         switch (ex) {
@@ -133,7 +130,7 @@ var liveTradingSetup = () => {
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
-
+    
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => {
         var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
         if (persister !== null)
@@ -221,8 +218,11 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     
         var orderCache = new Broker.OrderStateCache();
         var timeProvider = classes.timeProvider;
-    
         var getPublisher = classes.getPublisher;
+        
+        var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
+        getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
+        
         var quotePublisher = getPublisher(Messaging.Topics.Quote);
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
         var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
@@ -238,7 +238,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
         var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
         var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
-    
+        
         var messages = new Broker.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
         messages.publish("start up");
     
