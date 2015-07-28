@@ -1,0 +1,22 @@
+{
+	"TRIBECA_MODE": "dev",
+	"EXCHANGE": "null",
+	"MongoDbUrl": "mongodb://localhost:27017/tribeca",
+	"CoinbaseOrderDestination": "Coinbase",
+	"HitBtcOrderDestination": "HitBtc",
+
+	"HitBtcPullUrl": "http://demo-api.hitbtc.com", 
+    "HitBtcOrderEntryUrl": "ws://demo-api.hitbtc.com:8080",
+    "HitBtcMarketDataUrl": "ws://demo-api.hitbtc.com:80",
+    "HitBtcSocketIoUrl": "https://demo-api.hitbtc.com:8081",
+    "HitBtcApiKey": "NULL",
+    "HitBtcSecret": "NULL",
+    
+    "CoinbaseRestUrl": "https://api-public.sandbox.exchange.coinbase.com",
+    "CoinbaseWebsocketUrl": "https://ws-feed-public.sandbox.exchange.coinbase.com",
+    "CoinbasePassphrase": "NULL",
+    "CoinbaseApiKey": "NULL",
+    "CoinbaseSecret": "NULL",
+    "CoinbaseOrderDestination": "Coinbase",
+    "HitBtcOrderDestination": "HitBtc"
+}
