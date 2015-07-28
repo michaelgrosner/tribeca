@@ -24,14 +24,16 @@ class BtcEPublicApiClient {
     }
 
     public getFromEndpoint = <TResponse>(endpoint: string, params: any = null): Q.Promise<TResponse> => {
-        var url = this._baseUrl + endpoint;
+        var options: request.Options = {
+            url: this._baseUrl + endpoint,
+            method: "GET"
+        };
 
-        var options: request.Options = {};
         if (params !== null)
             options.qs = params;
 
         var d = Q.defer<TResponse>();
-        request.get(url, options, (err, resp, body) => {
+        request(options, (err, resp, body) => {
             if (err) d.reject(err);
             else d.resolve(JSON.parse(body));
         });
@@ -90,13 +92,13 @@ class BtcEMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    _log: Utils.Logger = Utils.log("tribeca:gateway:BtcEMD");
+    private _log: Utils.Logger = Utils.log("tribeca:gateway:BtcEMD");
     constructor(
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
         private _client: BtcEPublicApiClient) {
-        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(2, "seconds"));
-        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(2, "seconds"));
+        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(20, "seconds"));
+        _timeProvider.setInterval(this.onRefreshMarketTrades, moment.duration(20, "seconds"));
 
         _timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
     }
@@ -109,23 +111,25 @@ interface Response<T> {
 }
 
 class BtcEAuthenticatedApiClient {
+    private _log: Utils.Logger = Utils.log("tribeca:gateway:BtcAuthClient");
     private _baseUrl: string;
     private _key: string;
     private _secret: string;
+    
     constructor(config: Config.IConfigProvider) {
         this._baseUrl = config.GetString("BtcETradeAPIRestUrl") + "/";
         this._key = config.GetString("BtcEKey");
         this._secret = config.GetString("BtcESecret");
     }
 
-    private _lastTimeMs: number = 0;
+    private _lastTimeMs: number = 1;
     private getNonce = () => {
-        var t = new Date().getTime();
-        if (t === this._lastTimeMs) {
+        var t = Math.round(new Date().getTime() / 1000);
+        if (t <= this._lastTimeMs) {
             this._lastTimeMs++;
         }
         else {
-            this._lastTimeMs = t * 100;
+            this._lastTimeMs = t;
         }
 
         return this._lastTimeMs;
@@ -137,12 +141,13 @@ class BtcEAuthenticatedApiClient {
             formData[key] = params[key];
         }
         formData.method = method;
+        formData.nonce = this.getNonce();
 
         var form = querystring.stringify(formData);
         var sign = crypto.createHmac('sha512', this._secret).update(new Buffer(form)).digest('hex').toString();
 
         var options: request.Options = {
-            url: this._baseUrl + "/" + method,
+            url: this._baseUrl + method,
             method: "POST",
             form: form,
             headers: {
@@ -150,11 +155,16 @@ class BtcEAuthenticatedApiClient {
                 Key: this._key
             }
         };
+        
+        this._log("OUT", util.inspect(options));
 
         var d = Q.defer<Response<TResponse>>();
         request(options, (err, resp, body) => {
             if (err) d.reject(err);
-            else d.resolve(JSON.parse(body));
+            else { 
+                this._log("IN", body);
+                d.resolve(JSON.parse(body));
+            }
         });
         return d.promise;
     };
@@ -182,7 +192,7 @@ interface CancelOrder {
 
 interface CancelOrderAck {
     order_id: number;
-    funds: Object;
+    funds: { [currency: string] : number };
 }
 
 class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
@@ -262,7 +272,7 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
         private _client: BtcEAuthenticatedApiClient) {
-            this._timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        this._timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
     }
 }
 
