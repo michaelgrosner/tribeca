@@ -17,6 +17,13 @@
     "CoinbasePassphrase": "NULL",
     "CoinbaseApiKey": "NULL",
     "CoinbaseSecret": "NULL",
+    
+    "BitstampPusherUrl": "ws://ws.pusherapp.com:80/app/de504dc5763aeef9ff52?protocol=6&client=js&version=2.1.2&flash=false",
+    "BitstampHttpUrl": "https://www.bitstamp.net/api",
+    "BitstampCustomerId": "NULL",
+    "BitstampApiKey": "NULL",
+    "BitstampSecret": "NULL",
+    
     "CoinbaseOrderDestination": "Coinbase",
     "HitBtcOrderDestination": "HitBtc"
 }

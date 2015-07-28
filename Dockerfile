@@ -39,6 +39,12 @@ ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
 ENV CoinbaseOrderDestination Coinbase
 ENV HitBtcOrderDestination HitBtc
+## Bitstamp - no dev environment
+ENV BitstampPusherUrl ws://ws.pusherapp.com:80/app/de504dc5763aeef9ff52?protocol=6&client=js&version=2.1.2&flash=false
+ENV BitstampHttpUrl https://www.bitstamp.net/api
+ENV BitstampCustomerId NULL
+ENV BitstampApiKey NULL
+ENV BitstampSecret NULL
 
 # PROD - values provided for reference.
 ## HitBtc
