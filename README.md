@@ -1,8 +1,8 @@
 # tribeca
 
-`tribeca` is a very low latency cryptocurrency market making trading bot with a full featured web client, backtester, and supports direct connectivity to several large cryptocoin exchanges. On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb.
+`tribeca` is a very low latency cryptocurrency market making trading bot with a full featured web client, backtester, and supports direct connectivity to several large cryptocoin exchanges. On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb. Installation is recommended via Docker, but manually installing everything is also supported.
 
-### Installation
+### Docker Installation
 
 0) Please install [docker](https://www.docker.com/) for your system before preceeding. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
@@ -30,9 +30,27 @@
 
 4) Run the container `docker run -p 3000:3000 --link tribeca-mongo:mongo --name tribeca -d tribeca`. If you run `docker ps`, you should see tribeca and mongo containers running.
 
-5) Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows, replace "localhost" with the address returned by `boot2docker ip`.
+### Manual Installation
 
-6) Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
+1) Ensure your target machine has node v0.12 or greater and mongoDB v3 or greater. Also, ensure Typescript 1.5, grunt, tsd, and, optionally, forever are installed (`npm install -g grunt-cli typescript tsd forever`).
+
+2) Clone the repository.
+
+3) In the cloned repository directory, `npm install` and then `tsd reinstall -s` to pull in all dependencies.
+
+4) Compile typescript to javascript via `grunt compile`.
+
+5) cd to the outputted JS files, in `tribeca/service`. 
+
+6) Create a `tribeca.json` file based off the provided `sample-dev-tribeca.json` or `sample-prod-tribeca.json` files and save it in the current directory. Modify any config keys and point the instance towards the running mongoDB instance.
+
+7) Run `forever start main.js` to start the app.
+
+### Application Usage
+
+1) Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
+
+2) Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 
 #### Quoting Parameters
 
