@@ -1,35 +1,22 @@
 {
     "TRIBECA_MODE": "prod",
     "EXCHANGE": "null",
-    "TradedPair": "BTC/USD",
     "MongoDbUrl": "mongodb://localhost:27017/tribeca",
-    "WebClientUsername": "NULL",
-    "WebClientPassword": "NULL",
-    "WebClientListenPort": "3000",
-        
+    "CoinbaseOrderDestination": "Coinbase",
+    "HitBtcOrderDestination": "HitBtc",
     "HitBtcPullUrl": "http://api.hitbtc.com",
     "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
     "HitBtcMarketDataUrl": "ws://api.hitbtc.com:80",
     "HitBtcSocketIoUrl": "https://api.hitbtc.com:8081",
     "HitBtcApiKey": "NULL",
     "HitBtcSecret": "NULL",
-    "HitBtcOrderDestination": "HitBtc",
-    
     "CoinbaseRestUrl": "https://api.exchange.coinbase.com",
     "CoinbaseWebsocketUrl": "https://ws-feed-public.sandbox.exchange.coinbase.com",
     "CoinbasePassphrase": "NULL",
     "CoinbaseApiKey": "NULL",
     "CoinbaseSecret": "NULL",
-    "CoinbaseOrderDestination": "Coinbase",
-    
-    "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
-    "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
-    "OkCoinApiKey": "NULL",
-    "OkCoinSecretKey": "NULL",
-    "OkCoinOrderDestination": "OkCoin",
-    
-    "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
-    "BitfinexKey": "NULL",
-    "BitfinexSecret": "NULL",
-    "BitfinexOrderDestination": "Bitfinex"
+    "BtcEPublicAPIRestUrl": "https://btc-e.com/api/3",
+    "BtcETradeAPIRestUrl": "https://btc-e.com/tapi",
+    "BtcEKey": "NULL",
+    "BtcESecret": "NULL"
 }
