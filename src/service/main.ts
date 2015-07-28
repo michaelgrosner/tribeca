@@ -19,6 +19,7 @@ import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
 import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
+import BtcE = require("./gateways/btce");
 
 import Utils = require("./utils");
 import Config = require("./config");
@@ -144,7 +145,8 @@ var liveTradingSetup = () => {
             case "okcoin": return Models.Exchange.OkCoin;
             case "null": return Models.Exchange.Null;
             case "bitfinex": return Models.Exchange.Bitfinex;
-            default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+            case "btce": return Models.Exchange.BtcE;
+		    default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
         }
     };
     
@@ -157,6 +159,7 @@ var liveTradingSetup = () => {
             case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
             case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
             case Models.Exchange.Bitfinex: return <Interfaces.CombinedGateway>(new Bitfinex.Bitfinex(timeProvider, config, pair));
+            case Models.Exchange.BtcE: return <Interfaces.CombinedGateway>(new BtcE.BtcE(pair, timeProvider, config));
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
