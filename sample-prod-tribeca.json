@@ -22,8 +22,5 @@
     "BitstampHttpUrl": "https://www.bitstamp.net/api",
     "BitstampCustomerId": "NULL",
     "BitstampApiKey": "NULL",
-    "BitstampSecret": "NULL",
-    
-    "CoinbaseOrderDestination": "Coinbase",
-    "HitBtcOrderDestination": "HitBtc"
+    "BitstampSecret": "NULL"
 }

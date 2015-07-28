@@ -60,21 +60,19 @@ class PusherClient<T> {
 	private _ws;
 	private _log : Utils.Logger;
 	
-	ConnectionState : Models.ConnectivityStatus = Models.ConnectivityStatus.Disconnected;
 	ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 	private onConnectionStatusChange = () => {
         if (this._ws.readyState === WebSocket.OPEN) {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
-			this.ConnectionState = Models.ConnectivityStatus.Connected;
         }
         else {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
-			this.ConnectionState = Models.ConnectivityStatus.Disconnected;
         }
     };
 	
 	Message = new Utils.Evt<Models.Timestamped<T>>();
 	private onMessage = (data) => {
+        this._log("message", data);
 		try {
 			var first = JSON.parse(data);
 			
@@ -88,14 +86,16 @@ class PusherClient<T> {
 		}
 	};
 	
-	constructor(url: string, endpoint: string) {
-		this._log = Utils.log("tribeca:gateway:"+endpoint);
+	constructor(url: string, name: string, endpoints: string[]) {
+		this._log = Utils.log("tribeca:gateway:"+name);
 		this._ws = new WebSocket(url);
 		
 		this._ws.on('open', () => {
+            this._log("open");
 			this.onConnectionStatusChange();
 			
-			this._ws.send(JSON.stringify({'data': {'channel': endpoint}, 'event': 'pusher:subscribe'}));
+            endpoints.forEach(e => 
+                this._ws.send(JSON.stringify({'data': {'channel': e}, 'event': 'pusher:subscribe'})));
 		});
         this._ws.on('message', this.onMessage);
         this._ws.on("close", (code, msg) => {
@@ -114,19 +114,18 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 	
-	private _orderBookClient : PusherClient<OrderBook>;
-	private _tickerWsClient : PusherClient<Ticker>;
+	private _client : PusherClient<OrderBook | Ticker>;
 	
 	ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-	private onConnectChanged = () => {
-		if (this._orderBookClient.ConnectionState === Models.ConnectivityStatus.Connected 
-				&& this._tickerWsClient.ConnectionState === Models.ConnectivityStatus.Connected) {
-			this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
-		}
-		else {
-			this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
-		}
-	};
+    
+    private onMessage = (msg : Models.Timestamped<OrderBook | Ticker>) => {
+        if (msg.data.hasOwnProperty("id")) {
+            this.onTicker(<Models.Timestamped<Ticker>>msg);
+        }
+        else {
+            this.onOrderBookMessage(<Models.Timestamped<OrderBook>>msg);
+        }
+    };
 	
 	private static ConvertToMarketSide = (input : [number, number]) => new Models.MarketSide(input[0], input[1]);
 	private onOrderBookMessage = (message : Models.Timestamped<OrderBook>) => {
@@ -142,13 +141,10 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
 	
      _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampMD");
     constructor(url: string) {
-		this._orderBookClient = new PusherClient(url, "order_book");
-		this._orderBookClient.ConnectChanged.on(this.onConnectChanged);
-		this._orderBookClient.Message.on(this.onOrderBookMessage);
-		
-		this._tickerWsClient = new PusherClient(url, "live_trades");
-		this._tickerWsClient.ConnectChanged.on(this.onConnectChanged);
-        this._tickerWsClient.Message.on(this.onTicker);
+        this._log("BitstampMarketDataGateway");
+		this._client = new PusherClient(url, "BitstampPusherClient", ["order_book", "live_trades"]);
+		this._client.ConnectChanged.on(c => this.ConnectChanged.trigger(c));
+		this._client.Message.on(this.onMessage);
     }
 }
 
@@ -253,7 +249,7 @@ class BitstampPositionGateway implements Interfaces.IPositionGateway {
     };
 
     constructor(timeProvider : Utils.ITimeProvider, private _client : BitstampAuthenticatedClient) {
-        timeProvider.setInterval(this.onRefresh, moment.duration(20, "seconds"));
+        //timeProvider.setInterval(this.onRefresh, moment.duration(20, "seconds"));
     }
 }
 

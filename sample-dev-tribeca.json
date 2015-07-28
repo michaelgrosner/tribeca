@@ -23,7 +23,4 @@
     "BitstampCustomerId": "NULL",
     "BitstampApiKey": "NULL",
     "BitstampSecret": "NULL",
-    
-    "CoinbaseOrderDestination": "Coinbase",
-    "HitBtcOrderDestination": "HitBtc"
 }
