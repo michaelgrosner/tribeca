@@ -5,7 +5,7 @@
 
 import Config = require("../config");
 import crypto = require('crypto');
-import ws = require('ws');
+import WebSocket = require('ws');
 import request = require('request');
 import Models = require("../../common/models");
 import Utils = require("../utils");
@@ -59,6 +59,7 @@ interface AccountBalance {
 class PusherClient<T> {
 	private _ws;
 	private _log : Utils.Logger;
+    private _subscribedEvents = [];
 	
 	ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 	private onConnectionStatusChange = () => {
@@ -72,11 +73,10 @@ class PusherClient<T> {
 	
 	Message = new Utils.Evt<Models.Timestamped<T>>();
 	private onMessage = (data) => {
-        this._log("message", data);
 		try {
 			var first = JSON.parse(data);
 			
-			if (!first.hasOwnProperty("data"))
+			if (!first.hasOwnProperty("event") || !_.contains(this._subscribedEvents, first.event))
 				return;
 			
 			var t = Utils.date();
@@ -86,27 +86,34 @@ class PusherClient<T> {
 		}
 	};
 	
-	constructor(url: string, name: string, endpoints: string[]) {
+	constructor(url: string, name: string, endpointsAndEvents: [string, string][]) {
 		this._log = Utils.log("tribeca:gateway:"+name);
+        
 		this._ws = new WebSocket(url);
-		
-		this._ws.on('open', () => {
-            this._log("open");
-			this.onConnectionStatusChange();
-			
-            endpoints.forEach(e => 
-                this._ws.send(JSON.stringify({'data': {'channel': e}, 'event': 'pusher:subscribe'})));
-		});
-        this._ws.on('message', this.onMessage);
-        this._ws.on("close", (code, msg) => {
-            this.onConnectionStatusChange();
-            this._log("close code=%d msg=%s", code, msg);
-        });
-        this._ws.on("error", err => {
-            this.onConnectionStatusChange();
-            this._log("error %s", err);
-            throw err;
-        });
+        
+        this._ws
+            .on('open', () => {
+    			this.onConnectionStatusChange();
+                
+                var getSubscribeMsg = (channel: string) => {
+                    return {'data': {'channel': channel}, 'event': 'pusher:subscribe'};
+                }
+    			
+                endpointsAndEvents.forEach(e =>  {
+                    this._subscribedEvents.push(e[1]);
+                    this._ws.send(JSON.stringify(getSubscribeMsg(e[0])));
+                }); 
+    		})
+            .on('message', this.onMessage)
+            .on("close", (code, msg) => {
+                this.onConnectionStatusChange();
+                this._log("close code=%d msg=%s", code, msg);
+            })
+            .on("error", err => {
+                this.onConnectionStatusChange();
+                this._log("error %s", err);
+                throw err;
+            });
 	}
 }
 
@@ -127,10 +134,15 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 	
-	private static ConvertToMarketSide = (input : [number, number]) => new Models.MarketSide(input[0], input[1]);
+	private static ConvertToMarketSide = (input : [number, number]) => 
+        new Models.MarketSide(input[0], input[1]);
+        
+    private static ConvertToMarketSideList = (input : [number, number][]) => 
+        _(input).slice(0, 5).map(BitstampMarketDataGateway.ConvertToMarketSide).value();
+        
 	private onOrderBookMessage = (message : Models.Timestamped<OrderBook>) => {
-		var bids = message.data.bids.map(BitstampMarketDataGateway.ConvertToMarketSide);
-        var asks = message.data.asks.map(BitstampMarketDataGateway.ConvertToMarketSide);
+		var bids = BitstampMarketDataGateway.ConvertToMarketSideList(message.data.bids);
+        var asks = BitstampMarketDataGateway.ConvertToMarketSideList(message.data.asks);
 		this.MarketData.trigger(new Models.Market(bids, asks, message.time));
 	};
     
@@ -142,7 +154,7 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
      _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampMD");
     constructor(url: string) {
         this._log("BitstampMarketDataGateway");
-		this._client = new PusherClient(url, "BitstampPusherClient", ["order_book", "live_trades"]);
+		this._client = new PusherClient(url, "BitstampPusherClient", [["order_book", "data"], ["live_trades", "trade"]]);
 		this._client.ConnectChanged.on(c => this.ConnectChanged.trigger(c));
 		this._client.Message.on(this.onMessage);
     }
@@ -234,6 +246,8 @@ class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     
     constructor(timeProvider : Utils.ITimeProvider, private _client : BitstampAuthenticatedClient) {
         //timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(10, "seconds"));
+        
+        timeProvider.setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), moment.duration(10));
     }
 }
 
