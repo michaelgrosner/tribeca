@@ -18,8 +18,9 @@ import Q = require("q");
 var shortId = require("shortid");
 
 interface OrderBook {
-	bids : [number, number][];
-	asks : [number, number][];
+    timestamp?: string;        // only present in the http get
+	bids : [string, string][];
+	asks : [string, string][];
 }
 
 interface Ticker {
@@ -44,6 +45,14 @@ interface Transaction {
     btc: number;
     fee: number;
     order_id: number;
+}
+
+interface MarketTransaction {
+    date: string;
+    tid: string;
+    price: string;
+    type: number;
+    amount: string;
 }
 
 interface AccountBalance {
@@ -134,10 +143,10 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 	
-	private static ConvertToMarketSide = (input : [number, number]) => 
-        new Models.MarketSide(input[0], input[1]);
+	private static ConvertToMarketSide = (input : [string, string]) => 
+        new Models.MarketSide(parseFloat(input[0]), parseFloat(input[1]));
         
-    private static ConvertToMarketSideList = (input : [number, number][]) => 
+    private static ConvertToMarketSideList = (input : [string, string][]) => 
         _(input).slice(0, 5).map(BitstampMarketDataGateway.ConvertToMarketSide).value();
         
 	private onOrderBookMessage = (message : Models.Timestamped<OrderBook>) => {
@@ -152,23 +161,49 @@ class BitstampMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 	
      _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampMD");
-    constructor(url: string) {
-        this._log("BitstampMarketDataGateway");
+    constructor(restClient: BitstampAuthenticatedClient, url: string) {
 		this._client = new PusherClient(url, "BitstampPusherClient", [["order_book", "data"], ["live_trades", "trade"]]);
 		this._client.ConnectChanged.on(c => this.ConnectChanged.trigger(c));
 		this._client.Message.on(this.onMessage);
+        
+        restClient.getFromEndpoint<OrderBook>("order_book/").then(b => 
+            this.onOrderBookMessage(new Models.Timestamped(b, moment.utc())))
+                .done();
+            
+        restClient.getFromEndpoint<MarketTransaction[]>("transactions/").then(ts => {
+            ts.forEach(t => {
+                var side = t.type === 0 ? Models.Side.Bid : Models.Side.Ask; // is this really the make side?
+                var trd = new Models.GatewayMarketTrade(parseFloat(t.price), parseFloat(t.amount), moment(t.date, "X"), true, side);
+                this.MarketTrade.trigger(trd);
+            });
+        }).done();
     }
 }
 
 class BitstampAuthenticatedClient {
+    private static UserAgent = 'Mozilla/4.0 (compatible; Bitstamp node.js client)';
+    
     constructor(
         private baseUrl: string, 
         private _customerId: string, 
         private _apiKey: string, 
-        private _secret: string) {}
+        private _secret: string) { }
+        
+    private _lastTimeMs : number = 0;
+    private getNonce = () => {
+        var t = new Date().getTime();
+        if (t === this._lastTimeMs) {
+            this._lastTimeMs++;
+        }
+        else {
+            this._lastTimeMs = t*100;
+        }
+        
+        return this._lastTimeMs;
+    };
     
     private addAuthentication = (req: {}) => {
-        var nonce = new Date().getTime();
+        var nonce = this.getNonce();
         var message = nonce + this._customerId + this._apiKey;
         var signer = crypto.createHmac('sha256', new Buffer(this._secret, 'utf8'));
         var signature = signer.update(message).digest('hex').toUpperCase();
@@ -179,23 +214,36 @@ class BitstampAuthenticatedClient {
             nonce: nonce}, req);
     }; 
     
+    // the URLs must end with slashes in their API
+    private makeUrl = (endpoint: string) => this.baseUrl + "/" + endpoint;
+    
     public postToEndpoint = <TRequest, TResponse>(endpoint: string, req : TRequest) : Q.Promise<TResponse> => {
-        var defer = Q.defer<TResponse>();
-        
-        var options : request.Options = {
-            url: this.baseUrl + "/" + endpoint,
+        return this.requestFromEndpoint<TResponse>({
+            url: this.makeUrl(endpoint),
             form: this.addAuthentication(req),
             method: 'POST',
-            timeout: 5000
-        };
-        
-        request.post(options, (err, resp, body) => {
-            if (err) defer.reject(err);
-            else defer.resolve(body);
+            timeout: 5000,
+            headers: { 'User-Agent': BitstampAuthenticatedClient.UserAgent }
         });
-        
-        return defer.promise;
     }; 
+    
+    public getFromEndpoint = <TResponse>(endpoint: string) => {
+        return this.requestFromEndpoint<TResponse>({
+            url: this.makeUrl(endpoint),
+            method: 'GET',
+            timeout: 5000,
+            headers: { 'User-Agent': BitstampAuthenticatedClient.UserAgent }
+        });
+    };
+    
+    private requestFromEndpoint = <TResponse>(options: request.Options) => {
+        var defer = Q.defer<TResponse>();
+        request(options, (err, resp, body) => {
+            if (err) defer.reject(err);
+            else defer.resolve(JSON.parse(body));
+        });
+        return defer.promise;
+    };
 }
 
 class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
@@ -205,7 +253,7 @@ class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     public cancelsByClientOrderId = false;
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this._client.postToEndpoint<{}, boolean>("cancel_order", {id: cancel.exchangeId}).then(ack => {
+        this._client.postToEndpoint<{}, boolean>("cancel_order/", {id: cancel.exchangeId}).then(ack => {
             if (ack) this.OrderUpdate.trigger({
                 exchangeId: cancel.exchangeId, 
                 orderStatus: Models.OrderStatus.Cancelled
@@ -225,7 +273,7 @@ class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        var side = order.side === Models.Side.Bid ? "buy" : "sell";
+        var side = order.side === Models.Side.Bid ? "buy/" : "sell/";
         this._client.postToEndpoint<{}, NewOrderAck>(side, {amount: order.quantity, price: order.price}).then(ack => {
             this.OrderUpdate.trigger({
                 orderId: order.orderId, 
@@ -238,15 +286,15 @@ class BitstampEntryGateway implements Interfaces.IOrderEntryGateway {
     
     generateClientOrderId = () : string => shortId.generate();
 
-    /*private downloadOrderStatuses = () => {
-        this._client.postToEndpoint("order_status", )
-    };*/
+    private downloadOrderStatuses = () => {
+        // I really have no idea what to do here.
+        //this._client.postToEndpoint("order_status/", )
+    };
 
      _log : Utils.Logger = Utils.log("tribeca:gateway:BitstampOE");
     
     constructor(timeProvider : Utils.ITimeProvider, private _client : BitstampAuthenticatedClient) {
-        //timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(10, "seconds"));
-        
+        timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(10, "seconds"));
         timeProvider.setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), moment.duration(10));
     }
 }
@@ -256,14 +304,14 @@ class BitstampPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
     
     private onRefresh = () => {
-        this._client.postToEndpoint<{}, AccountBalance>("balance", {}).then(ack => {
+        this._client.postToEndpoint<{}, AccountBalance>("balance/", {}).then(ack => {
             this.PositionUpdate.trigger(new Models.CurrencyPosition(ack.usd_balance, ack.usd_reserved, Models.Currency.USD));
             this.PositionUpdate.trigger(new Models.CurrencyPosition(ack.btc_balance, ack.btc_reserved, Models.Currency.BTC));
         });
     };
 
     constructor(timeProvider : Utils.ITimeProvider, private _client : BitstampAuthenticatedClient) {
-        //timeProvider.setInterval(this.onRefresh, moment.duration(20, "seconds"));
+        timeProvider.setInterval(this.onRefresh, moment.duration(20, "seconds"));
     }
 }
 
@@ -276,11 +324,12 @@ class BitstampBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Bitstamp;
     }
 
-    // todo: this is provided dynamically via the `balance` request
+    // this is provided dynamically via the `balance` request
     makeFee() : number {
         return 0.0025;
     }
 
+    // this is provided dynamically via the `balance` request
     takeFee() : number {
         return 0.0025;
     }
@@ -301,7 +350,7 @@ export class Bitstamp extends Interfaces.CombinedGateway {
         var client = new BitstampAuthenticatedClient(httpUrl, customerId, apiKey, secret);
         var orderGateway = new BitstampEntryGateway(timeProvider, client);
         var positionGateway = new BitstampPositionGateway(timeProvider, client);
-        var marketDataGateway = new BitstampMarketDataGateway(marketDataUrl);
+        var marketDataGateway = new BitstampMarketDataGateway(client, marketDataUrl);
         super(
             marketDataGateway,
             orderGateway,
