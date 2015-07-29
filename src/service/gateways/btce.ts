@@ -15,6 +15,8 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import util = require("util");
 import Q = require("q");
+import _ = require('lodash');
+
 var shortId = require("shortid");
 
 class BtcEPublicApiClient {
@@ -97,8 +99,8 @@ class BtcEMarketDataGateway implements Interfaces.IMarketDataGateway {
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
         private _client: BtcEPublicApiClient) {
-        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(20, "seconds"));
-        _timeProvider.setInterval(this.onRefreshMarketTrades, moment.duration(20, "seconds"));
+        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(200, "seconds"));
+        _timeProvider.setInterval(this.onRefreshMarketTrades, moment.duration(200, "seconds"));
 
         _timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
     }
@@ -281,7 +283,7 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private refreshOpenOrders = () => {
-        _.forIn(this._openOrderExchangeIds, (_, id) => {
+        _.forIn(this._openOrderExchangeIds, (unused, id) => {
             var req = { order_id: parseInt(id) };
             this._client.postToEndpoint<ActiveOrderRequest, ActiveOrder>("OrderInfo", req).then(r => {
                 if (r.success === 1) {
