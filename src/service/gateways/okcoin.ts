@@ -128,12 +128,18 @@ class OkCoinWebsocket {
 }
 
 class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
-    MarketData = new Utils.Evt<Models.Market>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    // TODO
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
+    private onTrade = (trade : Models.Timestamped<[string,string,string,string,string]>) => {
+        // [tid, price, amount, time, type]
+        var px = parseFloat(trade[1]);
+        var amt = parseFloat(trade[2]);
+        var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid; // is this the make side?
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(px, amt, trade.time, false, side));
+    };
 
+    MarketData = new Utils.Evt<Models.Market>();
     private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = depth.data;
 
@@ -145,9 +151,12 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     constructor(socket : OkCoinWebsocket) {
         socket.ConnectChanged.on(cs => {
-            if (cs == Models.ConnectivityStatus.Connected)
-                socket.subscribe("ok_btcusd_depth", false, this.onDepth);
             this.ConnectChanged.trigger(cs);
+            
+            if (cs == Models.ConnectivityStatus.Connected) {
+                socket.subscribe("ok_btcusd_depth", false, this.onDepth);
+                socket.subscribe("ok_btcusd_trades_v1", false, this.onTrade)
+            }
         });
     }
 }
@@ -220,24 +229,36 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     };
+    
+    private static getStatus(status: number) : Models.OrderStatus {
+        // status: -1: cancelled, 0: pending, 1: partially filled, 2: fully filled, 4: cancel request in process
+        switch (status) {
+            case -1: return Models.OrderStatus.Cancelled;
+            case 0: return Models.OrderStatus.Working;
+            case 1: return Models.OrderStatus.Working;
+            case 2: return Models.OrderStatus.Complete;
+            case 4: return Models.OrderStatus.Working;
+            default: return Models.OrderStatus.Other;
+        }
+    }
 
     private onMessage = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
         var t = tsMsg.time;
         var msg : OkCoinTradeRecord = tsMsg.data;
+        
+        var avgPx = parseFloat(msg.averagePrice);
+        var lastQty = parseFloat(msg.tradeAmount);
+        var lastPx = parseFloat(msg.tradePrice);
 
-        var orderStatus = OkCoinOrderEntryGateway.getStatus(msg.orderStatus);
         var status : Models.OrderStatusReport = {
-            exchangeId: msg.exchangeId,
-            orderId: msg.orderId,
-            orderStatus: orderStatus,
+            exchangeId: msg.orderId,
+            orderStatus: OkCoinOrderEntryGateway.getStatus(msg.status),
             time: t,
-            lastQuantity: msg.lastQuantity > 0 ? msg.lastQuantity : undefined,
-            lastPrice: msg.lastPrice > 0 ? msg.lastPrice : undefined,
-            leavesQuantity: orderStatus == Models.OrderStatus.Working ? msg.leavesQuantity : undefined,
-            cumQuantity: msg.cumQuantity > 0 ? msg.cumQuantity : undefined,
-            averagePrice: msg.averagePrice > 0 ? msg.averagePrice : undefined,
-            pendingCancel: msg.orderStatus == "6",
-            pendingReplace: msg.orderStatus == "E"
+            lastQuantity: lastQty > 0 ? lastQty : undefined,
+            lastPrice: lastPx > 0 ? lastPx : undefined,
+            averagePrice: avgPx > 0 ? avgPx : undefined,
+            pendingCancel: msg.status === 4,
+            partiallyFilled: msg.status === 1
         };
 
         this.OrderUpdate.trigger(status);
@@ -245,8 +266,13 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
     constructor(private _socket : OkCoinWebsocket, private _http: OkCoinHttp) {
-        _socket.subscribe("ok_usd_realtrades", true, this.onMessage);
-        _socket.ConnectChanged.on(cs => this.ConnectChanged.trigger(cs));
+        _socket.ConnectChanged.on(cs => {
+            this.ConnectChanged.trigger(cs);
+            
+            if (cs === Models.ConnectivityStatus.Connected) {
+                _socket.subscribe("ok_usd_realtrades", true, this.onMessage);
+            }
+        });
     }
 }
 
