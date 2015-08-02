@@ -29,28 +29,53 @@ interface OkCoinDepthMessage {
     timestamp : string;
 }
 
-interface OkCoinExecutionReport {
-    exchangeId : string;
-    orderId : string;
-    orderStatus : string;
-    rejectMessage : string;
-    lastQuantity: number;
-    lastPrice : number;
-    leavesQuantity : number;
-    cumQuantity : number;
-    averagePrice : number;
+interface OrderAck {
+    result: boolean;
+    order_id: number;
 }
 
+interface SignedMessage {
+    api_key?: string;
+    sign?: string;
+}
+
+interface Order extends SignedMessage {
+    symbol: string;
+    type: string;
+    price: number;
+    amount: number;
+}
+
+interface Cancel extends SignedMessage {
+    orderId: string;
+}
+
+interface OkCoinTradeRecord {
+    averagePrice: string;
+    completedTradeAmount: string;
+    createdDate: string;
+    id: string;
+    orderId: string;
+    sigTradeAmount: string;
+    sigTradePrice: string;
+    status: number;
+    symbol: string;
+    tradeAmount: string;
+    tradePrice: string;
+    tradeType: string;
+    tradeUnitPrice: string;
+    unTrade: string;
+}
+
+interface SubscriptionRequest extends SignedMessage { }
+
 class OkCoinWebsocket {
-	send = <T>(eventName: string, data : T) => {
-		
-	};
-	
-    subscribe = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
-        var subsReq = {event: 'addChannel',
-                       channel: channel,
-                       parameters: {partner: this._partner,
-                                    secretkey: this._secretKey}};
+	subscribe = <T>(channel : string, authenticate: boolean, handler: (newMsg : Models.Timestamped<T>) => void) => {
+        var subsReq : SubscriptionRequest = {event: 'addChannel', channel: channel};
+        
+        if (authenticate) 
+            subsReq = this._signer.authenticateMessage(subsReq);
+        
         this._ws.send(JSON.stringify(subsReq));
         this._handlers[channel] = handler;
     }
@@ -89,15 +114,11 @@ class OkCoinWebsocket {
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    _serializedHeartbeat = JSON.stringify({event: "pong"});
-    _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinWebsocket");
-    _secretKey : string;
-    _partner : string;
-    _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
-    _ws : ws;
-    constructor(config : Config.IConfigProvider) {
-        this._partner = config.GetString("OkCoinPartner");
-        this._secretKey = config.GetString("OkCoinSecretKey");
+    private _serializedHeartbeat = JSON.stringify({event: "pong"});
+    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinWebsocket");
+    private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
+    private _ws : ws;
+    constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._ws = new ws(config.GetString("OkCoinWsUrl"));
 
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
@@ -125,15 +146,10 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     constructor(socket : OkCoinWebsocket) {
         socket.ConnectChanged.on(cs => {
             if (cs == Models.ConnectivityStatus.Connected)
-                socket.subscribe("ok_btcusd_depth", this.onDepth);
+                socket.subscribe("ok_btcusd_depth", false, this.onDepth);
             this.ConnectChanged.trigger(cs);
         });
     }
-}
-
-interface OrderAck {
-    result: boolean;
-    order_id: number;
 }
 
 class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
@@ -159,9 +175,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        var o = {
-            //api_key: "API KEY",
-            //sign: "SIGNATURE",
+        var o : Order = {
             symbol: "btc_usd", //btc_usd: bitcoin ltc_usd: litecoin,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
             price: order.price,
@@ -185,7 +199,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this._http.post<OrderAck>("cancel_order.do", {orderId: cancel.exchangeId }).then(ts => {
+        var c : Cancel = {orderId: cancel.exchangeId };
+        this._http.post<OrderAck>("cancel_order.do", c).then(ts => {
             var osr : Models.OrderStatusReport = { time: ts.time };
             
             if (ts.data.result === true) {
@@ -206,9 +221,9 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return this.sendOrder(replace);
     };
 
-    private onMessage = (tsMsg : Models.Timestamped<OkCoinExecutionReport>) => {
+    private onMessage = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
         var t = tsMsg.time;
-        var msg : OkCoinExecutionReport = tsMsg.data;
+        var msg : OkCoinTradeRecord = tsMsg.data;
 
         var orderStatus = OkCoinOrderEntryGateway.getStatus(msg.orderStatus);
         var status : Models.OrderStatusReport = {
@@ -230,13 +245,22 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
     constructor(private _socket : OkCoinWebsocket, private _http: OkCoinHttp) {
-        _socket.subscribe("ExecRpt", this.onMessage);
+        _socket.subscribe("ok_usd_realtrades", true, this.onMessage);
         _socket.ConnectChanged.on(cs => this.ConnectChanged.trigger(cs));
     }
 }
 
-class OkCoinHttp {
-    private signMsg = (m : { [key: string]: string }) => {
+class OkCoinMessageSigner {
+    private _secretKey : string;
+    private _partner : string;
+    
+    authenticateMessage = (msg : SignedMessage) => {
+        msg.api_key = this._partner;
+        msg.sign = this.getSign(msg);
+        return msg;
+    };
+    
+    private getSign = (m : SignedMessage) : string => {
         var els : string[] = [];
 
         var keys = [];
@@ -255,16 +279,20 @@ class OkCoinHttp {
         var sig = els.join("&") + "&secret_key=" + this._secretKey;
         return crypto.createHash('md5').update(sig).digest("hex").toString().toUpperCase();
     };
+    
+    constructor(config : Config.IConfigProvider) {
+        this._partner = config.GetString("OkCoinPartner");
+        this._secretKey = config.GetString("OkCoinSecretKey");
+    }
+}
 
-    post = <T>(actionUrl: string, msg : any) : Q.Promise<Models.Timestamped<T>> => {
-        msg.partner = this._partner;
-        msg.sign = this.signMsg(msg);
-        
+class OkCoinHttp {
+    post = <T>(actionUrl: string, msg : SignedMessage) : Q.Promise<Models.Timestamped<T>> => {
         var d = Q.defer<Models.Timestamped<T>>();
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
-            body: querystring.stringify(msg),
+            body: querystring.stringify(this._signer.authenticateMessage(msg)),
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             method: "POST"
         }, (err, resp, body) => {
@@ -285,13 +313,9 @@ class OkCoinHttp {
         return d.promise;
     };
 
-    _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinHTTP");
-    _secretKey : string;
-    _partner : string;
-    _baseUrl : string;
-    constructor(config : Config.IConfigProvider) {
-        this._partner = config.GetString("OkCoinPartner");
-        this._secretKey = config.GetString("OkCoinSecretKey");
+    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinHTTP");
+    private _baseUrl : string;
+    constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
     }
 }
@@ -354,8 +378,9 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
 export class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
-        var http = new OkCoinHttp(config);
-        var socket = new OkCoinWebsocket(config);
+        var signer = new OkCoinMessageSigner(config);
+        var http = new OkCoinHttp(config, signer);
+        var socket = new OkCoinWebsocket(config, signer);
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
             ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http)
