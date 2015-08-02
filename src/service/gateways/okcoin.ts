@@ -72,10 +72,10 @@ interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
 	subscribe = <T>(channel : string, authenticate: boolean, handler: (newMsg : Models.Timestamped<T>) => void) => {
-        var subsReq : SubscriptionRequest = {event: 'addChannel', channel: channel};
+        var subsReq : any = {event: 'addChannel', channel: channel};
         
         if (authenticate) 
-            subsReq = this._signer.authenticateMessage(subsReq);
+            subsReq.parameters = this._signer.signMessage({});
         
         this._ws.send(JSON.stringify(subsReq));
         this._handlers[channel] = handler;
@@ -200,7 +200,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             amount: order.quantity};
             
         this._http.post<OrderAck>("trade.do", o).then(ts => {
-            var osr : Models.OrderStatusReport = { time: ts.time };
+            var osr : Models.OrderStatusReport = { orderId: order.orderId, time: ts.time };
             
             if (ts.data.result === true) {
                 osr.exchangeId = ts.data.order_id.toString();
@@ -219,7 +219,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         var c : Cancel = {orderId: cancel.exchangeId };
         this._http.post<OrderAck>("cancel_order.do", c).then(ts => {
-            var osr : Models.OrderStatusReport = { time: ts.time };
+            var osr : Models.OrderStatusReport = { orderId: cancel.clientOrderId, time: ts.time };
             
             if (ts.data.result === true) {
                 osr.orderStatus = Models.OrderStatus.Cancelled;
@@ -260,7 +260,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var lastPx = parseFloat(msg.tradePrice);
 
         var status : Models.OrderStatusReport = {
-            exchangeId: msg.orderId,
+            exchangeId: msg.orderId.toString(),
             orderStatus: OkCoinOrderEntryGateway.getStatus(msg.status),
             time: t,
             lastQuantity: lastQty > 0 ? lastQty : undefined,
@@ -287,16 +287,13 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 class OkCoinMessageSigner {
     private _secretKey : string;
-    private _apiKey : string;
+    private _api_key : string;
     
-    authenticateMessage = (msg : SignedMessage) => {
-        msg.api_key = this._apiKey;
-        msg.sign = this.getSign(msg);
-        return msg;
-    };
-    
-    private getSign = (m : SignedMessage) : string => {
+    public signMessage = (m : SignedMessage) : SignedMessage => {
         var els : string[] = [];
+        
+        if (!m.hasOwnProperty("api_key"))
+            m.api_key = this._api_key;
 
         var keys = [];
         for (var key in m) {
@@ -312,11 +309,12 @@ class OkCoinMessageSigner {
         }
 
         var sig = els.join("&") + "&secret_key=" + this._secretKey;
-        return crypto.createHash('md5').update(sig).digest("hex").toString().toUpperCase();
+        m.sign = crypto.createHash('md5').update(sig).digest("hex").toString().toUpperCase();
+        return m;
     };
     
     constructor(config : Config.IConfigProvider) {
-        this._apiKey = config.GetString("OkCoinApiKey");
+        this._api_key = config.GetString("OkCoinApiKey");
         this._secretKey = config.GetString("OkCoinSecretKey");
     }
 }
@@ -327,7 +325,7 @@ class OkCoinHttp {
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
-            body: querystring.stringify(this._signer.authenticateMessage(msg)),
+            body: querystring.stringify(this._signer.signMessage(msg)),
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             method: "POST"
         }, (err, resp, body) => {
