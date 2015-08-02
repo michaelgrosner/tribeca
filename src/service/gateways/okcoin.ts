@@ -71,11 +71,11 @@ interface OkCoinTradeRecord {
 interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
-	subscribe = <T>(channel : string, authenticate: boolean, handler: (newMsg : Models.Timestamped<T>) => void) => {
+	subscribe = <T>(channel : string, parameters: any, handler: (newMsg : Models.Timestamped<T>) => void) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
         
-        if (authenticate) 
-            subsReq.parameters = this._signer.signMessage({});
+        if (parameters !== null) 
+            subsReq.parameters = parameters;
         
         this._ws.send(JSON.stringify(subsReq));
         this._handlers[channel] = handler;
@@ -119,7 +119,7 @@ class OkCoinWebsocket {
     private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
+    constructor(config : Config.IConfigProvider) {
         this._ws = new ws(config.GetString("OkCoinWsUrl"));
 
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
@@ -274,12 +274,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
-    constructor(private _socket : OkCoinWebsocket, private _http: OkCoinHttp) {
+    constructor(private _socket : OkCoinWebsocket, private _http: OkCoinHttp, signer: OkCoinMessageSigner) {
         _socket.ConnectChanged.on(cs => {
             this.ConnectChanged.trigger(cs);
             
             if (cs === Models.ConnectivityStatus.Connected) {
-                _socket.subscribe("ok_usd_realtrades", true, this.onMessage);
+                _socket.subscribe("ok_usd_realtrades", signer.signMessage({}), this.onMessage);
             }
         });
     }
@@ -414,10 +414,10 @@ export class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var signer = new OkCoinMessageSigner(config);
         var http = new OkCoinHttp(config, signer);
-        var socket = new OkCoinWebsocket(config, signer);
+        var socket = new OkCoinWebsocket(config);
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http, signer)
             : new NullGateway.NullOrderGateway();
 
         super(
