@@ -39,6 +39,12 @@ ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
 ENV CoinbaseOrderDestination Coinbase
 ENV HitBtcOrderDestination HitBtc
+## OkCoin
+ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
+ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
+ENV OkCoinApiKey NULL
+ENV OkCoinSecretKey NULL
+ENV OkCoinOrderDestination OkCoin
 
 # PROD - values provided for reference.
 ## HitBtc

@@ -14,6 +14,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
+import _ = require("lodash");
 var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
@@ -140,11 +141,19 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     MarketData = new Utils.Evt<Models.Market>();
+    
+    private static GetLevel = (n: [number, number]) : Models.MarketSide => 
+        new Models.MarketSide(n[0], n[1]);
+        
+    private static GetSides = (side: [number, number][]) : Models.MarketSide[] => 
+        _(side).first(3).map(OkCoinMarketDataGateway.GetLevel).value();
+    
     private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = depth.data;
 
-        var getLevel = n => new Models.MarketSide(n[0], n[1]);
-        var mkt = new Models.Market(msg.bids.map(getLevel), msg.asks.map(getLevel), depth.time);
+        var bids = OkCoinMarketDataGateway.GetSides(msg.bids);
+        var asks = OkCoinMarketDataGateway.GetSides(msg.asks);
+        var mkt = new Models.Market(bids, asks, depth.time);
 
         this.MarketData.trigger(mkt);
     };
@@ -278,10 +287,10 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 class OkCoinMessageSigner {
     private _secretKey : string;
-    private _partner : string;
+    private _apiKey : string;
     
     authenticateMessage = (msg : SignedMessage) => {
-        msg.api_key = this._partner;
+        msg.api_key = this._apiKey;
         msg.sign = this.getSign(msg);
         return msg;
     };
@@ -307,7 +316,7 @@ class OkCoinMessageSigner {
     };
     
     constructor(config : Config.IConfigProvider) {
-        this._partner = config.GetString("OkCoinPartner");
+        this._apiKey = config.GetString("OkCoinApiKey");
         this._secretKey = config.GetString("OkCoinSecretKey");
     }
 }
@@ -361,14 +370,15 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
     private trigger = () => {
         this._http.post("userinfo.do", {}).then(msg => {
-            var funds = (<any>msg.data).info.funds.free;
-            var held = (<any>msg.data).info.funds.freezed;
+            var free = (<any>msg.data).info.funds.free;
+            var freezed = (<any>msg.data).info.funds.freezed;
 
-            for (var currencyName in funds) {
-                if (!funds.hasOwnProperty(currencyName)) continue;
-                var val = funds[currencyName];
+            for (var currencyName in free) {
+                if (!free.hasOwnProperty(currencyName)) continue;
+                var amount = parseFloat(free[currencyName]);
+                var held = parseFloat(freezed[currencyName]);
 
-                var pos = new Models.CurrencyPosition(parseFloat(val), held, OkCoinPositionGateway.convertCurrency(currencyName));
+                var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
                 this.PositionUpdate.trigger(pos);
             }
         }).done();
