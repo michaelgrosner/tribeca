@@ -13,7 +13,9 @@ import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
+import util = require("util");
 import Interfaces = require("../interfaces");
+import moment = require("moment");
 import _ = require("lodash");
 var shortId = require("shortid");
 
@@ -31,7 +33,7 @@ interface OkCoinDepthMessage {
 }
 
 interface OrderAck {
-    result: boolean;
+    result: string; // "true" or "false"
     order_id: number;
 }
 
@@ -43,12 +45,12 @@ interface SignedMessage {
 interface Order extends SignedMessage {
     symbol: string;
     type: string;
-    price: number;
-    amount: number;
+    price: string;
+    amount: string;
 }
 
 interface Cancel extends SignedMessage {
-    orderId: string;
+    order_id: string;
 }
 
 interface OkCoinTradeRecord {
@@ -71,13 +73,16 @@ interface OkCoinTradeRecord {
 interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
-	subscribe = <T>(channel : string, parameters: any, handler: (newMsg : Models.Timestamped<T>) => void) => {
+	send = <T>(channel : string, parameters: any) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
         
         if (parameters !== null) 
             subsReq.parameters = parameters;
         
         this._ws.send(JSON.stringify(subsReq));
+    }
+    
+    setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
         this._handlers[channel] = handler;
     }
 
@@ -132,12 +137,15 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
-    private onTrade = (trade : Models.Timestamped<[string,string,string,string,string]>) => {
+    private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
         // [tid, price, amount, time, type]
-        var px = parseFloat(trade[1]);
-        var amt = parseFloat(trade[2]);
-        var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid; // is this the make side?
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(px, amt, trade.time, false, side));
+        _.forEach(trades.data, trade => {
+            var px = parseFloat(trade[1]);
+            var amt = parseFloat(trade[2]);
+            var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid; // is this the make side?
+            var mt = new Models.GatewayMarketTrade(px, amt, trades.time, trades.data.length > 0, side);
+            this.MarketTrade.trigger(mt);
+        });
     };
 
     MarketData = new Utils.Evt<Models.Market>();
@@ -158,13 +166,17 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketData.trigger(mkt);
     };
 
+    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinMD");
     constructor(socket : OkCoinWebsocket) {
+        socket.setHandler("ok_btcusd_depth", this.onDepth);
+        socket.setHandler("ok_btcusd_trades_v1", this.onTrade);
+        
         socket.ConnectChanged.on(cs => {
             this.ConnectChanged.trigger(cs);
             
             if (cs == Models.ConnectivityStatus.Connected) {
-                socket.subscribe("ok_btcusd_depth", false, this.onDepth);
-                socket.subscribe("ok_btcusd_trades_v1", false, this.onTrade)
+                socket.send("ok_btcusd_depth", {});
+                socket.send("ok_btcusd_trades_v1", {});
             }
         });
     }
@@ -174,9 +186,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    generateClientOrderId = () => {
-        return shortId.generate();
-    }
+    generateClientOrderId = () => shortId.generate();
 
     public cancelsByClientOrderId = false;
     
@@ -191,47 +201,62 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
         throw new Error("unable to convert " + Models.Side[side] + " and " + Models.OrderType[type]);
     }
+    
+    // let's really hope there's no race conditions on their end -- we're assuming here that orders sent first
+    // will be acked first, so we can match up orders and their acks
+    private _ordersWaitingForAckQueue = [];
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var o : Order = {
             symbol: "btc_usd", //btc_usd: bitcoin ltc_usd: litecoin,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
-            price: order.price,
-            amount: order.quantity};
+            price: order.price.toString(),
+            amount: order.quantity.toString()};
             
-        this._http.post<OrderAck>("trade.do", o).then(ts => {
-            var osr : Models.OrderStatusReport = { orderId: order.orderId, time: ts.time };
+        this._ordersWaitingForAckQueue.push(order.orderId);
             
-            if (ts.data.result === true) {
-                osr.exchangeId = ts.data.order_id.toString();
-                osr.orderStatus = Models.OrderStatus.Working;
-            } 
-            else {
-                osr.orderStatus = Models.OrderStatus.Rejected;
-            }
-            
-            this.OrderUpdate.trigger(osr);
-        }).done();
-
+        this._socket.send<OrderAck>("ok_spotusd_trade", this._signer.signMessage(o));
         return new Models.OrderGatewayActionReport(Utils.date());
+    };
+    
+    private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
+        var orderId = this._ordersWaitingForAckQueue.shift();
+        if (typeof orderId === "undefined") {
+            this._log("ERROR: got an order ack when there was no order queued!", util.format(ts.data));
+            return;
+        }
+        
+        var osr : Models.OrderStatusReport = { orderId: orderId, time: ts.time };
+            
+        if (ts.data.result === "true") {
+            osr.exchangeId = ts.data.order_id.toString();
+            osr.orderStatus = Models.OrderStatus.Working;
+        } 
+        else {
+            osr.orderStatus = Models.OrderStatus.Rejected;
+        }
+        
+        this.OrderUpdate.trigger(osr);
     };
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        var c : Cancel = {orderId: cancel.exchangeId };
-        this._http.post<OrderAck>("cancel_order.do", c).then(ts => {
-            var osr : Models.OrderStatusReport = { orderId: cancel.clientOrderId, time: ts.time };
-            
-            if (ts.data.result === true) {
-                osr.orderStatus = Models.OrderStatus.Cancelled;
-            }
-            else {
-                osr.orderStatus = Models.OrderStatus.Rejected;
-                osr.cancelRejected = true;
-            }
-            
-            this.OrderUpdate.trigger(osr);
-        });
+        var c : Cancel = {order_id: cancel.exchangeId, symbol: "btc_usd" };
+        this._socket.send<OrderAck>("ok_spotusd_cancel_order", this._signer.signMessage(c));
         return new Models.OrderGatewayActionReport(Utils.date());
+    };
+    
+    private onCancel = (ts: Models.Timestamped<OrderAck>) => {
+        var osr : Models.OrderStatusReport = { exchangeId: ts.data.order_id.toString(), time: ts.time };
+            
+        if (ts.data.result === "true") {
+            osr.orderStatus = Models.OrderStatus.Cancelled;
+        }
+        else {
+            osr.orderStatus = Models.OrderStatus.Rejected;
+            osr.cancelRejected = true;
+        }
+        
+        this.OrderUpdate.trigger(osr);
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
@@ -251,13 +276,13 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     }
 
-    private onMessage = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
+    private onTrade = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
         var t = tsMsg.time;
         var msg : OkCoinTradeRecord = tsMsg.data;
         
         var avgPx = parseFloat(msg.averagePrice);
-        var lastQty = parseFloat(msg.tradeAmount);
-        var lastPx = parseFloat(msg.tradePrice);
+        var lastQty = parseFloat(msg.sigTradeAmount);
+        var lastPx = parseFloat(msg.sigTradePrice);
 
         var status : Models.OrderStatusReport = {
             exchangeId: msg.orderId.toString(),
@@ -273,13 +298,17 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
-    constructor(private _socket : OkCoinWebsocket, private _http: OkCoinHttp, signer: OkCoinMessageSigner) {
+    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
+    constructor(private _socket : OkCoinWebsocket, private _signer: OkCoinMessageSigner) {
+        _socket.setHandler("ok_usd_realtrades", this.onTrade);
+        _socket.setHandler("ok_spotusd_trade", this.onOrderAck);
+        _socket.setHandler("ok_spotusd_cancel_order", this.onCancel);
+        
         _socket.ConnectChanged.on(cs => {
             this.ConnectChanged.trigger(cs);
             
             if (cs === Models.ConnectivityStatus.Connected) {
-                _socket.subscribe("ok_usd_realtrades", signer.signMessage({}), this.onMessage);
+                _socket.send("ok_usd_realtrades", _signer.signMessage({}));
             }
         });
     }
@@ -354,7 +383,6 @@ class OkCoinHttp {
 }
 
 class OkCoinPositionGateway implements Interfaces.IPositionGateway {
-    _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private static convertCurrency(name : string) : Models.Currency {
@@ -382,9 +410,10 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     };
 
+    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
-        this.trigger();
         setInterval(this.trigger, 15000);
+        setTimeout(this.trigger, 10);
     }
 }
 
@@ -417,7 +446,7 @@ export class OkCoin extends Interfaces.CombinedGateway {
         var socket = new OkCoinWebsocket(config);
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, http, signer)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer)
             : new NullGateway.NullOrderGateway();
 
         super(
