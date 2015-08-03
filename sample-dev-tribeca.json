@@ -1,16 +1,15 @@
 {
-	"TRIBECA_MODE": "dev",
-	"EXCHANGE": "null",
-	"MongoDbUrl": "mongodb://localhost:27017/tribeca",
-	"CoinbaseOrderDestination": "Coinbase",
-	"HitBtcOrderDestination": "HitBtc",
-
-	"HitBtcPullUrl": "http://demo-api.hitbtc.com", 
+    "TRIBECA_MODE": "dev",
+    "EXCHANGE": "null",
+    "MongoDbUrl": "mongodb://localhost:27017/tribeca",
+    
+    "HitBtcPullUrl": "http://demo-api.hitbtc.com",
     "HitBtcOrderEntryUrl": "ws://demo-api.hitbtc.com:8080",
     "HitBtcMarketDataUrl": "ws://demo-api.hitbtc.com:80",
     "HitBtcSocketIoUrl": "https://demo-api.hitbtc.com:8081",
     "HitBtcApiKey": "NULL",
     "HitBtcSecret": "NULL",
+    "HitBtcOrderDestination": "HitBtc",
     
     "CoinbaseRestUrl": "https://api-public.sandbox.exchange.coinbase.com",
     "CoinbaseWebsocketUrl": "https://ws-feed-public.sandbox.exchange.coinbase.com",
@@ -18,5 +17,10 @@
     "CoinbaseApiKey": "NULL",
     "CoinbaseSecret": "NULL",
     "CoinbaseOrderDestination": "Coinbase",
-    "HitBtcOrderDestination": "HitBtc"
+    
+    "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
+    "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
+    "OkCoinApiKey": "NULL",
+    "OkCoinSecretKey": "NULL",
+    "OkCoinOrderDestination": "OkCoin"
 }

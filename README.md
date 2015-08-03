@@ -16,7 +16,9 @@
     
     2) `hitbtc` - WebSocket + socket.io API. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
     
-    3) `null` - Test in-memory exchange. No exchange-specific config needed.
+    3) `okcoin` - Websocket.Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
+    
+    4) `null` - Test in-memory exchange. No exchange-specific config needed.
     
   * TRIBECA_MODE
   
