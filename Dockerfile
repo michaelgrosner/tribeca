@@ -39,6 +39,12 @@ ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
 ENV CoinbaseOrderDestination Coinbase
 ENV HitBtcOrderDestination HitBtc
+## Bitstamp - no dev environment
+ENV BitstampPusherUrl ws://ws.pusherapp.com:80/app/de504dc5763aeef9ff52?client=node-pusher-server&version=0.0.1&protocol=5&flash=false
+ENV BitstampHttpUrl https://www.bitstamp.net/api
+ENV BitstampCustomerId NULL
+ENV BitstampApiKey NULL
+ENV BitstampSecret NULL
 ## OkCoin
 ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
 ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/

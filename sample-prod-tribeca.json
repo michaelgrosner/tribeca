@@ -18,6 +18,12 @@
     "CoinbaseSecret": "NULL",
     "CoinbaseOrderDestination": "Coinbase",
     
+    "BitstampPusherUrl": "ws://ws.pusherapp.com:80/app/de504dc5763aeef9ff52?client=node-pusher-server&version=0.0.1&protocol=5&flash=false",
+    "BitstampHttpUrl": "https://www.bitstamp.net/api",
+    "BitstampCustomerId": "NULL",
+    "BitstampApiKey": "NULL",
+    "BitstampSecret": "NULL"
+    
     "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
     "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
     "OkCoinApiKey": "NULL",
