@@ -1,26 +1,35 @@
 {
-	"TRIBECA_MODE": "dev",
-	"EXCHANGE": "null",
-	"MongoDbUrl": "mongodb://localhost:27017/tribeca",
-	"CoinbaseOrderDestination": "Coinbase",
-	"HitBtcOrderDestination": "HitBtc",
-
-	"HitBtcPullUrl": "http://demo-api.hitbtc.com", 
+    "TRIBECA_MODE": "dev",
+    "EXCHANGE": "null",
+    "MongoDbUrl": "mongodb://localhost:27017/tribeca",
+    
+    "HitBtcPullUrl": "http://demo-api.hitbtc.com",
     "HitBtcOrderEntryUrl": "ws://demo-api.hitbtc.com:8080",
     "HitBtcMarketDataUrl": "ws://demo-api.hitbtc.com:80",
     "HitBtcSocketIoUrl": "https://demo-api.hitbtc.com:8081",
     "HitBtcApiKey": "NULL",
     "HitBtcSecret": "NULL",
+    "HitBtcOrderDestination": "HitBtc",
     
     "CoinbaseRestUrl": "https://api-public.sandbox.exchange.coinbase.com",
     "CoinbaseWebsocketUrl": "https://ws-feed-public.sandbox.exchange.coinbase.com",
     "CoinbasePassphrase": "NULL",
     "CoinbaseApiKey": "NULL",
     "CoinbaseSecret": "NULL",
+<<<<<<< HEAD
     
     "BitstampPusherUrl": "ws://ws.pusherapp.com:80/app/de504dc5763aeef9ff52?client=node-pusher-server&version=0.0.1&protocol=5&flash=false",
     "BitstampHttpUrl": "https://www.bitstamp.net/api",
     "BitstampCustomerId": "NULL",
     "BitstampApiKey": "NULL",
     "BitstampSecret": "NULL"
+=======
+    "CoinbaseOrderDestination": "Coinbase",
+    
+    "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
+    "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
+    "OkCoinApiKey": "NULL",
+    "OkCoinSecretKey": "NULL",
+    "OkCoinOrderDestination": "OkCoin"
+>>>>>>> master
 }

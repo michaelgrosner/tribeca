@@ -45,6 +45,12 @@ ENV BitstampHttpUrl https://www.bitstamp.net/api
 ENV BitstampCustomerId NULL
 ENV BitstampApiKey NULL
 ENV BitstampSecret NULL
+## OkCoin
+ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
+ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
+ENV OkCoinApiKey NULL
+ENV OkCoinSecretKey NULL
+ENV OkCoinOrderDestination OkCoin
 
 # PROD - values provided for reference.
 ## HitBtc
