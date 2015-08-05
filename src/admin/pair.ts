@@ -412,8 +412,8 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
         $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
-            .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
+    var sub = subscriberFactory.getSubscriber<Models.MarketTrade>($scope, Messaging.Topics.MarketTrade)
+            .registerSubscriber(addNewMarketTrade, x => x.filter(t => t != null).forEach(addNewMarketTrade))
             .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
     $scope.$on('$destroy', () => {

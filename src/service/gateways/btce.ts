@@ -56,6 +56,16 @@ interface MarketTrade {
     timestamp: number;
 }
 
+interface TradeHistory {
+    pair: string;
+    type: string;
+    amount: number;
+    rate: number;
+    order_id: number;
+    is_your_order: number;
+    timestamp: number;
+}
+
 class BtcEMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
 
@@ -99,9 +109,14 @@ class BtcEMarketDataGateway implements Interfaces.IMarketDataGateway {
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
         private _client: BtcEPublicApiClient) {
-        _timeProvider.setInterval(this.onRefreshMarketData, moment.duration(200, "seconds"));
-        _timeProvider.setInterval(this.onRefreshMarketTrades, moment.duration(200, "seconds"));
-
+            
+        var setTimer = (func) => {
+            _timeProvider.setTimeout(func, moment.duration(5));
+            _timeProvider.setInterval(func, moment.duration(5, "seconds"));
+        };
+        
+        setTimer(this.onRefreshMarketData);
+        setTimer(this.onRefreshMarketTrades);
         _timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
     }
 }
@@ -137,7 +152,7 @@ class BtcEAuthenticatedApiClient {
         return this._lastTimeMs;
     };
 
-    public postToEndpoint = <TRequest, TResponse>(method: string, params: TRequest): Q.Promise<Response<TResponse>> => {
+    public postToEndpoint = <TRequest, TResponse>(method: string, params: TRequest): Q.Promise<Models.Timestamped<Response<TResponse>>> => {
         var formData: any = {};
         for (var key in params) {
             formData[key] = params[key];
@@ -160,12 +175,13 @@ class BtcEAuthenticatedApiClient {
 
         this._log("OUT", util.inspect(options));
 
-        var d = Q.defer<Response<TResponse>>();
+        var d = Q.defer<Models.Timestamped<Response<TResponse>>>();
         request(options, (err, resp, body) => {
+            var t = moment.utc();
             if (err) d.reject(err);
             else {
                 this._log("IN", body);
-                d.resolve(JSON.parse(body));
+                d.resolve(new Models.Timestamped(JSON.parse(body), t));
             }
         });
         return d.promise;
@@ -180,12 +196,15 @@ interface Trade {
     amount: number;
 }
 
+interface IHaveFunds {
+    funds: { [currencyName: string]: number };
+}
+
 // aka order ack
-interface TradeResponse {
+interface TradeResponse extends IHaveFunds {
     received: number;
     remains: number;
     order_id: number;
-    funds: Object;
 }
 
 interface CancelOrder {
@@ -219,19 +238,22 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
         var req = { order_id: parseInt(cancel.exchangeId) };
         this._client.postToEndpoint<CancelOrder, CancelOrderAck>("CancelOrder", req).then(r => {
-            if (r.success === 1) {
+            if (r.data.success === 1) {
                 this.raiseOrderUpdate({
+                    time: r.time,
                     exchangeId: cancel.exchangeId,
                     orderId: cancel.clientOrderId,
-                    orderStatus: Models.OrderStatus.Cancelled
+                    orderStatus: Models.OrderStatus.Cancelled,
+                    leavesQuantity: 0
                 });
             }
             else {
                 this.raiseOrderUpdate({
+                    time: r.time,
                     exchangeId: cancel.exchangeId,
                     orderId: cancel.clientOrderId,
                     orderStatus: Models.OrderStatus.Rejected,
-                    rejectMessage: r.error
+                    rejectMessage: r.data.error
                 });
             }
         }).done();
@@ -252,14 +274,16 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
 
         this._client.postToEndpoint<Trade, TradeResponse>("Trade", t).then(r => {
-            if (r.success === 1) {
+            if (r.data.success === 1) {
+                var exchangeOrderId = r.data.return.order_id;
+                
                 var rpt: Models.OrderStatusReport = {
+                    time: r.time,
                     orderId: order.orderId,
-                    leavesQuantity: r.return.remains,
-                    partiallyFilled: Math.abs(r.return.received - r.return.remains) > 1e-4
+                    leavesQuantity: r.data.return.remains,
+                    partiallyFilled: r.data.return.received > 1e-6 && exchangeOrderId !== 0
                 };
 
-                var exchangeOrderId = r.return.order_id;
                 if (exchangeOrderId === 0) {
                     rpt.orderStatus = Models.OrderStatus.Complete;
                 }
@@ -269,12 +293,14 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 }
 
                 this.raiseOrderUpdate(rpt);
+                this._positions.handlePositionUpdate(r.data.return);
             }
             else {
                 this.raiseOrderUpdate({
+                    time: r.time,
                     orderId: order.orderId,
                     orderStatus: Models.OrderStatus.Rejected,
-                    rejectMessage: r.error
+                    rejectMessage: r.data.error
                 });
             }
         });
@@ -286,15 +312,16 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         _.forIn(this._openOrderExchangeIds, (unused, id) => {
             var req = { order_id: parseInt(id) };
             this._client.postToEndpoint<ActiveOrderRequest, ActiveOrder>("OrderInfo", req).then(r => {
-                if (r.success === 1) {
+                if (r.data.success === 1) {
                     this.raiseOrderUpdate({
+                        time: r.time,
                         exchangeId: id,
-                        leavesQuantity: r.return.amount,
-                        partiallyFilled: Math.abs(r.return.start_amount - r.return.amount) > 1e-4
+                        leavesQuantity: r.data.return.amount,
+                        partiallyFilled: Math.abs(r.data.return.start_amount - r.data.return.amount) > 1e-4
                     });
                 }
                 else {
-                    this._log("OrderInfo request for order " + id + " did not return successfully: " + r.error);
+                    this._log("OrderInfo request for order " + id + " did not return successfully: " + r.data.error);
                 }
             });
         });
@@ -307,11 +334,15 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 case Models.OrderStatus.New:
                 case Models.OrderStatus.Working:
                     this._openOrderExchangeIds[id] = true;
+                    this._log("add", id, "to _openOrderExchangeIds");
+                    break;
                 case Models.OrderStatus.Cancelled:
                 case Models.OrderStatus.Complete:
                 case Models.OrderStatus.Rejected:
                 case Models.OrderStatus.Other:
                     delete this._openOrderExchangeIds[id];
+                    this._log("removed", id, "from _openOrderExchangeIds");
+                    break;
             }
         }
 
@@ -327,6 +358,24 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             default: return Models.OrderStatus.Other;
         }
     }
+    
+    private _tradeSince = moment.utc();
+    private monitorTrades = () => {
+        var params = { count: 5 };
+        //var params = { since: Math.round(new Date().getTime() / 1000) };
+        this._client.postToEndpoint<{}, {[trade_id: string]: TradeHistory[]}>("TradeHistory", params).then(r => {
+            _.forIn(r.data.return, (trade : TradeHistory, trade_id) => {
+                this.raiseOrderUpdate({
+                    lastQuantity: trade.amount,
+                    lastPrice: trade.rate,
+                    exchangeId: trade.order_id.toString(),
+                    time: moment.unix(trade.timestamp),
+                    exchangeTradeId: trade_id.toString()
+                });
+            });
+        });
+        this._tradeSince = moment.utc();
+    };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -337,20 +386,55 @@ class BtcEOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
-        private _client: BtcEAuthenticatedApiClient) {
+        private _client: BtcEAuthenticatedApiClient,
+        private _positions: BtcEPositionGateway) {
+            
         this._timeProvider.setImmediate(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._timeProvider.setInterval(this.refreshOpenOrders, moment.duration(5, "seconds"));
+        
+        this._timeProvider.setTimeout(() => {
+            this._timeProvider.setInterval(this.monitorTrades, moment.duration(5, "seconds"));
+        }, moment.duration(2, "seconds"));
     }
 }
 
 class BtcEPositionGateway implements Interfaces.IPositionGateway {
     _log: Utils.Logger = Utils.log("tribeca:gateway:BtcEPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    
+    private downloadPositions = () => {
+        this._client.postToEndpoint<{}, IHaveFunds>("getInfo", {}).then(r => {
+            if (r.data.success === 1) {
+                this.handlePositionUpdate(r.data.return);
+            }
+        });
+    };
+    
+    public handlePositionUpdate = (msg : IHaveFunds) => {
+        _.forIn(msg.funds, (val, curName) => {
+            var cur = BtcEPositionGateway.GetCurrency(curName);
+            
+            if (cur !== null) {
+                this.PositionUpdate.trigger(new Models.CurrencyPosition(val, 0, cur));
+            }
+        });
+    };
+    
+    private static GetCurrency(name: string) : Models.Currency {
+        switch (name) {
+            case "usd": return Models.Currency.USD;
+            case "btc": return Models.Currency.BTC;
+            case "ltc": return Models.Currency.LTC;
+        }
+        return null;
+    }
 
     constructor(
         private _pairKey: string,
         private _timeProvider: Utils.ITimeProvider,
         private _client: BtcEAuthenticatedApiClient) {
+            this._timeProvider.setTimeout(this.downloadPositions, moment.duration(5));
+            this._timeProvider.setInterval(this.downloadPositions, moment.duration(30, "seconds"));
     }
 }
 
@@ -381,10 +465,11 @@ export class BtcE extends Interfaces.CombinedGateway {
         var publicClient = new BtcEPublicApiClient(config);
         var authClient = new BtcEAuthenticatedApiClient(config);
         var pairKey = Models.Currency[pair.base].toLowerCase() + "_" + Models.Currency[pair.quote].toLowerCase();
+        var positions = new BtcEPositionGateway(pairKey, timeProvider, authClient);
         super(
             new BtcEMarketDataGateway(pairKey, timeProvider, publicClient),
-            new BtcEOrderEntryGateway(pairKey, timeProvider, authClient),
-            new BtcEPositionGateway(pairKey, timeProvider, authClient),
+            new BtcEOrderEntryGateway(pairKey, timeProvider, authClient, positions),
+            positions,
             new BtcEBaseGateway());
     }
 }

@@ -172,6 +172,8 @@ export interface OrderStatusReport {
     pendingCancel? : boolean;
     pendingReplace? : boolean;
     cancelRejected? : boolean;
+    
+    exchangeTradeId?: string;
 }
 
 export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
