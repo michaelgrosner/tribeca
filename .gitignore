@@ -8,3 +8,5 @@ typings
 tribeca/
 *.log.*
 test/src
+.tscache
+tribeca.json
