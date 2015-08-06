@@ -15,9 +15,9 @@ export interface IPublish<T> {
 }
 
 export class Publisher<T> implements IPublish<T> {
-    private _io : any;
+    private _io : SocketIO.Namespace;
     private _snapshot : () => T[] = null;
-    constructor(private topic : string, io : any,
+    constructor(private topic : string, io : SocketIO.Server,
                 snapshot : () => T[] = null,
                 private _log : (...args: any[]) => void = console.log) {
         this.registerSnapshot(snapshot);
@@ -29,7 +29,7 @@ export class Publisher<T> implements IPublish<T> {
             s.on("disconnect", () => {
                 this._log("socket", s.id, "disconnected for Publisher", topic);
             });
-
+            
             s.on(Prefixes.SUBSCRIBE, () => {
                 if (this._snapshot !== null) {
                     var snapshot = this._snapshot();
@@ -71,16 +71,16 @@ export class Subscriber<T> implements ISubscribe<T> {
     private _snapshotHandler : (msgs : T[]) => void = null;
     private _disconnectHandler : () => void = null;
     private _connectHandler : () => void = null;
-    private _io : any;
+    private _io : SocketIOClient.Socket;
 
-    constructor(private topic : string, io : any,
+    constructor(private topic : string, io : SocketIOClientStatic,
                 private _log : (...args: any[]) => void = console.log) {
         this._log("creating subscriber to", this.topic);
         this._io = io("/"+this.topic, {forceNew: true});
-        this._io.on("connect", this.onConnect);
-        this._io.on("disconnect", this.onDisconnect);
-        this._io.on(Prefixes.MESSAGE, this.onIncremental);
-        this._io.on(Prefixes.SNAPSHOT, this.onSnapshot);
+        this._io.on("connect", this.onConnect)
+                .on("disconnect", this.onDisconnect)
+                .on(Prefixes.MESSAGE, this.onIncremental)
+                .on(Prefixes.SNAPSHOT, this.onSnapshot);
     }
 
     private onConnect = () => {
@@ -164,12 +164,12 @@ export interface IFire<T> {
 }
 
 export class Fire<T> implements IFire<T> {
-    private _io : any;
+    private _io : SocketIOClient.Socket;
 
-    constructor(private topic : string, io : any, _log : (...args: any[]) => void) {
+    constructor(private topic : string, io : SocketIOClientStatic, _log : (...args: any[]) => void) {
         this._io = io("/"+this.topic, {forceNew: true, transports: ['websocket']});
-        this._io.on("connect", () => _log("Fire connected to", this.topic));
-        this._io.on("disconnect", () => _log("Fire disconnected to", this.topic));
+        this._io.on("connect", () => _log("Fire connected to", this.topic))
+                .on("disconnect", () => _log("Fire disconnected to", this.topic));
     }
 
     public fire = (msg : T) : void => {
@@ -187,9 +187,9 @@ export class NullReceiver<T> implements IReceive<T> {
 
 export class Receiver<T> implements IReceive<T> {
     private _handler : (msg : T) => void = null;
-    constructor(private topic : string, io : any,
+    constructor(private topic : string, io : SocketIO.Server,
                 private _log : (...args: any[]) => void = console.log) {
-        io.of("/"+this.topic).on("connection", (s : any) => {
+        io.of("/"+this.topic).on("connection", (s : SocketIO.Socket) => {
             this._log("socket", s.id, "connected for Receiver", topic);
             s.on(Prefixes.MESSAGE, msg => {
                 if (this._handler !== null)

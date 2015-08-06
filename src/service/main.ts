@@ -11,6 +11,8 @@ import moment = require("moment");
 import fs = require("fs");
 import winston = require("winston");
 import request = require('request');
+import http = require("http");
+import socket_io = require('socket.io')
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
@@ -99,17 +101,17 @@ var liveTradingSetup = () => {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
     
     var app = express();
-    var http = (<any>require('http')).Server(app);
-    var io = require('socket.io')(http);
+    var http_server = http.createServer(app);
+    var io = socket_io(http_server);
 
     var basicAuth = require('basic-auth-connect');
 
     var isFullUser = (username, password) => true;
     app.use(basicAuth(isFullUser));
 
-    app.use(<any>compression());
+    app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));
-    http.listen(3000, () => mainLog('Listening to admins on *:3000...'));
+    http_server.listen(3000, () => mainLog('Listening to admins on *:3000...'));
 
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
