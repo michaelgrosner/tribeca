@@ -119,5 +119,3 @@ var requires = ['ui.bootstrap',
 
 angular.module('projectApp', requires)
        .controller('uiCtrl', uiCtrl);
-       
-angular.bootstrap(document, ["projectApp"]);
