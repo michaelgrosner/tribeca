@@ -54,8 +54,10 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
     $log.info("started position grid");
 };
 
+export var positionDirective = "positionDirective";
+
 angular
-    .module("positionDirective", ['ui.bootstrap', 'sharedDirectives'])
+    .module(positionDirective, ['ui.bootstrap', 'sharedDirectives'])
     .directive("positionGrid", () => {
         return {
             restrict: 'E',
@@ -93,8 +95,10 @@ var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.
     $log.info("started target base position");
 };
 
+export var targetBasePositionDirective = "targetBasePositionDirective";
+
 angular
-    .module("targetBasePositionDirective", ['sharedDirectives'])
+    .module(targetBasePositionDirective, ['sharedDirectives'])
     .directive("targetBasePosition", () => {
         var template = '<span>{{ targetBasePosition|number:2 }}</span>';
 
@@ -141,8 +145,10 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
     $log.info("started trade safety");
 };
 
+export var tradeSafetyDirective = "tradeSafetyDirective";
+
 angular
-    .module("tradeSafetyDirective", ['sharedDirectives'])
+    .module(tradeSafetyDirective, ['sharedDirectives'])
     .directive("tradeSafety", () => {
         var template = '<span>BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
 

@@ -20,41 +20,7 @@ ENV TRIBECA_MODE dev
 ENV EXCHANGE null
 # IP to access mongo instance. If you are on a mac, run `boot2docker ip` and replace `tribeca-mongo`.
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
-ENV CoinbaseOrderDestination Coinbase
-ENV HitBtcOrderDestination HitBtc
-
-# DEV
-## HitBtc
-ENV HitBtcPullUrl http://demo-api.hitbtc.com 
-ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
-ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
-ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
-ENV HitBtcApiKey NULL
-ENV HitBtcSecret NULL
-## Coinbase
-ENV CoinbaseRestUrl https://api-public.sandbox.exchange.coinbase.com
-ENV CoinbaseWebsocketUrl https://ws-feed-public.sandbox.exchange.coinbase.com
-ENV CoinbasePassphrase NULL
-ENV CoinbaseApiKey NULL
-ENV CoinbaseSecret NULL
-ENV CoinbaseOrderDestination Coinbase
-ENV HitBtcOrderDestination HitBtc
-## OkCoin
-ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
-ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
-ENV OkCoinApiKey NULL
-ENV OkCoinSecretKey NULL
-ENV OkCoinOrderDestination OkCoin
-
-# PROD - values provided for reference.
-## HitBtc
-#ENV HitBtcPullUrl http://api.hitbtc.com 
-#ENV HitBtcOrderEntryUrl wss://api.hitbtc.com:8080
-#ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
-#ENV HitBtcSocketIoUrl https://api.hitbtc.com:8081
-## Coinbase
-#ENV CoinbaseRestUrl https://api.exchange.coinbase.com
-#ENV CoinbaseWebsocketUrl wss://ws-feed.exchange.coinbase.com
+ENV CoinbaseWebsocketUrl wss://ws-feed.exchange.coinbase.com
 
 WORKDIR tribeca/service
 CMD ["forever", "main.js"]

@@ -1,7 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-/// <amd-dependency path="ui.bootstrap"/>
 
 import angular = require("angular");
 import Models = require("../common/models");
@@ -307,8 +306,10 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
     $log.info("started market quoting grid");
 };
 
+export var marketQuotingDirective = "marketQuotingDirective";
+
 angular
-    .module("marketQuotingDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .module(marketQuotingDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
     .directive("marketQuotingGrid", () => {
 
         return {
@@ -423,8 +424,10 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
     $log.info("started market trade grid");
 };
 
+export var marketTradeDirective = "marketTradeDirective";
+
 angular
-    .module("marketTradeDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .module(marketTradeDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
     .directive("marketTradeGrid", () => {
         var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
 
@@ -486,8 +489,10 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, su
     $log.info("started message grid");
 };
 
+export var messagesDirective = "messagesDirective";
+
 angular
-    .module("messagesDirective", ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+    .module(messagesDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
     .directive("messagesGrid", () => {
         var template = '<div><div class="table table-striped table-hover table-condensed" ng-grid="messageOptions"></div></div>';
 

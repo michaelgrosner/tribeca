@@ -47,7 +47,7 @@ module.exports = function (grunt) {
                 src: adminFiles,
                 outDir: 'tribeca/service/admin/js',
                 options: {
-                    module: 'amd'
+                    module: 'commonjs'
                 }
             }
         },

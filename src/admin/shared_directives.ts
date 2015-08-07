@@ -86,7 +86,9 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     public disconnect = () => this._wrapped.disconnect();
 }
 
-angular.module('sharedDirectives', ['ui.bootstrap'])
+export var sharedDirectives = "sharedDirectives";
+
+angular.module(sharedDirectives, ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
        .factory("socket", () => io)
