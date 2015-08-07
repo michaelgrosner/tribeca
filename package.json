@@ -19,6 +19,7 @@
     "connect": "^3.2.0",
     "express": "^4.8.8",
     "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.0",
     "grunt-contrib-copy": "^0.7.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-ts": "^1.12.1",
