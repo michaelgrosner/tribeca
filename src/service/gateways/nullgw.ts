@@ -61,6 +61,8 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
 
     constructor() {
         setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.USD)), 2500);
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.EUR)), 2500);
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.GBP)), 2500);
         setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(2, .5, Models.Currency.BTC)), 5000);
     }
 }
@@ -116,7 +118,9 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     }
     
     private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD)
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
     ];
     public get supportedCurrencyPairs() {
         return NullGatewayDetails.AllPairs;

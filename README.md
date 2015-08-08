@@ -27,6 +27,14 @@
     2) `dev`
     
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
+  
+  * TradedPair - The following currency pairs are supported on these exchanges:
+  
+    1) `BTC/USD` - Coinbase, HitBtc, OkCoin, Null
+    
+    2) `BTC/EUR` - Coinbase, HitBtc, Null
+    
+    3) `BTC/GBP` - Coinbase, Null
 
 3) Save the Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
