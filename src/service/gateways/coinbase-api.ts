@@ -397,7 +397,7 @@ _.assign(OrderBook.prototype, new function() {
         };
 
         request({
-            'url': self.restURI + '/products/BTC-USD/book?level=3',
+            'url': self.restURI + '/products/' + self.productID + '/book?level=3',
             'headers': { 'User-Agent': 'coinbase-node-client' },
         }, function(err, response, body) {
                 if (err) {
