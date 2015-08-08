@@ -491,15 +491,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                 qs: {nonce: nonce.toString(), apikey: this._apiKey}};
     };
 
-    private static convertCurrency(code : string) : Models.Currency {
-        switch (code) {
-            case "USD": return Models.Currency.USD;
-            case "BTC": return Models.Currency.BTC;
-            case "LTC": return Models.Currency.LTC;
-            default: return null;
-        }
-    }
-
     private onTick = () => {
         request.get(
             this.getAuth("/api/1/trading/balance"),
@@ -513,7 +504,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                     }
 
                     rpts.forEach(r => {
-                        var currency = HitBtcPositionGateway.convertCurrency(r.currency_code);
+                        var currency = GetCurrencyEnum(r.currency_code);
                         if (currency == null) return;
                         var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
                         this.PositionUpdate.trigger(position);
