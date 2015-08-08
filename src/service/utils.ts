@@ -3,6 +3,7 @@
 import Models = require("../common/models");
 import moment = require('moment');
 import events = require("events");
+require('events').EventEmitter.prototype._maxListeners = 100;
 
 export var date = moment.utc;
 
@@ -19,7 +20,7 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
 import util = require("util");
 import winston = require("winston");
 winston.add(winston.transports.DailyRotateFile, {
-    handleExceptions: true,
+    handleExceptions: false,
     exitOnError: false,
     filename: 'tribeca.log',
     timestamp: false,

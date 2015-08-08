@@ -46,8 +46,13 @@ var config = new Config.ConfigProvider();
 
 ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
     process.on(reason, (e?) => {
-        Utils.errorLog(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
-        console.log(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
+        var bits : string[] = ["Terminating!", reason, e];
+        if (reason === "uncaughtException")
+            bits.push(e.stack);
+        var msg = util.format.apply(null, bits);
+        
+        Utils.errorLog(msg);
+        console.error(msg);
         
         process.exit(1);
     });
@@ -347,7 +352,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             start = process.hrtime();
         }, interval).unref();
     
-    });
+    }).done();
 
     return completedSuccessfully.promise;
 };
@@ -418,11 +423,4 @@ var harness = () : Q.Promise<any> => {
     }
 };
 
-harness()
-    .catch(err => {
-        console.error("Caught an error!");
-        console.error(err);
-        if (typeof err.stack !== "undefined")
-            console.error(err.stack);
-    })
-    .done();
+harness().done();
