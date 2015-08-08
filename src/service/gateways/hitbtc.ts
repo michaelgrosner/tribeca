@@ -606,7 +606,8 @@ class HitBtcSymbolProvider {
 }
 
 export class HitBtc extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
+        var symbolProvider = new HitBtcSymbolProvider(pair);
         var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config)
             : new NullGateway.NullOrderGateway();

@@ -471,7 +471,8 @@ class OkCoinSymbolProvider {
 }
 
 export class OkCoin extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
+        var symbol = new OkCoinSymbolProvider(pair);
         var signer = new OkCoinMessageSigner(config);
         var http = new OkCoinHttp(config, signer);
         var socket = new OkCoinWebsocket(config);

@@ -766,7 +766,9 @@ class CoinbaseSymbolProvider {
 }
 
 export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider) {
+    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) {
+        var symbolProvider = new CoinbaseSymbolProvider(pair);
+        
         var orderEventEmitter = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
         var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));

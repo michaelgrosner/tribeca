@@ -133,9 +133,9 @@ var liveTradingSetup = () => {
     
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
         switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
+            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
+            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
             case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
