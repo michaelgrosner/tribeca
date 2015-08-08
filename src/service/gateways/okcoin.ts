@@ -444,6 +444,32 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
     }
 }
 
+function GetCurrencyEnum(c: string) : Models.Currency {
+    switch (name.toLowerCase()) {
+        case "usd": return Models.Currency.USD;
+        case "ltc": return Models.Currency.LTC;
+        case "btc": return Models.Currency.BTC;
+        default: throw new Error("Unsupported currency " + name);
+    }
+}
+
+function GetCurrencySymbol(c: Models.Currency) : string {
+    switch (c) {
+        case Models.Currency.USD: return "usd";
+        case Models.Currency.LTC: return "ltc";
+        case Models.Currency.BTC: return "btc";
+        default: throw new Error("Unsupported currency " + Models.Currency[c]);
+    }
+}
+
+class OkCoinSymbolProvider {
+    public symbol : string;
+    
+    constructor(pair: Models.CurrencyPair) {
+        this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
+    }
+}
+
 export class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var signer = new OkCoinMessageSigner(config);

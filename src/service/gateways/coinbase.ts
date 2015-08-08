@@ -737,6 +737,34 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
     }
 }
 
+function GetCurrencyEnum(c: string) : Models.Currency {
+    switch (name.toLowerCase()) {
+        case "BTC": return Models.Currency.BTC;
+        case "USD": return Models.Currency.USD;
+        case "EUR": return Models.Currency.EUR;
+        case "GBP": return Models.Currency.GBP;
+        default: throw new Error("Unsupported currency " + name);
+    }
+}
+
+function GetCurrencySymbol(c: Models.Currency) : string {
+    switch (c) {
+        case Models.Currency.USD: return "USD";
+        case Models.Currency.GBP: return "GBP";
+        case Models.Currency.BTC: return "BTC";
+        case Models.Currency.EUR: return "EUR";
+        default: throw new Error("Unsupported currency " + Models.Currency[c]);
+    }
+}
+
+class CoinbaseSymbolProvider {
+    public symbol : string;
+    
+    constructor(pair: Models.CurrencyPair) {
+        this.symbol = GetCurrencySymbol(pair.base) + "-" + GetCurrencySymbol(pair.quote);
+    }
+}
+
 export class Coinbase extends Interfaces.CombinedGateway {
     constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider) {
         var orderEventEmitter = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);

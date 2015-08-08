@@ -577,6 +577,34 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
     }
 }
 
+function GetCurrencyEnum(c: string) : Models.Currency {
+    switch (name.toLowerCase()) {
+        case "BTC": return Models.Currency.BTC;
+        case "USD": return Models.Currency.USD;
+        case "EUR": return Models.Currency.EUR;
+        case "LTC": return Models.Currency.LTC;
+        default: throw new Error("Unsupported currency " + name);
+    }
+}
+
+function GetCurrencySymbol(c: Models.Currency) : string {
+    switch (c) {
+        case Models.Currency.USD: return "USD";
+        case Models.Currency.LTC: return "LTC";
+        case Models.Currency.BTC: return "BTC";
+        case Models.Currency.EUR: return "EUR";
+        default: throw new Error("Unsupported currency " + Models.Currency[c]);
+    }
+}
+
+class HitBtcSymbolProvider {
+    public symbol : string;
+    
+    constructor(pair: Models.CurrencyPair) {
+        this.symbol = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+    }
+}
+
 export class HitBtc extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider) {
         var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
