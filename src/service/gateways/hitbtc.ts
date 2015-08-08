@@ -140,12 +140,12 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
     private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : moment.Moment) => {
-        if (msg.symbol != "BTCUSD" || !this._hasProcessedSnapshot) return;
+        if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
     };
 
     private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : moment.Moment) => {
-        if (msg.symbol != "BTCUSD") return;
+        if (msg.symbol !== this._symbolProvider.symbol) return;
         this._lastAsks.clear();
         this._lastBids.clear();
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -214,7 +214,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _tradesClient : SocketIOClient.Socket;
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcMD");
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
@@ -228,8 +228,8 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             throw err;
         });
 
-        this._log("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
-        this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/BTCUSD");
+        this._log("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
+        this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient.on("connect", this.onConnectionStatusChange);
         this._tradesClient.on("trade", (t : MarketTrade) => {
             this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, null));
@@ -237,13 +237,13 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
-            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/orderbook")},
+            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
             (err, body, resp) => {
                 this.onMarketDataSnapshotFullRefresh(resp, Utils.date());
             });
 
         request.get(
-            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/BTCUSD/trades"),
+            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/trades"),
              qs: {from: 0, by: "trade_id", sort: 'desc', start_index: 0, max_results: 100}},
             (err, body, resp) => {
                 JSON.parse((<any>body).body).trades.forEach(t => {
@@ -268,7 +268,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
             cancelRequestClientOrderId: cancel.requestId,
-            symbol: "BTCUSD",
+            symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(cancel.side)});
         return new Models.OrderGatewayActionReport(Utils.date());
     };
@@ -281,7 +281,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
-            symbol: "BTCUSD",
+            symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(order.side),
             quantity: order.quantity * _lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
@@ -454,7 +454,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
@@ -609,7 +609,7 @@ export class HitBtc extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbolProvider = new HitBtcSymbolProvider(pair);
         var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config)
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.
@@ -618,7 +618,7 @@ export class HitBtc extends Interfaces.CombinedGateway {
             new HitBtcPositionGateway(config);
 
         super(
-            new HitBtcMarketDataGateway(config),
+            new HitBtcMarketDataGateway(config, symbolProvider),
             orderGateway,
             positionGateway,
             new HitBtcBaseGateway());
