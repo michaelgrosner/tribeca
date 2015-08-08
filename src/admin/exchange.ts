@@ -80,6 +80,7 @@ interface TargetBasePositionScope extends ng.IScope {
 var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
     var update = (value : Models.TargetBasePositionValue) => {
+        if (value == null) return;
         $scope.targetBasePosition = value.data;
     };
 
@@ -122,6 +123,7 @@ interface TradeSafetyScope extends ng.IScope {
 var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
     var updateValue = (value : Models.TradeSafety) => {
+        if (value == null) return;
         $scope.tradeSafetyValue = value.combined;
         $scope.buySafety = value.buy;
         $scope.sellSafety = value.sell;

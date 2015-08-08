@@ -28,7 +28,7 @@ var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCac
                 html: true,
                 date: scope.date
             };
-            (<any>$(element)).popover(options).click((e) => {
+            (<any>jQuery(element)).popover(options).click((e) => {
                 e.preventDefault();
             });
         }
@@ -91,7 +91,7 @@ export var sharedDirectives = "sharedDirectives";
 angular.module(sharedDirectives, ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
-       .factory("socket", () => io)
+       .factory("socket", () : SocketIOClient.Socket => io())
        .service("subscriberFactory", SubscriberFactory)
        .service("fireFactory", FireFactory)
        .filter("momentFullDate", () => Models.toUtcFormattedTime)

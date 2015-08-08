@@ -124,6 +124,7 @@ export class DisplayPair {
     }
 
     public dispose = () => {
+        console.log("dispose client");
         this._subscribers.forEach(s => s.disconnect());
     };
 
@@ -409,7 +410,8 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
     };
 
     var addNewMarketTrade = (u : Models.MarketTrade) => {
-        $scope.marketTrades.push(new MarketTradeViewModel(u));
+        if (u != null)
+            $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
