@@ -164,16 +164,19 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinMD");
-    constructor(socket : OkCoinWebsocket) {
-        socket.setHandler("ok_btcusd_depth", this.onDepth);
-        socket.setHandler("ok_btcusd_trades_v1", this.onTrade);
+    constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
+        var depthChannel = "ok_" + symbolProvider.symbol + "_depth";
+        var tradesChannel = "ok_" + symbolProvider.symbol + "_trades_v1";
+        
+        socket.setHandler(depthChannel, this.onDepth);
+        socket.setHandler(tradesChannel, this.onTrade);
         
         socket.ConnectChanged.on(cs => {
             this.ConnectChanged.trigger(cs);
             
             if (cs == Models.ConnectivityStatus.Connected) {
-                socket.send("ok_btcusd_depth", {});
-                socket.send("ok_btcusd_trades_v1", {});
+                socket.send(depthChannel, {});
+                socket.send(tradesChannel, {});
             }
         });
     }
@@ -205,7 +208,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var o : Order = {
-            symbol: "btc_usd", //btc_usd: bitcoin ltc_usd: litecoin,
+            symbol: this._symbolProvider.symbol,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
             price: order.price.toString(),
             amount: order.quantity.toString()};
@@ -237,7 +240,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        var c : Cancel = {order_id: cancel.exchangeId, symbol: "btc_usd" };
+        var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
         this._socket.send<OrderAck>("ok_spotusd_cancel_order", this._signer.signMessage(c));
         return new Models.OrderGatewayActionReport(Utils.date());
     };
@@ -296,7 +299,10 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
-    constructor(private _socket : OkCoinWebsocket, private _signer: OkCoinMessageSigner) {
+    constructor(
+            private _socket : OkCoinWebsocket, 
+            private _signer: OkCoinMessageSigner,
+            private _symbolProvider: OkCoinSymbolProvider) {
         _socket.setHandler("ok_usd_realtrades", this.onTrade);
         _socket.setHandler("ok_spotusd_trade", this.onOrderAck);
         _socket.setHandler("ok_spotusd_cancel_order", this.onCancel);
@@ -478,11 +484,11 @@ export class OkCoin extends Interfaces.CombinedGateway {
         var socket = new OkCoinWebsocket(config);
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
-            new OkCoinMarketDataGateway(socket),
+            new OkCoinMarketDataGateway(socket, symbol),
             orderGateway,
             new OkCoinPositionGateway(http),
             new OkCoinBaseGateway());
