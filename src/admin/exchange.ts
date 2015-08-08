@@ -54,8 +54,10 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
     $log.info("started position grid");
 };
 
+export var positionDirective = "positionDirective";
+
 angular
-    .module("positionDirective", ['ui.bootstrap', 'sharedDirectives'])
+    .module(positionDirective, ['ui.bootstrap', 'sharedDirectives'])
     .directive("positionGrid", () => {
         return {
             restrict: 'E',
@@ -78,6 +80,7 @@ interface TargetBasePositionScope extends ng.IScope {
 var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
     var update = (value : Models.TargetBasePositionValue) => {
+        if (value == null) return;
         $scope.targetBasePosition = value.data;
     };
 
@@ -93,8 +96,10 @@ var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.
     $log.info("started target base position");
 };
 
+export var targetBasePositionDirective = "targetBasePositionDirective";
+
 angular
-    .module("targetBasePositionDirective", ['sharedDirectives'])
+    .module(targetBasePositionDirective, ['sharedDirectives'])
     .directive("targetBasePosition", () => {
         var template = '<span>{{ targetBasePosition|number:2 }}</span>';
 
@@ -118,6 +123,7 @@ interface TradeSafetyScope extends ng.IScope {
 var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
 
     var updateValue = (value : Models.TradeSafety) => {
+        if (value == null) return;
         $scope.tradeSafetyValue = value.combined;
         $scope.buySafety = value.buy;
         $scope.sellSafety = value.sell;
@@ -141,8 +147,10 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
     $log.info("started trade safety");
 };
 
+export var tradeSafetyDirective = "tradeSafetyDirective";
+
 angular
-    .module("tradeSafetyDirective", ['sharedDirectives'])
+    .module(tradeSafetyDirective, ['sharedDirectives'])
     .directive("tradeSafety", () => {
         var template = '<span>BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
 

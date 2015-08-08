@@ -1,8 +1,13 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
-/// <amd-dependency path="ui.bootstrap"/>
 
+(<any>global).jQuery = require("jquery");
 import angular = require("angular");
+
+var ui_bootstrap = require("angular-ui-bootstrap");
+var bootstrap = require("../ng-grid.min");
+var ngGrid = require("../bootstrap.min");
+
 import Models = require("../common/models");
 import moment = require("moment");
 import Exchange = require("./exchange");
@@ -102,15 +107,15 @@ var uiCtrl = ($scope : MainWindowScope,
 
 var requires = ['ui.bootstrap',
                 'ngGrid',
-                'orderListDirective',
-                'tradeListDirective',
-                'marketQuotingDirective',
-                'marketTradeDirective',
-                'messagesDirective', 
-                'positionDirective',
-                'targetBasePositionDirective',
-                'tradeSafetyDirective',
-                'sharedDirectives'];
+                OrderList.orderListDirective,
+                Trades.tradeListDirective,
+                Pair.marketQuotingDirective,
+                Pair.marketTradeDirective,
+                Pair.messagesDirective, 
+                Exchange.positionDirective,
+                Exchange.targetBasePositionDirective,
+                Exchange.tradeSafetyDirective,
+                Shared.sharedDirectives];
 
 angular.module('projectApp', requires)
        .controller('uiCtrl', uiCtrl);

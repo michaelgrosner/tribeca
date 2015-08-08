@@ -4,9 +4,9 @@
 import Models = require("./models");
 
 module Prefixes {
-    export var SUBSCRIBE = "subscribe";
-    export var SNAPSHOT = "snapshot";
-    export var MESSAGE = "message";
+    export var SUBSCRIBE = "u";
+    export var SNAPSHOT = "n";
+    export var MESSAGE = "m";
 }
 
 export interface IPublish<T> {
@@ -15,32 +15,34 @@ export interface IPublish<T> {
 }
 
 export class Publisher<T> implements IPublish<T> {
-    private _io : SocketIO.Namespace;
     private _snapshot : () => T[] = null;
-    constructor(private topic : string, io : SocketIO.Server,
+    constructor(private topic : string, 
+                private _io : SocketIO.Server,
                 snapshot : () => T[] = null,
                 private _log : (...args: any[]) => void = console.log) {
         this.registerSnapshot(snapshot);
 
-        this._io = io.of("/"+this.topic);
-        this._io.on("connection", s => {
+        var onConnection = s => {
             this._log("socket", s.id, "connected for Publisher", topic);
 
             s.on("disconnect", () => {
                 this._log("socket", s.id, "disconnected for Publisher", topic);
             });
             
-            s.on(Prefixes.SUBSCRIBE, () => {
+            s.on(Prefixes.SUBSCRIBE + "-" + topic, () => {
                 if (this._snapshot !== null) {
                     var snapshot = this._snapshot();
                     this._log("socket", s.id, "asking for snapshot on topic", topic);
-                    s.emit(Prefixes.SNAPSHOT, snapshot);
+                    s.emit(Prefixes.SNAPSHOT + "-" + topic, snapshot);
                 }
             });
-        });
+        };
+
+        this._io.on("connection", onConnection);
+        this._io.sockets.sockets.filter(s => s.connected).forEach(onConnection);
     }
 
-    public publish = (msg : T) => this._io.emit(Prefixes.MESSAGE, msg);
+    public publish = (msg : T) => this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
 
     public registerSnapshot = (generator : () => T[]) => {
         if (this._snapshot === null) {
@@ -71,16 +73,22 @@ export class Subscriber<T> implements ISubscribe<T> {
     private _snapshotHandler : (msgs : T[]) => void = null;
     private _disconnectHandler : () => void = null;
     private _connectHandler : () => void = null;
-    private _io : SocketIOClient.Socket;
+    private _socket : SocketIOClient.Socket;
 
-    constructor(private topic : string, io : SocketIOClientStatic,
+    constructor(private topic : string, 
+                io : SocketIOClient.Socket,
                 private _log : (...args: any[]) => void = console.log) {
-        this._log("creating subscriber to", this.topic);
-        this._io = io("/"+this.topic, {forceNew: true});
-        this._io.on("connect", this.onConnect)
+        this._socket = io;
+        
+        this._log("creating subscriber to", this.topic, "; connected?", this._socket.connected);
+        
+        if (this._socket.connected) 
+            this.onConnect();
+        
+        this._socket.on("connect", this.onConnect)
                 .on("disconnect", this.onDisconnect)
-                .on(Prefixes.MESSAGE, this.onIncremental)
-                .on(Prefixes.SNAPSHOT, this.onSnapshot);
+                .on(Prefixes.MESSAGE + "-" + topic, this.onIncremental)
+                .on(Prefixes.SNAPSHOT + "-" + topic, this.onSnapshot);
     }
 
     private onConnect = () => {
@@ -89,7 +97,7 @@ export class Subscriber<T> implements ISubscribe<T> {
             this._connectHandler();
         }
 
-        this._io.emit(Prefixes.SUBSCRIBE);
+        this._socket.emit(Prefixes.SUBSCRIBE + "-" + this.topic);
     };
 
     private onDisconnect = () => {
@@ -111,11 +119,10 @@ export class Subscriber<T> implements ISubscribe<T> {
 
     public disconnect = () => {
         this._log("forcing disconnection from ", this.topic);
-        this._io.off("connect", this.onConnect);
-        this._io.off("disconnect", this.onDisconnect);
-        this._io.off(Prefixes.MESSAGE, this.onIncremental);
-        this._io.off(Prefixes.SNAPSHOT, this.onSnapshot);
-        this._io.disconnect();
+        this._socket.off("connect", this.onConnect);
+        this._socket.off("disconnect", this.onDisconnect);
+        this._socket.off(Prefixes.MESSAGE + "-" + this.topic, this.onIncremental);
+        this._socket.off(Prefixes.SNAPSHOT + "-" + this.topic, this.onSnapshot);
     };
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
@@ -164,16 +171,16 @@ export interface IFire<T> {
 }
 
 export class Fire<T> implements IFire<T> {
-    private _io : SocketIOClient.Socket;
+    private _socket : SocketIOClient.Socket;
 
-    constructor(private topic : string, io : SocketIOClientStatic, _log : (...args: any[]) => void) {
-        this._io = io("/"+this.topic, {forceNew: true, transports: ['websocket']});
-        this._io.on("connect", () => _log("Fire connected to", this.topic))
-                .on("disconnect", () => _log("Fire disconnected to", this.topic));
+    constructor(private topic : string, io : SocketIOClient.Socket, _log : (...args: any[]) => void) {
+        this._socket = io;
+        this._socket.on("connect", () => _log("Fire connected to", this.topic))
+                    .on("disconnect", () => _log("Fire disconnected to", this.topic));
     }
 
     public fire = (msg : T) : void => {
-        this._io.emit(Prefixes.MESSAGE, msg);
+        this._socket.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
     };
 }
 
@@ -189,13 +196,16 @@ export class Receiver<T> implements IReceive<T> {
     private _handler : (msg : T) => void = null;
     constructor(private topic : string, io : SocketIO.Server,
                 private _log : (...args: any[]) => void = console.log) {
-        io.of("/"+this.topic).on("connection", (s : SocketIO.Socket) => {
+        var onConnection = (s : SocketIO.Socket) => {
             this._log("socket", s.id, "connected for Receiver", topic);
-            s.on(Prefixes.MESSAGE, msg => {
+            s.on(Prefixes.MESSAGE + "-" + this.topic, msg => {
                 if (this._handler !== null)
                     this._handler(msg);
             });
-        });
+        };
+                    
+        io.on("connection", onConnection);
+        io.sockets.sockets.filter(s => s.connected).forEach(onConnection);
     }
 
     registerReceiver = (handler : (msg : T) => void) => {

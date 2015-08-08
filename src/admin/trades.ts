@@ -70,7 +70,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     $log.info("started trades list");
 };
 
-var tradeListDirective = () : ng.IDirective => {
+var tradeList = () : ng.IDirective => {
     var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
 
     return {
@@ -86,5 +86,7 @@ var tradeListDirective = () : ng.IDirective => {
     }
 };
 
-angular.module('tradeListDirective', ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
-       .directive("tradeList", tradeListDirective);
+export var tradeListDirective = "tradeListDirective";
+
+angular.module(tradeListDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+       .directive("tradeList", tradeList);

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html ng-controller="uiCtrl">
+<html ng-controller="uiCtrl" ng-app="projectApp">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.css">
-
-    <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js" data-main="/js/admin/require-config.js"></script>
+    
+    <script src="/js/admin/bundle.min.js"></script>
+    
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <title>tribeca [{{ env }}]</title>
@@ -78,7 +79,7 @@
         </div>
         <button type="button"
                 class="btn btn-success"
-                onclick="$('#order_form').popover('hide');"
+                onclick="jQuery('#order_form').popover('hide');"
                 ng-click="order.submit()">Submit</button>
     </form>
 </script>

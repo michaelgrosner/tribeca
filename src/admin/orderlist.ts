@@ -152,7 +152,7 @@ var OrderListController = ($scope : OrderListScope,
     $log.info("started order list");
 };
 
-var orderListDirective = () : ng.IDirective => {
+var orderList = () : ng.IDirective => {
     var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
 
     return {
@@ -164,6 +164,8 @@ var orderListDirective = () : ng.IDirective => {
     }
 };
 
-angular.module('orderListDirective', ['ui.bootstrap', 'ngGrid', 'sharedDirectives'])
+export var orderListDirective = "orderListDirective";
+
+angular.module(orderListDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
        .controller('OrderListController', OrderListController)
-       .directive("orderList", orderListDirective);
+       .directive("orderList", orderList);

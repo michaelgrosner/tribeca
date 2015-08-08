@@ -17,12 +17,12 @@ module.exports = function (grunt) {
 
             client: {
                 files: adminFiles,
-                tasks: ['ts:admin']
+                tasks: ['ts:admin', "copy", "browserify"]
             },
 
             static: {
                 files: html,
-                tasks: ['copy']
+                tasks: ['copy', "browserify"]
             }
         },
 
@@ -47,7 +47,7 @@ module.exports = function (grunt) {
                 src: adminFiles,
                 outDir: 'tribeca/service/admin/js',
                 options: {
-                    module: 'amd'
+                    module: 'commonjs'
                 }
             }
         },
@@ -59,13 +59,23 @@ module.exports = function (grunt) {
                 src: "**",
                 dest: "tribeca/service/admin"
             }
+        },
+        
+        browserify: {
+            dist: {
+                files: {
+                    "tribeca/service/admin/js/admin/bundle.min.js": ["tribeca/service/admin/js/admin/client.js"]
+                },
+            }
         }
     });
 
     grunt.loadNpmTasks("grunt-ts");
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-browserify');
 
-    grunt.registerTask("default", ["ts", "copy", "watch"]);
-    grunt.registerTask("compile", ["ts", "copy"])
+    var compile = ["ts", "copy", "browserify"];
+    grunt.registerTask("compile", compile);
+    grunt.registerTask("default", compile.concat(["watch"]));
 };
