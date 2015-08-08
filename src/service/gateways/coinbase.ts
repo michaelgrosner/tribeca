@@ -726,6 +726,15 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name(): string {
         return "Coinbase";
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
+    ];
+    public get supportedCurrencyPairs() {
+        return CoinbaseBaseGateway.AllPairs;
+    }
 }
 
 export class Coinbase extends Interfaces.CombinedGateway {

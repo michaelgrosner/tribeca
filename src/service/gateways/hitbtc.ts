@@ -558,6 +558,23 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name() : string {
         return "HitBtc";
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
+        
+        // don't use these yet.
+        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.BTC),
+        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
+        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.EUR),
+        //new Models.CurrencyPair(Models.Currency.DOGE, Models.Currency.BTC),
+        //new Models.CurrencyPair(Models.Currency.XMR, Models.Currency.BTC),
+        //new Models.CurrencyPair(Models.Currency.BCN, Models.Currency.BTC),
+        //new Models.CurrencyPair(Models.Currency.XDN, Models.Currency.BTC),
+    ];
+    public get supportedCurrencyPairs() {
+        return HitBtcBaseGateway.AllPairs;
+    }
 }
 
 export class HitBtc extends Interfaces.CombinedGateway {

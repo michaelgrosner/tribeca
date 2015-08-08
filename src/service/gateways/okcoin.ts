@@ -434,6 +434,14 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
     exchange() : Models.Exchange {
         return Models.Exchange.OkCoin;
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
+    ];
+    public get supportedCurrencyPairs() {
+        return OkCoinBaseGateway.AllPairs;
+    }
 }
 
 export class OkCoin extends Interfaces.CombinedGateway {

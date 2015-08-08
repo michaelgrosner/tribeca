@@ -114,6 +114,13 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     exchange(): Models.Exchange {
         return Models.Exchange.Null;
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD)
+    ];
+    public get supportedCurrencyPairs() {
+        return NullGatewayDetails.AllPairs;
+    }
 }
 
 export class NullGateway extends Interfaces.CombinedGateway {
