@@ -260,6 +260,13 @@ class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     exchange(): Models.Exchange {
         return Models.Exchange.Null;
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD)
+    ];
+    public get supportedCurrencyPairs() {
+        return BacktestGatewayDetails.AllPairs;
+    }
 }
 
 export class BacktestParameters {

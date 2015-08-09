@@ -18,6 +18,7 @@ EXPOSE 3000 5000
 # General config properties. Properties with `NULL` should be replaced with your own exchange account information.
 ENV TRIBECA_MODE dev
 ENV EXCHANGE null
+ENV TradedPair BTC/USD
 # IP to access mongo instance. If you are on a mac, run `boot2docker ip` and replace `tribeca-mongo`.
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
 ENV CoinbaseOrderDestination Coinbase

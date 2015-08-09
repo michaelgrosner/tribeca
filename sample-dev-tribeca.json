@@ -1,6 +1,7 @@
 {
     "TRIBECA_MODE": "dev",
     "EXCHANGE": "null",
+    "TradedPair": "BTC/USD",
     "MongoDbUrl": "mongodb://localhost:27017/tribeca",
     
     "HitBtcPullUrl": "http://demo-api.hitbtc.com",

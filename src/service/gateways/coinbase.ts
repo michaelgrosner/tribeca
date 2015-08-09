@@ -552,7 +552,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             client_oid: order.orderId,
             size: order.quantity.toString(),
             price: order.price.toString(),
-            product_id: "BTC-USD"
+            product_id: this._symbolProvider.symbol
         };
 
         if (order.side === Models.Side.Bid)
@@ -671,7 +671,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
         private _orderBook: CoinbaseOrderEmitter,
-        private _authClient: CoinbaseAuthenticatedClient) {
+        private _authClient: CoinbaseAuthenticatedClient,
+        private _symbolProvider: CoinbaseSymbolProvider) {
 
         this._orderBook.on("statechange", this.onStateChange);
 
@@ -691,7 +692,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
             _.forEach(data, d => {
-                var c = d.currency === "BTC" ? Models.Currency.BTC : Models.Currency.USD;
+                var c = GetCurrencyEnum(d.currency);
                 var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
                 this.PositionUpdate.trigger(rpt);
             });
@@ -726,16 +727,55 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name(): string {
         return "Coinbase";
     }
+    
+    private static AllPairs = [
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
+        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
+    ];
+    public get supportedCurrencyPairs() {
+        return CoinbaseBaseGateway.AllPairs;
+    }
+}
+
+function GetCurrencyEnum(c: string) : Models.Currency {
+    switch (name.toLowerCase()) {
+        case "BTC": return Models.Currency.BTC;
+        case "USD": return Models.Currency.USD;
+        case "EUR": return Models.Currency.EUR;
+        case "GBP": return Models.Currency.GBP;
+        default: throw new Error("Unsupported currency " + name);
+    }
+}
+
+function GetCurrencySymbol(c: Models.Currency) : string {
+    switch (c) {
+        case Models.Currency.USD: return "USD";
+        case Models.Currency.GBP: return "GBP";
+        case Models.Currency.BTC: return "BTC";
+        case Models.Currency.EUR: return "EUR";
+        default: throw new Error("Unsupported currency " + Models.Currency[c]);
+    }
+}
+
+class CoinbaseSymbolProvider {
+    public symbol : string;
+    
+    constructor(pair: Models.CurrencyPair) {
+        this.symbol = GetCurrencySymbol(pair.base) + "-" + GetCurrencySymbol(pair.quote);
+    }
 }
 
 export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider) {
-        var orderEventEmitter = new CoinbaseExchange.OrderBook("BTC-USD", config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
+    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) {
+        var symbolProvider = new CoinbaseSymbolProvider(pair);
+        
+        var orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol, config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
         var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
         var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         var positionGateway = new CoinbasePositionGateway(timeProvider, authClient);

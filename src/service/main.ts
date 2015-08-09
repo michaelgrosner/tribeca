@@ -61,7 +61,15 @@ var config = new Config.ConfigProvider();
 var mainLog = Utils.log("tribeca:main");
 var messagingLog = Utils.log("tribeca:messaging");
 
-var pair = new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD);
+function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
+    var split = raw.split("/");
+    if (split.length !== 2) 
+        throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/USD");
+    
+    return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+}
+var pair = ParseCurrencyPair(config.GetString("TradedPair"));
+
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
 var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
     Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
@@ -133,9 +141,9 @@ var liveTradingSetup = () => {
     
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
         switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config));
+            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
+            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
+            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
             case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
@@ -260,6 +268,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
         
         var gateway = classes.getExch(orderCache);
+        
+        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
+            throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
     
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
