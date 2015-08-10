@@ -19,10 +19,10 @@ EXPOSE 3000 5000
 ENV TRIBECA_MODE dev
 ENV EXCHANGE null
 ENV TradedPair BTC/USD
+ENV WebClientUsername NULL
+ENV WebClientPassword NULL
 # IP to access mongo instance. If you are on a mac, run `boot2docker ip` and replace `tribeca-mongo`.
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
-ENV CoinbaseOrderDestination Coinbase
-ENV HitBtcOrderDestination HitBtc
 
 # DEV
 ## HitBtc
@@ -32,6 +32,7 @@ ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
 ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
 ENV HitBtcApiKey NULL
 ENV HitBtcSecret NULL
+ENV HitBtcOrderDestination HitBtc
 ## Coinbase
 ENV CoinbaseRestUrl https://api-public.sandbox.exchange.coinbase.com
 ENV CoinbaseWebsocketUrl https://ws-feed-public.sandbox.exchange.coinbase.com
@@ -39,7 +40,6 @@ ENV CoinbasePassphrase NULL
 ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
 ENV CoinbaseOrderDestination Coinbase
-ENV HitBtcOrderDestination HitBtc
 ## OkCoin
 ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
 ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/

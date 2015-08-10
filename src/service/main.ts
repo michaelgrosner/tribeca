@@ -117,10 +117,13 @@ var liveTradingSetup = () => {
     var http_server = http.createServer(app);
     var io = socket_io(http_server);
 
-    var basicAuth = require('basic-auth-connect');
-
-    var isFullUser = (username, password) => true;
-    app.use(basicAuth(isFullUser));
+    var username = config.GetString("WebClientUsername");
+    var password = config.GetString("WebClientPassword");
+    if (username !== "NULL" && password !== "NULL") {
+        mainLog("Requiring authentication to web client");
+        var basicAuth = require('basic-auth-connect');
+        app.use(basicAuth((u, p) => u === username && p === password));
+    }
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));

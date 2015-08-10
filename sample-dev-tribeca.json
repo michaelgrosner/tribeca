@@ -3,6 +3,8 @@
     "EXCHANGE": "null",
     "TradedPair": "BTC/USD",
     "MongoDbUrl": "mongodb://localhost:27017/tribeca",
+    "WebClientUsername": "NULL",
+    "WebClientPassword": "NULL",
     
     "HitBtcPullUrl": "http://demo-api.hitbtc.com",
     "HitBtcOrderEntryUrl": "ws://demo-api.hitbtc.com:8080",
