@@ -261,13 +261,42 @@ class BitfinexHttp {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     
     get = <T>(actionUrl: string, qs: any = undefined) : Q.Promise<Models.Timestamped<T>> => { 
-        var d = Q.defer<Models.Timestamped<T>>();
-
-        request({
+        var opts = {
+            timeout: 5000,
             url: url.resolve(this._baseUrl, actionUrl),
             qs: qs,
             method: "GET"
-        }, (err, resp, body) => {
+        };
+        
+        return this.doRequest<T>(actionUrl, opts);
+    };
+    
+    post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {        
+        msg["request"] = "/v1/" + actionUrl;
+        msg["nonce"] = this._nonce;
+        this._nonce += 1;
+        
+        var payload = new Buffer(JSON.stringify(msg)).toString("base64");
+        var signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
+        
+        var opts : request.Options = {
+            timeout: 5000,
+            url: url.resolve(this._baseUrl, actionUrl),
+            headers: {
+                "X-BFX-APIKEY": this._apiKey,
+                "X-BFX-PAYLOAD": payload,
+                "X-BFX-SIGNATURE": signature
+            },
+            method: "POST"
+        };
+
+        return this.doRequest<TResponse>(actionUrl, opts);
+    };
+    
+    private doRequest = <TResponse>(actionUrl: string, msg : request.Options) : Q.Promise<Models.Timestamped<TResponse>> => {
+        var d = Q.defer<Models.Timestamped<TResponse>>();
+        
+        request(msg, (err, resp, body) => {
             if (err) d.reject(err);
             else {
                 try {
@@ -285,36 +314,20 @@ class BitfinexHttp {
         return d.promise;
     };
     
-    post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {
-        var d = Q.defer<Models.Timestamped<TResponse>>();
-
-        request({
-            url: url.resolve(this._baseUrl, actionUrl),
-            body: querystring.stringify({}),
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            method: "POST"
-        }, (err, resp, body) => {
-            if (err) d.reject(err);
-            else {
-                try {
-                    var t = Utils.date();
-                    var data = JSON.parse(body);
-                    d.resolve(new Models.Timestamped(data, t));
-                }
-                catch (e) {
-                    this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
-                    d.reject(e);
-                }
-            }
-        });
-        
-        return d.promise;
-    };
-
     private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexHTTP");
     private _baseUrl : string;
+    private _apiKey: string;
+    private _secret: string;
+    private _nonce: number;
+    
+    
     constructor(config : Config.IConfigProvider) {
         this._baseUrl = config.GetString("BitfinexHttpUrl")
+        this._apiKey = config.GetString("BitfinexKey");
+        this._secret = config.GetString("BitfinexSecret");
+        
+        this._nonce = new Date().valueOf();
+        setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
 
