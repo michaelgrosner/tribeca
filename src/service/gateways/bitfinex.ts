@@ -102,6 +102,51 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 }
 
+interface BitfinexNewOrderRequest {
+    symbol: string;
+    amount: number;
+    price: number; //Price to buy or sell at. Must be positive. Use random number for market orders.
+    exchange: string; //always "bitfinex"
+    side: string; // buy or sell
+    type: string; // "market" / "limit" / "stop" / "trailing-stop" / "fill-or-kill" / "exchange market" / "exchange limit" / "exchange stop" / "exchange trailing-stop" / "exchange fill-or-kill". (type starting by "exchange " are exchange orders, others are margin trading orders)
+    is_hidden: boolean;
+}
+
+interface BitfinexNewOrderResponse {
+    order_id: string;
+}
+
+interface BitfinexCancelOrderRequest {
+    order_id: string;
+}
+
+interface BitfinexCancelReplaceOrderRequest extends BitfinexNewOrderRequest {
+    order_id: string;
+}
+
+interface BitfinexCancelReplaceOrderResponse extends BitfinexCancelOrderRequest {}
+
+interface BitfinexOrderStatusRequest {
+    order_id: string;
+}
+
+interface BitfinexOrderStatusResponse {
+    symbol: string;
+    exchange: string; // bitstamp or bitfinex
+    price: number;
+    avg_execution_price: number;
+    side: string;
+    type: string; // "market" / "limit" / "stop" / "trailing-stop".
+    timestamp: number;
+    is_live: boolean;
+    is_cancelled: boolean;
+    is_hidden: boolean;
+    was_forced: boolean;
+    executed_amount: number;
+    remaining_amount: number;
+    original_amount: number;
+}
+
 class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
