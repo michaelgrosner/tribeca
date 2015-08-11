@@ -39,6 +39,30 @@ interface BitfinexOrderBook {
     asks: BitfinexMarketLevel[];
 }
 
+function decodeSide(side: string) {
+    switch (side) {
+        case "buy": return Models.Side.Bid;
+        case "sell": return Models.Side.Ask;
+        default: return  Models.Side.Unknown;
+    }
+}
+
+function encodeSide(side: Models.Side) {
+    switch (side) {
+        case Models.Side.Bid: return "buy";
+        case Models.Side.Ask: return "sell";
+        default: return "";
+    } 
+}
+
+function encodeTimeInForce(tif: Models.TimeInForce) {
+    switch (tif) {
+        case Models.TimeInForce.FOK: return "fill-or-kill";
+        case Models.TimeInForce.GTC: return "limit";
+        default: throw new Error("unsupported tif " + Models.TimeInForce[tif]);
+    }
+}
+
 class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -49,7 +73,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
             var px = parseFloat(trade.price);
             var sz = parseFloat(trade.amount);
             var time = moment.unix(trade.timestamp);
-            var side = trade.type === "buy" ? Models.Side.Bid : Models.Side.Ask;
+            var side = decodeSide(trade.type);
             var mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
             this.MarketTrade.trigger(mt);
         });
@@ -155,11 +179,54 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     public cancelsByClientOrderId = false;
     
+    private convertToOrderRequest = (order: Models.Order) : BitfinexNewOrderRequest => {
+        return {
+            amount: order.quantity,
+            exchange: "bitfinex",
+            is_hidden: false,
+            price: order.price,
+            side: encodeSide(order.side),
+            symbol: this._symbolProvider.symbol,
+            type: encodeTimeInForce(order.timeInForce)
+        };
+    }
+    
+    private _orderIdsToMonitor : { [orderId: string] : boolean} = {};
+    
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+        var req = this.convertToOrderRequest(order);
+        
+        this._http
+            .post<BitfinexNewOrderRequest, BitfinexNewOrderResponse>("order/new", req)
+            .then(resp => {
+                this._orderIdsToMonitor[resp.data.order_id] = true;
+                
+                this.OrderUpdate.trigger({
+                    orderId: order.orderId, 
+                    exchangeId: resp.data.order_id,
+                    time: resp.time,
+                    orderStatus: Models.OrderStatus.Working
+                });
+            }).done();
+            
         return new Models.OrderGatewayActionReport(Utils.date());
     };
     
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
+        var req = {order_id: cancel.exchangeId};
+        this._http
+            .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
+            .then(resp => {
+                delete this._orderIdsToMonitor[cancel.exchangeId];
+                
+                this.OrderUpdate.trigger({
+                    exchangeId: cancel.clientOrderId,
+                    time: resp.time,
+                    orderStatus: Models.OrderStatus.Cancelled
+                });
+            })
+            .done();
+        
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
@@ -168,8 +235,25 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return this.sendOrder(replace);
     };
     
+    /*private downloadOrderStatuses = () => {
+        for (var k in this._orderIdsToMonitor) {
+            var req = {order_id: k};
+            this._http
+                .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", {order_id: k})
+                .then(resp => {
+                    
+                    if (resp.data.)
+                    
+                }).done();
+        }
+    };*/
+    
     private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexOE");
-    constructor(private _symbolProvider: BitfinexSymbolProvider) {
+    constructor(timeProvider: Utils.ITimeProvider,
+        private _http: BitfinexHttp,
+        private _symbolProvider: BitfinexSymbolProvider) {
+            
+        _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
     }
 }
 
@@ -201,8 +285,8 @@ class BitfinexHttp {
         return d.promise;
     };
     
-    post = <T>(actionUrl: string, msg : any) : Q.Promise<Models.Timestamped<T>> => {
-        var d = Q.defer<Models.Timestamped<T>>();
+    post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {
+        var d = Q.defer<Models.Timestamped<TResponse>>();
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
