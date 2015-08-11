@@ -28,21 +28,77 @@ interface BitfinexMarketTrade {
 	type: string;
 }
 
+interface BitfinexMarketLevel {
+    price: string;
+    amount: string;
+    timestamp: string;
+}
+
+interface BitfinexOrderBook {
+    bids: BitfinexMarketLevel[];
+    asks: BitfinexMarketLevel[];
+}
+
 class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    private _since : number = null;
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrades = (trades : Models.Timestamped<BitfinexMarketTrade[]>) => {
         _.forEach(trades.data, trade => {
-            //this.MarketTrade.trigger(mt);
+            var px = parseFloat(trade.price);
+            var sz = parseFloat(trade.amount);
+            var time = moment.unix(trade.timestamp);
+            var side = trade.type === "buy" ? Models.Side.Bid : Models.Side.Ask;
+            var mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
+            this.MarketTrade.trigger(mt);
         });
+        
+        this._since = moment().unix();
     };
+    
+    private downloadMarketTrades = () => {
+        var qs = this._since === null ? undefined : {timestamp: this._since};
+        this._http
+            .get<BitfinexMarketTrade[]>("trades/"+this._symbolProvider.symbol, qs)
+            .then(this.onTrades)
+            .done();
+    };
+    
+    private static ConvertToMarketSide(level: BitfinexMarketLevel) : Models.MarketSide {
+        return new Models.MarketSide(parseFloat(level.price), parseFloat(level.amount));
+    }
+    
+    private static ConvertToMarketSides(level: BitfinexMarketLevel[]) : Models.MarketSide[] {
+        return _(level).first(3).map(BitfinexMarketDataGateway.ConvertToMarketSide).value();
+    }
 
     MarketData = new Utils.Evt<Models.Market>();
+    private onMarketData = (book: Models.Timestamped<BitfinexOrderBook>) => {
+        var bids = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.bids);
+        var asks = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.asks);
+        this.MarketData.trigger(new Models.Market(bids, asks, book.time));
+    };
+    
+    private downloadMarketData = () => {
+        this._http
+            .get<BitfinexOrderBook>("book/"+this._symbolProvider.symbol, {limit_bids: 3, limit_asks: 3})
+            .then(this.onMarketData)
+            .done();
+    };
 
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexMD");
-    constructor(private _symbolProvider: BitfinexSymbolProvider) {
+    constructor(
+        timeProvider: Utils.ITimeProvider,
+        private _http: BitfinexHttp,
+        private _symbolProvider: BitfinexSymbolProvider) {
         
+        timeProvider.setInterval(this.downloadMarketData, moment.duration(4, "seconds"));
+        timeProvider.setInterval(this.downloadMarketTrades, moment.duration(10, "seconds"));
+        
+        this.downloadMarketData();
+        this.downloadMarketTrades();
+        
+        _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
     }
 }
 
@@ -73,6 +129,33 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 }
 
 class BitfinexHttp {
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    
+    get = <T>(actionUrl: string, qs: any = undefined) : Q.Promise<Models.Timestamped<T>> => { 
+        var d = Q.defer<Models.Timestamped<T>>();
+
+        request({
+            url: url.resolve(this._baseUrl, actionUrl),
+            qs: qs,
+            method: "GET"
+        }, (err, resp, body) => {
+            if (err) d.reject(err);
+            else {
+                try {
+                    var t = Utils.date();
+                    var data = JSON.parse(body);
+                    d.resolve(new Models.Timestamped(data, t));
+                }
+                catch (e) {
+                    this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
+                    d.reject(e);
+                }
+            }
+        });
+        
+        return d.promise;
+    };
+    
     post = <T>(actionUrl: string, msg : any) : Q.Promise<Models.Timestamped<T>> => {
         var d = Q.defer<Models.Timestamped<T>>();
 
