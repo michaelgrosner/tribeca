@@ -154,11 +154,28 @@ interface BitfinexOrderStatusRequest {
     order_id: string;
 }
 
+interface BitfinexMyTradesRequest {
+    symbol: string;
+    timestamp: number;
+}
+
+interface BitfinexMyTradesResponse {
+    price: string;
+    amount: string;
+    timestamp: number;
+    exchange: string;
+    type: string;
+    fee_currency: string;
+    fee_amount: string;
+    tid: number;
+    order_id: string;
+}
+
 interface BitfinexOrderStatusResponse {
     symbol: string;
     exchange: string; // bitstamp or bitfinex
     price: number;
-    avg_execution_price: number;
+    avg_execution_price: string;
     side: string;
     type: string; // "market" / "limit" / "stop" / "trailing-stop".
     timestamp: number;
@@ -166,9 +183,9 @@ interface BitfinexOrderStatusResponse {
     is_cancelled: boolean;
     is_hidden: boolean;
     was_forced: boolean;
-    executed_amount: number;
-    remaining_amount: number;
-    original_amount: number;
+    executed_amount: string;
+    remaining_amount: string;
+    original_amount: string;
 }
 
 class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
@@ -235,25 +252,50 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return this.sendOrder(replace);
     };
     
-    /*private downloadOrderStatuses = () => {
-        for (var k in this._orderIdsToMonitor) {
-            var req = {order_id: k};
-            this._http
-                .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", {order_id: k})
-                .then(resp => {
+    private downloadOrderStatuses = () => {
+        var tradesReq = { timestamp: this._since.unix(), symbol: this._symbolProvider.symbol };
+        this._http
+            .post<BitfinexMyTradesRequest, BitfinexMyTradesResponse[]>("mytrades", tradesReq)
+            .then(resps => {
+                _.forEach(resps.data, t => {
                     
-                    if (resp.data.)
-                    
-                }).done();
-        }
-    };*/
+                    this._http
+                        .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", {order_id: t.order_id})
+                        .then(r => {
+                            
+                            this.OrderUpdate.trigger({
+                               exchangeId: t.order_id,
+                               lastPrice: parseFloat(t.price),
+                               lastQuantity: parseFloat(t.amount),
+                               orderStatus: BitfinexOrderEntryGateway.GetOrderStatus(r.data),
+                               averagePrice: parseFloat(r.data.avg_execution_price),
+                               leavesQuantity: parseFloat(r.data.remaining_amount),
+                               cumQuantity: parseFloat(r.data.executed_amount),
+                               quantity: parseFloat(r.data.original_amount)
+                            });
+                            
+                        })
+                        .done();
+                });
+            }).done();
+            
+        this._since = moment.utc();
+    };
     
+    private static GetOrderStatus(r: BitfinexOrderStatusResponse) {
+        if (r.is_cancelled) return Models.OrderStatus.Cancelled;
+        if (r.is_live) return Models.OrderStatus.Working;
+        return Models.OrderStatus.Other;
+    }
+    
+    private _since = moment.utc();
     private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexOE");
     constructor(timeProvider: Utils.ITimeProvider,
         private _http: BitfinexHttp,
         private _symbolProvider: BitfinexSymbolProvider) {
             
         _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
+        timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(7, "seconds"));
     }
 }
 
@@ -344,7 +386,8 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
     }
 
     private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexPG");
-    constructor() {
+    constructor(private _http: BitfinexHttp) {
+        this._http.post("positions", {}).then(r => console.log(util.inspect(r)));
     }
 }
 
@@ -405,18 +448,18 @@ class BitfinexSymbolProvider {
 }
 
 export class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
+    constructor(timeProvider: Utils.ITimeProvider, config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new BitfinexSymbolProvider(pair);
         var http = new BitfinexHttp(config);
 
         var orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(symbol)
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, http, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
-            new BitfinexMarketDataGateway(symbol),
+            new BitfinexMarketDataGateway(timeProvider, http, symbol),
             orderGateway,
-            new BitfinexPositionGateway(),
+            new BitfinexPositionGateway(http),
             new BitfinexBaseGateway());
         }
 }
