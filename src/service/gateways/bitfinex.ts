@@ -18,6 +18,7 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
 var shortId = require("shortid");
+var Deque = require("collections/deque");
 
 interface BitfinexMarketTrade {
 	tid: number;
@@ -327,6 +328,30 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 }
 
+
+class RateLimitMonitor {
+    private _queue = Deque();
+    private _durationMs : number;
+    
+    public add = () => {
+        var now = moment.utc();
+        
+        while (now.diff(this._queue.peek()) > this._durationMs) {
+            this._queue.shift();
+        }
+        
+        this._queue.push(now);
+        
+        if (this._queue.length > this._number) {
+            Utils.errorLog("Exceeded rate limit", {nRequests: this._queue.length, max: this._number, durationMs: this._durationMs});
+        }
+    }
+    
+    constructor(private _number: number, duration: moment.Duration) {
+        this._durationMs = duration.asMilliseconds();
+    }
+}
+
 class BitfinexHttp {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     
@@ -366,6 +391,7 @@ class BitfinexHttp {
     private doRequest = <TResponse>(msg : request.Options) : Q.Promise<Models.Timestamped<TResponse>> => {
         var d = Q.defer<Models.Timestamped<TResponse>>();
         
+        this._monitor.add();
         request(msg, (err, resp, body) => {
             if (err) d.reject(err);
             else {
@@ -390,7 +416,7 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
     
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.IConfigProvider, private _monitor: RateLimitMonitor) {
         this._baseUrl = config.GetString("BitfinexHttpUrl")
         this._apiKey = config.GetString("BitfinexKey");
         this._secret = config.GetString("BitfinexSecret");
@@ -489,7 +515,8 @@ class BitfinexSymbolProvider {
 export class Bitfinex extends Interfaces.CombinedGateway {
     constructor(timeProvider: Utils.ITimeProvider, config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new BitfinexSymbolProvider(pair);
-        var http = new BitfinexHttp(config);
+        var monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
+        var http = new BitfinexHttp(config, monitor);
 
         var orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, http, symbol)
