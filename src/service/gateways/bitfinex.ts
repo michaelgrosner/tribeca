@@ -126,17 +126,21 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 }
 
+interface RejectableResponse {
+    message: string;
+}
+
 interface BitfinexNewOrderRequest {
     symbol: string;
-    amount: number;
-    price: number; //Price to buy or sell at. Must be positive. Use random number for market orders.
+    amount: string;
+    price: string; //Price to buy or sell at. Must be positive. Use random number for market orders.
     exchange: string; //always "bitfinex"
     side: string; // buy or sell
     type: string; // "market" / "limit" / "stop" / "trailing-stop" / "fill-or-kill" / "exchange market" / "exchange limit" / "exchange stop" / "exchange trailing-stop" / "exchange fill-or-kill". (type starting by "exchange " are exchange orders, others are margin trading orders)
     is_hidden: boolean;
 }
 
-interface BitfinexNewOrderResponse {
+interface BitfinexNewOrderResponse extends RejectableResponse {
     order_id: string;
 }
 
@@ -148,7 +152,7 @@ interface BitfinexCancelReplaceOrderRequest extends BitfinexNewOrderRequest {
     order_id: string;
 }
 
-interface BitfinexCancelReplaceOrderResponse extends BitfinexCancelOrderRequest {}
+interface BitfinexCancelReplaceOrderResponse extends BitfinexCancelOrderRequest, RejectableResponse {}
 
 interface BitfinexOrderStatusRequest {
     order_id: string;
@@ -159,7 +163,7 @@ interface BitfinexMyTradesRequest {
     timestamp: number;
 }
 
-interface BitfinexMyTradesResponse {
+interface BitfinexMyTradesResponse extends RejectableResponse {
     price: string;
     amount: string;
     timestamp: number;
@@ -171,7 +175,7 @@ interface BitfinexMyTradesResponse {
     order_id: string;
 }
 
-interface BitfinexOrderStatusResponse {
+interface BitfinexOrderStatusResponse extends RejectableResponse {
     symbol: string;
     exchange: string; // bitstamp or bitfinex
     price: number;
@@ -198,10 +202,10 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     
     private convertToOrderRequest = (order: Models.Order) : BitfinexNewOrderRequest => {
         return {
-            amount: order.quantity,
+            amount: Utils.roundFloat(order.quantity).toString(),
             exchange: "bitfinex",
             is_hidden: false,
-            price: order.price,
+            price: Utils.roundFloat(order.price).toString(),
             side: encodeSide(order.side),
             symbol: this._symbolProvider.symbol,
             type: encodeTimeInForce(order.timeInForce)
@@ -216,6 +220,16 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http
             .post<BitfinexNewOrderRequest, BitfinexNewOrderResponse>("order/new", req)
             .then(resp => {
+                if (typeof resp.data.message !== "undefined") {
+                    this.OrderUpdate.trigger({
+                        orderStatus: Models.OrderStatus.Rejected,
+                        orderId: order.orderId,
+                        rejectMessage: resp.data.message,
+                        time: resp.time
+                    });
+                    return;
+                }
+                
                 this._orderIdsToMonitor[resp.data.order_id] = true;
                 
                 this.OrderUpdate.trigger({
@@ -234,6 +248,17 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http
             .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
             .then(resp => {
+                if (typeof resp.data.message !== "undefined") {
+                    this.OrderUpdate.trigger({
+                        orderStatus: Models.OrderStatus.Rejected,
+                        cancelRejected: true,
+                        orderId: cancel.clientOrderId,
+                        rejectMessage: resp.data.message,
+                        time: resp.time
+                    });
+                    return;
+                }
+                
                 delete this._orderIdsToMonitor[cancel.exchangeId];
                 
                 this.OrderUpdate.trigger({
@@ -305,17 +330,19 @@ class BitfinexHttp {
     get = <T>(actionUrl: string, qs: any = undefined) : Q.Promise<Models.Timestamped<T>> => { 
         var opts = {
             timeout: 5000,
-            url: url.resolve(this._baseUrl, actionUrl),
+            url: this._baseUrl + "/" + actionUrl,
             qs: qs,
             method: "GET"
         };
         
-        return this.doRequest<T>(actionUrl, opts);
+        console.log("<<", util.inspect(opts));
+        
+        return this.doRequest<T>(opts);
     };
     
     post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {        
         msg["request"] = "/v1/" + actionUrl;
-        msg["nonce"] = this._nonce;
+        msg["nonce"] = this._nonce.toString();
         this._nonce += 1;
         
         var payload = new Buffer(JSON.stringify(msg)).toString("base64");
@@ -323,7 +350,7 @@ class BitfinexHttp {
         
         var opts : request.Options = {
             timeout: 5000,
-            url: url.resolve(this._baseUrl, actionUrl),
+            url: this._baseUrl + "/" + actionUrl,
             headers: {
                 "X-BFX-APIKEY": this._apiKey,
                 "X-BFX-PAYLOAD": payload,
@@ -331,11 +358,13 @@ class BitfinexHttp {
             },
             method: "POST"
         };
-
-        return this.doRequest<TResponse>(actionUrl, opts);
+        
+        console.log("<<", util.inspect([msg, opts]));
+        
+        return this.doRequest<TResponse>(opts);
     };
     
-    private doRequest = <TResponse>(actionUrl: string, msg : request.Options) : Q.Promise<Models.Timestamped<TResponse>> => {
+    private doRequest = <TResponse>(msg : request.Options) : Q.Promise<Models.Timestamped<TResponse>> => {
         var d = Q.defer<Models.Timestamped<TResponse>>();
         
         request(msg, (err, resp, body) => {
@@ -344,10 +373,11 @@ class BitfinexHttp {
                 try {
                     var t = Utils.date();
                     var data = JSON.parse(body);
+                    console.log(">>", util.inspect(data));
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
-                    this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
+                    this._log("url: %s, err: %o, body: %o", msg.url, err, body);
                     d.reject(e);
                 }
             }
