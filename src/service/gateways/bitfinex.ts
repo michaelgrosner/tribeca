@@ -55,12 +55,15 @@ function encodeSide(side: Models.Side) {
     } 
 }
 
-function encodeTimeInForce(tif: Models.TimeInForce) {
-    switch (tif) {
-        case Models.TimeInForce.FOK: return "fill-or-kill";
-        case Models.TimeInForce.GTC: return "limit";
-        default: throw new Error("unsupported tif " + Models.TimeInForce[tif]);
+function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
+    if (type === Models.OrderType.Market) {
+        return "exchange market";
     }
+    else if (type === Models.OrderType.Limit) {
+        if (tif === Models.TimeInForce.FOK) return "exchange fill-or-kill";
+        if (tif === Models.TimeInForce.GTC) return "exchange limit";
+    }
+    throw new Error("unsupported tif " + Models.TimeInForce[tif] + " and order type " + Models.OrderType[type]);
 }
 
 class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
@@ -82,7 +85,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
     
     private downloadMarketTrades = () => {
-        var qs = this._since === null ? undefined : {timestamp: this._since};
+        var qs = {timestamp: this._since === null ? moment.utc().subtract(60, "seconds").unix() : this._since};
         this._http
             .get<BitfinexMarketTrade[]>("trades/"+this._symbolProvider.symbol, qs)
             .then(this.onTrades)
@@ -207,7 +210,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             price: Utils.roundFloat(order.price).toString(),
             side: encodeSide(order.side),
             symbol: this._symbolProvider.symbol,
-            type: encodeTimeInForce(order.timeInForce)
+            type: encodeTimeInForce(order.timeInForce, order.type)
         };
     }
     
@@ -261,7 +264,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 delete this._orderIdsToMonitor[cancel.exchangeId];
                 
                 this.OrderUpdate.trigger({
-                    exchangeId: cancel.clientOrderId,
+                    orderId: cancel.clientOrderId,
                     time: resp.time,
                     orderStatus: Models.OrderStatus.Cancelled
                 });
@@ -309,6 +312,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private static GetOrderStatus(r: BitfinexOrderStatusResponse) {
         if (r.is_cancelled) return Models.OrderStatus.Cancelled;
         if (r.is_live) return Models.OrderStatus.Working;
+        if (r.executed_amount === r.original_amount) return Models.OrderStatus.Complete;
         return Models.OrderStatus.Other;
     }
     

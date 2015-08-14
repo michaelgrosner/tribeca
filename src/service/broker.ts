@@ -236,7 +236,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
             getOrFallback(osr.liquidity, orig.liquidity),
             getOrFallback(osr.exchange, orig.exchange),
-            osr.computationalLatency,
+            getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
             (typeof orig.version === "undefined") ? 0 : orig.version + 1,
             partiallyFilled,
             osr.pendingCancel,
