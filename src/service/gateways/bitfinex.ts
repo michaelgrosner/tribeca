@@ -215,8 +215,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
     }
     
-    private _orderIdsToMonitor : { [orderId: string] : boolean} = {};
-    
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
         var req = this.convertToOrderRequest(order);
         
@@ -232,8 +230,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     });
                     return;
                 }
-                
-                this._orderIdsToMonitor[resp.data.order_id] = true;
                 
                 this.OrderUpdate.trigger({
                     orderId: order.orderId, 
@@ -261,8 +257,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     });
                     return;
                 }
-                
-                delete this._orderIdsToMonitor[cancel.exchangeId];
                 
                 this.OrderUpdate.trigger({
                     orderId: cancel.clientOrderId,
