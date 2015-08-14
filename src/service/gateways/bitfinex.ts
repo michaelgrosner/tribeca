@@ -94,7 +94,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
     
     private static ConvertToMarketSides(level: BitfinexMarketLevel[]) : Models.MarketSide[] {
-        return _(level).first(3).map(BitfinexMarketDataGateway.ConvertToMarketSide).value();
+        return _.map(level, BitfinexMarketDataGateway.ConvertToMarketSide);
     }
 
     MarketData = new Utils.Evt<Models.Market>();
@@ -106,7 +106,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     
     private downloadMarketData = () => {
         this._http
-            .get<BitfinexOrderBook>("book/"+this._symbolProvider.symbol, {limit_bids: 3, limit_asks: 3})
+            .get<BitfinexOrderBook>("book/"+this._symbolProvider.symbol, {limit_bids: 5, limit_asks: 5})
             .then(this.onMarketData)
             .done();
     };
@@ -137,7 +137,7 @@ interface BitfinexNewOrderRequest {
     exchange: string; //always "bitfinex"
     side: string; // buy or sell
     type: string; // "market" / "limit" / "stop" / "trailing-stop" / "fill-or-kill" / "exchange market" / "exchange limit" / "exchange stop" / "exchange trailing-stop" / "exchange fill-or-kill". (type starting by "exchange " are exchange orders, others are margin trading orders)
-    is_hidden: boolean;
+    is_hidden?: boolean;
 }
 
 interface BitfinexNewOrderResponse extends RejectableResponse {
@@ -204,7 +204,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return {
             amount: Utils.roundFloat(order.quantity).toString(),
             exchange: "bitfinex",
-            is_hidden: false,
             price: Utils.roundFloat(order.price).toString(),
             side: encodeSide(order.side),
             symbol: this._symbolProvider.symbol,
@@ -335,8 +334,6 @@ class BitfinexHttp {
             method: "GET"
         };
         
-        console.log("<<", util.inspect(opts));
-        
         return this.doRequest<T>(opts);
     };
     
@@ -359,8 +356,6 @@ class BitfinexHttp {
             method: "POST"
         };
         
-        console.log("<<", util.inspect([msg, opts]));
-        
         return this.doRequest<TResponse>(opts);
     };
     
@@ -373,7 +368,6 @@ class BitfinexHttp {
                 try {
                     var t = Utils.date();
                     var data = JSON.parse(body);
-                    console.log(">>", util.inspect(data));
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
@@ -381,7 +375,7 @@ class BitfinexHttp {
                     d.reject(e);
                 }
             }
-        });
+        }).on("error", e => d.reject(e)).end();
         
         return d.promise;
     };
@@ -392,32 +386,43 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
     
-    
     constructor(config : Config.IConfigProvider) {
         this._baseUrl = config.GetString("BitfinexHttpUrl")
         this._apiKey = config.GetString("BitfinexKey");
         this._secret = config.GetString("BitfinexSecret");
         
         this._nonce = new Date().valueOf();
+        this._log("Starting nonce: ", this._nonce);
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
 
+interface BitfinexPositionResponseItem {
+    type: string;
+    currency: string;
+    amount: string;
+    available: string;
+}
+
 class BitfinexPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
-    private static convertCurrency(name : string) : Models.Currency {
-        switch (name.toLowerCase()) {
-            case "usd": return Models.Currency.USD;
-            case "ltc": return Models.Currency.LTC;
-            case "btc": return Models.Currency.BTC;
-            default: throw new Error("Unsupported currency " + name);
-        }
+    
+    private onRefreshPositions = () => {
+        this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
+            _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
+                var amt = parseFloat(p.amount);
+                var cur = GetCurrencyEnum(p.currency);
+                var held = amt - parseFloat(p.available);
+                var rpt = new Models.CurrencyPosition(amt, held, cur);
+                this.PositionUpdate.trigger(new Models.CurrencyPosition(amt, held, cur));
+            });
+        }).done();
     }
 
     private _log : Utils.Logger = Utils.log("tribeca:gateway:BitfinexPG");
-    constructor(private _http: BitfinexHttp) {
-        this._http.post("positions", {}).then(r => console.log(util.inspect(r)));
+    constructor(timeProvider: Utils.ITimeProvider, private _http: BitfinexHttp) {
+        timeProvider.setInterval(this.onRefreshPositions, moment.duration(15, "seconds"));
+        this.onRefreshPositions();
     }
 }
 
@@ -452,11 +457,11 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (name.toLowerCase()) {
+    switch (c.toLowerCase()) {
         case "usd": return Models.Currency.USD;
         case "ltc": return Models.Currency.LTC;
         case "btc": return Models.Currency.BTC;
-        default: throw new Error("Unsupported currency " + name);
+        default: throw new Error("Unsupported currency " + c);
     }
 }
 
@@ -489,7 +494,7 @@ export class Bitfinex extends Interfaces.CombinedGateway {
         super(
             new BitfinexMarketDataGateway(timeProvider, http, symbol),
             orderGateway,
-            new BitfinexPositionGateway(http),
+            new BitfinexPositionGateway(timeProvider, http),
             new BitfinexBaseGateway());
         }
 }
