@@ -46,6 +46,11 @@ ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
 ENV OkCoinApiKey NULL
 ENV OkCoinSecretKey NULL
 ENV OkCoinOrderDestination OkCoin
+## Bitfinex
+ENV BitfinexHttpUrl https://api.bitfinex.com/v1
+ENV BitfinexKey NULL
+ENV BitfinexSecret NULL
+ENV BitfinexOrderDestination Bitfinex
 
 # PROD - values provided for reference.
 ## HitBtc
