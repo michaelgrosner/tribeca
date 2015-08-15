@@ -1,5 +1,7 @@
 # tribeca
 
+[![Join the chat at https://gitter.im/michaelgrosner/tribeca](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/michaelgrosner/tribeca?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 `tribeca` is a very low latency cryptocurrency [market making](https://github.com/michaelgrosner/tribeca/wiki#what-is-market-making) trading bot with a full featured [web client](https://github.com/michaelgrosner/tribeca#web-ui), [backtester](https://github.com/michaelgrosner/tribeca/wiki#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/michaelgrosner/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. 
 
 It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation everything is also supported.
