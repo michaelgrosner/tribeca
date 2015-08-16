@@ -738,7 +738,7 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
     }
 }
 
-function GetCurrencyEnum(c: string) : Models.Currency {
+function GetCurrencyEnum(name: string) : Models.Currency {
     switch (name.toLowerCase()) {
         case "BTC": return Models.Currency.BTC;
         case "USD": return Models.Currency.USD;
