@@ -165,8 +165,8 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinMD");
     constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
-        var depthChannel = "ok_" + symbolProvider.symbol + "_depth";
-        var tradesChannel = "ok_" + symbolProvider.symbol + "_trades_v1";
+        var depthChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_depth";
+        var tradesChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_trades_v1";
         
         socket.setHandler(depthChannel, this.onDepth);
         socket.setHandler(tradesChannel, this.onTrade);
@@ -470,9 +470,11 @@ function GetCurrencySymbol(c: Models.Currency) : string {
 
 class OkCoinSymbolProvider {
     public symbol : string;
+    public symbolWithoutUnderscore: string;
     
     constructor(pair: Models.CurrencyPair) {
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
+        this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
     }
 }
 
