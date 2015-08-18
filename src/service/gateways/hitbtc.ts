@@ -569,7 +569,7 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (name.toLowerCase()) {
+    switch (name.toUpperCase()) {
         case "BTC": return Models.Currency.BTC;
         case "USD": return Models.Currency.USD;
         case "EUR": return Models.Currency.EUR;
