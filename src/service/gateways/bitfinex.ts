@@ -360,7 +360,19 @@ class BitfinexHttp {
         return this.doRequest<T>(opts);
     };
     
-    post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {        
+    // Bitfinex seems to have a race condition where nonces are processed out of order when rapidly placing orders
+    // Retry here - look to mitigate in the future by batching orders?
+    post = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {
+        return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg)).then(resp => {
+            var rejectMsg : string = (<any>(resp.data)).message;
+            if (typeof rejectMsg !== "undefined" && rejectMsg.indexOf("Nonce is too small") > -1) 
+                return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg));
+            else 
+                return resp;
+        });
+    }
+    
+    private postOnce = <TRequest, TResponse>(actionUrl: string, msg : TRequest) : Q.Promise<Models.Timestamped<TResponse>> => {        
         msg["request"] = "/v1/" + actionUrl;
         msg["nonce"] = this._nonce.toString();
         this._nonce += 1;
