@@ -10,22 +10,23 @@ import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 
 class FormViewModel<T> {
-    master : T;
-    display : T;
-    pending : boolean = false;
-    connected : boolean = false;
+    master: T;
+    display: T;
+    pending: boolean = false;
+    connected: boolean = false;
 
-    constructor(defaultParameter : T,
-                private _sub : Messaging.ISubscribe<T>,
-                private _fire : Messaging.IFire<T>,
-                private _submitConverter : (disp : T) => T = null) {
+    constructor(defaultParameter: T,
+        private _sub: Messaging.ISubscribe<T>,
+        private _fire: Messaging.IFire<T>,
+        private _submitConverter: (disp: T) => T = null) {
         if (this._submitConverter === null)
             this._submitConverter = d => d;
-
+            
         _sub.registerConnectHandler(() => this.connected = true)
             .registerDisconnectedHandler(() => this.connected = false)
             .registerSubscriber(this.update, us => us.forEach(this.update));
-
+            
+        this.connected = _sub.connected;
         this.master = angular.copy(defaultParameter);
         this.display = angular.copy(defaultParameter);
     }
@@ -34,7 +35,7 @@ class FormViewModel<T> {
         this.display = angular.copy(this.master);
     };
 
-    public update = (p : T) => {
+    public update = (p: T) => {
         console.log("updating parameters", p);
         this.master = angular.copy(p);
         this.display = angular.copy(p);
@@ -48,8 +49,8 @@ class FormViewModel<T> {
 }
 
 class QuotingButtonViewModel extends FormViewModel<boolean> {
-    constructor(sub : Messaging.ISubscribe<boolean>,
-                fire : Messaging.IFire<boolean>) {
+    constructor(sub: Messaging.ISubscribe<boolean>,
+        fire: Messaging.IFire<boolean>) {
         super(false, sub, fire, d => !d);
     }
 
@@ -65,8 +66,8 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableFvModels = [];
     availableAutoPositionModes = [];
 
-    constructor(sub : Messaging.ISubscribe<Models.QuotingParameters>,
-                fire : Messaging.IFire<Models.QuotingParameters>) {
+    constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
+        fire: Messaging.IFire<Models.QuotingParameters>) {
         super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
@@ -74,13 +75,13 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
         this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
     }
 
-    private static getMapping<T>(enumObject : T) {
+    private static getMapping<T>(enumObject: T) {
         var names = [];
         for (var mem in enumObject) {
             if (!enumObject.hasOwnProperty(mem)) continue;
             var val = parseInt(mem, 10);
             if (val >= 0) {
-                names.push({'str': enumObject[mem], 'val': val});
+                names.push({ 'str': enumObject[mem], 'val': val });
             }
         }
         return names;
@@ -88,19 +89,19 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 }
 
 export class DisplayPair {
-    name : string;
-    connected : boolean;
+    name: string;
+    connected: boolean;
 
-    active : QuotingButtonViewModel;
-    quotingParameters : DisplayQuotingParameters;
+    active: QuotingButtonViewModel;
+    quotingParameters: DisplayQuotingParameters;
 
-    private _subscribers : Messaging.ISubscribe<any>[] = [];
+    private _subscribers: Messaging.ISubscribe<any>[] = [];
 
-    constructor(public scope : ng.IScope,
-                subscriberFactory : Shared.SubscriberFactory,
-                fireFactory : Shared.FireFactory) {
+    constructor(public scope: ng.IScope,
+        subscriberFactory: Shared.SubscriberFactory,
+        fireFactory: Shared.FireFactory) {
 
-        var setConnectStatus = (cs : Models.ConnectivityStatus) => {
+        var setConnectStatus = (cs: Models.ConnectivityStatus) => {
             this.connected = cs == Models.ConnectivityStatus.Connected;
         };
 
@@ -112,14 +113,14 @@ export class DisplayPair {
         this.active = new QuotingButtonViewModel(
             activeSub,
             fireFactory.getFire(Messaging.Topics.ActiveChange)
-        );
+            );
         this._subscribers.push(activeSub);
 
         var qpSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange);
         this.quotingParameters = new DisplayQuotingParameters(
             qpSub,
             fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
-        );
+            );
         this._subscribers.push(qpSub);
     }
 
@@ -128,7 +129,7 @@ export class DisplayPair {
         this._subscribers.forEach(s => s.disconnect());
     };
 
-    public updateParameters = (p : Models.QuotingParameters) => {
+    public updateParameters = (p: Models.QuotingParameters) => {
         this.quotingParameters.update(p);
     };
 }
@@ -136,41 +137,41 @@ export class DisplayPair {
 // ===============
 
 class Level {
-    bidPrice : number;
-    bidSize : number;
-    askPrice : number;
-    askSize : number;
+    bidPrice: number;
+    bidSize: number;
+    askPrice: number;
+    askSize: number;
 
-    bidClass : string;
-    askClass : string;
+    bidClass: string;
+    askClass: string;
 }
 
 interface MarketQuotingScope extends ng.IScope {
-    levels : Level[];
-    qBidSz : number;
-    qBidPx : number;
-    fairValue : number;
-    qAskPx : number;
-    qAskSz : number;
-    extVal : number;
+    levels: Level[];
+    qBidSz: number;
+    qBidPx: number;
+    fairValue: number;
+    qAskPx: number;
+    qAskSz: number;
+    extVal: number;
 
-    bidIsLive : boolean;
-    askIsLive : boolean;
+    bidIsLive: boolean;
+    askIsLive: boolean;
 }
 
-var MarketQuotingController = ($scope : MarketQuotingScope,
-                               $log : ng.ILogService,
-                               subscriberFactory : Shared.SubscriberFactory) => {
+var MarketQuotingController = ($scope: MarketQuotingScope,
+    $log: ng.ILogService,
+    subscriberFactory: Shared.SubscriberFactory) => {
     var clearMarket = () => {
         $scope.levels = [];
     };
     clearMarket();
-    
+
     var clearBid = () => {
         $scope.qBidPx = null;
         $scope.qBidSz = null;
     };
-    
+
     var clearAsk = () => {
         $scope.qAskPx = null;
         $scope.qAskSz = null;
@@ -194,7 +195,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         $scope.extVal = null;
     };
 
-    var updateMarket = (update : Models.Market) => {
+    var updateMarket = (update: Models.Market) => {
         if (update == null) {
             clearMarket();
             return;
@@ -217,7 +218,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         updateQuoteClass();
     };
 
-    var updateQuote = (quote : Models.TwoSidedQuote) => {
+    var updateQuote = (quote: Models.TwoSidedQuote) => {
         if (quote !== null) {
             if (quote.bid !== null) {
                 $scope.qBidPx = quote.bid.price;
@@ -226,7 +227,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
             else {
                 clearBid();
             }
-            
+
             if (quote.ask !== null) {
                 $scope.qAskPx = quote.ask.price;
                 $scope.qAskSz = quote.ask.size;
@@ -238,11 +239,11 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         else {
             clearQuote();
         }
-        
+
         updateQuoteClass();
     };
 
-    var updateQuoteStatus = (status : Models.TwoSidedQuoteStatus) => {
+    var updateQuoteStatus = (status: Models.TwoSidedQuoteStatus) => {
         if (status == null) {
             clearQuoteStatus();
             return;
@@ -276,7 +277,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
         }
     };
 
-    var updateFairValue = (fv : Models.FairValue) => {
+    var updateFairValue = (fv: Models.FairValue) => {
         if (fv == null) {
             clearFairValue();
             return;
@@ -287,7 +288,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
 
     var subscribers = [];
 
-    var makeSubscriber = <T>(topic : string, updateFn, clearFn) => {
+    var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
         var sub = subscriberFactory.getSubscriber<T>($scope, topic)
             .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
             .registerDisconnectedHandler(clearFn);
@@ -310,7 +311,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
 export var marketQuotingDirective = "marketQuotingDirective";
 
 angular
-    .module(marketQuotingDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("marketQuotingGrid", () => {
 
         return {
@@ -319,29 +320,29 @@ angular
             transclude: false,
             templateUrl: "market_display.html",
             controller: MarketQuotingController
-          }
+        }
     });
 
 // ===============
 
 class MarketTradeViewModel {
-    price : number;
-    size : number;
-    time : moment.Moment;
+    price: number;
+    size: number;
+    time: moment.Moment;
 
-    qA : number;
-    qB : number;
-    qAz : number;
-    qBz : number;
+    qA: number;
+    qB: number;
+    qAz: number;
+    qBz: number;
 
-    mA : number;
-    mB : number;
-    mAz : number;
-    mBz : number;
-    
-    make_side : string;
+    mA: number;
+    mB: number;
+    mAz: number;
+    mBz: number;
 
-    constructor(trade : Models.MarketTrade) {
+    make_side: string;
+
+    constructor(trade: Models.MarketTrade) {
         this.price = MarketTradeViewModel.round(trade.price);
         this.size = MarketTradeViewModel.round(trade.size);
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
@@ -351,7 +352,7 @@ class MarketTradeViewModel {
                 this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
                 this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
             }
-            
+
             if (trade.quote.bid !== null) {
                 this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
                 this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
@@ -367,56 +368,56 @@ class MarketTradeViewModel {
             this.mB = MarketTradeViewModel.round(trade.bid.price);
             this.mBz = MarketTradeViewModel.round(trade.bid.size);
         }
-        
+
         this.make_side = Models.Side[trade.make_side];
     }
 
-    private static round(num : number) {
+    private static round(num: number) {
         return Math.round(num * 100) / 100;
     }
 }
 
 interface MarketTradeScope extends ng.IScope {
-    marketTrades : MarketTradeViewModel[];
-    marketTradeOptions : Object;
+    marketTrades: MarketTradeViewModel[];
+    marketTradeOptions: Object;
 }
 
-var MarketTradeGrid = ($scope : MarketTradeScope,
-                       $log : ng.ILogService,
-                       subscriberFactory : Shared.SubscriberFactory) => {
+var MarketTradeGrid = ($scope: MarketTradeScope,
+    $log: ng.ILogService,
+    subscriberFactory: Shared.SubscriberFactory) => {
     $scope.marketTrades = [];
-    $scope.marketTradeOptions  = {
+    $scope.marketTradeOptions = {
         data: 'marketTrades',
         showGroupPanel: false,
         rowHeight: 20,
         headerRowHeight: 20,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['time'], directions: ['desc']},
+        sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
-            {width: 80, field:'time', displayName:'t', cellFilter: "momentShortDate"},
-            {width: 50, field:'price', displayName:'px'},
-            {width: 40, field:'size', displayName:'sz'},
-            {width: 40, field:'make_side', displayName:'ms'},
-            {width: 40, field:'qBz', displayName:'qBz'},
-            {width: 50, field:'qB', displayName:'qB'},
-            {width: 50, field:'qA', displayName:'qA'},
-            {width: 40, field:'qAz', displayName:'qAz'},
-            {width: 40, field:'mBz', displayName:'mBz'},
-            {width: 50, field:'mB', displayName:'mB'},
-            {width: 50, field:'mA', displayName:'mA'},
-            {width: 40, field:'mAz', displayName:'mAz'}
+            { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate" },
+            { width: 50, field: 'price', displayName: 'px' },
+            { width: 40, field: 'size', displayName: 'sz' },
+            { width: 40, field: 'make_side', displayName: 'ms' },
+            { width: 40, field: 'qBz', displayName: 'qBz' },
+            { width: 50, field: 'qB', displayName: 'qB' },
+            { width: 50, field: 'qA', displayName: 'qA' },
+            { width: 40, field: 'qAz', displayName: 'qAz' },
+            { width: 40, field: 'mBz', displayName: 'mBz' },
+            { width: 50, field: 'mB', displayName: 'mB' },
+            { width: 50, field: 'mA', displayName: 'mA' },
+            { width: 40, field: 'mAz', displayName: 'mAz' }
         ]
     };
 
-    var addNewMarketTrade = (u : Models.MarketTrade) => {
+    var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
             $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
-            .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
-            .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
+        .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
+        .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
@@ -429,9 +430,9 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
 export var marketTradeDirective = "marketTradeDirective";
 
 angular
-    .module(marketTradeDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(marketTradeDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("marketTradeGrid", () => {
-        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
+        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div></div>';
 
         return {
             restrict: 'E',
@@ -439,49 +440,50 @@ angular
             transclude: false,
             template: template,
             controller: MarketTradeGrid
-          }
+        }
     });
 
 // ==================
 
 class MessageViewModel {
-    text : string;
-    time : moment.Moment;
+    text: string;
+    time: moment.Moment;
 
-    constructor(message : Models.Message) {
+    constructor(message: Models.Message) {
         this.time = (moment.isMoment(message.time) ? message.time : moment(message.time));
         this.text = message.text;
     }
 }
 
 interface MessageLoggerScope extends ng.IScope {
-    messages : MessageViewModel[];
-    messageOptions : Object;
+    messages: MessageViewModel[];
+    messageOptions: Object;
 }
 
-var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subscriberFactory: Shared.SubscriberFactory) => {
     $scope.messages = [];
-    $scope.messageOptions  = {
+    $scope.messageOptions = {
         data: 'messages',
         showGroupPanel: false,
         rowHeight: 20,
         headerRowHeight: 0,
+        hideHeader: true,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['time'], directions: ['desc']},
+        sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
-            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
-            {width: "*", field:'text', displayName:'text'}
+            { width: 120, field: 'time', displayName: 't', cellFilter: 'momentFullDate' },
+            { width: "*", field: 'text', displayName: 'text' }
         ]
     };
 
-    var addNewMessage = (u : Models.Message) => {
+    var addNewMessage = (u: Models.Message) => {
         $scope.messages.push(new MessageViewModel(u));
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Message)
-            .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
-            .registerDisconnectedHandler(() => $scope.messages.length = 0);
+        .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
+        .registerDisconnectedHandler(() => $scope.messages.length = 0);
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
@@ -494,9 +496,9 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, su
 export var messagesDirective = "messagesDirective";
 
 angular
-    .module(messagesDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(messagesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("messagesGrid", () => {
-        var template = '<div><div class="table table-striped table-hover table-condensed" ng-grid="messageOptions"></div></div>';
+        var template = '<div><div style="height: 50px" class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
 
         return {
             restrict: 'E',
@@ -504,5 +506,5 @@ angular
             transclude: false,
             template: template,
             controller: MessagesController
-          }
+        }
     });

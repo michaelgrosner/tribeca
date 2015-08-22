@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.css">
+    <link rel="stylesheet" href="/css/ui-grid.min.css">
     
     <script src="/js/admin/bundle.min.js"></script>
     
@@ -162,115 +162,112 @@
                     <div class="row">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
-                                <form novalidate>
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">mode</div>
-                                            <select class="form-control input-sm"
+                                <table class="table table-responsive table-bordered">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>mode</th>
+                                            <th>fv</th>
+                                            <th>apMode</th>
+                                            <th>width</th>
+                                            <th>size</th>
+                                            <th>tbp</th>
+                                            <th>pDiv</th>
+                                            <th>ewma?</th>
+                                            <th>apr?</th>
+                                            <th>trds</th>
+                                            <th>/sec</th>
+                                            <th colspan="2">
+                                                <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                                    Applied
+                                                </span>
+                                                <span ng-if="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                                    Pending
+                                                </span>
+                                                <span ng-if="!pair.quotingParameters.connected" class="text-danger">
+                                                    Not Connected
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="active">
+                                            <td>
+                                                <select class="form-control input-sm"
                                                     ng-model="pair.quotingParameters.display.mode"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">fv</div>
-                                            <select class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <select class="form-control input-sm"
                                                     ng-model="pair.quotingParameters.display.fvModel"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">apMode</div>
-                                            <select class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <select class="form-control input-sm"
                                                     ng-model="pair.quotingParameters.display.autoPositionMode"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableAutoPositionModes"></select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">width</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.width">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">size</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.size">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">tbp</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.targetBasePosition">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">pDiv</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.positionDivergence">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">ewma?</div>
-                                            <input class="form-control input-sm"
-                                                   type="checkbox"
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
                                                    ng-model="pair.quotingParameters.display.ewmaProtection">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group col-md-2 col-xs-6" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">apr?</div>
-                                            <input class="form-control input-sm"
-                                                   type="checkbox"
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
                                                    ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group col-md-2 col-xs-12" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">trds</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.tradesPerMinute">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group col-md-2 col-xs-12" ng-class="pair.quotingParameters.pending ? 'has-warning' : 'has-success'">
-                                        <div class="input-group">
-                                            <div class="input-group-addon">/sec</div>
-                                            <input class="form-control input-sm"
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.tradeRateSeconds">
-                                        </div>
-                                    </div>
-
-                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
-                                    <input class="btn btn-default btn col-md-1 col-xs-6" type="submit" ng-click="pair.quotingParameters.submit()" value="Save" />
-                                </form>
+                                            </td>
+                                            <td>
+                                                <input class="btn btn-default btn col-md-1 col-xs-6" 
+                                                    style="width:55px"
+                                                    type="button" 
+                                                    ng-click="pair.quotingParameters.reset()" 
+                                                    value="Reset" />
+                                            </td>
+                                            <td>
+                                                <input class="btn btn-default btn col-md-1 col-xs-6"
+                                                    style="width:50px" 
+                                                    type="submit" 
+                                                    ng-click="pair.quotingParameters.submit()" 
+                                                    value="Save" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    
+                                </table>
                             </div>
 
                         </div>

@@ -1,7 +1,5 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
-/// <amd-dependency path="ui.bootstrap"/>
-/// <amd-dependency path="ngGrid"/>
 
 import angular = require("angular");
 import Models = require("../common/models");
@@ -71,7 +69,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 };
 
 var tradeList = () : ng.IDirective => {
-    var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
+    var template = '<div><div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
 
     return {
         template: template,
@@ -88,5 +86,5 @@ var tradeList = () : ng.IDirective => {
 
 export var tradeListDirective = "tradeListDirective";
 
-angular.module(tradeListDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+angular.module(tradeListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
        .directive("tradeList", tradeList);
