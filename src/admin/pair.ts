@@ -21,11 +21,12 @@ class FormViewModel<T> {
         private _submitConverter: (disp: T) => T = null) {
         if (this._submitConverter === null)
             this._submitConverter = d => d;
-
+            
         _sub.registerConnectHandler(() => this.connected = true)
             .registerDisconnectedHandler(() => this.connected = false)
             .registerSubscriber(this.update, us => us.forEach(this.update));
-
+            
+        this.connected = _sub.connected;
         this.master = angular.copy(defaultParameter);
         this.display = angular.copy(defaultParameter);
     }

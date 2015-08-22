@@ -65,6 +65,7 @@ export interface ISubscribe<T> {
     registerSubscriber : (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => ISubscribe<T>;
     registerDisconnectedHandler : (handler : () => void) => ISubscribe<T>;
     registerConnectHandler : (handler : () => void) => ISubscribe<T>;
+    connected: boolean;
     disconnect : () => void;
 }
 
@@ -80,15 +81,19 @@ export class Subscriber<T> implements ISubscribe<T> {
                 private _log : (...args: any[]) => void = console.log) {
         this._socket = io;
         
-        this._log("creating subscriber to", this.topic, "; connected?", this._socket.connected);
+        this._log("creating subscriber to", this.topic, "; connected?", this.connected);
         
-        if (this._socket.connected) 
+        if (this.connected) 
             this.onConnect();
         
         this._socket.on("connect", this.onConnect)
                 .on("disconnect", this.onDisconnect)
                 .on(Prefixes.MESSAGE + "-" + topic, this.onIncremental)
                 .on(Prefixes.SNAPSHOT + "-" + topic, this.onSnapshot);
+    }
+    
+    public get connected() : boolean {
+        return this._socket.connected;
     }
 
     private onConnect = () => {

@@ -84,6 +84,8 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     };
 
     public disconnect = () => this._wrapped.disconnect();
+    
+    public get connected() { return this._wrapped.connected; }
 }
 
 export var sharedDirectives = "sharedDirectives";
