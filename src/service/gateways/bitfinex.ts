@@ -120,8 +120,8 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         private _http: BitfinexHttp,
         private _symbolProvider: BitfinexSymbolProvider) {
 
-        timeProvider.setInterval(this.downloadMarketData, moment.duration(4, "seconds"));
-        timeProvider.setInterval(this.downloadMarketTrades, moment.duration(10, "seconds"));
+        timeProvider.setInterval(this.downloadMarketData, moment.duration(5, "seconds"));
+        timeProvider.setInterval(this.downloadMarketTrades, moment.duration(15, "seconds"));
 
         this.downloadMarketData();
         this.downloadMarketTrades();
@@ -318,7 +318,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         private _symbolProvider: BitfinexSymbolProvider) {
 
         _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
-        timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(7, "seconds"));
+        timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(8, "seconds"));
     }
 }
 
@@ -349,9 +349,11 @@ class RateLimitMonitor {
 class BitfinexHttp {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
+    private _timeout = 15000;
+
     get = <T>(actionUrl: string, qs: any = undefined): Q.Promise<Models.Timestamped<T>> => {
         var opts = {
-            timeout: 5000,
+            timeout: this._timeout,
             url: this._baseUrl + "/" + actionUrl,
             qs: qs,
             method: "GET"
@@ -366,7 +368,7 @@ class BitfinexHttp {
         return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg)).then(resp => {
             var rejectMsg: string = (<any>(resp.data)).message;
             if (typeof rejectMsg !== "undefined" && rejectMsg.indexOf("Nonce is too small") > -1)
-                return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg));
+                return this.post<TRequest, TResponse>(actionUrl, _.clone(msg));
             else
                 return resp;
         });
@@ -381,7 +383,7 @@ class BitfinexHttp {
         var signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
 
         var opts: request.Options = {
-            timeout: 5000,
+            timeout: this._timeout,
             url: this._baseUrl + "/" + actionUrl,
             headers: {
                 "X-BFX-APIKEY": this._apiKey,
@@ -399,19 +401,22 @@ class BitfinexHttp {
 
         this._monitor.add();
         request(msg, (err, resp, body) => {
-            if (err) d.reject(err);
+            if (err) {
+                this._log("Error returned: url=", msg.url, "err=", err);
+                d.reject(err);
+            }
             else {
                 try {
                     var t = Utils.date();
                     var data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }
-                catch (e) {
-                    this._log("url: %s, err: %o, body: %o", msg.url, err, body);
-                    d.reject(e);
+                catch (err) {
+                    this._log("Error parsing JSON url=", msg.url, "err=", err, ", body=", body);
+                    d.reject(err);
                 }
             }
-        }).on("error", e => d.reject(e)).end();
+        });
 
         return d.promise;
     };
@@ -450,7 +455,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
                 var cur = GetCurrencyEnum(p.currency);
                 var held = amt - parseFloat(p.available);
                 var rpt = new Models.CurrencyPosition(amt, held, cur);
-                this.PositionUpdate.trigger(new Models.CurrencyPosition(amt, held, cur));
+                this.PositionUpdate.trigger(rpt);
             });
         }).done();
     }
