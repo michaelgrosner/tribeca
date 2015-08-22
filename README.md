@@ -4,11 +4,13 @@
 
 `tribeca` is a very low latency cryptocurrency [market making](https://github.com/michaelgrosner/tribeca/wiki#what-is-market-making) trading bot with a full featured [web client](https://github.com/michaelgrosner/tribeca#web-ui), [backtester](https://github.com/michaelgrosner/tribeca/wiki#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/michaelgrosner/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. 
 
+![Web UI Preview](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/docs/web_ui_preview.png)
+
 It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation everything is also supported.
 
 ### Docker Installation
 
-0) Please install [docker](https://www.docker.com/) for your system before preceeding. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
+0) Please install [docker](https://www.docker.com/) for your system before preceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
 1) Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
@@ -77,8 +79,6 @@ Input your exchange connectivity information, account information, and API keys 
 3) Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 
 ### Web UI
-
-![Web UI Preview](http://i.imgur.com/FY4hhp2.png)
 
 Once `tribeca` is up and running, visit port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
 
