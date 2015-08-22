@@ -25,5 +25,10 @@
     "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
     "OkCoinApiKey": "NULL",
     "OkCoinSecretKey": "NULL",
-    "OkCoinOrderDestination": "OkCoin"
+    "OkCoinOrderDestination": "OkCoin",
+    
+    "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
+    "BitfinexKey": "NULL",
+    "BitfinexSecret": "NULL",
+    "BitfinexOrderDestination": "Bitfinex"
 }
