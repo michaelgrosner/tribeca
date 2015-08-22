@@ -1,7 +1,5 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
-/// <amd-dependency path="ui.bootstrap"/>
-/// <amd-dependency path="ngGrid"/>
 
 import angular = require("angular");
 import Models = require("../common/models");
@@ -115,7 +113,7 @@ var OrderListController = ($scope : OrderListScope,
             {width: 65, field:'averagePrice', displayName:'avg', cellFilter: 'currency'},
             {width: 40, field:'liquidity', displayName:'liq'},
             {width: "*", field:'rejectMessage', displayName:'msg'},
-            {width: 40, displayName:'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>'},
+            {width: 40, name: "cancel", displayName:'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>'},
         ]
     };
 
@@ -153,7 +151,7 @@ var OrderListController = ($scope : OrderListScope,
 };
 
 var orderList = () : ng.IDirective => {
-    var template = '<div><div ng-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
+    var template = '<div><div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
 
     return {
         template: template,
@@ -166,6 +164,6 @@ var orderList = () : ng.IDirective => {
 
 export var orderListDirective = "orderListDirective";
 
-angular.module(orderListDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
        .controller('OrderListController', OrderListController)
        .directive("orderList", orderList);

@@ -310,7 +310,7 @@ var MarketQuotingController = ($scope : MarketQuotingScope,
 export var marketQuotingDirective = "marketQuotingDirective";
 
 angular
-    .module(marketQuotingDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("marketQuotingGrid", () => {
 
         return {
@@ -429,9 +429,9 @@ var MarketTradeGrid = ($scope : MarketTradeScope,
 export var marketTradeDirective = "marketTradeDirective";
 
 angular
-    .module(marketTradeDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(marketTradeDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("marketTradeGrid", () => {
-        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ng-grid="marketTradeOptions"></div></div>';
+        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div></div>';
 
         return {
             restrict: 'E',
@@ -494,9 +494,9 @@ var MessagesController = ($scope : MessageLoggerScope, $log : ng.ILogService, su
 export var messagesDirective = "messagesDirective";
 
 angular
-    .module(messagesDirective, ['ui.bootstrap', 'ngGrid', Shared.sharedDirectives])
+    .module(messagesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("messagesGrid", () => {
-        var template = '<div><div class="table table-striped table-hover table-condensed" ng-grid="messageOptions"></div></div>';
+        var template = '<div><div class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
 
         return {
             restrict: 'E',
