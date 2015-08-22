@@ -88,9 +88,9 @@ var OrderListController = ($scope: OrderListScope,
     $scope.order_statuses = [];
     $scope.gridOptions = {
         data: 'order_statuses',
-        showGroupPanel: true,
         primaryKey: 'orderId',
         groupsCollapsedByDefault: true,
+        treeRowHeaderAlwaysVisible: false,
         enableColumnResize: true,
         sortInfo: { fields: ['time'], directions: ['desc'] },
         rowHeight: 20,
@@ -151,7 +151,7 @@ var OrderListController = ($scope: OrderListScope,
 };
 
 var orderList = (): ng.IDirective => {
-    var template = '<div><div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
+    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
 
     return {
         template: template,
@@ -164,6 +164,6 @@ var orderList = (): ng.IDirective => {
 
 export var orderListDirective = "orderListDirective";
 
-angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
+angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', "ui.grid.grouping", Shared.sharedDirectives])
     .controller('OrderListController', OrderListController)
     .directive("orderList", orderList);

@@ -37,7 +37,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     $scope.trade_statuses = [];
     $scope.gridOptions = {
         data: 'trade_statuses',
-        showGroupPanel: false,
+        treeRowHeaderAlwaysVisible: false,
         primaryKey: 'tradeId',
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
@@ -69,7 +69,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 };
 
 var tradeList = () : ng.IDirective => {
-    var template = '<div><div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
+    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
 
     return {
         template: template,
@@ -86,5 +86,5 @@ var tradeList = () : ng.IDirective => {
 
 export var tradeListDirective = "tradeListDirective";
 
-angular.module(tradeListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
+angular.module(tradeListDirective, ['ui.bootstrap', 'ui.grid', "ui.grid.grouping", Shared.sharedDirectives])
        .directive("tradeList", tradeList);
