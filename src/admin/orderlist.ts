@@ -80,9 +80,10 @@ class DisplayOrderStatusReport {
 }
 
 var OrderListController = ($scope: OrderListScope,
-    $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory,
-    fireFactory: Shared.FireFactory) => {
+                           $log: ng.ILogService,
+                           subscriberFactory: Shared.SubscriberFactory,
+                           fireFactory: Shared.FireFactory,
+                           uiGridConstants: any) => {
     var fireCxl = fireFactory.getFire(Messaging.Topics.CancelOrder);
 
     $scope.order_statuses = [];
@@ -92,11 +93,12 @@ var OrderListController = ($scope: OrderListScope,
         groupsCollapsedByDefault: true,
         treeRowHeaderAlwaysVisible: false,
         enableColumnResize: true,
-        sortInfo: { fields: ['time'], directions: ['desc'] },
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            { width: 120, field: 'time', displayName: 'time', cellFilter: "momentFullDate" },
+            { width: 120, field: 'time', displayName: 'time', cellFilter: "momentFullDate", 
+                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sort: { direction: uiGridConstants.DESC, priority: 1} },
             { width: 90, field: 'orderId', displayName: 'id' },
             { width: 35, field: 'version', displayName: 'v' },
             { width: 120, field: 'orderStatus', displayName: 'status' },

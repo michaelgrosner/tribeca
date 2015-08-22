@@ -383,8 +383,9 @@ interface MarketTradeScope extends ng.IScope {
 }
 
 var MarketTradeGrid = ($scope: MarketTradeScope,
-    $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory) => {
+                       $log: ng.ILogService,
+                       subscriberFactory: Shared.SubscriberFactory,
+                       uiGridConstants: any) => {
     $scope.marketTrades = [];
     $scope.marketTradeOptions = {
         data: 'marketTrades',
@@ -395,7 +396,9 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         enableColumnResize: true,
         sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
-            { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate" },
+            { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
+                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sort: { direction: uiGridConstants.DESC, priority: 1} },
             { width: 50, field: 'price', displayName: 'px' },
             { width: 40, field: 'size', displayName: 'sz' },
             { width: 40, field: 'make_side', displayName: 'ms' },

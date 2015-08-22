@@ -33,7 +33,7 @@ class DisplayTrade {
     }
 }
 
-var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory, uiGridConstants: any) => {
     $scope.trade_statuses = [];
     $scope.gridOptions = {
         data: 'trade_statuses',
@@ -45,7 +45,9 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate'},
+            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate',
+                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},
