@@ -46,7 +46,7 @@ It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongo
     
     4) `bitfinex` REST API only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
     
-    4) `null` - Test in-memory exchange. No exchange-specific config needed.
+    5) `null` - Test in-memory exchange. No exchange-specific config needed.
     
   * TRIBECA_MODE
   
