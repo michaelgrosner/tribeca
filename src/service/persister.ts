@@ -41,6 +41,10 @@ export class LoaderSaver {
     public saver = (x: Persistable) => {
         if (typeof x.time !== "undefined")
             x.time = (moment.isMoment(x.time) ? <moment.Moment>x.time : moment(x.time)).toDate();
+        if (typeof x.exchange === "undefined")
+            x.exchange = this._exchange;
+        if (typeof x.pair === "undefined")
+            x.pair = this._pair;
     }
 
     constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
@@ -65,7 +69,8 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         var deferred = Q.defer<T>();
 
         this.collection.then(coll => {
-            coll.find({}, { fields: { _id: 0 } }).limit(1).sort({ $natural: -1 }).toArray((err, arr) => {
+            var selector = { exchange: this._exchange, pair: this._pair };
+            coll.find(selector, { fields: { _id: 0 } }).limit(1).sort({ $natural: -1 }).toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
                 }
