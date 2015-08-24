@@ -5,6 +5,7 @@
     "MongoDbUrl": "mongodb://localhost:27017/tribeca",
     "WebClientUsername": "NULL",
     "WebClientPassword": "NULL",
+    "WebClientListenPort": "3000",
         
     "HitBtcPullUrl": "http://api.hitbtc.com",
     "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
