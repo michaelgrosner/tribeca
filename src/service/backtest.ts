@@ -276,7 +276,7 @@ export class BacktestParameters {
     id: string;
 }
 
-export class BacktestPersister<T> implements Persister.ILoadAllByExchangeAndPair<T>, Persister.ILoadLatest<T> {
+export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.ILoadLatest<T> {
     public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
         return this.loadAll(limit);    
     };

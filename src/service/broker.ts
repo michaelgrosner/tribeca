@@ -334,12 +334,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 }
 
-export class PositionPersister extends Persister.Persister<Models.PositionReport> {
-    constructor(db) {
-        super(db, "pos", Persister.timeLoader, Persister.timeSaver);
-    }
-}
-
 export class PositionBroker implements Interfaces.IPositionBroker {
     private _log : Utils.Logger;
 
