@@ -13,7 +13,7 @@ import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
 
-export function loadDb(config : Config.IConfigProvider) {
+export function loadDb(config: Config.IConfigProvider) {
     var deferred = Q.defer<mongodb.Db>();
     mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
         if (err) deferred.reject(err);
@@ -29,7 +29,7 @@ export interface Persistable {
 }
 
 export class LoaderSaver {
-    public loader = (x : Persistable) => {
+    public loader = (x: Persistable) => {
         if (typeof x.time !== "undefined")
             x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
         if (typeof x.exchange === "undefined")
@@ -37,13 +37,13 @@ export class LoaderSaver {
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
     }
-    
+
     public saver = (x: Persistable) => {
         if (typeof x.time !== "undefined")
             x.time = (moment.isMoment(x.time) ? <moment.Moment>x.time : moment(x.time)).toDate();
     }
-    
-    constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) {}
+
+    constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
 }
 
 export interface IPersist<T> {
@@ -112,9 +112,9 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
         if (start_time) {
-            selector["time"] = {$gte: start_time.toDate()};
+            selector["time"] = { $gte: start_time.toDate() };
         }
-        
+
         return this.loadInternal(selector, limit);
     };
 
@@ -129,7 +129,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     var options: any = { fields: { _id: 0 } };
                     if (limit !== null) {
                         options.limit = limit;
-                        if (count !== 0) 
+                        if (count !== 0)
                             options.skip = Math.max(count - limit, 0);
                     }
 
