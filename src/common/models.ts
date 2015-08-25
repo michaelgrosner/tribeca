@@ -261,7 +261,7 @@ export class PositionReport {
                 public value: number,
                 public quoteValue: number,
                 public pair: CurrencyPair,
-                public exch: Exchange,
+                public exchange: Exchange,
                 public time: moment.Moment) {}
 }
 

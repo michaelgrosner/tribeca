@@ -88,8 +88,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
     
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => new Backtest.BacktestPersister<T>();
-    var getMarketTradePersister = () => getPersister<Models.MarketTrade>("mt");
+    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
     
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
     
@@ -104,7 +103,6 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
         getExch: getExch,
         getReceiver: getReceiver,
         getPersister: getPersister,
-        getMarketTradePersister: getMarketTradePersister,
         getRepository: getRepository,
         getPublisher: getPublisher
     };
@@ -128,7 +126,7 @@ var liveTradingSetup = () => {
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));
-    http_server.listen(3000, () => mainLog('Listening to admins on *:3000...'));
+    http_server.listen(config.GetNumber("WebClientListenPort"), () => mainLog('Listening to admins on *:3000...'));
 
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
@@ -167,12 +165,16 @@ var liveTradingSetup = () => {
     
     var db = Persister.loadDb(config);
     
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T> => 
-        new Persister.BasicPersister<T>(db, collectionName);
-    var getMarketTradePersister = () : Persister.ILoadAllByExchangeAndPair<Models.MarketTrade> => new MarketTrades.MarketTradePersister(db);
+    var loaderSaver = new Persister.LoaderSaver(exchange, pair);
+    var mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
+    
+    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
+        var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
+        return new Persister.Persister<T>(db, collectionName, exchange, pair, ls.loader, ls.saver);
+    };
         
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
-        new Persister.RepositoryPersister<T>(db, defValue, collectionName);
+        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
         
     var classes : SimulationClasses = {
         exchange: exchange,
@@ -182,7 +184,6 @@ var liveTradingSetup = () => {
         getExch: getExch,
         getReceiver: getReceiver,
         getPersister: getPersister,
-        getMarketTradePersister: getMarketTradePersister,
         getRepository: getRepository,
         getPublisher: getPublisher
     };
@@ -196,8 +197,7 @@ interface SimulationClasses {
     timeProvider: Utils.ITimeProvider;
     getExch(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
     getReceiver<T>(topic: string) : Messaging.IReceive<T>;
-    getPersister<T>(collectionName: string) : Persister.ILoadAllByExchangeAndPair<T>;
-    getMarketTradePersister() : Persister.ILoadAllByExchangeAndPair<Models.MarketTrade>;
+    getPersister<T>(collectionName: string) : Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
@@ -207,7 +207,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var orderPersister = getPersister("osr");
     var tradesPersister = getPersister("trades");
     var fairValuePersister = getPersister("fv");
-    var mktTradePersister = classes.getMarketTradePersister();
+    var mktTradePersister = getPersister("mt");
     var positionPersister = getPersister("pos");
     var messagesPersister = getPersister("msg");
     var rfvPersister = getPersister("rfv");
@@ -222,9 +222,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var completedSuccessfully = Q.defer<boolean>();
     
     Q.all<any>([
-        orderPersister.load(exchange, pair, 25000),
-        tradesPersister.load(exchange, pair, 10000),
-        mktTradePersister.load(exchange, pair, 100),
+        orderPersister.loadAll(25000),
+        tradesPersister.loadAll(10000),
+        mktTradePersister.loadAll(100),
         messagesPersister.loadAll(50),
         paramsPersister.loadLatest(),
         activePersister.loadLatest(),

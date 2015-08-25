@@ -21,6 +21,7 @@ ENV EXCHANGE null
 ENV TradedPair BTC/USD
 ENV WebClientUsername NULL
 ENV WebClientPassword NULL
+ENV WebClientListenPort 3000
 # IP to access mongo instance. If you are on a mac, run `boot2docker ip` and replace `tribeca-mongo`.
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
 

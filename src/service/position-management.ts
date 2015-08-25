@@ -17,12 +17,6 @@ import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 
-export class RegularFairValuePersister extends Persister.Persister<Models.RegularFairValue> {
-    constructor(db: Q.Promise<mongodb.Db>) {
-        super(db, "rfv", Persister.timeLoader, Persister.timeSaver);
-    }
-}
-
 export class PositionManager {
     private _log: Utils.Logger = Utils.log("tribeca:rfv");
 
