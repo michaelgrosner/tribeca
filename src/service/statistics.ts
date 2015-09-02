@@ -1,3 +1,8 @@
+import Utils = require("./utils");
+import Interfaces = require("./interfaces");
+import FairValue = require("./fair-value");
+import moment = require("moment");
+
 export interface IComputeStatistics {
     latest: number;
     initialize(seedData: number[]): void;
@@ -26,4 +31,45 @@ export function computeEwma(newValue: number, previous: number, alpha: number): 
     }
 
     return newValue;
+}
+
+export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
+    constructor() { }
+    latest: number = null;
+    Updated = new Utils.Evt<any>();
+}
+
+export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
+    private _log: Utils.Logger = Utils.log("tribeca:ewma");
+
+    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
+        _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
+        this.onTick();
+    }
+
+    private onTick = () => {
+        var fv = this._fv.latestFairValue;
+
+        if (fv === null) {
+            this._log("Unable to compute EMWA value");
+            return;
+        }
+
+        var value = computeEwma(fv.price, this._latest, this._alpha);
+
+        this.setLatest(value);
+    };
+
+    private _latest: number = null;
+    public get latest() { return this._latest; }
+    private setLatest = (v: number) => {
+        if (Math.abs(v - this._latest) > 1e-3) {
+            this._latest = v;
+            this.Updated.trigger();
+
+            this._log("New EMWA value: %d", this._latest);
+        }
+    };
+
+    Updated = new Utils.Evt<any>();
 }

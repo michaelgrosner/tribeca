@@ -10,12 +10,17 @@ var bootstrap = require("../bootstrap.min");
 
 import Models = require("../common/models");
 import moment = require("moment");
-import Exchange = require("./exchange");
 import OrderList = require("./orderlist");
 import Trades = require("./trades");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 import Pair = require("./pair");
+import MarketQuoting = require("./market-quoting");
+import MarketTrades = require("./market-trades");
+import Messages = require("./messages");
+import Position = require("./position");
+import Tbp = require("./target-base-position");
+import TradeSafety = require("./trade-safety");
 
 interface MainWindowScope extends ng.IScope {
     env : string;
@@ -109,12 +114,12 @@ var requires = ['ui.bootstrap',
                 'ui.grid',
                 OrderList.orderListDirective,
                 Trades.tradeListDirective,
-                Pair.marketQuotingDirective,
-                Pair.marketTradeDirective,
-                Pair.messagesDirective, 
-                Exchange.positionDirective,
-                Exchange.targetBasePositionDirective,
-                Exchange.tradeSafetyDirective,
+                MarketQuoting.marketQuotingDirective,
+                MarketTrades.marketTradeDirective,
+                Messages.messagesDirective, 
+                Position.positionDirective,
+                Tbp.targetBasePositionDirective,
+                TradeSafety.tradeSafetyDirective,
                 Shared.sharedDirectives];
 
 angular.module('projectApp', requires)

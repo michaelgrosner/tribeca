@@ -12,25 +12,7 @@ import Q = require("q");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
-
-export class MessagesPubisher implements Interfaces.IPublishMessages {
-    private _storedMessages : Models.Message[] = [];
-
-    constructor(private _timeProvider: Utils.ITimeProvider,
-                private _persister : Persister.IPersist<Models.Message>,
-                initMsgs : Models.Message[],
-                private _wrapped : Messaging.IPublish<Models.Message>) {
-        _.forEach(initMsgs, m => this._storedMessages.push(m));
-        _wrapped.registerSnapshot(() => _.last(this._storedMessages, 50));
-    }
-
-    public publish = (text : string) => {
-        var message = new Models.Message(text, this._timeProvider.utcNow());
-        this._wrapped.publish(message);
-        this._persister.persist(message);
-        this._storedMessages.push(message);
-    };
-}
+import Messages = require("./messages");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -47,7 +29,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
                 private _marketPublisher : Messaging.IPublish<Models.Market>,
                 private _persister: Persister.IPersist<Models.Market>,
-                private _messages : MessagesPubisher) {
+                private _messages : Messages.MessagesPubisher) {
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
@@ -301,7 +283,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _messages : MessagesPubisher,
+                private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {

@@ -23,7 +23,7 @@ import Bitfinex = require("./gateways/bitfinex");
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
-import Agent = require("./arbagent");
+import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
@@ -40,6 +40,8 @@ import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
+import QuotingEngine = require("./quoting-engine");
+import Messages = require("./messages");
 
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -263,7 +265,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
         var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
         
-        var messages = new Broker.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
+        var messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
         messages.publish("start up");
     
         var getReceiver = classes.getReceiver;
@@ -295,7 +297,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var quoter = new Quoter.Quoter(orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
-        var ewma = new Agent.EWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
+        var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
         var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
@@ -305,9 +307,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new Agent.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
+        var quotingEngine = new QuotingEngine.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
-        var quoteSender = new Agent.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
+        var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
     
         var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
             quotingEngine, broker, mktTradePersister, initMktTrades);
