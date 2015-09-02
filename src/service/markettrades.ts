@@ -12,7 +12,7 @@ import P = require("./persister");
 import Broker = require("./broker");
 import mongodb = require('mongodb');
 import Web = require("./web");
-import QuotingEngine = require("quoting-engine");
+import QuotingEngine = require("./quoting-engine");
 
 export class MarketTradesLoaderSaver {
     public loader = (x : Models.MarketTrade) => {

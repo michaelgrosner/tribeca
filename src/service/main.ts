@@ -40,8 +40,8 @@ import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
-import QuotingEngine = require("quoting-engine");
-import Messages = require("messages");
+import QuotingEngine = require("./quoting-engine");
+import Messages = require("./messages");
 
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 

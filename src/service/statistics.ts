@@ -1,6 +1,7 @@
-import Utils = require("utils");
-import Interfaces = require("interfaces");
-import FairValue = require("fair-value");
+import Utils = require("./utils");
+import Interfaces = require("./interfaces");
+import FairValue = require("./fair-value");
+import moment = require("moment");
 
 export interface IComputeStatistics {
     latest: number;

@@ -20,7 +20,7 @@ import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import moment = require('moment');
-import QuotingEngine = require("quoting-engine");
+import QuotingEngine = require("./quoting-engine");
 
 export class QuoteSender {
     private _log: Utils.Logger = Utils.log("tribeca:quotesender");
