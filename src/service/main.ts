@@ -128,8 +128,10 @@ var liveTradingSetup = () => {
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));
-    http_server.listen(config.GetNumber("WebClientListenPort"), () => mainLog('Listening to admins on *:3000...'));
-
+    
+    var webport = config.GetNumber("WebClientListenPort");
+    http_server.listen(webport, () => mainLog('Listening to admins on *:'+webport));
+    
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
         switch (ex) {
