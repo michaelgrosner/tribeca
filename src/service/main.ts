@@ -40,6 +40,7 @@ import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
+import QuotingEngine = require("quoting-engine");
 
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -305,7 +306,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new Agent.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
+        var quotingEngine = new QuotingEngine.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
         var quoteSender = new Agent.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
     

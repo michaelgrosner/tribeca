@@ -13,6 +13,7 @@ import P = require("./persister");
 import Broker = require("./broker");
 import mongodb = require('mongodb');
 import Web = require("./web");
+import QuotingEngine = require("quoting-engine");
 
 export class MarketTradesLoaderSaver {
     public loader = (x : Models.MarketTrade) => {
@@ -71,7 +72,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     constructor(private _mdGateway: Interfaces.IMarketDataGateway,
         private _marketTradePublisher: Messaging.IPublish<Models.MarketTrade>,
         private _mdBroker: Interfaces.IMarketDataBroker,
-        private _quoteEngine: Agent.QuotingEngine,
+        private _quoteEngine: QuotingEngine.QuotingEngine,
         private _base: Broker.ExchangeBroker,
         private _persister: P.IPersist<Models.MarketTrade>,
         initMkTrades: Array<Models.MarketTrade>) {
