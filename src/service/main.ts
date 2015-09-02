@@ -295,7 +295,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var quoter = new Quoter.Quoter(orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
-        var ewma = new Agent.EWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
+        var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
         var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
