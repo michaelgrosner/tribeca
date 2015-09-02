@@ -23,7 +23,7 @@ import Bitfinex = require("./gateways/bitfinex");
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
-import Agent = require("./arbagent");
+import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
@@ -308,7 +308,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
         var quotingEngine = new QuotingEngine.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
-        var quoteSender = new Agent.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
+        var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
     
         var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
             quotingEngine, broker, mktTradePersister, initMktTrades);

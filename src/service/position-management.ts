@@ -10,7 +10,6 @@ import Statistics = require("./statistics");
 import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
-import Agent = require("./arbagent");
 import mongodb = require('mongodb');
 import FairValue = require("./fair-value");
 import moment = require("moment");

@@ -7,7 +7,6 @@ import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Agent = require("./arbagent");
 import _ = require("lodash");
 import P = require("./persister");
 import Broker = require("./broker");
