@@ -16,6 +16,9 @@ import Trades = require("./trades");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 import Pair = require("./pair");
+import MarketQuoting = require("./market-quoting");
+import MarketTrades = require("./market-trades");
+import Messages = require("./messages");
 
 interface MainWindowScope extends ng.IScope {
     env : string;
@@ -109,9 +112,9 @@ var requires = ['ui.bootstrap',
                 'ui.grid',
                 OrderList.orderListDirective,
                 Trades.tradeListDirective,
-                Pair.marketQuotingDirective,
-                Pair.marketTradeDirective,
-                Pair.messagesDirective, 
+                MarketQuoting.marketQuotingDirective,
+                MarketTrades.marketTradeDirective,
+                Messages.messagesDirective, 
                 Exchange.positionDirective,
                 Exchange.targetBasePositionDirective,
                 Exchange.tradeSafetyDirective,
