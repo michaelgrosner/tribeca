@@ -41,6 +41,7 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("quoting-engine");
+import Messages = require("messages");
 
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -264,7 +265,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
         var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
         
-        var messages = new Broker.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
+        var messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
         messages.publish("start up");
     
         var getReceiver = classes.getReceiver;
