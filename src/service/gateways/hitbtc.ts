@@ -497,14 +497,19 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             (err, body, resp) => {
                 try {
                     var rpts : Array<HitBtcPositionReport> = JSON.parse(resp).balance;
-
                     if (typeof rpts === 'undefined' || err) {
                         this._log("Trouble getting positions err: %o body: %o", err, body.body);
                         return;
                     }
 
                     rpts.forEach(r => {
-                        var currency = GetCurrencyEnum(r.currency_code);
+			try {
+                            var currency = GetCurrencyEnum(r.currency_code);
+			}
+			catch (e)
+			{
+			    return;
+			}
                         if (currency == null) return;
                         var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
                         this.PositionUpdate.trigger(position);
@@ -569,12 +574,12 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (name.toUpperCase()) {
+    switch (c.toUpperCase()) {
         case "BTC": return Models.Currency.BTC;
         case "USD": return Models.Currency.USD;
         case "EUR": return Models.Currency.EUR;
         case "LTC": return Models.Currency.LTC;
-        default: throw new Error("Unsupported currency " + name);
+        default: throw new Error("Unsupported currency " + c);
     }
 }
 
@@ -604,9 +609,10 @@ export class HitBtc extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.
-        var positionGateway = config.GetString("HitBtcPullUrl").indexOf("demo") ?
-            new NullGateway.NullPositionGateway() :
-            new HitBtcPositionGateway(config);
+        var positionGateway = new HitBtcPositionGateway(config);
+        if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
+            positionGateway = new NullGateway.NullPositionGateway();
+        }
 
         super(
             new HitBtcMarketDataGateway(config, symbolProvider),
