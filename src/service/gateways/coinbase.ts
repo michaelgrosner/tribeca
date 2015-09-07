@@ -115,10 +115,13 @@ interface CoinbaseOrderEmitter {
 
 interface CoinbaseOrder {
     client_oid?: string;
-    price: string;
+    price?: string;
     size: string;
     product_id: string;
     stp?: string;
+    time_in_force?: string;
+    post_only?: boolean;
+    funds?: string;
 }
 
 interface CoinbaseOrderAck {
@@ -554,6 +557,19 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             price: order.price.toString(),
             product_id: this._symbolProvider.symbol
         };
+        
+        switch (order.timeInForce) {
+            case Models.TimeInForce.GTC: 
+                break;
+            case Models.TimeInForce.FOK: 
+                o.time_in_force = "FOK";
+                break;
+            case Models.TimeInForce.IOC: 
+                o.time_in_force = "IOC";
+                break;
+            default: 
+                throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
+        }
 
         if (order.side === Models.Side.Bid)
             this._authClient.buy(o, cb);

@@ -18,14 +18,14 @@ export class MarketTradesLoaderSaver {
     public loader = (x : Models.MarketTrade) => {
         this._wrapped.loader(x);
         
-        if (typeof x.quote !== "undefined")
+        if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.loader(x.quote);
     }
     
     public saver = (x : Models.MarketTrade) => {
         this._wrapped.saver(x);
         
-        if (typeof x.quote !== "undefined")
+        if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.saver(x.quote);
     }
     
