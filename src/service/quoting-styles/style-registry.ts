@@ -16,12 +16,14 @@ class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
 export class QuotingStyleRegistry {
 	private _mapping : StyleHelpers.QuoteStyle[];
 	
-	constructor(private _modules: StyleHelpers.QuoteStyle[]) {}
+	constructor(modules: StyleHelpers.QuoteStyle[]) {
+		this._mapping = _.sortBy(modules, s => s.Mode);
+	}
 	
 	private static NullQuoteGenerator : StyleHelpers.QuoteStyle = new NullQuoteGenerator();
 	
 	public Get = (mode : Models.QuotingMode) : StyleHelpers.QuoteStyle => {
-		var mod = this._modules[mode];
+		var mod = this._mapping[mode];
 		
 		if (typeof mod === "undefined")
 			return QuotingStyleRegistry.NullQuoteGenerator;
