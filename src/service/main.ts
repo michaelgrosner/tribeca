@@ -43,6 +43,10 @@ import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Messages = require("./messages");
 
+import QuotingStyleRegistry = require("./quoting-styles/style-registry");
+import MidMarket = require("./quoting-styles/mid-market");
+import TopJoin = require("./quoting-styles/top-join");
+
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
 var config = new Config.ConfigProvider();
@@ -306,10 +310,18 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         shortEwma.initialize(rfvValues);
         var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
+        
+        var registry = new QuotingStyleRegistry.QuotingStyleRegistry([
+            new MidMarket.MidMarketQuoteStyle(),
+            new TopJoin.InverseJoinQuoteStyle(),
+            new TopJoin.InverseTopOfTheMarketQuoteStyle(),
+            new TopJoin.JoinQuoteStyle(),
+            new TopJoin.TopOfTheMarketQuoteStyle(),
+        ]);
     
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new QuotingEngine.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
+        var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
         var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
     
