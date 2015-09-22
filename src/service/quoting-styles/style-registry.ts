@@ -5,6 +5,14 @@ import StyleHelpers = require("./helpers");
 import Models = require("../../common/models");
 import _ = require("lodash");
 
+class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
+	Mode = null;
+    
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
+		return null;
+	};
+}
+
 export class QuotingStyleRegistry {
 	private _mapping : StyleHelpers.QuoteStyle[];
 	
@@ -19,13 +27,5 @@ export class QuotingStyleRegistry {
 			return QuotingStyleRegistry.NullQuoteGenerator;
 			
 		return mod;
-	};
-}
-
-class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
-	Mode = null;
-    
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-		return null;
 	};
 }
