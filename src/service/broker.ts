@@ -89,7 +89,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
-    private _tradesByTradeId : { [id: string] : Models.Trade } = {};
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
@@ -178,7 +177,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orderChain === "undefined") {
-                this._log("ERROR: cannot find orderId from %s", JSON.stringify(osr));
+                this._log("ERROR: cannot find orderId from %s", util.inspect(osr));
                 return;
             }
 
@@ -199,7 +198,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
-        
+
         var o = new Models.OrderStatusReportImpl(
             getOrFallback(osr.pair, orig.pair),
             getOrFallback(osr.side, orig.side),
@@ -246,10 +245,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
-            var tradeId = (typeof osr.exchangeTradeId !== "undefined") ? osr.exchangeTradeId : o.orderId+"."+o.version;
-            if (tradeId in this._tradesByTradeId) 
-                return;
-            
             var value = Math.abs(o.lastPrice * o.lastQuantity);
 
             var liq = o.liquidity;
@@ -260,12 +255,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            var trade = new Models.Trade(tradeId, o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side, value);
-            this.addTradeToMemory(trade);
-            
+            var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side, value);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
+            this._trades.push(trade);
         }
     };
 
@@ -278,11 +272,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._orderCache.allOrders[osr.orderId].push(osr);
 
         this._orderCache.allOrdersFlat.push(osr);
-    };
-    
-    private addTradeToMemory = (t: Models.Trade) => {
-        this._trades.push(t);
-        this._tradesByTradeId[t.tradeId] = t;
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -318,7 +307,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _.each(initOrders, this.addOrderStatusToMemory);
         this._log("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
 
-        _.each(initTrades, this.addTradeToMemory);
+        _.each(initTrades, t => this._trades.push(t));
         this._log("loaded %d trades", this._trades.length);
 
         this._oeGateway.ConnectChanged.on(s => {
