@@ -211,6 +211,18 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
         }
     };
+    
+    private onTrade = (t: MarketTrade) => {
+        var side : Models.Side = Models.Side.Unknown;
+        if (this._lastAsks.any() && this._lastBids.any()) {
+            var distance_from_bid = Math.abs(this._lastBids.max() - t.price);
+            var distance_from_ask = Math.abs(this._lastAsks.min() - t.price);
+            if (distance_from_bid < distance_from_ask) side = Models.Side.Bid;
+            if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
+        }
+        
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, side));
+    };
 
     _tradesClient : SocketIOClient.Socket;
      _log : Utils.Logger = Utils.log("tribeca:gateway:HitBtcMD");
@@ -231,9 +243,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._log("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient.on("connect", this.onConnectionStatusChange);
-        this._tradesClient.on("trade", (t : MarketTrade) => {
-            this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, null));
-        });
+        this._tradesClient.on("trade", this.onTrade);
         this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
