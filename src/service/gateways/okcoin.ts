@@ -51,6 +51,7 @@ interface Order extends SignedMessage {
 
 interface Cancel extends SignedMessage {
     order_id: string;
+    symbol: string;
 }
 
 interface OkCoinTradeRecord {

@@ -12,7 +12,6 @@ import Quoter = require("./quoter");
 import Safety = require("./safety");
 import util = require("util");
 import _ = require("lodash");
-import Web = require("web");
 import Statistics = require("./statistics");
 import Active = require("./active-state");
 import FairValue = require("./fair-value");

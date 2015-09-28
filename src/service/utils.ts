@@ -19,7 +19,7 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
 
 import util = require("util");
 import winston = require("winston");
-winston.add(winston.transports.DailyRotateFile, {
+winston.add(winston.transports.DailyRotateFile, <any>{
     handleExceptions: false,
     exitOnError: false,
     filename: 'tribeca.log',

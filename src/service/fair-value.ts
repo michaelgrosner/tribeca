@@ -12,7 +12,6 @@ import Safety = require("./safety");
 import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
-import Web = require("web");
 import Statistics = require("./statistics");
 import Active = require("./active-state");
 import MarketFiltration = require("./market-filtration");
