@@ -50,7 +50,7 @@ export class QuotingEngine {
         private _safeties: Safety.SafetyCalculator) {
         var recalcWithoutInputTime = () => this.recalcQuote(_timeProvider.utcNow());
 
-        _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(m.time));
+        _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, _timeProvider)));
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
