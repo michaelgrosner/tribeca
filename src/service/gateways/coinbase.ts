@@ -700,18 +700,21 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 }
 
-
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbasePG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
-            _.forEach(data, d => {
-                var c = GetCurrencyEnum(d.currency);
-                var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
-                this.PositionUpdate.trigger(rpt);
-            });
+            try {
+                _.forEach(data, d => {
+                    var c = GetCurrencyEnum(d.currency);
+                    var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
+                    this.PositionUpdate.trigger(rpt);
+                });
+            } catch (error) {
+                Utils.errorLog("Exception while downloading Coinbase positions: " + error, data)
+            }
         });
     };
 
