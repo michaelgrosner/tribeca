@@ -2,6 +2,10 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="utils.ts"/>
+/// <reference path="interfaces.ts"/>
+/// <reference path="persister.ts"/>
+/// <reference path="messages.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
@@ -441,7 +445,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
                 private _mdGateway : Interfaces.IMarketDataGateway,
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _posGateway : Interfaces.IPositionGateway,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
         this._log = Utils.log("tribeca:exchangebroker:" + this._baseGateway.name());
 

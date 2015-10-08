@@ -1,5 +1,15 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
+/// <reference path="orderlist.ts"/>
+/// <reference path="trades.ts"/>
+/// <reference path="../common/messaging.ts"/>
+/// <reference path="shared_directives.ts"/>
+/// <reference path="pair.ts"/>
+/// <reference path="market-quoting.ts"/>
+/// <reference path="market-trades.ts"/>
+/// <reference path="position.ts"/>
+/// <reference path="target-base-position.ts"/>
+/// <reference path="trade-safety.ts"/>
 
 (<any>global).jQuery = require("jquery");
 import angular = require("angular");

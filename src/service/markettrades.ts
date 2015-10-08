@@ -2,6 +2,11 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="interfaces.ts"/>
+/// <reference path="persister.ts"/>
+/// <reference path="broker.ts"/>
+/// <reference path="web.ts"/>
+/// <reference path="quoting-engine.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
@@ -20,14 +25,14 @@ export class MarketTradesLoaderSaver {
         
         if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.loader(x.quote);
-    }
+    };
     
     public saver = (x : Models.MarketTrade) => {
         this._wrapped.saver(x);
         
         if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.saver(x.quote);
-    }
+    };
     
     constructor(private _wrapped: P.LoaderSaver) {}
 }

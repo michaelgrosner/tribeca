@@ -2,6 +2,8 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="interfaces.ts"/>
+/// <reference path="config.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
@@ -36,7 +38,7 @@ export class LoaderSaver {
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
-    }
+    };
 
     public saver = (x: Persistable) => {
         if (typeof x.time !== "undefined")
@@ -45,7 +47,7 @@ export class LoaderSaver {
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
-    }
+    };
 
     constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
 }

@@ -2,6 +2,13 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="quoter.ts"/>
+/// <reference path="safety.ts"/>
+/// <reference path="persister.ts"/>
+/// <reference path="statistics.ts"/>
+/// <reference path="active-state.ts"/>
+/// <reference path="market-filtration.ts"/>
+/// <reference path="quoting-parameters.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");

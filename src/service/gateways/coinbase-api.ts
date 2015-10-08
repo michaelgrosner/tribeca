@@ -1,3 +1,6 @@
+///<reference path="../utils.ts"/>
+///<reference path="../../common/models.ts"/>
+
 var util = require('util');
 var crypto = require('crypto');
 

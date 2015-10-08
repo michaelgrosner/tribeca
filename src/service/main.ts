@@ -1,6 +1,22 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-/// <reference path="config.ts" />
+/// <reference path="broker.ts"/>
+/// <reference path="active-state.ts"/>
+/// <reference path="backtest.ts"/>
+/// <reference path="config.ts"/>
+/// <reference path="fair-value.ts"/>
+/// <reference path="interfaces.ts"/>
+/// <reference path="market-filtration.ts"/>
+/// <reference path="markettrades.ts"/>
+/// <reference path="messages.ts"/>
+/// <reference path="quote-sender.ts"/>
+/// <reference path="quoter.ts"/>
+/// <reference path="quoting-engine.ts"/>
+/// <reference path="quoting-parameters.ts"/>
+/// <reference path="safety.ts"/>
+/// <reference path="statistics.ts"/>
+/// <reference path="utils.ts"/>
+/// <reference path="web.ts"/>
 
 import _ = require("lodash");
 import Q = require("q");
@@ -90,7 +106,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     
     var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
-    }
+    };
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
     
@@ -100,8 +116,8 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     
     var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
     var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
-    
-    var classes : SimulationClasses = {
+
+    return {
         exchange: exchange,
         startingActive: startingActive,
         startingParameters: startingParameters,
@@ -112,7 +128,6 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
         getRepository: getRepository,
         getPublisher: getPublisher
     };
-    return classes;
 };
 
 var liveTradingSetup = () => {
@@ -183,8 +198,8 @@ var liveTradingSetup = () => {
         
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
-        
-    var classes : SimulationClasses = {
+
+    return {
         exchange: exchange,
         startingActive: defaultActive,
         startingParameters: defaultQuotingParameters,
@@ -195,7 +210,6 @@ var liveTradingSetup = () => {
         getRepository: getRepository,
         getPublisher: getPublisher
     };
-    return classes;
 };
 
 interface SimulationClasses {
@@ -260,7 +274,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
         var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
         var tradePublisher = getPublisher(Messaging.Topics.Trades, tradesPersister);
-        var safetySettingsPublisher = getPublisher(Messaging.Topics.SafetySettings);
         var activePublisher = getPublisher(Messaging.Topics.ActiveChange);
         var quotingParametersPublisher = getPublisher(Messaging.Topics.QuotingParametersChange);
         var marketTradePublisher = getPublisher(Messaging.Topics.MarketTrade, mktTradePersister);
@@ -275,7 +288,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         messages.publish("start up");
     
         var getReceiver = classes.getReceiver;
-        var safetySettingsReceiver = getReceiver(Messaging.Topics.SafetySettings);
         var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
         var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
         var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
@@ -286,7 +298,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
             throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
     
-        var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, gateway.pg, connectivity);
+        var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, orderCache, initOrders, initTrades);
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
@@ -404,7 +416,7 @@ var harness = () : Q.Promise<any> => {
                 else d.resolve(body);
             });
             return d.promise;
-        }
+        };
         
         var inputDataPromise = getFromBacktestServer("inputData").then(body => {
             var inp : Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
@@ -431,11 +443,11 @@ var harness = () : Q.Promise<any> => {
                     if (!possibleResult) return done.resolve(null);
                     else Q.when(possibleResult, loop, done.reject);
                 });
-            }
+            };
             
             Q.nextTick(loop);
             return done.promise;
-        }
+        };
         
         var runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
             var singleRun = () => {
@@ -446,7 +458,7 @@ var harness = () : Q.Promise<any> => {
                 return nextParameters().then(runWithParameters);
             };
             
-            return promiseWhile(singleRun);
+            return promiseWhile(<any>singleRun);
         };
         
         return inputDataPromise.then(runLoop);

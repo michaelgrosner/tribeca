@@ -2,6 +2,16 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="interfaces.ts"/>
+/// <reference path="quoter.ts"/>
+/// <reference path="safety.ts"/>
+/// <reference path="statistics.ts"/>
+/// <reference path="active-state.ts"/>
+/// <reference path="fair-value.ts"/>
+/// <reference path="market-filtration.ts"/>
+/// <reference path="quoting-parameters.ts"/>
+/// <reference path="position-management.ts"/>
+/// <reference path="./quoting-styles/style-registry.ts"/>
 
 import Config = require("./config");
 import Models = require("../common/models");

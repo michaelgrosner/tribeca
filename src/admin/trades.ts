@@ -1,5 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="../common/models.ts" />
+/// <reference path="shared_directives.ts"/>
 
 import angular = require("angular");
 import Models = require("../common/models");
