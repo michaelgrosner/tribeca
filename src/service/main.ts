@@ -341,6 +341,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             quotingEngine, broker, mktTradePersister, initMktTrades);
             
         if (config.inBacktestMode) {
+            var t = Utils.date();
+            console.log("starting backtest");
             try {
                 (<Backtest.BacktestExchange>gateway).run();
             }
@@ -351,10 +353,10 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             }
             
             var results = [paramsRepo.latest, positionBroker.latestReport, {
-                nTrades: orderBroker._trades.length,
+                trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
                 volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
             }];
-            console.log("sending back results: ", util.inspect(results));
+            console.log("sending back results, took: ", Utils.date().diff(t, "seconds"));
             
             request({url: serverUrl+"/result", 
                      method: 'POST', 
