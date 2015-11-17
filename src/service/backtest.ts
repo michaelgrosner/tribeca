@@ -237,6 +237,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                 }
             }
         });
+        
+        this.recomputePosition();        
     };
 }
 
@@ -343,7 +345,7 @@ var backtestServer = () => {
     console.log("loaded input data...");
     
     var app = express();
-    app.use(require('body-parser').json());
+    app.use(require('body-parser').json({limit: '200mb'}));
     app.use(require("compression")());
     
     var server = app.listen(5001, () => {
