@@ -112,7 +112,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             exchange: exch,
-            computationalLatency: sent.sentTime.diff(order.generatedTime),
+            computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
             rejectMessage: order.msg};
         this.onOrderUpdate(rpt);
 
@@ -133,7 +133,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             price: replace.price,
             quantity: replace.quantity,
             time: sent.sentTime,
-            computationalLatency: sent.sentTime.diff(replace.generatedTime)};
+            computationalLatency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
         this.onOrderUpdate(rpt);
 
         return new Models.SentOrder(rpt.orderId);
@@ -159,7 +159,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderStatus: Models.OrderStatus.Working,
             pendingCancel: true,
             time: sent.sentTime,
-            computationalLatency: sent.sentTime.diff(cancel.generatedTime)};
+            computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         this.onOrderUpdate(rpt);
     };
 

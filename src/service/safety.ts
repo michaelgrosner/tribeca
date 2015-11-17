@@ -69,7 +69,7 @@ export class SafetyCalculator {
 
     private isOlderThan(o: Models.Trade, settings: Models.QuotingParameters) {
         var now = this._timeProvider.utcNow();
-        return Math.abs(now.diff(o.time)) > (1000 * settings.tradeRateSeconds);
+        return Math.abs(Utils.fastDiff(now, o.time)) > (1000 * settings.tradeRateSeconds);
     }
 
     private computeQtyLimit = () => {

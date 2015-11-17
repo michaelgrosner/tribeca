@@ -7,6 +7,10 @@ require('events').EventEmitter.prototype._maxListeners = 100;
 
 export var date = moment.utc;
 
+export function fastDiff(x: moment.Moment, y: moment.Moment) : number {
+    return x.valueOf() - y.valueOf();
+}
+
 export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): moment.Moment {
     if (x === null)
         return timeProvider.utcNow();
