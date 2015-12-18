@@ -112,7 +112,6 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             }
             
             this.OrderUpdate.trigger({ orderId: order.orderId, orderStatus: Models.OrderStatus.Working });
-            this.recomputePosition();
         }, moment.duration(3));
         
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
@@ -142,7 +141,6 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             }
             
             this.OrderUpdate.trigger({ orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Cancelled });
-            this.recomputePosition();
         }, moment.duration(3));
         
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
@@ -161,11 +159,18 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
     
     private tryToMatch = (orders: Models.BrokeredOrder[], marketSides: Models.MarketSide[], side: Models.Side) => {
+        if (orders.length === 0 || marketSides.length === 0) 
+            return _.indexBy(orders, k => k.orderId);
+        
         var cmp = side === Models.Side.Ask ? (m, o) => o < m : (m, o) => o > m;
         _.forEach(orders, order => {
             _.forEach(marketSides, mkt => {
-                if (cmp(mkt.price, order.price) && order.quantity > 0) {
-                    var update : Models.OrderStatusReport = { orderId: order.orderId, lastPrice: order.price };
+                if ((cmp(mkt.price, order.price) || order.type === Models.OrderType.Market) && order.quantity > 0) {
+                    
+                    var px = order.price;
+                    if (order.type === Models.OrderType.Market) px = mkt.price;
+                    
+                    var update : Models.OrderStatusReport = { orderId: order.orderId, lastPrice: px };
                     if (mkt.size >= order.quantity) {
                         update.orderStatus = Models.OrderStatus.Complete;
                         update.lastQuantity = order.quantity;
@@ -179,20 +184,24 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                     
                     if (side === Models.Side.Bid) {
                         this._baseAmount += update.lastQuantity;
-                        this._quoteHeld -= (update.lastQuantity*order.price);
+                        this._quoteHeld -= (update.lastQuantity*px);
                     }
                     else {
                         this._baseHeld -= update.lastQuantity;
-                        this._quoteAmount += (update.lastQuantity*order.price);
+                        this._quoteAmount += (update.lastQuantity*px);
                     }
-                    this.recomputePosition();
                     
-                    order.quantity -= update.lastQuantity;
+                    order.quantity = order.quantity - update.lastQuantity;
                 };
             });
         });
         
-        return _.indexBy(_.filter(orders, (o: Models.BrokeredOrder) => o.quantity > 0), k => k.orderId);
+        var liveOrders = _.filter(orders, o => o.quantity > 0);
+        
+        if (liveOrders.length > 5)
+            console.warn("more than 5 outstanding " + Models.Side[side] + " orders open");
+        
+        return _.indexBy(liveOrders, k => k.orderId);
     };
     
     private onMarketTrade = (trade : Models.MarketTrade) => {
@@ -221,6 +230,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         
         var hasProcessedMktData = false;
+        
+        this.timeProvider.setInterval(() => this.recomputePosition(), moment.duration(15, "seconds"));
         
         _(this._inputData).forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
@@ -387,7 +398,8 @@ var backtestServer = () => {
     
     app.post("/result", (req, res) => {
         var params = req.body;
-        console.log("Accept backtest results", params);
+        console.log("Accept backtest results, volume =", params[2].volume.toFixed(2), "val =", 
+            params[1].value.toFixed(2), "qVal =", params[1].quoteValue.toFixed(2));
         fs.appendFileSync(backtestResultFile, JSON.stringify(params)+"\n");
     });
 }
