@@ -555,21 +555,24 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var o: CoinbaseOrder = {
             client_oid: order.orderId,
             size: order.quantity.toString(),
-            price: order.price.toString(),
             product_id: this._symbolProvider.symbol
         };
         
-        switch (order.timeInForce) {
-            case Models.TimeInForce.GTC: 
-                break;
-            case Models.TimeInForce.FOK: 
-                o.time_in_force = "FOK";
-                break;
-            case Models.TimeInForce.IOC: 
-                o.time_in_force = "IOC";
-                break;
-            default: 
-                throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
+        if (order.type === Models.OrderType.Limit) {
+            o.price = order.price.toString();
+            
+            switch (order.timeInForce) {
+                case Models.TimeInForce.GTC: 
+                    break;
+                case Models.TimeInForce.FOK: 
+                    o.time_in_force = "FOK";
+                    break;
+                case Models.TimeInForce.IOC: 
+                    o.time_in_force = "IOC";
+                    break;
+                default: 
+                    throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
+            }
         }
 
         if (order.side === Models.Side.Bid)
