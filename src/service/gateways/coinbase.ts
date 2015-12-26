@@ -123,6 +123,7 @@ interface CoinbaseOrder {
     time_in_force?: string;
     post_only?: boolean;
     funds?: string;
+    type?: string;
 }
 
 interface CoinbaseOrderAck {
@@ -573,6 +574,9 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 default: 
                     throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
             }
+        }
+        else if (order.type === Models.OrderType.Market) {
+            o.type = "market";
         }
 
         if (order.side === Models.Side.Bid)
