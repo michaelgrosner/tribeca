@@ -295,13 +295,23 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _tradePublisher.registerSnapshot(() => _.last(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
-            var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow());
-            this.sendOrder(order);
+            this._log("got new order req %o", o);
+            try {
+                var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow());
+                this.sendOrder(order);
+            }
+            catch (e) {
+                Utils.errorLog("unhandled exception while submitting order", o, e);
+            }
         });
         _cancelOrderReciever.registerReceiver(o => {
             this._log("got new cancel req %o", o);
-            this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()))
+            try {
+                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));    
+            } catch (e) {
+                Utils.errorLog("unhandled exception while submitting order", o, e);
+            }
         });
 
         this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);

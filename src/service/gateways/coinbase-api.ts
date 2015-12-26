@@ -192,7 +192,7 @@ _.assign(AuthenticatedClient.prototype, new function() {
 
     prototype._placeOrder = function(params, callback) {
         var self = this;
-        _.forEach(['price', 'size', 'side', 'product_id'], function(param) {
+        _.forEach(['size', 'side', 'product_id'], function(param) {
             if (params[param] === undefined) {
                 throw "`opts` must include param `" + param + "`";
             }
