@@ -10,4 +10,3 @@ tribeca/
 test/src
 .tscache
 tribeca.json
-Dockerfile
