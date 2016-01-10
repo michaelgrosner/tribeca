@@ -34,7 +34,9 @@ It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongo
 
 6. Create a `tribeca.json` file based off the provided `sample-dev-tribeca.json` or `sample-prod-tribeca.json` files and save it in the current directory. Modify the config keys (see [configuration](https://github.com/michaelgrosner/tribeca#configuration) section) and point the instance towards the running mongoDB instance.
 
-7. Run `forever start main.js` to start the app.
+7. Set environmental variable TRIBECA_CONFIG_FILE to full path of tribeca.json
+
+8. Run `forever start main.js` to start the app.
 
 ### Configuration
 
