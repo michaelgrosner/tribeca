@@ -273,6 +273,9 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
+    
+    supportsCancelAllOpenOrders = () : boolean => { return false; };
+    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
 
     _nonce = 1;
 

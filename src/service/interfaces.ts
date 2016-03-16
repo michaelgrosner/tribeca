@@ -5,6 +5,7 @@
 import Utils = require("./utils");
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
+import q = require("q");
 
 export interface IExchangeDetailsGateway {
     name(): string;
@@ -34,9 +35,14 @@ export interface IOrderEntryGateway extends IGateway {
     sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport;
     cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport;
     replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport;
+    
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
+    
     cancelsByClientOrderId: boolean;
     generateClientOrderId(): string;
+    
+    supportsCancelAllOpenOrders() : boolean;
+    cancelAllOpenOrders() : q.Promise<number>;
 }
 
 export interface IPositionGateway {
