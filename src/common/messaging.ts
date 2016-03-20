@@ -39,7 +39,10 @@ export class Publisher<T> implements IPublish<T> {
         };
 
         this._io.on("connection", onConnection);
-        this._io.sockets.sockets.filter(s => s.connected).forEach(onConnection);
+        
+        Object.keys(this._io.sockets.connected).forEach(s => {
+            onConnection(this._io.sockets.connected[s]);
+        });
     }
 
     public publish = (msg : T) => this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
@@ -207,10 +210,15 @@ export class Receiver<T> implements IReceive<T> {
                 if (this._handler !== null)
                     this._handler(msg);
             });
+            s.on("error", e => {
+                _log("error in Receiver", e.stack, e.message);
+            });
         };
                     
         io.on("connection", onConnection);
-        io.sockets.sockets.filter(s => s.connected).forEach(onConnection);
+        Object.keys(io.sockets.connected).forEach(s => {
+            onConnection(io.sockets.connected[s]);
+        });
     }
 
     registerReceiver = (handler : (msg : T) => void) => {

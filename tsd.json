@@ -24,7 +24,7 @@
       "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
     },
     "node/node.d.ts": {
-      "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
+      "commit": "95433230a9913054c57c715e6b91a9ae738d0b97"
     },
     "jquery/jquery.d.ts": {
       "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
@@ -54,7 +54,7 @@
       "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
     },
     "socket.io/socket.io.d.ts": {
-      "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
+      "commit": "95433230a9913054c57c715e6b91a9ae738d0b97"
     },
     "serve-static/serve-static.d.ts": {
       "commit": "983126e131a2b81739053d60e4bbdbb46d6577b7"
