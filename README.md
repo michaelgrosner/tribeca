@@ -6,7 +6,7 @@
 
 ![Web UI Preview](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/docs/web_ui_preview.png)
 
-It runs on v0.12 nodejs or the latest io.js. Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation everything is also supported.
+Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
 
 ### Docker Installation
 
