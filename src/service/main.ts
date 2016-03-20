@@ -292,6 +292,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
         var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
         var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
+        var cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
         
         var gateway = classes.getExch(orderCache);
         
@@ -300,7 +301,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-            tradePublisher, submitOrderReceiver, cancelOrderReceiver, messages, orderCache, initOrders, initTrades);
+            tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
     

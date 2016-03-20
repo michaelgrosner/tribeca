@@ -245,4 +245,5 @@ export class Topics {
     static QuoteStatus = "qs";
     static TargetBasePosition = "tbp";
     static TradeSafetyValue = "tsv";
+    static CancelAllOrders = "cao";
 }
