@@ -39,6 +39,7 @@ interface MainWindowScope extends ng.IScope {
     pair : Pair.DisplayPair;
     exch_name : string;
     pair_name : string;
+    cancelAllOrders();
 }
 
 class DisplayOrder {
@@ -84,6 +85,10 @@ var uiCtrl = ($scope : MainWindowScope,
               $log : ng.ILogService,
               subscriberFactory : Shared.SubscriberFactory,
               fireFactory : Shared.FireFactory) => {
+    
+    var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
+    $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
+                  
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 

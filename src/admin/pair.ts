@@ -58,7 +58,7 @@ class QuotingButtonViewModel extends FormViewModel<boolean> {
     public getClass = () => {
         if (this.pending) return "btn btn-warning";
         if (this.display) return "btn btn-success";
-        return "btn btn-danger"
+        return "btn btn-danger";
     }
 }
 
