@@ -54,6 +54,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private _log : Utils.Logger;
 
     cancelOpenOrders() : Q.Promise<number> {
+        if (this._oeGateway.supportsCancelAllOpenOrders()) {
+            return this._oeGateway.cancelAllOpenOrders();
+        }
+        
         var deferred = Q.defer<number>();
 
         var lateCancels : {[id: string] : boolean} = {};

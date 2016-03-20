@@ -153,6 +153,7 @@ interface CoinbaseAuthenticatedClient {
     sell(order: CoinbaseOrder, cb: (err?: Error, response?: any, ack?: CoinbaseOrderAck) => void);
     cancelOrder(id: string, cb: (err?: Error, response?: any) => void);
     getOrders(cb: (err?: Error, response?: any, ack?: CoinbaseOpen[]) => void);
+    cancelAllOrders(cb: (err?: Error, response?: string[]) => void);
     getProductTrades(product: string, cb: (err?: Error, response?: any, ack?: CoinbaseRESTTrade[]) => void);
     getAccounts(cb: (err?: Error, response?: any, info?: CoinbaseAccountInformation[]) => void);
     getAccount(accountID: string, cb: (err?: Error, response?: any, info?: CoinbaseAccountInformation) => void);
@@ -461,7 +462,16 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    cancelAllOpenOrders = () : Q.Promise<number> => {
+        var d = Q.defer<number>();
+        this._authClient.cancelAllOrders((err, resp) => {
+            if (err) d.reject(err);
+            else  {
+                d.resolve(resp.length);
+            };
+        });
+        return d.promise;
+    };
 
     generateClientOrderId = (): string => {
         return uuid.v1();
