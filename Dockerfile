@@ -1,4 +1,4 @@
-FROM node:0.12.7
+FROM node:latest
 RUN apt-get update
 
 RUN apt-get install -y git
