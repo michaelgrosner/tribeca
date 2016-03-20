@@ -377,3 +377,7 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(public data: number, public time: moment.Moment) {}
 }
+
+export class CancelAllOrdersRequest {
+    constructor() {}
+}

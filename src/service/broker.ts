@@ -54,6 +54,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private _log : Utils.Logger;
 
     cancelOpenOrders() : Q.Promise<number> {
+        if (this._oeGateway.supportsCancelAllOpenOrders()) {
+            return this._oeGateway.cancelAllOpenOrders();
+        }
+        
         var deferred = Q.defer<number>();
 
         var lateCancels : {[id: string] : boolean} = {};
@@ -287,6 +291,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
+                private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
                 private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
@@ -312,6 +317,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             } catch (e) {
                 Utils.errorLog("unhandled exception while submitting order", o, e);
             }
+        });
+        
+        _cancelAllOrdersReciever.registerReceiver(o => {
+            this._log("handling cancel all orders request");
+            this.cancelOpenOrders()
+                .then(x => this._log("cancelled all ", x, " open orders"), 
+                      e => this._log("error when cancelling all orders!", e));
         });
 
         this._log = Utils.log("tribeca:exchangebroker:" + Models.Exchange[this._baseBroker.exchange()]);

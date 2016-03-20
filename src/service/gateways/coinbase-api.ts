@@ -217,6 +217,11 @@ _.assign(AuthenticatedClient.prototype, new function() {
         var self = this;
         return prototype.delete.call(self, ['orders', orderID], callback);
     };
+    
+    prototype.cancelAllOrders = function(callback) {
+        var self = this;
+        return prototype.delete.call(self, ['orders'], callback);
+    };
 
     prototype.getOrders = function(callback) {
         var self = this;

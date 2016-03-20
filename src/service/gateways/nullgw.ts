@@ -10,6 +10,9 @@ var uuid = require('node-uuid');
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    
+    supportsCancelAllOpenOrders = () : boolean => { return false; };
+    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
 
     public cancelsByClientOrderId = true;
 

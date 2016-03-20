@@ -89,6 +89,9 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     
+    supportsCancelAllOpenOrders = () : boolean => { return false; };
+    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    
     generateClientOrderId = () => {
         return "BACKTEST-" + shortId.generate();
     }
