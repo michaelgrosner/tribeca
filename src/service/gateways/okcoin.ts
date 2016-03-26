@@ -340,9 +340,9 @@ class OkCoinMessageSigner {
         keys.sort();
 
         for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            if (m.hasOwnProperty(key))
-                els.push(key + "=" + m[key]);
+            const k = keys[i];
+            if (m.hasOwnProperty(k))
+                els.push(k + "=" + m[k]);
         }
 
         var sig = els.join("&") + "&secret_key=" + this._secretKey;
