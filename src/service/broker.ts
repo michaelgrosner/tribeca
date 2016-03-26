@@ -1,7 +1,6 @@
 /// <reference path="utils.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-/// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="utils.ts"/>
 /// <reference path="interfaces.ts"/>
 /// <reference path="persister.ts"/>

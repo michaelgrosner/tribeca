@@ -7,6 +7,7 @@
     "angular-ui-bootstrap": "registry:dt/angular-ui-bootstrap#0.13.3+20160317120654",
     "basic-auth": "registry:dt/basic-auth#0.0.0+20160316155526",
     "body-parser": "registry:dt/body-parser#0.0.0+20160317120654",
+    "bunyan": "registry:dt/bunyan#0.0.0+20160316155526",
     "compression": "registry:dt/compression#0.0.0+20160317120654",
     "connect": "registry:dt/connect#3.4.0+20160317120654",
     "express": "registry:dt/express#4.0.0+20160317120654",
@@ -18,12 +19,12 @@
     "moment-node": "registry:dt/moment-node#2.11.1+20160317120654",
     "mongodb": "registry:dt/mongodb#2.1.0+20160316155526",
     "node": "registry:dt/node#4.0.0+20160319033040",
+    "promise": "registry:dt/promise#7.1.1+20160316171810",
     "q": "registry:dt/q#0.0.0+20160323171452",
     "request": "registry:dt/request#0.0.0+20160316155526",
     "serve-static": "registry:dt/serve-static#0.0.0+20160317120654",
     "socket.io": "registry:dt/socket.io#1.4.4+20160317120654",
     "socket.io-client": "registry:dt/socket.io-client#1.4.4+20160317120654",
-    "winston": "registry:dt/winston#0.0.0+20160324163241",
     "ws": "registry:dt/ws#0.0.0+20160317120654"
   }
 }

@@ -15,6 +15,7 @@
     "basic-auth-connect": "1.0.0",
     "body-parser": "1.15.0",
     "bufferutil": "1.2.1",
+    "bunyan": "^1.8.0",
     "collections": "3.0.0",
     "compression": "1.6.1",
     "connect": "3.4.1",
@@ -37,7 +38,6 @@
     "typescript": "1.8.9",
     "typings": "^0.7.9",
     "utf-8-validate": "1.2.1",
-    "winston": "2.2.0",
     "ws": "1.0.1"
   },
   "devDependencies": {

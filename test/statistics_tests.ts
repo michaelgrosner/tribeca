@@ -1,4 +1,3 @@
-/// <reference path="../typings/tsd.d.ts" />
 /// <reference path="../src/service/safety.ts" />
 
 import assert = require("assert");

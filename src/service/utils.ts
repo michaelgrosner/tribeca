@@ -1,4 +1,4 @@
-/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../typings/main.d.ts" />
 
 import Models = require("../common/models");
 import moment = require('moment');
@@ -22,22 +22,13 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
 }
 
 import util = require("util");
-import winston = require("winston");
-winston.add(winston.transports.DailyRotateFile, <any>{
-    handleExceptions: false,
-    exitOnError: false,
-    filename: 'tribeca.log',
-    timestamp: false,
-    json: false
-}
-    );
+import bunyan = require("bunyan");
 
-export var errorLog = winston.error;
+export var errorLog = () => bunyan.createLogger({name: "error", level: bunyan.ERROR });
 
 export var log = (name: string) => {
     return (...msg: any[]) => {
-        var head = util.format.bind(this, Models.toUtcFormattedTime(date()) + "\t[" + name + "]\t" + msg.shift());
-        winston.info(head.apply(this, msg));
+        bunyan.createLogger({name: name, level: bunyan.INFO});
     };
 };
 
