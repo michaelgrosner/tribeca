@@ -13,7 +13,7 @@ var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCac
         var template = '';
         switch (contentType) {
             case 'user':
-                template = $templateCache.get(template_url);
+                template = <any>$templateCache.get(template_url);
                 break;
         }
         return template;

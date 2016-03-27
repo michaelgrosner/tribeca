@@ -12,7 +12,7 @@ export interface IConfigProvider {
 }
 
 export class ConfigProvider implements IConfigProvider {
-    private static Log: Utils.Logger = Utils.log("tribeca:config");
+    private static Log = Utils.log("tribeca:config");
     private _config: { [key: string]: string } = {};
 
     constructor() {
@@ -30,7 +30,7 @@ export class ConfigProvider implements IConfigProvider {
 
     public GetString = (configKey: string): string => {
         var value = this.Fetch(configKey);
-        ConfigProvider.Log("%s = %s", configKey, value);
+        ConfigProvider.Log.info("%s = %s", configKey, value);
         return value;
     };
     

@@ -30,7 +30,7 @@ import moment = require('moment');
 import QuotingEngine = require("./quoting-engine");
 
 export class QuoteSender {
-    private _log: Utils.Logger = Utils.log("tribeca:quotesender");
+    private _log = Utils.log("quotesender");
 
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
@@ -66,7 +66,7 @@ export class QuoteSender {
         var qs = this._quoter.quotesSent(oppSide);
         for (var qi = 0; qi < qs.length; qi++) {
             if (doesQuoteCross(qs[qi].quote, px)) {
-                this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %j",
+                this._log.warn("crossing quote detected! gen quote at %d would crossed with %s quote at",
                     px, Models.Side[oppSide], qs[qi]);
                 return true;
             }
@@ -113,7 +113,7 @@ export class QuoteSender {
         if (this.shouldLogDescision(askAction) || this.shouldLogDescision(bidAction)) {
             var fv = this._fv.latestFairValue;
             var lm = this._broker.currentBook;
-            this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
+            this._log.info("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
                 Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
                 (fv == null ? null : fv.price),
                 this.fmtQuoteSide(quote),

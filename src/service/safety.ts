@@ -17,7 +17,7 @@ import _ = require("lodash");
 import Persister = require("./persister");
 
 export class SafetyCalculator {
-    private _log: Utils.Logger = Utils.log("tribeca:sc");
+    private _log = Utils.log("sc");
 
     NewValue = new Utils.Evt();
 
@@ -31,7 +31,7 @@ export class SafetyCalculator {
             this._persister.persist(this.latest);
             this._publisher.publish(this.latest);
 
-            this._log("New safety value: %j", this.latest);
+            this._log.info("New safety value", this.latest);
         }
     }
 

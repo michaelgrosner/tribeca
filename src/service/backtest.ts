@@ -154,8 +154,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
     
     private onMarketData = (market : Models.Market) => {
-        this._openAskOrders = this.tryToMatch(_.values(this._openAskOrders), market.bids, Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch(_.values(this._openBidOrders), market.asks, Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch(<any>_.values(this._openAskOrders), market.bids, Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(<any>_.values(this._openBidOrders), market.asks, Models.Side.Bid);
         
         this.MarketData.trigger(market);
     };
@@ -207,8 +207,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
     
     private onMarketTrade = (trade : Models.MarketTrade) => {
-        this._openAskOrders = this.tryToMatch(_.values(this._openAskOrders), [trade], Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch(_.values(this._openBidOrders), [trade], Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch(<any>_.values(this._openAskOrders), [trade], Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(<any>_.values(this._openBidOrders), [trade], Models.Side.Bid);
         
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
@@ -292,14 +292,14 @@ export class BacktestParameters {
 }
 
 export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.ILoadLatest<T> {
-    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit: number = null): Q.Promise<T[]> => {
+    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Q.Promise<T[]> => {
         return this.loadAll(limit);    
     };
     
     public loadAll = (limit?: number): Q.Promise<T[]> => { 
         if (this.initialData) {
             if (limit) {
-                return Q(_.last(this.initialData, limit));
+                return Q(_.takeRight(this.initialData, limit));
             }
             else {
                 return Q(this.initialData);
@@ -315,7 +315,9 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
             return Q(_.last(this.initialData));
     };
     
-    constructor(private initialData: T[] = null) {}
+    constructor(private initialData?: T[]) {
+        this.initialData = initialData || null;
+    }
 }
 
 export class BacktestExchange extends Interfaces.CombinedGateway {
@@ -349,7 +351,7 @@ var backtestServer = () => {
     var parameters : BacktestParameters[] = JSON.parse(rawParams);
     if (fs.existsSync(savedProgressFile)) {
         var l = parseInt(fs.readFileSync(savedProgressFile, 'utf8'));
-        parameters = _.last(parameters, l);
+        parameters = _.takeRight(parameters, l);
     }
     else if (fs.existsSync(backtestResultFile)) {
         fs.unlinkSync(backtestResultFile);
@@ -377,7 +379,7 @@ var backtestServer = () => {
     });
     
     app.get("/nextParameters", (req, res) => {
-        if (_.any(parameters)) {
+        if (_.some(parameters)) {
             var id = parameters.length;
             var served = parameters.shift();
             if (typeof served["id"] === "undefined") 
@@ -387,7 +389,7 @@ var backtestServer = () => {
             res.json(served);
             fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
             
-            if (!_.any(parameters)) {
+            if (!_.some(parameters)) {
                 console.log("Done serving parameters");
             }
         }

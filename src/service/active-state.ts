@@ -12,7 +12,7 @@ import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 
 export class ActiveRepository implements Interfaces.IRepository<boolean> {
-    private _log: Utils.Logger = Utils.log("tribeca:active");
+    private _log = Utils.log("tribeca:active");
 
     NewParameters = new Utils.Evt();
 
@@ -30,7 +30,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
         private _pub: Messaging.IPublish<boolean>,
         private _rec: Messaging.IReceive<boolean>) {
-        this._log("Starting saved quoting state: ", startQuoting);
+        this._log.info("Starting saved quoting state: ", startQuoting);
         this._savedQuotingMode = startQuoting;
 
         _pub.registerSnapshot(() => [this.latest]);
@@ -41,7 +41,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
-            this._log("Changed saved quoting state: ", this._savedQuotingMode);
+            this._log.info("Changed saved quoting state: ", this._savedQuotingMode);
             this.updateParameters();
         }
 
@@ -55,11 +55,11 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
     private updateParameters = () => {
         var newMode = this.reevaluateQuotingMode();
-        this._log("updateParameters newMode = ", this.latest);
+        this._log.info("updateParameters newMode = ", this.latest);
 
         if (newMode !== this._latest) {
             this._latest = newMode;
-            this._log("Changed quoting mode to %j", this.latest);
+            this._log.info("Changed quoting mode to %j", this.latest);
             this.NewParameters.trigger();
             this._pub.publish(this.latest);
         }

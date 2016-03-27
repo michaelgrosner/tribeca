@@ -44,9 +44,10 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
 }
 
 export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
-    private _log: Utils.Logger = Utils.log("tribeca:ewma");
+    private _log = Utils.log("ewma");
 
-    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha: number = .095) {
+    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
+        this._alpha = _alpha || .095;
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
         this.onTick();
     }
@@ -55,7 +56,7 @@ export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
         var fv = this._fv.latestFairValue;
 
         if (fv === null) {
-            this._log("Unable to compute EMWA value");
+            this._log.info("Unable to compute EMWA value");
             return;
         }
 
@@ -71,7 +72,7 @@ export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
             this._latest = v;
             this.Updated.trigger();
 
-            this._log("New EMWA value: %d", this._latest);
+            this._log.info("New EMWA value", this._latest);
         }
     };
 

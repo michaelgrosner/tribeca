@@ -29,7 +29,8 @@ export class GatewayMarketTrade implements ITimestamped {
                 public make_side: Side) { }
 }
 
-export function marketSideEquals(t: MarketSide, other: MarketSide, tol: number = 1e-4) {
+export function marketSideEquals(t: MarketSide, other: MarketSide, tol?: number) {
+    tol = tol || 1e-4;
     if (other == null) return false;
     return Math.abs(t.price - other.price) > tol && Math.abs(t.size - other.size) > tol;
 }
@@ -92,7 +93,9 @@ export class SubmitNewOrder implements Order {
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
                 public generatedTime: moment.Moment,
-                public msg: string = null) {}
+                public msg?: string) {
+                    this.msg = msg || null;
+                }
 }
 
 export class CancelReplaceOrder {
@@ -289,8 +292,9 @@ export class Quote {
     constructor(public price: number,
                 public size: number) {}
 
-    public equals(other: Quote, tol: number = 1e-3) {
-        return Math.abs(this.price - other.price) < tol && Math.abs(this.size - other.size) < tol;
+    private static Tol = 1e-3;
+    public equals(other: Quote) {
+        return Math.abs(this.price - other.price) < Quote.Tol && Math.abs(this.size - other.size) < Quote.Tol;
     }
 }
 

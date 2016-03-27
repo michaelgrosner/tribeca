@@ -18,9 +18,7 @@ export class StandaloneHttpPublisher<T> {
         private _wrapped: Messaging.IPublish<T>,
         private route: string,
         private _httpApp: express.Application,
-        private _persister: Persister.ILoadAll<T>,
-        snapshot: () => T[] = null) {
-        this.registerSnapshot(snapshot);
+        private _persister: Persister.ILoadAll<T>) {
         
         _httpApp.get("/data/" + route, (req: express.Request, res: express.Response) => {
             var getParameter = <T>(pName: string, cvt: (r: string) => T) => {
@@ -33,7 +31,7 @@ export class StandaloneHttpPublisher<T> {
 
             var handler = (d: T[]) => {
                 if (max !== null && max <= d.length)
-                    d = _.last(d, max);
+                    d = _.takeRight(d, max);
                 res.json(d);
             };
 

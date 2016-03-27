@@ -18,9 +18,9 @@ export class Publisher<T> implements IPublish<T> {
     private _snapshot : () => T[] = null;
     constructor(private topic : string, 
                 private _io : SocketIO.Server,
-                snapshot : () => T[] = null,
-                private _log : (...args: any[]) => void = console.log) {
-        this.registerSnapshot(snapshot);
+                snapshot : () => T[],
+                private _log : (...args: any[]) => void) {
+        this.registerSnapshot(snapshot || null);
 
         var onConnection = s => {
             this._log("socket", s.id, "connected for Publisher", topic);
@@ -81,7 +81,7 @@ export class Subscriber<T> implements ISubscribe<T> {
 
     constructor(private topic : string, 
                 io : SocketIOClient.Socket,
-                private _log : (...args: any[]) => void = console.log) {
+                private _log : (...args: any[]) => void) {
         this._socket = io;
         
         this._log("creating subscriber to", this.topic, "; connected?", this.connected);
@@ -203,7 +203,7 @@ export class NullReceiver<T> implements IReceive<T> {
 export class Receiver<T> implements IReceive<T> {
     private _handler : (msg : T) => void = null;
     constructor(private topic : string, io : SocketIO.Server,
-                private _log : (...args: any[]) => void = console.log) {
+                private _log : (...args: any[]) => void) {
         var onConnection = (s : SocketIO.Socket) => {
             this._log("socket", s.id, "connected for Receiver", topic);
             s.on(Prefixes.MESSAGE + "-" + this.topic, msg => {
