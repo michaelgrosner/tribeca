@@ -10,7 +10,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Docker Installation
 
-1. Please install [docker](https://www.docker.com/) for your system before preceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker is already running. See [the docs](https://docs.docker.com/installation/mac/) for more help.
+1. Please install [docker](https://www.docker.com/) for your system before preceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker or docker-machine is set up, depending on Docker version. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
 2. Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
@@ -22,11 +22,11 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Manual Installation
 
-1. Ensure your target machine has node v0.12 or greater and mongoDB v3 or greater. Also, ensure Typescript 1.5, grunt, tsd, and, optionally, forever are installed (`npm install -g grunt-cli typescript tsd forever`).
+1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 1.7.5, grunt, typings, and, optionally, forever are installed (`npm install -g grunt-cli typescript typings forever`).
 
 2. Clone the repository.
 
-3. In the cloned repository directory, `npm install` and then `tsd reinstall -s` to pull in all dependencies.
+3. In the cloned repository directory, `npm install` and then `tsd install` to pull in all dependencies.
 
 4. Compile typescript to javascript via `grunt compile`.
 

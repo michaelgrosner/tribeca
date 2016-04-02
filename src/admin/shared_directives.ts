@@ -1,4 +1,4 @@
-/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../typings/main.d.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
@@ -13,7 +13,7 @@ var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCac
         var template = '';
         switch (contentType) {
             case 'user':
-                template = $templateCache.get(template_url);
+                template = <any>$templateCache.get(template_url);
                 break;
         }
         return template;

@@ -22,7 +22,7 @@ import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 
 export class PositionManager {
-    private _log: Utils.Logger = Utils.log("tribeca:rfv");
+    private _log = Utils.log("rfv");
 
     public NewTargetPosition = new Utils.Evt();
 
@@ -39,7 +39,7 @@ export class PositionManager {
         private _data: Models.RegularFairValue[],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
-        var lastTime = (this._data !== null && _.any(_data)) ? _.last(this._data).time : null;
+        var lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
     }
 
@@ -63,8 +63,8 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._log("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", Utils.roundFloat(newLong),
-            "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
+        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", 
+            Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
         this._persister.persist(rfv);
@@ -72,7 +72,7 @@ export class PositionManager {
 }
 
 export class TargetBasePositionManager {
-    private _log: Utils.Logger = Utils.log("tribeca:positionmanager");
+    private _log = Utils.log("positionmanager");
 
     public NewTargetPosition = new Utils.Evt();
 
@@ -113,7 +113,7 @@ export class TargetBasePositionManager {
             this._wrapped.publish(this.latestTargetPosition);
             this._persister.persist(this.latestTargetPosition);
 
-            this._log("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
+            this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
         }
     };
 }
@@ -124,8 +124,8 @@ export class RegularTimer {
         private _timeProvider : Utils.ITimeProvider,
         private _action: () => void,
         private _diffTime: moment.Duration,
-        lastTime: moment.Moment = null) {
-        if (lastTime === null) {
+        lastTime: moment.Moment) {
+        if (!moment.isMoment(lastTime)) {
             this.startTicking();
         }
         else {

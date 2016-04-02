@@ -1,7 +1,6 @@
 /// <reference path="utils.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-/// <reference path="../../typings/tsd.d.ts" />
 /// <reference path="interfaces.ts"/>
 /// <reference path="config.ts"/>
 
@@ -65,25 +64,28 @@ export interface ILoadAll<T> extends IPersist<T> {
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
-    _log: Utils.Logger = Utils.log("tribeca:exchangebroker:repopersister");
+    private _log = Utils.log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = (): Q.Promise<T> => {
         var deferred = Q.defer<T>();
 
         this.collection.then(coll => {
-            var selector = { exchange: this._exchange, pair: this._pair };
-            coll.find(selector, { fields: { _id: 0 } }).limit(1).sort({ $natural: -1 }).toArray((err, arr) => {
-                if (err) {
-                    deferred.reject(err);
-                }
-                else if (arr.length === 0) {
-                    deferred.resolve(this._defaultParameter);
-                }
-                else {
-                    var v = <T>_.defaults(arr[0], this._defaultParameter);
-                    this._loader(v);
-                    deferred.resolve(v);
-                }
+            coll.find({ exchange: this._exchange, pair: this._pair })
+                .limit(1)
+                .project({ _id: 0 })
+                .sort({ $natural: -1 })
+                .toArray((err, arr) => {
+                    if (err) {
+                        deferred.reject(err);
+                    }
+                    else if (arr.length === 0) {
+                        deferred.resolve(this._defaultParameter);
+                    }
+                    else {
+                        var v = <T>_.defaults(arr[0], this._defaultParameter);
+                        this._loader(v);
+                        deferred.resolve(v);
+                    }
             });
         }).done();
 
@@ -93,9 +95,11 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
     public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
-            coll.insert(report, err => {
+            coll.insertOne(report, err => {
                 if (err)
-                    this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
+                    this._log.error(err, "Unable to insert", this._dbName, report);
+                else
+                    this._log.info("Persisted", report);
             });
         }).done();
     };
@@ -114,7 +118,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 }
 
 export class Persister<T extends Persistable> implements ILoadAll<T> {
-    _log: Utils.Logger = Utils.log("tribeca:exchangebroker:persister");
+    private _log = Utils.log("persister");
 
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
@@ -132,26 +136,21 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             coll.count(selector, (err, count) => {
                 if (err) deferred.reject(err);
                 else {
+                    let query = coll.find(selector).project({ _id: 0 });
 
-                    var options: any = { fields: { _id: 0 } };
                     if (limit !== null) {
-                        options.limit = limit;
+                        query = query.limit(limit);
                         if (count !== 0)
-                            options.skip = Math.max(count - limit, 0);
+                            query = query.skip(Math.max(count - limit, 0));
                     }
 
-                    coll.find(selector, options, (err, docs) => {
+                    query.toArray((err, arr) => {
                         if (err) deferred.reject(err);
                         else {
-                            docs.toArray((err, arr) => {
-                                if (err) deferred.reject(err);
-                                else {
-                                    _.forEach(arr, this._loader);
-                                    deferred.resolve(arr);
-                                }
-                            })
+                            _.forEach(arr, this._loader);
+                            deferred.resolve(arr);
                         }
-                    })
+                    });
                 }
             });
 
@@ -161,11 +160,11 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     public persist = (report: T) => {
-        this._saver(report);
         this.collection.then(coll => {
-            coll.insert(report, err => {
+            this._saver(report);
+            coll.insertOne(report, err => {
                 if (err)
-                    this._log("Unable to insert into %s %s; %o", this._dbName, report, err);
+                    this._log.error(err, "Unable to insert", this._dbName, report);
             });
         }).done();
     };
@@ -178,6 +177,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _pair: Models.CurrencyPair,
         private _loader: (p: Persistable) => void,
         private _saver: (p: Persistable) => void) {
-        this.collection = db.then(db => db.collection(this._dbName));
+            this._log = Utils.log("persister:"+_dbName);
+            this.collection = db.then(db => db.collection(this._dbName));
     }
 }

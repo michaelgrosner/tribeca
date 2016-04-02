@@ -1,4 +1,3 @@
-/// <reference path="../../../typings/tsd.d.ts" />
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
 /// <reference path="nullgw.ts" />
@@ -100,30 +99,30 @@ class OkCoinWebsocket {
 
             if (typeof msg.success !== "undefined") {
                 if (msg.success !== "true")
-                    this._log("Unsuccessful message %o", msg);
+                    this._log.warn("Unsuccessful message", msg);
                 else
-                    this._log("Successfully connected to %s", msg.channel);
+                    this._log.info("Successfully connected to %s", msg.channel);
                 return;
             }
 
             var handler = this._handlers[msg.channel];
 
             if (typeof handler === "undefined") {
-                this._log("Got message on unknown topic %o", msg);
+                this._log.warn("Got message on unknown topic", msg);
                 return;
             }
 
             handler(new Models.Timestamped(msg.data, t));
         }
         catch (e) {
-            this._log("Error parsing msg %o", raw);
+            this._log.error(e, "Error parsing msg %o", raw);
             throw e;
         }
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinWebsocket");
+    private _log = Utils.log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
@@ -158,14 +157,14 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = depth.data;
 
-        var bids = _(msg.bids).first(3).map(OkCoinMarketDataGateway.GetLevel).value();
-        var asks = _(msg.asks).reverse().first(3).map(OkCoinMarketDataGateway.GetLevel).value()
+        var bids = _(msg.bids).take(3).map(OkCoinMarketDataGateway.GetLevel).value();
+        var asks = _(msg.asks).reverse().take(3).map(OkCoinMarketDataGateway.GetLevel).value()
         var mkt = new Models.Market(bids, asks, depth.time);
 
         this.MarketData.trigger(mkt);
     };
 
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinMD");
+    private _log = Utils.log("tribeca:gateway:OkCoinMD");
     constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
         var depthChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_depth";
         var tradesChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_trades_v1";
@@ -227,7 +226,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
         var orderId = this._ordersWaitingForAckQueue.shift();
         if (typeof orderId === "undefined") {
-            this._log("ERROR: got an order ack when there was no order queued!", util.format(ts.data));
+            this._log.error("got an order ack when there was no order queued!", util.format(ts.data));
             return;
         }
         
@@ -303,7 +302,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinOE");
+    private _log = Utils.log("tribeca:gateway:OkCoinOE");
     constructor(
             private _socket : OkCoinWebsocket, 
             private _signer: OkCoinMessageSigner,
@@ -340,9 +339,9 @@ class OkCoinMessageSigner {
         keys.sort();
 
         for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            if (m.hasOwnProperty(key))
-                els.push(key + "=" + m[key]);
+            const k = keys[i];
+            if (m.hasOwnProperty(k))
+                els.push(k + "=" + m[k]);
         }
 
         var sig = els.join("&") + "&secret_key=" + this._secretKey;
@@ -374,7 +373,7 @@ class OkCoinHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
-                    this._log("url: %s, err: %o, body: %o", actionUrl, err, body);
+                    this._log.error(err, "url: %s, err: %o, body: %o", actionUrl, err, body);
                     d.reject(e);
                 }
             }
@@ -383,7 +382,7 @@ class OkCoinHttp {
         return d.promise;
     };
 
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinHTTP");
+    private _log = Utils.log("tribeca:gateway:OkCoinHTTP");
     private _baseUrl : string;
     constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
@@ -418,7 +417,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     };
 
-    private _log : Utils.Logger = Utils.log("tribeca:gateway:OkCoinPG");
+    private _log = Utils.log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 10);

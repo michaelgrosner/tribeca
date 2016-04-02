@@ -1,8 +1,12 @@
-/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../typings/main.d.ts" />
 
 import Models = require("../common/models");
 import moment = require('moment');
 import events = require("events");
+import util = require("util");
+import bunyan = require("bunyan");
+import _ = require("lodash");
+
 require('events').EventEmitter.prototype._maxListeners = 100;
 
 export var date = moment.utc;
@@ -21,27 +25,24 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
     return timeProvider.utcNow();
 }
 
-import util = require("util");
-import winston = require("winston");
-winston.add(winston.transports.DailyRotateFile, <any>{
-    handleExceptions: false,
-    exitOnError: false,
-    filename: 'tribeca.log',
-    timestamp: false,
-    json: false
+export function log(name: string) : bunyan.Logger {
+    // don't log while testing
+    const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
+    if (isRunFromMocha) {
+        return bunyan.createLogger({name: name, stream: process.stdout, level: bunyan.FATAL});
+    }
+
+    return bunyan.createLogger({
+        name: name,
+        streams: [{
+            level: 'info',
+            stream: process.stdout            // log INFO and above to stdout
+        }, {
+            level: 'info',
+            path: './tribeca.log'  // log ERROR and above to a file
+        }
+    ]});
 }
-    );
-
-export var errorLog = winston.error;
-
-export var log = (name: string) => {
-    return (...msg: any[]) => {
-        var head = util.format.bind(this, Models.toUtcFormattedTime(date()) + "\t[" + name + "]\t" + msg.shift());
-        winston.info(head.apply(this, msg));
-    };
-};
-
-export interface Logger { (...arg: any[]): void; }
 
 // typesafe wrapper around EventEmitter
 export class Evt<T> {

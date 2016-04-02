@@ -2,7 +2,6 @@
 /// <reference path="../common/messaging.ts" />
 ///<reference path="interfaces.ts"/>
 ///<reference path="persister.ts"/>
-/// <reference path="../../typings/tsd.d.ts" />
 
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");
@@ -20,7 +19,7 @@ export class MessagesPubisher implements Interfaces.IPublishMessages {
                 initMsgs : Models.Message[],
                 private _wrapped : Messaging.IPublish<Models.Message>) {
         _.forEach(initMsgs, m => this._storedMessages.push(m));
-        _wrapped.registerSnapshot(() => _.last(this._storedMessages, 50));
+        _wrapped.registerSnapshot(() => _.takeRight(this._storedMessages, 50));
     }
 
     public publish = (text : string) => {

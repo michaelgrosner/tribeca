@@ -32,7 +32,7 @@ import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 
 export class QuotingEngine {
-    private _log: Utils.Logger = Utils.log("tribeca:quotingengine");
+    private _log = Utils.log("quotingengine");
 
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
@@ -90,7 +90,7 @@ export class QuotingEngine {
 
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
-            this._log("cannot compute a quote since no position report exists!");
+            this._log.warn("cannot compute a quote since no position report exists!");
             return null;
         }
         var targetBasePosition = tbp.data;
@@ -114,7 +114,7 @@ export class QuotingEngine {
         
         var safety = this._safeties.latest;
         if (safety === null) {
-            this._log("cannot compute a quote since trade safety is not yet computed!");
+            this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
         }
         

@@ -1,4 +1,3 @@
-/// <reference path="../../../typings/tsd.d.ts" />
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
 /// <reference path="nullgw.ts" />
@@ -318,7 +317,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private _since = moment.utc();
-    private _log: Utils.Logger = Utils.log("tribeca:gateway:BitfinexOE");
+    private _log = Utils.log("tribeca:gateway:BitfinexOE");
     constructor(timeProvider: Utils.ITimeProvider,
         private _http: BitfinexHttp,
         private _symbolProvider: BitfinexSymbolProvider) {
@@ -330,6 +329,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 
 class RateLimitMonitor {
+    private _log = Utils.log("tribeca:gateway:rlm");
+    
     private _queue = Deque();
     private _durationMs: number;
 
@@ -343,7 +344,7 @@ class RateLimitMonitor {
         this._queue.push(now);
 
         if (this._queue.length > this._number) {
-            Utils.errorLog("Exceeded rate limit", { nRequests: this._queue.length, max: this._number, durationMs: this._durationMs });
+            this._log.error("Exceeded rate limit", { nRequests: this._queue.length, max: this._number, durationMs: this._durationMs });
         }
     }
 
@@ -357,15 +358,16 @@ class BitfinexHttp {
 
     private _timeout = 15000;
 
-    get = <T>(actionUrl: string, qs: any = undefined): Q.Promise<Models.Timestamped<T>> => {
+    get = <T>(actionUrl: string, qs?: any): Q.Promise<Models.Timestamped<T>> => {
+        const url = this._baseUrl + "/" + actionUrl;
         var opts = {
             timeout: this._timeout,
-            url: this._baseUrl + "/" + actionUrl,
-            qs: qs,
+            url: url,
+            qs: qs || undefined,
             method: "GET"
         };
 
-        return this.doRequest<T>(opts);
+        return this.doRequest<T>(opts, url);
     };
     
     // Bitfinex seems to have a race condition where nonces are processed out of order when rapidly placing orders
@@ -388,9 +390,10 @@ class BitfinexHttp {
         var payload = new Buffer(JSON.stringify(msg)).toString("base64");
         var signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
 
+        const url = this._baseUrl + "/" + actionUrl;
         var opts: request.Options = {
             timeout: this._timeout,
-            url: this._baseUrl + "/" + actionUrl,
+            url: url,
             headers: {
                 "X-BFX-APIKEY": this._apiKey,
                 "X-BFX-PAYLOAD": payload,
@@ -399,16 +402,16 @@ class BitfinexHttp {
             method: "POST"
         };
 
-        return this.doRequest<TResponse>(opts);
+        return this.doRequest<TResponse>(opts, url);
     };
 
-    private doRequest = <TResponse>(msg: request.Options): Q.Promise<Models.Timestamped<TResponse>> => {
+    private doRequest = <TResponse>(msg: request.Options, url: string): Q.Promise<Models.Timestamped<TResponse>> => {
         var d = Q.defer<Models.Timestamped<TResponse>>();
 
         this._monitor.add();
         request(msg, (err, resp, body) => {
             if (err) {
-                this._log("Error returned: url=", msg.url, "err=", err);
+                this._log.error(err, "Error returned: url=", url, "err=", err);
                 d.reject(err);
             }
             else {
@@ -418,7 +421,7 @@ class BitfinexHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (err) {
-                    this._log("Error parsing JSON url=", msg.url, "err=", err, ", body=", body);
+                    this._log.error(err, "Error parsing JSON url=", url, "err=", err, ", body=", body);
                     d.reject(err);
                 }
             }
@@ -427,7 +430,7 @@ class BitfinexHttp {
         return d.promise;
     };
 
-    private _log: Utils.Logger = Utils.log("tribeca:gateway:BitfinexHTTP");
+    private _log = Utils.log("tribeca:gateway:BitfinexHTTP");
     private _baseUrl: string;
     private _apiKey: string;
     private _secret: string;
@@ -439,7 +442,7 @@ class BitfinexHttp {
         this._secret = config.GetString("BitfinexSecret");
 
         this._nonce = new Date().valueOf();
-        this._log("Starting nonce: ", this._nonce);
+        this._log.info("Starting nonce: ", this._nonce);
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
@@ -466,7 +469,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     }
 
-    private _log: Utils.Logger = Utils.log("tribeca:gateway:BitfinexPG");
+    private _log = Utils.log("tribeca:gateway:BitfinexPG");
     constructor(timeProvider: Utils.ITimeProvider, private _http: BitfinexHttp) {
         timeProvider.setInterval(this.onRefreshPositions, moment.duration(15, "seconds"));
         this.onRefreshPositions();

@@ -1,5 +1,4 @@
 /// <reference path="../../common/models.ts" />
-/// <reference path="../../../typings/tsd.d.ts" />
 
 import StyleHelpers = require("./helpers");
 import Models = require("../../common/models");

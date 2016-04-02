@@ -299,7 +299,7 @@ _.assign(OrderBook.prototype, new function() {
     };
 
     prototype.connect = function() {
-        coinbaseLog("Starting connect");
+        coinbaseLog.info("Starting connect");
         var self = this;
         if (self.socket) {
             self.socket.close();
@@ -342,7 +342,7 @@ _.assign(OrderBook.prototype, new function() {
         }
 
         var sc = { 'old': oldState, 'new': newState };
-        coinbaseLog("statechange: ", sc);
+        coinbaseLog.info("statechange: ", sc);
         self.emit('statechange', sc);
     };
 
@@ -410,11 +410,11 @@ _.assign(OrderBook.prototype, new function() {
         }, function(err, response, body) {
                 if (err) {
                     self.changeState(self.STATES.error);
-                    coinbaseLog("error: Failed to load snapshot: " + err);
+                    coinbaseLog.error(err, "error: Failed to load snapshot");
                 }
                 else if (response.statusCode !== 200) {
                     self.changeState(self.STATES.error);
-                    coinbaseLog("error: Failed to load snapshot: " + response.statusCode);
+                    coinbaseLog.error("Failed to load snapshot", response.statusCode);
                 }
                 else {
                     load(JSON.parse(body));
@@ -430,7 +430,7 @@ _.assign(OrderBook.prototype, new function() {
         }
         if (message.sequence != self.book.sequence + 1) {
             self.changeState(self.STATES.error);
-            coinbaseLog("error: Received message out of order, expected", self.book.sequence, "but got", message.sequence);
+            coinbaseLog.warn("Received message out of order, expected", self.book.sequence, "but got", message.sequence);
         }
         self.book.sequence = message.sequence;
 

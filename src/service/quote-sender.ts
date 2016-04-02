@@ -30,7 +30,7 @@ import moment = require('moment');
 import QuotingEngine = require("./quoting-engine");
 
 export class QuoteSender {
-    private _log: Utils.Logger = Utils.log("tribeca:quotesender");
+    private _log = Utils.log("quotesender");
 
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
@@ -66,7 +66,7 @@ export class QuoteSender {
         var qs = this._quoter.quotesSent(oppSide);
         for (var qi = 0; qi < qs.length; qi++) {
             if (doesQuoteCross(qs[qi].quote, px)) {
-                this._log("crossing quote detected! gen quote at %d would crossed with %s quote at %j",
+                this._log.warn("crossing quote detected! gen quote at %d would crossed with %s quote at",
                     px, Models.Side[oppSide], qs[qi]);
                 return true;
             }
@@ -109,40 +109,7 @@ export class QuoteSender {
         }
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
-
-        if (this.shouldLogDescision(askAction) || this.shouldLogDescision(bidAction)) {
-            var fv = this._fv.latestFairValue;
-            var lm = this._broker.currentBook;
-            this._log("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
-                Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
-                (fv == null ? null : fv.price),
-                this.fmtQuoteSide(quote),
-                this.fmtLevel(0, lm.bids, lm.asks),
-                this.fmtLevel(1, lm.bids, lm.asks),
-                this.fmtLevel(2, lm.bids, lm.asks));
-        }
     };
-
-    private fmtQuoteSide(q: Models.TwoSidedQuote) {
-        if (q == null) return "[no quote]";
-        return util.format("q:[%d %d - %d %d]",
-            (q.bid == null ? null : q.bid.size),
-            (q.bid == null ? null : q.bid.price),
-            (q.ask == null ? null : q.ask.price),
-            (q.ask == null ? null : q.ask.size));
-    }
-
-    private fmtLevel(n: number, bids: Models.MarketSide[], asks: Models.MarketSide[]) {
-        return util.format("mkt%d:[%d %d - %d %d]", n,
-            (typeof bids[n] === "undefined" ? null : bids[n].size),
-            (typeof bids[n] === "undefined" ? null : bids[n].price),
-            (typeof asks[n] === "undefined" ? null : asks[n].price),
-            (typeof asks[n] === "undefined" ? null : asks[n].size));
-    }
-
-    private shouldLogDescision(a: Models.QuoteSent) {
-        return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
-    }
 
     private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);

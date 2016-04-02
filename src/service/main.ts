@@ -25,7 +25,7 @@ import express = require('express');
 import util = require('util');
 import moment = require("moment");
 import fs = require("fs");
-import winston = require("winston");
+import bunyan = require("bunyan");
 import request = require('request');
 import http = require("http");
 import socket_io = require('socket.io')
@@ -67,18 +67,38 @@ var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SER
 
 var config = new Config.ConfigProvider();
 
-["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-    process.on(reason, (e?) => {
-        var bits : string[] = ["Terminating!", reason, e];
-        if (reason === "uncaughtException")
-            bits.push(e.stack);
-        var msg = util.format.apply(null, bits);
-        
-        Utils.errorLog(msg);
-        console.error(msg);
-        
+let exitingEvent : () => Q.Promise<boolean>;
+
+const performExit = () => {
+    Q.timeout(exitingEvent(), 2000).then(completed => {
+        if (completed)
+            mainLog.info("All exiting event handlers have fired, exiting application.");
+        else
+            mainLog.warn("Did not complete clean-up tasks successfully, still shutting down.");
+        process.exit();
+    }).catch(err => {
+        mainLog.error(err, "Error while exiting application.");
         process.exit(1);
     });
+};
+
+process.on("uncaughtException", err => {
+    mainLog.error(err, "Unhandled exception!");
+    performExit();
+});
+
+process.on("unhandledRejection", (reason, p) => {
+    mainLog.error(reason, "Unhandled promise rejection!", p);
+    performExit();
+});
+
+process.on("exit", (code) => {
+    mainLog.info("Exiting with code", code);
+});
+
+process.on("SIGINT", () => {
+    mainLog.info("Handling SIGINT");
+    performExit();
 });
 
 var mainLog = Utils.log("tribeca:main");
@@ -104,7 +124,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
     
-    var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => { 
+    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
     };
     
@@ -140,7 +160,7 @@ var liveTradingSetup = () => {
     var username = config.GetString("WebClientUsername");
     var password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
-        mainLog("Requiring authentication to web client");
+        mainLog.info("Requiring authentication to web client");
         var basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
@@ -149,7 +169,7 @@ var liveTradingSetup = () => {
     app.use(express.static(path.join(__dirname, "admin")));
     
     var webport = config.GetNumber("WebClientListenPort");
-    http_server.listen(webport, () => mainLog('Listening to admins on *:'+webport));
+    http_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
     
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
@@ -176,15 +196,16 @@ var liveTradingSetup = () => {
         }
     };
     
-    var getPublisher = <T>(topic: string, persister: Persister.ILoadAll<T> = null): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, Utils.log("tribeca:messaging"));
-        if (persister !== null)
+    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
+        if (persister)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
         else
             return socketIoPublisher;
     };
     
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, messagingLog);
+    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
+        new Messaging.Receiver<T>(topic, io, messagingLog.info.bind(messagingLog));
     
     var db = Persister.loadDb(config);
     
@@ -366,27 +387,24 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             completedSuccessfully.resolve(true);
             return completedSuccessfully.promise;
         }
-    
-        ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-            process.on(reason, (e?) => {
-    
-                var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
-                mainLog("persisting active to", active.savedQuotingMode);
-                activePersister.persist(a);
-    
-                orderBroker.cancelOpenOrders().then(n_cancelled => {
-                    Utils.errorLog(util.format("Cancelled all", n_cancelled, "open orders"), () => {
-                        completedSuccessfully.resolve(true);
-                    });
-                }).done();
-    
-                timeProvider.setTimeout(() => {
-                    Utils.errorLog("Could not cancel all open orders!", () => {
-                        completedSuccessfully.resolve(false);
-                    });
-                }, moment.duration(1000));
-            });
-        });
+        
+        exitingEvent = () => {
+            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
+            mainLog.info("persisting active to", a.active);
+            activePersister.persist(a);
+
+            orderBroker.cancelOpenOrders().then(n_cancelled => {
+                mainLog.info("Cancelled all", n_cancelled, "open orders");
+                completedSuccessfully.resolve(true);
+            }).done();
+
+            timeProvider.setTimeout(() => {
+                if (completedSuccessfully.promise.isFulfilled) return;
+                mainLog.error("Could not cancel all open orders!");
+                completedSuccessfully.resolve(false);
+            }, moment.duration(1000));
+            return completedSuccessfully.promise;
+        };
     
         // event looped blocked timer
         var start = process.hrtime();
@@ -396,7 +414,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
             var n = ms - interval;
             if (n > 25)
-                mainLog("Event looped blocked for " + Utils.roundFloat(n) + "ms");
+                mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
             start = process.hrtime();
         }, interval).unref();
     
@@ -408,9 +426,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
 var harness = () : Q.Promise<any> => {
     if (config.inBacktestMode) {
         console.log("enter backtest mode");
-        
-        winston.remove(winston.transports.Console);
-        winston.remove(winston.transports.DailyRotateFile);
         
         var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
             var d = Q.defer<any>();

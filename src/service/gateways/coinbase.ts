@@ -1,4 +1,3 @@
-/// <reference path="../../../typings/tsd.d.ts" />
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
 /// <reference path="nullgw.ts" />
@@ -438,7 +437,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private raiseMarketData = (t: moment.Moment) => {
         if (typeof this._cachedBids[0] !== "undefined" && typeof this._cachedAsks[0] !== "undefined") {
             if (this._cachedBids[0].price > this._cachedAsks[0].price) {
-                this._log("WARNING: crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
+                this._log.warn("Crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
                 (<any>this._client).changeState('error');
                 return;
             }
@@ -447,7 +446,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 
-    _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbaseMD");
+    private _log = Utils.log("tribeca:gateway:CoinbaseMD");
     constructor(private _orderBook: CoinbaseOrderBook, private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("statechange", m => this.onStateChange(m));
         this._client.on("received", m => this.onReceived(m.data, m.time));
@@ -541,7 +540,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var t = this._timeProvider.utcNow();
 
             if (ack == null || typeof ack.id === "undefined") {
-                this._log("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
+                this._log.warn("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
             }
 
             var msg = null;
@@ -713,7 +712,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbaseOE");
+    private _log = Utils.log("tribeca:gateway:CoinbaseOE");
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
@@ -732,7 +731,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 }
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    _log: Utils.Logger = Utils.log("tribeca:gateway:CoinbasePG");
+    private _log = Utils.log("tribeca:gateway:CoinbasePG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {
@@ -744,7 +743,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
                     this.PositionUpdate.trigger(rpt);
                 });
             } catch (error) {
-                Utils.errorLog("Exception while downloading Coinbase positions: " + error, data)
+                this._log.error(error, "Exception while downloading Coinbase positions", data)
             }
         });
     };
