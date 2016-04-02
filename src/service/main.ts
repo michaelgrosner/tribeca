@@ -177,14 +177,15 @@ var liveTradingSetup = () => {
     };
     
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, mainLog.info);
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, mainLog.info.bind(mainLog));
         if (persister)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
         else
             return socketIoPublisher;
     };
     
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io, mainLog.info);
+    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
+        new Messaging.Receiver<T>(topic, io, mainLog.info.bind(mainLog));
     
     var db = Persister.loadDb(config);
     

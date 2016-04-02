@@ -109,40 +109,7 @@ export class QuoteSender {
         }
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
-
-        if (this.shouldLogDescision(askAction) || this.shouldLogDescision(bidAction)) {
-            var fv = this._fv.latestFairValue;
-            var lm = this._broker.currentBook;
-            this._log.info("new trading decision bidAction=%s, askAction=%s; fv: %d; q:%s %s %s %s",
-                Models.QuoteSent[bidAction], Models.QuoteSent[askAction],
-                (fv == null ? null : fv.price),
-                this.fmtQuoteSide(quote),
-                this.fmtLevel(0, lm.bids, lm.asks),
-                this.fmtLevel(1, lm.bids, lm.asks),
-                this.fmtLevel(2, lm.bids, lm.asks));
-        }
     };
-
-    private fmtQuoteSide(q: Models.TwoSidedQuote) {
-        if (q == null) return "[no quote]";
-        return util.format("q:[%d %d - %d %d]",
-            (q.bid == null ? null : q.bid.size),
-            (q.bid == null ? null : q.bid.price),
-            (q.ask == null ? null : q.ask.price),
-            (q.ask == null ? null : q.ask.size));
-    }
-
-    private fmtLevel(n: number, bids: Models.MarketSide[], asks: Models.MarketSide[]) {
-        return util.format("mkt%d:[%d %d - %d %d]", n,
-            (typeof bids[n] === "undefined" ? null : bids[n].size),
-            (typeof bids[n] === "undefined" ? null : bids[n].price),
-            (typeof asks[n] === "undefined" ? null : asks[n].price),
-            (typeof asks[n] === "undefined" ? null : asks[n].size));
-    }
-
-    private shouldLogDescision(a: Models.QuoteSent) {
-        return a !== Models.QuoteSent.UnsentDelete && a !== Models.QuoteSent.UnsentDuplicate && a !== Models.QuoteSent.UnableToSend;
-    }
 
     private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);

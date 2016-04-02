@@ -70,20 +70,22 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         var deferred = Q.defer<T>();
 
         this.collection.then(coll => {
-            var selector = { exchange: this._exchange, pair: this._pair };
-            
-            coll.find(selector).filter({_id: 0}).limit(1).sort({ $natural: -1 }).toArray((err, arr) => {
-                if (err) {
-                    deferred.reject(err);
-                }
-                else if (arr.length === 0) {
-                    deferred.resolve(this._defaultParameter);
-                }
-                else {
-                    var v = <T>_.defaults(arr[0], this._defaultParameter);
-                    this._loader(v);
-                    deferred.resolve(v);
-                }
+            coll.find({ exchange: this._exchange, pair: this._pair })
+                .limit(1)
+                .project({ _id: 0 })
+                .sort({ $natural: -1 })
+                .toArray((err, arr) => {
+                    if (err) {
+                        deferred.reject(err);
+                    }
+                    else if (arr.length === 0) {
+                        deferred.resolve(this._defaultParameter);
+                    }
+                    else {
+                        var v = <T>_.defaults(arr[0], this._defaultParameter);
+                        this._loader(v);
+                        deferred.resolve(v);
+                    }
             });
         }).done();
 
@@ -95,7 +97,9 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         this.collection.then(coll => {
             coll.insertOne(report, err => {
                 if (err)
-                    this._log.info("Unable to insert into %s %s", this._dbName, report, err);
+                    this._log.error(err, "Unable to insert", this._dbName, report);
+                else
+                    this._log.info("Persisted", report);
             });
         }).done();
     };
@@ -132,10 +136,8 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             coll.count(selector, (err, count) => {
                 if (err) deferred.reject(err);
                 else {
-                    
-                    let query = coll.find(selector).filter({_id: 0});
+                    let query = coll.find(selector).project({ _id: 0 });
 
-                    var options: any = { fields: { _id: 0 } };
                     if (limit !== null) {
                         query = query.limit(limit);
                         if (count !== 0)
@@ -158,11 +160,11 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     public persist = (report: T) => {
-        this._saver(report);
         this.collection.then(coll => {
+            this._saver(report);
             coll.insertOne(report, err => {
                 if (err)
-                    this._log.info("Unable to insert into %s %s", this._dbName, report, err);
+                    this._log.error(err, "Unable to insert", this._dbName, report);
             });
         }).done();
     };

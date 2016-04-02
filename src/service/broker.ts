@@ -247,7 +247,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this.OrderUpdate.trigger(o);
 
-        this._log.info("applied gw update", o);
         this._orderPersister.persist(o);
         this._orderStatusPublisher.publish(o);
 
@@ -381,7 +380,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
             return;
 
-        this._log.info("New position report", positionReport);
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
