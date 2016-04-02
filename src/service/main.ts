@@ -67,18 +67,38 @@ var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SER
 
 var config = new Config.ConfigProvider();
 
-["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-    process.on(reason, (e?) => {
-        var bits : string[] = ["Terminating!", reason, e];
-        if (reason === "uncaughtException")
-            bits.push(e.stack);
-        var msg = util.format.apply(null, bits);
-        
-        mainLog.error(msg);
-        console.error(msg);
-        
+let exitingEvent : () => Q.Promise<boolean>;
+
+const performExit = () => {
+    Q.timeout(exitingEvent(), 2000).then(completed => {
+        if (completed)
+            mainLog.info("All exiting event handlers have fired, exiting application.");
+        else
+            mainLog.warn("Did not complete clean-up tasks successfully, still shutting down.");
+        process.exit();
+    }).catch(err => {
+        mainLog.error(err, "Error while exiting application.");
         process.exit(1);
     });
+};
+
+process.on("uncaughtException", err => {
+    mainLog.error(err, "Unhandled exception!");
+    performExit();
+});
+
+process.on("unhandledRejection", (reason, p) => {
+    mainLog.error(reason, "Unhandled promise rejection!", p);
+    performExit();
+});
+
+process.on("exit", (code) => {
+    mainLog.info("Exiting with code", code);
+});
+
+process.on("SIGINT", () => {
+    mainLog.info("Handling SIGINT");
+    performExit();
 });
 
 var mainLog = Utils.log("tribeca:main");
@@ -177,7 +197,7 @@ var liveTradingSetup = () => {
     };
     
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, mainLog.info.bind(mainLog));
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
         if (persister)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
         else
@@ -185,7 +205,7 @@ var liveTradingSetup = () => {
     };
     
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
-        new Messaging.Receiver<T>(topic, io, mainLog.info.bind(mainLog));
+        new Messaging.Receiver<T>(topic, io, messagingLog.info.bind(messagingLog));
     
     var db = Persister.loadDb(config);
     
@@ -367,27 +387,24 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             completedSuccessfully.resolve(true);
             return completedSuccessfully.promise;
         }
-    
-        ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-            process.on(reason, (e?) => {
-    
-                var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
-                mainLog.info("persisting active to", active.savedQuotingMode);
-                activePersister.persist(a);
-    
-                orderBroker.cancelOpenOrders().then(n_cancelled => {
-                    mainLog.error(util.format("Cancelled all", n_cancelled, "open orders"), () => {
-                        completedSuccessfully.resolve(true);
-                    });
-                }).done();
-    
-                timeProvider.setTimeout(() => {
-                    mainLog.error("Could not cancel all open orders!", () => {
-                        completedSuccessfully.resolve(false);
-                    });
-                }, moment.duration(1000));
-            });
-        });
+        
+        exitingEvent = () => {
+            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
+            mainLog.info("persisting active to", a.active);
+            activePersister.persist(a);
+
+            orderBroker.cancelOpenOrders().then(n_cancelled => {
+                mainLog.info("Cancelled all", n_cancelled, "open orders");
+                completedSuccessfully.resolve(true);
+            }).done();
+
+            timeProvider.setTimeout(() => {
+                if (completedSuccessfully.promise.isFulfilled) return;
+                mainLog.error("Could not cancel all open orders!");
+                completedSuccessfully.resolve(false);
+            }, moment.duration(1000));
+            return completedSuccessfully.promise;
+        };
     
         // event looped blocked timer
         var start = process.hrtime();

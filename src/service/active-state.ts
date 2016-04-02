@@ -41,7 +41,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
-            this._log.info("Changed saved quoting state: ", this._savedQuotingMode);
+            this._log.info("Changed saved quoting state", this._savedQuotingMode);
             this.updateParameters();
         }
 
@@ -55,11 +55,10 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
     private updateParameters = () => {
         var newMode = this.reevaluateQuotingMode();
-        this._log.info("updateParameters newMode = ", this.latest);
 
         if (newMode !== this._latest) {
             this._latest = newMode;
-            this._log.info("Changed quoting mode to %j", this.latest);
+            this._log.info("Changed quoting mode to", this.latest);
             this.NewParameters.trigger();
             this._pub.publish(this.latest);
         }

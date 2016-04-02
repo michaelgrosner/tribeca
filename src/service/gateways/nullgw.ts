@@ -21,6 +21,8 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     }
 
     sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport {
+        if (order.timeInForce == Models.TimeInForce.IOC)
+            throw new Error("Cannot send IOCs");
         setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working, order), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }

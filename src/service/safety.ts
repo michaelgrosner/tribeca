@@ -17,8 +17,6 @@ import _ = require("lodash");
 import Persister = require("./persister");
 
 export class SafetyCalculator {
-    private _log = Utils.log("sc");
-
     NewValue = new Utils.Evt();
 
     private _latest: Models.TradeSafety = null;
@@ -30,8 +28,6 @@ export class SafetyCalculator {
 
             this._persister.persist(this.latest);
             this._publisher.publish(this.latest);
-
-            this._log.info("New safety value", this.latest);
         }
     }
 
