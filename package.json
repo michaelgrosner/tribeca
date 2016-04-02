@@ -1,7 +1,7 @@
 {
-  "name": "Hudson",
-  "version": "1.0.0",
-  "description": "",
+  "name": "tribeca",
+  "version": "2.0.0",
+  "description": "A high frequency, market making cryptocurrency trading platform",
   "main": "Gruntfile.js",
   "directories": {
     "test": "test"
@@ -48,8 +48,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@bitbucket.org:michaelgrosner/tribeca.git"
+    "url": "git@github.com:michaelgrosner/tribeca.git"
   },
-  "author": "",
+  "author": "Michael Grosner",
   "license": "ISC"
 }
