@@ -22,7 +22,7 @@ class DisplayTrade {
     quantity : number;
     side : string;
     value : number;
-    liqudity : string;
+    liquidity : string;
 
     constructor(public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
@@ -31,7 +31,13 @@ class DisplayTrade {
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
-        this.liqudity = Models.Liquidity[trade.liquidity].charAt(0);
+        
+        if (trade.liquidity === 0 || trade.liquidity === 1) {
+            this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
+        }
+        else {
+            this.liquidity = "?";
+        }
     }
 }
 
