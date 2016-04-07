@@ -261,7 +261,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side, value);
+            var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);

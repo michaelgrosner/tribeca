@@ -243,7 +243,8 @@ export class Trade implements ITimestamped {
                 public price: number,
                 public quantity: number,
                 public side: Side,
-                public value: number) {}
+                public value: number,
+                public liquidity: Liquidity) {}
 }
 
 export class CurrencyPosition {
