@@ -22,14 +22,16 @@ class DisplayTrade {
     quantity : number;
     side : string;
     value : number;
+    liqudity : string;
 
     constructor(public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
-        this.side = Models.Side[trade.side];
+        this.side = trade.side === Models.Side.Ask ? "S" : "B";
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
+        this.liqudity = Models.Liquidity[trade.liquidity].charAt(0);
     }
 }
 
@@ -45,13 +47,14 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate',
+            {width: 80, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
-            {width: 35, field:'side', displayName:'side'},
-            {width: 50, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
+            {width: 30, field:'side', displayName:'side'},
+            {width: 30, field:'liquidity', displayName:'liq'},
+            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
         ]
     };
 
