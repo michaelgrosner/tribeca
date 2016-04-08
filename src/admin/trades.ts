@@ -13,6 +13,7 @@ interface TradesScope extends ng.IScope {
     exch : Models.Exchange;
     pair : Models.CurrencyPair;
     gridOptions : any;
+    sound: boolean;
 }
 
 class DisplayTrade {
@@ -23,13 +24,16 @@ class DisplayTrade {
     side : string;
     value : number;
 
-    constructor(public trade : Models.Trade) {
+    constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
         this.side = Models.Side[trade.side];
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
+        if ($scope.sound) {
+            var audio = new Audio('http://antminer/a.mp3');audio.play();
+        }
     }
 }
 
@@ -55,7 +59,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         ]
     };
 
-    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
+    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade($scope, t));
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
@@ -68,6 +72,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     });
 
     $log.info("started trades list");
+    setTimeout(function(){$scope.sound = true;},7000);
 };
 
 var tradeList = () : ng.IDirective => {
