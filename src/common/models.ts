@@ -244,7 +244,8 @@ export class Trade implements ITimestamped {
                 public quantity: number,
                 public side: Side,
                 public value: number,
-                public liquidity: Liquidity) {}
+                public liquidity: Liquidity,
+                public feeCharged: number) {}
 }
 
 export class CurrencyPosition {

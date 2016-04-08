@@ -251,18 +251,19 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
-            var value = Math.abs(o.lastPrice * o.lastQuantity);
+            let value = Math.abs(o.lastPrice * o.lastQuantity);
 
-            var liq = o.liquidity;
+            const liq = o.liquidity;
+            let feeCharged = null;
             if (typeof liq !== "undefined") {
                 // negative fee is a rebate, positive fee is a fee
-                var feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
-                var sign = (o.side === Models.Side.Bid ? 1 : -1);
+                feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
+                const sign = (o.side === Models.Side.Bid ? 1 : -1);
                 value = value * (1 + sign * feeCharged);
             }
 
-            var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity);
+            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
