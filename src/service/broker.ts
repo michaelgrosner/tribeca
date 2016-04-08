@@ -100,7 +100,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+            order.price, order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
@@ -114,6 +115,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             price: order.price,
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
+            preferPostOnly: order.preferPostOnly,
             exchange: exch,
             computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
             rejectMessage: order.msg};
@@ -124,8 +126,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
-            replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+            rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
 
@@ -230,7 +232,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             partiallyFilled,
             osr.pendingCancel,
             osr.pendingReplace,
-            osr.cancelRejected
+            osr.cancelRejected,
+            getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
         );
 
         this.addOrderStatusToMemory(o);
@@ -303,13 +306,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._log.info("got new order req", o);
             try {
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow());
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
                 this.sendOrder(order);
             }
             catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
+        
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
