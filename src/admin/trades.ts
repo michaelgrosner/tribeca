@@ -53,7 +53,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
-            {width: 50, field:'quantity', displayName:'qty'},
+            {width: 70, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},
             {width: 70, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
         ]
