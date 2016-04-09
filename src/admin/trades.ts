@@ -55,7 +55,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 35, field:'side', displayName:'side'},
-            {width: 50, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
+            {width: 70, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
         ]
     };
 
