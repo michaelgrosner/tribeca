@@ -67,14 +67,14 @@ export class QuotingEngine {
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
-        
+
         _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         var params = this._qlParamRepo.latest;
         var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params);
-        
+
         if (unrounded === null)
             return null;
 
@@ -88,7 +88,7 @@ export class QuotingEngine {
             }
         }
 
-        if (params.mode === Models.QuotingMode.InverseTop) {
+        if (params.mode === Models.QuotingMode.Top || params.mode === Models.QuotingMode.InverseTop) {
           for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
             if (filteredMkt.asks[fai].price > unrounded.askPx) {
               unrounded.askPx = filteredMkt.asks[fai].price - .01;
@@ -109,30 +109,30 @@ export class QuotingEngine {
             return null;
         }
         var targetBasePosition = tbp.data;
-        
+
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        
+
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
                 unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
         }
-        
+
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
                 unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
         }
-        
+
         var safety = this._safeties.latest;
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
         }
-        
+
         if (safety.sell > params.tradesPerMinute) {
             unrounded.askPx = null;
             unrounded.askSz = null;
@@ -141,22 +141,22 @@ export class QuotingEngine {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
-        
+
         if (unrounded.bidPx !== null) {
             unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
-        
+
         if (unrounded.askPx !== null) {
             unrounded.askPx = Utils.roundFloat(unrounded.askPx);
             unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
         }
-        
+
         if (unrounded.askSz !== null) {
             unrounded.askSz = Utils.roundFloat(unrounded.askSz);
             unrounded.askSz = Math.max(0.01, unrounded.askSz);
         }
-        
+
         if (unrounded.bidSz !== null) {
             unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
             unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
