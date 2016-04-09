@@ -106,34 +106,34 @@ var messagingLog = Utils.log("tribeca:messaging");
 
 function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
     var split = raw.split("/");
-    if (split.length !== 2) 
+    if (split.length !== 2)
         throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/USD");
-    
+
     return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
 }
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
-var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
-    Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
+var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(1, 1, Models.QuotingMode.InverseTop,
+    Models.FairValueModel.BBO, 2, 2, true, Models.AutoPositionMode.EwmaBasic, false, 2.5, 84, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
     var exchange = Models.Exchange.Null;
     var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
-    
+
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
-    
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
+
+    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
         return new Messaging.NullPublisher<T>();
     };
-    
+
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
-    
+
     var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
-    
+
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
-    
+
     var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
     var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
 
@@ -152,7 +152,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
 
 var liveTradingSetup = () => {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
-    
+
     var app = express();
     var http_server = http.createServer(app);
     var io = socket_io(http_server);
@@ -167,10 +167,10 @@ var liveTradingSetup = () => {
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));
-    
+
     var webport = config.GetNumber("WebClientListenPort");
     http_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
-    
+
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
         switch (ex) {
@@ -182,9 +182,9 @@ var liveTradingSetup = () => {
             default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
         }
     };
-    
+
     var exchange = getExchange();
-    
+
     var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
         switch (exchange) {
             case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
@@ -195,7 +195,7 @@ var liveTradingSetup = () => {
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
-    
+
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
         var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
         if (persister)
@@ -203,21 +203,21 @@ var liveTradingSetup = () => {
         else
             return socketIoPublisher;
     };
-    
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
+
+    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> =>
         new Messaging.Receiver<T>(topic, io, messagingLog.info.bind(messagingLog));
-    
+
     var db = Persister.loadDb(config);
-    
+
     var loaderSaver = new Persister.LoaderSaver(exchange, pair);
     var mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
-    
+
     var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
         var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
         return new Persister.Persister<T>(db, collectionName, exchange, pair, ls.loader, ls.saver);
     };
-        
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
+
+    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> =>
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
 
     return {
@@ -257,13 +257,13 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var tbpPersister = getPersister("tbp");
     var tsvPersister = getPersister("tsv");
     var marketDataPersister = getPersister(Messaging.Topics.MarketData);
-    
+
     var activePersister = classes.getRepository(classes.startingActive, Messaging.Topics.ActiveChange);
     var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
-    
+
     var exchange = classes.exchange;
     var completedSuccessfully = Q.defer<boolean>();
-    
+
     Q.all<any>([
         orderPersister.loadAll(25000),
         tradesPersister.loadAll(10000),
@@ -279,17 +279,17 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         initParams: Models.QuotingParameters,
         initActive: Models.SerializedQuotesActive,
         initRfv: Models.RegularFairValue[]) => {
-            
+
         _.defaults(initParams, defaultQuotingParameters);
         _.defaults(initActive, defaultActive);
-    
+
         var orderCache = new Broker.OrderStateCache();
         var timeProvider = classes.timeProvider;
         var getPublisher = classes.getPublisher;
-        
+
         var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
-        
+
         var quotePublisher = getPublisher(Messaging.Topics.Quote);
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
         var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
@@ -304,47 +304,47 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
         var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
         var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
-        
+
         var messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
         messages.publish("start up");
-    
+
         var getReceiver = classes.getReceiver;
         var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
         var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
         var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
         var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
         var cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
-        
+
         var gateway = classes.getExch(orderCache);
-        
+
         if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
             throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
-    
+
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
-    
+
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
         paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
-    
+
         var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
-    
+
         var startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
         var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
-    
+
         var quoter = new Quoter.Quoter(orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
         var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
-    
+
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
         var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
         shortEwma.initialize(rfvValues);
         var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
-        
+
         var registry = new QuotingStyleRegistry.QuotingStyleRegistry([
             new MidMarket.MidMarketQuoteStyle(),
             new TopJoin.InverseJoinQuoteStyle(),
@@ -352,16 +352,16 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             new TopJoin.JoinQuoteStyle(),
             new TopJoin.TopOfTheMarketQuoteStyle(),
         ]);
-    
+
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
         var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
         var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
-    
+
         var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
             quotingEngine, broker, mktTradePersister, initMktTrades);
-            
+
         if (config.inBacktestMode) {
             var t = Utils.date();
             console.log("starting backtest");
@@ -373,21 +373,21 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
                 completedSuccessfully.reject(err);
                 return completedSuccessfully.promise;
             }
-            
+
             var results = [paramsRepo.latest, positionBroker.latestReport, {
                 trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
                 volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
             }];
             console.log("sending back results, took: ", Utils.date().diff(t, "seconds"));
-            
-            request({url: serverUrl+"/result", 
-                     method: 'POST', 
+
+            request({url: serverUrl+"/result",
+                     method: 'POST',
                      json: results}, (err, resp, body) => { });
-                     
+
             completedSuccessfully.resolve(true);
             return completedSuccessfully.promise;
         }
-        
+
         exitingEvent = () => {
             var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
             mainLog.info("persisting active to", a.active);
@@ -405,7 +405,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             }, moment.duration(1000));
             return completedSuccessfully.promise;
         };
-    
+
         // event looped blocked timer
         var start = process.hrtime();
         var interval = 100;
@@ -417,7 +417,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
                 mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
             start = process.hrtime();
         }, interval).unref();
-    
+
     }).done();
 
     return completedSuccessfully.promise;
@@ -426,59 +426,59 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
 var harness = () : Q.Promise<any> => {
     if (config.inBacktestMode) {
         console.log("enter backtest mode");
-        
+
         var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
             var d = Q.defer<any>();
-            request.get(serverUrl+"/"+ep, (err, resp, body) => { 
+            request.get(serverUrl+"/"+ep, (err, resp, body) => {
                 if (err) d.reject(err);
                 else d.resolve(body);
             });
             return d.promise;
         };
-        
+
         var inputDataPromise = getFromBacktestServer("inputData").then(body => {
             var inp : Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
-            
+
             for (var i = 0; i < inp.length; i++) {
                 var d = inp[i];
                 d.time = moment(d.time);
             }
-            
+
             return inp;
         });
-        
+
         var nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
             var p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
             console.log("Recv'd parameters", util.inspect(p));
             return (typeof p === "string") ? null : p;
         });
-        
+
         var promiseWhile = <T>(body : () => Q.Promise<boolean>) => {
             var done = Q.defer<any>();
-        
+
             var loop = () => {
                 body().then(possibleResult => {
                     if (!possibleResult) return done.resolve(null);
                     else Q.when(possibleResult, loop, done.reject);
                 });
             };
-            
+
             Q.nextTick(loop);
             return done.promise;
         };
-        
+
         var runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
             var singleRun = () => {
                 var runWithParameters = (p : Backtest.BacktestParameters) => {
                     return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : false;
                 };
-                    
+
                 return nextParameters().then(runWithParameters);
             };
-            
+
             return promiseWhile(<any>singleRun);
         };
-        
+
         return inputDataPromise.then(runLoop);
     }
     else {
