@@ -94,10 +94,8 @@
             {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
         </small></h4>
         <h4 class="col-md-12 col-xs-2">
-          <small>Value: </small><b>{{ value|currency:"B":3 }}</b>
-        </h4>
-        <h4 class="col-md-12 col-xs-2">
-          <small>Value: </small><b>{{ valueFiat|currency:undefined:3 }}</b>
+          <small>Value: </small><b>{{ value|currency:"B":3 }}</b><br/>
+          <b>{{ valueFiat|currency:undefined:3 }}</b>
         </h4>
     </div>
 </script>
