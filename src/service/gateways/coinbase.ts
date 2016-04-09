@@ -395,11 +395,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _cachedAsks: Models.MarketSide[] = null;
 
     private reevalBids = () => {
-        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 3), s => (<any>s).value.marketUpdate);
+        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 7), s => (<any>s).value.marketUpdate);
     };
 
     private reevalAsks = () => {
-        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 3), s => (<any>s).value.marketUpdate);
+        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 7), s => (<any>s).value.marketUpdate);
     };
 
     private onOrderBookChanged = (t: moment.Moment, side: Models.Side, price: number) => {
