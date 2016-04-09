@@ -20,6 +20,7 @@ interface PositionScope extends ng.IScope {
     baseHeldPosition : number;
     quoteHeldPosition : number;
     value : number;
+    valueFiat : number;
 }
 
 var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
@@ -41,6 +42,7 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         $scope.baseHeldPosition = position.baseHeldAmount;
         $scope.quoteHeldPosition = position.quoteHeldAmount;
         $scope.value = position.value;
+        $scope.valueFiat = position.valueFiat;
     };
 
     var positionSubscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.Position)
