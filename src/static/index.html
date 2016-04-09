@@ -49,7 +49,7 @@
             <td>mkt{{ $index }}</td>
             <td>{{ level.bidSize|number:2 }}</td>
             <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
-            <td></td>
+            <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
             <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
             <td>{{ level.askSize|number:2 }}</td>
         </tr>

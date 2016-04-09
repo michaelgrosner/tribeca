@@ -14,6 +14,7 @@ class Level {
     bidSize: number;
     askPrice: number;
     askSize: number;
+    diffWidth: number;
 
     bidClass: string;
     askClass: string;
@@ -86,7 +87,10 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
+            $scope.levels[i].diffWidth = (i==0)
+              ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : 0;
         }
+
 
         updateQuoteClass();
     };

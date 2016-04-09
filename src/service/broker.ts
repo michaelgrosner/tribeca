@@ -56,7 +56,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
         }
-        
+
         var deferred = Q.defer<number>();
 
         var lateCancels : {[id: string] : boolean} = {};
@@ -311,16 +311,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
-                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));    
+                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
             } catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
-                .then(x => this._log.info("cancelled all ", x, " open orders"), 
+                .then(x => this._log.info("cancelled all ", x, " open orders"),
                       e => this._log.error(e, "error when cancelling all orders!"));
         });
 
@@ -369,12 +369,13 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var quoteAmount = quotePosition.amount;
         var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
         var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
+        var valueFiat = baseValue * mid;
         var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
+            quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        if (this._report !== null && 
-                Math.abs(positionReport.value - this._report.value) < 2e-2 && 
+        if (this._report !== null &&
+                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
                 Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
                 Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
@@ -420,7 +421,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
     public get pair() {
         return this._pair;
     }
-    
+
     public get supportedCurrencyPairs() : Models.CurrencyPair[] {
         return this._baseGateway.supportedCurrencyPairs;
     }
