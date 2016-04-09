@@ -5,9 +5,9 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="/css/ui-grid.min.css">
-    
+
     <script src="/js/admin/bundle.min.js"></script>
-    
+
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <title>tribeca [{{ env }}]</title>
@@ -93,9 +93,8 @@
         <h4 class="col-md-12 col-xs-2"><small>
             {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
         </small></h4>
-        <h4 class="col-md-12 col-xs-2"><small>
-            Value: {{ value|currency:"B":3 }}
-        </small></h4>
+        <h4 class="col-md-12 col-xs-2"><small>Value: </small><b>{{ value|currency:"B":3 }}</b>
+        </h4>
     </div>
 </script>
 
@@ -259,22 +258,22 @@
                                                    ng-model="pair.quotingParameters.display.tradeRateSeconds">
                                             </td>
                                             <td>
-                                                <input class="btn btn-default btn col-md-1 col-xs-6" 
+                                                <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:55px"
-                                                    type="button" 
-                                                    ng-click="pair.quotingParameters.reset()" 
+                                                    type="button"
+                                                    ng-click="pair.quotingParameters.reset()"
                                                     value="Reset" />
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
-                                                    style="width:50px" 
-                                                    type="submit" 
-                                                    ng-click="pair.quotingParameters.submit()" 
+                                                    style="width:50px"
+                                                    type="submit"
+                                                    ng-click="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
                                         </tr>
                                     </tbody>
-                                    
+
                                 </table>
                             </div>
 
