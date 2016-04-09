@@ -88,6 +88,21 @@ export class QuotingEngine {
             }
         }
 
+        if (params.mode === Models.QuotingMode.InverseTop) {
+          for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
+            if (filteredMkt.asks[fai].price > unrounded.askPx) {
+              unrounded.askPx = filteredMkt.asks[fai].price - .01;
+              break;
+            }
+          }
+          for (var fbi = 0; fbi < Math.min(42, filteredMkt.bids.length); fbi++) {
+            if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
+              unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
+              break;
+            }
+          }
+        }
+
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
             this._log.warn("cannot compute a quote since no position report exists!");
