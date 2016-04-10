@@ -106,14 +106,14 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
 function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
     var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
 
-    if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
+    if (params.mode === Models.QuotingMode.PingPong && genQt.bidSz > .2) {
         genQt.bidPx += .01;
     }
 
     var minBid = fv.price - params.width / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
-    if (params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
+    if (params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
