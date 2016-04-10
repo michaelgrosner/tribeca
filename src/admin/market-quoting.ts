@@ -87,8 +87,11 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
-            $scope.levels[i].diffWidth = (i==0)
-              ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : 0;
+            $scope.levels[i].diffWidth = i==0
+              ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
+                (i==1 && $scope.qBidPx && $scope.qAskPx)
+                  ? $scope.qBidPx - $scope.qAskPx : 0
+              );
         }
 
 
