@@ -114,7 +114,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
-var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(1, 1, Models.QuotingMode.InverseTop,
+var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(1, 1, Models.QuotingMode.Top,
     Models.FairValueModel.BBO, 2, 2, true, Models.AutoPositionMode.EwmaBasic, false, 2.5, 84, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
@@ -351,6 +351,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             new TopJoin.InverseTopOfTheMarketQuoteStyle(),
             new TopJoin.JoinQuoteStyle(),
             new TopJoin.TopOfTheMarketQuoteStyle(),
+            new TopJoin.PingPongQuoteStyle(),
         ]);
 
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
