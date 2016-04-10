@@ -88,7 +88,7 @@ export class QuotingEngine {
             }
         }
 
-        if (params.mode === Models.QuotingMode.Top || params.mode === Models.QuotingMode.InverseTop) {
+        // if (params.mode === Models.QuotingMode.Top || params.mode === Models.QuotingMode.InverseTop) {
           for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
             if (filteredMkt.asks[fai].price > unrounded.askPx) {
               unrounded.askPx = filteredMkt.asks[fai].price - .01;
@@ -101,7 +101,7 @@ export class QuotingEngine {
               break;
             }
           }
-        }
+        // }
 
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
