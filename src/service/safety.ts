@@ -85,7 +85,10 @@ export class SafetyCalculator {
         this._buys = orderTrades(this._buys, -1);
         this._sells = orderTrades(this._sells, 1);
 
-        var buyS = sellS = buySq = sellSq = 0;
+        var buyS = 0;
+        var sellS = 0;
+        var buySq = 0;
+        var sellSq = 0;
         for (var bSi = 0; bSi < this._buysS.length; bSi++) {
           if (buySq>settings.width) break;
           buyS = this._buysS[bSi].price / this._buysS[bSi].quantity;
