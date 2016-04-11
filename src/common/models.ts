@@ -93,6 +93,7 @@ export class SubmitNewOrder implements Order {
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
                 public generatedTime: moment.Moment,
+                public preferPostOnly: boolean,
                 public msg?: string) {
                     this.msg = msg || null;
                 }
@@ -119,7 +120,8 @@ export class BrokeredOrder implements Order {
                 public type: OrderType,
                 public price: number,
                 public timeInForce: TimeInForce,
-                public exchange: Exchange) {}
+                public exchange: Exchange,
+                public preferPostOnly: boolean) {}
 }
 
 export class BrokeredReplace implements Order {
@@ -131,7 +133,8 @@ export class BrokeredReplace implements Order {
                 public price: number,
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
-                public exchangeId: string) {}
+                public exchangeId: string,
+                public preferPostOnly: boolean) {}
 }
 
 export class BrokeredCancel {
@@ -170,6 +173,7 @@ export interface OrderStatusReport {
     exchange? : Exchange;
     computationalLatency? : number;
     version? : number;
+    preferPostOnly?: boolean;
 
     partiallyFilled? : boolean;
     pendingCancel? : boolean;
@@ -201,7 +205,8 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
                 public partiallyFilled: boolean,
                 public pendingCancel: boolean,
                 public pendingReplace: boolean,
-                public cancelRejected: boolean) {}
+                public cancelRejected: boolean,
+                public preferPostOnly: boolean) {}
 
     public toString() {
         var components: string[] = [];
@@ -243,7 +248,9 @@ export class Trade implements ITimestamped {
                 public price: number,
                 public quantity: number,
                 public side: Side,
-                public value: number) {}
+                public value: number,
+                public liquidity: Liquidity,
+                public feeCharged: number) {}
 }
 
 export class CurrencyPosition {
