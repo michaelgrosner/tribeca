@@ -9,6 +9,7 @@
     "bunyan": "registry:dt/bunyan#0.0.0+20160316155526",
     "compression": "registry:dt/compression#0.0.0+20160317120654",
     "connect": "registry:dt/connect#3.4.0+20160317120654",
+    "es6-promise": "registry:dt/es6-promise#0.0.0+20160317120654",
     "express": "registry:dt/express#4.0.0+20160317120654",
     "express-serve-static-core": "registry:dt/express-serve-static-core#0.0.0+20160322035842",
     "form-data": "registry:dt/form-data#0.0.0+20160316155526",
