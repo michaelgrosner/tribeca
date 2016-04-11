@@ -33,6 +33,8 @@ export class SafetyCalculator {
 
     private _buys: Models.Trade[] = [];
     private _sells: Models.Trade[] = [];
+    private _buysS: Models.Trade[] = [];
+    private _sellsS: Models.Trade[] = [];
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
@@ -45,7 +47,7 @@ export class SafetyCalculator {
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);
-        
+
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
 
@@ -55,9 +57,11 @@ export class SafetyCalculator {
 
         if (u.side === Models.Side.Ask) {
             this._sells.push(u);
+            this._sellsS.unshift(u);
         }
         else if (u.side === Models.Side.Bid) {
             this._buys.push(u);
+            this._buysS.unshift(u);
         }
 
         this.computeQtyLimit();
@@ -80,6 +84,27 @@ export class SafetyCalculator {
 
         this._buys = orderTrades(this._buys, -1);
         this._sells = orderTrades(this._sells, 1);
+
+        var buyS = sellS = buySq = sellSq = 0;
+        for (var bSi = 0; bSi < this._buysS.length; bSi++) {
+          if (buySq>settings.width) break;
+          buyS = this._buysS[bSi].price / this._buysS[bSi].quantity;
+          buySq += this._buysS[bSi].quantity;
+        }
+        if (bSi) {
+          buyS /= bSi;
+          this._buysS.slice(0,bSi);
+        }
+
+        for (var sSi = 0; sSi < this._sellsS.length; sSi++) {
+          if (sellSq>settings.width) break;
+          sellS = this._sellsS[sSi].price / this._sellsS[sSi].quantity;
+          sellSq += this._sellsS[sSi].quantity;
+        }
+        if (sSi) {
+          sellS /= sSi;
+          this._sellsS.slice(0,sSi);
+        }
 
         // don't count good trades against safety
         while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
@@ -104,6 +129,6 @@ export class SafetyCalculator {
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
-            computeSafety(this._buys.concat(this._sells)), this._timeProvider.utcNow());
+            buyS, sellS, computeSafety(this._buys.concat(this._sells)), this._timeProvider.utcNow());
     };
 }
