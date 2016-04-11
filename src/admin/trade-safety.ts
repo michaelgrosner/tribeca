@@ -24,12 +24,16 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
         $scope.tradeSafetyValue = value.combined;
         $scope.buySafety = value.buy;
         $scope.sellSafety = value.sell;
+        $scope.buySizeSafety = value.buyS;
+        $scope.sellSizeSafety = value.sellS;
     };
 
     var clear = () => {
         $scope.tradeSafetyValue = null;
         $scope.buySafety = null;
         $scope.sellSafety = null;
+        $scope.buySizeSafety = null;
+        $scope.sellSizeSafety = null;
     };
 
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
@@ -49,7 +53,7 @@ export var tradeSafetyDirective = "tradeSafetyDirective";
 angular
     .module(tradeSafetyDirective, ['sharedDirectives'])
     .directive("tradeSafety", () => {
-        var template = '<span>BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
+        var template = '<span>BuyLT: {{ buySizeSafety|number:2 }}, SellLT: {{ sellSizeSafety|number:2 }}, BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
 
         return {
             restrict: 'E',
