@@ -53,14 +53,14 @@ export class SafetyCalculator {
 
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
-        if (this.isOlderThan(u, this._repo.latest)) return;
 
+        var older = this.isOlderThan(u, this._repo.latest);
         if (u.side === Models.Side.Ask) {
-            this._sells.push(u);
+            if (older) this._sells.push(u);
             this._sellsS.unshift(u);
         }
         else if (u.side === Models.Side.Bid) {
-            this._buys.push(u);
+            if (older) this._buys.push(u);
             this._buysS.unshift(u);
         }
 
@@ -74,16 +74,6 @@ export class SafetyCalculator {
 
     private computeQtyLimit = () => {
         var settings = this._repo.latest;
-
-        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
-            return _.chain(input)
-                .filter(o => !this.isOlderThan(o, settings))
-                .sortBy((t: Models.Trade) => direction * t.price)
-                .value();
-        };
-
-        this._buys = orderTrades(this._buys, -1);
-        this._sells = orderTrades(this._sells, 1);
 
         var buyS = 0;
         var sellS = 0;
@@ -109,6 +99,16 @@ export class SafetyCalculator {
           this._sellsS.slice(0,sSi);
         }
 
+        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
+            return _.chain(input)
+                .filter(o => !this.isOlderThan(o, settings))
+                .sortBy((t: Models.Trade) => direction * t.price)
+                .value();
+        };
+
+        this._buys = orderTrades(this._buys, -1);
+        this._sells = orderTrades(this._sells, 1);
+
         // don't count good trades against safety
         while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
             var sell = _.last(this._sells);
@@ -131,7 +131,7 @@ export class SafetyCalculator {
 
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
-        this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
-            buyS, sellS, computeSafety(this._buys.concat(this._sells)), this._timeProvider.utcNow());
+        this.latest = new Models.TradeSafety(computeSafety(this._buys) || 0, computeSafety(this._sells) || 0,
+            buyS, sellS, computeSafety(this._buys.concat(this._sells)) || 0, this._timeProvider.utcNow());
     };
 }
