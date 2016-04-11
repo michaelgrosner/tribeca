@@ -14,6 +14,8 @@ import Shared = require("./shared_directives");
 interface TradeSafetyScope extends ng.IScope {
     buySafety: number;
     sellSafety: number;
+    buySizeSafety: number;
+    sellSizeSafety: number;
     tradeSafetyValue : number;
 }
 
