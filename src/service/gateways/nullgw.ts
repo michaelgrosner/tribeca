@@ -45,13 +45,14 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         };
         this.OrderUpdate.trigger(rpt);
 
-        if (status === Models.OrderStatus.Working) {
+        if (status === Models.OrderStatus.Working && Math.random() < .1) {
             var rpt: Models.OrderStatusReport = {
                 orderId: orderId,
                 orderStatus: status,
                 time: Utils.date(),
                 lastQuantity: order.quantity,
-                lastPrice: order.price
+                lastPrice: order.price,
+                liquidity: Math.random() < .5 ? Models.Liquidity.Make : Models.Liquidity.Take
             };
             setTimeout(() => this.OrderUpdate.trigger(rpt), 1000);
         }

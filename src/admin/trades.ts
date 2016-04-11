@@ -23,14 +23,23 @@ class DisplayTrade {
     quantity : number;
     side : string;
     value : number;
+    liquidity : string;
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
-        this.side = Models.Side[trade.side];
+        this.side = trade.side === Models.Side.Ask ? "S" : "B";
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
+
+        if (trade.liquidity === 0 || trade.liquidity === 1) {
+            this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
+        }
+        else {
+            this.liquidity = "?";
+        }
+
         if ($scope.sound) {
             var audio = new Audio('http://antminer/a.mp3');audio.play();
         }
@@ -49,13 +58,24 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 120, field:'time', displayName:'t', cellFilter: 'momentFullDate',
+            {width: 80, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
-            {width: 70, field:'quantity', displayName:'qty'},
-            {width: 35, field:'side', displayName:'side'},
-            {width: 70, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
+            {width: 50, field:'quantity', displayName:'qty'},
+            {width: 30, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (grid.getCellValue(row, col) === 'B') {
+                    return 'buy';
+                }
+                else if (grid.getCellValue(row, col) === 'S') {
+                    return "sell";
+                }
+                else {
+                    return "unknown";
+                }
+            }},
+            {width: 30, field:'liquidity', displayName:'liq'},
+            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
         ]
     };
 
