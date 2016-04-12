@@ -80,6 +80,7 @@ export class SafetyCalculator {
         this._log.info("!! Calc", this._broker._trades.length);
         for (var ti = 0; ti < this._broker._trades.length; ti++) {
           this._log.info("!! Side", this._broker._trades[ti].side == Models.Side.Bid);
+          this._log.info("!! time", this._broker._trades[ti].time);
           this._log.info("!! Price", this._broker._trades[ti].price);
           this._log.info("!! Quantity", this._broker._trades[ti].quantity);
           if (buySq>settings.size && sellSq>settings.size) break;
