@@ -24,7 +24,9 @@ export class SafetyCalculator {
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
-        if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3) {
+        if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3
+          || Math.abs(val.buyS - this._latest.buyS) >= 1e-2
+          || Math.abs(val.sellS - this._latest.sellS) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
 
