@@ -134,7 +134,7 @@ export class QuotingEngine {
         if (params.mode === Models.QuotingMode.PingPong) {
           if (unrounded.bidPx > safety.sellS - params.width)
             unrounded.bidPx = safety.sellS - params.width;
-          if (unrounded.askPx > safety.buyS + params.width)
+          if (unrounded.askPx < safety.buyS + params.width)
             unrounded.askPx = safety.buyS + params.width;
         }
 
