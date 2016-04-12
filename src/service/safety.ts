@@ -31,11 +31,6 @@ export class SafetyCalculator {
         }
     }
 
-    private _buys: Models.Trade[] = [];
-    private _sells: Models.Trade[] = [];
-    private _buysS: Models.Trade[] = [];
-    private _sellsS: Models.Trade[] = [];
-
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
@@ -53,15 +48,13 @@ export class SafetyCalculator {
 
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
+        if (this.isOlderThan(u, this._repo.latest)) return;
 
-        var older = this.isOlderThan(u, this._repo.latest);
         if (u.side === Models.Side.Ask) {
-            if (older) this._sells.push(u);
-            this._sellsS.unshift(u);
+            this._sells.push(u);
         }
         else if (u.side === Models.Side.Bid) {
-            if (older) this._buys.push(u);
-            this._buysS.unshift(u);
+            this._buys.push(u);
         }
 
         this.computeQtyLimit();
@@ -77,27 +70,25 @@ export class SafetyCalculator {
 
         var buyS = 0;
         var sellS = 0;
+        var buyi = 0;
+        var selli = 0;
         var buySq = 0;
         var sellSq = 0;
-        for (var bSi = 0; bSi < this._buysS.length; bSi++) {
-          if (buySq>settings.width) break;
-          buyS = this._buysS[bSi].price / this._buysS[bSi].quantity;
-          buySq += this._buysS[bSi].quantity;
+        for (var ti = 0; ti < this._broker._trades.length; ti++) {
+          if (buySq>settings.size && sellSq>settings.size) break;
+          if (this._broker._trades[ti].side == Models.Side.Bid && buySq<=settings.size) {
+            buyS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
+            buySq += this._broker._trades[ti].quantity;
+            buyi++:
+          }
+          if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<=settings.size) {
+            sellS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
+            sellSq += this._broker._trades[ti].quantity;
+            selli++;
+          }
         }
-        if (bSi) {
-          buyS /= bSi;
-          this._buysS.slice(0,bSi);
-        }
-
-        for (var sSi = 0; sSi < this._sellsS.length; sSi++) {
-          if (sellSq>settings.width) break;
-          sellS = this._sellsS[sSi].price / this._sellsS[sSi].quantity;
-          sellSq += this._sellsS[sSi].quantity;
-        }
-        if (sSi) {
-          sellS /= sSi;
-          this._sellsS.slice(0,sSi);
-        }
+        if (buyi) buyS /= buyi;
+        if (selli) sellS /= selli;
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
