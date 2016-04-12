@@ -79,7 +79,7 @@ export class SafetyCalculator {
           if (this._broker._trades[ti].side == Models.Side.Bid && buySq<=settings.size) {
             buyS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
             buySq += this._broker._trades[ti].quantity;
-            buyi++:
+            buyi++;
           }
           if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<=settings.size) {
             sellS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
