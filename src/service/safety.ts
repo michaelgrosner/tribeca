@@ -37,7 +37,7 @@ export class SafetyCalculator {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
-        private _broker: Interfaces.IOrderBroker,
+        private _broker: Broker.OrderBroker,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
         private _publisher: Messaging.IPublish<Models.TradeSafety>,
         private _persister: Persister.IPersist<Models.TradeSafety>) {
