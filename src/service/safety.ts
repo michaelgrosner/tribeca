@@ -19,10 +19,14 @@ import Persister = require("./persister");
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
 
+    private _log = Utils.log("safety");
+
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
-        if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3) {
+        if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3
+          || Math.abs(val.buyS - this._latest.buyS) >= 1e-2
+          || Math.abs(val.sellS - this._latest.sellS) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
 
@@ -37,7 +41,7 @@ export class SafetyCalculator {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
-        private _broker: Interfaces.ITradeBroker,
+        private _broker: Broker.OrderBroker,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
         private _publisher: Messaging.IPublish<Models.TradeSafety>,
         private _persister: Persister.IPersist<Models.TradeSafety>) {
@@ -45,7 +49,7 @@ export class SafetyCalculator {
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);
-        
+
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
 
@@ -70,6 +74,29 @@ export class SafetyCalculator {
 
     private computeQtyLimit = () => {
         var settings = this._repo.latest;
+
+        var buyS = 0;
+        var sellS = 0;
+        var buySq = 0;
+        var sellSq = 0;
+        var _buySq = 0;
+        var _sellSq = 0;
+        for (var ti = this._broker._trades.length - 1; ti > -1; ti--) {
+          if (this._broker._trades[ti].side == Models.Side.Bid && buySq<settings.size) {
+            _buySq = Math.min(settings.size - buySq, this._broker._trades[ti].quantity);
+            buyS += this._broker._trades[ti].price * _buySq;
+            buySq += _buySq;
+          }
+          if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<settings.size) {
+            _sellSq = Math.min(settings.size - sellSq, this._broker._trades[ti].quantity);
+            sellS += this._broker._trades[ti].price * _sellSq;
+            sellSq += _sellSq;
+          }
+          if (buySq>=settings.size && sellSq>=settings.size) break;
+        }
+
+        if (buySq) buyS /= buySq;
+        if (sellSq) sellS /= sellSq;
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
@@ -103,7 +130,7 @@ export class SafetyCalculator {
 
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
-        this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
-            computeSafety(this._buys.concat(this._sells)), this._timeProvider.utcNow());
+        this.latest = new Models.TradeSafety(computeSafety(this._buys) || 0, computeSafety(this._sells) || 0,
+            buyS, sellS, computeSafety(this._buys.concat(this._sells)) || 0, this._timeProvider.utcNow());
     };
 }

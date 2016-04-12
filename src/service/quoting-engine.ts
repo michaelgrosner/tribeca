@@ -88,18 +88,16 @@ export class QuotingEngine {
             }
         }
 
-        if (params.mode === Models.QuotingMode.Top || params.mode === Models.QuotingMode.InverseTop) {
-          for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
-            if (filteredMkt.asks[fai].price > unrounded.askPx) {
-              unrounded.askPx = filteredMkt.asks[fai].price - .01;
-              break;
-            }
+        for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
+          if (filteredMkt.asks[fai].price > unrounded.askPx) {
+            unrounded.askPx = filteredMkt.asks[fai].price - .01;
+            break;
           }
-          for (var fbi = 0; fbi < Math.min(42, filteredMkt.bids.length); fbi++) {
-            if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-              unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
-              break;
-            }
+        }
+        for (var fbi = 0; fbi < Math.min(42, filteredMkt.bids.length); fbi++) {
+          if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
+            unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
+            break;
           }
         }
 
@@ -131,6 +129,13 @@ export class QuotingEngine {
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
+        }
+
+        if (params.mode === Models.QuotingMode.PingPong) {
+          if (unrounded.bidPx > safety.sellS - params.width)
+            unrounded.bidPx = safety.sellS - params.width;
+          if (unrounded.askPx > safety.buyS + params.width)
+            unrounded.askPx = safety.buyS + params.width;
         }
 
         if (safety.sell > params.tradesPerMinute) {
