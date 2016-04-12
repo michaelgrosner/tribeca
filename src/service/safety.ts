@@ -85,11 +85,11 @@ export class SafetyCalculator {
           this._log.info("!! Quantity", this._broker._trades[ti].quantity);
           if (buySq>settings.size && sellSq>settings.size) break;
           if (this._broker._trades[ti].side == Models.Side.Bid && buySq<=settings.size) {
-            buyS += this._broker._trades[ti].price;
+            buyS += this._broker._trades[ti].price * this._broker._trades[ti].quantity;
             buySq += this._broker._trades[ti].quantity;
           }
           if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<=settings.size) {
-            sellS += this._broker._trades[ti].price;
+            sellS += this._broker._trades[ti].price * this._broker._trades[ti].quantity;
             sellSq += this._broker._trades[ti].quantity;
           }
           this._log.info("!! buyS", buyS);
