@@ -19,6 +19,8 @@ import Persister = require("./persister");
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
 
+    private _log = Utils.log("safety");
+
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
@@ -75,7 +77,11 @@ export class SafetyCalculator {
         var sellS = 0;
         var buySq = 0;
         var sellSq = 0;
+        this._log.info("!! Calc", this._broker._trades.length);
         for (var ti = 0; ti < this._broker._trades.length; ti++) {
+          this._log.info("!! Side", this._broker._trades[ti].side == Models.Side.Bid);
+          this._log.info("!! Price", this._broker._trades[ti].price);
+          this._log.info("!! Quantity", this._broker._trades[ti].quantity);
           if (buySq>settings.size && sellSq>settings.size) break;
           if (this._broker._trades[ti].side == Models.Side.Bid && buySq<=settings.size) {
             buyS += this._broker._trades[ti].price;
@@ -85,9 +91,18 @@ export class SafetyCalculator {
             sellS += this._broker._trades[ti].price;
             sellSq += this._broker._trades[ti].quantity;
           }
-        } // BuyLT: 28,431.15, SellLT: 30,593.53 $14.118
+          this._log.info("!! buyS", buyS);
+          this._log.info("!! buySq", buySq);
+          this._log.info("!! sellS", sellS);
+          this._log.info("!! sellSq", sellSq);
+        }
+
         if (buySq) buyS /= buySq;
         if (sellSq) sellS /= sellSq;
+        this._log.info("!! buyS", buyS);
+        this._log.info("!! buySq", buySq);
+        this._log.info("!! sellS", sellS);
+        this._log.info("!! sellSq", sellSq);
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
