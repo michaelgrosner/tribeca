@@ -31,6 +31,9 @@ export class SafetyCalculator {
         }
     }
 
+    private _buys: Models.Trade[] = [];
+    private _sells: Models.Trade[] = [];
+
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
