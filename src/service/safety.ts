@@ -78,7 +78,7 @@ export class SafetyCalculator {
         var buySq = 0;
         var sellSq = 0;
         this._log.info("!! Calc", this._broker._trades.length);
-        for (var ti = 0; ti < this._broker._trades.length; ti++) {
+        for (var ti = this._broker._trades.length - 1; ti > -1; ti--) {
           this._log.info("!! Side", this._broker._trades[ti].side == Models.Side.Bid);
           this._log.info("!! time", this._broker._trades[ti].time);
           this._log.info("!! Price", this._broker._trades[ti].price);
