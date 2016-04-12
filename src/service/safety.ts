@@ -73,25 +73,21 @@ export class SafetyCalculator {
 
         var buyS = 0;
         var sellS = 0;
-        var buyi = 0;
-        var selli = 0;
         var buySq = 0;
         var sellSq = 0;
         for (var ti = 0; ti < this._broker._trades.length; ti++) {
           if (buySq>settings.size && sellSq>settings.size) break;
           if (this._broker._trades[ti].side == Models.Side.Bid && buySq<=settings.size) {
-            buyS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
+            buyS += this._broker._trades[ti].price;
             buySq += this._broker._trades[ti].quantity;
-            buyi++;
           }
           if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<=settings.size) {
-            sellS += (this._broker._trades[ti].price / this._broker._trades[ti].quantity);
+            sellS += this._broker._trades[ti].price;
             sellSq += this._broker._trades[ti].quantity;
-            selli++;
           }
-        }
-        if (buyi) buyS /= buyi;
-        if (selli) sellS /= selli;
+        } // BuyLT: 28,431.15, SellLT: 30,593.53 $14.118
+        if (buySq) buyS /= buySq;
+        if (sellSq) sellS /= sellSq;
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
