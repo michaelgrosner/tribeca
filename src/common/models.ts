@@ -269,6 +269,7 @@ export class PositionReport {
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
                 public value: number,
+                public valueFiat: number,
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
