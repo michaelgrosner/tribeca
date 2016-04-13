@@ -331,7 +331,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 
@@ -382,6 +382,8 @@ export class TradeSafety {
     constructor(public buy: number,
                 public sell: number,
                 public combined: number,
+                public buyPing: number,
+                public sellPong: number,
                 public time: moment.Moment) {}
 }
 
