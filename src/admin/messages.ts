@@ -32,7 +32,7 @@ var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subs
         showGroupPanel: false,
         rowHeight: 20,
         headerRowHeight: 0,
-        hideHeader: true,
+        showHeader: false,
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
         sortInfo: { fields: ['time'], directions: ['desc'] },
