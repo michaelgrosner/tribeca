@@ -584,6 +584,9 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (order.type === Models.OrderType.Limit) {
             o.price = order.price.toString();
             
+            if (order.preferPostOnly)
+                o.post_only = true;
+            
             switch (order.timeInForce) {
                 case Models.TimeInForce.GTC: 
                     break;

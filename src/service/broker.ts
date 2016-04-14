@@ -100,7 +100,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, order.price, order.timeInForce, exch);
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+            order.price, order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
@@ -114,6 +115,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             price: order.price,
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
+            preferPostOnly: order.preferPostOnly,
             exchange: exch,
             computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
             rejectMessage: order.msg};
@@ -124,8 +126,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side,
-            replace.quantity, rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId);
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+            rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
 
@@ -230,7 +232,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             partiallyFilled,
             osr.pendingCancel,
             osr.pendingReplace,
-            osr.cancelRejected
+            osr.cancelRejected,
+            getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
         );
 
         this.addOrderStatusToMemory(o);
@@ -251,17 +254,19 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
-            var value = Math.abs(o.lastPrice * o.lastQuantity);
+            let value = Math.abs(o.lastPrice * o.lastQuantity);
 
-            var liq = o.liquidity;
+            const liq = o.liquidity;
+            let feeCharged = null;
             if (typeof liq !== "undefined") {
                 // negative fee is a rebate, positive fee is a fee
-                var feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
-                var sign = (o.side === Models.Side.Bid ? 1 : -1);
+                feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
+                const sign = (o.side === Models.Side.Bid ? 1 : -1);
                 value = value * (1 + sign * feeCharged);
             }
 
-            var trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, o.lastPrice, o.lastQuantity, o.side, value);
+            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
@@ -301,13 +306,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._log.info("got new order req", o);
             try {
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow());
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
                 this.sendOrder(order);
             }
             catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
+        
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
