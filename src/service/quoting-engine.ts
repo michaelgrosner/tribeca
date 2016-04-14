@@ -88,19 +88,6 @@ export class QuotingEngine {
             }
         }
 
-        for (var fai = 0; fai < Math.min(42, filteredMkt.asks.length); fai++) {
-          if (filteredMkt.asks[fai].price > unrounded.askPx) {
-            unrounded.askPx = filteredMkt.asks[fai].price - .01;
-            break;
-          }
-        }
-        for (var fbi = 0; fbi < Math.min(42, filteredMkt.bids.length); fbi++) {
-          if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-            unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
-            break;
-          }
-        }
-
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
             this._log.warn("cannot compute a quote since no position report exists!");
@@ -137,6 +124,21 @@ export class QuotingEngine {
           if (unrounded.askPx < safety.buyS + params.width)
             unrounded.askPx = safety.buyS + params.width;
         }
+
+        if (unrounded.askPx !== null)
+          for (var fai = 0; fai < filteredMkt.asks.length; fai++) {
+            if (filteredMkt.asks[fai].price > unrounded.askPx) {
+              unrounded.askPx = filteredMkt.asks[fai].price - .01;
+              break;
+            }
+          }
+        if (unrounded.bidPx !== null)
+          for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++) {
+            if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
+              unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
+              break;
+            }
+          }
 
         if (safety.sell > params.tradesPerMinute) {
             unrounded.askPx = null;
