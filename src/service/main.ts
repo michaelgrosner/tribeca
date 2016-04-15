@@ -351,6 +351,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             new TopJoin.InverseTopOfTheMarketQuoteStyle(),
             new TopJoin.JoinQuoteStyle(),
             new TopJoin.TopOfTheMarketQuoteStyle(),
+            new TopJoin.PingPongQuoteStyle(),
         ]);
     
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);

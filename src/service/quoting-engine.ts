@@ -118,6 +118,13 @@ export class QuotingEngine {
             return null;
         }
         
+        if (params.mode === Models.QuotingMode.PingPong) {
+          if (safety.buyPing && unrounded.askPx < safety.buyPing + params.width)
+            unrounded.askPx = safety.buyPing + params.width;
+          if (safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)
+            unrounded.bidPx = safety.sellPong - params.width;
+        }
+        
         if (safety.sell > params.tradesPerMinute) {
             unrounded.askPx = null;
             unrounded.askSz = null;
