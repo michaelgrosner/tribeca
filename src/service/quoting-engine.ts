@@ -119,10 +119,10 @@ export class QuotingEngine {
         }
 
         if (params.mode === Models.QuotingMode.PingPong) {
-          if (unrounded.bidPx > safety.sellS - params.width)
-            unrounded.bidPx = safety.sellS - params.width;
-          if (unrounded.askPx < safety.buyS + params.width)
-            unrounded.askPx = safety.buyS + params.width;
+          if (safety.buyPing && unrounded.askPx < safety.buyPing + params.width)
+            unrounded.askPx = safety.buyPing + params.width;
+          if (safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)
+            unrounded.bidPx = safety.sellPong - params.width;
         }
 
         if (unrounded.askPx !== null)
