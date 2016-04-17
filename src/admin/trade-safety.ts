@@ -26,8 +26,8 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
         $scope.tradeSafetyValue = value.combined;
         $scope.buySafety = value.buy;
         $scope.sellSafety = value.sell;
-        $scope.buySizeSafety = value.buyS;
-        $scope.sellSizeSafety = value.sellS;
+        $scope.buySizeSafety = value.buyPing;
+        $scope.sellSizeSafety = value.sellPong;
     };
 
     var clear = () => {
