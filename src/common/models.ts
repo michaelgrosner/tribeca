@@ -385,6 +385,8 @@ export class TradeSafety {
                 public buyS: number,
                 public sellS: number,
                 public combined: number,
+                public buyPing: number,
+                public sellPong: number,
                 public time: moment.Moment) {}
 }
 

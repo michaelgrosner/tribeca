@@ -25,8 +25,8 @@ export class SafetyCalculator {
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
         if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3
-          || Math.abs(val.buyS - this._latest.buyS) >= 1e-2
-          || Math.abs(val.sellS - this._latest.sellS) >= 1e-2) {
+          || Math.abs(val.buyPing - this._latest.buyPing) >= 1e-2
+          || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
 
@@ -75,28 +75,28 @@ export class SafetyCalculator {
     private computeQtyLimit = () => {
         var settings = this._repo.latest;
 
-        var buyS = 0;
-        var sellS = 0;
-        var buySq = 0;
-        var sellSq = 0;
-        var _buySq = 0;
-        var _sellSq = 0;
+        var buyPing = 0;
+        var sellPong = 0;
+        var buyPq = 0;
+        var sellPq = 0;
+        var _buyPq = 0;
+        var _sellPq = 0;
         for (var ti = this._broker._trades.length - 1; ti > -1; ti--) {
-          if (this._broker._trades[ti].side == Models.Side.Bid && buySq<settings.size) {
-            _buySq = Math.min(settings.size - buySq, this._broker._trades[ti].quantity);
-            buyS += this._broker._trades[ti].price * _buySq;
-            buySq += _buySq;
+          if (this._broker._trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
+            _buyPq = Math.min(settings.size - buyPq, this._broker._trades[ti].quantity);
+            buyPing += this._broker._trades[ti].price * _buyPq;
+            buyPq += _buyPq;
           }
-          if (this._broker._trades[ti].side == Models.Side.Ask && sellSq<settings.size) {
-            _sellSq = Math.min(settings.size - sellSq, this._broker._trades[ti].quantity);
-            sellS += this._broker._trades[ti].price * _sellSq;
-            sellSq += _sellSq;
+          if (this._broker._trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
+            _sellPq = Math.min(settings.size - sellPq, this._broker._trades[ti].quantity);
+            sellPong += this._broker._trades[ti].price * _sellPq;
+            sellPq += _sellPq;
           }
-          if (buySq>=settings.size && sellSq>=settings.size) break;
+          if (buyPq>=settings.size && sellPq>=settings.size) break;
         }
 
-        if (buySq) buyS /= buySq;
-        if (sellSq) sellS /= sellSq;
+        if (buyPq) buyPing /= buyPq;
+        if (sellPq) sellPong /= sellPq;
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
@@ -130,7 +130,8 @@ export class SafetyCalculator {
 
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
-        this.latest = new Models.TradeSafety(computeSafety(this._buys) || 0, computeSafety(this._sells) || 0,
-            buyS, sellS, computeSafety(this._buys.concat(this._sells)) || 0, this._timeProvider.utcNow());
+        this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
+            computeSafety(this._buys.concat(this._sells)), buyPing, sellPong, this._timeProvider.utcNow());
+
     };
 }
