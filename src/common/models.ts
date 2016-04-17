@@ -382,8 +382,6 @@ export class RegularFairValue {
 export class TradeSafety {
     constructor(public buy: number,
                 public sell: number,
-                public buyS: number,
-                public sellS: number,
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
