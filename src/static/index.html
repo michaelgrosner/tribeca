@@ -17,7 +17,7 @@
         .buy { color: blue }
         .sell { color: red }
         .unknown { color: black }
-        
+
         .row {
             margin-left: 0;
             margin-right: 0
@@ -99,7 +99,7 @@
         </small></h4>
         <h4 class="col-md-12 col-xs-2">
           <small>Value: </small><b>{{ value|currency:"B":5 }}</b><br/>
-          <b>{{ valueFiat|currency:undefined:2 }}</b>
+          <b>{{ quoteValue|currency:undefined:2 }}</b>
         </h4>
     </div>
 </script>
