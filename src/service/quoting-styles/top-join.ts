@@ -111,14 +111,14 @@ function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, 
         genQt.bidPx += .01;
     }
 
-    var minBid = fv.price - params.width / 6.0;
+    var minBid = fv.price - params.width / 8.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
-    var minAsk = fv.price + params.width / 6.0;
+    var minAsk = fv.price + params.width / 8.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = params.size;
