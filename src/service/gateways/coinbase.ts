@@ -475,7 +475,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         leavesQuantity: 0
                     });
                 }
-                
+
                 d.resolve(resp.length);
             };
         });
@@ -580,23 +580,23 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             size: order.quantity.toString(),
             product_id: this._symbolProvider.symbol
         };
-        
+
         if (order.type === Models.OrderType.Limit) {
             o.price = order.price.toString();
-            
+
             if (order.preferPostOnly)
                 o.post_only = true;
-            
+
             switch (order.timeInForce) {
-                case Models.TimeInForce.GTC: 
+                case Models.TimeInForce.GTC:
                     break;
-                case Models.TimeInForce.FOK: 
+                case Models.TimeInForce.FOK:
                     o.time_in_force = "FOK";
                     break;
-                case Models.TimeInForce.IOC: 
+                case Models.TimeInForce.IOC:
                     o.time_in_force = "IOC";
                     break;
-                default: 
+                default:
                     throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
             }
         }
@@ -739,15 +739,15 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
-            try {
                 _.forEach(data, d => {
+            try {
                     var c = GetCurrencyEnum(d.currency);
                     var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
                     this.PositionUpdate.trigger(rpt);
-                });
             } catch (error) {
                 this._log.error(error, "Exception while downloading Coinbase positions", data)
             }
+                });
         });
     };
 
