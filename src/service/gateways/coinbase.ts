@@ -739,15 +739,18 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
-                _.forEach(data, d => {
             try {
+                _.forEach(data, d => {
                     var c = GetCurrencyEnum(d.currency);
-                    var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
-                    this.PositionUpdate.trigger(rpt);
+                    if (c) {
+                      var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
+                      this.PositionUpdate.trigger(rpt);
+                    }
+                    else this._log.error(error, "Exception while downloading Coinbase positions", data)
+                });
             } catch (error) {
                 this._log.error(error, "Exception while downloading Coinbase positions", data)
             }
-                });
         });
     };
 
@@ -796,7 +799,7 @@ function GetCurrencyEnum(name: string): Models.Currency {
         case "USD": return Models.Currency.USD;
         case "EUR": return Models.Currency.EUR;
         case "GBP": return Models.Currency.GBP;
-        default: throw new Error("Unsupported currency " + name);
+        default: return false;
     }
 }
 
