@@ -746,7 +746,9 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
                       var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
                       this.PositionUpdate.trigger(rpt);
                     }
-                    else this._log.error(error, "Exception while downloading Coinbase positions", data)
+                    else {
+                      this._log.error('ERROR CoinbasePositionGateway function', "Exception while downloading Coinbase positions", data);
+                    }
                 });
             } catch (error) {
                 this._log.error(error, "Exception while downloading Coinbase positions", data)
