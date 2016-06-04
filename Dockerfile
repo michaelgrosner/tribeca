@@ -7,7 +7,7 @@ RUN git clone https://github.com/michaelgrosner/tribeca.git
 
 WORKDIR tribeca
 
-RUN npm install -g grunt-cli typings forever
+RUN npm install -g grunt-cli typings@0.8.1 forever
 RUN npm install
 RUN typings install
 RUN grunt compile
