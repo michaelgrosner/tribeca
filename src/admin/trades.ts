@@ -24,6 +24,7 @@ class DisplayTrade {
     side : string;
     value : number;
     liquidity : string;
+    alloc : number;
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
@@ -31,6 +32,7 @@ class DisplayTrade {
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
+        this.alloc = 0;
         this.value = trade.value;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
@@ -75,7 +77,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 }
             }},
             {width: 30, field:'liquidity', displayName:'liq'},
-            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
+            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
+            {width: 50, field:'alloc', displayName:'alloc'}
         ]
     };
 

@@ -100,7 +100,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type,
             order.price, order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
@@ -126,7 +126,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
@@ -265,8 +265,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
+            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
@@ -313,7 +313,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
