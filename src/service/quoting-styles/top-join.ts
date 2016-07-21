@@ -35,6 +35,14 @@ export class PingPongQuoteStyle implements StyleHelpers.QuoteStyle {
     };
 }
 
+export class BoomerangQuoteStyle implements StyleHelpers.QuoteStyle {
+    Mode = Models.QuotingMode.Boomerang;
+
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
+        return computeBoomerangQuote(market, fv, params);
+    };
+}
+
 export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Join;
 
@@ -115,6 +123,30 @@ function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, 
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
+        genQt.askPx -= .01;
+    }
+
+    var minAsk = fv.price + params.width / 8.0;
+    genQt.askPx = Math.max(minAsk, genQt.askPx);
+
+    genQt.bidSz = params.size;
+    genQt.askSz = params.size;
+
+    return genQt;
+}
+
+//computeBoomerangQuote is same as computeTopJoinQuote but need to use params.mode === Models.QuotingMode.PingPong
+function computeBoomerangQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
+    var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
+
+    if (params.mode === Models.QuotingMode.Boomerang && genQt.bidSz > .2) {
+        genQt.bidPx += .01;
+    }
+
+    var minBid = fv.price - params.width / 8.0;
+    genQt.bidPx = Math.min(minBid, genQt.bidPx);
+
+    if (params.mode === Models.QuotingMode.Boomerang && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 

@@ -118,7 +118,7 @@ export class QuotingEngine {
             return null;
         }
 
-        if (params.mode === Models.QuotingMode.PingPong) {
+        if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang) {
           if (unrounded.askSz && safety.buyPing && unrounded.askPx < safety.buyPing + params.width)
             unrounded.askPx = safety.buyPing + params.width;
           if (unrounded.bidSz && safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)

@@ -250,6 +250,7 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
+                public alloc: number,
                 public feeCharged: number) {}
 }
 
@@ -332,7 +333,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 
