@@ -54,7 +54,7 @@ export class LoaderSaver {
 export interface IPersist<T> {
     persist(data: T): void;
     perfind(report: T, side: Models.Side, width?: number, price?: number): any;
-    repersist(data: T): void;
+    repersist(report: T, tradeId: string, alloc?: number): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -96,7 +96,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
     public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => { };
 
-    public repersist = (report: T) => { };
+    public repersist = (report: T, tradeId: string, alloc?: number) => { };
 
     public persist = (report: T) => {
         this._saver(report);
