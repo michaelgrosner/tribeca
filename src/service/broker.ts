@@ -282,7 +282,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                     this._trades[i].alloc += allocMod;
                     trade.quantity -= allocMod;
                     this._tradePublisher.publish(this._trades[i]);
-                    this._tradePublisher.repersist(this._trades[i]);
+                    this._tradePersister.repersist(this._trades[i]);
                     if (trade.quantity>0) reTrade = this._tradePersister.perfind(trade, this._qlParamRepo.latest.width);
                     break;
                   }
@@ -290,7 +290,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               }
               if (trade.quantity>0) {
                 this._tradePublisher.publish(trade);
-                this._tradePublisher.persist(trade);
+                this._tradePersister.persist(trade);
                 this._trades.push(trade);
               }
             }
