@@ -53,6 +53,8 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
+    perfind(data: T, width?: number): void;
+    repersist(data: T): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -60,8 +62,6 @@ export interface ILoadLatest<T> extends IPersist<T> {
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
-    perfind(data: T, width?: number): void;
-    repersist(data: T): void;
     loadAll(limit?: number, start_time?: moment.Moment): Q.Promise<T[]>;
 }
 
@@ -93,6 +93,10 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
         return deferred.promise;
     };
+
+    public perfind = (report: T, width: number) => { };
+
+    public repersist = (report: T) => { };
 
     public persist = (report: T) => {
         this._saver(report);
