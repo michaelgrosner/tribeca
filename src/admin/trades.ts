@@ -32,7 +32,7 @@ class DisplayTrade {
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
-        this.alloc = alloc;
+        this.alloc = trade.alloc;
         this.value = trade.value;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
