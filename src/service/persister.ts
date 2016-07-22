@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, width: number): Q.Promise<T> => { };
+    public perfind = (report: T, width: number): any => { };
 
     public repersist = (report: T) => { };
 
