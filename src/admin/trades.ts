@@ -32,7 +32,7 @@ class DisplayTrade {
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
-        this.alloc = trade.alloc;
+        this.alloc = alloc;
         this.value = trade.value;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
@@ -79,15 +79,14 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     };
 
     var addTrade = t => {
-      var _t = new DisplayTrade($scope, t);
       var exists = 0;
       for(var i = 0;i<$scope.trade_statuses.length;i++) {
-        if ($scope.trade_statuses.tradeId==_t.tradeId) {
+        if ($scope.trade_statuses[i].tradeId==t.tradeId) {
           exists = 1;
-          $scope.trade_statuses.alloc = _t.alloc;
+          $scope.trade_statuses[i].alloc = t.alloc;
         }
       }
-      if (!exists) $scope.trade_statuses.push(_t);
+      if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
       if ($scope.sound) {
           var audio = new Audio('http://antminer/a.mp3');
           audio.volume = 0.5;
