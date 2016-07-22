@@ -310,7 +310,7 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
 
     public persist = (report: T) => { };
 
-    public perfind = (report: T, width: number): Q.Promise<T> => { };
+    public perfind = (report: T, width: number): any => { };
 
     public repersist = (report: T) => { };
 
