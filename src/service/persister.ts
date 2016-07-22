@@ -60,6 +60,8 @@ export interface ILoadLatest<T> extends IPersist<T> {
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
+    perfind(data: T, width?: number): void;
+    repersist(data: T): void;
     loadAll(limit?: number, start_time?: moment.Moment): Q.Promise<T[]>;
 }
 
@@ -165,6 +167,46 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
+            });
+        }).done();
+    };
+
+    public perfind = (report: T, width?: number) => {
+        var deferred = Q.defer<T[]>();
+        this.collection.then(coll => {
+            this._saver(report);
+            coll.findOne({ $and: [
+              price: report.side==Models.Side.Bid?{ $gt: width+report.price }:{ $lt: report.price-width },
+              side: report.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid,
+              $where: "this.quantity - this.alloc > 0"
+            ] }, err => {
+                if (err) deferred.reject(err);
+                if (err)
+                    this._log.error(err, "Unable to prefind", this._dbName, report);
+            }).sort({ alloc: 1, price: report.side==Models.Side.Bid?-1:1 })
+            .toArray((err, arr) => {
+                if (err) {
+                    deferred.reject(err);
+                }
+                else if (arr.length === 0) {
+                    deferred.resolve(null);
+                }
+                else {
+                    this._loader(arr[0]);
+                    deferred.resolve(arr[0]);
+                }
+            });;
+        }).done();
+
+        return deferred.promise;
+    };
+
+    public repersist = (report: T) => {
+        this.collection.then(coll => {
+            this._saver(report);
+            coll.findOneAndUpdate({ tradeId: report.tradeId }, { alloc : report.alloc }, err => {
+                if (err)
+                    this._log.error(err, "Unable to repersist", this._dbName, report);
             });
         }).done();
     };

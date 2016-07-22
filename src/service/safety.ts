@@ -81,13 +81,13 @@ export class SafetyCalculator {
         var sellPq = 0;
         var _buyPq = 0;
         var _sellPq = 0;
-        for (var ti = this._broker._trades.length - 1; ti > -1; ti--) {
-          if (this._broker._trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
+        for (var ti = (settings.mode === Models.QuotingMode.Boomerang?0:this._broker._trades.length - 1); (settings.mode === Models.QuotingMode.Boomerang?ti<this._broker._trades.length:ti > -1); (settings.mode === Models.QuotingMode.Boomerang?ti++:ti--)) {
+          if ((settings.mode !== Models.QuotingMode.Boomerang || this._broker._trades[ti].alloc<this._broker._trades[ti].quantity) && this._broker._trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
             _buyPq = Math.min(settings.size - buyPq, this._broker._trades[ti].quantity);
             buyPing += this._broker._trades[ti].price * _buyPq;
             buyPq += _buyPq;
           }
-          if (this._broker._trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
+          if ((settings.mode !== Models.QuotingMode.Boomerang || this._broker._trades[ti].alloc<this._broker._trades[ti].quantity) && this._broker._trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
             _sellPq = Math.min(settings.size - sellPq, this._broker._trades[ti].quantity);
             sellPong += this._broker._trades[ti].price * _sellPq;
             sellPq += _sellPq;

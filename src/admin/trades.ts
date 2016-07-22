@@ -41,10 +41,6 @@ class DisplayTrade {
         else {
             this.liquidity = "?";
         }
-
-        if ($scope.sound) {
-            var audio = new Audio('http://antminer/a.mp3');audio.play();
-        }
     }
 }
 
@@ -82,7 +78,21 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         ]
     };
 
-    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade($scope, t));
+    var addTrade = t => {
+      var exists = 0;
+      for(var i = 0;i<$scope.trade_statuses.length;i++) {
+        if ($scope.trade_statuses.tradeId==t.tradeId) {
+          exists = 1;
+          $scope.trade_statuses.alloc = t.alloc;
+        }
+      }
+      if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
+      if ($scope.sound) {
+          var audio = new Audio('http://antminer/a.mp3');
+          audio.volume = 0.5;
+          audio.play();
+      }
+    };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)

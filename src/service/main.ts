@@ -320,14 +320,14 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
             throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
 
+        var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
+        paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
+
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
-        var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
+        var orderBroker = new Broker.OrderBroker(timeProvider, paramsRepo, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
-
-        var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
-        paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
 
         var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
