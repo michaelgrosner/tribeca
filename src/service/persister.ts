@@ -179,7 +179,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             this._saver(report);
-            coll.findOne({ $and: [
+            coll.find({ $and: [
               { price: report.side==Models.Side.Bid?{ $gt: width+report.price }:{ $lt: report.price-width } },
               { side: report.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid },
               { $where: "this.quantity - this.alloc > 0" }
@@ -187,7 +187,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 if (err) deferred.reject(err);
                 if (err)
                     this._log.error(err, "Unable to prefind", this._dbName, report);
-            }).sort({ alloc: 1, price: report.side==Models.Side.Bid?-1:1 })
+            }).limit(1).sort({ alloc: 1, price: report.side==Models.Side.Bid?-1:1 })
             .toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
