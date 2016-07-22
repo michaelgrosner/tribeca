@@ -53,7 +53,7 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(data: T, width?: number): void;
+    perfind(data: T, width?: number): Q.Promise<T>;
     repersist(data: T): void;
 }
 
