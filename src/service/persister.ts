@@ -53,7 +53,7 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(data: T, width?: number): Q.Promise<T>;
+    perfind(data: T, width?: number): any;
     repersist(data: T): void;
 }
 
@@ -175,7 +175,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         }).done();
     };
 
-    public perfind = (report: T, width?: number): Q.Promise<T> => {
+    public perfind = (report: T, width?: number): any => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             this._saver(report);
