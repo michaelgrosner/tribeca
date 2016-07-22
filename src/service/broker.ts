@@ -269,7 +269,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
-            var reTrade = this._tradePersister.perfind(trade, this._qlParamRepo.latest.width);
+            var reTrade = this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price);
             if (reTrade==null||!reTrade) {
               this._tradePublisher.publish(trade);
               this._tradePersister.persist(trade);
@@ -282,8 +282,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                     this._trades[i].alloc += allocMod;
                     trade.quantity -= allocMod;
                     this._tradePublisher.publish(this._trades[i]);
-                    this._tradePersister.repersist(this._trades[i]);
-                    if (trade.quantity>0) reTrade = this._tradePersister.perfind(trade, this._qlParamRepo.latest.width);
+                    this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
+                    if (trade.quantity>0) reTrade = this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price);
                     break;
                   }
                 }
