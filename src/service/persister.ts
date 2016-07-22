@@ -53,7 +53,7 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(data: T, width?: number): any;
+    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
     repersist(data: T): void;
 }
 
@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, width: number): any => { };
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => { };
 
     public repersist = (report: T) => { };
 
@@ -175,14 +175,14 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         }).done();
     };
 
-    public perfind = (report: T, width?: number): any => {
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             coll.find({ $and: [
-              { price: report.side==Models.Side.Bid?{ $gt: width+report.price }:{ $lt: report.price-width } },
-              { side: report.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid },
+              { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
+              { side: side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid },
               { $where: "this.quantity - this.alloc > 0" }
-            ] }).limit(1).sort({ alloc: 1, price: report.side==Models.Side.Bid?-1:1 })
+            ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?-1:1 })
             .toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
@@ -200,10 +200,10 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         return deferred.promise;
     };
 
-    public repersist = (report: T) => {
+    public repersist = (report: T, tradeId: string, alloc?: number) => {
         this.collection.then(coll => {
             this._saver(report);
-            coll.findOneAndUpdate({ tradeId: report.tradeId }, { alloc : report.alloc }, err => {
+            coll.findOneAndUpdate({ tradeId: tradeId }, { alloc : alloc }, err => {
                 if (err)
                     this._log.error(err, "Unable to repersist", this._dbName, report);
             });
