@@ -16,6 +16,7 @@ import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
+import QuotingParameters = require("./quoting-parameters");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -268,9 +269,31 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
-            this._tradePublisher.publish(trade);
-            this._tradePersister.persist(trade);
-            this._trades.push(trade);
+            var reTrade = this._tradePersister.perfind(trade, this._qlParamRepo.latest.width);
+            if (reTrade==null||!reTrade) {
+              this._tradePublisher.publish(trade);
+              this._tradePersister.persist(trade);
+              this._trades.push(trade);
+            } else {
+              while (trade.quantity>0 && reTrade!=null && reTrade) {
+                for(var i = 0;i<this._trades.length;i++) {
+                  if (this._trades[i].tradeId==reTrade.tradeId) {
+                    var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+                    this._trades[i].alloc += allocMod;
+                    trade.quantity -= allocMod;
+                    this._tradePublisher.publish(this._trades[i]);
+                    this._tradePublisher.repersist(this._trades[i]);
+                    if (trade.quantity>0) reTrade = this._tradePersister.perfind(trade, this._qlParamRepo.latest.width);
+                    break;
+                  }
+                }
+              }
+              if (trade.quantity>0) {
+                this._tradePublisher.publish(trade);
+                this._tradePublisher.persist(trade);
+                this._trades.push(trade);
+              }
+            }
         }
     };
 
@@ -286,6 +309,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
+                private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _orderPersister : Persister.IPersist<Models.OrderStatusReport>,
