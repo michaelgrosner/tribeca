@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, width: number) => { };
+    public perfind = (report: T, width: number): Q.Promise<T> => { };
 
     public repersist = (report: T) => { };
 
@@ -175,7 +175,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         }).done();
     };
 
-    public perfind = (report: T, width?: number) => {
+    public perfind = (report: T, width?: number): Q.Promise<T> => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             this._saver(report);
