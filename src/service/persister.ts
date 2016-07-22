@@ -178,7 +178,6 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public perfind = (report: T, width?: number): any => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
-            this._saver(report);
             coll.find({ $and: [
               { price: report.side==Models.Side.Bid?{ $gt: width+report.price }:{ $lt: report.price-width } },
               { side: report.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid },
