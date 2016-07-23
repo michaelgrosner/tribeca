@@ -180,7 +180,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         this.collection.then(coll => {
             coll.find({ $and: [
               { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
-              { side: side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid },
+              { side: side==Models.Side.Bid?1:0 },
               { $where: "this.quantity - this.alloc > 0" }
             ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?-1:1 })
             .toArray((err, arr) => {
