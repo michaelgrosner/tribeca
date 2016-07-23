@@ -275,9 +275,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._tradePersister.persist(trade);
               this._trades.push(trade);
             } else {
-              while (trade.quantity>0 && reTrade!=null && reTrade) {
+              var gowhile = true;
+              while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
+                gowhile = false;
                 for(var i = 0;i<this._trades.length;i++) {
                   if (this._trades[i].tradeId==reTrade.tradeId) {
+                    gowhile = true;
                     var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
                     this._trades[i].alloc += allocMod;
                     trade.quantity -= allocMod;
