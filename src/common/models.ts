@@ -58,7 +58,7 @@ export class MarketTrade implements ITimestamped {
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
-export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH }
+export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH , CAD }
 export enum ConnectivityStatus { Connected, Disconnected }
 export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfinex }
 export enum Side { Bid, Ask, Unknown }
