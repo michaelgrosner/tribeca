@@ -90,6 +90,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
       }
       if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
+      $scope.trade_statuses.sort(function(a,b){return a.alloc>b.alloc?1:(a.alloc<b.alloc?-1:0);});
       /*var _whileDone = function(){
         for(var i = 0;i<$scope.trade_statuses.length;i++)
           if ($scope.trade_statuses[i].alloc>=$scope.trade_statuses[i].quantity)
