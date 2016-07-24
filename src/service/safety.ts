@@ -82,7 +82,7 @@ export class SafetyCalculator {
         var _buyPq = 0;
         var _sellPq = 0;
         var trades = this._broker._trades;
-        trades.sort(function(a,b){return a.price>b.price;});
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
           if ((settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
             _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
@@ -91,7 +91,7 @@ export class SafetyCalculator {
           }
           if (buyPq>=settings.size) break;
         }
-        trades.sort(function(a,b){return a.price<b.price;});
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
           if ((settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
             _sellPq = Math.min(settings.size - sellPq, trades[ti].quantity);
