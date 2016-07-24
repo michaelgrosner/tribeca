@@ -97,12 +97,12 @@ export class QuotingEngine {
 
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-
+        unrounded.bidSz *= 2;
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(params.aprMultiplier*params.size*2, targetBasePosition - totalBasePosition);
+                unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
         }
 
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
