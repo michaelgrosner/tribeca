@@ -169,7 +169,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
-    private _reTrade = (reTrade: Models.Timestamped<Models.Trade>, trade: Models.Trade) => {
+    private _reTrade = (reTrade: Models.Trade, trade: Models.Trade) => {
       if (reTrade==null||!reTrade) {
         this._log.info('reTrade-nope');
         this._tradePublisher.publish(trade);
