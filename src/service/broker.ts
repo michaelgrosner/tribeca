@@ -152,7 +152,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
                 this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                this._log.info("Registered %s for late deletion", rpt.orderId);
+                /////this._log.info("Registered %s for late deletion", rpt.orderId);
                 return;
             }
         }
@@ -243,7 +243,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (!this._oeGateway.cancelsByClientOrderId
                 && typeof o.exchangeId !== "undefined"
                 && o.orderId in this._cancelsWaitingForExchangeOrderId) {
-            this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            /////this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
