@@ -177,7 +177,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
         var deferred = Q.defer<T[]>();
-        console.log('prefind');
+        this._log.info('prefind');
         this.collection.then(coll => {
             coll.find({ $and: [
               { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
@@ -186,15 +186,15 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?-1:1 })
             .toArray((err, arr) => {
                 if (err) {
-                  console.log('prefind-err');
+                  this._log.info('prefind-err');
                     deferred.reject(err);
                 }
                 else if (arr.length === 0) {
-                  console.log('prefind-0');
+                  this._log.info('prefind-0');
                     deferred.resolve(null);
                 }
                 else {
-                  console.log('prefind-1');
+                  this._log.info('prefind-1');
                     this._loader(arr[0]);
                     deferred.resolve(arr[0]);
                 }
