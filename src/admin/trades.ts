@@ -93,7 +93,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
       }
       if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
-      else if (unset>-1) $scope.trade_statuses[i].splice(unset, 1);
+      else if (unset>-1) $scope.trade_statuses.splice(unset, 1);
       if ($scope.sound) {
           var audio = new Audio('http://antminer/a.mp3');
           audio.volume = 0.5;
