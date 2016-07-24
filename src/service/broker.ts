@@ -169,6 +169,41 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
+    private _reTrade = (reTrade: Models.Timestamped<any>) => {
+      if (reTrade==null||!reTrade) {
+        this._log.info('reTrade-nope');
+        this._tradePublisher.publish(trade);
+        this._tradePersister.persist(trade);
+        this._trades.push(trade);
+      } else {
+        this._log.info('reTrade-maybe');
+        var gowhile = true;
+        while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
+        this._log.info('reTrade-almost');
+          gowhile = false;
+          for(var i = 0;i<this._trades.length;i++) {
+            this._log.info('reTrade-sure');
+            if (this._trades[i].tradeId==reTrade.tradeId) {
+              this._log.info('reTrade-yes'+' '+reTrade.tradeId);
+              gowhile = true;
+              var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+              this._trades[i].alloc += allocMod;
+              trade.quantity -= allocMod;
+              this._tradePublisher.publish(this._trades[i]);
+              this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
+              if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(this._reTrade);
+              break;
+            }
+          }
+        }
+        if (trade.quantity>0) {
+          this._tradePublisher.publish(trade);
+          this._tradePersister.persist(trade);
+          this._trades.push(trade);
+        }
+      }
+    };
+
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {
         var orig : Models.OrderStatusReport;
         if (osr.orderStatus === Models.OrderStatus.New) {
@@ -270,41 +305,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
             this._log.info('reTrade-init');
-            var _reTrade = function (reTrade) {
-              if (reTrade==null||!reTrade) {
-                this._log.info('reTrade-nope');
-                this._tradePublisher.publish(trade);
-                this._tradePersister.persist(trade);
-                this._trades.push(trade);
-              } else {
-                this._log.info('reTrade-maybe');
-                var gowhile = true;
-                while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
-                this._log.info('reTrade-almost');
-                  gowhile = false;
-                  for(var i = 0;i<this._trades.length;i++) {
-                    this._log.info('reTrade-sure');
-                    if (this._trades[i].tradeId==reTrade.tradeId) {
-                      this._log.info('reTrade-yes'+' '+reTrade.tradeId);
-                      gowhile = true;
-                      var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
-                      this._trades[i].alloc += allocMod;
-                      trade.quantity -= allocMod;
-                      this._tradePublisher.publish(this._trades[i]);
-                      this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
-                      if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { _reTrade(reTrade); });
-                      break;
-                    }
-                  }
-                }
-                if (trade.quantity>0) {
-                  this._tradePublisher.publish(trade);
-                  this._tradePersister.persist(trade);
-                  this._trades.push(trade);
-                }
-              }
-            };
-            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { _reTrade(reTrade); });
+            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(this._reTrade});
         }
     };
 
