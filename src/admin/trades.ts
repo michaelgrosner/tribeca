@@ -82,19 +82,25 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 
     var addTrade = t => {
       var exists = 0;
-      var unset = -1;
       for(var i = 0;i<$scope.trade_statuses.length;i++) {
         if ($scope.trade_statuses[i].tradeId==t.tradeId) {
           exists = 1;
           $scope.trade_statuses[i].alloc = t.alloc;
           $scope.trade_statuses[i].allocprice = t.allocprice;
-          if ($scope.trade_statuses[i].alloc>=$scope.trade_statuses[i].quantity)
-            unset = i;
         }
       }
       if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
-      else if (unset>-1) $scope.trade_statuses.splice(unset, 1);
-      $scope.trade_statuses.sort(function(a,b){return a.quantity-a.alloc<b.quantity-b.alloc?1:(a.quantity-a.alloc>b.quantity-b.alloc?-1:0);});
+      var _whileDone = function(){
+        for(var i = 0;i<$scope.trade_statuses.length;i++)
+          if ($scope.trade_statuses[i].alloc>=$scope.trade_statuses[i].quantity)
+            return i;
+        return -1;
+      };
+      var _done = _whileDone();
+      while(_done>-1) {
+        $scope.trade_statuses.splice(_done, 1);
+        _done = _whileDone();
+      }
       if ($scope.sound) {
           var audio = new Audio('http://antminer/a.mp3');
           audio.volume = 0.5;
