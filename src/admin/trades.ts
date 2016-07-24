@@ -60,7 +60,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         columnDefs: [
             {width: 75, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-                sort: { direction: uiGridConstants.ASC, priority: 2} },
+                sort: { direction: uiGridConstants.ASC, priority: 1} },
             {width: 50, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 20, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
@@ -76,8 +76,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             }},
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
             {width: 50, field:'alloc', displayName:'alloc'},
-            {width: 55, field:'allocprice', displayName:'px', cellFilter: 'currency',
-                sort: { direction: uiGridConstants.DESC, priority: 1}}
+            {width: 55, field:'allocprice', displayName:'px', cellFilter: 'currency'}
         ]
     };
 
@@ -86,6 +85,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
       for(var i = 0;i<$scope.trade_statuses.length;i++) {
         if ($scope.trade_statuses[i].tradeId==t.tradeId) {
           exists = 1;
+          $scope.trade_statuses[i].time = t.time;
           $scope.trade_statuses[i].alloc = t.alloc;
           $scope.trade_statuses[i].allocprice = t.allocprice;
         }

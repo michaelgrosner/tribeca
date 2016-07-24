@@ -180,8 +180,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._trades[i].allocprice = ((allocQty*trade.price) + (this._trades[i].alloc*this._trades[i].allocprice)) / (this._trades[i].alloc+allocQty);
             this._trades[i].alloc += allocQty;
             trade.quantity -= allocQty;
+            this._trades[i].time = trade.time;
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice);
+            this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice, this._trades[i].time);
             if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
             break;
           }
