@@ -169,7 +169,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
-    private _reTrade = (reTrade: Models.Timestamped<any>) => {
+    private _reTrade = (reTrade: Models.Timestamped<Models.Trade>, trade: Models.Trade) => {
       if (reTrade==null||!reTrade) {
         this._log.info('reTrade-nope');
         this._tradePublisher.publish(trade);
@@ -191,7 +191,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               trade.quantity -= allocMod;
               this._tradePublisher.publish(this._trades[i]);
               this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
-              if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(this._reTrade);
+              if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
               break;
             }
           }
@@ -305,7 +305,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
             this._log.info('reTrade-init');
-            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(this._reTrade);
+            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
         }
     };
 
