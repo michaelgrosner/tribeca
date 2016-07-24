@@ -54,7 +54,7 @@ export class LoaderSaver {
 export interface IPersist<T> {
     persist(data: T): void;
     perfind(report: T, side: Models.Side, width?: number, price?: number): any;
-    repersist(report: T, tradeId: string, alloc?: number, _allocprice?: number): void;
+    repersist(report: T, tradeId: string, alloc?: number, _allocprice?: number, _time?: moment.Moment): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => { };
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
 
     public repersist = (report: T, tradeId: string, alloc?: number, _allocprice?: number) => { };
 
@@ -200,7 +200,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         return deferred.promise;
     };
 
-    public repersist = (report: T, _tradeId: string, _alloc?: number, _allocprice?: number) => {
+    public repersist = (report: T, _tradeId: string, _alloc?: number, _allocprice?: number, _time?: moment.Moment) => {
         this.collection.then(coll => {
             this._saver(report);
             coll.updateOne({ tradeId: _tradeId }, { $set: { alloc : _alloc, allocprice : _allocprice } }, err => {
