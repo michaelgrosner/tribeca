@@ -270,6 +270,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
             var reTrade = this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price);
+            console.log('reTrade',reTrade, 'trade',trade, 'side',trade.side, 'width',this._qlParamRepo.latest.width, 'price',trade.price);
             if (reTrade==null||!reTrade) {
               this._tradePublisher.publish(trade);
               this._tradePersister.persist(trade);
