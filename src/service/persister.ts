@@ -128,9 +128,9 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
-        if (start_time) {
+        /*if (start_time) {
             selector["time"] = { $gte: start_time.toDate() };
-        }
+        }*/
 
         return this.loadInternal(selector, limit);
     };
