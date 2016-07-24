@@ -251,6 +251,7 @@ export class Trade implements ITimestamped {
                 public value: number,
                 public liquidity: Liquidity,
                 public alloc: number,
+                public allocprice: number,
                 public feeCharged: number) {}
 }
 

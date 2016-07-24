@@ -170,32 +170,26 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     private _reTrade = (reTrade: Models.Trade, trade: Models.Trade) => {
-      if (reTrade==null||!reTrade) {
+      var gowhile = true;
+      while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
+        gowhile = false;
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].tradeId==reTrade.tradeId) {
+            gowhile = true;
+            var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+            this._trades[i].alloc += allocMod;
+            trade.quantity -= allocMod;
+            this._tradePublisher.publish(this._trades[i]);
+            this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
+            if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
+            break;
+          }
+        }
+      }
+      if (trade.quantity>0) {
         this._tradePublisher.publish(trade);
         this._tradePersister.persist(trade);
         this._trades.push(trade);
-      } else {
-        var gowhile = true;
-        while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
-          gowhile = false;
-          for(var i = 0;i<this._trades.length;i++) {
-            if (this._trades[i].tradeId==reTrade.tradeId) {
-              gowhile = true;
-              var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
-              this._trades[i].alloc += allocMod;
-              trade.quantity -= allocMod;
-              this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc);
-              if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
-              break;
-            }
-          }
-        }
-        if (trade.quantity>0) {
-          this._tradePublisher.publish(trade);
-          this._tradePersister.persist(trade);
-          this._trades.push(trade);
-        }
       }
     };
 
@@ -297,7 +291,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged);
             this.Trade.trigger(trade);
             this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
         }
