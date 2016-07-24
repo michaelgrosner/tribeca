@@ -74,7 +74,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                     return "unknown";
                 }
             }},
-            {width: 20, field:'liquidity', displayName:'liq'},
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
             {width: 50, field:'alloc', displayName:'alloc'},
             {width: 55, field:'allocprice', displayName:'px', cellFilter: 'currency'}
