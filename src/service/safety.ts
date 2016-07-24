@@ -87,7 +87,7 @@ export class SafetyCalculator {
         var fv = this._fvEngine.latestFairValue;
         var fvp = 0;
         if (fv != null) {fvp = fv.price;}
-        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || (fvp>trades[ti].price && fvp-settings.width<trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
             _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
@@ -96,6 +96,7 @@ export class SafetyCalculator {
           }
           if (buyPq>=settings.size) break;
         }
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || fvp>trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
             _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
@@ -104,7 +105,7 @@ export class SafetyCalculator {
           }
           if (buyPq>=settings.size) break;
         }
-        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || (fvp<trades[ti].price && fvp+settings.width>trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
             _sellPq = Math.min(settings.size - sellPq, trades[ti].quantity);
@@ -113,6 +114,7 @@ export class SafetyCalculator {
           }
           if (sellPq>=settings.size) break;
         }
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || fvp<trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
             _sellPq = Math.min(settings.size - sellPq, trades[ti].quantity);

@@ -172,7 +172,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private _reTrade = (reTrade: Models.Trade, trade: Models.Trade) => {
       var gowhile = true;
       while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
-        gowhile = false;
+        gowhile = false;//allocprice
         for(var i = 0;i<this._trades.length;i++) {
           if (this._trades[i].tradeId==reTrade.tradeId) {
             gowhile = true;
