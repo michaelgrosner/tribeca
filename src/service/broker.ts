@@ -171,20 +171,15 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private _reTrade = (reTrade: Models.Trade, trade: Models.Trade) => {
       if (reTrade==null||!reTrade) {
-        this._log.info('reTrade-nope');
         this._tradePublisher.publish(trade);
         this._tradePersister.persist(trade);
         this._trades.push(trade);
       } else {
-        this._log.info('reTrade-maybe');
         var gowhile = true;
         while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
-        this._log.info('reTrade-almost');
           gowhile = false;
           for(var i = 0;i<this._trades.length;i++) {
-            this._log.info('reTrade-sure');
             if (this._trades[i].tradeId==reTrade.tradeId) {
-              this._log.info('reTrade-yes'+' '+reTrade.tradeId);
               gowhile = true;
               var allocMod = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
               this._trades[i].alloc += allocMod;
@@ -304,7 +299,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
-            this._log.info('reTrade-init');
             this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
         }
     };
