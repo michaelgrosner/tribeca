@@ -270,7 +270,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, feeCharged);
             this.Trade.trigger(trade);
             this._log.info('reTrade-init');
-            var function _reTrade(reTrade) {
+            var _reTrade = function (reTrade) {
               if (reTrade==null||!reTrade) {
                 this._log.info('reTrade-nope');
                 this._tradePublisher.publish(trade);
