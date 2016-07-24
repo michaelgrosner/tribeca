@@ -183,7 +183,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
               { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
               { side: side==Models.Side.Bid?1:0 },
               { $where: "this.quantity - this.alloc > 0" }
-            ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?-1:1 })
+            ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?1:-1 })
             .toArray((err, arr) => {
                 if (err) {
                   this._log.info('prefind-err');
