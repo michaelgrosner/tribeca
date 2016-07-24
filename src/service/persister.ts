@@ -207,7 +207,6 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 if (err)
                     this._log.error(err, "Unable to repersist", this._dbName, report);
             });
-            coll.deleteMany({ $where: "this.alloc >= this.quantity" });
         }).done();
     };
 
