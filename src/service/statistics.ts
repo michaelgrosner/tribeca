@@ -72,7 +72,7 @@ export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
             this._latest = v;
             this.Updated.trigger();
 
-            this._log.info("New EMWA value", this._latest);
+            ////this._log.info("New EMWA value", this._latest);
         }
     };
 
