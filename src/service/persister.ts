@@ -200,10 +200,10 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         return deferred.promise;
     };
 
-    public repersist = (report: T, tradeId: string, alloc?: number) => {
+    public repersist = (report: T, tradeId: string, alloc?: number, allocprice?: number) => {
         this.collection.then(coll => {
             this._saver(report);
-            coll.findOneAndUpdate({ tradeId: tradeId }, { alloc : alloc }, err => {
+            coll.findOneAndUpdate({ tradeId: tradeId }, { alloc : alloc, allocprice : allocprice }, err => {
                 if (err)
                     this._log.error(err, "Unable to repersist", this._dbName, report);
             });
