@@ -14,6 +14,7 @@ import Broker = require("./broker");
 import Messaging = require("../common/messaging");
 import moment = require('moment');
 import _ = require("lodash");
+import FairValue = require("./fair-value");
 import Persister = require("./persister");
 
 export class SafetyCalculator {
@@ -40,6 +41,7 @@ export class SafetyCalculator {
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
+        private _fvEngine: FairValue.FairValueEngine,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
         private _broker: Broker.OrderBroker,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
@@ -82,18 +84,20 @@ export class SafetyCalculator {
         var _buyPq = 0;
         var _sellPq = 0;
         var trades = this._broker._trades;
-        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
+        var fv = this._fvEngine.latestFairValue
+        if (fv != null) {fv = fv.price;} else fv = 0;
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
-          if ((settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
+          if ((!fv || fv>trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
             _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
             buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
           }
           if (buyPq>=settings.size) break;
         }
-        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
-          if ((settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
+          if ((!fv || fv<trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
             _sellPq = Math.min(settings.size - sellPq, trades[ti].quantity);
             sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;

@@ -329,14 +329,15 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
-        var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
-
         var startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
         var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
         var quoter = new Quoter.Quoter(orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
+
+        var safetyCalculator = new Safety.SafetyCalculator(timeProvider, fvEngine, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
+
         var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
 
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
