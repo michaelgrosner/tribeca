@@ -25,6 +25,7 @@ class DisplayTrade {
     value : number;
     liquidity : string;
     alloc : number;
+    allocprice : number;
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
@@ -34,6 +35,7 @@ class DisplayTrade {
         this.quantity = trade.quantity;
         this.alloc = trade.alloc;
         this.value = trade.value;
+        this.allocprice = trade.allocprice;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
             this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
@@ -74,7 +76,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             }},
             {width: 30, field:'liquidity', displayName:'liq'},
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
-            {width: 50, field:'alloc', displayName:'alloc'}
+            {width: 50, field:'alloc', displayName:'alloc'},
+            {width: 55, field:'allocprice', displayName:'px', cellFilter: 'currency'}
         ]
     };
 
@@ -84,6 +87,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         if ($scope.trade_statuses[i].tradeId==t.tradeId) {
           exists = 1;
           $scope.trade_statuses[i].alloc = t.alloc;
+          $scope.trade_statuses[i].allocprice = t.allocprice;
         }
       }
       if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
