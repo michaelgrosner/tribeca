@@ -169,21 +169,21 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
-    private _reTrade = (reTrade: Models.Trade, trade: Models.Trade) => {
+    private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
-      while (gowhile && trade.quantity>0 && reTrade!=null && reTrade) {
+      while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
+        var reTrade = reTrades.shift();
         gowhile = false;
         for(var i = 0;i<this._trades.length;i++) {
           if (this._trades[i].tradeId==reTrade.tradeId) {
             gowhile = true;
             var allocQty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+            this._trades[i].time = trade.time;
             this._trades[i].allocprice = ((allocQty*trade.price) + (this._trades[i].alloc*this._trades[i].allocprice)) / (this._trades[i].alloc+allocQty);
             this._trades[i].alloc += allocQty;
             trade.quantity -= allocQty;
-            this._trades[i].time = trade.time;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice, this._trades[i].time);
-            if (trade.quantity>0) this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
             break;
           }
         }
@@ -295,7 +295,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged);
             this.Trade.trigger(trade);
-            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrade => { this._reTrade(reTrade, trade); });
+            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
         }
     };
 
