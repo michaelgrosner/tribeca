@@ -88,9 +88,21 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
           $scope.trade_statuses[i].time = t.time;
           $scope.trade_statuses[i].alloc = t.alloc;
           $scope.trade_statuses[i].allocprice = t.allocprice;
+          if ($scope.sound) {
+              var audio = new Audio('/z.mp3');
+              audio.volume = 0.5;
+              audio.play();
+          }
         }
       }
-      if (!exists) $scope.trade_statuses.push(new DisplayTrade($scope, t));
+      if (!exists) {
+        $scope.trade_statuses.push(new DisplayTrade($scope, t));
+        if ($scope.sound) {
+            var audio = new Audio('/a.wav');
+            audio.volume = 0.5;
+            audio.play();
+        }
+      }
       /*var _whileDone = function(){
         for(var i = 0;i<$scope.trade_statuses.length;i++)
           if ($scope.trade_statuses[i].alloc>=$scope.trade_statuses[i].quantity)
@@ -102,11 +114,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         $scope.trade_statuses.splice(_done, 1);
         _done = _whileDone();
       }*/
-      if ($scope.sound) {
-          var audio = new Audio('http://antminer/a.mp3');
-          audio.volume = 0.5;
-          audio.play();
-      }
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
