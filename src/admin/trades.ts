@@ -81,10 +81,10 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     };
 
     var addTrade = t => {
-      var exists = 0;
+      var exists = false;
       for(var i = 0;i<$scope.trade_statuses.length;i++) {
         if ($scope.trade_statuses[i].tradeId==t.tradeId) {
-          exists = 1;
+          exists = true;
           $scope.trade_statuses[i].time = t.time;
           $scope.trade_statuses[i].alloc = t.alloc;
           $scope.trade_statuses[i].allocprice = t.allocprice;
