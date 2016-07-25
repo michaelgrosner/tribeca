@@ -7,7 +7,7 @@ RUN git clone https://github.com/michaelgrosner/tribeca.git
 
 WORKDIR tribeca
 
-RUN npm install -g grunt-cli typings forever
+RUN npm install -g grunt-cli typings@0.8.1 forever
 RUN npm install
 RUN typings install
 RUN grunt compile
@@ -34,8 +34,9 @@ ENV HitBtcApiKey NULL
 ENV HitBtcSecret NULL
 ENV HitBtcOrderDestination HitBtc
 ## Coinbase
-ENV CoinbaseRestUrl https://api-public.sandbox.exchange.coinbase.com
-ENV CoinbaseWebsocketUrl https://ws-feed-public.sandbox.exchange.coinbase.com
+## Use GDAX keys
+ENV CoinbaseRestUrl https://api-public.sandbox.gdax.com
+ENV CoinbaseWebsocketUrl wss://ws-feed-public.sandbox.gdax.com
 ENV CoinbasePassphrase NULL
 ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
@@ -59,8 +60,8 @@ ENV BitfinexOrderDestination Bitfinex
 #ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
 #ENV HitBtcSocketIoUrl https://api.hitbtc.com:8081
 ## Coinbase
-#ENV CoinbaseRestUrl https://api.exchange.coinbase.com
-#ENV CoinbaseWebsocketUrl wss://ws-feed.exchange.coinbase.com
+#ENV CoinbaseRestUrl https://api.gdax.com
+#ENV CoinbaseWebsocketUrl wss://ws-feed.gdax.com
 
 WORKDIR tribeca/service
 CMD ["forever", "main.js"]
