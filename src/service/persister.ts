@@ -191,7 +191,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     deferred.resolve(null);
                 }
                 else {
-                    this._loader(arr);
+                    _.forEach(arr, this._loader);
                     deferred.resolve(arr);
                 }
             });;
