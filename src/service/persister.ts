@@ -53,7 +53,7 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(report: T, side: Models.Side, width?: number, price?: number): Q.Promise<T[]>;
+    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
     repersist(report: T, tradeId: string, alloc?: number, _allocprice?: number, _time?: moment.Moment): void;
 }
 
@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): Q.Promise<T[]> => { };
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
 
     public repersist = (report: T, tradeId: string, alloc?: number, _allocprice?: number) => { };
 
@@ -175,7 +175,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         }).done();
     };
 
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number): Q.Promise<T[]> => {
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
         var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             coll.find({ $and: [
