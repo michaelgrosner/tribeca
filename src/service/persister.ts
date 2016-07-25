@@ -53,7 +53,7 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
+    perfind(report: T, side: Models.Side, width?: number, price?: number): Q.Promise<T[]>;
     repersist(report: T, tradeId: string, alloc?: number, _allocprice?: number, _time?: moment.Moment): void;
 }
 
@@ -94,7 +94,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): Q.Promise<T[]> => { };
 
     public repersist = (report: T, tradeId: string, alloc?: number, _allocprice?: number) => { };
 
@@ -175,14 +175,14 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         }).done();
     };
 
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
-        var deferred = Q.defer<T>();
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): Q.Promise<T[]> => {
+        var deferred = Q.defer<T[]>();
         this.collection.then(coll => {
             coll.find({ $and: [
               { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
               { side: side==Models.Side.Bid?1:0 },
               { $where: "this.quantity - this.alloc > 0" }
-            ] }).limit(1).sort({ alloc: 1, price: side==Models.Side.Bid?1:-1 })
+            ] }).limit(10000).sort({ alloc: 1, price: side==Models.Side.Bid?1:-1 })
             .toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
@@ -191,8 +191,8 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     deferred.resolve(null);
                 }
                 else {
-                    this._loader(arr[0]);
-                    deferred.resolve(arr[0]);
+                    this._loader(arr);
+                    deferred.resolve(arr);
                 }
             });;
         }).done();
