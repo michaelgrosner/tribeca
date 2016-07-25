@@ -203,7 +203,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public repersist = (report: T, _tradeId: string, _alloc?: number, _allocprice?: number, _time?: moment.Moment) => {
         this.collection.then(coll => {
             this._saver(report);
-            coll.updateOne({ tradeId: _tradeId }, { $set: { time: _time, alloc : _alloc, allocprice : _allocprice } }, err => {
+            coll.updateOne({ tradeId: _tradeId }, { $set: { time: _time.format('YY-M-d h:mm:ss'), alloc : _alloc, allocprice : _allocprice } }, err => {
                 if (err)
                     this._log.error(err, "Unable to repersist", this._dbName, report);
             });
