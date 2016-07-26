@@ -107,48 +107,20 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         for (var k in lateCleans) {
-            if (!(k in lateCleans)) continue;
-            for(var i = 0;i<this._trades.length;i++) {
-              if (k == this._trades[i].tradeId) {
-                this._trades[i].alloc = -1;
-                this._tradePublisher.publish(this._trades[i]);
-                this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice, this._trades[i].time);
-                this._trades.splice(i, 1);
-              }
+          if (!(k in lateCleans)) continue;
+          for(var i = 0;i<this._trades.length;i++) {
+            if (k == this._trades[i].tradeId) {
+              this._trades[i].alloc = -1;
+              this._tradePublisher.publish(this._trades[i]);
+              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._trades.splice(i, 1);
+              break;
             }
+          }
         }
 
         if (_.every(_.values(lateCleans)))
             deferred.resolve(_.size(lateCleans));
-
-        var lateCancels : {[id: string] : boolean} = {};
-        for (var k in this._orderCache.allOrders) {
-            if (!(k in this._orderCache.allOrders)) continue;
-            var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
-
-            if (e.pendingCancel) continue;
-
-            switch (e.orderStatus) {
-                case Models.OrderStatus.New:
-                case Models.OrderStatus.Working:
-                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
-                    lateCancels[e.orderId] = false;
-                    break;
-            }
-        }
-
-        if (_.isEmpty(_.keys(lateCancels))) {
-            deferred.resolve(0);
-        }
-
-        this.OrderUpdate.on(o => {
-            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
-                return;
-
-            lateCancels[e.orderId] = true;
-            if (_.every(_.values(lateCancels)))
-                deferred.resolve(_.size(lateCancels));
-        });
 
         return deferred.promise;
     }
@@ -244,17 +216,30 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._trades[i].alloc += allocQty;
             trade.quantity -= allocQty;
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice, this._trades[i].time);
+            this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
           }
         }
       }
-      if (trade.quantity>0) {
-        this._tradePublisher.publish(trade);
-        this._tradePersister.persist(trade);
-        this._trades.push(trade);
-      }
       this.Trade.trigger(trade);
+      if (trade.quantity>0) {
+        var exists = false;
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].price==t.price && this._trades[i].side==t.side ) {
+            exists = true;
+            this._trades[i].time = t.time;
+            this._trades[i].quantity += t.quantity;
+            this._trades[i].value += t.value;
+            this._tradePublisher.publish(this._trades[i]);
+            this._tradePersister.repersist(this._trades[i], this._trades[i]);
+          }
+        }
+        if (!exists) {
+          this._tradePublisher.publish(trade);
+          this._tradePersister.persist(trade);
+          this._trades.push(trade);
+        }
+      }
     };
 
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {

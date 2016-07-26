@@ -54,7 +54,7 @@ export class LoaderSaver {
 export interface IPersist<T> {
     persist(data: T): void;
     perfind(report: T, side: Models.Side, width?: number, price?: number): any;
-    repersist(report: T, tradeId: string, alloc?: number, _allocprice?: number, _time?: moment.Moment): void;
+    repersist(report: T, trade: Models.Trade): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -96,7 +96,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
     public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
 
-    public repersist = (report: T, tradeId: string, alloc?: number, _allocprice?: number) => { };
+    public repersist = (report: T, trade: Models.Trade) => { };
 
     public persist = (report: T) => {
         this._saver(report);
@@ -200,16 +200,16 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         return deferred.promise;
     };
 
-    public repersist = (report: T, _tradeId: string, _alloc?: number, _allocprice?: number, _time?: moment.Moment) => {
+    public repersist = (report: T, trade: Models.Trade) => {
         this.collection.then(coll => {
             this._saver(report);
             if (_alloc<0)
-              coll.deleteOne({ tradeId: _tradeId }, err => {
+              coll.deleteOne({ tradeId: trade.tradeId }, err => {
                   if (err)
                       this._log.error(err, "Unable to repersist", this._dbName, report);
               });
             else
-              coll.updateOne({ tradeId: _tradeId }, { $set: { time: _time.format('Y-MM-DD HH:mm:ss'), alloc : _alloc, allocprice : _allocprice } }, err => {
+              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: trade.time.format('Y-MM-DD HH:mm:ss'), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
                   if (err)
                       this._log.error(err, "Unable to repersist", this._dbName, report);
               });

@@ -94,6 +94,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
           if ($scope.trade_statuses[i].tradeId==t.tradeId) {
             exists = true;
             $scope.trade_statuses[i].time = t.time;
+            $scope.trade_statuses[i].quantity = t.quantity;
+            $scope.trade_statuses[i].value = t.value;
             $scope.trade_statuses[i].alloc = t.alloc;
             $scope.trade_statuses[i].allocprice = t.allocprice;
             if ($scope.sound) {
@@ -113,17 +115,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
           }
         }
       }
-      /*var _whileDone = function(){
-        for(var i = 0;i<$scope.trade_statuses.length;i++)
-          if ($scope.trade_statuses[i].alloc>=$scope.trade_statuses[i].quantity)
-            return i;
-        return -1;
-      };
-      var _done = _whileDone();
-      while(_done>-1) {
-        $scope.trade_statuses.splice(_done, 1);
-        _done = _whileDone();
-      }*/
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
