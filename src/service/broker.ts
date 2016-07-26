@@ -225,13 +225,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
       if (trade.quantity>0) {
         var exists = false;
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].price==t.price && this._trades[i].side==t.side ) {
+          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side ) {
             exists = true;
-            this._trades[i].time = t.time;
-            this._trades[i].quantity += t.quantity;
-            this._trades[i].value += t.value;
+            this._trades[i].time = trade.time;
+            this._trades[i].quantity += trade.quantity;
+            this._trades[i].value += trade.value;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
+            break;
           }
         }
         if (!exists) {
