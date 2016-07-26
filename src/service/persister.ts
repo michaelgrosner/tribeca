@@ -209,7 +209,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                       this._log.error(err, "Unable to repersist", this._dbName, report);
               });
             else
-              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: trade.time.format('Y-MM-DD HH:mm:ss'), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
+              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
                   if (err)
                       this._log.error(err, "Unable to repersist", this._dbName, report);
               });
