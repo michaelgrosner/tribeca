@@ -203,7 +203,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public repersist = (report: T, trade: Models.Trade) => {
         this.collection.then(coll => {
             this._saver(report);
-            if (trade._alloc<0)
+            if (trade.alloc<0)
               coll.deleteOne({ tradeId: trade.tradeId }, err => {
                   if (err)
                       this._log.error(err, "Unable to repersist", this._dbName, report);
