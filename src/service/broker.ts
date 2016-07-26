@@ -92,6 +92,45 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
+    cleanOpenOrders() : Q.Promise<number> {
+        if (this._oeGateway.supportsCancelAllOpenOrders()) {
+            return this._oeGateway.cancelAllOpenOrders();
+        }
+
+        var deferred = Q.defer<number>();
+
+        var lateCancels : {[id: string] : boolean} = {};
+        for (var k in this._orderCache.allOrders) {
+            if (!(k in this._orderCache.allOrders)) continue;
+            var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
+
+            if (e.pendingCancel) continue;
+
+            switch (e.orderStatus) {
+                case Models.OrderStatus.New:
+                case Models.OrderStatus.Working:
+                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
+                    lateCancels[e.orderId] = false;
+                    break;
+            }
+        }
+
+        if (_.isEmpty(_.keys(lateCancels))) {
+            deferred.resolve(0);
+        }
+
+        this.OrderUpdate.on(o => {
+            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
+                return;
+
+            lateCancels[e.orderId] = true;
+            if (_.every(_.values(lateCancels)))
+                deferred.resolve(_.size(lateCancels));
+        });
+
+        return deferred.promise;
+    }
+
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.OrderCancel} = {};
 
@@ -321,6 +360,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
                 private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
+                private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
                 private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
@@ -352,6 +392,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cancelAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
+                .then(x => this._log.info("cancelled all ", x, " open orders"),
+                      e => this._log.error(e, "error when cancelling all orders!"));
+        });
+
+        _cleanAllOrdersReciever.registerReceiver(o => {
+            this._log.info("handling cancel all orders request");
+            this.cleanOpenOrders()
                 .then(x => this._log.info("cancelled all ", x, " open orders"),
                       e => this._log.error(e, "error when cancelling all orders!"));
         });

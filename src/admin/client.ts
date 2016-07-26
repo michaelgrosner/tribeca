@@ -39,6 +39,7 @@ interface MainWindowScope extends ng.IScope {
     exch_name : string;
     pair_name : string;
     cancelAllOrders();
+    cleanAllOrders();
 }
 
 class DisplayOrder {
@@ -84,10 +85,13 @@ var uiCtrl = ($scope : MainWindowScope,
               $log : ng.ILogService,
               subscriberFactory : Shared.SubscriberFactory,
               fireFactory : Shared.FireFactory) => {
-    
+
     var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
-                  
+
+    var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
+    $scope.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
+
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 
@@ -130,7 +134,7 @@ var requires = ['ui.bootstrap',
                 Trades.tradeListDirective,
                 MarketQuoting.marketQuotingDirective,
                 MarketTrades.marketTradeDirective,
-                Messages.messagesDirective, 
+                Messages.messagesDirective,
                 Position.positionDirective,
                 Tbp.targetBasePositionDirective,
                 TradeSafety.tradeSafetyDirective,

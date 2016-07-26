@@ -397,3 +397,7 @@ export class TargetBasePositionValue {
 export class CancelAllOrdersRequest {
     constructor() {}
 }
+
+export class CleanAllOrdersRequest {
+    constructor() {}
+}
