@@ -99,7 +99,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             $scope.trade_statuses[i].alloc = t.alloc;
             $scope.trade_statuses[i].allocprice = t.allocprice;
             if ($scope.sound) {
-                var audio = new Audio('/a.wav');
+                var audio = new Audio('/a.mp3');
                 audio.volume = 0.5;
                 audio.play();
             }
@@ -109,7 +109,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         if (!exists) {
           $scope.trade_statuses.push(new DisplayTrade($scope, t));
           if ($scope.sound) {
-              var audio = new Audio('/z.mp3');
+              var audio = new Audio('/z.wav');
               audio.volume = 0.5;
               audio.play();
           }
