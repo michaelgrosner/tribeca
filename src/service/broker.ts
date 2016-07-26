@@ -93,11 +93,33 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     cleanOpenOrders() : Q.Promise<number> {
-        if (this._oeGateway.supportsCancelAllOpenOrders()) {
-            return this._oeGateway.cancelAllOpenOrders();
+        var deferred = Q.defer<number>();
+
+        var lateCleans : {[id: string] : boolean} = {};
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].alloc == this._trades[i].quantity) {
+            lateCleans[this._trades[i].tradeId] = true;
+          }
         }
 
-        var deferred = Q.defer<number>();
+        if (_.isEmpty(_.keys(lateCleans))) {
+            deferred.resolve(0);
+        }
+
+        for (var k in lateCleans) {
+            if (!(k in lateCleans)) continue;
+            for(var i = 0;i<this._trades.length;i++) {
+              if (k == this._trades[i].tradeId) {
+                this._trades[i].alloc = -1;
+                this._tradePublisher.publish(this._trades[i]);
+                this._tradePersister.repersist(this._trades[i], this._trades[i].tradeId, this._trades[i].alloc, this._trades[i].allocprice, this._trades[i].time);
+                this._trades.splice(i, 1);
+              }
+            }
+        }
+
+        if (_.every(_.values(lateCleans)))
+            deferred.resolve(_.size(lateCleans));
 
         var lateCancels : {[id: string] : boolean} = {};
         for (var k in this._orderCache.allOrders) {
@@ -399,8 +421,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cleanAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling cancel all orders request");
             this.cleanOpenOrders()
-                .then(x => this._log.info("cancelled all ", x, " open orders"),
-                      e => this._log.error(e, "error when cancelling all orders!"));
+                .then(x => this._log.info("cleaned all ", x, " closed orders"),
+                      e => this._log.error(e, "error when cleaning all orders!"));
         });
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
