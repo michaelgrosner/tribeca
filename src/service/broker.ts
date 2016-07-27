@@ -217,7 +217,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             trade.quantity -= allocQty;
             trade.value = Math.abs(trade.price*trade.quantity);
             if (this._trades[i].quantity<=this._trades[i].alloc)
-              this._trades[i].value = Math.abs(this._trades[i].price-this._trades[i].allocprice);
+              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].alloc*this._trades[i].allocprice));
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
