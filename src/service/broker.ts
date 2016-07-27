@@ -216,6 +216,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._trades[i].alloc += allocQty;
             trade.quantity -= allocQty;
             trade.value = Math.abs(trade.price*trade.quantity);
+            if (this._trades[i].quantity<=this._trades[i].alloc)
+              this._trades[i].value = Math.abs(this._trades[i].price-this._trades[i].allocprice);
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
@@ -226,7 +228,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
       if (trade.quantity>0) {
         var exists = false;
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side ) {
+          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].alloc) {
             exists = true;
             this._trades[i].time = trade.time;
             this._trades[i].quantity += trade.quantity;
