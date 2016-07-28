@@ -98,6 +98,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             $scope.trade_statuses[i].value = t.value;
             $scope.trade_statuses[i].alloc = t.alloc;
             $scope.trade_statuses[i].allocprice = t.allocprice;
+            if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
+              $scope.trade_statuses[i].side = 'K';
             if ($scope.sound) {
                 var audio = new Audio('/a.mp3');
                 audio.volume = 0.5;
