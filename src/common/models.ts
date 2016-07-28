@@ -58,7 +58,7 @@ export class MarketTrade implements ITimestamped {
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
-export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH }
+export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH , CAD }
 export enum ConnectivityStatus { Connected, Disconnected }
 export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfinex }
 export enum Side { Bid, Ask, Unknown }
@@ -250,6 +250,8 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
+                public alloc: number,
+                public allocprice: number,
                 public feeCharged: number) {}
 }
 
@@ -269,6 +271,7 @@ export class PositionReport {
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
                 public value: number,
+                public valueFiat: number,
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
@@ -331,7 +334,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 
@@ -392,5 +395,9 @@ export class TargetBasePositionValue {
 }
 
 export class CancelAllOrdersRequest {
+    constructor() {}
+}
+
+export class CleanAllOrdersRequest {
     constructor() {}
 }

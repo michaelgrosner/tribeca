@@ -16,6 +16,7 @@ import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
+import QuotingParameters = require("./quoting-parameters");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -56,7 +57,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
         }
-        
+
         var deferred = Q.defer<number>();
 
         var lateCancels : {[id: string] : boolean} = {};
@@ -91,6 +92,39 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
+    cleanOpenOrders() : Q.Promise<number> {
+        var deferred = Q.defer<number>();
+
+        var lateCleans : {[id: string] : boolean} = {};
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].alloc+0.000001 >= this._trades[i].quantity) {
+            lateCleans[this._trades[i].tradeId] = true;
+          }
+        }
+
+        if (_.isEmpty(_.keys(lateCleans))) {
+            deferred.resolve(0);
+        }
+
+        for (var k in lateCleans) {
+          if (!(k in lateCleans)) continue;
+          for(var i = 0;i<this._trades.length;i++) {
+            if (k == this._trades[i].tradeId) {
+              this._trades[i].alloc = -1;
+              this._tradePublisher.publish(this._trades[i]);
+              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._trades.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        if (_.every(_.values(lateCleans)))
+            deferred.resolve(_.size(lateCleans));
+
+        return deferred.promise;
+    }
+
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.OrderCancel} = {};
 
@@ -100,7 +134,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type,
             order.price, order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
@@ -126,7 +160,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
@@ -151,7 +185,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
                 this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                this._log.info("Registered %s for late deletion", rpt.orderId);
+                /////this._log.info("Registered %s for late deletion", rpt.orderId);
                 return;
             }
         }
@@ -166,6 +200,50 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             time: sent.sentTime,
             computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         this.onOrderUpdate(rpt);
+    };
+
+    private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
+      var gowhile = true;
+      while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
+        var reTrade = reTrades.shift();
+        gowhile = false;
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].tradeId==reTrade.tradeId) {
+            gowhile = true;
+            var allocQty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+            this._trades[i].time = trade.time;
+            this._trades[i].allocprice = ((allocQty*trade.price) + (this._trades[i].alloc*this._trades[i].allocprice)) / (this._trades[i].alloc+allocQty);
+            this._trades[i].alloc += allocQty;
+            trade.quantity -= allocQty;
+            trade.value = Math.abs(trade.price*trade.quantity);
+            if (this._trades[i].quantity<=this._trades[i].alloc)
+              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].alloc*this._trades[i].allocprice));
+            this._tradePublisher.publish(this._trades[i]);
+            this._tradePersister.repersist(this._trades[i], this._trades[i]);
+            break;
+          }
+        }
+      }
+      this.Trade.trigger(trade);
+      if (trade.quantity>0) {
+        var exists = false;
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].alloc) {
+            exists = true;
+            this._trades[i].time = trade.time;
+            this._trades[i].quantity += trade.quantity;
+            this._trades[i].value += trade.value;
+            this._tradePublisher.publish(this._trades[i]);
+            this._tradePersister.repersist(this._trades[i], this._trades[i]);
+            break;
+          }
+        }
+        if (!exists) {
+          this._tradePublisher.publish(trade);
+          this._tradePersister.persist(trade);
+          this._trades.push(trade);
+        }
+      }
     };
 
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {
@@ -242,7 +320,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (!this._oeGateway.cancelsByClientOrderId
                 && typeof o.exchangeId !== "undefined"
                 && o.orderId in this._cancelsWaitingForExchangeOrderId) {
-            this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            /////this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
@@ -265,12 +343,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
-            this.Trade.trigger(trade);
-            this._tradePublisher.publish(trade);
-            this._tradePersister.persist(trade);
-            this._trades.push(trade);
+            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged);
+            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
         }
     };
 
@@ -286,6 +361,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
+                private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _orderPersister : Persister.IPersist<Models.OrderStatusReport>,
@@ -295,6 +371,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
                 private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
+                private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
                 private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
@@ -313,21 +390,28 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
-                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));    
+                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
             } catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
-                .then(x => this._log.info("cancelled all ", x, " open orders"), 
+                .then(x => this._log.info("cancelled all ", x, " open orders"),
                       e => this._log.error(e, "error when cancelling all orders!"));
+        });
+
+        _cleanAllOrdersReciever.registerReceiver(o => {
+            this._log.info("handling clean all orders request");
+            this.cleanOpenOrders()
+                .then(x => this._log.info("cleaned all ", x, " closed orders"),
+                      e => this._log.error(e, "error when cleaning all orders!"));
         });
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
@@ -375,12 +459,13 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var quoteAmount = quotePosition.amount;
         var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
         var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
+        var valueFiat = baseValue * mid;
         var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
+            quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        if (this._report !== null && 
-                Math.abs(positionReport.value - this._report.value) < 2e-2 && 
+        if (this._report !== null &&
+                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
                 Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
                 Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
@@ -426,7 +511,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
     public get pair() {
         return this._pair;
     }
-    
+
     public get supportedCurrencyPairs() : Models.CurrencyPair[] {
         return this._baseGateway.supportedCurrencyPairs;
     }

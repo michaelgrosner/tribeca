@@ -53,6 +53,8 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
+    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
+    repersist(report: T, trade: Models.Trade): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -92,6 +94,10 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
+
+    public repersist = (report: T, trade: Models.Trade) => { };
+
     public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
@@ -122,9 +128,9 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
-        if (start_time) {
+        /*if (start_time) {
             selector["time"] = { $gte: start_time.toDate() };
-        }
+        }*/
 
         return this.loadInternal(selector, limit);
     };
@@ -162,10 +168,56 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
+            if (this._dbName=="fv" || this._dbName=="md" || this._dbName=="tsv")
+              coll.deleteMany({ time: { $exists:true } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+              });
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
             });
+        }).done();
+    };
+
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
+        var deferred = Q.defer<T[]>();
+        this.collection.then(coll => {
+            coll.find({ $and: [
+              { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
+              { side: side==Models.Side.Bid?1:0 },
+              { $where: "this.quantity - this.alloc > 0" }
+            ] }).limit(10000).project({ _id: 0 }).sort({ alloc: 1, price: side==Models.Side.Bid?1:-1 })
+            .toArray((err, arr) => {
+                if (err) {
+                    deferred.reject(err);
+                }
+                else if (arr.length === 0) {
+                    deferred.resolve(null);
+                }
+                else {
+                    _.forEach(arr, this._loader);
+                    deferred.resolve(arr);
+                }
+            });;
+        }).done();
+
+        return deferred.promise;
+    };
+
+    public repersist = (report: T, trade: Models.Trade) => {
+        this.collection.then(coll => {
+            this._saver(report);
+            if (trade.alloc<0)
+              coll.deleteOne({ tradeId: trade.tradeId }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteOne", this._dbName, report);
+              });
+            else
+              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to repersist", this._dbName, report);
+              });
         }).done();
     };
 

@@ -14,10 +14,13 @@ import Broker = require("./broker");
 import Messaging = require("../common/messaging");
 import moment = require('moment');
 import _ = require("lodash");
+import FairValue = require("./fair-value");
 import Persister = require("./persister");
 
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
+
+    private _log = Utils.log("safety");
 
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
@@ -38,6 +41,7 @@ export class SafetyCalculator {
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
+        private _fvEngine: FairValue.FairValueEngine,
         private _repo: Interfaces.IRepository<Models.QuotingParameters>,
         private _broker: Broker.OrderBroker,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
@@ -47,7 +51,7 @@ export class SafetyCalculator {
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _broker.Trade.on(this.onTrade);
-        
+
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
 
@@ -79,18 +83,45 @@ export class SafetyCalculator {
         var sellPq = 0;
         var _buyPq = 0;
         var _sellPq = 0;
-        for (var ti = this._broker._trades.length - 1; ti > -1; ti--) {
-          if (this._broker._trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
-            _buyPq = Math.min(settings.size - buyPq, this._broker._trades[ti].quantity);
-            buyPing += this._broker._trades[ti].price * _buyPq;
+        var trades = this._broker._trades;
+        var fv = this._fvEngine.latestFairValue;
+        var fvp = 0;
+        if (fv != null) {fvp = fv.price;}
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
+        for (var ti = 0;ti<trades.length;ti++) {
+          if ((!fvp || (fvp>trades[ti].price && fvp-settings.width<trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
+            _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
+            buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
           }
-          if (this._broker._trades[ti].side == Models.Side.Ask && sellPq<settings.size) {
-            _sellPq = Math.min(settings.size - sellPq, this._broker._trades[ti].quantity);
-            sellPong += this._broker._trades[ti].price * _sellPq;
+          if (buyPq>=settings.size) break;
+        }
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
+        if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
+          if ((!fvp || fvp>trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.size) {
+            _buyPq = Math.min(settings.size - buyPq, trades[ti].quantity);
+            buyPing += trades[ti].price * _buyPq;
+            buyPq += _buyPq;
+          }
+          if (buyPq>=settings.size) break;
+        }
+        trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
+        for (var ti = 0;ti<trades.length;ti++) {
+          if ((!fvp || (fvp<trades[ti].price && fvp+settings.width>trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size*2) {
+            _sellPq = Math.min(settings.size*2 - sellPq, trades[ti].quantity);
+            sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;
           }
-          if (buyPq>=settings.size && sellPq>=settings.size) break;
+          if (sellPq>=settings.size*2) break;
+        }
+        trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
+        if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
+          if ((!fvp || fvp<trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].alloc<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.size*2) {
+            _sellPq = Math.min(settings.size*2 - sellPq, trades[ti].quantity);
+            sellPong += trades[ti].price * _sellPq;
+            sellPq += _sellPq;
+          }
+          if (sellPq>=settings.size*2) break;
         }
 
         if (buyPq) buyPing /= buyPq;
@@ -130,5 +161,6 @@ export class SafetyCalculator {
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
             computeSafety(this._buys.concat(this._sells)), buyPing, sellPong, this._timeProvider.utcNow());
+
     };
 }

@@ -395,11 +395,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _cachedAsks: Models.MarketSide[] = null;
 
     private reevalBids = () => {
-        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 3), s => (<any>s).value.marketUpdate);
+        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 9), s => (<any>s).value.marketUpdate);
     };
 
     private reevalAsks = () => {
-        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 3), s => (<any>s).value.marketUpdate);
+        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 9), s => (<any>s).value.marketUpdate);
     };
 
     private onOrderBookChanged = (t: moment.Moment, side: Models.Side, price: number) => {
@@ -475,7 +475,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         leavesQuantity: 0
                     });
                 }
-                
+
                 d.resolve(resp.length);
             };
         });
@@ -580,23 +580,23 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             size: order.quantity.toString(),
             product_id: this._symbolProvider.symbol
         };
-        
+
         if (order.type === Models.OrderType.Limit) {
             o.price = order.price.toString();
-            
+
             if (order.preferPostOnly)
                 o.post_only = true;
-            
+
             switch (order.timeInForce) {
-                case Models.TimeInForce.GTC: 
+                case Models.TimeInForce.GTC:
                     break;
-                case Models.TimeInForce.FOK: 
+                case Models.TimeInForce.FOK:
                     o.time_in_force = "FOK";
                     break;
-                case Models.TimeInForce.IOC: 
+                case Models.TimeInForce.IOC:
                     o.time_in_force = "IOC";
                     break;
-                default: 
+                default:
                     throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
             }
         }
@@ -796,6 +796,7 @@ function GetCurrencyEnum(name: string): Models.Currency {
         case "USD": return Models.Currency.USD;
         case "EUR": return Models.Currency.EUR;
         case "GBP": return Models.Currency.GBP;
+        case "CAD": return Models.Currency.CAD;
         case "ETH": return Models.Currency.ETH;
         default: throw new Error("Unsupported currency " + name);
     }
@@ -808,6 +809,7 @@ function GetCurrencySymbol(c: Models.Currency): string {
         case Models.Currency.BTC: return "BTC";
         case Models.Currency.EUR: return "EUR";
         case Models.Currency.ETH: return "ETH";
+        case Models.Currency.CAD: return "CAD";
         default: throw new Error("Unsupported currency " + Models.Currency[c]);
     }
 }

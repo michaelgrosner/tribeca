@@ -5,9 +5,9 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="/css/ui-grid.min.css">
-    
+
     <script src="/js/admin/bundle.min.js"></script>
-    
+
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <title>tribeca [{{ env }}]</title>
@@ -17,7 +17,7 @@
         .buy { color: blue }
         .sell { color: red }
         .unknown { color: black }
-        
+
         .row {
             margin-left: 0;
             margin-right: 0
@@ -53,7 +53,7 @@
             <td>mkt{{ $index }}</td>
             <td>{{ level.bidSize|number:2 }}</td>
             <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
-            <td></td>
+            <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
             <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
             <td>{{ level.askSize|number:2 }}</td>
         </tr>
@@ -136,6 +136,13 @@
                                     class="btn btn-danger navbar-btn"
                                     ng-click="cancelAllOrders()"
                                     data-placement="bottom">Cancel All Open Orders
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-warning navbar-btn"
+                                    ng-click="cleanAllOrders()"
+                                    data-placement="bottom">Clean All Closed Orders
                             </button>
                         </li>
                     </ul>
@@ -264,22 +271,22 @@
                                                    ng-model="pair.quotingParameters.display.tradeRateSeconds">
                                             </td>
                                             <td>
-                                                <input class="btn btn-default btn col-md-1 col-xs-6" 
+                                                <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:55px"
-                                                    type="button" 
-                                                    ng-click="pair.quotingParameters.reset()" 
+                                                    type="button"
+                                                    ng-click="pair.quotingParameters.reset()"
                                                     value="Reset" />
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
-                                                    style="width:50px" 
-                                                    type="submit" 
-                                                    ng-click="pair.quotingParameters.submit()" 
+                                                    style="width:50px"
+                                                    type="submit"
+                                                    ng-click="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
                                         </tr>
                                     </tbody>
-                                    
+
                                 </table>
                             </div>
 

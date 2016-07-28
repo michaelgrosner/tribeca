@@ -13,6 +13,7 @@ interface TradesScope extends ng.IScope {
     exch : Models.Exchange;
     pair : Models.CurrencyPair;
     gridOptions : any;
+    sound: boolean;
 }
 
 class DisplayTrade {
@@ -23,15 +24,19 @@ class DisplayTrade {
     side : string;
     value : number;
     liquidity : string;
+    alloc : number;
+    allocprice : number;
 
-    constructor(public trade : Models.Trade) {
+    constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
         this.side = trade.side === Models.Side.Ask ? "S" : "B";
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
+        this.alloc = trade.alloc;
         this.value = trade.value;
-        
+        this.allocprice = trade.allocprice;
+
         if (trade.liquidity === 0 || trade.liquidity === 1) {
             this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
         }
@@ -53,12 +58,12 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 80, field:'time', displayName:'t', cellFilter: 'momentShortDate',
+            {width: 75, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
+            {width: 50, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
-            {width: 30, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            {width: 20, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'B') {
                     return 'buy';
                 }
@@ -69,12 +74,50 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                     return "unknown";
                 }
             }},
-            {width: 30, field:'liquidity', displayName:'liq'},
-            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'}
+            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
+            {width: 50, field:'alloc', displayName:'alloc'},
+            {width: 55, field:'allocprice', displayName:'px', cellFilter: 'currency'}
         ]
     };
 
-    var addTrade = t => $scope.trade_statuses.push(new DisplayTrade(t));
+    var addTrade = t => {
+      if (t.alloc<0) {
+        for(var i = 0;i<$scope.trade_statuses.length;i++) {
+          if ($scope.trade_statuses[i].tradeId==t.tradeId) {
+            $scope.trade_statuses.splice(i, 1);
+            break;
+          }
+        }
+      } else {
+        var exists = false;
+        for(var i = 0;i<$scope.trade_statuses.length;i++) {
+          if ($scope.trade_statuses[i].tradeId==t.tradeId) {
+            exists = true;
+            $scope.trade_statuses[i].time = t.time;
+            $scope.trade_statuses[i].quantity = t.quantity;
+            $scope.trade_statuses[i].value = t.value;
+            $scope.trade_statuses[i].alloc = t.alloc;
+            $scope.trade_statuses[i].allocprice = t.allocprice;
+            if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
+              $scope.trade_statuses[i].side = 'K';
+            if ($scope.sound) {
+                var audio = new Audio('/a.mp3');
+                audio.volume = 0.5;
+                audio.play();
+            }
+            break;
+          }
+        }
+        if (!exists) {
+          $scope.trade_statuses.push(new DisplayTrade($scope, t));
+          if ($scope.sound) {
+              var audio = new Audio('/z.wav');
+              audio.volume = 0.5;
+              audio.play();
+          }
+        }
+      }
+    };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
@@ -87,6 +130,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     });
 
     $log.info("started trades list");
+    setTimeout(function(){$scope.sound = true;},7000);
 };
 
 var tradeList = () : ng.IDirective => {
