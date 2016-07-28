@@ -408,7 +408,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cleanAllOrdersReciever.registerReceiver(o => {
-            this._log.info("handling cancel all orders request");
+            this._log.info("handling clean all orders request");
             this.cleanOpenOrders()
                 .then(x => this._log.info("cleaned all ", x, " closed orders"),
                       e => this._log.error(e, "error when cleaning all orders!"));
