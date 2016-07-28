@@ -168,6 +168,11 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
+            if (this._dbName=="fv" || this._dbName=="md") || this._dbName=="tsv")
+              coll.deleteMany({ $where: "this.price > 0" }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+              });
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
@@ -206,7 +211,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             if (trade.alloc<0)
               coll.deleteOne({ tradeId: trade.tradeId }, err => {
                   if (err)
-                      this._log.error(err, "Unable to repersist", this._dbName, report);
+                      this._log.error(err, "Unable to deleteOne", this._dbName, report);
               });
             else
               coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
