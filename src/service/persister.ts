@@ -169,7 +169,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         this.collection.then(coll => {
             this._saver(report);
             if (this._dbName=="fv" || this._dbName=="md" || this._dbName=="tsv")
-              coll.deleteMany({ $where: "this.price > 0" }, err => {
+              coll.deleteMany({ time: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
               });
