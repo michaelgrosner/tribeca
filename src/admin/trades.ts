@@ -29,7 +29,7 @@ class DisplayTrade {
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
-        this.side = trade.side === Models.Side.Ask ? "S" : "B";
+        this.side = (this.alloc >= this.quantity) ? 'K' : (trade.side === Models.Side.Ask ? "S" : "B");
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
