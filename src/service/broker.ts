@@ -97,7 +97,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         var lateCleans : {[id: string] : boolean} = {};
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].alloc+0.000001 >= this._trades[i].quantity) {
+          if (this._trades[i].alloc+0.0001 >= this._trades[i].quantity) {
             lateCleans[this._trades[i].tradeId] = true;
           }
         }
