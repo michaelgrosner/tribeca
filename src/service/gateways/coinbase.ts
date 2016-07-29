@@ -540,7 +540,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var t = this._timeProvider.utcNow();
 
             if (ack == null || typeof ack.id === "undefined") {
-                this._log.warn("NO EXCHANGE ID PROVIDED FOR ORDER ID:", order.orderId, err, ack);
+                this._log.warn("WARNING FROM GATEWAY:", order.orderId, err, ack);
             }
 
             var msg = null;
