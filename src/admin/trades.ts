@@ -81,7 +81,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     };
 
     var addTrade = t => {
-      //if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang)
       if (t.alloc<0) {
         for(var i = 0;i<$scope.trade_statuses.length;i++) {
           if ($scope.trade_statuses[i].tradeId==t.tradeId) {
@@ -101,8 +100,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             $scope.trade_statuses[i].allocprice = t.allocprice;
             if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
-            if ($scope.sound) {
-                var audio = new Audio('/erang.mp3');
+            if ($scope.sound && $('input[ng-model="pair.quotingParameters.display.audio"]').checked) {
+                var audio = new Audio('/audio/erang.mp3');
                 audio.volume = 0.5;
                 audio.play();
             }
@@ -111,8 +110,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
         if (!exists) {
           $scope.trade_statuses.push(new DisplayTrade($scope, t));
-          if ($scope.sound) {
-              var audio = new Audio('/boom.mp3');
+          if ($scope.sound && $('input[ng-model="pair.quotingParameters.display.audio"]').checked) {
+              var audio = new Audio('/audio/boom.mp3');
               audio.volume = 0.5;
               audio.play();
           }
