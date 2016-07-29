@@ -1,7 +1,7 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
-///<reference path="interfaces.ts"/>
+/// <reference path="interfaces.ts"/>
 
 import Config = require("./config");
 import Models = require("../common/models");

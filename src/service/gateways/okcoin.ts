@@ -1,7 +1,7 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
 /// <reference path="nullgw.ts" />
-///<reference path="../interfaces.ts"/>
+/// <reference path="../interfaces.ts"/>
 
 import ws = require('ws');
 import Q = require("q");
