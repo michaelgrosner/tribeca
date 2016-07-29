@@ -26,7 +26,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 2. Clone the repository.
 
-3. In the cloned repository directory, `npm install` and then `tsd install` to pull in all dependencies.
+3. In the cloned repository directory, `npm install` and then `typings install` to pull in all dependencies.
 
 4. Compile typescript to javascript via `grunt compile`.
 
