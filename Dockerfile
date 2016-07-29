@@ -26,7 +26,7 @@ ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
 
 # DEV
 ## HitBtc
-ENV HitBtcPullUrl http://demo-api.hitbtc.com 
+ENV HitBtcPullUrl http://demo-api.hitbtc.com
 ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
 ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
 ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
@@ -55,7 +55,7 @@ ENV BitfinexOrderDestination Bitfinex
 
 # PROD - values provided for reference.
 ## HitBtc
-#ENV HitBtcPullUrl http://api.hitbtc.com 
+#ENV HitBtcPullUrl http://api.hitbtc.com
 #ENV HitBtcOrderEntryUrl wss://api.hitbtc.com:8080
 #ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
 #ENV HitBtcSocketIoUrl https://api.hitbtc.com:8081
