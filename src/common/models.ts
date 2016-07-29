@@ -350,7 +350,7 @@ export class QuotingParameters {
                 public aggressivePositionRebalancing: boolean,
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
-                public audio: number,
+                public audio: boolean,
                 public longEwma: number,
                 public shortEwma: number,
                 public quotingEwma: number,
