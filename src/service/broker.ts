@@ -345,7 +345,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged);
-            this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang)
+              this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
+            else {
+              this.Trade.trigger(trade);
+              this._tradePublisher.publish(trade);
+              this._tradePersister.persist(trade);
+              this._trades.push(trade);
+            }
         }
     };
 
