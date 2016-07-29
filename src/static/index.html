@@ -196,6 +196,7 @@
                                             <th>apr?</th>
                                             <th>trds</th>
                                             <th>/sec</th>
+                                            <th>audio</th>
                                             <th colspan="2">
                                                 <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
                                                     Applied
@@ -269,6 +270,10 @@
                                                    type="number"
                                                    onClick="this.select()"
                                                    ng-model="pair.quotingParameters.display.tradeRateSeconds">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.audio">
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
