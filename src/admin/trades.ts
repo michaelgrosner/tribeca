@@ -31,7 +31,7 @@ class DisplayTrade {
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
-        
+
         if (trade.liquidity === 0 || trade.liquidity === 1) {
             this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
         }

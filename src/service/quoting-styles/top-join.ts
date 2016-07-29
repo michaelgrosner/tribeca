@@ -5,7 +5,7 @@ import Models = require("../../common/models");
 
 export class TopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Top;
-    
+
     GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
         return computeTopJoinQuote(market, fv, params);
     };
@@ -13,7 +13,7 @@ export class TopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
 
 export class InverseTopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.InverseTop;
-    
+
     GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
         return computeInverseJoinQuote(market, fv, params);
     };
@@ -21,7 +21,7 @@ export class InverseTopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle 
 
 export class InverseJoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.InverseJoin;
-    
+
     GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
         return computeInverseJoinQuote(market, fv, params);
     };
@@ -37,7 +37,7 @@ export class PingPongQuoteStyle implements StyleHelpers.QuoteStyle {
 
 export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Join;
-    
+
     GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
         return computeTopJoinQuote(market, fv, params);
     };
@@ -103,7 +103,7 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
     return genQt;
 }
 
-//computePingPongQuote is same as computeTopJoinQuote but need to use params.mode === Models.QuotingMode.PingPong 
+//computePingPongQuote is same as computeTopJoinQuote but need to use params.mode === Models.QuotingMode.PingPong
 function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
     var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
 
