@@ -125,8 +125,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
     var newQP = qp => {
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.latest.mode === Models.QuotingMode.Boomerang);
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.latest.mode === Models.QuotingMode.Boomerang);
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.mode === Models.QuotingMode.Boomerang);
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
     };
 
     var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
