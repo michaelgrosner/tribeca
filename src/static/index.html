@@ -189,7 +189,8 @@
                                             <th>fv</th>
                                             <th>apMode</th>
                                             <th>width</th>
-                                            <th>size</th>
+                                            <th>buySize</th>
+                                            <th>sellSize</th>
                                             <th>tbp</th>
                                             <th>pDiv</th>
                                             <th>ewma?</th>
@@ -237,7 +238,13 @@
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.size">
+                                                   ng-model="pair.quotingParameters.display.buySize">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.sellSize">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"

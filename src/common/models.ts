@@ -340,7 +340,8 @@ export enum AutoPositionMode { Off, EwmaBasic }
 
 export class QuotingParameters {
     constructor(public width: number,
-                public size: number,
+                public buySize: number,
+                public sellSize: number,
                 public mode: QuotingMode,
                 public fvModel: FairValueModel,
                 public targetBasePosition: number,
