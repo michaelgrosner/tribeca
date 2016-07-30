@@ -108,7 +108,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy market trade grid");
+        // $log.info("destroy market trade grid");
     });
 
     // $log.info("started market trade grid");
