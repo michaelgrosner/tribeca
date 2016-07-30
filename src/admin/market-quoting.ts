@@ -185,7 +185,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         $log.info("destroy market quoting grid");
     });
 
-    $log.info("started market quoting grid");
+    // $log.info("started market quoting grid");
 };
 
 export var marketQuotingDirective = "marketQuotingDirective";

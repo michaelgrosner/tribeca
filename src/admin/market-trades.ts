@@ -111,7 +111,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         $log.info("destroy market trade grid");
     });
 
-    $log.info("started market trade grid");
+    // $log.info("started market trade grid");
 };
 
 export var marketTradeDirective = "marketTradeDirective";

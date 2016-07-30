@@ -31,7 +31,7 @@ var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.
         $log.info("destroy target base position");
     });
 
-    $log.info("started target base position");
+    // $log.info("started target base position");
 };
 
 export var targetBasePositionDirective = "targetBasePositionDirective";
