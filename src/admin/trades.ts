@@ -129,9 +129,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
-    var newQP = qp => {
+    var updateQP = qp => {
       $scope.audio = qp.audio;
-      console.log(qp);
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridApi.grid.refresh();
@@ -140,7 +139,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
-        .registerSubscriber(newQP, qp => qp.forEach(newQP));
+        .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
