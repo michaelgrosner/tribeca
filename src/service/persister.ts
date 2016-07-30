@@ -168,7 +168,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
-            if (["fv","md","msg","mt","pos","tbd","osr","tsv"].indexOf(this._dbName)>-1)
+            if (["fv","md","msg","mt","pos","qp-sub","tbp","osr","tsv"].indexOf(this._dbName)>-1)
               coll.deleteMany({ time: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
