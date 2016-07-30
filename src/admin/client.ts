@@ -39,6 +39,7 @@ interface MainWindowScope extends ng.IScope {
     exch_name : string;
     pair_name : string;
     cancelAllOrders();
+    cleanAllClosedOrders();
     cleanAllOrders();
 }
 
@@ -88,6 +89,9 @@ var uiCtrl = ($scope : MainWindowScope,
 
     var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
+
+    var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
+    $scope.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
 
     var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
     $scope.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());

@@ -141,9 +141,17 @@
                         <li>
                             <button type="button"
                                     class="btn btn-warning navbar-btn"
-                                    ng-click="cleanAllOrders()"
+                                    ng-click="cleanAllClosedOrders()"
                                     ng-show="pair.quotingParameters.display.mode == 6"
                                     data-placement="bottom">Clean All Closed Orders
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-danger navbar-btn"
+                                    ng-click="cleanAllOrders()"
+                                    ng-show="pair.quotingParameters.display.mode == 6"
+                                    data-placement="bottom">Clean All Orders
                             </button>
                         </li>
                     </ul>

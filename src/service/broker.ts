@@ -92,7 +92,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
-    cleanOpenOrders() : Q.Promise<number> {
+    cleanClosedOrders() : Q.Promise<number> {
         var deferred = Q.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
@@ -100,6 +100,37 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (this._trades[i].alloc+0.0001 >= this._trades[i].quantity) {
             lateCleans[this._trades[i].tradeId] = true;
           }
+        }
+
+        if (_.isEmpty(_.keys(lateCleans))) {
+            deferred.resolve(0);
+        }
+
+        for (var k in lateCleans) {
+          if (!(k in lateCleans)) continue;
+          for(var i = 0;i<this._trades.length;i++) {
+            if (k == this._trades[i].tradeId) {
+              this._trades[i].alloc = -1;
+              this._tradePublisher.publish(this._trades[i]);
+              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._trades.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        if (_.every(_.values(lateCleans)))
+            deferred.resolve(_.size(lateCleans));
+
+        return deferred.promise;
+    }
+
+    cleanOrders() : Q.Promise<number> {
+        var deferred = Q.defer<number>();
+
+        var lateCleans : {[id: string] : boolean} = {};
+        for(var i = 0;i<this._trades.length;i++) {
+          lateCleans[this._trades[i].tradeId] = true;
         }
 
         if (_.isEmpty(_.keys(lateCleans))) {
@@ -378,6 +409,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
                 private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
+                private _cleanAllClosedOrdersReciever : Messaging.IReceive<Models.CleanAllClosedOrdersRequest>,
                 private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
                 private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
@@ -414,9 +446,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                       e => this._log.error(e, "error when cancelling all orders!"));
         });
 
+        _cleanAllClosedOrdersReciever.registerReceiver(o => {
+            this._log.info("handling clean all closed orders request");
+            this.cleanClosedOrders()
+                .then(x => this._log.info("cleaned all closed ", x, " closed orders"),
+                      e => this._log.error(e, "error when cleaning all closed orders!"));
+        });
+
         _cleanAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling clean all orders request");
-            this.cleanOpenOrders()
+            this.cleanOrders()
                 .then(x => this._log.info("cleaned all ", x, " closed orders"),
                       e => this._log.error(e, "error when cleaning all orders!"));
         });

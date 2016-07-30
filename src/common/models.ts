@@ -400,6 +400,10 @@ export class CancelAllOrdersRequest {
     constructor() {}
 }
 
+export class CleanAllClosedOrdersRequest {
+    constructor() {}
+}
+
 export class CleanAllOrdersRequest {
     constructor() {}
 }
