@@ -81,7 +81,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
             if (!enumObject.hasOwnProperty(mem)) continue;
             var val = parseInt(mem, 10);
             if (val >= 0) {
-                names.push({ 'str': enumObject[mem], 'val': val });
+                names.push({ 'str': enumObject[mem].replace('AK47', 'AK-47'), 'val': val });
             }
         }
         return names;
