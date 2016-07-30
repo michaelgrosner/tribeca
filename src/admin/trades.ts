@@ -14,7 +14,8 @@ interface TradesScope extends ng.IScope {
     pair : Models.CurrencyPair;
     gridOptions : any;
     gridApi : any;
-    sound: boolean;
+    audioReady: boolean;
+    audio: boolean;
 }
 
 class DisplayTrade {
@@ -104,7 +105,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             $scope.trade_statuses[i].allocprice = t.allocprice;
             if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
-            if ($scope.sound && $('input[ng-model="pair.quotingParameters.display.audio"]:checked')) {
+            if ($scope.audioReady && $scope.audio) {
                 var audio = new Audio('/audio/erang.mp3');
                 audio.volume = 0.5;
                 audio.play();
@@ -114,7 +115,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
         if (!exists) {
           $scope.trade_statuses.push(new DisplayTrade($scope, t));
-          if ($scope.sound && $('input[ng-model="pair.quotingParameters.display.audio"]:checked')) {
+          if ($scope.audioReady && $scope.audio) {
               var audio = new Audio('/audio/boom.mp3');
               audio.volume = 0.5;
               audio.play();
@@ -129,6 +130,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
     var newQP = qp => {
+      $scope.audio = qp.audio;
+      console.log(qp);
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridApi.grid.refresh();
@@ -146,7 +149,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     });
 
     // $log.info("started trades list");
-    setTimeout(function(){$scope.sound = true;},7000);
+    setTimeout(function(){$scope.audioReady = true;},7000);
 };
 
 var tradeList = () : ng.IDirective => {
