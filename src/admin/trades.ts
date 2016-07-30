@@ -13,6 +13,7 @@ interface TradesScope extends ng.IScope {
     exch : Models.Exchange;
     pair : Models.CurrencyPair;
     gridOptions : any;
+    gridApi : any;
     sound: boolean;
 }
 
@@ -77,7 +78,10 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
             {width: 50, field:'alloc', displayName:'Kqty', visible:false},
             {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency', visible:false}
-        ]
+        ],
+        onRegisterApi: function(gridApi) {
+          $scope.gridApi = gridApi;
+        }
     };
 
     var addTrade = t => {
@@ -127,7 +131,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     var newQP = qp => {
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
-      $scope.gridOptions.gridApi.grid.refresh();
+      $scope.gridApi.grid.refresh();
     };
 
     var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
