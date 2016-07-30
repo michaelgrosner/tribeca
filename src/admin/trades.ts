@@ -144,7 +144,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     $scope.$on('$destroy', () => {
         sub.disconnect();
         qpSub.disconnect();
-        $log.info("destroy trades list");
+        // $log.info("destroy trades list");
     });
 
     // $log.info("started trades list");

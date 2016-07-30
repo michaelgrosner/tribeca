@@ -52,7 +52,7 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
 
     $scope.$on('$destroy', () => {
         positionSubscriber.disconnect();
-        $log.info("destroy position grid");
+        // $log.info("destroy position grid");
     });
 
     // $log.info("started position grid");
