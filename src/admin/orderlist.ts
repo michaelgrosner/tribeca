@@ -96,7 +96,7 @@ var OrderListController = ($scope: OrderListScope,
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            { width: 120, field: 'time', displayName: 'time', cellFilter: "momentFullDate", 
+            { width: 120, field: 'time', displayName: 'time', cellFilter: "momentFullDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             { width: 90, field: 'orderId', displayName: 'id' },
@@ -149,7 +149,7 @@ var OrderListController = ($scope: OrderListScope,
         $log.info("destroy order list");
     });
 
-    $log.info("started order list");
+    // $log.info("started order list");
 };
 
 var orderList = (): ng.IDirective => {

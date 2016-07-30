@@ -145,7 +145,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         $log.info("destroy trades list");
     });
 
-    $log.info("started trades list");
+    // $log.info("started trades list");
     setTimeout(function(){$scope.sound = true;},7000);
 };
 

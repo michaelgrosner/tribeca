@@ -55,7 +55,7 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         $log.info("destroy position grid");
     });
 
-    $log.info("started position grid");
+    // $log.info("started position grid");
 };
 
 export var positionDirective = "positionDirective";

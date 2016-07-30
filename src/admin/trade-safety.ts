@@ -47,7 +47,7 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
         $log.info("destroy trade safety");
     });
 
-    $log.info("started trade safety");
+    // $log.info("started trade safety");
 };
 
 export var tradeSafetyDirective = "tradeSafetyDirective";

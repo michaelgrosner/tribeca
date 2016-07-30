@@ -55,7 +55,7 @@ var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subs
         $log.info("destroy message grid");
     });
 
-    $log.info("started message grid");
+    // $log.info("started message grid");
 };
 
 export var messagesDirective = "messagesDirective";
