@@ -150,7 +150,7 @@
                             <button type="button"
                                     class="btn btn-danger navbar-btn"
                                     ng-click="cleanAllOrders()"
-                                    ng-show="pair.quotingParameters.display.mode == 6"
+                                    ng-show="[5,6].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Orders
                             </button>
                         </li>
