@@ -36,7 +36,7 @@ class FormViewModel<T> {
     };
 
     public update = (p: T) => {
-        console.log("updating parameters", p);
+        // console.log("updating parameters", p);
         this.master = angular.copy(p);
         this.display = angular.copy(p);
         this.pending = false;
@@ -125,7 +125,7 @@ export class DisplayPair {
     }
 
     public dispose = () => {
-        console.log("dispose client");
+        // console.log("dispose client");
         this._subscribers.forEach(s => s.disconnect());
     };
 
