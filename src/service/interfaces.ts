@@ -35,12 +35,12 @@ export interface IOrderEntryGateway extends IGateway {
     sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport;
     cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport;
     replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport;
-    
+
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
-    
+
     cancelsByClientOrderId: boolean;
     generateClientOrderId(): string;
-    
+
     supportsCancelAllOpenOrders() : boolean;
     cancelAllOpenOrders() : q.Promise<number>;
 }

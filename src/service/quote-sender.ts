@@ -91,7 +91,7 @@ export class QuoteSender {
                 bidStatus = Models.QuoteStatus.Live;
             }
         }
-        
+
         var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
             askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);

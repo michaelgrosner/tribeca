@@ -330,7 +330,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 class RateLimitMonitor {
     private _log = Utils.log("tribeca:gateway:rlm");
-    
+
     private _queue = Deque();
     private _durationMs: number;
 
@@ -369,7 +369,7 @@ class BitfinexHttp {
 
         return this.doRequest<T>(opts, url);
     };
-    
+
     // Bitfinex seems to have a race condition where nonces are processed out of order when rapidly placing orders
     // Retry here - look to mitigate in the future by batching orders?
     post = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Q.Promise<Models.Timestamped<TResponse>> => {

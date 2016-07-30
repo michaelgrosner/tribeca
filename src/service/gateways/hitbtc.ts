@@ -211,7 +211,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
         }
     };
-    
+
     private onTrade = (t: MarketTrade) => {
         var side : Models.Side = Models.Side.Unknown;
         if (this._lastAsks.any() && this._lastBids.any()) {
@@ -220,7 +220,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (distance_from_bid < distance_from_ask) side = Models.Side.Bid;
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
-        
+
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, side));
     };
 
@@ -272,7 +272,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
-    
+
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
 
@@ -567,11 +567,11 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
     name() : string {
         return "HitBtc";
     }
-    
+
     private static AllPairs = [
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-        
+
         // don't use these yet.
         //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.BTC),
         //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
@@ -608,7 +608,7 @@ function GetCurrencySymbol(c: Models.Currency) : string {
 
 class HitBtcSymbolProvider {
     public symbol : string;
-    
+
     constructor(pair: Models.CurrencyPair) {
         this.symbol = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
     }
