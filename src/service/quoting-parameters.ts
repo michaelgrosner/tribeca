@@ -50,7 +50,7 @@ export class QuotingParametersRepository extends Repository<Models.QuotingParame
         rec: Messaging.IReceive<Models.QuotingParameters>,
         initParam: Models.QuotingParameters) {
         super("qpr",
-            (p: Models.QuotingParameters) => p.size > 0 || p.width > 0,
+            (p: Models.QuotingParameters) => p.buySize > 0 || p.sellSize > 0 || p.width > 0,
             (a: Models.QuotingParameters, b: Models.QuotingParameters) => !_.isEqual(a, b),
             initParam, rec, pub);
 

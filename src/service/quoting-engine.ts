@@ -97,19 +97,19 @@ export class QuotingEngine {
 
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        unrounded.bidSz *= 2;
+
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
+                unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition);
         }
 
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
+                unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition);
         }
 
         var safety = this._safeties.latest;
