@@ -102,7 +102,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         this._saver(report);
         this.collection.then(coll => {
             if (["qp-sub"].indexOf(this._dbName)>-1)
-              coll.deleteMany({ time: { $exists:true } }, err => {
+              coll.deleteMany({ _id: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
               });
