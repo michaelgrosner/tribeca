@@ -75,8 +75,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 }
             }},
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
-            {width: 50, field:'alloc', displayName:'Kqty'},
-            {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency'}
+            {width: 50, field:'alloc', displayName:'Kqty', visible:false},
+            {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency', visible:false}
         ]
     };
 
@@ -124,8 +124,22 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
+    var newQP = qp => {
+      var visible = $('select[ng-model="pair.quotingParameters.display.mode"] option[selected][value="number:6"]');
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = visible;
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = visible;
+      console.log(qp);
+      console.log(qp.latest.mode);
+    };
+
+    var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
+        .registerConnectHandler(() => $scope.trade_statuses.length = 0)
+        .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
+        .registerSubscriber(newQP, qp => qp.forEach(newQP));
+
     $scope.$on('$destroy', () => {
         sub.disconnect();
+        qpSub.disconnect();
         $log.info("destroy trades list");
     });
 
