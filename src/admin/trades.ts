@@ -111,7 +111,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         for(var i = 0;i<$scope.trade_statuses.length;i++) {
           if ($scope.trade_statuses[i].tradeId==t.tradeId) {
             exists = true;
-            $scope.trade_statuses[i].time = t.time;
+            $scope.trade_statuses[i].time = (moment.isMoment(t.time) ? t.time : moment(t.time));
             var merged = ($scope.trade_statuses[i].quantity != t.quantity);
             $scope.trade_statuses[i].quantity = t.quantity;
             $scope.trade_statuses[i].value = t.value;
