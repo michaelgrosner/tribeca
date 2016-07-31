@@ -72,6 +72,9 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 else if (grid.getCellValue(row, col) === 'S') {
                     return "sell";
                 }
+                else if (grid.getCellValue(row, col) === 'K') {
+                    return (row.entity.price > row.entity.allocprice) ? "sell" : "buy";
+                }
                 else {
                     return "unknown";
                 }
