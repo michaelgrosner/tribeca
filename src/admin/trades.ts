@@ -124,6 +124,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 audio.volume = 0.5;
                 audio.play();
             }
+            $scope.gridApi.grid.refresh();
             break;
           }
         }
