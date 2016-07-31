@@ -112,6 +112,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
           if ($scope.trade_statuses[i].tradeId==t.tradeId) {
             exists = true;
             $scope.trade_statuses[i].time = t.time;
+            var merged = ($scope.trade_statuses[i].quantity != t.quantity);
             $scope.trade_statuses[i].quantity = t.quantity;
             $scope.trade_statuses[i].value = t.value;
             $scope.trade_statuses[i].alloc = t.alloc;
@@ -119,7 +120,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
             if ($scope.audioReady && $scope.audio) {
-                var audio = new Audio('/audio/erang.mp3');
+                var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
                 audio.volume = 0.5;
                 audio.play();
             }
