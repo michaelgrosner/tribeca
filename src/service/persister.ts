@@ -101,6 +101,11 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
     public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
+            if (["qp-sub"].indexOf(this._dbName)>-1)
+              coll.deleteMany({ _id: { $exists:true } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+              });
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
@@ -168,7 +173,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
-            if (["fv","md","msg","mt","pos","qp-sub","tbp","osr","tsv"].indexOf(this._dbName)>-1)
+            if (["fv","md","msg","mt","pos","tbp","osr","tsv"].indexOf(this._dbName)>-1)
               coll.deleteMany({ time: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
