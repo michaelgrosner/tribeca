@@ -63,8 +63,12 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 75, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            {width: 50, field:'price', displayName:'px', cellFilter: 'currency'},
-            {width: 50, field:'quantity', displayName:'qty'},
+            {width: 50, field:'price', displayName:'px', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price > row.entity.allocprice) ? "sell" : "buy"; else return "";
+            }},
+            {width: 50, field:'quantity', displayName:'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price > row.entity.allocprice) ? "sell" : "buy"; else return "";
+            }},
             {width: 20, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'B') {
                     return 'buy';
@@ -73,15 +77,21 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                     return "sell";
                 }
                 else if (grid.getCellValue(row, col) === 'K') {
-                    return (row.entity.price > row.entity.allocprice) ? "sell" : "buy";
+                    return "kira";
                 }
                 else {
                     return "unknown";
                 }
             }},
-            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3'},
-            {width: 50, field:'alloc', displayName:'Kqty', visible:false},
-            {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency', visible:false}
+            {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return "kira"; else return "";
+            }},
+            {width: 50, field:'alloc', displayName:'Kqty', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price < row.entity.allocprice) ? "sell" : "buy"; else return "";
+            }},
+            {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price < row.entity.allocprice) ? "sell" : "buy"; else return "";
+            }}
         ],
         onRegisterApi: function(gridApi) {
           $scope.gridApi = gridApi;
