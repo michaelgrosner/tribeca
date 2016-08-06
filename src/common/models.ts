@@ -252,7 +252,8 @@ export class Trade implements ITimestamped {
                 public liquidity: Liquidity,
                 public alloc: number,
                 public allocprice: number,
-                public feeCharged: number) {}
+                public feeCharged: number,
+                public loadedFromBD: boolean) {}
 }
 
 export class CurrencyPosition {

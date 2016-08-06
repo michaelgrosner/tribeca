@@ -14,7 +14,6 @@ interface TradesScope extends ng.IScope {
     pair : Models.CurrencyPair;
     gridOptions : any;
     gridApi : any;
-    audioReady: boolean;
     audio: boolean;
 }
 
@@ -120,7 +119,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
             $scope.gridApi.grid.notifyDataChange(uiGridConstants.dataChange.ALL);
-            if ($scope.audioReady && $scope.audio) {
+            if (!t.loadedFromBD && $scope.audio) {
                 var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
                 audio.volume = 0.5;
                 audio.play();
@@ -130,7 +129,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
         if (!exists) {
           $scope.trade_statuses.push(new DisplayTrade($scope, t));
-          if ($scope.audioReady && $scope.audio) {
+          if (!t.loadedFromBD && $scope.audio) {
               var audio = new Audio('/audio/boom.mp3');
               audio.volume = 0.5;
               audio.play();
@@ -163,7 +162,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     });
 
     // $log.info("started trades list");
-    setTimeout(function(){$scope.audioReady = true;},7000);
 };
 
 var tradeList = () : ng.IDirective => {
