@@ -213,7 +213,8 @@ var liveTradingSetup = () => {
 
     var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
         var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
-        return new Persister.Persister<T>(db, collectionName, exchange, pair, ls.loader, ls.saver);
+        var setDBFlag = (collectionName === "trades");
+        return new Persister.Persister<T>(db, collectionName, exchange, pair, setDBFlag, ls.loader, ls.saver);
     };
 
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> =>

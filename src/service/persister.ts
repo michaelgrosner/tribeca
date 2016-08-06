@@ -27,16 +27,19 @@ export interface Persistable {
     time?: moment.Moment|Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
+    loadedFromBD?: boolean;
 }
 
 export class LoaderSaver {
-    public loader = (x: Persistable) => {
+    public loader = (x: Persistable, setDBFlag?: boolean) => {
         if (typeof x.time !== "undefined")
             x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
         if (typeof x.exchange === "undefined")
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
+        if (setDBFlag === true)
+            x.loadedFromBD = true;
     };
 
     public saver = (x: Persistable) => {
@@ -158,7 +161,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     query.toArray((err, arr) => {
                         if (err) deferred.reject(err);
                         else {
-                            _.forEach(arr, this._loader);
+                            _.forEach(arr, p => this._loader(p, this._setDBFlag));
                             deferred.resolve(arr);
                         }
                     });
@@ -201,7 +204,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     deferred.resolve(null);
                 }
                 else {
-                    _.forEach(arr, this._loader);
+                    _.forEach(arr, p => this._loader(p, this._setDBFlag));
                     deferred.resolve(arr);
                 }
             });;
@@ -232,7 +235,8 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair,
-        private _loader: (p: Persistable) => void,
+        private _setDBFlag: boolean,
+        private _loader: (p: Persistable, setDBFlag?: boolean) => void,
         private _saver: (p: Persistable) => void) {
             this._log = Utils.log("persister:"+_dbName);
             this.collection = db.then(db => db.collection(this._dbName));
