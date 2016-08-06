@@ -27,7 +27,7 @@ export interface Persistable {
     time?: moment.Moment|Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
-    loadedFromBD?: boolean;
+    loadedFromDB?: boolean;
 }
 
 export class LoaderSaver {
@@ -39,7 +39,7 @@ export class LoaderSaver {
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
         if (setDBFlag === true)
-            x.loadedFromBD = true;
+            x.loadedFromDB = true;
     };
 
     public saver = (x: Persistable) => {
@@ -49,6 +49,8 @@ export class LoaderSaver {
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
+        if (typeof x.loadedFromDB !== "undefined")
+            delete x.loadedFromDB;
     };
 
     constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
