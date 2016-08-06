@@ -119,7 +119,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
             $scope.gridApi.grid.notifyDataChange(uiGridConstants.dataChange.ALL);
-            if (!t.loadedFromBD && $scope.audio) {
+            if (t.loadedFromDB === false && $scope.audio) {
                 var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
                 audio.volume = 0.5;
                 audio.play();
@@ -129,7 +129,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         }
         if (!exists) {
           $scope.trade_statuses.push(new DisplayTrade($scope, t));
-          if (!t.loadedFromBD && $scope.audio) {
+          if (t.loadedFromDB === false && $scope.audio) {
               var audio = new Audio('/audio/boom.mp3');
               audio.volume = 0.5;
               audio.play();

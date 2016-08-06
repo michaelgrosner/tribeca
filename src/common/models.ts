@@ -253,7 +253,7 @@ export class Trade implements ITimestamped {
                 public alloc: number,
                 public allocprice: number,
                 public feeCharged: number,
-                public loadedFromBD: boolean) {}
+                public loadedFromDB: boolean) {}
 }
 
 export class CurrencyPosition {
