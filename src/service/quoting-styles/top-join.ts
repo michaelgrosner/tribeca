@@ -111,7 +111,6 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
     return genQt;
 }
 
-//computePingPongQuote is same as computeTopJoinQuote but need to use params.mode === Models.QuotingMode.PingPong
 function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
     var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
 
@@ -135,7 +134,6 @@ function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, 
     return genQt;
 }
 
-//computeBoomerangQuote is same as computeTopJoinQuote but need to use params.mode === Models.QuotingMode.PingPong
 function computeBoomerangQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
     var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
 
