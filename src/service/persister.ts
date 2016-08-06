@@ -104,7 +104,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
     public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
-            if (["qp-sub"].indexOf(this._dbName)>-1)
+            if (this._dbName != 'trades')
               coll.deleteMany({ _id: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
@@ -136,9 +136,9 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
-        /*if (start_time) {
+        if (this._dbName != "trades" && start_time) {
             selector["time"] = { $gte: start_time.toDate() };
-        }*/
+        }
 
         return this.loadInternal(selector, limit);
     };
@@ -176,7 +176,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
-            if (["fv","md","msg","mt","pos","tbp","osr","tsv"].indexOf(this._dbName)>-1)
+            if (this._dbName != 'trades')
               coll.deleteMany({ time: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
