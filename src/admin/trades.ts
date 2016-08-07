@@ -25,18 +25,18 @@ class DisplayTrade {
     side : string;
     value : number;
     liquidity : string;
-    alloc : number;
-    allocprice : number;
+    Kqty : number;
+    Kprice : number;
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
-        this.side = (trade.alloc >= trade.quantity) ? 'K' : (trade.side === Models.Side.Ask ? "S" : "B");
+        this.side = (trade.Kqty >= trade.quantity) ? 'K' : (trade.side === Models.Side.Ask ? "S" : "B");
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
         this.price = trade.price;
         this.quantity = trade.quantity;
-        this.alloc = trade.alloc;
         this.value = trade.value;
-        this.allocprice = trade.allocprice;
+        this.Kqty = trade.Kqty;
+        this.Kprice = trade.Kprice;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
             this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
@@ -63,10 +63,10 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 50, field:'price', displayName:'px', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                if (row.entity.side === 'K') return (row.entity.price > row.entity.allocprice) ? "sell" : "buy"; else return "";
+                if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return "";
             }},
             {width: 50, field:'quantity', displayName:'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                if (row.entity.side === 'K') return (row.entity.price > row.entity.allocprice) ? "sell" : "buy"; else return "";
+                if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return "";
             }},
             {width: 20, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'B') {
@@ -85,11 +85,11 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 60, field:'value', displayName:'val', cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return "kira"; else return "";
             }},
-            {width: 50, field:'alloc', displayName:'Kqty', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                if (row.entity.side === 'K') return (row.entity.price < row.entity.allocprice) ? "sell" : "buy"; else return "";
+            {width: 50, field:'Kqty', displayName:'Kqty', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return "";
             }},
-            {width: 55, field:'allocprice', displayName:'Kpx', cellFilter: 'currency', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                if (row.entity.side === 'K') return (row.entity.price < row.entity.allocprice) ? "sell" : "buy"; else return "";
+            {width: 55, field:'Kprice', displayName:'Kpx', cellFilter: 'currency', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return "";
             }}
         ],
         onRegisterApi: function(gridApi) {
@@ -98,7 +98,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     };
 
     var addTrade = t => {
-      if (t.alloc<0) {
+      if (t.Kqty<0) {
         for(var i = 0;i<$scope.trade_statuses.length;i++) {
           if ($scope.trade_statuses[i].tradeId==t.tradeId) {
             $scope.trade_statuses.splice(i, 1);
@@ -114,9 +114,9 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             var merged = ($scope.trade_statuses[i].quantity != t.quantity);
             $scope.trade_statuses[i].quantity = t.quantity;
             $scope.trade_statuses[i].value = t.value;
-            $scope.trade_statuses[i].alloc = t.alloc;
-            $scope.trade_statuses[i].allocprice = t.allocprice;
-            if ($scope.trade_statuses[i].alloc >= $scope.trade_statuses[i].quantity)
+            $scope.trade_statuses[i].Kqty = t.Kqty;
+            $scope.trade_statuses[i].Kprice = t.Kprice;
+            if ($scope.trade_statuses[i].Kqty >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
             $scope.gridApi.grid.notifyDataChange(uiGridConstants.dataChange.ALL);
             if (t.loadedFromDB === false && $scope.audio) {
@@ -145,8 +145,8 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 
     var updateQP = qp => {
       $scope.audio = qp.audio;
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('alloc')].visible = (qp.mode === Models.QuotingMode.Boomerang);
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('allocprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kqty')].visible = (qp.mode === Models.QuotingMode.Boomerang);
+      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kprice')].visible = (qp.mode === Models.QuotingMode.Boomerang);
       $scope.gridApi.grid.refresh();
     };
 

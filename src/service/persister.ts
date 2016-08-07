@@ -196,8 +196,8 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             coll.find({ $and: [
               { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
               { side: side==Models.Side.Bid?1:0 },
-              { $where: "this.quantity - this.alloc > 0" }
-            ] }).limit(10000).project({ _id: 0 }).sort({ alloc: 1, price: side==Models.Side.Bid?1:-1 })
+              { $where: "this.quantity - this.Kqty > 0" }
+            ] }).limit(10000).project({ _id: 0 }).sort({ Kqty: 1, price: side==Models.Side.Bid?1:-1 })
             .toArray((err, arr) => {
                 if (err) {
                     deferred.reject(err);
@@ -218,13 +218,13 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public repersist = (report: T, trade: Models.Trade) => {
         this.collection.then(coll => {
             this._saver(report);
-            if (trade.alloc<0)
+            if (trade.Kqty<0)
               coll.deleteOne({ tradeId: trade.tradeId }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteOne", this._dbName, report);
               });
             else
-              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, alloc : trade.alloc, allocprice : trade.allocprice } }, err => {
+              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, Kqty : trade.Kqty, Kprice : trade.Kprice } }, err => {
                   if (err)
                       this._log.error(err, "Unable to repersist", this._dbName, report);
               });
