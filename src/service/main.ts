@@ -213,7 +213,8 @@ var liveTradingSetup = () => {
 
     var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
         var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
-        return new Persister.Persister<T>(db, collectionName, exchange, pair, ls.loader, ls.saver);
+        var setDBFlag = (collectionName === "trades");
+        return new Persister.Persister<T>(db, collectionName, exchange, pair, setDBFlag, ls.loader, ls.saver);
     };
 
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> =>
@@ -417,7 +418,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             var delta = process.hrtime(start);
             var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
             var n = ms - interval;
-            ////if (n > 25) mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
+            if (n > 25)
+                mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
             start = process.hrtime();
         }, interval).unref();
 

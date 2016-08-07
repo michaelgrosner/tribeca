@@ -97,7 +97,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         var lateCleans : {[id: string] : boolean} = {};
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].alloc+0.0001 >= this._trades[i].quantity) {
+          if (this._trades[i].Kqty+0.0001 >= this._trades[i].quantity) {
             lateCleans[this._trades[i].tradeId] = true;
           }
         }
@@ -110,7 +110,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (!(k in lateCleans)) continue;
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
-              this._trades[i].alloc = -1;
+              this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
               this._tradePersister.repersist(this._trades[i], this._trades[i]);
               this._trades.splice(i, 1);
@@ -141,7 +141,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (!(k in lateCleans)) continue;
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
-              this._trades[i].alloc = -1;
+              this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
               this._tradePersister.repersist(this._trades[i], this._trades[i]);
               this._trades.splice(i, 1);
@@ -216,7 +216,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
                 this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                /////this._log.info("Registered %s for late deletion", rpt.orderId);
+                this._log.info("Registered %s for late deletion", rpt.orderId);
                 return;
             }
         }
@@ -241,29 +241,30 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         for(var i = 0;i<this._trades.length;i++) {
           if (this._trades[i].tradeId==reTrade.tradeId) {
             gowhile = true;
-            var allocQty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+            var Kqty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].Kqty);
             this._trades[i].time = trade.time;
-            this._trades[i].allocprice = ((allocQty*trade.price) + (this._trades[i].alloc*this._trades[i].allocprice)) / (this._trades[i].alloc+allocQty);
-            this._trades[i].alloc += allocQty;
-            trade.quantity -= allocQty;
+            this._trades[i].Kprice = ((Kqty*trade.price) + (this._trades[i].Kqty*this._trades[i].Kprice)) / (this._trades[i].Kqty+Kqty);
+            this._trades[i].Kqty += Kqty;
+            trade.quantity -= Kqty;
             trade.value = Math.abs(trade.price*trade.quantity);
-            if (this._trades[i].quantity<=this._trades[i].alloc)
-              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].alloc*this._trades[i].allocprice));
+            if (this._trades[i].quantity<=this._trades[i].Kqty)
+              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
+            this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
           }
         }
       }
-      this.Trade.trigger(trade);
       if (trade.quantity>0) {
         var exists = false;
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].alloc) {
+          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].Kqty) {
             exists = true;
             this._trades[i].time = trade.time;
             this._trades[i].quantity += trade.quantity;
             this._trades[i].value += trade.value;
+            this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
@@ -351,7 +352,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (!this._oeGateway.cancelsByClientOrderId
                 && typeof o.exchangeId !== "undefined"
                 && o.orderId in this._cancelsWaitingForExchangeOrderId) {
-            /////this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
@@ -375,11 +376,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged);
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged, false);
+            this.Trade.trigger(trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang)
               this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
             else {
-              this.Trade.trigger(trade);
               this._tradePublisher.publish(trade);
               this._tradePersister.persist(trade);
               this._trades.push(trade);

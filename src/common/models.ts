@@ -250,9 +250,10 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
-                public alloc: number,
-                public allocprice: number,
-                public feeCharged: number) {}
+                public Kqty: number,
+                public Kprice: number,
+                public feeCharged: number,
+                public loadedFromDB: boolean) {}
 }
 
 export class CurrencyPosition {
