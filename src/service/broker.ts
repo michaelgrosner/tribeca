@@ -97,7 +97,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         var lateCleans : {[id: string] : boolean} = {};
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].alloc+0.0001 >= this._trades[i].quantity) {
+          if (this._trades[i].Kqty+0.0001 >= this._trades[i].quantity) {
             lateCleans[this._trades[i].tradeId] = true;
           }
         }
@@ -110,7 +110,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (!(k in lateCleans)) continue;
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
-              this._trades[i].alloc = -1;
+              this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
               this._tradePersister.repersist(this._trades[i], this._trades[i]);
               this._trades.splice(i, 1);
@@ -141,7 +141,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (!(k in lateCleans)) continue;
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
-              this._trades[i].alloc = -1;
+              this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
               this._tradePersister.repersist(this._trades[i], this._trades[i]);
               this._trades.splice(i, 1);
@@ -241,14 +241,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         for(var i = 0;i<this._trades.length;i++) {
           if (this._trades[i].tradeId==reTrade.tradeId) {
             gowhile = true;
-            var allocQty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].alloc);
+            var Kqty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].Kqty);
             this._trades[i].time = trade.time;
-            this._trades[i].allocprice = ((allocQty*trade.price) + (this._trades[i].alloc*this._trades[i].allocprice)) / (this._trades[i].alloc+allocQty);
-            this._trades[i].alloc += allocQty;
-            trade.quantity -= allocQty;
+            this._trades[i].Kprice = ((Kqty*trade.price) + (this._trades[i].Kqty*this._trades[i].Kprice)) / (this._trades[i].Kqty+Kqty);
+            this._trades[i].Kqty += Kqty;
+            trade.quantity -= Kqty;
             trade.value = Math.abs(trade.price*trade.quantity);
-            if (this._trades[i].quantity<=this._trades[i].alloc)
-              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].alloc*this._trades[i].allocprice));
+            if (this._trades[i].quantity<=this._trades[i].Kqty)
+              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
             this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
@@ -259,7 +259,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
       if (trade.quantity>0) {
         var exists = false;
         for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].alloc) {
+          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].Kqty) {
             exists = true;
             this._trades[i].time = trade.time;
             this._trades[i].quantity += trade.quantity;
