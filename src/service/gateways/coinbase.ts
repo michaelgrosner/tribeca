@@ -797,6 +797,7 @@ function GetCurrencyEnum(name: string): Models.Currency {
         case "EUR": return Models.Currency.EUR;
         case "GBP": return Models.Currency.GBP;
         case "ETH": return Models.Currency.ETH;
+        case "LTC": return Models.Currency.LTC;
         default: throw new Error("Unsupported currency " + name);
     }
 }
@@ -808,6 +809,7 @@ function GetCurrencySymbol(c: Models.Currency): string {
         case Models.Currency.BTC: return "BTC";
         case Models.Currency.EUR: return "EUR";
         case Models.Currency.ETH: return "ETH";
+        case Models.Currency.LTC: return "LTC";
         default: throw new Error("Unsupported currency " + Models.Currency[c]);
     }
 }
