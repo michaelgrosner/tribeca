@@ -113,7 +113,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 }
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
-var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
+var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, moment.utc());
 var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.QuotingMode.Boomerang, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
