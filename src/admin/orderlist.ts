@@ -123,14 +123,19 @@ var OrderListController = ($scope: OrderListScope,
     var addOrderRpt = (o: Models.OrderStatusReport) => {
         var idx = idsToIndex[o.orderId];
         if (typeof idx === "undefined") {
-            idsToIndex[o.orderId] = $scope.order_statuses.length;
-            $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
+            if (o.orderStatus<2) {
+              idsToIndex[o.orderId] = $scope.order_statuses.length;
+              $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
+            }
         }
         else {
-            var existing = $scope.order_statuses[idx];
-            if (existing.version < o.version) {
-                existing.updateWith(o);
+            if (o.orderStatus<2) {
+              var existing = $scope.order_statuses[idx];
+              if (existing.version < o.version) {
+                  existing.updateWith(o);
+              }
             }
+            else $scope.order_statuses.splice(idx,1);
         }
     };
 
