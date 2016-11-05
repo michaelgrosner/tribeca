@@ -100,6 +100,9 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
     var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
             $scope.marketTrades.push(new MarketTradeViewModel(u));
+        for(var i=$scope.marketTrades.length-1;i>-1;i--)
+          if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 3600000)
+            $scope.marketTrades.splice(i,1);
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
