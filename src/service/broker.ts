@@ -17,6 +17,8 @@ import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
 import QuotingParameters = require("./quoting-parameters");
+var Lynx = require('lynx');
+var metrics = new Lynx('localhost', 8125);
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -385,6 +387,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._tradePersister.persist(trade);
               this._trades.push(trade);
             }
+            metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
         }
     };
 
@@ -521,6 +524,13 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
+        metrics.gauge('tribeca.position_btc', positionReport.value);
+        metrics.gauge('tribeca.position_eur', positionReport.quoteValue);
+        metrics.gauge('tribeca.fair_value', mid);
+        metrics.gauge('tribeca.wallet_btc', baseAmount);
+        metrics.gauge('tribeca.wallet_eur', quoteAmount);
+        metrics.gauge('tribeca.wallet_held_btc', basePosition.heldAmount);
+        metrics.gauge('tribeca.wallet_held_eur', quotePosition.heldAmount);
         this._positionPersister.persist(positionReport);
     };
 
