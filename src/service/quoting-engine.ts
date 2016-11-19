@@ -123,7 +123,7 @@ export class QuotingEngine {
             unrounded.askPx = safety.buyPing + params.width;
           if (unrounded.bidSz && safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)
             unrounded.bidPx = safety.sellPong - params.width;
-          if (unrounded.bidSz && !safety.sellPong)
+          if (unrounded.bidSz && (!safety.sellPong || unrounded.bidSz>latestPosition.quoteAmount/fv.price))
             unrounded.bidSz = unrounded.askSz;
         }
 
