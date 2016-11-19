@@ -524,13 +524,15 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
-        metrics.gauge('tribeca.position_btc', positionReport.value);
-        metrics.gauge('tribeca.position_eur', positionReport.quoteValue);
-        metrics.gauge('tribeca.fair_value', mid);
-        metrics.gauge('tribeca.wallet_btc', baseAmount);
-        metrics.gauge('tribeca.wallet_eur', quoteAmount);
-        metrics.gauge('tribeca.wallet_held_btc', basePosition.heldAmount);
-        metrics.gauge('tribeca.wallet_held_eur', quotePosition.heldAmount);
+        metrics.send({
+          "tribeca.position_btc" : positionReport.value+"|g",
+          "tribeca.position_eur" : positionReport.quoteValue+"|g",
+          "tribeca.fair_value" : mid+"|g",
+          "tribeca.wallet_btc" : baseAmount+"|g",
+          "tribeca.wallet_eur" : quoteAmount+"|g",
+          "tribeca.wallet_held_btc" : basePosition.heldAmount+"|g",
+          "tribeca.wallet_held_eur" : quotePosition.heldAmount+"|g"
+        });
         this._positionPersister.persist(positionReport);
     };
 
