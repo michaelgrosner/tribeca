@@ -124,12 +124,12 @@ var OrderListController = ($scope: OrderListScope,
         for(var i=0;i<$scope.order_statuses.length;i++)
           if ($scope.order_statuses[i].orderId==o.orderId) {idx=i; break;}
         if (idx!=-1) {
-            if (o.orderStatus<2) {
+            if (o.leavesQuantity) {
               var existing = $scope.order_statuses[idx];
               if (existing.version < o.version)
                   existing.updateWith(o);
             } else $scope.order_statuses.splice(idx,1);
-        } else if (o.orderStatus<2)
+        } else if (o.leavesQuantity)
           $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
