@@ -90,7 +90,7 @@ export class QuotingEngine {
 
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
-            this._log.warn("cannot compute a quote since no position report exists!");
+            // this._log.warn("cannot compute a quote since no position report exists!");
             return null;
         }
         var targetBasePosition = tbp.data;

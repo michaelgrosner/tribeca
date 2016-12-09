@@ -399,6 +399,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         else
             this._orderCache.allOrders[osr.orderId].push(osr);
 
+        // if (osr.orderStatus>=2) {
+          // delete this._orderCache.allOrders[osr.orderId];
+        // }
+
         this._orderCache.allOrdersFlat.push(osr);
     };
 
@@ -419,6 +423,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
+        this._oeGateway.cancelAllOpenOrders();
         _orderStatusPublisher.registerSnapshot(() => _.takeRight(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
