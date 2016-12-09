@@ -52,10 +52,10 @@ var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subs
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy message grid");
+        // $log.info("destroy message grid");
     });
 
-    $log.info("started message grid");
+    // $log.info("started message grid");
 };
 
 export var messagesDirective = "messagesDirective";

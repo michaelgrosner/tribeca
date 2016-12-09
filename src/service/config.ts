@@ -30,7 +30,7 @@ export class ConfigProvider implements IConfigProvider {
 
     public GetString = (configKey: string): string => {
         var value = this.Fetch(configKey);
-        ConfigProvider.Log.info("%s = %s", configKey, value);
+        // ConfigProvider.Log.info("%s = %s", configKey, value);
         return value;
     };
 
