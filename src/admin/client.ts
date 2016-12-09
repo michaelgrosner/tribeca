@@ -76,7 +76,7 @@ class DisplayOrder {
 
     public submit = () => {
         var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-        this._log.info("submitting order", msg);
+        // this._log.info("submitting order", msg);
         this._fire.fire(msg);
     };
 }
@@ -100,7 +100,7 @@ var uiCtrl = ($scope : MainWindowScope,
     $scope.pair = null;
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
-        $log.info("advert", pa);
+        // $log.info("advert", pa);
         $scope.connected = true;
         $scope.env = pa.environment;
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
@@ -109,7 +109,7 @@ var uiCtrl = ($scope : MainWindowScope,
     };
 
     var reset = (reason : string) => {
-        $log.info("reset", reason);
+        // $log.info("reset", reason);
         $scope.connected = false;
         $scope.pair_name = null;
         $scope.exch_name = null;
@@ -126,10 +126,10 @@ var uiCtrl = ($scope : MainWindowScope,
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy client");
+        // $log.info("destroy client");
     });
 
-    $log.info("started client");
+    // $log.info("started client");
 };
 
 var requires = ['ui.bootstrap',

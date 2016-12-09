@@ -182,10 +182,10 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
 
     $scope.$on('$destroy', () => {
         subscribers.forEach(d => d.disconnect());
-        $log.info("destroy market quoting grid");
+        // $log.info("destroy market quoting grid");
     });
 
-    $log.info("started market quoting grid");
+    // $log.info("started market quoting grid");
 };
 
 export var marketQuotingDirective = "marketQuotingDirective";

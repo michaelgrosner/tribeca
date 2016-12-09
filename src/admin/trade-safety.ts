@@ -44,10 +44,10 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
 
     $scope.$on('$destroy', () => {
         subscriber.disconnect();
-        $log.info("destroy trade safety");
+        // $log.info("destroy trade safety");
     });
 
-    $log.info("started trade safety");
+    // $log.info("started trade safety");
 };
 
 export var tradeSafetyDirective = "tradeSafetyDirective";

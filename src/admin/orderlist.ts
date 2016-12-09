@@ -144,10 +144,10 @@ var OrderListController = ($scope: OrderListScope,
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy order list");
+        // $log.info("destroy order list");
     });
 
-    $log.info("started order list");
+    // $log.info("started order list");
 };
 
 var orderList = (): ng.IDirective => {

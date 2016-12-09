@@ -218,7 +218,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
                 this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                this._log.info("Registered %s for late deletion", rpt.orderId);
+                // this._log.info("Registered %s for late deletion", rpt.orderId);
                 return;
             }
         }
@@ -298,7 +298,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orderChain === "undefined") {
-                this._log.error("cannot find orderId from", osr);
+                // this._log.error("cannot find orderId from", osr);
                 return;
             }
 
@@ -354,7 +354,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (!this._oeGateway.cancelsByClientOrderId
                 && typeof o.exchangeId !== "undefined"
                 && o.orderId in this._cancelsWaitingForExchangeOrderId) {
-            this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            // this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
@@ -423,7 +423,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
-            this._log.info("got new order req", o);
+            // this._log.info("got new order req", o);
             try {
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
@@ -435,7 +435,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cancelOrderReciever.registerReceiver(o => {
-            this._log.info("got new cancel req", o);
+            // this._log.info("got new cancel req", o);
             try {
                 this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
             } catch (e) {
@@ -444,33 +444,36 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cancelAllOrdersReciever.registerReceiver(o => {
-            this._log.info("handling cancel all orders request");
+            // this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
-                .then(x => this._log.info("cancelled all ", x, " open orders"),
-                      e => this._log.error(e, "error when cancelling all orders!"));
+                // .then(x => this._log.info("cancelled all ", x, " open orders"),
+                      // e => this._log.error(e, "error when cancelling all orders!"))
+                      ;
         });
 
         _cleanAllClosedOrdersReciever.registerReceiver(o => {
-            this._log.info("handling clean all closed orders request");
+            // this._log.info("handling clean all closed orders request");
             this.cleanClosedOrders()
-                .then(x => this._log.info("cleaned all closed ", x, " closed orders"),
-                      e => this._log.error(e, "error when cleaning all closed orders!"));
+                // .then(x => this._log.info("cleaned all closed ", x, " closed orders"),
+                      // e => this._log.error(e, "error when cleaning all closed orders!"))
+                      ;
         });
 
         _cleanAllOrdersReciever.registerReceiver(o => {
-            this._log.info("handling clean all orders request");
+            // this._log.info("handling clean all orders request");
             this.cleanOrders()
-                .then(x => this._log.info("cleaned all ", x, " closed orders"),
-                      e => this._log.error(e, "error when cleaning all orders!"));
+                // .then(x => this._log.info("cleaned all ", x, " closed orders"),
+                      // e => this._log.error(e, "error when cleaning all orders!"))
+                      ;
         });
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
         _.each(initOrders, this.addOrderStatusToMemory);
-        this._log.info("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
+        // this._log.info("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
 
         _.each(initTrades, t => this._trades.push(t));
-        this._log.info("loaded %d trades", this._trades.length);
+        // this._log.info("loaded %d trades", this._trades.length);
 
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
@@ -597,8 +600,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
         this._connectStatus = newStatus;
         this.ConnectChanged.trigger(newStatus);
 
-        this._log.info("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[this._connectStatus],
-            Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
+        // this._log.info("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[this._connectStatus],
+            // Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
         this._connectivityPublisher.publish(this.connectStatus);
     };
 
