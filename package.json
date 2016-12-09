@@ -25,6 +25,7 @@
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-watch": "1.0.0",
     "grunt-ts": "5.4.0",
+    "heapdump": "https://registry.npmjs.org/heapdump/-/heapdump-0.3.7.tgz",
     "jquery": "2.2.2",
     "lodash": "4.6.1",
     "lynx": "^0.2.0",
@@ -37,7 +38,7 @@
     "socket.io": "1.4.5",
     "socket.io-client": "1.4.5",
     "typescript": "1.8.9",
-    "typings": "0.8.1",
+    "typings": "0.7.11",
     "utf-8-validate": "1.2.1",
     "ws": "1.0.1"
   },

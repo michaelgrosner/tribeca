@@ -28,14 +28,14 @@ import fs = require("fs");
 import bunyan = require("bunyan");
 import request = require('request');
 import http = require("http");
-import socket_io = require('socket.io')
+import socket_io = require('socket.io');
+var heapdump = require('heapdump'); // kill -USR2
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
 import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
-
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
