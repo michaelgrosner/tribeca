@@ -11,6 +11,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
+import Q = require("q");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
