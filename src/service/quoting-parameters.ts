@@ -23,7 +23,7 @@ class Repository<T> implements Interfaces.IRepository<T> {
         private _rec: Messaging.IReceive<T>,
         private _pub: Messaging.IPublish<T>) {
 
-        this._log.info("Starting parameter:", defaultParameter);
+        // this._log.info("Starting parameter:", defaultParameter);
         _pub.registerSnapshot(() => [this.latest]);
         _rec.registerReceiver(this.updateParameters);
         this._latest = defaultParameter;
@@ -37,7 +37,7 @@ class Repository<T> implements Interfaces.IRepository<T> {
     public updateParameters = (newParams: T) => {
         if (this._validator(newParams) && this._paramsEqual(newParams, this._latest)) {
             this._latest = newParams;
-            this._log.info("Changed parameters", this.latest);
+            // this._log.info("Changed parameters", this.latest);
             this.NewParameters.trigger();
         }
 
