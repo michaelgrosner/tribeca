@@ -43,6 +43,14 @@ export class BoomerangQuoteStyle implements StyleHelpers.QuoteStyle {
     };
 }
 
+export class AK47QuoteStyle implements StyleHelpers.QuoteStyle {
+    Mode = Models.QuotingMode.AK47;
+
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
+        return computeAK47Quote(market, fv, params);
+    };
+}
+
 export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Join;
 
@@ -145,6 +153,29 @@ function computeBoomerangQuote(filteredMkt: Models.Market, fv: Models.FairValue,
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.Boomerang && genQt.askSz > .2) {
+        genQt.askPx -= .01;
+    }
+
+    var minAsk = fv.price + params.width / 8.0;
+    genQt.askPx = Math.max(minAsk, genQt.askPx);
+
+    genQt.bidSz = params.buySize;
+    genQt.askSz = params.sellSize;
+
+    return genQt;
+}
+
+function computeAK47Quote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
+    var genQt = getQuoteAtTopOfMarket(filteredMkt, params);
+
+    if (params.mode === Models.QuotingMode.AK47 && genQt.bidSz > .2) {
+        genQt.bidPx += .01;
+    }
+
+    var minBid = fv.price - params.width / 8.0;
+    genQt.bidPx = Math.min(minBid, genQt.bidPx);
+
+    if (params.mode === Models.QuotingMode.AK47 && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 

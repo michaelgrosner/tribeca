@@ -89,7 +89,7 @@ export class SafetyCalculator {
         if (fv != null) {fvp = fv.price;}
         trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || (fvp>trades[ti].price && fvp-settings.width<trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
+          if ((!fvp || (fvp>trades[ti].price && fvp-settings.width<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
             _buyPq = Math.min(settings.sellSize - buyPq, trades[ti].quantity);
             buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
@@ -98,7 +98,7 @@ export class SafetyCalculator {
         }
         trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp>trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
+          if ((!fvp || fvp>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
             _buyPq = Math.min(settings.sellSize - buyPq, trades[ti].quantity);
             buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
@@ -107,7 +107,7 @@ export class SafetyCalculator {
         }
         trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || (fvp<trades[ti].price && fvp+settings.width>trades[ti].price)) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
+          if ((!fvp || (fvp<trades[ti].price && fvp+settings.width>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
             _sellPq = Math.min(settings.buySize - sellPq, trades[ti].quantity);
             sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;
@@ -116,7 +116,7 @@ export class SafetyCalculator {
         }
         trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp<trades[ti].price) && (settings.mode !== Models.QuotingMode.Boomerang || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
+          if ((!fvp || fvp<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
             _sellPq = Math.min(settings.buySize - sellPq, trades[ti].quantity);
             sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;

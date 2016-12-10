@@ -143,7 +143,7 @@
                             <button type="button"
                                     class="btn btn-info navbar-btn"
                                     ng-click="cleanAllClosedOrders()"
-                                    ng-show="pair.quotingParameters.display.mode == 6"
+                                    ng-show="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Closed Orders
                             </button>
                         </li>
@@ -151,7 +151,7 @@
                             <button type="button"
                                     class="btn btn-danger navbar-btn"
                                     ng-click="cleanAllOrders()"
-                                    ng-show="[5,6].indexOf(pair.quotingParameters.display.mode)>-1"
+                                    ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Orders
                             </button>
                         </li>

@@ -17,6 +17,7 @@ import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
 import QuotingParameters = require("./quoting-parameters");
+import moment = require('moment');
 var Lynx = require('lynx');
 var metrics = new Lynx('localhost', 8125);
 
@@ -196,6 +197,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
+        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+          var order = new Models.SubmitNewOrder(br.side, br.quantity, br.type,
+                    br.price, br.timeInForce, br.exchange, this._timeProvider.utcNow(), false);
+          return this.sendOrder(order);
+        }
+
         var sent = this._oeGateway.replaceOrder(br);
 
         var rpt : Models.OrderStatusReport = {
@@ -233,6 +240,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             time: sent.sentTime,
             computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         this.onOrderUpdate(rpt);
+    };
+
+    private onTick = () => {
+      if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+        this._oeGateway.cancelAllOpenOrders();
     };
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
@@ -380,7 +392,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang)
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
             else {
               this._tradePublisher.publish(trade);
@@ -388,22 +400,23 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._trades.push(trade);
             }
             metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
+
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+              this._oeGateway.cancelAllOpenOrders();
         }
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
-        if (!(osr.orderId in this._orderCache.allOrders))
-            this._orderCache.allOrders[osr.orderId] = [osr];
-        else
-            this._orderCache.allOrders[osr.orderId].push(osr);
+        this._orderCache.allOrders[osr.orderId] = [osr];
 
-        // if (osr.orderStatus>=2) {
-          // delete this._orderCache.allOrders[osr.orderId];
-        // }
+        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && osr.orderStatus>=2) {
+            delete this._orderCache.allOrders[osr.orderId];
+            delete this._orderCache.exchIdsToClientIds[osr.exchangeId];
+          }
 
-        this._orderCache.allOrdersFlat.push(osr);
+        // this._orderCache.allOrdersFlat.push(osr);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -423,7 +436,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        this._oeGateway.cancelAllOpenOrders();
+        if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+          _timeProvider.setInterval(this.onTick, moment.duration(21, "seconds"));
+          this.onTick();
+        }
         _orderStatusPublisher.registerSnapshot(() => _.takeRight(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
