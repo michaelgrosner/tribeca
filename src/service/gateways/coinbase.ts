@@ -14,6 +14,7 @@ import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
+import Q = require("q");
 import _ = require('lodash');
 
 var uuid = require('node-uuid');
@@ -475,7 +476,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         leavesQuantity: 0
                     });
                 }
-                
+
                 d.resolve(resp.length);
             };
         });
@@ -580,23 +581,23 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             size: order.quantity.toString(),
             product_id: this._symbolProvider.symbol
         };
-        
+
         if (order.type === Models.OrderType.Limit) {
             o.price = order.price.toString();
-            
+
             if (order.preferPostOnly)
                 o.post_only = true;
-            
+
             switch (order.timeInForce) {
-                case Models.TimeInForce.GTC: 
+                case Models.TimeInForce.GTC:
                     break;
-                case Models.TimeInForce.FOK: 
+                case Models.TimeInForce.FOK:
                     o.time_in_force = "FOK";
                     break;
-                case Models.TimeInForce.IOC: 
+                case Models.TimeInForce.IOC:
                     o.time_in_force = "IOC";
                     break;
-                default: 
+                default:
                     throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
             }
         }
