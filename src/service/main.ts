@@ -62,6 +62,7 @@ import Messages = require("./messages");
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
+import PingPong = require("./quoting-styles/ping-pong");
 
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -114,7 +115,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, moment.utc());
-var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.QuotingMode.AK47, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, .095, 2*.095, .095, 3, .1);
+var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.QuotingMode.Boomerang, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
@@ -354,9 +355,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             new TopJoin.InverseTopOfTheMarketQuoteStyle(),
             new TopJoin.JoinQuoteStyle(),
             new TopJoin.TopOfTheMarketQuoteStyle(),
-            new TopJoin.PingPongQuoteStyle(),
-            new TopJoin.BoomerangQuoteStyle(),
-            new TopJoin.AK47QuoteStyle(),
+            new PingPong.PingPongQuoteStyle(),
+            new PingPong.BoomerangQuoteStyle(),
+            new PingPong.AK47QuoteStyle(),
         ]);
 
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
