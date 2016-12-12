@@ -81,7 +81,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         initMkTrades: Array<Models.MarketTrade>) {
 
         initMkTrades.forEach(t => this.marketTrades.push(t));
-        this._log.info("loaded %d market trades", this.marketTrades.length);
+        // this._log.info("loaded %d market trades", this.marketTrades.length);
 
         _marketTradePublisher.registerSnapshot(() => _.takeRight(this.marketTrades, 50));
         this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);

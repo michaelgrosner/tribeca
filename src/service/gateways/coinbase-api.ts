@@ -299,7 +299,7 @@ _.assign(OrderBook.prototype, new function() {
     };
 
     prototype.connect = function() {
-        coinbaseLog.info("Starting connect");
+        // coinbaseLog.info("Starting connect");
         var self = this;
         if (self.socket) {
             self.socket.close();
@@ -342,7 +342,7 @@ _.assign(OrderBook.prototype, new function() {
         }
 
         var sc = { 'old': oldState, 'new': newState };
-        coinbaseLog.info("statechange: ", sc);
+        // coinbaseLog.info("statechange: ", sc);
         self.emit('statechange', sc);
     };
 

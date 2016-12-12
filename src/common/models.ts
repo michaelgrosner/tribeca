@@ -179,6 +179,7 @@ export interface OrderStatusReport {
     pendingCancel? : boolean;
     pendingReplace? : boolean;
     cancelRejected? : boolean;
+    done? : boolean;
 }
 
 export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
@@ -206,7 +207,8 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
                 public pendingCancel: boolean,
                 public pendingReplace: boolean,
                 public cancelRejected: boolean,
-                public preferPostOnly: boolean) {}
+                public preferPostOnly: boolean,
+                public done: boolean) {}
 
     public toString() {
         var components: string[] = [];
