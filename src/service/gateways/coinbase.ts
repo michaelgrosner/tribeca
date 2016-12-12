@@ -15,6 +15,7 @@ import Q = require("q");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
+import Q = require("q");
 import _ = require('lodash');
 
 var uuid = require('node-uuid');
