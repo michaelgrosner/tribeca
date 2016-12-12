@@ -15,7 +15,6 @@ import Q = require("q");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
-import Q = require("q");
 import _ = require('lodash');
 
 var uuid = require('node-uuid');
@@ -522,7 +521,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     orderId: cancel.clientOrderId,
                     orderStatus: Models.OrderStatus.Cancelled,
                     time: t,
-                    leavesQuantity: 0
+                    leavesQuantity: 0,
+                    done: true
                 };
             }
 
@@ -671,7 +671,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: orderId,
             orderStatus: ordStatus,
             time: tsMsg.time,
-            leavesQuantity: 0
+            leavesQuantity: 0,
         };
 
         this.OrderUpdate.trigger(status);

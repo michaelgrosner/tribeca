@@ -197,12 +197,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
-        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-          var order = new Models.SubmitNewOrder(br.side, br.quantity, br.type,
-                    br.price, br.timeInForce, br.exchange, this._timeProvider.utcNow(), false);
-          return this.sendOrder(order);
-        }
-
         var sent = this._oeGateway.replaceOrder(br);
 
         var rpt : Models.OrderStatusReport = {
@@ -244,7 +238,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private onTick = () => {
       if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-        this._oeGateway.cancelAllOpenOrders();
+        this.cancelOpenOrders();
     };
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
@@ -357,7 +351,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             osr.pendingCancel,
             osr.pendingReplace,
             osr.cancelRejected,
-            getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
+            getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
+            osr.done
         );
 
         this.addOrderStatusToMemory(o);
@@ -402,7 +397,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
 
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-              this._oeGateway.cancelAllOpenOrders();
+              this.cancelOpenOrders();
+        }
+
+        if (o.done===true) {
+          delete this._orderCache.allOrders[o.orderId];
+          delete this._orderCache.exchIdsToClientIds[o.exchangeId];
         }
     };
 
@@ -410,11 +410,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
         this._orderCache.allOrders[osr.orderId] = [osr];
-
-        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && osr.orderStatus>=2) {
-            delete this._orderCache.allOrders[osr.orderId];
-            delete this._orderCache.exchIdsToClientIds[osr.exchangeId];
-          }
 
         // this._orderCache.allOrdersFlat.push(osr);
     };
