@@ -84,10 +84,10 @@ var uiCtrl = ($scope : MainWindowScope,
               $log : ng.ILogService,
               subscriberFactory : Shared.SubscriberFactory,
               fireFactory : Shared.FireFactory) => {
-    
+
     var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
-                  
+
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 
@@ -130,7 +130,7 @@ var requires = ['ui.bootstrap',
                 Trades.tradeListDirective,
                 MarketQuoting.marketQuotingDirective,
                 MarketTrades.marketTradeDirective,
-                Messages.messagesDirective, 
+                Messages.messagesDirective,
                 Position.positionDirective,
                 Tbp.targetBasePositionDirective,
                 TradeSafety.tradeSafetyDirective,

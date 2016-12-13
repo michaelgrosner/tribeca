@@ -22,7 +22,7 @@ class Repository<T> implements Interfaces.IRepository<T> {
         defaultParameter: T,
         private _rec: Messaging.IReceive<T>,
         private _pub: Messaging.IPublish<T>) {
-            
+
         this._log.info("Starting parameter:", defaultParameter);
         _pub.registerSnapshot(() => [this.latest]);
         _rec.registerReceiver(this.updateParameters);

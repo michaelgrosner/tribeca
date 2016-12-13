@@ -16,7 +16,7 @@ export interface IPublish<T> {
 
 export class Publisher<T> implements IPublish<T> {
     private _snapshot : () => T[] = null;
-    constructor(private topic : string, 
+    constructor(private topic : string,
                 private _io : SocketIO.Server,
                 snapshot : () => T[],
                 private _log : (...args: any[]) => void) {
@@ -28,7 +28,7 @@ export class Publisher<T> implements IPublish<T> {
             s.on("disconnect", () => {
                 this._log("socket", s.id, "disconnected for Publisher", topic);
             });
-            
+
             s.on(Prefixes.SUBSCRIBE + "-" + topic, () => {
                 if (this._snapshot !== null) {
                     var snapshot = this._snapshot();
@@ -39,7 +39,7 @@ export class Publisher<T> implements IPublish<T> {
         };
 
         this._io.on("connection", onConnection);
-        
+
         Object.keys(this._io.sockets.connected).forEach(s => {
             onConnection(this._io.sockets.connected[s]);
         });
@@ -79,22 +79,22 @@ export class Subscriber<T> implements ISubscribe<T> {
     private _connectHandler : () => void = null;
     private _socket : SocketIOClient.Socket;
 
-    constructor(private topic : string, 
+    constructor(private topic : string,
                 io : SocketIOClient.Socket,
                 private _log : (...args: any[]) => void) {
         this._socket = io;
-        
+
         this._log("creating subscriber to", this.topic, "; connected?", this.connected);
-        
-        if (this.connected) 
+
+        if (this.connected)
             this.onConnect();
-        
+
         this._socket.on("connect", this.onConnect)
                 .on("disconnect", this.onDisconnect)
                 .on(Prefixes.MESSAGE + "-" + topic, this.onIncremental)
                 .on(Prefixes.SNAPSHOT + "-" + topic, this.onSnapshot);
     }
-    
+
     public get connected() : boolean {
         return this._socket.connected;
     }
@@ -214,7 +214,7 @@ export class Receiver<T> implements IReceive<T> {
                 _log("error in Receiver", e.stack, e.message);
             });
         };
-                    
+
         io.on("connection", onConnection);
         Object.keys(io.sockets.connected).forEach(s => {
             onConnection(io.sockets.connected[s]);

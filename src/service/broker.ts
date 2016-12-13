@@ -56,7 +56,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
         }
-        
+
         var deferred = Q.defer<number>();
 
         var lateCancels : {[id: string] : boolean} = {};
@@ -100,7 +100,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type,
             order.price, order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
@@ -126,7 +126,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
@@ -265,7 +265,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
+            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
@@ -313,20 +313,20 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelOrderReciever.registerReceiver(o => {
             this._log.info("got new cancel req", o);
             try {
-                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));    
+                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
             } catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
         });
-        
+
         _cancelAllOrdersReciever.registerReceiver(o => {
             this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
-                .then(x => this._log.info("cancelled all ", x, " open orders"), 
+                .then(x => this._log.info("cancelled all ", x, " open orders"),
                       e => this._log.error(e, "error when cancelling all orders!"));
         });
 
@@ -379,8 +379,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        if (this._report !== null && 
-                Math.abs(positionReport.value - this._report.value) < 2e-2 && 
+        if (this._report !== null &&
+                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
                 Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
                 Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
@@ -426,7 +426,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
     public get pair() {
         return this._pair;
     }
-    
+
     public get supportedCurrencyPairs() : Models.CurrencyPair[] {
         return this._baseGateway.supportedCurrencyPairs;
     }
