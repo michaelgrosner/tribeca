@@ -101,11 +101,8 @@ export class ExchangeQuoter {
     };
 
     private modify = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
-        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+        if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this.stopOlder(q.time);
-          if (Math.random() < .5)
-            this.stopOlder(q.time);
-        }
         else this.stop(q.time);
         this.start(q);
         return Models.QuoteSent.Modify;
@@ -129,7 +126,7 @@ export class ExchangeQuoter {
     };
 
     private stopOlder = (t: moment.Moment): Models.QuoteSent => {
-        if (this._activeQuote === null) {
+        if (!this._activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
 
