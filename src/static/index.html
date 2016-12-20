@@ -44,11 +44,11 @@
         </tr>
         <tr class="info">
             <td>q</td>
-            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
-            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
+            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz[qBidSz.length - 1]|number:2 }}</td>
+            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx[qBidPx.length - 1]|number:2 }}</td>
             <td>{{ fairValue|number:2 }}</td>
-            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx|number:2 }}</td>
-            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
+            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx[qAskPx.length - 1]|number:2 }}</td>
+            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz[qAskSz.length - 1]|number:2 }}</td>
         </tr>
         <tr class="active" ng-repeat="level in levels">
             <td>mkt{{ $index }}</td>
