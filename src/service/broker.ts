@@ -17,7 +17,6 @@ import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
 import QuotingParameters = require("./quoting-parameters");
-import moment = require('moment');
 var Lynx = require('lynx');
 var metrics = new Lynx('localhost', 8125);
 
