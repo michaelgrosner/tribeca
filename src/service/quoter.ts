@@ -103,7 +103,7 @@ export class ExchangeQuoter {
     private modify = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
           this.stopOlder(q.time);
-          if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && Math.random() < .5)
+          if (Math.random() < .5)
             this.stopOlder(q.time);
         }
         else this.stop(q.time);
