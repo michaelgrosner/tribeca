@@ -196,6 +196,7 @@
                                     <thead>
                                         <tr class="active">
                                             <th>mode</th>
+                                            <th ng-show="pair.quotingParameters.display.mode==7">bullets per side</th>
                                             <th>fv</th>
                                             <th>apMode</th>
                                             <th>width</th>
@@ -227,6 +228,12 @@
                                                 <select class="form-control input-sm"
                                                     ng-model="pair.quotingParameters.display.mode"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
+                                            </td>
+                                            <td ng-show="pair.quotingParameters.display.mode==7">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.bullets">
                                             </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"

@@ -355,6 +355,7 @@ export class QuotingParameters {
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
                 public audio: boolean,
+                public bullets: number,
                 public longEwma: number,
                 public shortEwma: number,
                 public quotingEwma: number,
