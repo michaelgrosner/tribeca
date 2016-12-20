@@ -50,10 +50,16 @@ export class SafetyCalculator {
         _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
+        _qlParams.NewParameters.on(_ => this.cancelOpenOrders());
         _broker.Trade.on(this.onTrade);
 
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
+
+    private cancelOpenOrders = () => {
+      if (this._repo.latest.mode === Models.QuotingMode.AK47)
+        this._broker.cancelOpenOrders();
+    };
 
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
