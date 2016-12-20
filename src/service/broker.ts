@@ -236,11 +236,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
-    private onTick = () => {
-      if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-        this.cancelOpenOrders();
-    };
-
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
@@ -431,10 +426,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-          _timeProvider.setInterval(this.onTick, moment.duration(21, "seconds"));
-          this.onTick();
-        }
+        if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+          this.cancelOpenOrders();
+
         _orderStatusPublisher.registerSnapshot(() => _.takeRight(this._orderCache.allOrdersFlat, 1000));
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
