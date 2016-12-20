@@ -22,11 +22,11 @@ class Level {
 
 interface MarketQuotingScope extends ng.IScope {
     levels: Level[];
-    qBidSz: number;
-    qBidPx: number;
+    qBidSz: number[];
+    qBidPx: number[];
     fairValue: number;
-    qAskPx: number;
-    qAskSz: number;
+    qAskPx: number[];
+    qAskSz: number[];
     extVal: number;
 
     bidIsLive: boolean;
@@ -42,13 +42,13 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     clearMarket();
 
     var clearBid = () => {
-        $scope.qBidPx = null;
-        $scope.qBidSz = null;
+        $scope.qBidPx = [];
+        $scope.qBidSz = [];
     };
 
     var clearAsk = () => {
-        $scope.qAskPx = null;
-        $scope.qAskSz = null;
+        $scope.qAskPx = [];
+        $scope.qAskSz = [];
     };
 
     var clearQuote = () => {
@@ -90,8 +90,8 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
 
             $scope.levels[i].diffWidth = i==0
               ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
-                (i==1 && $scope.qBidPx && $scope.qAskPx)
-                  ? $scope.qAskPx - $scope.qBidPx : 0
+                (i==1 && $scope.qBidPx.length && $scope.qAskPx.length)
+                  ? Math.min.apply(Math, $scope.qAskPx) - Math.max.apply(Math, $scope.qBidPx) : 0
               );
         }
 
@@ -102,16 +102,18 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     var updateQuote = (quote: Models.TwoSidedQuote) => {
         if (quote !== null) {
             if (quote.bid !== null) {
-                $scope.qBidPx = quote.bid.price;
-                $scope.qBidSz = quote.bid.size;
+                if (!$scope.qBidPx || !$scope.qBidSz) clearBid();
+                $scope.qBidPx.push(quote.bid.price);
+                $scope.qBidSz.push(quote.bid.size);
             }
             else {
                 clearBid();
             }
 
             if (quote.ask !== null) {
-                $scope.qAskPx = quote.ask.price;
-                $scope.qAskSz = quote.ask.size;
+                if (!$scope.qAskPx || !$scope.qAskSz) clearAsk();
+                $scope.qAskPx.push(quote.ask.price);
+                $scope.qAskSz.push(quote.ask.size);
             }
             else {
                 clearAsk();
@@ -140,20 +142,16 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             var tol = .005;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
-
-                if (Math.abs($scope.qBidPx - level.bidPrice) < tol && $scope.bidIsLive) {
-                    level.bidClass = 'success';
-                }
-                else {
-                    level.bidClass = 'active';
-                }
-
-                if (Math.abs($scope.qAskPx - level.askPrice) < tol && $scope.askIsLive) {
-                    level.askClass = 'success';
-                }
-                else {
-                    level.askClass = 'active';
-                }
+                level.bidClass = 'active';
+                if ($scope.bidIsLive)
+                  for (var j = 0; j < $scope.qBidPx.length; j++)
+                    if (Math.abs($scope.qBidPx[j] - level.bidPrice) < tol)
+                        level.bidClass = 'success';
+                level.askClass = 'active';
+                if ($scope.askIsLive)
+                  for (var j = 0; j < $scope.qAskPx.length; j++)
+                    if (Math.abs($scope.qAskPx[j] - level.askPrice) < tol)
+                        level.askClass = 'success';
             }
         }
     };
@@ -186,6 +184,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         // $log.info("destroy market quoting grid");
     });
 
+    clearQuote();
     // $log.info("started market quoting grid");
 };
 
