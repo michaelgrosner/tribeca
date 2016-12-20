@@ -102,9 +102,20 @@ var OrderListController = ($scope: OrderListScope,
             { width: 90, field: 'orderId', displayName: 'id' },
             { width: 35, field: 'version', displayName: 'v' },
             { width: 120, field: 'orderStatus', displayName: 'status' },
-            { width: 65, field: 'price', displayName: 'px', cellFilter: 'currency' },
-            { width: 60, field: 'quantity', displayName: 'qty' },
-            { width: 50, field: 'side', displayName: 'side' },
+            { width: 65, field: 'price', displayName: 'px', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.side === 'Ask') ? "sell" : "buy";
+            } },
+            { width: 60, field: 'quantity', displayName: 'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.side === 'Ask') ? "sell" : "buy";
+            }},
+            { width: 50, field: 'side', displayName: 'side' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (grid.getCellValue(row, col) === 'Bid') {
+                    return 'buy';
+                }
+                else if (grid.getCellValue(row, col) === 'Ask') {
+                    return "sell";
+                }
+            }},
             { width: 50, field: 'orderType', displayName: 'type' },
             { width: 50, field: 'tif', displayName: 'tif' },
             { width: 35, field: 'computationalLatency', displayName: 'lat' },

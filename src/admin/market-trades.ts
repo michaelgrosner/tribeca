@@ -83,9 +83,20 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
             { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            { width: 50, field: 'price', displayName: 'px' },
-            { width: 40, field: 'size', displayName: 'sz' },
-            { width: 40, field: 'make_side', displayName: 'ms' },
+            { width: 50, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+            } },
+            { width: 40, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+            } },
+            { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (grid.getCellValue(row, col) === 'Bid') {
+                    return 'buy';
+                }
+                else if (grid.getCellValue(row, col) === 'Ask') {
+                    return "sell";
+                }
+            }},
             { width: 40, field: 'qBz', displayName: 'qBz' },
             { width: 50, field: 'qB', displayName: 'qB' },
             { width: 50, field: 'qA', displayName: 'qA' },
