@@ -397,6 +397,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (o.done===true) {
           delete this._orderCache.allOrders[o.orderId];
           delete this._orderCache.exchIdsToClientIds[o.exchangeId];
+          this._orderCache.allOrdersFlat.filter(q => q.orderId !== o.orderId);
         }
     };
 
@@ -405,7 +406,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._orderCache.allOrders[osr.orderId] = [osr];
 
-        // this._orderCache.allOrdersFlat.push(osr);
+        this._orderCache.allOrdersFlat.push(osr);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
