@@ -20,14 +20,29 @@ class Level {
     askClass: string;
 }
 
+class DisplayOrderStatusClassReport {
+    orderId: string;
+    price: number;
+    quantity: number;
+    side: Models.Side;
+
+    constructor(public osr: Models.OrderStatusReport) {
+        this.orderId = osr.orderId;
+        this.side = osr.side;
+        this.quantity = osr.quantity;
+        this.price = osr.price;
+    }
+}
+
 interface MarketQuotingScope extends ng.IScope {
     levels: Level[];
-    qBidSz: number[];
-    qBidPx: number[];
     fairValue: number;
-    qAskPx: number[];
-    qAskSz: number[];
     extVal: number;
+    qBidSz: number;
+    qBidPx: number;
+    qAskPx: number;
+    qAskSz: number;
+    order_classes: DisplayOrderStatusClassReport[];
 
     bidIsLive: boolean;
     askIsLive: boolean;
@@ -41,19 +56,8 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     };
     clearMarket();
 
-    var clearBid = () => {
-        $scope.qBidPx = [];
-        $scope.qBidSz = [];
-    };
-
-    var clearAsk = () => {
-        $scope.qAskPx = [];
-        $scope.qAskSz = [];
-    };
-
     var clearQuote = () => {
-        clearBid();
-        clearAsk();
+        $scope.order_classes = [];
     };
 
     var clearFairValue = () => {
@@ -82,6 +86,20 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             $scope.levels[i].askSize = update.asks[i].size;
         }
 
+        if (!angular.isUndefined($scope.order_classes)) {
+          var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
+          var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
+          if (bids.length) {
+            var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
+            $scope.qBidPx = bid.price;
+            $scope.qBidSz = bid.quantity;
+          }
+          if (asks.length) {
+            var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
+            $scope.qAskPx = ask.price;
+            $scope.qAskSz = ask.quantity;
+          }
+        }
         for (var i = 0; i < update.bids.length; i++) {
             if (angular.isUndefined($scope.levels[i]))
                 $scope.levels[i] = new Level();
@@ -90,8 +108,8 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
 
             $scope.levels[i].diffWidth = i==0
               ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
-                (i==1 && $scope.qBidPx.length && $scope.qAskPx.length)
-                  ? Math.min.apply(Math, $scope.qAskPx) - Math.max.apply(Math, $scope.qBidPx) : 0
+                (i==1 && $scope.qAskPx && $scope.qBidPx)
+                  ? $scope.qAskPx - $scope.qBidPx : 0
               );
         }
 
@@ -99,29 +117,15 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         updateQuoteClass();
     };
 
-    var updateQuote = (quote: Models.TwoSidedQuote) => {
-        if (quote !== null) {
-            if (quote.bid !== null) {
-                if (!$scope.qBidPx || !$scope.qBidSz) clearBid();
-                $scope.qBidPx.push(quote.bid.price);
-                $scope.qBidSz.push(quote.bid.size);
-            }
-            else {
-                clearBid();
-            }
-
-            if (quote.ask !== null) {
-                if (!$scope.qAskPx || !$scope.qAskSz) clearAsk();
-                $scope.qAskPx.push(quote.ask.price);
-                $scope.qAskSz.push(quote.ask.size);
-            }
-            else {
-                clearAsk();
-            }
-        }
-        else {
-            clearQuote();
-        }
+    var updateQuote = (o: Models.OrderStatusReport) => {
+        var idx = -1;
+        for(var i=0;i<$scope.order_classes.length;i++)
+          if ($scope.order_classes[i].orderId==o.orderId) {idx=i; break;}
+        if (idx!=-1) {
+            if (!o.leavesQuantity)
+              $scope.order_classes.splice(idx,1);
+        } else if (o.leavesQuantity)
+          $scope.order_classes.push(new DisplayOrderStatusClassReport(o));
 
         updateQuoteClass();
     };
@@ -143,15 +147,19 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
                 level.bidClass = 'active';
-                if ($scope.bidIsLive)
-                  for (var j = 0; j < $scope.qBidPx.length; j++)
-                    if (Math.abs($scope.qBidPx[j] - level.bidPrice) < tol)
+                if ($scope.bidIsLive) {
+                  var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
+                  for (var j = 0; j < bids.length; j++)
+                    if (Math.abs(bids[j].price - level.bidPrice) < tol)
                         level.bidClass = 'success';
+                }
                 level.askClass = 'active';
-                if ($scope.askIsLive)
-                  for (var j = 0; j < $scope.qAskPx.length; j++)
-                    if (Math.abs($scope.qAskPx[j] - level.askPrice) < tol)
+                if ($scope.askIsLive) {
+                  var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
+                  for (var j = 0; j < asks.length; j++)
+                    if (Math.abs(asks[j].price - level.askPrice) < tol)
                         level.askClass = 'success';
+                }
             }
         }
     };
@@ -175,7 +183,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     };
 
     makeSubscriber<Models.Market>(Messaging.Topics.MarketData, updateMarket, clearMarket);
-    makeSubscriber<Models.TwoSidedQuote>(Messaging.Topics.Quote, updateQuote, clearQuote);
+    makeSubscriber<Models.OrderStatusReport>(Messaging.Topics.OrderStatusReports, updateQuote, clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, updateQuoteStatus, clearQuoteStatus);
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
 
