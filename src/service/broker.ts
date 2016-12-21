@@ -47,8 +47,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
 }
 
 export class OrderStateCache implements Interfaces.IOrderStateCache {
-    public allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
-    public allOrdersFlat : Models.OrderStatusReport[] = [];
+    public allOrders : { [orderId: string]: Models.OrderStatusReport } = {};
     public exchIdsToClientIds : { [exchId: string] : string} = {};
 }
 
@@ -65,7 +64,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var lateCancels : {[id: string] : boolean} = {};
         for (var k in this._orderCache.allOrders) {
             if (!(k in this._orderCache.allOrders)) continue;
-            var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
+            var e : Models.OrderStatusReport = this._orderCache.allOrders[k];
 
             if (e.pendingCancel) continue;
 
@@ -192,7 +191,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
-        var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
+        var rpt = this._orderCache.allOrders[replace.origOrderId];
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
             rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
@@ -212,7 +211,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     cancelOrder = (cancel : Models.OrderCancel) => {
-        var rpt = _.last(this._orderCache.allOrders[cancel.origOrderId]);
+        var rpt = this._orderCache.allOrders[cancel.origOrderId];
 
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
@@ -302,7 +301,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 return;
             }
 
-            orig = _.last(orderChain);
+            orig = orderChain;
         }
 
         var getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
@@ -397,16 +396,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (o.done===true) {
           delete this._orderCache.allOrders[o.orderId];
           delete this._orderCache.exchIdsToClientIds[o.exchangeId];
-          this._orderCache.allOrdersFlat.filter(q => q.orderId !== o.orderId);
         }
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
 
-        this._orderCache.allOrders[osr.orderId] = [osr];
-
-        this._orderCache.allOrdersFlat.push(osr);
+        this._orderCache.allOrders[osr.orderId] = osr;
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -429,7 +425,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this.cancelOpenOrders();
 
-        _orderStatusPublisher.registerSnapshot(() => _.takeRight(this._orderCache.allOrdersFlat, 1000));
+        _orderStatusPublisher.registerSnapshot(() => _.values(this._orderCache.allOrders));
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
@@ -480,7 +476,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
         _.each(initOrders, this.addOrderStatusToMemory);
-        // this._log.info("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
+        // this._log.info("loaded %d osrs", Object.keys(this._orderCache.allOrders).length);
 
         _.each(initTrades, t => this._trades.push(t));
         // this._log.info("loaded %d trades", this._trades.length);
