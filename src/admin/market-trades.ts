@@ -13,6 +13,7 @@ class MarketTradeViewModel {
     price: number;
     size: number;
     time: moment.Moment;
+    recent: boolean;
 
     qA: number;
     qB: number;
@@ -54,6 +55,8 @@ class MarketTradeViewModel {
         }
 
         this.make_side = Models.Side[trade.make_side];
+
+        this.recent = true;
     }
 
     private static round(num: number) {
@@ -83,7 +86,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
             { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                return (Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000) ? "text-muted" : "";
+                return !row.entity.recent ? "text-muted" : "";
             } },
             { width: 50, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.make_side === 'Ask') ? "sell" : "buy";
@@ -117,6 +120,8 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         for(var i=$scope.marketTrades.length-1;i>-1;i--)
           if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 3600000)
             $scope.marketTrades.splice(i,1);
+          else if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 7000)
+            $scope.marketTrades[i].recent = false;
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
