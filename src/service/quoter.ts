@@ -122,6 +122,11 @@ export class ExchangeQuoter {
         this.quotesSent.push(quoteOrder);
         this._activeQuote.push(quoteOrder);
 
+        if (this._side === Models.Side.Bid)
+          this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
+        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
+
+
         return Models.QuoteSent.First;
     };
 
@@ -129,10 +134,6 @@ export class ExchangeQuoter {
         if (!this._activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
-
-        if (this._side === Models.Side.Bid)
-          this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
-        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
 
         var cxl = new Models.OrderCancel(this._activeQuote.shift().orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
