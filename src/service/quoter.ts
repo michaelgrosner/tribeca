@@ -102,7 +102,7 @@ export class ExchangeQuoter {
 
     private modify = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-          this.stopOlder(q.time);
+          this.stopLowest(q.time);
         else this.stop(q.time);
         this.start(q);
         return Models.QuoteSent.Modify;
@@ -125,10 +125,14 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stopOlder = (t: moment.Moment): Models.QuoteSent => {
+    private stopLowest = (t: moment.Moment): Models.QuoteSent => {
         if (!this._activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
+
+        if (this._side === Models.Side.Bid)
+          this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
+        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
 
         var cxl = new Models.OrderCancel(this._activeQuote.shift().orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
