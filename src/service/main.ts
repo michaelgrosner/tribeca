@@ -28,6 +28,7 @@ import fs = require("fs");
 import bunyan = require("bunyan");
 import request = require('request');
 import http = require("http");
+import https = require('https');
 import socket_io = require('socket.io');
 // var heapdump = require('heapdump'); // kill -USR2
 
@@ -154,8 +155,18 @@ var liveTradingSetup = () => {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
 
     var app = express();
-    var http_server = http.createServer(app);
-    var io = socket_io(http_server);
+
+    var web_server;
+    try {
+      web_server = https.createServer({
+        key: fs.readFileSync('./sslcert/server.key', 'utf8'),
+        cert: fs.readFileSync('./sslcert/server.crt', 'utf8')
+      }, app);
+    } catch (e) {
+      web_server = http.createServer(app)
+    }
+
+    var io = socket_io(web_server);
 
     var username = config.GetString("WebClientUsername");
     var password = config.GetString("WebClientPassword");
@@ -169,7 +180,7 @@ var liveTradingSetup = () => {
     app.use(express.static(path.join(__dirname, "admin")));
 
     var webport = config.GetNumber("WebClientListenPort");
-    http_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
+    web_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
 
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
