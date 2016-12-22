@@ -82,7 +82,9 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         columnDefs: [
             { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-                sort: { direction: uiGridConstants.DESC, priority: 1} },
+                sort: { direction: uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000) ? "text-muted" : "";
+            } },
             { width: 50, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.make_side === 'Ask') ? "sell" : "buy";
             } },
@@ -111,6 +113,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
     var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
             $scope.marketTrades.push(new MarketTradeViewModel(u));
+
         for(var i=$scope.marketTrades.length-1;i>-1;i--)
           if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 3600000)
             $scope.marketTrades.splice(i,1);
