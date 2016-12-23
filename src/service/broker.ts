@@ -430,10 +430,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           for (var k in this._orderCache.allOrders) {
             if (!(k in this._orderCache.allOrders) || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working) continue;
             flat.push(this._orderCache.allOrders[k]);
+            if (flat.length>=100) break;
           }
           return flat;
         });
-        _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
+        _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             // this._log.info("got new order req", o);
