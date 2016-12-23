@@ -144,14 +144,14 @@ export class QuotingEngine {
 
         if (safety.sell > params.tradesPerMinute || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
-          && params.pingAt === Models.PingAt.BidSide && !safety.buyPing
+          && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide)
         )) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
         if (safety.buy > params.tradesPerMinute || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
-          && params.pingAt === Models.PingAt.AskSide && !safety.sellPong
+          && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide)
         )) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
