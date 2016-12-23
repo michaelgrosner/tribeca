@@ -97,6 +97,7 @@ export class QuotingEngine {
 
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        var totalQuotePosition = latestPosition.quoteAmount + latestPosition.quoteHeldAmount / fv.price;
 
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
@@ -144,15 +145,17 @@ export class QuotingEngine {
 
         if (safety.sell > params.tradesPerMinute || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
-          && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide)
-        )) {
+          && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide
+            || (params.pingAt === Models.PingAt.DepletedSide && totalQuotePosition>params.buySize)
+        ))) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
         if (safety.buy > params.tradesPerMinute || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
-          && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide)
-        )) {
+          && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide
+            || (params.pingAt === Models.PingAt.DepletedSide && totalBasePosition>params.sellSize)
+        ))) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
