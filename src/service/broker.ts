@@ -425,7 +425,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this.cancelOpenOrders();
 
-        _orderStatusPublisher.registerSnapshot(() => _.values(this._orderCache.allOrders));
+        _orderStatusPublisher.registerSnapshot(() => {
+          var flat = [];
+          for (var k in this._orderCache.allOrders) {
+            if (!(k in this._orderCache.allOrders) || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working) continue;
+            flat.push(this._orderCache.allOrders[k]);
+          }
+          return flat;
+        });
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
