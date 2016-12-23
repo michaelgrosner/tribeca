@@ -55,7 +55,7 @@ export var tradeSafetyDirective = "tradeSafetyDirective";
 angular
     .module(tradeSafetyDirective, ['sharedDirectives'])
     .directive("tradeSafety", () => {
-        var template = '<span>BuyLT: <b>{{ buySizeSafety|number:2 }}</b>, SellLT: <b>{{ sellSizeSafety|number:2 }}</b>, BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
+        var template = '<span>BuyPing: <b>{{ buySizeSafety|number:2 }}</b>, SellPing: <b>{{ sellSizeSafety|number:2 }}</b>, BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</span>';
 
         return {
             restrict: 'E',
