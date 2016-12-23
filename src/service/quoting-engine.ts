@@ -142,11 +142,17 @@ export class QuotingEngine {
             }
           }
 
-        if (safety.sell > params.tradesPerMinute) {
+        if (safety.sell > params.tradesPerMinute || (
+          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+          && params.pingAt === Models.PingAt.BidSide && !safety.buyPing
+        )) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
-        if (safety.buy > params.tradesPerMinute) {
+        if (safety.buy > params.tradesPerMinute || (
+          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+          && params.pingAt === Models.PingAt.AskSide && !safety.sellPong
+        )) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
