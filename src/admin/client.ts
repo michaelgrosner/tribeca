@@ -104,7 +104,8 @@ var uiCtrl = ($scope : MainWindowScope,
         // $log.info("advert", pa);
         $scope.connected = true;
         $scope.env = pa.environment;
-        $scope.theme = moment.utc().hours()<9?'-dark':'';
+        var h = moment.utc().hours();
+        $scope.theme = (h<9 || h>=21)?'-dark':'';
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
