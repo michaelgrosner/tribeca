@@ -340,7 +340,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
-export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, StopPings  }
+export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 
 export class QuotingParameters {
     constructor(public width: number,
