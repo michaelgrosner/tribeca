@@ -30,6 +30,7 @@ class DisplayTrade {
     Kprice : number;
     Kvalue : number;
     Kdiff : number;
+    sortTime : moment.Moment;
 
     constructor($scope : TradesScope, public trade : Models.Trade) {
         this.tradeId = trade.tradeId;
@@ -43,6 +44,7 @@ class DisplayTrade {
         this.Kprice = trade.Kprice ? trade.Kprice : null;
         this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
         this.Kdiff = trade.Kdiff ? trade.Kdiff : null;
+        this.sortTime = this.Ktime ? this.Ktime : this.time;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
             this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
@@ -61,16 +63,15 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         primaryKey: 'tradeId',
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['Ktime', 'time'], directions: ['desc']},
+        sortInfo: {fields: ['sortTime'], directions: ['desc']},
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 115, field:'time', displayName:'t', cellFilter: 'momentFullDate',
+            {field:'sortTime', visible: false,
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            {width: 115, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate',
-                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => { return a && b ? a.diff(b) : 0 },
-                sort: { direction: uiGridConstants.DESC, priority: 1} },
+            {width: 115, field:'time', displayName:'t', cellFilter: 'momentFullDate' },
+            {width: 115, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate' },
             {width: 32, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'Buy') {
                     return 'buy';
@@ -134,6 +135,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             $scope.trade_statuses[i].Kprice = t.Kprice;
             $scope.trade_statuses[i].Kvalue = t.Kvalue;
             $scope.trade_statuses[i].Kdiff = t.Kdiff;
+            $scope.trade_statuses[i].sortTime = $scope.trade_statuses[i].Ktime ? $scope.trade_statuses[i].Ktime : $scope.trade_statuses[i].time;
             if ($scope.trade_statuses[i].Kqty >= $scope.trade_statuses[i].quantity)
               $scope.trade_statuses[i].side = 'K';
             $scope.gridApi.grid.notifyDataChange(uiGridConstants.dataChange.ALL);
