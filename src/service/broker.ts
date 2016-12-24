@@ -246,10 +246,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._trades[i].time = trade.time;
             this._trades[i].Kprice = ((Kqty*trade.price) + (this._trades[i].Kqty*this._trades[i].Kprice)) / (this._trades[i].Kqty+Kqty);
             this._trades[i].Kqty += Kqty;
+            this._trades[i].Kvalue = Math.abs(this._trades[i].Kprice*this._trades[i].Kqty);
             trade.quantity -= Kqty;
             trade.value = Math.abs(trade.price*trade.quantity);
             if (this._trades[i].quantity<=this._trades[i].Kqty)
-              this._trades[i].value = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
+              this._trades[i].Kdiff = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
             this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
@@ -378,7 +379,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, feeCharged, false);
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });

@@ -254,6 +254,8 @@ export class Trade implements ITimestamped {
                 public liquidity: Liquidity,
                 public Kqty: number,
                 public Kprice: number,
+                public Kvalue: number,
+                public Kdiff: number,
                 public feeCharged: number,
                 public loadedFromDB: boolean) {}
 }
