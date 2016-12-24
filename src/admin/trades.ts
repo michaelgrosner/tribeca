@@ -25,6 +25,7 @@ class DisplayTrade {
     side : string;
     value : number;
     liquidity : string;
+    Ktime : moment.Moment;
     Kqty : number;
     Kprice : number;
     Kvalue : number;
@@ -37,6 +38,7 @@ class DisplayTrade {
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
+        this.Ktime = trade.Ktime ? (moment.isMoment(trade.Ktime) ? trade.Ktime : moment(trade.Ktime)) : null;
         this.Kqty = trade.Kqty ? trade.Kqty : null;
         this.Kprice = trade.Kprice ? trade.Kprice : null;
         this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
@@ -59,12 +61,15 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         primaryKey: 'tradeId',
         groupsCollapsedByDefault: true,
         enableColumnResize: true,
-        sortInfo: {fields: ['time'], directions: ['desc']},
+        sortInfo: {fields: ['Ktime', 'time'], directions: ['desc']},
         rowHeight: 20,
         headerRowHeight: 20,
         columnDefs: [
-            {width: 134, field:'time', displayName:'t', cellFilter: 'momentFullDate',
+            {width: 115, field:'time', displayName:'t', cellFilter: 'momentFullDate',
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sort: { direction: uiGridConstants.DESC, priority: 1} },
+            {width: 115, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate',
+                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => { return a && b ? a.diff(b) : 0 },
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 32, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'Buy') {
@@ -98,7 +103,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 65, field:'Kprice', displayName:'pxPong', visible:false, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return row.entity.Kqty ? ((row.entity.price < row.entity.Kprice) ? "sell" : "buy") : "";
             }},
-            {width: 65, field:'Kdiff', displayName:'diff', visible:false, cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            {width: 65, field:'Kdiff', displayName:'Kdiff', visible:false, cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return "kira"; else return "";
             }}
         ],
@@ -124,6 +129,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             var merged = ($scope.trade_statuses[i].quantity != t.quantity);
             $scope.trade_statuses[i].quantity = t.quantity;
             $scope.trade_statuses[i].value = t.value;
+            $scope.trade_statuses[i].Ktime = (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime));
             $scope.trade_statuses[i].Kqty = t.Kqty;
             $scope.trade_statuses[i].Kprice = t.Kprice;
             $scope.trade_statuses[i].Kvalue = t.Kvalue;
@@ -157,11 +163,13 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 
     var updateQP = qp => {
       $scope.audio = qp.audio;
-      var visibility = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kqty')].visible = visibility;
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kprice')].visible = visibility;
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kvalue')].visible = visibility;
-      $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf('Kdiff')].visible = visibility;
+      var modGrid = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
+      ['Kqty','Kprice','Kvalue','Kdiff','Ktime'].map(function (r) {
+        $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf(r)].visible = modGrid;
+      });
+      [['time','time'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(function (r) {
+        $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf(r[0])].displayName = modGrid ? r[1] : r[1].replace('Ping','');
+      });
       $scope.gridApi.grid.refresh();
     };
 

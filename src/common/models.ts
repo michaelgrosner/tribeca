@@ -252,6 +252,7 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
+                public Ktime: moment.Moment,
                 public Kqty: number,
                 public Kprice: number,
                 public Kvalue: number,
@@ -368,7 +369,7 @@ export class QuotingParameters {
 }
 
 export function toUtcFormattedTime(t: moment.Moment) {
-    return t.format('M/D/YY HH:mm:ss,SSS');
+    return t === null ? null : t.format('D/M HH:mm:ss,SSS');
 }
 
 export function toShortTimeString(t: moment.Moment) {
