@@ -2,9 +2,9 @@
 
 [![Join the chat at https://gitter.im/michaelgrosner/tribeca](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/michaelgrosner/tribeca?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-`tribeca` is a very low latency cryptocurrency [market making](https://github.com/michaelgrosner/tribeca/wiki#what-is-market-making) trading bot with a full featured [web client](https://github.com/michaelgrosner/tribeca#web-ui), [backtester](https://github.com/michaelgrosner/tribeca/wiki#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/michaelgrosner/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond. 
+`tribeca` is a very low latency cryptocurrency [market making](https://github.com/michaelgrosner/tribeca/wiki#what-is-market-making) trading bot with a full featured [web client](https://github.com/michaelgrosner/tribeca#web-ui), [backtester](https://github.com/michaelgrosner/tribeca/wiki#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/michaelgrosner/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
-![Web UI Preview](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/docs/web_ui_preview.png)
+![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/AK-47/docs/web_ui_preview.png)
 
 Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
 
@@ -30,7 +30,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 4. Compile typescript to javascript via `grunt compile`.
 
-5. cd to the outputted JS files, in `tribeca/service`. 
+5. cd to the outputted JS files, in `tribeca/service`.
 
 6. Create a `tribeca.json` file based off the provided `sample-dev-tribeca.json` or `sample-prod-tribeca.json` files and save it in the current directory. Modify the config keys (see [configuration](https://github.com/michaelgrosner/tribeca#configuration) section) and point the instance towards the running mongoDB instance.
 
@@ -41,33 +41,33 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 ### Configuration
 
   * EXCHANGE
-  
+
     1. `coinbase` - uses the WebSocket API. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
-    
+
     2. `hitbtc` - WebSocket + socket.io API. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
-    
+
     3. `okcoin` - Websocket.Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
-    
+
     4. `bitfinex` REST API only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
-    
+
     5. `null` - Test in-memory exchange. No exchange-specific config needed.
-    
+
   * TRIBECA_MODE
-  
+
     1. `prod`
-    
+
     2. `dev`
-    
+
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
-  
+
   * TradedPair - The following currency pairs are supported on these exchanges:
-  
+
     1. `BTC/USD` - Coinbase, HitBtc, OkCoin, Null
-    
+
     2. `BTC/EUR` - Coinbase, HitBtc, Null
-    
+
     3. `BTC/GBP` - Coinbase, Null
-    
+
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/michaelgrosner/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 
 Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on.
