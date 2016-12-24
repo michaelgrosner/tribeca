@@ -97,7 +97,7 @@ export class QuotingEngine {
 
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        var totalQuotePosition = latestPosition.quoteAmount + latestPosition.quoteHeldAmount / fv.price;
+        var totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
 
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
