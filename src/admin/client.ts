@@ -34,6 +34,7 @@ import TradeSafety = require("./trade-safety");
 interface MainWindowScope extends ng.IScope {
     env : string;
     theme : string;
+    memory : string;
     connected : boolean;
     order : DisplayOrder;
     pair : Pair.DisplayPair;
@@ -100,12 +101,28 @@ var uiCtrl = ($scope : MainWindowScope,
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 
+    var unit = ['', 'K', 'M', 'G', 'T', 'P'];
+
+    var bytesToSize = (input:number, precision:number) => {
+        var index = Math.floor(Math.log(input) / Math.log(1024));
+        if (index >= unit.length) return input + ' B';
+        return (input / Math.pow(1024, index)).toFixed(precision) + ' ' + unit[index] + 'B'
+    };
+
+    var getTheme = (hour: number) => {
+      return (hour<9 || hour>=21)?'-dark':'';
+    };
+
+    var onAppState = (as : Models.ApplicationState) => {
+      $scope.memory = bytesToSize(as.memory, 3);
+      $scope.theme = getTheme(as.hour);
+    };
+
     var onAdvert = (pa : Models.ProductAdvertisement) => {
         // $log.info("advert", pa);
         $scope.connected = true;
         $scope.env = pa.environment;
-        var h = moment.utc().hours();
-        $scope.theme = (h<9 || h>=21)?'-dark':'';
+        $scope.theme = getTheme(moment.utc().hours());
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
@@ -127,8 +144,13 @@ var uiCtrl = ($scope : MainWindowScope,
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
         .registerDisconnectedHandler(() => reset("disconnect"));
 
+    var ASsub = subscriberFactory.getSubscriber($scope, Messaging.Topics.ApplicationState)
+        .registerSubscriber(onAppState, a => a.forEach(onAppState))
+        .registerDisconnectedHandler(() => reset("disconnect"));
+
     $scope.$on('$destroy', () => {
         sub.disconnect();
+        ASsub.disconnect();
         // $log.info("destroy client");
     });
 
@@ -147,5 +169,5 @@ var requires = ['ui.bootstrap',
                 TradeSafety.tradeSafetyDirective,
                 Shared.sharedDirectives];
 
-angular.module('projectApp', requires)
+angular.module('tribeca', requires)
        .controller('uiCtrl', uiCtrl);
