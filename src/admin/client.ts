@@ -43,6 +43,7 @@ interface MainWindowScope extends ng.IScope {
     cancelAllOrders();
     cleanAllClosedOrders();
     cleanAllOrders();
+    changeTheme();
 }
 
 class DisplayOrder {
@@ -98,6 +99,7 @@ var uiCtrl = ($scope : MainWindowScope,
     var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
     $scope.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
 
+
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
 
@@ -109,8 +111,14 @@ var uiCtrl = ($scope : MainWindowScope,
         return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
     };
 
+    var user_theme = null;
+    $scope.changeTheme = () => {
+      user_theme = user_theme!==null?(user_theme==''?'-dark':''):($scope.theme==''?'-dark':'');
+      $scope.theme = user_theme;
+    };
+
     var getTheme = (hour: number) => {
-      return (hour<9 || hour>=21)?'-dark':'';
+      return user_theme!==null?user_theme:((hour<9 || hour>=21)?'-dark':'');
     };
 
     var onAppState = (as : Models.ApplicationState) => {
