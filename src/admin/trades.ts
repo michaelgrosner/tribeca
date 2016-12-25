@@ -70,9 +70,9 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {field:'sortTime', visible: false,
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            {width: 115, field:'time', displayName:'t', cellFilter: 'momentFullDate' },
-            {width: 115, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate' },
-            {width: 32, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            {width: 121, field:'time', displayName:'t', cellFilter: 'momentFullDate', cellClass: 'fs11px' },
+            {width: 121, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate', cellClass: 'fs11px' },
+            {width: 42, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'Buy') {
                     return 'buy';
                 }
@@ -92,10 +92,10 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 65, field:'quantity', displayName:'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return row.entity.side === 'Sell' ? "sell" : "buy";
             }},
-            {width: 65, field:'value', displayName:'val', cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            {width: 69, field:'value', displayName:'val', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return row.entity.side === 'Sell' ? "sell" : "buy";
             }},
-            {width: 65, field:'Kvalue', displayName:'valPong', visible:false, cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            {width: 69, field:'Kvalue', displayName:'valPong', visible:false, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return row.entity.Kqty ? ((row.entity.price < row.entity.Kprice) ? "sell" : "buy") : "";
             }},
             {width: 65, field:'Kqty', displayName:'qtyPong', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
