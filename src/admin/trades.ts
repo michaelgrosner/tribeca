@@ -39,6 +39,7 @@ class DisplayTrade {
         this.price = trade.price;
         this.quantity = trade.quantity;
         this.value = trade.value;
+        if (trade.Ktime && <any>trade.Ktime=='Invalid date') trade.Ktime = null;
         this.Ktime = trade.Ktime ? (moment.isMoment(trade.Ktime) ? trade.Ktime : moment(trade.Ktime)) : null;
         this.Kqty = trade.Kqty ? trade.Kqty : null;
         this.Kprice = trade.Kprice ? trade.Kprice : null;
