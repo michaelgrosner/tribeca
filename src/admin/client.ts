@@ -115,6 +115,7 @@ var uiCtrl = ($scope : MainWindowScope,
     $scope.changeTheme = () => {
       user_theme = user_theme!==null?(user_theme==''?'-dark':''):($scope.theme==''?'-dark':'');
       $scope.theme = user_theme;
+      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var getTheme = (hour: number) => {
@@ -134,6 +135,7 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
+        window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var reset = (reason : string) => {
