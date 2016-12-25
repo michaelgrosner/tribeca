@@ -40,6 +40,7 @@ import Bitfinex = require("./gateways/bitfinex");
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
+import Monitor = require("./monitor");
 import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
 import Messaging = require("../common/messaging");
@@ -301,6 +302,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
 
         var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
+
+        new Monitor.ApplicationState(timeProvider, getPublisher(Messaging.Topics.ApplicationState));
 
         var quotePublisher = getPublisher(Messaging.Topics.Quote);
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
