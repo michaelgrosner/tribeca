@@ -83,15 +83,15 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         enableColumnResize: true,
         sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
-            { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
+            { width: 90, field: 'time', displayName: 't', cellFilter: "momentShortDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
                 sort: { direction: uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                return !row.entity.recent ? "text-muted" : "";
+                return 'fs11px '+(!row.entity.recent ? "text-muted" : "");
             } },
-            { width: 50, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            { width: 60, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.make_side === 'Ask') ? "sell" : "buy";
             } },
-            { width: 40, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            { width: 50, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.make_side === 'Ask') ? "sell" : "buy";
             } },
             { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
