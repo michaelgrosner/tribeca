@@ -105,8 +105,8 @@ var uiCtrl = ($scope : MainWindowScope,
 
     var bytesToSize = (input:number, precision:number) => {
         var index = Math.floor(Math.log(input) / Math.log(1024));
-        if (index >= unit.length) return input + ' B';
-        return (input / Math.pow(1024, index)).toFixed(precision) + ' ' + unit[index] + 'B'
+        if (index >= unit.length) return input + 'B';
+        return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
     };
 
     var getTheme = (hour: number) => {
