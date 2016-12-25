@@ -43,7 +43,7 @@ class DisplayTrade {
         this.Kqty = trade.Kqty ? trade.Kqty : null;
         this.Kprice = trade.Kprice ? trade.Kprice : null;
         this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
-        this.Kdiff = trade.Kdiff ? trade.Kdiff : null;
+        this.Kdiff = (trade.Kdiff && trade.Kdiff!=0) ? trade.Kdiff : null;
         this.sortTime = this.Ktime ? this.Ktime : this.time;
 
         if (trade.liquidity === 0 || trade.liquidity === 1) {
@@ -169,7 +169,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
       ['Kqty','Kprice','Kvalue','Kdiff','Ktime'].map(function (r) {
         $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf(r)].visible = modGrid;
       });
-      [['time','time'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(function (r) {
+      [['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(function (r) {
         $scope.gridOptions.columnDefs[$scope.gridOptions.columnDefs.map(function (e) { return e.field; }).indexOf(r[0])].displayName = modGrid ? r[1] : r[1].replace('Ping','');
       });
       $scope.gridApi.grid.refresh();
