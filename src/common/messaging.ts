@@ -243,6 +243,8 @@ export class Topics {
     static OrderStatusReports = "osr";
     static ProductAdvertisement = "pa";
     static ApplicationState = "as";
+    static Notepad = "np";
+    static ChangeNotepad = "cn";
     static Position = "pos";
     static ExchangeConnectivity = "ec";
     static SubmitNewOrder = "sno";

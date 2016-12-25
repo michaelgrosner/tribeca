@@ -35,6 +35,7 @@ interface MainWindowScope extends ng.IScope {
     env : string;
     theme : string;
     memory : string;
+    notepad : string;
     connected : boolean;
     order : DisplayOrder;
     pair : Pair.DisplayPair;
@@ -44,6 +45,7 @@ interface MainWindowScope extends ng.IScope {
     cleanAllClosedOrders();
     cleanAllOrders();
     changeTheme();
+    changeNotepad(content:string);
 }
 
 class DisplayOrder {
@@ -99,6 +101,8 @@ var uiCtrl = ($scope : MainWindowScope,
     var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
     $scope.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
 
+    var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
+    $scope.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
 
     $scope.order = new DisplayOrder(fireFactory, $log);
     $scope.pair = null;
@@ -120,6 +124,11 @@ var uiCtrl = ($scope : MainWindowScope,
 
     var getTheme = (hour: number) => {
       return user_theme!==null?user_theme:((hour<9 || hour>=21)?'-dark':'');
+    };
+
+    $scope.notepad = null;
+    var onNotepad = (np : Models.Notepad) => {
+      $scope.notepad = np ? np.content : "";
     };
 
     var onAppState = (as : Models.ApplicationState) => {
@@ -158,9 +167,14 @@ var uiCtrl = ($scope : MainWindowScope,
         .registerSubscriber(onAppState, a => a.forEach(onAppState))
         .registerDisconnectedHandler(() => reset("disconnect"));
 
+    var NPsub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Notepad)
+        .registerSubscriber(onNotepad, a => a.forEach(onNotepad))
+        .registerDisconnectedHandler(() => reset("disconnect"));
+
     $scope.$on('$destroy', () => {
         sub.disconnect();
         ASsub.disconnect();
+        NPsub.disconnect();
         // $log.info("destroy client");
     });
 

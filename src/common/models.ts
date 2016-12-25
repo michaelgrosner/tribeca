@@ -388,6 +388,10 @@ export class ApplicationState {
     constructor(public memory: number, public hour: number) { }
 }
 
+export class Notepad {
+    constructor(public content: string) { }
+}
+
 export class Message implements ITimestamped {
     constructor(public text: string, public time: moment.Moment) {}
 }

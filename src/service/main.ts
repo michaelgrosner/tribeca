@@ -303,7 +303,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
 
-        new Monitor.ApplicationState(timeProvider, getPublisher(Messaging.Topics.ApplicationState));
 
         var quotePublisher = getPublisher(Messaging.Topics.Quote);
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
@@ -331,6 +330,13 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
         var cleanAllClosedOrdersReceiver = getReceiver(Messaging.Topics.CleanAllClosedOrders);
         var cleanAllOrdersReceiver = getReceiver(Messaging.Topics.CleanAllOrders);
+
+        new Monitor.ApplicationState(
+          timeProvider,
+          getPublisher(Messaging.Topics.ApplicationState),
+          getPublisher(Messaging.Topics.Notepad),
+          getReceiver(Messaging.Topics.ChangeNotepad)
+        );
 
         var gateway = classes.getExch(orderCache);
 
