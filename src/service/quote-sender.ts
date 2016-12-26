@@ -100,13 +100,13 @@ export class QuoteSender {
         }
 
         if (askStatus === Models.QuoteStatus.Live) {
-          if (quote !== null && quote.ask !== null && !askhasEnoughPosition && (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this._quoter.quotesSent(Models.Side.Ask).length))
+          if (quote !== null && quote.ask !== null && !askhasEnoughPosition && this._quoter.quotesSent(Models.Side.Ask).length)
             this._quoter.cancelOneQuote(new Models.Timestamped(Models.Side.Ask, t));
           else this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
         } else this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
 
         if (bidStatus === Models.QuoteStatus.Live) {
-          if (quote !== null && quote.bid !== null && !bidhasEnoughPosition && (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this._quoter.quotesSent(Models.Side.Bid).length))
+          if (quote !== null && quote.bid !== null && !bidhasEnoughPosition && this._quoter.quotesSent(Models.Side.Bid).length)
             this._quoter.cancelOneQuote(new Models.Timestamped(Models.Side.Bid, t));
           else this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
         } else this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));

@@ -542,6 +542,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var t = this._timeProvider.utcNow();
 
             if (ack == null || typeof ack.id === "undefined") {
+              if (ack==null || (ack.message && ack.message!='Insufficient funds'))
                 this._log.warn("WARNING FROM GATEWAY:", order.orderId, err, ack);
             }
 
