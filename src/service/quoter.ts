@@ -88,12 +88,26 @@ export class ExchangeQuoter {
         }
     };
 
+    private highestAskPrice: number;
+    private highestBidPrice: number;
+
     public updateQuote = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
         if (this._activeQuote.length) {
             if (this._activeQuote.filter(o => q.data.price === o.quote.price).length) {
+              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+                if (this._side === Models.Side.Bid && this.highestBidPrice!==null) {
+                  q.data.price = Utils.roundFloat(this.highestBidPrice - .01);
+                  this.highestBidPrice = q.data.price;
+                } else if (this._side === Models.Side.Ask && this.highestAskPrice!==null) {
+                  q.data.price = Utils.roundFloat(this.highestAskPrice + .01);
+                  this.highestAskPrice = q.data.price;
+                }
+                if (this.quotesSent.filter(o => q.data.price === o.quote.price).length)
+                  return Models.QuoteSent.UnsentDuplicate;
+              } else
                 return Models.QuoteSent.UnsentDuplicate;
             }
 
@@ -139,10 +153,13 @@ export class ExchangeQuoter {
         this.quotesSent.push(quoteOrder);
         this._activeQuote.push(quoteOrder);
 
-        if (this._side === Models.Side.Bid)
+        if (this._side === Models.Side.Bid) {
           this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
-        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
-
+          this.highestBidPrice = _.last(this._activeQuote).quote.price;
+        } else {
+          this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
+          this.highestAskPrice = _.last(this._activeQuote).quote.price;
+        }
 
         return Models.QuoteSent.First;
     };
