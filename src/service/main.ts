@@ -348,7 +348,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var orderBroker = new Broker.OrderBroker(timeProvider, paramsRepo, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, cleanAllClosedOrdersReceiver, cleanAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
-        var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+        var positionBroker = new Broker.PositionBroker(timeProvider, broker, orderBroker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
         var startQuoting = (/*timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 &&*/ initActive.active);
         var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
