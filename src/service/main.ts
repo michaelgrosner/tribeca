@@ -382,7 +382,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
         var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
-        var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
+        var quoteSender = new QuoteSender.QuoteSender(timeProvider, paramsRepo, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
         var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
             quotingEngine, broker, mktTradePersister, initMktTrades);

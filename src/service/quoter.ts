@@ -44,6 +44,15 @@ export class Quoter {
         }
     };
 
+    public cancelOneQuote = (s: Models.Timestamped<Models.Side>): Models.QuoteSent => {
+        switch (s.data) {
+            case Models.Side.Ask:
+                return this._askQuoter.cancelOneQuote(s.time);
+            case Models.Side.Bid:
+                return this._bidQuoter.cancelOneQuote(s.time);
+        }
+    };
+
     public quotesSent = (s: Models.Side) => {
         switch (s) {
             case Models.Side.Ask:
@@ -92,6 +101,13 @@ export class ExchangeQuoter {
               ? this.start(q) : this.modify(q);
         }
         return this.start(q);
+    };
+
+    public cancelOneQuote = (t: moment.Moment): Models.QuoteSent => {
+        if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
+            return Models.QuoteSent.UnableToSend;
+
+        return this.stopLowest(t);
     };
 
     public cancelQuote = (t: moment.Moment): Models.QuoteSent => {
