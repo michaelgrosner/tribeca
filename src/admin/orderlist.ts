@@ -95,16 +95,18 @@ var OrderListController = ($scope: OrderListScope,
         enableColumnResize: true,
         rowHeight: 20,
         headerRowHeight: 20,
+        sortInfo: {fields: ['price'], directions: ['desc']},
         columnDefs: [
             { width: 140, field: 'time', displayName: 'time', cellFilter: "momentFullDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-                sort: { direction: uiGridConstants.ASC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                sort: { direction: uiGridConstants.DESC, priority: 2}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000 ? "text-muted" : "";
             }  },
             { width: 90, field: 'orderId', displayName: 'id' },
             { width: 35, field: 'version', displayName: 'v' },
             { width: 120, field: 'orderStatus', displayName: 'status' },
-            { width: 65, field: 'price', displayName: 'px', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            { width: 65, field: 'price', displayName: 'px',
+            sort: { direction: uiGridConstants.DESC, priority: 1}, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
             } },
             { width: 60, field: 'quantity', displayName: 'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
