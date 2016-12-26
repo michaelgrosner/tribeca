@@ -43,7 +43,6 @@ export class QuotingEngine {
 
         this._latest = val;
         this.QuoteChanged.trigger();
-        this._quotePublisher.publish(this._latest);
     }
 
     constructor(
@@ -52,7 +51,6 @@ export class QuotingEngine {
         private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _quotePublisher: Messaging.IPublish<Models.TwoSidedQuote>,
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
         private _ewma: Interfaces.IEwmaCalculator,
@@ -64,7 +62,6 @@ export class QuotingEngine {
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
-        _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
 

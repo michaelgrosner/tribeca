@@ -303,8 +303,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
 
-
-        var quotePublisher = getPublisher(Messaging.Topics.Quote);
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
         var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
         var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
@@ -382,7 +380,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
 
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
+        var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
         var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
