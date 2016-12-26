@@ -98,7 +98,9 @@ var OrderListController = ($scope: OrderListScope,
         columnDefs: [
             { width: 140, field: 'time', displayName: 'time', cellFilter: "momentFullDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-                sort: { direction: uiGridConstants.DESC, priority: 1} },
+                sort: { direction: uiGridConstants.ASC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000 ? "text-muted" : "";
+            }  },
             { width: 90, field: 'orderId', displayName: 'id' },
             { width: 35, field: 'version', displayName: 'v' },
             { width: 120, field: 'orderStatus', displayName: 'status' },
