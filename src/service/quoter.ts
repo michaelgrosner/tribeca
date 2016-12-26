@@ -8,6 +8,7 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
+import _ = require('lodash');
 
 class QuoteOrder {
     constructor(public quote: Models.Quote, public orderId: string) { }
@@ -146,7 +147,7 @@ export class ExchangeQuoter {
             return Models.QuoteSent.UnsentDelete;
         }
 
-        this._broker.cancelOpenOrders();
+        _.map(this._activeQuote, (q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
         this._activeQuote = [];
         return Models.QuoteSent.Delete;
     };
