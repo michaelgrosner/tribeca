@@ -541,25 +541,62 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
-        metrics.send({
-          "tribeca.position_btc" : positionReport.value+"|g",
-          "tribeca.position_eur" : positionReport.quoteValue+"|g",
-          "tribeca.fair_value" : mid+"|g",
-          "tribeca.wallet_btc" : baseAmount+"|g",
-          "tribeca.wallet_eur" : quoteAmount+"|g",
-          "tribeca.wallet_held_btc" : basePosition.heldAmount+"|g",
-          "tribeca.wallet_held_eur" : quotePosition.heldAmount+"|g"
-        });
+        try {
+          if (!this.skipInternalMetrics)
+            metrics.send({
+              "tribeca.position_btc" : positionReport.value+"|g",
+              "tribeca.position_eur" : positionReport.quoteValue+"|g",
+              "tribeca.fair_value" : mid+"|g",
+              "tribeca.wallet_btc" : baseAmount+"|g",
+              "tribeca.wallet_eur" : quoteAmount+"|g",
+              "tribeca.wallet_held_btc" : basePosition.heldAmount+"|g",
+              "tribeca.wallet_held_eur" : quotePosition.heldAmount+"|g"
+            });
+        } catch (e) {}
+        this.skipInternalMetrics = false;
         this._positionPersister.persist(positionReport);
+    };
+
+    private osr: Models.OrderStatusReport[] = [];
+    private skipInternalMetrics: boolean = false;
+
+    private handleOrderUpdate = (o: Models.OrderStatusReport) => {
+        var idx = -1;
+        for(var i=0;i<this.osr.length;i++)
+          if (this.osr[i].orderId==o.orderId) {idx=i; break;}
+        if (idx!=-1) {
+            if (!o.leavesQuantity)
+              this.osr.splice(idx,1);
+        } else if (o.leavesQuantity)
+          this.osr.push(o);
+
+        if (!this.osr.length || !this._report) return;
+        var amount = o.side == Models.Side.Ask
+          ? this._report.baseAmount + this._report.baseHeldAmount
+          : this._report.quoteAmount + this._report.quoteHeldAmount;
+        var heldAmount = 0;
+        this.osr.map((osr: Models.OrderStatusReport) => {
+          if (osr.side!=o.side || !osr.leavesQuantity) return;
+          amount -= osr.leavesQuantity * (osr.side == Models.Side.Bid ? osr.price : 1);
+          heldAmount += osr.leavesQuantity * (osr.side == Models.Side.Bid ? osr.price : 1);
+        });
+        this.skipInternalMetrics = true;
+        this.onPositionUpdate(new Models.CurrencyPosition(
+          amount,
+          heldAmount,
+          o.side == Models.Side.Ask ? o.pair.base : o.pair.quote
+        ));
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _base : Interfaces.IBroker,
+                private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.IPersist<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
+        this._broker.OrderUpdate.on(this.handleOrderUpdate);
 
         this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
     }
