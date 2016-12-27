@@ -81,7 +81,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         this.OrderUpdate.on(o => {
-            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
+            if (!e  || o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
                 return;
 
             lateCancels[e.orderId] = true;
@@ -396,6 +396,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (o.done===true) {
           delete this._orderCache.allOrders[o.orderId];
           delete this._orderCache.exchIdsToClientIds[o.exchangeId];
+          if (o.orderId in this._cancelsWaitingForExchangeOrderId)
+            delete this._cancelsWaitingForExchangeOrderId[o.orderId];
         }
     };
 
@@ -423,12 +425,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-          this.cancelOpenOrders();
+          this._oeGateway.cancelAllOpenOrders();
 
         _orderStatusPublisher.registerSnapshot(() => {
           var flat = [];
           for (var k in this._orderCache.allOrders) {
-            if (!(k in this._orderCache.allOrders) || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working) continue;
+            if (!(k in this._orderCache.allOrders) || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.New || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working) continue;
             flat.push(this._orderCache.allOrders[k]);
             if (flat.length>=100) break;
           }
@@ -483,7 +485,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        _.each(initOrders, this.addOrderStatusToMemory);
+        // _.each(initOrders, this.addOrderStatusToMemory);
         // this._log.info("loaded %d osrs", Object.keys(this._orderCache.allOrders).length);
 
         _.each(initTrades, t => this._trades.push(t));
@@ -567,7 +569,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         if (idx!=-1) {
             if (!o.leavesQuantity)
               this.osr.splice(idx,1);
-        } else if (o.leavesQuantity)
+        } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
           this.osr.push(o);
 
         if (!this.osr.length || !this._report) return;
@@ -576,9 +578,9 @@ export class PositionBroker implements Interfaces.IPositionBroker {
           : this._report.quoteAmount + this._report.quoteHeldAmount;
         var heldAmount = 0;
         this.osr.map((osr: Models.OrderStatusReport) => {
-          if (osr.side!=o.side || !osr.leavesQuantity) return;
-          amount -= osr.leavesQuantity * (osr.side == Models.Side.Bid ? osr.price : 1);
-          heldAmount += osr.leavesQuantity * (osr.side == Models.Side.Bid ? osr.price : 1);
+          if (osr.side!=o.side || !osr.quantity) return;
+          amount -= osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
+          heldAmount += osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
         });
         this.skipInternalMetrics = true;
         this.onPositionUpdate(new Models.CurrencyPosition(

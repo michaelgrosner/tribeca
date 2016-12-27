@@ -461,7 +461,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
 
-    supportsCancelAllOpenOrders = () : boolean => { return true; };
+    supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => {
         var d = Q.defer<number>();
         this._authClient.cancelAllOrders((err, resp) => {
