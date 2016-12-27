@@ -97,7 +97,10 @@ export class ExchangeQuoter {
 
         if (this._activeQuote.length) {
             if (this._activeQuote.filter(o => q.data.price === o.quote.price).length) {
-              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && (
+                this._qlParamRepo.latest.magazine === Models.Magazine.Ludicrous
+                  || (this._qlParamRepo.latest.magazine === Models.Magazine.Fast && this.quotesSent.length<this._qlParamRepo.latest.bullets)
+              )) {
                 if (this._side === Models.Side.Bid && this.highestBidPrice!==null) {
                   q.data.price = Utils.roundFloat(this.highestBidPrice - .01);
                   this.highestBidPrice = q.data.price;
@@ -107,11 +110,13 @@ export class ExchangeQuoter {
                 }
                 if (this.quotesSent.filter(o => q.data.price === o.quote.price).length)
                   return Models.QuoteSent.UnsentDuplicate;
+                if (this._qlParamRepo.latest.magazine === Models.Magazine.Fast)
+                  this.stopLowest(q.time);
               } else
                 return Models.QuoteSent.UnsentDuplicate;
             }
 
-            return (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this._activeQuote.length<this._qlParamRepo.latest.bullets)
+            return (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this.quotesSent.length<this._qlParamRepo.latest.bullets)
               ? this.start(q) : this.modify(q);
         }
         return this.start(q);

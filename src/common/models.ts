@@ -344,6 +344,7 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boo
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
+export enum Magazine { Slow, Fast, Ludicrous }
 
 export class QuotingParameters {
     constructor(public width: number,
@@ -361,6 +362,7 @@ export class QuotingParameters {
                 public tradeRateSeconds: number,
                 public audio: boolean,
                 public bullets: number,
+                public magazine: number,
                 public longEwma: number,
                 public shortEwma: number,
                 public quotingEwma: number,
