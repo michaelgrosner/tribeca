@@ -30,7 +30,7 @@ import request = require('request');
 import http = require("http");
 import https = require('https');
 import socket_io = require('socket.io');
-var heapdump = require('heapdump'); // kill -USR2
+// var heapdump = require('heapdump'); // kill -USR2
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");

@@ -30,7 +30,7 @@ export class ApplicationState {
                 private _appStatePublisher : Messaging.IPublish<Models.ApplicationState>,
                 private _notepadPublisher : Messaging.IPublish<Models.Notepad>,
                 private _changeNotepadReciever : Messaging.IReceive<Models.Notepad>) {
-        _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
+        _timeProvider.setInterval(this.onTick, moment.duration(69, "seconds"));
         this.onTick();
 
         _appStatePublisher.registerSnapshot(() => [this._app_state]);
