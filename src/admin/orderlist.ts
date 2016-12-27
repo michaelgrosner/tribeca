@@ -103,8 +103,14 @@ var OrderListController = ($scope: OrderListScope,
                 return Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000 ? "text-muted" : "";
             }  },
             { width: 90, field: 'orderId', displayName: 'id' },
+            { width: 35, field: 'computationalLatency', displayName: 'lat'},
             { width: 35, field: 'version', displayName: 'v' },
-            { width: 120, field: 'orderStatus', displayName: 'status' },
+            { width: 120, field: 'orderStatus', displayName: 'status', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return row.entity.orderStatus == "New" ? "text-muted" : "";
+            }  },
+            { width: 60, field: 'leavesQuantity', displayName: 'lvQty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.side === 'Ask') ? "sell" : "buy";
+            } },
             { width: 65, field: 'price', displayName: 'px',
             sort: { direction: uiGridConstants.DESC, priority: 1}, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
@@ -122,10 +128,8 @@ var OrderListController = ($scope: OrderListScope,
             }},
             { width: 50, field: 'orderType', displayName: 'type' },
             { width: 50, field: 'tif', displayName: 'tif' },
-            { width: 35, field: 'computationalLatency', displayName: 'lat' },
             { width: 60, field: 'lastQuantity', displayName: 'lQty' },
             { width: 65, field: 'lastPrice', displayName: 'lPx', cellFilter: 'currency' },
-            { width: 60, field: 'leavesQuantity', displayName: 'lvQty' },
             { width: 60, field: 'cumQuantity', displayName: 'cum' },
             { width: 65, field: 'averagePrice', displayName: 'avg', cellFilter: 'currency' },
             { width: 40, field: 'liquidity', displayName: 'liq' },
