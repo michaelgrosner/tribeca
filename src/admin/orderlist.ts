@@ -144,7 +144,7 @@ var OrderListController = ($scope: OrderListScope,
               if (existing.version < o.version)
                   existing.updateWith(o);
             } else $scope.order_statuses.splice(idx,1);
-        } else if (o.leavesQuantity)
+        } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
           $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
