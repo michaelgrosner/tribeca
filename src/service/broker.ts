@@ -430,7 +430,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _orderStatusPublisher.registerSnapshot(() => {
           var flat = [];
           for (var k in this._orderCache.allOrders) {
-            if (!(k in this._orderCache.allOrders) || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.New || this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working) continue;
+            if (!(k in this._orderCache.allOrders) || (this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.New && this._orderCache.allOrders[k].orderStatus != Models.OrderStatus.Working)) continue;
             flat.push(this._orderCache.allOrders[k]);
             if (flat.length>=100) break;
           }
