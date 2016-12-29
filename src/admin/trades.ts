@@ -177,7 +177,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
     };
 
     var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
-        .registerConnectHandler(() => $scope.trade_statuses.length = 0)
         .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
 
