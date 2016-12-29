@@ -110,6 +110,14 @@ var OrderListController = ($scope: OrderListScope,
             { width: 120, field: 'orderStatus', displayName: 'status', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return row.entity.orderStatus == "New" ? "text-muted" : "";
             }  },
+            { width: 50, field: 'side', displayName: 'side' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (grid.getCellValue(row, col) === 'Bid') {
+                    return 'buy';
+                }
+                else if (grid.getCellValue(row, col) === 'Ask') {
+                    return "sell";
+                }
+            }},
             { width: 60, field: 'leavesQuantity', displayName: 'lvQty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
             } },
@@ -122,14 +130,6 @@ var OrderListController = ($scope: OrderListScope,
             }},
             { width: 60, field: 'value', displayName: 'value', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
-            }},
-            { width: 50, field: 'side', displayName: 'side' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-                if (grid.getCellValue(row, col) === 'Bid') {
-                    return 'buy';
-                }
-                else if (grid.getCellValue(row, col) === 'Ask') {
-                    return "sell";
-                }
             }},
             { width: 50, field: 'orderType', displayName: 'type' },
             { width: 50, field: 'tif', displayName: 'tif' },
