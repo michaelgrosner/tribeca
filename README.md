@@ -89,6 +89,13 @@ Once `tribeca` is up and running, visit port `3000` of the machine on which it i
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
 
 ### TODO
+KNOWN BUGS:
+1. Occasionnaly trades would not be correclty cancelled.
+
+2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
+
+3. Orders do not last more than a few miliseconds on OkCoin.
+
 
 TODO:
 
