@@ -97,21 +97,22 @@ export class ExchangeQuoter {
 
         if (this._activeQuote.length) {
             if (this._activeQuote.filter(o => q.data.price === o.quote.price).length) {
-              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && (
-                this._qlParamRepo.latest.magazine === Models.Magazine.Ludicrous
-                  || (this._qlParamRepo.latest.magazine === Models.Magazine.Fast && this.quotesSent.length<this._qlParamRepo.latest.bullets)
-              )) {
-                if (this._side === Models.Side.Bid && this.highestBidPrice!==null) {
-                  q.data.price = Utils.roundFloat(this.highestBidPrice - .01);
-                  this.highestBidPrice = q.data.price;
-                } else if (this._side === Models.Side.Ask && this.highestAskPrice!==null) {
-                  q.data.price = Utils.roundFloat(this.highestAskPrice + .01);
-                  this.highestAskPrice = q.data.price;
-                }
-                if (this.quotesSent.filter(o => q.data.price === o.quote.price).length)
+              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+                this.cancelHigherQuotes(q);
+                if (this._qlParamRepo.latest.magazine === Models.Magazine.Ludicrous || (this._qlParamRepo.latest.magazine === Models.Magazine.Fast && this.quotesSent.length<this._qlParamRepo.latest.bullets)) {
+                  if (this._side === Models.Side.Bid && this.highestBidPrice!==null) {
+                    q.data.price = Utils.roundFloat(this.highestBidPrice - .01);
+                    this.highestBidPrice = q.data.price;
+                  } else if (this._side === Models.Side.Ask && this.highestAskPrice!==null) {
+                    q.data.price = Utils.roundFloat(this.highestAskPrice + .01);
+                    this.highestAskPrice = q.data.price;
+                  }
+                  if (this.quotesSent.filter(o => q.data.price === o.quote.price).length)
+                    return Models.QuoteSent.UnsentDuplicate;
+                  if (this._qlParamRepo.latest.magazine === Models.Magazine.Fast)
+                    this.stopLowest(q.time);
+                } else
                   return Models.QuoteSent.UnsentDuplicate;
-                if (this._qlParamRepo.latest.magazine === Models.Magazine.Fast)
-                  this.stopLowest(q.time);
               } else
                 return Models.QuoteSent.UnsentDuplicate;
             }
@@ -120,6 +121,18 @@ export class ExchangeQuoter {
               ? this.start(q) : this.modify(q);
         }
         return this.start(q);
+    };
+
+    public cancelHigherQuotes = (q: Models.Timestamped<Models.Quote>) => {
+      this._activeQuote.filter(o =>
+        this._side === Models.Side.Bid
+          ? q.data.price < o.quote.price
+          : q.data.price > o.quote.price
+      ).map(o => {
+        var cxl = new Models.OrderCancel(o.orderId, this._exchange, q.time);
+        this._broker.cancelOrder(cxl);
+        this._activeQuote = this._activeQuote.filter(q => q.orderId !== cxl.origOrderId);
+      });
     };
 
     public cancelOneQuote = (t: moment.Moment): Models.QuoteSent => {
