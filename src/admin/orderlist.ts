@@ -19,6 +19,7 @@ class DisplayOrderStatusReport {
     orderStatus: string;
     price: number;
     quantity: number;
+    value: number;
     side: string;
     orderType: string;
     tif: string;
@@ -45,6 +46,7 @@ class DisplayOrderStatusReport {
         this.orderStatus = DisplayOrderStatusReport.getOrderStatus(osr);
         this.price = osr.price;
         this.quantity = osr.quantity;
+        this.value = Math.round(osr.price * osr.quantity * 100) / 100;
         this.orderType = Models.OrderType[osr.type];
         this.tif = Models.TimeInForce[osr.timeInForce];
         this.computationalLatency = osr.computationalLatency;
@@ -116,6 +118,9 @@ var OrderListController = ($scope: OrderListScope,
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
             } },
             { width: 60, field: 'quantity', displayName: 'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.side === 'Ask') ? "sell" : "buy";
+            }},
+            { width: 60, field: 'value', displayName: 'value', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 return (row.entity.side === 'Ask') ? "sell" : "buy";
             }},
             { width: 50, field: 'side', displayName: 'side' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
