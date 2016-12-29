@@ -91,12 +91,12 @@
 </script>
 
 <script type="text/ng-template" id="positions.html">
-    <div>
+    <div class="positions">
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ quoteCurrency }}: {{ quotePosition|currency:undefined:3 }} ({{ quoteHeldPosition|currency:undefined:3 }})
+            {{ quoteCurrency }}:&nbsp;{{ quotePosition|currency:undefined:2 }} (<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
         </small></h4>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
+            {{ baseCurrency }}:&nbsp;{{ basePosition|currency:"B":3 }} (<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
         </small></h4>
         <h4 class="col-md-12 col-xs-2">
           <small>Value: </small><b>{{ value|currency:"B":5 }}</b><br/>
