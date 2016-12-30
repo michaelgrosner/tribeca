@@ -19,13 +19,13 @@ export class StandaloneHttpPublisher<T> {
         private route: string,
         private _httpApp: express.Application,
         private _persister: Persister.ILoadAll<T>) {
-        
+
         _httpApp.get("/data/" + route, (req: express.Request, res: express.Response) => {
             var getParameter = <T>(pName: string, cvt: (r: string) => T) => {
                 var rawMax : string = req.param(pName, null);
                 return (rawMax === null ? null : cvt(rawMax));
             };
-            
+
             var max = getParameter<number>("max", r => parseInt(r));
             var startTime = getParameter<moment.Moment>("start_time", r => moment(r));
 

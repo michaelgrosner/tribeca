@@ -28,10 +28,10 @@ var TargetBasePositionController = ($scope : TargetBasePositionScope, $log : ng.
 
     $scope.$on('$destroy', () => {
         subscriber.disconnect();
-        $log.info("destroy target base position");
+        // $log.info("destroy target base position");
     });
 
-    $log.info("started target base position");
+    // $log.info("started target base position");
 };
 
 export var targetBasePositionDirective = "targetBasePositionDirective";

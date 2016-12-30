@@ -35,12 +35,12 @@ export interface IOrderEntryGateway extends IGateway {
     sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport;
     cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport;
     replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport;
-    
+
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
-    
+
     cancelsByClientOrderId: boolean;
     generateClientOrderId(): string;
-    
+
     supportsCancelAllOpenOrders() : boolean;
     cancelAllOpenOrders() : q.Promise<number>;
 }
@@ -86,8 +86,7 @@ export interface IPositionBroker {
 }
 
 export interface IOrderStateCache {
-    allOrders: { [orderId: string]: Models.OrderStatusReport[] };
-    allOrdersFlat: Models.OrderStatusReport[];
+    allOrders: { [orderId: string]: Models.OrderStatusReport };
     exchIdsToClientIds: { [exchId: string]: string };
 }
 

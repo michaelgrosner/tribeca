@@ -51,11 +51,11 @@ export class Evt<T> {
     public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
 
     public trigger = (data?: T) => this._event.emit("evt", data);
-    
+
     public once = (handler: (data?: T) => void) => this._event.once("evt", handler);
-    
+
     public setMaxListeners = (max: number) => this._event.setMaxListeners(max);
-    
+
     public removeAllListeners = () => this._event.removeAllListeners();
 }
 
@@ -76,12 +76,12 @@ export interface IBacktestingTimeProvider extends ITimeProvider {
 
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
-    
+
     utcNow = () => moment.utc();
-    
+
     setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
-    
+
     setImmediate = (action: () => void) => setImmediate(action);
-    
+
     setInterval = (action: () => void, time: moment.Duration) => setInterval(action, time.asMilliseconds());
 }

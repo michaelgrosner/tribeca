@@ -58,7 +58,7 @@ export class MarketTrade implements ITimestamped {
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
-export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH }
+export enum Currency { USD, BTC, LTC, EUR, GBP, CNY , ETH , CAD }
 export enum ConnectivityStatus { Connected, Disconnected }
 export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfinex }
 export enum Side { Bid, Ask, Unknown }
@@ -179,6 +179,7 @@ export interface OrderStatusReport {
     pendingCancel? : boolean;
     pendingReplace? : boolean;
     cancelRejected? : boolean;
+    done? : boolean;
 }
 
 export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
@@ -206,7 +207,8 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
                 public pendingCancel: boolean,
                 public pendingReplace: boolean,
                 public cancelRejected: boolean,
-                public preferPostOnly: boolean) {}
+                public preferPostOnly: boolean,
+                public done: boolean) {}
 
     public toString() {
         var components: string[] = [];
@@ -250,7 +252,13 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
-                public feeCharged: number) {}
+                public Ktime: moment.Moment,
+                public Kqty: number,
+                public Kprice: number,
+                public Kvalue: number,
+                public Kdiff: number,
+                public feeCharged: number,
+                public loadedFromDB: boolean) {}
 }
 
 export class CurrencyPosition {
@@ -269,6 +277,7 @@ export class PositionReport {
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
                 public value: number,
+                public valueFiat: number,
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
@@ -331,13 +340,17 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
+export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
+export enum Magazine { Slow, Fast, Ludicrous }
 
 export class QuotingParameters {
     constructor(public width: number,
-                public size: number,
+                public buySize: number,
+                public sellSize: number,
+                public pingAt: PingAt,
                 public mode: QuotingMode,
                 public fvModel: FairValueModel,
                 public targetBasePosition: number,
@@ -347,6 +360,9 @@ export class QuotingParameters {
                 public aggressivePositionRebalancing: boolean,
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
+                public audio: boolean,
+                public bullets: number,
+                public magazine: number,
                 public longEwma: number,
                 public shortEwma: number,
                 public quotingEwma: number,
@@ -355,7 +371,7 @@ export class QuotingParameters {
 }
 
 export function toUtcFormattedTime(t: moment.Moment) {
-    return t.format('M/D/YY HH:mm:ss,SSS');
+    return t === null ? null : t.format('D/M HH:mm:ss,SSS');
 }
 
 export function toShortTimeString(t: moment.Moment) {
@@ -368,6 +384,14 @@ export class ExchangePairMessage<T> {
 
 export class ProductAdvertisement {
     constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string) { }
+}
+
+export class ApplicationState {
+    constructor(public memory: number, public hour: number) { }
+}
+
+export class Notepad {
+    constructor(public content: string) { }
 }
 
 export class Message implements ITimestamped {
@@ -392,5 +416,13 @@ export class TargetBasePositionValue {
 }
 
 export class CancelAllOrdersRequest {
+    constructor() {}
+}
+
+export class CleanAllClosedOrdersRequest {
+    constructor() {}
+}
+
+export class CleanAllOrdersRequest {
     constructor() {}
 }

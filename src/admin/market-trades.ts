@@ -13,6 +13,7 @@ class MarketTradeViewModel {
     price: number;
     size: number;
     time: moment.Moment;
+    recent: boolean;
 
     qA: number;
     qB: number;
@@ -54,6 +55,8 @@ class MarketTradeViewModel {
         }
 
         this.make_side = Models.Side[trade.make_side];
+
+        this.recent = true;
     }
 
     private static round(num: number) {
@@ -80,12 +83,25 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         enableColumnResize: true,
         sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
-            { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
+            { width: 90, field: 'time', displayName: 'time', cellFilter: "momentShortDate",
                 sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-                sort: { direction: uiGridConstants.DESC, priority: 1} },
-            { width: 50, field: 'price', displayName: 'px' },
-            { width: 40, field: 'size', displayName: 'sz' },
-            { width: 40, field: 'make_side', displayName: 'ms' },
+                sort: { direction: uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return 'fs11px '+(!row.entity.recent ? "text-muted" : "");
+            } },
+            { width: 60, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+            } },
+            { width: 50, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+            } },
+            { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+                if (grid.getCellValue(row, col) === 'Bid') {
+                    return 'buy';
+                }
+                else if (grid.getCellValue(row, col) === 'Ask') {
+                    return "sell";
+                }
+            }},
             { width: 40, field: 'qBz', displayName: 'qBz' },
             { width: 50, field: 'qB', displayName: 'qB' },
             { width: 50, field: 'qA', displayName: 'qA' },
@@ -100,6 +116,12 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
     var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
             $scope.marketTrades.push(new MarketTradeViewModel(u));
+
+        for(var i=$scope.marketTrades.length-1;i>-1;i--)
+          if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 3600000)
+            $scope.marketTrades.splice(i,1);
+          else if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 7000)
+            $scope.marketTrades[i].recent = false;
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
@@ -108,10 +130,10 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy market trade grid");
+        // $log.info("destroy market trade grid");
     });
 
-    $log.info("started market trade grid");
+    // $log.info("started market trade grid");
 };
 
 export var marketTradeDirective = "marketTradeDirective";

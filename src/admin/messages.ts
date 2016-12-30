@@ -52,10 +52,10 @@ var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subs
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
-        $log.info("destroy message grid");
+        // $log.info("destroy message grid");
     });
 
-    $log.info("started message grid");
+    // $log.info("started message grid");
 };
 
 export var messagesDirective = "messagesDirective";
@@ -63,7 +63,7 @@ export var messagesDirective = "messagesDirective";
 angular
     .module(messagesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("messagesGrid", () => {
-        var template = '<div><div style="height: 50px" class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
+        var template = '<div style="display:none;"><div style="height: 81px" class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
 
         return {
             restrict: 'E',
