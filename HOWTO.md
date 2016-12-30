@@ -87,7 +87,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `bullets` - maximum amount of trades placed in each side (only affects `AK-47`)
 
-* `magazine`
+* `magazine` (only affects `AK-47`)
 
   * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once and canceling the worsts.
 
@@ -95,7 +95,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Ludicrous` - Same as `Fast` but after fire as much `bullets` as configured, cancel them as soon as possible, and repeat the process again forever as in `Fast` (be aware: it may effectively consume all possible CPU/RAM/Network).
 
-* `pingAt` (note: Pongs are always placed in both sides)
+* `pingAt` (Pongs are always placed in both sides, only affects `PingPong`, `Boomerang` and `AK-47`)
 
   * `BothSides` - Place new Pings in both sides.
 
