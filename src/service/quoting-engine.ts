@@ -43,7 +43,6 @@ export class QuotingEngine {
 
         this._latest = val;
         this.QuoteChanged.trigger();
-        this._quotePublisher.publish(this._latest);
     }
 
     constructor(
@@ -52,7 +51,6 @@ export class QuotingEngine {
         private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _quotePublisher: Messaging.IPublish<Models.TwoSidedQuote>,
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
         private _ewma: Interfaces.IEwmaCalculator,
@@ -64,17 +62,16 @@ export class QuotingEngine {
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
         _ewma.Updated.on(recalcWithoutInputTime);
-        _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
-        
+
         _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         var params = this._qlParamRepo.latest;
         var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params);
-        
+
         if (unrounded === null)
             return null;
 
@@ -90,65 +87,89 @@ export class QuotingEngine {
 
         var tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
-            this._log.warn("cannot compute a quote since no position report exists!");
+            // this._log.warn("cannot compute a quote since no position report exists!");
             return null;
         }
         var targetBasePosition = tbp.data;
-        
+
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        
+        var totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
+                unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition);
         }
-        
+
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
+                unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition);
         }
-        
+
         var safety = this._safeties.latest;
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
         }
-        
-        if (params.mode === Models.QuotingMode.PingPong) {
+
+        if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && unrounded.askPx < safety.buyPing + params.width)
             unrounded.askPx = safety.buyPing + params.width;
           if (unrounded.bidSz && safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)
             unrounded.bidPx = safety.sellPong - params.width;
         }
-        
-        if (safety.sell > params.tradesPerMinute) {
+
+        if (unrounded.askPx !== null)
+          for (var fai = 0; fai < filteredMkt.asks.length; fai++) {
+            if (filteredMkt.asks[fai].price > unrounded.askPx) {
+              unrounded.askPx = filteredMkt.asks[fai].price - .01;
+              break;
+            }
+          }
+        if (unrounded.bidPx !== null)
+          for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++) {
+            if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
+              unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
+              break;
+            }
+          }
+
+        if (safety.sell > params.tradesPerMinute || (
+            (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+            && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
+              || (totalQuotePosition>params.buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
+        ))) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
-        if (safety.buy > params.tradesPerMinute) {
+        if (safety.buy > params.tradesPerMinute || (
+          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+            && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide || params.pingAt === Models.PingAt.DepletedBidSide
+              || (totalBasePosition>params.sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))
+        ))) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
-        
+
         if (unrounded.bidPx !== null) {
             unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
-        
+
         if (unrounded.askPx !== null) {
             unrounded.askPx = Utils.roundFloat(unrounded.askPx);
             unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
         }
-        
+
         if (unrounded.askSz !== null) {
             unrounded.askSz = Utils.roundFloat(unrounded.askSz);
             unrounded.askSz = Math.max(0.01, unrounded.askSz);
         }
-        
+
         if (unrounded.bidSz !== null) {
             unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
             unrounded.bidSz = Math.max(0.01, unrounded.bidSz);

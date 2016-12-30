@@ -21,6 +21,9 @@ interface PositionScope extends ng.IScope {
     quoteHeldPosition : number;
     value : number;
     quoteValue : number;
+    buySize : number;
+    sellSize : number;
+    fv : number;
 }
 
 var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
@@ -33,6 +36,12 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         $scope.quoteHeldPosition = null;
         $scope.value = null;
         $scope.quoteValue = null;
+        $scope.fv = null;
+    };
+
+    var clearQP = () => {
+        $scope.buySize = null;
+        $scope.sellSize = null;
     };
 
     var updatePosition = (position : Models.PositionReport) => {
@@ -44,7 +53,17 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
         $scope.quoteHeldPosition = position.quoteHeldAmount;
         $scope.value = position.value;
         $scope.quoteValue = position.quoteValue;
+        $scope.fv = position.quoteValue / position.value;
     };
+
+    var updateQP = qp => {
+      $scope.buySize = qp.buySize;
+      $scope.sellSize = qp.sellSize;
+    };
+
+    var qpSub = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
+        .registerDisconnectedHandler(clearQP)
+        .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
 
     var positionSubscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.Position)
         .registerDisconnectedHandler(clearPosition)
@@ -52,10 +71,11 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
 
     $scope.$on('$destroy', () => {
         positionSubscriber.disconnect();
-        $log.info("destroy position grid");
+        qpSub.disconnect();
+        // $log.info("destroy position grid");
     });
 
-    $log.info("started position grid");
+    // $log.info("started position grid");
 };
 
 export var positionDirective = "positionDirective";

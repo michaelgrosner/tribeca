@@ -10,7 +10,7 @@ var uuid = require('node-uuid');
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    
+
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
 
@@ -123,7 +123,7 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     exchange(): Models.Exchange {
         return Models.Exchange.Null;
     }
-    
+
     private static AllPairs = [
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),

@@ -21,18 +21,18 @@ import QuotingEngine = require("./quoting-engine");
 export class MarketTradesLoaderSaver {
     public loader = (x : Models.MarketTrade) => {
         this._wrapped.loader(x);
-        
+
         if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.loader(x.quote);
     };
-    
+
     public saver = (x : Models.MarketTrade) => {
         this._wrapped.saver(x);
-        
+
         if (typeof x.quote !== "undefined" && x.quote !== null)
             this._wrapped.saver(x.quote);
     };
-    
+
     constructor(private _wrapped: P.LoaderSaver) {}
 }
 
@@ -48,7 +48,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         var qt = u.onStartup ? null : this._quoteEngine.latestQuote;
         var mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
-        var t = new Models.MarketTrade(this._base.exchange(), this._base.pair, u.price, u.size, u.time, qt, 
+        var t = new Models.MarketTrade(this._base.exchange(), this._base.pair, u.price, u.size, u.time, qt,
             mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
 
         if (u.onStartup) {
@@ -79,9 +79,9 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         private _base: Broker.ExchangeBroker,
         private _persister: P.IPersist<Models.MarketTrade>,
         initMkTrades: Array<Models.MarketTrade>) {
-            
+
         initMkTrades.forEach(t => this.marketTrades.push(t));
-        this._log.info("loaded %d market trades", this.marketTrades.length);
+        // this._log.info("loaded %d market trades", this.marketTrades.length);
 
         _marketTradePublisher.registerSnapshot(() => _.takeRight(this.marketTrades, 50));
         this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);

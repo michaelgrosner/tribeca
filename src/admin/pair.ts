@@ -21,11 +21,11 @@ class FormViewModel<T> {
         private _submitConverter: (disp: T) => T = null) {
         if (this._submitConverter === null)
             this._submitConverter = d => d;
-            
+
         _sub.registerConnectHandler(() => this.connected = true)
             .registerDisconnectedHandler(() => this.connected = false)
             .registerSubscriber(this.update, us => us.forEach(this.update));
-            
+
         this.connected = _sub.connected;
         this.master = angular.copy(defaultParameter);
         this.display = angular.copy(defaultParameter);
@@ -36,7 +36,7 @@ class FormViewModel<T> {
     };
 
     public update = (p: T) => {
-        console.log("updating parameters", p);
+        // console.log("updating parameters", p);
         this.master = angular.copy(p);
         this.display = angular.copy(p);
         this.pending = false;
@@ -65,14 +65,18 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableQuotingModes = [];
     availableFvModels = [];
     availableAutoPositionModes = [];
+    availablePingAt = [];
+    availableMagazine = [];
 
     constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
         fire: Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
         this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
+        this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
+        this.availableMagazine = DisplayQuotingParameters.getMapping(Models.Magazine);
     }
 
     private static getMapping<T>(enumObject: T) {
@@ -81,7 +85,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
             if (!enumObject.hasOwnProperty(mem)) continue;
             var val = parseInt(mem, 10);
             if (val >= 0) {
-                names.push({ 'str': enumObject[mem], 'val': val });
+                names.push({ 'str': enumObject[mem].replace('AK47', 'AK-47'), 'val': val });
             }
         }
         return names;
@@ -125,7 +129,7 @@ export class DisplayPair {
     }
 
     public dispose = () => {
-        console.log("dispose client");
+        // console.log("dispose client");
         this._subscribers.forEach(s => s.disconnect());
     };
 

@@ -27,16 +27,19 @@ export interface Persistable {
     time?: moment.Moment|Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
+    loadedFromDB?: boolean;
 }
 
 export class LoaderSaver {
-    public loader = (x: Persistable) => {
+    public loader = (x: Persistable, setDBFlag?: boolean) => {
         if (typeof x.time !== "undefined")
             x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
         if (typeof x.exchange === "undefined")
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
+        if (setDBFlag === true)
+            x.loadedFromDB = true;
     };
 
     public saver = (x: Persistable) => {
@@ -46,6 +49,8 @@ export class LoaderSaver {
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
+        if (typeof x.loadedFromDB !== "undefined")
+            delete x.loadedFromDB;
     };
 
     constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
@@ -53,6 +58,8 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
+    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
+    repersist(report: T, trade: Models.Trade): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -92,9 +99,18 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
+
+    public repersist = (report: T, trade: Models.Trade) => { };
+
     public persist = (report: T) => {
         this._saver(report);
         this.collection.then(coll => {
+            if (this._dbName != 'trades')
+              coll.deleteMany({ _id: { $exists:true } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+              });
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
@@ -122,7 +138,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
         var selector = { exchange: this._exchange, pair: this._pair };
-        if (start_time) {
+        if (this._dbName != "trades" && start_time) {
             selector["time"] = { $gte: start_time.toDate() };
         }
 
@@ -147,7 +163,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     query.toArray((err, arr) => {
                         if (err) deferred.reject(err);
                         else {
-                            _.forEach(arr, this._loader);
+                            _.forEach(arr, p => this._loader(p, this._setDBFlag));
                             deferred.resolve(arr);
                         }
                     });
@@ -162,10 +178,56 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public persist = (report: T) => {
         this.collection.then(coll => {
             this._saver(report);
+            if (this._dbName != 'trades')
+              coll.deleteMany({ time: { $exists:true } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+              });
             coll.insertOne(report, err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
             });
+        }).done();
+    };
+
+    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
+        var deferred = Q.defer<T[]>();
+        this.collection.then(coll => {
+            coll.find({ $and: [
+              { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
+              { side: side==Models.Side.Bid?1:0 },
+              { $where: "this.quantity - this.Kqty > 0" }
+            ] }).limit(10000).project({ _id: 0 }).sort({ Kqty: 1, price: side==Models.Side.Bid?1:-1 })
+            .toArray((err, arr) => {
+                if (err) {
+                    deferred.reject(err);
+                }
+                else if (arr.length === 0) {
+                    deferred.resolve(null);
+                }
+                else {
+                    _.forEach(arr, p => this._loader(p, this._setDBFlag));
+                    deferred.resolve(arr);
+                }
+            });;
+        }).done();
+
+        return deferred.promise;
+    };
+
+    public repersist = (report: T, trade: Models.Trade) => {
+        this.collection.then(coll => {
+            this._saver(report);
+            if (trade.Kqty<0)
+              coll.deleteOne({ tradeId: trade.tradeId }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to deleteOne", this._dbName, report);
+              });
+            else
+              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, Ktime: (moment.isMoment(trade.Ktime) ? trade.Ktime.format('Y-MM-DD HH:mm:ss') : moment(trade.Ktime).format('Y-MM-DD HH:mm:ss')), Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
+                  if (err)
+                      this._log.error(err, "Unable to repersist", this._dbName, report);
+              });
         }).done();
     };
 
@@ -175,7 +237,8 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair,
-        private _loader: (p: Persistable) => void,
+        private _setDBFlag: boolean,
+        private _loader: (p: Persistable, setDBFlag?: boolean) => void,
         private _saver: (p: Persistable) => void) {
             this._log = Utils.log("persister:"+_dbName);
             this.collection = db.then(db => db.collection(this._dbName));

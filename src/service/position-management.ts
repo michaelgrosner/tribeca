@@ -63,7 +63,7 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", 
+        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:",
             Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
@@ -106,7 +106,7 @@ export class TargetBasePositionManager {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.05) {
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01) {
             this._latest = new Models.TargetBasePositionValue(targetBasePosition, this._timeProvider.utcNow());
             this.NewTargetPosition.trigger();
 
