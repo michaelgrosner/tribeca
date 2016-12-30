@@ -30,6 +30,7 @@ import request = require('request');
 import http = require("http");
 import https = require('https');
 import socket_io = require('socket.io');
+var marked = require('marked');
 // var heapdump = require('heapdump'); // kill -USR2
 
 import HitBtc = require("./gateways/hitbtc");
@@ -182,6 +183,14 @@ var liveTradingSetup = () => {
 
     var webport = config.GetNumber("WebClientListenPort");
     web_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
+
+    app.get("/view/*.md", (req: express.Request, res: express.Response) => {
+      try {
+        res.send(marked(fs.readFileSync('./../../'+req.path.replace('/view/','').replace('.md','')+'.md', 'utf8')));
+      } catch (e) {
+        res.send('Document Not Found');
+      }
+    });
 
     var getExchange = (): Models.Exchange => {
         var ex = config.GetString("EXCHANGE").toLowerCase();
