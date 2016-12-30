@@ -29,13 +29,9 @@ import bunyan = require("bunyan");
 import request = require('request');
 import http = require("http");
 import https = require('https');
-<<<<<<< HEAD
-import socket_io = require('socket.io')
-=======
 import socket_io = require('socket.io');
 var marked = require('marked');
 // var heapdump = require('heapdump'); // kill -USR2
->>>>>>> origin/AK-47
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
@@ -161,10 +157,7 @@ var liveTradingSetup = () => {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
 
     var app = express();
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/AK-47
     var web_server;
     try {
       web_server = https.createServer({
@@ -174,10 +167,6 @@ var liveTradingSetup = () => {
     } catch (e) {
       web_server = http.createServer(app)
     }
-<<<<<<< HEAD
-    mainLog.info("Secure web server:", !!web_server.key);
-=======
->>>>>>> origin/AK-47
 
     var io = socket_io(web_server);
 
