@@ -85,15 +85,15 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
 
-* `bullets` - maximum amount of trades placed in each side
+* `bullets` - maximum amount of trades placed in each side (only affects `AK-47`)
 
 * `magazine`
 
-  * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once.
+  * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once and canceling the worsts.
 
-  * `Fast` - Tribeca will force orders until have as much consecutive `bullets` as configured. Increasing/decreasing price by 0.01 from the best matching `width`.
+  * `Fast` - Force orders (ncrease/decrease price by 0.01 from the best matching `width`) until have as much concurrent `bullets` as configured, then place new orders as in `Slow`.
 
-  * `Ludicrous` - Tribeca will fire as much `bullets` as configured and cancel them as soon as possible, and repeat the process again forever (be aware: it may effectively consume all possible CPU/RAM/Network).
+  * `Ludicrous` - Same as `Fast` but after fire as much `bullets` as configured, cancel them as soon as possible, and repeat the process again forever as in `Fast` (be aware: it may effectively consume all possible CPU/RAM/Network).
 
 * `pingAt` (note: Pongs are always placed in both sides)
 
