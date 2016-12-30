@@ -81,6 +81,36 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `PingPong` - Same as `Top` but always respect the calculated `width` from the last sold or bought `size`.
 
+  * `Boomerang` - Same as `PingPong` but the calculated `width` for new Pongs is based on any best matching previous sold or bought `size`.
+
+  * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
+
+* `bullets` - maximum amount of trades placed in each side
+
+* `magazine`
+
+  * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once.
+
+  * `Fast` - Tribeca will force orders until have as much consecutive `bullets` as configured. Increasing/decreasing price by 0.01 from the best matching `width`.
+
+  * `Ludicrous` - Tribeca will fire as much `bullets` as configured and cancel them as soon as possible, and repeat the process again forever (be aware: it may effectively consume all possible CPU/RAM/Network).
+
+* `pingAt` (note: Pongs are always placed in both sides)
+
+  * `BothSides` - Place new Pings in both sides.
+
+  * `BidSide` - Place new Pings only in Bid side, and therefore in Ask side only Pongs will be placed.
+
+  * `AskSide` - Place new Pings only in Ask side, and therefore in Bid side only Pongs will be placed.
+
+  * `Depleted` - Place new Pings only in the opposite side with not enough funds to continue trading.
+
+  * `DepletedBidSide` - Place new Pings only in the Ask side if there are not enough funds to continue trading in the Bid side.
+
+  * `DepletedAskSide` - Place new Pings only in the Bid side if there are not enough funds to continue trading in the Ask side.
+
+  * `StopPings` - Only place new Pongs based on the history of Pings without placing new Pings.
+
 * `fv` - Sets the fair value calculation mode
 
   * `BBO` - `FV = ([best bid price] + [best ask price])/2.0`
@@ -117,6 +147,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 12:00:07 | Buy  | 10    | 0.5  | 2.75  | 0      | Stop sending buy orders until 12:30:07!
 
 * `/sec` - see `trds`
+
+* `audio` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
+
 
 # How can I make up my own trading strategies?
 
