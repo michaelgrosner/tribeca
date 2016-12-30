@@ -29,6 +29,7 @@
     "jquery": "2.2.2",
     "lodash": "4.6.1",
     "lynx": "^0.2.0",
+    "marked": "0.3.6",
     "moment": "2.12.0",
     "mongodb": "2.1.11",
     "node-uuid": "1.4.7",
