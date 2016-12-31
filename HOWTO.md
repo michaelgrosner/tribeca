@@ -91,7 +91,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once and canceling the worsts.
 
-  * `Fast` - Force orders (ncrease/decrease price by 0.01 from the best matching `width`) until have as much concurrent `bullets` as configured, then place new orders as in `Slow`.
+  * `Fast` - Force orders (increase/decrease price by 0.01 from the best matching `width`) until have as much concurrent `bullets` as configured, then place new orders as in `Slow`.
 
   * `Ludicrous` - Same as `Fast` but after fire as much `bullets` as configured, cancel them as soon as possible, and repeat the process again forever as in `Fast` (be aware: it may effectively consume all possible CPU/RAM/Network).
 

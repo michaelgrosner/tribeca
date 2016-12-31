@@ -86,6 +86,22 @@ Once `tribeca` is up and running, visit port `3000` of the machine on which it i
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
 
+### Grafana + InfluxDB + CollectD
+
+Tribeca send metrics periodically to [StatsD plugin of CollectD](https://collectd.org/wiki/index.php/Plugin:StatsD) on default port 8125
+
+You can setup a Grafana instance with a InfluxDB datasource to read the metrics from CollectD send by Tribeca.
+
+The metrics send are:
+
+ * Fair Value
+ * Amount available in wallet for buy
+ * Amount held in open trades for buy
+ * Amount available in wallet for sell
+ * Amount held in open trades for sell
+ * Total amount available in wallet and held in open trades in BTC currency
+ * Total amount available in wallet and held in open trades in Fiat currency
+
 ### KNOWN BUGS:
 
 1. Occasionnaly trades would not be correclty cancelled. (Coinbase seems to cancel orders always OK; what otherexchanges fail occasionnaly?)
@@ -113,6 +129,8 @@ Added new quoting styles PingPong, Boomerang, AK-47.
 Added cleanup of database records, memory usage and log recording.
 
 Added realtime wallet.
+
+Added grafana integration.
 
 Added dark theme and new UI elements.
 
