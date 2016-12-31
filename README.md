@@ -82,6 +82,8 @@ Input your exchange connectivity information, account information, and API keys 
 
 Once `tribeca` is up and running, visit port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
 
+If you want to use https, please create near `tribeca.json` (usually at `tribeca/service`) the folder `sslcert` and place inside the files `server.key` and `server.crt`.
+
 ### REST API
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
@@ -132,7 +134,7 @@ Added realtime wallet.
 
 Added grafana integration.
 
-Added dark theme and new UI elements.
+Added https, dark theme and new UI elements.
 
 Added a bit of love to Kira.
 
