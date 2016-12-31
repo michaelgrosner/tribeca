@@ -2,19 +2,9 @@
 
 `tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
-![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/AK-47/docs/web_ui_preview.png)
+![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/docs/web_ui_preview.png)
 
 Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
-
-### Release 2.0 Changelog:
-
-Added new quoting styles PingPong, Boomerang, AK-47.
-
-Added cleanup of database records, memory usage and log recording.
-
-Added dark theme and new UI elements.
-
-Added a bit of love to Kira.
 
 ### Docker Installation
 
@@ -116,8 +106,24 @@ Tribeca also exposes a REST API of all it's data. It's all the same data you wou
 
 5. More performant UI
 
+### Release 2.0 Changelog:
+
+Added new quoting styles PingPong, Boomerang, AK-47.
+
+Added cleanup of database records, memory usage and log recording.
+
+Added realtime wallet.
+
+Added dark theme and new UI elements.
+
+Added a bit of love to Kira.
+
+### Release 1.0 Changelog:
+
+see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
+
 ### Donations
 
 nope. but you can donate to your favorite developer today! (or tomorrow!)
 
-or, see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
+or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
