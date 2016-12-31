@@ -12,8 +12,10 @@ import Shared = require("./shared_directives");
 class Level {
     bidPrice: number;
     bidSize: number;
+    bidPercent: number;
     askPrice: number;
     askSize: number;
+    askPercent: number;
     diffWidth: number;
 
     bidClass: string;
@@ -79,12 +81,16 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             return;
         }
 
+        var allBids = 0;
+        var allAsks = 0;
         for (var i = 0; i < update.asks.length; i++) {
             if (angular.isUndefined($scope.levels[i]))
                 $scope.levels[i] = new Level();
             $scope.levels[i].askPrice = update.asks[i].price;
             $scope.levels[i].askSize = update.asks[i].size;
+            allAsks += update.asks[i].size;
         }
+        update.bids.map((o) => {allBids += o.size});
 
         if (!angular.isUndefined($scope.order_classes)) {
           var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
@@ -105,6 +111,9 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
+            $scope.levels[i].bidPercent = allBids?update.bids[i].size * 13 / allBids:0;
+            if (!angular.isUndefined(update.asks[i]))
+              $scope.levels[i].askPercent = allAsks?update.asks[i].size * 13 / allAsks:0;
 
             $scope.levels[i].diffWidth = i==0
               ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (

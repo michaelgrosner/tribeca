@@ -33,7 +33,7 @@
 </head>
 
 <script type="text/ng-template" id="market_display.html">
-    <table class="table table-hover table-bordered table-condensed table-responsive">
+    <table class="table table-hover table-bordered table-condensed table-responsive text-center">
         <tr class="active">
             <th></th>
             <th>bidSz</th>
@@ -43,7 +43,7 @@
             <th>askSz</th>
         </tr>
         <tr class="info">
-            <td>q</td>
+            <td class="text-left">q</td>
             <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
             <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
             <td class="fairvalue">{{ fairValue|number:2 }}</td>
@@ -51,12 +51,12 @@
             <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
         </tr>
         <tr class="active" ng-repeat="level in levels">
-            <td>mkt{{ $index }}</td>
-            <td ng-class="level.bidClass">{{ level.bidSize|number:2 }}</td>
+            <td class="text-left">mkt{{ $index }}</td>
+            <td ng-class="level.bidClass"><div style="float:left;position:absolute;background:#8de2ff;width:{{ level.bidPercent|number:2 }}px;">&nbsp;</div>{{ level.bidSize|number:2 }}</td>
             <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
             <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
             <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
-            <td ng-class="level.askClass">{{ level.askSize|number:2 }}</td>
+            <td ng-class="level.askClass"><div style="float:right;position:absolute;background:#ff8e8c;width:{{ level.askPercent|number:2 }}px;">&nbsp;</div>{{ level.askSize|number:2 }}</td>
         </tr>
     </table>
 </script>
