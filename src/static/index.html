@@ -93,10 +93,10 @@
 <script type="text/ng-template" id="positions.html">
     <div class="positions">
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span> (<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
+            {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span><br/>(<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
         </small></h4>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ baseCurrency }}:&nbsp;<span ng-class="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">{{ basePosition|currency:"B":3 }}</span> (<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
+            {{ baseCurrency }}:&nbsp;<span ng-class="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">{{ basePosition|currency:"B":3 }}</span><br/>(<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
         </small></h4>
         <h4 class="col-md-12 col-xs-2">
           <small>Value: </small><b>{{ value|currency:"B":5 }}</b><br/>
