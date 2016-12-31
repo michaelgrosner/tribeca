@@ -81,16 +81,12 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             return;
         }
 
-        var allBids = 0;
-        var allAsks = 0;
         for (var i = 0; i < update.asks.length; i++) {
             if (angular.isUndefined($scope.levels[i]))
                 $scope.levels[i] = new Level();
             $scope.levels[i].askPrice = update.asks[i].price;
             $scope.levels[i].askSize = update.asks[i].size;
-            allAsks += update.asks[i].size;
         }
-        update.bids.map((o) => {allBids += o.size});
 
         if (!angular.isUndefined($scope.order_classes)) {
           var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
@@ -111,9 +107,9 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
-            $scope.levels[i].bidPercent = allBids?Math.max(update.bids[i].size * 32 / allBids,1):1;
+            $scope.levels[i].bidPercent = Math.max(Math.min((Math.log(update.bids[i].size)/Math.log(2))*4,19),1);
             if (!angular.isUndefined(update.asks[i]))
-              $scope.levels[i].askPercent = allAsks?Math.max(update.asks[i].size * 32 / allAsks,1):1;
+              $scope.levels[i].askPercent = Math.max(Math.min((Math.log(update.asks[i].size)/Math.log(2))*4,19),1);
 
             $scope.levels[i].diffWidth = i==0
               ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
