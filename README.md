@@ -1,12 +1,20 @@
 # tribeca
 
-[![Join the chat at https://gitter.im/michaelgrosner/tribeca](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/michaelgrosner/tribeca?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-`tribeca` is a very low latency cryptocurrency [market making](https://github.com/michaelgrosner/tribeca/wiki#what-is-market-making) trading bot with a full featured [web client](https://github.com/michaelgrosner/tribeca#web-ui), [backtester](https://github.com/michaelgrosner/tribeca/wiki#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/michaelgrosner/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
+`tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/AK-47/docs/web_ui_preview.png)
 
 Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
+
+### Release 2.0 Changelog:
+
+Added new quoting styles PingPong, Boomerang, AK-47.
+
+Added cleanup of database records, memory usage and log recording.
+
+Added dark theme and new UI elements.
+
+Added a bit of love to Kira.
 
 ### Docker Installation
 
@@ -14,7 +22,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 2. Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
-3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/michaelgrosner/tribeca#configuration). Input your exchange connectivity information, account information, and mongoDB credentials.
+3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/ctubio/tribeca#configuration). Input your exchange connectivity information, account information, and mongoDB credentials.
 
 4. Save the Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
@@ -32,7 +40,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 5. cd to the outputted JS files, in `tribeca/service`.
 
-6. Create a `tribeca.json` file based off the provided `sample-dev-tribeca.json` or `sample-prod-tribeca.json` files and save it in the current directory. Modify the config keys (see [configuration](https://github.com/michaelgrosner/tribeca#configuration) section) and point the instance towards the running mongoDB instance.
+6. Create a `tribeca.json` file based off the provided `sample-dev-tribeca.json` or `sample-prod-tribeca.json` files and save it in the current directory. Modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section) and point the instance towards the running mongoDB instance.
 
 7. Set environmental variable TRIBECA_CONFIG_FILE to full path of tribeca.json
 
@@ -68,7 +76,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
     3. `BTC/GBP` - Coinbase, Null
 
-  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/michaelgrosner/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
+  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 
 Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on.
 
@@ -76,7 +84,7 @@ Input your exchange connectivity information, account information, and API keys 
 
 1. Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
-2. Read up on how to use tribeca and market making in the [wiki](https://github.com/michaelgrosner/tribeca/wiki).
+2. Read up on how to use tribeca and market making in the [wiki](https://github.com/ctubio/tribeca/blob/master/HOWTO.md).
 
 3. Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 
@@ -88,16 +96,15 @@ Once `tribeca` is up and running, visit port `3000` of the machine on which it i
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
 
-### TODO
-KNOWN BUGS:
-1. Occasionnaly trades would not be correclty cancelled.
+### KNOWN BUGS:
+
+1. Occasionnaly trades would not be correclty cancelled. (Coinbase seems to cancel orders always OK; what otherexchanges fail occasionnaly?)
 
 2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
 
 3. Orders do not last more than a few miliseconds on OkCoin.
 
-
-TODO:
+### TODO:
 
 1. Add new exchanges
 
@@ -111,4 +118,6 @@ TODO:
 
 ### Donations
 
-If you would like to support this project, please consider donating to 1BDpAKp8qqTA1ASXxK2ekk8b8metHcdTxj
+nope. but you can donate to your favorite developer today! (or tomorrow!)
+
+or, see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).

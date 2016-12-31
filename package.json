@@ -51,8 +51,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:michaelgrosner/tribeca.git"
+    "url": "git@github.com:ctubio/tribeca.git"
   },
   "author": "Michael Grosner",
+  "contributors": [{
+    "name": "Carles Tubio"
+  }],
   "license": "ISC"
 }
