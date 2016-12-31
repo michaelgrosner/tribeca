@@ -52,11 +52,11 @@
         </tr>
         <tr class="active" ng-repeat="level in levels">
             <td class="text-left">mkt{{ $index }}</td>
-            <td ng-class="level.bidClass"><div style="float:left;position:absolute;background:#8de2ff;width:{{ level.bidPercent|number:2 }}px;">&nbsp;</div>{{ level.bidSize|number:2 }}</td>
+            <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background:    -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background:     -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background:      -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background:         linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
             <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
             <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
             <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
-            <td ng-class="level.askClass"><div style="float:right;position:absolute;background:#ff8e8c;width:{{ level.askPercent|number:2 }}px;">&nbsp;</div>{{ level.askSize|number:2 }}</td>
+            <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
         </tr>
     </table>
 </script>

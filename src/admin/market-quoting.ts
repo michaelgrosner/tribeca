@@ -111,9 +111,9 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
-            $scope.levels[i].bidPercent = allBids?update.bids[i].size * 13 / allBids:0;
+            $scope.levels[i].bidPercent = allBids?Math.max(update.bids[i].size * 32 / allBids,1):1;
             if (!angular.isUndefined(update.asks[i]))
-              $scope.levels[i].askPercent = allAsks?update.asks[i].size * 13 / allAsks:0;
+              $scope.levels[i].askPercent = allAsks?Math.max(update.asks[i].size * 32 / allAsks,1):1;
 
             $scope.levels[i].diffWidth = i==0
               ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
