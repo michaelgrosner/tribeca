@@ -152,19 +152,15 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
                 level.bidClass = 'active';
-                if ($scope.bidIsLive) {
-                  var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
-                  for (var j = 0; j < bids.length; j++)
-                    if (Math.abs(bids[j].price - level.bidPrice) < tol)
-                        level.bidClass = 'success buy';
-                }
+                var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
+                for (var j = 0; j < bids.length; j++)
+                  if (Math.abs(bids[j].price - level.bidPrice) < tol)
+                      level.bidClass = 'success buy';
                 level.askClass = 'active';
-                if ($scope.askIsLive) {
-                  var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
-                  for (var j = 0; j < asks.length; j++)
-                    if (Math.abs(asks[j].price - level.askPrice) < tol)
-                        level.askClass = 'success sell';
-                }
+                var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
+                for (var j = 0; j < asks.length; j++)
+                  if (Math.abs(asks[j].price - level.askPrice) < tol)
+                      level.askClass = 'success sell';
             }
         }
     };
