@@ -130,9 +130,7 @@ Added new quoting styles PingPong, Boomerang, AK-47.
 
 Added cleanup of database records, memory usage and log recording.
 
-Added realtime wallet.
-
-Added grafana integration.
+Added audio notices, realtime wallet display, and grafana integration.
 
 Added https, dark theme and new UI elements.
 
