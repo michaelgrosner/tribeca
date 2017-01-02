@@ -206,7 +206,6 @@ angular
 
         return {
             restrict: 'E',
-            replace: true,
             transclude: false,
             templateUrl: "market_display.html",
             controller: MarketQuotingController

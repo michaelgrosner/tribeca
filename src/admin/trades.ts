@@ -195,7 +195,6 @@ var tradeList = () : ng.IDirective => {
     return {
         template: template,
         restrict: "E",
-        replace: true,
         transclude: false,
         controller: TradesListController,
         scope: {

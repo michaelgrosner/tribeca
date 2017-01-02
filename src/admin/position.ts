@@ -85,7 +85,6 @@ angular
     .directive("positionGrid", () => {
         return {
             restrict: 'E',
-            replace: true,
             transclude: false,
             templateUrl: "positions.html",
             controller: PositionController,
