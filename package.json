@@ -39,12 +39,13 @@
     "socket.io": "1.4.5",
     "socket.io-client": "1.4.5",
     "typescript": "1.8.9",
-    "typings": "0.7.11",
+    "typings": "2.1.0",
     "utf-8-validate": "1.2.1",
     "ws": "1.0.1"
   },
   "devDependencies": {
-    "mocha": "2.4.5"
+    "mocha": "2.4.5",
+    "retyped-marked-tsd-ambient": "0.0.0-0"
   },
   "scripts": {
     "test": "mocha"
@@ -54,8 +55,10 @@
     "url": "git@github.com:ctubio/tribeca.git"
   },
   "author": "Michael Grosner",
-  "contributors": [{
-    "name": "Carles Tubio"
-  }],
+  "contributors": [
+    {
+      "name": "Carles Tubio"
+    }
+  ],
   "license": "ISC"
 }
