@@ -61,6 +61,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     var clearQuote = () => {
         $scope.order_classes = [];
     };
+    clearQuote();
 
     var clearFairValue = () => {
         $scope.fairValue = null;
@@ -82,13 +83,13 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         }
 
         for (var i = 0; i < update.asks.length; i++) {
-            if (angular.isUndefined($scope.levels[i]))
+            if (i >= $scope.levels.length)
                 $scope.levels[i] = new Level();
             $scope.levels[i].askPrice = update.asks[i].price;
             $scope.levels[i].askSize = update.asks[i].size;
         }
 
-        if (!angular.isUndefined($scope.order_classes)) {
+        if ($scope.order_classes.length) {
           var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
           var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
           if (bids.length) {
@@ -103,12 +104,12 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
           }
         }
         for (var i = 0; i < update.bids.length; i++) {
-            if (angular.isUndefined($scope.levels[i]))
+            if (i >= $scope.levels.length)
                 $scope.levels[i] = new Level();
             $scope.levels[i].bidPrice = update.bids[i].price;
             $scope.levels[i].bidSize = update.bids[i].size;
             $scope.levels[i].bidPercent = Math.max(Math.min((Math.log(update.bids[i].size)/Math.log(2))*4,19),1);
-            if (!angular.isUndefined(update.asks[i]))
+            if (i < update.asks.length)
               $scope.levels[i].askPercent = Math.max(Math.min((Math.log(update.asks[i].size)/Math.log(2))*4,19),1);
 
             $scope.levels[i].diffWidth = i==0
@@ -147,7 +148,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     };
 
     var updateQuoteClass = () => {
-        if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
+        if ($scope.levels && $scope.levels.length > 0) {
             var tol = .005;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
