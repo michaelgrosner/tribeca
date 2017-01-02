@@ -114,6 +114,8 @@ The metrics send are:
 
 ### TODO:
 
+0. Migrate to angular 2 and typescript 2
+
 1. Add new exchanges
 
 2. Add new, smarter trading strategies (as always!)
