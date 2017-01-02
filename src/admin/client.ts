@@ -66,7 +66,7 @@ class DisplayOrder {
         for (var mem in enumObject) {
             if (!enumObject.hasOwnProperty(mem)) continue;
             if (parseInt(mem, 10) >= 0) {
-              names.push(enumObject[mem]);
+              names.push(String(enumObject[mem]));
             }
         }
         return names;
@@ -183,18 +183,18 @@ var uiCtrl = ($scope : MainWindowScope,
     // $log.info("started client");
 };
 
-var requires = ['ui.bootstrap',
-                'ui.grid',
-                FairValueChart.fvChartDirective,
-                OrderList.orderListDirective,
-                Trades.tradeListDirective,
-                MarketQuoting.marketQuotingDirective,
-                MarketTrades.marketTradeDirective,
-                Messages.messagesDirective,
-                Position.positionDirective,
-                Tbp.targetBasePositionDirective,
-                TradeSafety.tradeSafetyDirective,
-                Shared.sharedDirectives];
-
-angular.module('tribeca', requires)
-       .controller('uiCtrl', uiCtrl);
+angular.module('tribeca', [
+        'ui.bootstrap',
+        'ui.grid',
+        FairValueChart.fvChartDirective,
+        OrderList.orderListDirective,
+        Trades.tradeListDirective,
+        MarketQuoting.marketQuotingDirective,
+        MarketTrades.marketTradeDirective,
+        Messages.messagesDirective,
+        Position.positionDirective,
+        Tbp.targetBasePositionDirective,
+        TradeSafety.tradeSafetyDirective,
+        Shared.sharedDirectives
+    ])
+    .controller('uiCtrl', uiCtrl);

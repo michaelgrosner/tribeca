@@ -14,7 +14,7 @@ interface fvChartScope extends ng.IScope {
     fairValueChart: Models.FairValue[];
 }
 
-var fvChartController = ($scope: fvChartScope,
+var fvChartBlock = ($scope: fvChartScope,
                            $log: ng.ILogService,
                            subscriberFactory: Shared.SubscriberFactory) => {
     $scope.fairValueChart = [];
@@ -29,7 +29,7 @@ var fvChartController = ($scope: fvChartScope,
             return;
         }
 
-        //$scope.fairValueChart.push(fv);
+        // $scope.fairValueChart.push(fv);
     };
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
@@ -45,7 +45,10 @@ var fvChartController = ($scope: fvChartScope,
     // $log.info("started order list");
 };
 
-var fvChart = (): ng.IDirective => {
+export var fvChartDirective = "fvChartDirective";
+
+angular.module(fvChartDirective, ['sharedDirectives'])
+    .directive('fvChart', () => {
     var template = '<div></div>';
 
     return {
@@ -53,12 +56,6 @@ var fvChart = (): ng.IDirective => {
         restrict: "E",
         replace: true,
         transclude: false,
-        controller: fvChartController
+        controller: fvChartBlock
     }
-};
-
-export var fvChartDirective = "fvChartDirective";
-
-angular.module(fvChartDirective, ['sharedDirectives'])
-    .controller('fvChartController', fvChartController)
-    .directive("fvChart", fvChart);
+});
