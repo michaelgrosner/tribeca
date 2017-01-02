@@ -43,7 +43,6 @@ angular
 
         return {
             restrict: 'E',
-            replace: true,
             transclude: false,
             template: template,
             controller: TargetBasePositionController

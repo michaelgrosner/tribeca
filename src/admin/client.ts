@@ -209,7 +209,6 @@ angular.module('tribeca', [
         templateUrl: "tribeca.html",
         scope: {},
         restrict: "E",
-        replace: true,
         transclude: false,
         controller: uiCtrl
     }

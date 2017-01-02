@@ -54,7 +54,6 @@ angular.module(fvChartDirective, ['sharedDirectives'])
     return {
         template: template,
         restrict: "E",
-        replace: true,
         transclude: false,
         controller: fvChartBlock
     }
