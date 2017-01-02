@@ -8,6 +8,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
+import _ = require("lodash");
 
 class FormViewModel<T> {
     master: T;
@@ -27,18 +28,18 @@ class FormViewModel<T> {
             .registerSubscriber(this.update, us => us.forEach(this.update));
 
         this.connected = _sub.connected;
-        this.master = angular.copy(defaultParameter);
-        this.display = angular.copy(defaultParameter);
+        this.master = _.cloneDeep(defaultParameter);
+        this.display = _.cloneDeep(defaultParameter);
     }
 
     public reset = () => {
-        this.display = angular.copy(this.master);
+        this.display = _.cloneDeep(this.master);
     };
 
     public update = (p: T) => {
         // console.log("updating parameters", p);
-        this.master = angular.copy(p);
-        this.display = angular.copy(p);
+        this.master = _.cloneDeep(p);
+        this.display = _.cloneDeep(p);
         this.pending = false;
     };
 
@@ -87,7 +88,9 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
             if (!enumObject.hasOwnProperty(mem)) continue;
             var val = parseInt(mem, 10);
             if (val >= 0) {
-                names.push({ 'str': enumObject[mem].replace('AK47', 'AK-47'), 'val': val });
+                var str = String(enumObject[mem]);
+                if (str == 'AK47') str = 'AK-47';
+                names.push({ 'str': str, 'val': val });
             }
         }
         return names;
