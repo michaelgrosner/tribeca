@@ -109,7 +109,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `DepletedAskSide` - Place new Pings only in the Bid side if there are not enough funds to continue trading in the Ask side.
 
-  * `StopPings` - Only place new Pongs based on the history of Pings without placing new Pings.
+  * `StopPings` - Only place new Pongs based on the history of Pings, without placing new Pings.
+
+* `pongAt` (only affects `PingPong`, `Boomerang` and `AK-47`)
+
+  * `LowMarginPing` - Place new Pongs based on the lowest margin Ping in history.
+
+  * `HighMarginPing` - Place new Pongs based on the highest margin Ping in history.
 
 * `fv` - Sets the fair value calculation mode
 
