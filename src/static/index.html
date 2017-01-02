@@ -199,6 +199,7 @@
                                             <th ng-show="pair.quotingParameters.display.mode==7">bullets</th>
                                             <th ng-show="pair.quotingParameters.display.mode==7">magazine</th>
                                             <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
+                                            <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
                                             <th>fv</th>
                                             <th>apMode</th>
                                             <th>width</th>
@@ -231,7 +232,7 @@
                                                     ng-model="pair.quotingParameters.display.mode"
                                                     ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
                                             </td>
-                                            <td style="width:88px;" ng-show="pair.quotingParameters.display.mode==7">
+                                            <td style="width:78px;" ng-show="pair.quotingParameters.display.mode==7">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
@@ -246,6 +247,11 @@
                                                 <select class="form-control input-sm"
                                                    ng-model="pair.quotingParameters.display.pingAt"
                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availablePingAt"></select>
+                                            </td>
+                                            <td style="width:148px;" ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <select class="form-control input-sm"
+                                                   ng-model="pair.quotingParameters.display.pongAt"
+                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availablePongAt"></select>
                                             </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"

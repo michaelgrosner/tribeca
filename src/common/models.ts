@@ -344,6 +344,7 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boo
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
+export enum PongAt { LowMarginPing, HighMarginPing }
 export enum Magazine { Slow, Fast, Ludicrous }
 
 export class QuotingParameters {
@@ -351,6 +352,7 @@ export class QuotingParameters {
                 public buySize: number,
                 public sellSize: number,
                 public pingAt: PingAt,
+                public pongAt: PongAt,
                 public mode: QuotingMode,
                 public fvModel: FairValueModel,
                 public targetBasePosition: number,
