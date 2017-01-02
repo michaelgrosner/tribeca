@@ -235,6 +235,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
+      if (reTrades!=null && reTrades.length && this._qlParamRepo.latest.pongAt == Models.PongAt.LowMarginPing)
+        reTrades.reverse();
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
         gowhile = false;

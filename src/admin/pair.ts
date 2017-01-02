@@ -66,16 +66,18 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableFvModels = [];
     availableAutoPositionModes = [];
     availablePingAt = [];
+    availablePongAt = [];
     availableMagazine = [];
 
     constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
         fire: Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
         this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
         this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
+        this.availablePongAt = DisplayQuotingParameters.getMapping(Models.PongAt);
         this.availableMagazine = DisplayQuotingParameters.getMapping(Models.Magazine);
     }
 
