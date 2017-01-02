@@ -81,7 +81,7 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListController = ($scope: OrderListScope,
+var OrderListGrid = ($scope: OrderListScope,
                            $log: ng.ILogService,
                            subscriberFactory: Shared.SubscriberFactory,
                            fireFactory: Shared.FireFactory,
@@ -174,7 +174,10 @@ var OrderListController = ($scope: OrderListScope,
     // $log.info("started order list");
 };
 
-var orderList = (): ng.IDirective => {
+export var orderListDirective = "orderListDirective";
+
+angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', "ui.grid.grouping", Shared.sharedDirectives])
+    .directive('orderList', () => {
     var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
 
     return {
@@ -182,12 +185,6 @@ var orderList = (): ng.IDirective => {
         restrict: "E",
         replace: true,
         transclude: false,
-        controller: OrderListController
+        controller: OrderListGrid
     }
-};
-
-export var orderListDirective = "orderListDirective";
-
-angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', "ui.grid.grouping", Shared.sharedDirectives])
-    .controller('OrderListController', OrderListController)
-    .directive("orderList", orderList);
+});
