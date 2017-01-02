@@ -114,6 +114,8 @@ The metrics send are:
 
 ### TODO:
 
+-1. concurrent exchanges, display charts, chat room
+
 0. Migrate to angular 2 and typescript 2
 
 1. Add new exchanges
