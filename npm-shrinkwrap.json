@@ -2,6 +2,11 @@
   "name": "tribeca",
   "version": "2.0.0",
   "dependencies": {
+    "@angular/core": {
+      "version": "2.4.1",
+      "from": "@angular/core@latest",
+      "resolved": "https://registry.npmjs.org/@angular/core/-/core-2.4.1.tgz"
+    },
     "abbrev": {
       "version": "1.0.7",
       "from": "abbrev@>=1.0.0 <2.0.0",
@@ -2270,6 +2275,11 @@
       "from": "ripemd160@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/ripemd160/-/ripemd160-1.0.1.tgz"
     },
+    "rxjs": {
+      "version": "5.0.2",
+      "from": "rxjs@latest",
+      "resolved": "https://registry.npmjs.org/rxjs/-/rxjs-5.0.2.tgz"
+    },
     "safe-json-stringify": {
       "version": "1.0.3",
       "from": "safe-json-stringify@>=1.0.0 <2.0.0",
@@ -2487,6 +2497,11 @@
       "version": "2.0.0",
       "from": "supports-color@>=2.0.0 <3.0.0",
       "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-2.0.0.tgz"
+    },
+    "symbol-observable": {
+      "version": "1.0.4",
+      "from": "symbol-observable@>=1.0.1 <2.0.0",
+      "resolved": "https://registry.npmjs.org/symbol-observable/-/symbol-observable-1.0.4.tgz"
     },
     "syntax-error": {
       "version": "1.1.6",
@@ -2842,6 +2857,11 @@
       "version": "0.1.0",
       "from": "zip-object@>=0.1.0 <0.2.0",
       "resolved": "https://registry.npmjs.org/zip-object/-/zip-object-0.1.0.tgz"
+    },
+    "zone.js": {
+      "version": "0.7.4",
+      "from": "zone.js@latest",
+      "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.7.4.tgz"
     }
   }
 }

@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "@angular/core": "^2.4.1",
     "agentkeepalive": "2.0.5",
     "angular": "1.5.3",
     "angular-ui-bootstrap": "1.2.5",
@@ -35,13 +36,15 @@
     "node-uuid": "1.4.7",
     "q": "1.4.1",
     "request": "2.69.0",
+    "rxjs": "^5.0.2",
     "shortid": "2.2.4",
     "socket.io": "1.4.5",
     "socket.io-client": "1.4.5",
     "typescript": "1.8.9",
     "typings": "^0.8.1",
     "utf-8-validate": "1.2.1",
-    "ws": "1.0.1"
+    "ws": "1.0.1",
+    "zone.js": "^0.7.4"
   },
   "devDependencies": {
     "mocha": "2.4.5",
