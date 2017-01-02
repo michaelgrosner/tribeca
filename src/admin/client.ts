@@ -197,4 +197,12 @@ angular.module('tribeca', [
         TradeSafety.tradeSafetyDirective,
         Shared.sharedDirectives
     ])
-    .controller('uiCtrl', uiCtrl);
+    .directive('tribeca', () => {
+    return {
+        templateUrl: "tribeca.html",
+        restrict: "E",
+        replace: true,
+        transclude: false,
+        controller: uiCtrl
+    }
+});
