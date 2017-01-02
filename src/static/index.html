@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-controller="uiCtrl" ng-app="tribeca">
+<html ng-app="tribeca">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -105,8 +105,8 @@
     </div>
 </script>
 
-<body>
-
+<script type="text/ng-template" id="tribeca.html">
+  <div>
     <div ng-if="!connected">
         Not connected
     </div>
@@ -369,5 +369,10 @@
         <a href="/view/README.md" target="_blank">README</a> - <a href="/view/HOWTO.md" target="_blank">HOWTO</a>
       </small>
     </address>
+  </div>
+</script>
+
+<body>
+  <tribeca></tribeca>
 </body>
 </html>
