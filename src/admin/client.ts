@@ -1,4 +1,5 @@
 /// <reference path="../common/models.ts" />
+/// <reference path="fv-chart.ts"/>
 /// <reference path="orderlist.ts"/>
 /// <reference path="trades.ts"/>
 /// <reference path="../common/messaging.ts"/>
@@ -19,6 +20,7 @@ var bootstrap = require("../bootstrap.min");
 
 import Models = require("../common/models");
 import moment = require("moment");
+import FairValueChart = require("./fv-chart");
 import OrderList = require("./orderlist");
 import Trades = require("./trades");
 import Messaging = require("../common/messaging");
@@ -183,6 +185,7 @@ var uiCtrl = ($scope : MainWindowScope,
 
 var requires = ['ui.bootstrap',
                 'ui.grid',
+                FairValueChart.fvChartDirective,
                 OrderList.orderListDirective,
                 Trades.tradeListDirective,
                 MarketQuoting.marketQuotingDirective,
