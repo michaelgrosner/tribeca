@@ -34,8 +34,6 @@ import Tbp = require("./target-base-position");
 import TradeSafety = require("./trade-safety");
 
 interface MainWindowScope extends ng.IScope {
-    env : string;
-    theme : string;
     memory : string;
     notepad : string;
     connected : boolean;
@@ -118,9 +116,16 @@ var uiCtrl = ($scope : MainWindowScope,
     };
 
     var user_theme = null;
+    var system_theme = null;
+
+    var setTheme = () => {
+      jQuery('#daynight').attr('href', '/css/bootstrap-theme'+system_theme+'.min.css');
+    };
+
     $scope.changeTheme = () => {
-      user_theme = user_theme!==null?(user_theme==''?'-dark':''):($scope.theme==''?'-dark':'');
-      $scope.theme = user_theme;
+      user_theme = user_theme!==null?(user_theme==''?'-dark':''):(system_theme==''?'-dark':'');
+      system_theme = user_theme;
+      setTheme();
       window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
@@ -135,14 +140,16 @@ var uiCtrl = ($scope : MainWindowScope,
 
     var onAppState = (as : Models.ApplicationState) => {
       $scope.memory = bytesToSize(as.memory, 3);
-      $scope.theme = getTheme(as.hour);
+      system_theme = getTheme(as.hour);
+      setTheme();
     };
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
         // $log.info("advert", pa);
         $scope.connected = true;
-        $scope.env = pa.environment;
-        $scope.theme = getTheme(moment.utc().hours());
+        window.document.title = 'tribeca ['+pa.environment+']';
+        system_theme = getTheme(moment.utc().hours());
+        setTheme();
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
@@ -200,6 +207,7 @@ angular.module('tribeca', [
     .directive('tribeca', () => {
     return {
         templateUrl: "tribeca.html",
+        scope: {},
         restrict: "E",
         replace: true,
         transclude: false,
