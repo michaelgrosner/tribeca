@@ -94,7 +94,7 @@ angular.module(walletPositionDirective, ['ui.bootstrap', Shared.sharedDirectives
         <br/><b>{{ walletPositionScope.quoteValue|currency:undefined:2 }}</b>
       </h4>
     </div>`,
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: WalletPositionController,
     controllerAs: 'walletPositionScope',

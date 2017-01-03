@@ -1,11 +1,12 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="shared_directives.ts"/>
+/// <reference path='../common/models.ts' />
+/// <reference path='../common/messaging.ts' />
+/// <reference path='shared_directives.ts'/>
+/// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require("angular");
-import Models = require("../common/models");
-import Messaging = require("../common/messaging");
-import Shared = require("./shared_directives");
+import angular = require('angular');
+import Models = require('../common/models');
+import Messaging = require('../common/messaging');
+import Shared = require('./shared_directives');
 
 class DisplayLevel {
   bidPrice: number;
@@ -225,7 +226,7 @@ angular.module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.shared
         <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
       </tr>
     </table>`,
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: MarketQuotingController,
     controllerAs: 'marketQuotingScope',

@@ -1,17 +1,13 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="shared_directives.ts"/>
+/// <reference path='../common/models.ts' />
+/// <reference path='../common/messaging.ts' />
+/// <reference path='shared_directives.ts'/>
+/// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require("angular");
-import Models = require("../common/models");
-import io = require("socket.io-client");
-import moment = require("moment");
-import Messaging = require("../common/messaging");
-import Shared = require("./shared_directives");
-
-interface OrderListScope extends ng.IScope {
-    order_statuses: DisplayOrderStatusReport[];
-    gridOptions: any;
-}
+import angular = require('angular');
+import moment = require('moment');
+import Models = require('../common/models');
+import Messaging = require('../common/messaging');
+import Shared = require('./shared_directives');
 
 class DisplayOrderStatusReport {
     orderId: string;
@@ -81,16 +77,23 @@ class DisplayOrderStatusReport {
     };
 }
 
-var OrderListGrid = ($scope: OrderListScope,
-                           $log: ng.ILogService,
-                           subscriberFactory: Shared.SubscriberFactory,
-                           fireFactory: Shared.FireFactory,
-                           uiGridConstants: any) => {
+class OrderListController {
+
+  public order_statuses: DisplayOrderStatusReport[];
+  public gridOptions: any;
+
+  constructor(
+    $scope: ng.IScope,
+    $log: ng.ILogService,
+    subscriberFactory: Shared.SubscriberFactory,
+    fireFactory: Shared.FireFactory,
+    uiGridConstants: any
+  ) {
     var fireCxl = fireFactory.getFire(Messaging.Topics.CancelOrder);
 
-    $scope.order_statuses = [];
-    $scope.gridOptions = {
-        data: 'order_statuses',
+    this.order_statuses = [];
+    this.gridOptions = {
+        data: 'orderListScope.order_statuses',
         primaryKey: 'orderId',
         groupsCollapsedByDefault: true,
         treeRowHeaderAlwaysVisible: false,
@@ -145,45 +148,44 @@ var OrderListGrid = ($scope: OrderListScope,
 
     var addOrderRpt = (o: Models.OrderStatusReport) => {
         var idx = -1;
-        for(var i=0;i<$scope.order_statuses.length;i++)
-          if ($scope.order_statuses[i].orderId==o.orderId) {idx=i; break;}
+        for(var i=0;i<this.order_statuses.length;i++)
+          if (this.order_statuses[i].orderId==o.orderId) {idx=i; break;}
         if (idx!=-1) {
             if (o.leavesQuantity) {
-              var existing = $scope.order_statuses[idx];
+              var existing = this.order_statuses[idx];
               if (existing.version < o.version)
                   existing.updateWith(o);
-            } else $scope.order_statuses.splice(idx,1);
+            } else this.order_statuses.splice(idx,1);
         } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
-          $scope.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
+          this.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
     };
 
     var clear = () => {
-        $scope.order_statuses.length = 0;
+        this.order_statuses.length = 0;
     };
 
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.OrderStatusReports)
+    var subscriberOSR = subscriberFactory.getSubscriber($scope, Messaging.Topics.OrderStatusReports)
         .registerConnectHandler(clear)
         .registerDisconnectedHandler(clear)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
     $scope.$on('$destroy', () => {
-        sub.disconnect();
-        // $log.info("destroy order list");
+        subscriberOSR.disconnect();
     });
+  }
+}
 
-    // $log.info("started order list");
-};
+export var orderListDirective = 'orderListDirective';
 
-export var orderListDirective = "orderListDirective";
-
-angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', "ui.grid.grouping", Shared.sharedDirectives])
-    .directive('orderList', () => {
-    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
-
-    return {
-        template: template,
-        restrict: "E",
-        transclude: false,
-        controller: OrderListGrid
-    }
-});
+angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
+  .directive('orderList', (): ng.IDirective => { return {
+    template: `<div>
+      <div ui-grid="orderListScope.gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div>
+    </div>`,
+    restrict: 'E',
+    transclude: false,
+    controller: OrderListController,
+    controllerAs: 'orderListScope',
+    scope: {},
+    bindToController: true
+  }});

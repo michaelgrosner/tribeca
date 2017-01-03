@@ -58,7 +58,7 @@ angular.module(tradeSafetyDirective, [Shared.sharedDirectives])
       SellTS: {{ tradeSafetyScope.sellSafety|number:2 }},
       TotalTS: {{ tradeSafetyScope.tradeSafetyValue|number:2 }}
     </div>`,
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: TradeSafetyController,
     controllerAs: 'tradeSafetyScope',

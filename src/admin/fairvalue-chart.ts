@@ -47,7 +47,7 @@ export var fairValueChartDirective = 'fairValueChartDirective';
 angular.module(fairValueChartDirective, [Shared.sharedDirectives])
   .directive('fairValueChart', (): ng.IDirective => { return {
     template: '',//'<div>{{ fairValueChartScope.fairValueChart|number:2 }}</div>',
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: FairValueChartController,
     controllerAs: 'fairValueChartScope',
