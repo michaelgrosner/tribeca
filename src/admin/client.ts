@@ -199,7 +199,7 @@ angular.module('tribeca', [
         OrderList.orderListDirective,
         Trades.tradeListDirective,
         MarketQuoting.marketQuotingDirective,
-        MarketTrades.marketTradeDirective,
+        MarketTrades.marketTradesDirective,
         Messages.messagesDirective,
         WalletPosition.walletPositionDirective,
         TargetBasePosition.targetBasePositionDirective,

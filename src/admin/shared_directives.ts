@@ -4,9 +4,9 @@
 /// <amd-dependency path="ui.bootstrap"/>
 
 import angular = require("angular");
+import io = require("socket.io-client");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
-import io = require("socket.io-client");
 
 var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
     var getTemplate = (contentType, template_url) => {

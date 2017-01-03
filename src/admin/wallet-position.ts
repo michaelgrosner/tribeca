@@ -1,7 +1,7 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
-/// <amd-dependency path='ui.bootstrap'/>
 /// <reference path='shared_directives.ts'/>
+/// <amd-dependency path='ui.bootstrap'/>
 
 import angular = require('angular');
 import Models = require('../common/models');
@@ -78,7 +78,7 @@ class WalletPositionController {
 
 export var walletPositionDirective = 'walletPositionDirective';
 
-angular.module(walletPositionDirective, ['ui.bootstrap', 'sharedDirectives'])
+angular.module(walletPositionDirective, ['ui.bootstrap', Shared.sharedDirectives])
   .directive('walletPosition', (): ng.IDirective => { return {
     template: `<div class="positions">
         <h4 class="col-md-12 col-xs-2"><small>
