@@ -1,14 +1,10 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
-///<reference path='pair.ts'/>
 
 import angular = require('angular');
 import Models = require('../common/models');
-import io = require('socket.io-client');
-import moment = require('moment');
 import Messaging = require('../common/messaging');
-import Pair = require('./pair');
 import Shared = require('./shared_directives');
 
 class TargetBasePositionController {
