@@ -87,6 +87,7 @@ class DisplayOrder {
 }
 
 var uiCtrl = ($scope : MainWindowScope,
+              $window: ng.IWindowService,
               $timeout : ng.ITimeoutService,
               $log : ng.ILogService,
               subscriberFactory : Shared.SubscriberFactory,
@@ -127,7 +128,7 @@ var uiCtrl = ($scope : MainWindowScope,
       user_theme = user_theme!==null?(user_theme==''?'-dark':''):(system_theme==''?'-dark':'');
       system_theme = user_theme;
       setTheme();
-      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
+      $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var getTheme = (hour: number) => {
@@ -148,13 +149,13 @@ var uiCtrl = ($scope : MainWindowScope,
     var onAdvert = (pa : Models.ProductAdvertisement) => {
         // $log.info("advert", pa);
         $scope.connected = true;
-        window.document.title = 'tribeca ['+pa.environment+']';
+        $window.document.title = 'tribeca ['+pa.environment+']';
         system_theme = getTheme(moment.utc().hours());
         setTheme();
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
-        window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
+        $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var reset = (reason : string) => {
