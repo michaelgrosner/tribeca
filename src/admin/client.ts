@@ -195,7 +195,7 @@ var uiCtrl = ($scope : MainWindowScope,
 angular.module('tribeca', [
         'ui.bootstrap',
         'ui.grid',
-        FairValueChart.fvChartDirective,
+        FairValueChart.fairValueChartDirective,
         OrderList.orderListDirective,
         Trades.tradeListDirective,
         MarketQuoting.marketQuotingDirective,
