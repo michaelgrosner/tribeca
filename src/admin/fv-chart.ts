@@ -14,47 +14,54 @@ interface fvChartScope extends ng.IScope {
     fairValueChart: Models.FairValue[];
 }
 
-var fvChartBlock = ($scope: fvChartScope,
-                           $log: ng.ILogService,
-                           subscriberFactory: Shared.SubscriberFactory) => {
-    $scope.fairValueChart = [];
+class fvChartCtrl {
 
-    var clear = () => {
-        $scope.fairValueChart.length = 0;
-    };
+    public fairValueChart: number;
 
-    var addFairValue = (fv: Models.FairValue) => {
-        if (fv == null) {
-            clear();
-            return;
-        }
+    constructor($scope: fvChartScope,
+                       $log: ng.ILogService,
+                       subscriberFactory: Shared.SubscriberFactory) {
+        var clear = () => {
+            this.fairValueChart = 0;
+        };
+        clear();
 
-        // $scope.fairValueChart.push(fv);
-    };
+        var addFairValue = (fv: Models.FairValue) => {
+            if (fv == null) {
+                clear();
+                return;
+            }
 
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
-        .registerConnectHandler(clear)
-        .registerDisconnectedHandler(clear)
-        .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
+            // this.fairValueChart = fv.price;
+        };
 
-    $scope.$on('$destroy', () => {
-        sub.disconnect();
-        // $log.info("destroy order list");
-    });
+        var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
+            .registerConnectHandler(clear)
+            .registerDisconnectedHandler(clear)
+            .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
 
-    // $log.info("started order list");
-};
+        $scope.$on('$destroy', () => {
+            sub.disconnect();
+            // $log.info("destroy order list");
+        });
+
+        // $log.info("started order list");
+    }
+}
 
 export var fvChartDirective = "fvChartDirective";
 
 angular.module(fvChartDirective, ['sharedDirectives'])
-    .directive('fvChart', () => {
-    var template = '<div></div>';
-
+    .directive('fvChart', (): ng.IDirective => {
     return {
-        template: template,
+        template: '',// '<div>{{ fvChartVM.fairValueChart|number:2 }}</div>',
         restrict: "E",
         transclude: false,
-        controller: fvChartBlock
+        controller: fvChartCtrl,
+        controllerAs: 'fvChartVM',
+        scope: {},
+        bindToController: {
+          fairValueChart: "@"
+        }
     }
 });
