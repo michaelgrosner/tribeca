@@ -10,7 +10,7 @@ import Messaging = require('../common/messaging');
 import Shared = require('./shared_directives');
 //import Highcharts = require('highcharts-ng');
 
-class fvChartCtrl {
+class FairValueChartController {
 
   public fairValueChart: number;
 
@@ -44,15 +44,15 @@ class fvChartCtrl {
   }
 }
 
-export var fvChartDirective = 'fvChartDirective';
+export var fairValueChartDirective = 'fairValueChartDirective';
 
-angular.module(fvChartDirective, ['sharedDirectives'])
-  .directive('fvChart', (): ng.IDirective => { return {
-    template: '',//'<div>{{ fvChartScope.fairValueChart|number:2 }}</div>',
+angular.module(fairValueChartDirective, ['sharedDirectives'])
+  .directive('fairValueChart', (): ng.IDirective => { return {
+    template: '',//'<div>{{ fairValueChartScope.fairValueChart|number:2 }}</div>',
     restrict: "E",
     transclude: false,
-    controller: fvChartCtrl,
-    controllerAs: 'fvChartScope',
+    controller: FairValueChartController,
+    controllerAs: 'fairValueChartScope',
     scope: {},
     bindToController: {
       fairValueChart: '@'
