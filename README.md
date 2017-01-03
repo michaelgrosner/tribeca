@@ -20,7 +20,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Manual Installation
 
-1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 1.7.5, grunt, typings, and, optionally, forever are installed (`npm install -g grunt-cli typescript typings@0.8.1 forever`).
+1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 2.1.4, grunt, typings, and, optionally, forever are installed (`npm install -g grunt-cli typescript typings@2.1.0 forever`).
 
 2. Clone the repository.
 
