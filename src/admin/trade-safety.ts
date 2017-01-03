@@ -1,66 +1,70 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="shared_directives.ts"/>
-///<reference path="pair.ts"/>
+/// <reference path='../common/models.ts' />
+/// <reference path='../common/messaging.ts' />
+/// <reference path='shared_directives.ts'/>
+///<reference path='pair.ts'/>
 
-import angular = require("angular");
-import Models = require("../common/models");
-import io = require("socket.io-client");
-import moment = require("moment");
-import Messaging = require("../common/messaging");
-import Pair = require("./pair");
-import Shared = require("./shared_directives");
+import angular = require('angular');
+import Models = require('../common/models');
+import io = require('socket.io-client');
+import moment = require('moment');
+import Messaging = require('../common/messaging');
+import Pair = require('./pair');
+import Shared = require('./shared_directives');
 
-interface TradeSafetyScope extends ng.IScope {
-    buySafety: number;
-    sellSafety: number;
-    buySizeSafety: number;
-    sellSizeSafety: number;
-    tradeSafetyValue : number;
-}
+class TradeSafetyController {
 
-var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+  public buySafety: number;
+  public sellSafety: number;
+  public buySizeSafety: number;
+  public sellSizeSafety: number;
+  public tradeSafetyValue : number;
 
+  constructor(
+    $scope: ng.IScope,
+    $log: ng.ILogService,
+    subscriberFactory: Shared.SubscriberFactory
+  ) {
     var updateValue = (value : Models.TradeSafety) => {
-        if (value == null) return;
-        $scope.tradeSafetyValue = value.combined;
-        $scope.buySafety = value.buy;
-        $scope.sellSafety = value.sell;
-        $scope.buySizeSafety = value.buyPing;
-        $scope.sellSizeSafety = value.sellPong;
+      if (value == null) return;
+      this.tradeSafetyValue = value.combined;
+      this.buySafety = value.buy;
+      this.sellSafety = value.sell;
+      this.buySizeSafety = value.buyPing;
+      this.sellSizeSafety = value.sellPong;
     };
 
     var clear = () => {
-        $scope.tradeSafetyValue = null;
-        $scope.buySafety = null;
-        $scope.sellSafety = null;
-        $scope.buySizeSafety = null;
-        $scope.sellSizeSafety = null;
+      this.tradeSafetyValue = null;
+      this.buySafety = null;
+      this.sellSafety = null;
+      this.buySizeSafety = null;
+      this.sellSizeSafety = null;
     };
 
-    var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
-        .registerDisconnectedHandler(clear)
-        .registerSubscriber(updateValue, us => us.forEach(updateValue));
+    var subscriberTradeSafetyValue = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
+      .registerDisconnectedHandler(clear)
+      .registerSubscriber(updateValue, us => us.forEach(updateValue));
 
     $scope.$on('$destroy', () => {
-        subscriber.disconnect();
-        // $log.info("destroy trade safety");
+        subscriberTradeSafetyValue.disconnect();
     });
+  }
+}
+export var tradeSafetyDirective = 'tradeSafetyDirective';
 
-    // $log.info("started trade safety");
-};
-
-export var tradeSafetyDirective = "tradeSafetyDirective";
-
-angular
-    .module(tradeSafetyDirective, ['sharedDirectives'])
-    .directive("tradeSafety", () => {
-    var template = '<div>BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety|number:2 }}</span>, SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety|number:2 }}</span>, BuyTS: {{ buySafety|number:2 }}, SellTS: {{ sellSafety|number:2 }}, TotalTS: {{ tradeSafetyValue|number:2 }}</div>';
-
-        return {
-            restrict: 'E',
-            transclude: false,
-            template: template,
-            controller: TradeSafetyController
-        }
-    });
+angular.module(tradeSafetyDirective, ['sharedDirectives'])
+  .directive('tradeSafety', (): ng.IDirective => { return {
+    template: `<div>
+      BuyPing: <span class="{{ tradeSafetyScope.buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyScope.buySizeSafety|number:2 }}</span>,
+      SellPing: <span class="{{ tradeSafetyScope.sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyScope.sellSizeSafety|number:2 }}</span>,
+      BuyTS: {{ tradeSafetyScope.buySafety|number:2 }},
+      SellTS: {{ tradeSafetyScope.sellSafety|number:2 }},
+      TotalTS: {{ tradeSafetyScope.tradeSafetyValue|number:2 }}
+    </div>`,
+    restrict: "E",
+    transclude: false,
+    controller: TradeSafetyController,
+    controllerAs: 'tradeSafetyScope',
+    scope: {},
+    bindToController: true
+  }});

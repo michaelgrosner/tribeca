@@ -33,13 +33,13 @@ class FairValueChartController {
       // this.fairValueChart = fv.price;
     };
 
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
+    var subscriberFairValue = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
       .registerConnectHandler(clear)
       .registerDisconnectedHandler(clear)
       .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
 
     $scope.$on('$destroy', () => {
-      sub.disconnect();
+      subscriberFairValue.disconnect();
     });
   }
 }
@@ -54,7 +54,5 @@ angular.module(fairValueChartDirective, ['sharedDirectives'])
     controller: FairValueChartController,
     controllerAs: 'fairValueChartScope',
     scope: {},
-    bindToController: {
-      fairValueChart: '@'
-    }
+    bindToController: true
   }});

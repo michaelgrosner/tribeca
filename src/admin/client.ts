@@ -1,5 +1,5 @@
 /// <reference path="../common/models.ts" />
-/// <reference path="fv-chart.ts"/>
+/// <reference path="fairvalue-chart.ts"/>
 /// <reference path="orderlist.ts"/>
 /// <reference path="trades.ts"/>
 /// <reference path="../common/messaging.ts"/>
@@ -20,7 +20,7 @@ var bootstrap = require("../bootstrap.min");
 
 import Models = require("../common/models");
 import moment = require("moment");
-import FairValueChart = require("./fv-chart");
+import FairValueChart = require("./fairvalue-chart");
 import OrderList = require("./orderlist");
 import Trades = require("./trades");
 import Messaging = require("../common/messaging");
