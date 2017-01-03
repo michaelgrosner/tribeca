@@ -455,11 +455,11 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
 }
 
 function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (name.toLowerCase()) {
+    switch (c.toLowerCase()) {
         case "usd": return Models.Currency.USD;
         case "ltc": return Models.Currency.LTC;
         case "btc": return Models.Currency.BTC;
-        default: throw new Error("Unsupported currency " + name);
+        default: throw new Error("Unsupported currency " + c);
     }
 }
 
