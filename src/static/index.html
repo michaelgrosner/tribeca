@@ -90,21 +90,6 @@
     </form>
 </script>
 
-<script type="text/ng-template" id="positions.html">
-    <div class="positions">
-        <h4 class="col-md-12 col-xs-2"><small>
-            {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span><br/>(<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
-        </small></h4>
-        <h4 class="col-md-12 col-xs-2"><small>
-            {{ baseCurrency }}:&nbsp;<span ng-class="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">{{ basePosition|currency:"B":3 }}</span><br/>(<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
-        </small></h4>
-        <h4 class="col-md-12 col-xs-2">
-          <small>Value: </small><b>{{ value|currency:"B":5 }}</b><br/>
-          <b>{{ quoteValue|currency:undefined:2 }}</b>
-        </h4>
-    </div>
-</script>
-
 <script type="text/ng-template" id="tribeca.html">
   <div>
     <div ng-if="!connected">
@@ -171,7 +156,7 @@
                                 </button>
 
                                 <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
-                                <position-grid></position-grid>
+                                <wallet-position></wallet-position>
                             </div>
                         </div>
 

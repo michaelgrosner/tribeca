@@ -13,7 +13,7 @@ class TradeSafetyController {
   public sellSafety: number;
   public buySizeSafety: number;
   public sellSizeSafety: number;
-  public tradeSafetyValue : number;
+  public tradeSafetyValue: number;
 
   constructor(
     $scope: ng.IScope,
@@ -46,6 +46,7 @@ class TradeSafetyController {
     });
   }
 }
+
 export var tradeSafetyDirective = 'tradeSafetyDirective';
 
 angular.module(tradeSafetyDirective, ['sharedDirectives'])
