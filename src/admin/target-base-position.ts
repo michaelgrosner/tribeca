@@ -25,12 +25,12 @@ class TargetBasePositionController {
       this.targetBasePosition = value.data;
     };
 
-    var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TargetBasePosition)
+    var subscriberTargetBasePosition = subscriberFactory.getSubscriber($scope, Messaging.Topics.TargetBasePosition)
       .registerDisconnectedHandler(() => this.targetBasePosition = null)
       .registerSubscriber(update, us => us.forEach(update));
 
     $scope.$on('$destroy', () => {
-      subscriber.disconnect();
+      subscriberTargetBasePosition.disconnect();
     });
   }
 }
@@ -45,7 +45,5 @@ angular.module(targetBasePositionDirective, ['sharedDirectives'])
     controller: TargetBasePositionController,
     controllerAs: 'targetBasePositionScope',
     scope: {},
-    bindToController: {
-      targetBasePosition: '@'
-    }
+    bindToController: true
   }});
