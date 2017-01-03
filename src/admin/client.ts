@@ -119,7 +119,8 @@ var uiCtrl = ($scope : MainWindowScope,
     var system_theme = null;
 
     var setTheme = () => {
-      jQuery('#daynight').attr('href', '/css/bootstrap-theme'+system_theme+'.min.css');
+      if (jQuery('#daynight').attr('href')!='/css/bootstrap-theme'+system_theme+'.min.css')
+        jQuery('#daynight').attr('href', '/css/bootstrap-theme'+system_theme+'.min.css');
     };
 
     $scope.changeTheme = () => {
