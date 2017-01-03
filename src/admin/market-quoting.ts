@@ -4,184 +4,182 @@
 
 import angular = require("angular");
 import Models = require("../common/models");
-import io = require("socket.io-client");
-import moment = require("moment");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 
-class Level {
-    bidPrice: number;
-    bidSize: number;
-    bidPercent: number;
-    askPrice: number;
-    askSize: number;
-    askPercent: number;
-    diffWidth: number;
+class DisplayLevel {
+  bidPrice: number;
+  bidSize: number;
+  bidPercent: number;
+  askPrice: number;
+  askSize: number;
+  askPercent: number;
+  diffWidth: number;
 
-    bidClass: string;
-    askClass: string;
+  bidClass: string;
+  askClass: string;
 }
 
 class DisplayOrderStatusClassReport {
-    orderId: string;
-    price: number;
-    quantity: number;
-    side: Models.Side;
+  orderId: string;
+  price: number;
+  quantity: number;
+  side: Models.Side;
 
-    constructor(public osr: Models.OrderStatusReport) {
-        this.orderId = osr.orderId;
-        this.side = osr.side;
-        this.quantity = osr.quantity;
-        this.price = osr.price;
-    }
+  constructor(public osr: Models.OrderStatusReport) {
+    this.orderId = osr.orderId;
+    this.side = osr.side;
+    this.quantity = osr.quantity;
+    this.price = osr.price;
+  }
 }
 
-interface MarketQuotingScope extends ng.IScope {
-    levels: Level[];
-    fairValue: number;
-    extVal: number;
-    qBidSz: number;
-    qBidPx: number;
-    qAskPx: number;
-    qAskSz: number;
-    order_classes: DisplayOrderStatusClassReport[];
+class MarketQuotingController {
 
-    bidIsLive: boolean;
-    askIsLive: boolean;
-}
+  public levels: DisplayLevel[];
+  public fairValue: number;
+  public extVal: number;
+  public qBidSz: number;
+  public qBidPx: number;
+  public qAskPx: number;
+  public qAskSz: number;
+  public order_classes: DisplayOrderStatusClassReport[];
+  public bidIsLive: boolean;
+  public askIsLive: boolean;
 
-var MarketQuotingController = ($scope: MarketQuotingScope,
+  constructor(
+    $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory) => {
+    subscriberFactory: Shared.SubscriberFactory
+  ) {
     var clearMarket = () => {
-        $scope.levels = [];
+        this.levels = [];
     };
     clearMarket();
 
     var clearQuote = () => {
-        $scope.order_classes = [];
+        this.order_classes = [];
     };
     clearQuote();
 
     var clearFairValue = () => {
-        $scope.fairValue = null;
+        this.fairValue = null;
     };
 
     var clearQuoteStatus = () => {
-        $scope.bidIsLive = false;
-        $scope.askIsLive = false;
+        this.bidIsLive = false;
+        this.askIsLive = false;
     };
 
     var clearExtVal = () => {
-        $scope.extVal = null;
+        this.extVal = null;
     };
 
     var updateMarket = (update: Models.Market) => {
-        if (update == null) {
-            clearMarket();
-            return;
+      if (update == null) {
+        clearMarket();
+        return;
+      }
+
+      for (var i = 0; i < update.asks.length; i++) {
+        if (i >= this.levels.length)
+          this.levels[i] = new DisplayLevel();
+        this.levels[i].askPrice = update.asks[i].price;
+        this.levels[i].askSize = update.asks[i].size;
+      }
+
+      if (this.order_classes.length) {
+        var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
+        var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
+        if (bids.length) {
+          var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
+          this.qBidPx = bid.price;
+          this.qBidSz = bid.quantity;
         }
-
-        for (var i = 0; i < update.asks.length; i++) {
-            if (i >= $scope.levels.length)
-                $scope.levels[i] = new Level();
-            $scope.levels[i].askPrice = update.asks[i].price;
-            $scope.levels[i].askSize = update.asks[i].size;
+        if (asks.length) {
+          var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
+          this.qAskPx = ask.price;
+          this.qAskSz = ask.quantity;
         }
+      }
+      for (var i = 0; i < update.bids.length; i++) {
+        if (i >= this.levels.length)
+          this.levels[i] = new DisplayLevel();
+        this.levels[i].bidPrice = update.bids[i].price;
+        this.levels[i].bidSize = update.bids[i].size;
+        this.levels[i].bidPercent = Math.max(Math.min((Math.log(update.bids[i].size)/Math.log(2))*4,19),1);
+        if (i < update.asks.length)
+          this.levels[i].askPercent = Math.max(Math.min((Math.log(update.asks[i].size)/Math.log(2))*4,19),1);
 
-        if ($scope.order_classes.length) {
-          var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
-          var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
-          if (bids.length) {
-            var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
-            $scope.qBidPx = bid.price;
-            $scope.qBidSz = bid.quantity;
-          }
-          if (asks.length) {
-            var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
-            $scope.qAskPx = ask.price;
-            $scope.qAskSz = ask.quantity;
-          }
-        }
-        for (var i = 0; i < update.bids.length; i++) {
-            if (i >= $scope.levels.length)
-                $scope.levels[i] = new Level();
-            $scope.levels[i].bidPrice = update.bids[i].price;
-            $scope.levels[i].bidSize = update.bids[i].size;
-            $scope.levels[i].bidPercent = Math.max(Math.min((Math.log(update.bids[i].size)/Math.log(2))*4,19),1);
-            if (i < update.asks.length)
-              $scope.levels[i].askPercent = Math.max(Math.min((Math.log(update.asks[i].size)/Math.log(2))*4,19),1);
+        this.levels[i].diffWidth = i==0
+          ? this.levels[i].askPrice - this.levels[i].bidPrice : (
+            (i==1 && this.qAskPx && this.qBidPx)
+              ? this.qAskPx - this.qBidPx : 0
+          );
+      }
 
-            $scope.levels[i].diffWidth = i==0
-              ? $scope.levels[i].askPrice - $scope.levels[i].bidPrice : (
-                (i==1 && $scope.qAskPx && $scope.qBidPx)
-                  ? $scope.qAskPx - $scope.qBidPx : 0
-              );
-        }
-
-
-        updateQuoteClass();
+      updateQuoteClass();
     };
 
     var updateQuote = (o: Models.OrderStatusReport) => {
-        var idx = -1;
-        for(var i=0;i<$scope.order_classes.length;i++)
-          if ($scope.order_classes[i].orderId==o.orderId) {idx=i; break;}
-        if (idx!=-1) {
-            if (!o.leavesQuantity)
-              $scope.order_classes.splice(idx,1);
-        } else if (o.leavesQuantity)
-          $scope.order_classes.push(new DisplayOrderStatusClassReport(o));
+      var idx = -1;
+      for(var i=0;i<this.order_classes.length;i++)
+        if (this.order_classes[i].orderId==o.orderId) {idx=i; break;}
+      if (idx!=-1) {
+        if (!o.leavesQuantity)
+          this.order_classes.splice(idx,1);
+      } else if (o.leavesQuantity)
+        this.order_classes.push(new DisplayOrderStatusClassReport(o));
 
-        updateQuoteClass();
+      updateQuoteClass();
     };
 
     var updateQuoteStatus = (status: Models.TwoSidedQuoteStatus) => {
-        if (status == null) {
-            clearQuoteStatus();
-            return;
-        }
+      if (status == null) {
+        clearQuoteStatus();
+        return;
+      }
 
-        $scope.bidIsLive = (status.bidStatus === Models.QuoteStatus.Live);
-        $scope.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
-        updateQuoteClass();
+      this.bidIsLive = (status.bidStatus === Models.QuoteStatus.Live);
+      this.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
+      updateQuoteClass();
     };
 
     var updateQuoteClass = () => {
-        if ($scope.levels && $scope.levels.length > 0) {
-            var tol = .005;
-            for (var i = 0; i < $scope.levels.length; i++) {
-                var level = $scope.levels[i];
-                level.bidClass = 'active';
-                var bids = $scope.order_classes.filter(o => o.side === Models.Side.Bid);
-                for (var j = 0; j < bids.length; j++)
-                  if (Math.abs(bids[j].price - level.bidPrice) < tol)
-                      level.bidClass = 'success buy';
-                level.askClass = 'active';
-                var asks = $scope.order_classes.filter(o => o.side === Models.Side.Ask);
-                for (var j = 0; j < asks.length; j++)
-                  if (Math.abs(asks[j].price - level.askPrice) < tol)
-                      level.askClass = 'success sell';
-            }
+      if (this.levels && this.levels.length > 0) {
+        var tol = .005;
+        for (var i = 0; i < this.levels.length; i++) {
+          var level = this.levels[i];
+          level.bidClass = 'active';
+          var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
+          for (var j = 0; j < bids.length; j++)
+            if (Math.abs(bids[j].price - level.bidPrice) < tol)
+              level.bidClass = 'success buy';
+          level.askClass = 'active';
+          var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
+          for (var j = 0; j < asks.length; j++)
+            if (Math.abs(asks[j].price - level.askPrice) < tol)
+              level.askClass = 'success sell';
         }
+      }
     };
 
     var updateFairValue = (fv: Models.FairValue) => {
-        if (fv == null) {
-            clearFairValue();
-            return;
-        }
+      if (fv == null) {
+        clearFairValue();
+        return;
+      }
 
-        $scope.fairValue = fv.price;
+      this.fairValue = fv.price;
     };
 
     var subscribers = [];
 
     var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
-        var sub = subscriberFactory.getSubscriber<T>($scope, topic)
-            .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
-            .registerDisconnectedHandler(clearFn);
-        subscribers.push(sub);
+      var subscriber = subscriberFactory.getSubscriber<T>($scope, topic)
+        .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
+        .registerDisconnectedHandler(clearFn);
+      subscribers.push(subscriber);
     };
 
     makeSubscriber<Models.Market>(Messaging.Topics.MarketData, updateMarket, clearMarket);
@@ -190,24 +188,47 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
 
     $scope.$on('$destroy', () => {
-        subscribers.forEach(d => d.disconnect());
-        // $log.info("destroy market quoting grid");
+      subscribers.forEach(d => d.disconnect());
     });
 
     clearQuote();
-    // $log.info("started market quoting grid");
-};
+  }
+}
 
-export var marketQuotingDirective = "marketQuotingDirective";
+export var marketQuotingDirective = 'marketQuotingDirective';
 
-angular
-    .module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-    .directive("marketQuotingGrid", () => {
-
-        return {
-            restrict: 'E',
-            transclude: false,
-            templateUrl: "market_display.html",
-            controller: MarketQuotingController
-        }
-    });
+angular.module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
+  .directive('marketQuoting', (): ng.IDirective => { return {
+    template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
+      <tr class="active">
+        <th></th>
+        <th>bidSz</th>
+        <th>bidPx</th>
+        <th>FV</th>
+        <th>askPx</th>
+        <th>askSz</th>
+      </tr>
+      <tr class="info">
+        <td class="text-left">q</td>
+        <td ng-class="marketQuotingScope.bidIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qBidSz|number:2 }}</td>
+        <td ng-class="marketQuotingScope.bidIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qBidPx|number:2 }}</td>
+        <td class="fairvalue">{{ marketQuotingScope.fairValue|number:2 }}</td>
+        <td ng-class="marketQuotingScope.askIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qAskPx|number:2 }}</td>
+        <td ng-class="marketQuotingScope.askIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qAskSz|number:2 }}</td>
+      </tr>
+      <tr class="active" ng-repeat="level in marketQuotingScope.levels">
+        <td class="text-left">mkt{{ $index }}</td>
+        <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
+        <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
+        <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
+        <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
+        <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
+      </tr>
+    </table>`,
+    restrict: "E",
+    transclude: false,
+    controller: MarketQuotingController,
+    controllerAs: 'marketQuotingScope',
+    scope: {},
+    bindToController: true
+  }});
