@@ -81,16 +81,18 @@ export var walletPositionDirective = 'walletPositionDirective';
 angular.module(walletPositionDirective, ['ui.bootstrap', Shared.sharedDirectives])
   .directive('walletPosition', (): ng.IDirective => { return {
     template: `<div class="positions">
-        <h4 class="col-md-12 col-xs-2"><small>
-            {{ walletPositionScope.quoteCurrency }}:&nbsp;<span ng-class="walletPositionScope.quotePosition + walletPositionScope.quoteHeldPosition > walletPositionScope.buySize * walletPositionScope.fv ? 'text-danger' : 'text-muted'">{{ walletPositionScope.quotePosition|currency:undefined:2 }}</span><br/>(<span ng-class="walletPositionScope.quoteHeldPosition ? 'buy' : 'text-muted'">{{ walletPositionScope.quoteHeldPosition|currency:undefined:2 }}</span>)
-        </small></h4>
-        <h4 class="col-md-12 col-xs-2"><small>
-            {{ walletPositionScope.baseCurrency }}:&nbsp;<span ng-class="walletPositionScope.basePosition + walletPositionScope.baseHeldPosition > walletPositionScope.sellSize ? 'text-danger' : 'text-muted'">{{ walletPositionScope.basePosition|currency:"B":3 }}</span><br/>(<span ng-class="walletPositionScope.baseHeldPosition ? 'sell' : 'text-muted'">{{ walletPositionScope.baseHeldPosition|currency:"B":3 }}</span>)
-        </small></h4>
-        <h4 class="col-md-12 col-xs-2">
-          <small>Value: </small><b>{{ walletPositionScope.value|currency:"B":5 }}</b><br/>
-          <b>{{ walletPositionScope.quoteValue|currency:undefined:2 }}</b>
-        </h4>
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ walletPositionScope.quoteCurrency }}:&nbsp;<span ng-class="walletPositionScope.quotePosition + walletPositionScope.quoteHeldPosition > walletPositionScope.buySize * walletPositionScope.fv ? 'text-danger' : 'text-muted'">{{ walletPositionScope.quotePosition|currency:undefined:2 }}</span>
+        <br/>(<span ng-class="walletPositionScope.quoteHeldPosition ? 'buy' : 'text-muted'">{{ walletPositionScope.quoteHeldPosition|currency:undefined:2 }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ walletPositionScope.baseCurrency }}:&nbsp;<span ng-class="walletPositionScope.basePosition + walletPositionScope.baseHeldPosition > walletPositionScope.sellSize ? 'text-danger' : 'text-muted'">{{ walletPositionScope.basePosition|currency:"B":3 }}</span>
+        <br/>(<span ng-class="walletPositionScope.baseHeldPosition ? 'sell' : 'text-muted'">{{ walletPositionScope.baseHeldPosition|currency:"B":3 }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2">
+        <small>Value: </small><b>{{ walletPositionScope.value|currency:"B":5 }}</b>
+        <br/><b>{{ walletPositionScope.quoteValue|currency:undefined:2 }}</b>
+      </h4>
     </div>`,
     restrict: "E",
     transclude: false,
