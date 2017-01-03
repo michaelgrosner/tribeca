@@ -3,13 +3,12 @@
 /// <reference path="shared_directives.ts"/>
 
 import angular = require("angular");
-import Models = require("../common/models");
-import io = require("socket.io-client");
 import moment = require("moment");
+import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Shared = require("./shared_directives");
 
-class MarketTradeViewModel {
+class DisplayMarketTrade {
     price: number;
     size: number;
     time: moment.Moment;
@@ -28,30 +27,30 @@ class MarketTradeViewModel {
     make_side: string;
 
     constructor(trade: Models.MarketTrade) {
-        this.price = MarketTradeViewModel.round(trade.price);
-        this.size = MarketTradeViewModel.round(trade.size);
+        this.price = DisplayMarketTrade.round(trade.price);
+        this.size = DisplayMarketTrade.round(trade.size);
         this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
 
         if (trade.quote != null) {
             if (trade.quote.ask !== null) {
-                this.qA = MarketTradeViewModel.round(trade.quote.ask.price);
-                this.qAz = MarketTradeViewModel.round(trade.quote.ask.size);
+                this.qA = DisplayMarketTrade.round(trade.quote.ask.price);
+                this.qAz = DisplayMarketTrade.round(trade.quote.ask.size);
             }
 
             if (trade.quote.bid !== null) {
-                this.qB = MarketTradeViewModel.round(trade.quote.bid.price);
-                this.qBz = MarketTradeViewModel.round(trade.quote.bid.size);
+                this.qB = DisplayMarketTrade.round(trade.quote.bid.price);
+                this.qBz = DisplayMarketTrade.round(trade.quote.bid.size);
             }
         }
 
         if (trade.ask != null) {
-            this.mA = MarketTradeViewModel.round(trade.ask.price);
-            this.mAz = MarketTradeViewModel.round(trade.ask.size);
+            this.mA = DisplayMarketTrade.round(trade.ask.price);
+            this.mAz = DisplayMarketTrade.round(trade.ask.size);
         }
 
         if (trade.bid != null) {
-            this.mB = MarketTradeViewModel.round(trade.bid.price);
-            this.mBz = MarketTradeViewModel.round(trade.bid.size);
+            this.mB = DisplayMarketTrade.round(trade.bid.price);
+            this.mBz = DisplayMarketTrade.round(trade.bid.size);
         }
 
         this.make_side = Models.Side[trade.make_side];
@@ -64,18 +63,20 @@ class MarketTradeViewModel {
     }
 }
 
-interface MarketTradeScope extends ng.IScope {
-    marketTrades: MarketTradeViewModel[];
-    marketTradeOptions: Object;
-}
+class MarketTradesController {
 
-var MarketTradeGrid = ($scope: MarketTradeScope,
-                       $log: ng.ILogService,
-                       subscriberFactory: Shared.SubscriberFactory,
-                       uiGridConstants: any) => {
-    $scope.marketTrades = [];
-    $scope.marketTradeOptions = {
-        data: 'marketTrades',
+  public marketTrades: DisplayMarketTrade[];
+  public marketTradeOptions: Object;
+
+  constructor(
+    $scope: ng.IScope,
+    $log: ng.ILogService,
+    subscriberFactory: Shared.SubscriberFactory,
+    uiGridConstants: any
+  ) {
+    this.marketTrades = [];
+    this.marketTradeOptions = {
+        data: 'marketTradesScope.marketTrades',
         showGroupPanel: false,
         rowHeight: 20,
         headerRowHeight: 20,
@@ -115,38 +116,36 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
 
     var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
-            $scope.marketTrades.push(new MarketTradeViewModel(u));
+            this.marketTrades.push(new DisplayMarketTrade(u));
 
-        for(var i=$scope.marketTrades.length-1;i>-1;i--)
-          if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 3600000)
-            $scope.marketTrades.splice(i,1);
-          else if (Math.abs(moment.utc().valueOf() - $scope.marketTrades[i].time.valueOf()) > 7000)
-            $scope.marketTrades[i].recent = false;
+        for(var i=this.marketTrades.length-1;i>-1;i--)
+          if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 3600000)
+            this.marketTrades.splice(i,1);
+          else if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 7000)
+            this.marketTrades[i].recent = false;
     };
 
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
+    var subscriberMarketTrade = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
         .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
-        .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
+        .registerDisconnectedHandler(() => this.marketTrades.length = 0);
 
     $scope.$on('$destroy', () => {
-        sub.disconnect();
-        // $log.info("destroy market trade grid");
+        subscriberMarketTrade.disconnect();
     });
+  }
+}
 
-    // $log.info("started market trade grid");
-};
+export var marketTradesDirective = 'marketTradesDirective';
 
-export var marketTradeDirective = "marketTradeDirective";
-
-angular
-    .module(marketTradeDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-    .directive("marketTradeGrid", () => {
-        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div></div>';
-
-        return {
-            restrict: 'E',
-            transclude: false,
-            template: template,
-            controller: MarketTradeGrid
-        }
-    });
+angular.module(marketTradesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
+  .directive('marketTrades', (): ng.IDirective => { return {
+    template: `<div>
+      <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradesScope.marketTradeOptions"></div>
+    </div>`,
+    restrict: "E",
+    transclude: false,
+    controller: MarketTradesController,
+    controllerAs: 'marketTradesScope',
+    scope: {},
+    bindToController: true
+  }});

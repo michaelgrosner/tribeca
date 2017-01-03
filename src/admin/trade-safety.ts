@@ -49,7 +49,7 @@ class TradeSafetyController {
 
 export var tradeSafetyDirective = 'tradeSafetyDirective';
 
-angular.module(tradeSafetyDirective, ['sharedDirectives'])
+angular.module(tradeSafetyDirective, [Shared.sharedDirectives])
   .directive('tradeSafety', (): ng.IDirective => { return {
     template: `<div>
       BuyPing: <span class="{{ tradeSafetyScope.buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyScope.buySizeSafety|number:2 }}</span>,
