@@ -188,7 +188,7 @@ var liveTradingSetup = () => {
       try {
         res.send(marked(fs.readFileSync('./../../'+req.path.replace('/view/','').replace('.md','')+'.md', 'utf8')));
       } catch (e) {
-        res.send('Document Not Found');
+        res.send('Document Not Found, but today is a beautiful day.');
       }
     });
 
