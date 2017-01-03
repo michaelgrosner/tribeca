@@ -7,7 +7,7 @@
 /// <reference path="pair.ts"/>
 /// <reference path="market-quoting.ts"/>
 /// <reference path="market-trades.ts"/>
-/// <reference path="position.ts"/>
+/// <reference path="wallet-position.ts"/>
 /// <reference path="target-base-position.ts"/>
 /// <reference path="trade-safety.ts"/>
 
@@ -29,8 +29,8 @@ import Pair = require("./pair");
 import MarketQuoting = require("./market-quoting");
 import MarketTrades = require("./market-trades");
 import Messages = require("./messages");
-import Position = require("./position");
-import Tbp = require("./target-base-position");
+import WalletPosition = require("./wallet-position");
+import TargetBasePosition = require("./target-base-position");
 import TradeSafety = require("./trade-safety");
 
 interface MainWindowScope extends ng.IScope {
@@ -201,8 +201,8 @@ angular.module('tribeca', [
         MarketQuoting.marketQuotingDirective,
         MarketTrades.marketTradeDirective,
         Messages.messagesDirective,
-        Position.positionDirective,
-        Tbp.targetBasePositionDirective,
+        WalletPosition.walletPositionDirective,
+        TargetBasePosition.targetBasePositionDirective,
         TradeSafety.tradeSafetyDirective,
         Shared.sharedDirectives
     ])
