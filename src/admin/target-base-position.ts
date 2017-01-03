@@ -36,7 +36,7 @@ export var targetBasePositionDirective = 'targetBasePositionDirective';
 angular.module(targetBasePositionDirective, [Shared.sharedDirectives])
   .directive('targetBasePosition', (): ng.IDirective => { return {
     template: '<span>{{ targetBasePositionScope.targetBasePosition|number:2 }}</span>',
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: TargetBasePositionController,
     controllerAs: 'targetBasePositionScope',

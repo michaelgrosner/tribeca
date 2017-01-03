@@ -1,12 +1,13 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="shared_directives.ts"/>
+/// <reference path='../common/models.ts' />
+/// <reference path='../common/messaging.ts' />
+/// <reference path='shared_directives.ts'/>
+/// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require("angular");
-import moment = require("moment");
-import Models = require("../common/models");
-import Messaging = require("../common/messaging");
-import Shared = require("./shared_directives");
+import angular = require('angular');
+import moment = require('moment');
+import Models = require('../common/models');
+import Messaging = require('../common/messaging');
+import Shared = require('./shared_directives');
 
 class DisplayMarketTrade {
   price: number;
@@ -142,7 +143,7 @@ angular.module(marketTradesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedD
     template: `<div>
       <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradesScope.marketTradeOptions"></div>
     </div>`,
-    restrict: "E",
+    restrict: 'E',
     transclude: false,
     controller: MarketTradesController,
     controllerAs: 'marketTradesScope',
