@@ -251,7 +251,6 @@ export class Topics {
     static CancelOrder = "cxl";
     static MarketTrade = "mt";
     static Trades = "t";
-    static Message = "msg";
     static ExternalValuation = "ev";
     static QuoteStatus = "qs";
     static TargetBasePosition = "tbp";

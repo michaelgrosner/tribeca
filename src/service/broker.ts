@@ -3,7 +3,6 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="interfaces.ts"/>
 /// <reference path="persister.ts"/>
-/// <reference path="messages.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
@@ -14,7 +13,6 @@ import Q = require("q");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
-import Messages = require("./messages");
 import QuotingParameters = require("./quoting-parameters");
 var Lynx = require('lynx');
 var metrics = new Lynx('localhost', 8125);
@@ -23,6 +21,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook() : Models.Market { return this._currentBook; }
 
+    // private _log = Utils.log("md:broker");
     private _currentBook : Models.Market = null;
     private handleMarketData = (book : Models.Market) => {
         this._currentBook = book;
@@ -33,14 +32,13 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
                 private _marketPublisher : Messaging.IPublish<Models.Market>,
-                private _persister: Persister.IPersist<Models.Market>,
-                private _messages : Messages.MessagesPubisher) {
+                private _persister: Persister.IPersist<Models.Market>) {
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
             if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
-            _messages.publish("MD gw " + Models.ConnectivityStatus[s]);
+            // this._log.info("MarkedData changed: " + Models.ConnectivityStatus[s]);
         });
     }
 }
@@ -422,7 +420,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
                 private _cleanAllClosedOrdersReciever : Messaging.IReceive<Models.CleanAllClosedOrdersRequest>,
                 private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
-                private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
@@ -493,9 +490,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _.each(initTrades, t => this._trades.push(t));
         // this._log.info("loaded %d trades", this._trades.length);
 
-        this._oeGateway.ConnectChanged.on(s => {
-            _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
-        });
+        // this._oeGateway.ConnectChanged.on(s => {
+            // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);
+        // });
     }
 }
 

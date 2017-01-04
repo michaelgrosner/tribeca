@@ -8,7 +8,6 @@
 /// <reference path="interfaces.ts"/>
 /// <reference path="market-filtration.ts"/>
 /// <reference path="markettrades.ts"/>
-/// <reference path="messages.ts"/>
 /// <reference path="quote-sender.ts"/>
 /// <reference path="quoter.ts"/>
 /// <reference path="quoting-engine.ts"/>
@@ -60,7 +59,6 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
-import Messages = require("./messages");
 
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
@@ -274,7 +272,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var fairValuePersister = getPersister("fv");
     var mktTradePersister = getPersister("mt");
     var positionPersister = getPersister("pos");
-    var messagesPersister = getPersister("msg");
     var rfvPersister = getPersister("rfv");
     var tbpPersister = getPersister("tbp");
     var tsvPersister = getPersister("tsv");
@@ -290,14 +287,12 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         orderPersister.loadAll(25000),
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
-        messagesPersister.loadAll(50),
         paramsPersister.loadLatest(),
         activePersister.loadLatest(),
         rfvPersister.loadAll(50)
     ]).spread((initOrders: Models.OrderStatusReport[],
         initTrades: Models.Trade[],
         initMktTrades: Models.MarketTrade[],
-        initMsgs: Models.Message[],
         initParams: Models.QuotingParameters,
         initActive: Models.SerializedQuotesActive,
         initRfv: Models.RegularFairValue[]) => {
@@ -319,15 +314,11 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var activePublisher = getPublisher(Messaging.Topics.ActiveChange);
         var quotingParametersPublisher = getPublisher(Messaging.Topics.QuotingParametersChange);
         var marketTradePublisher = getPublisher(Messaging.Topics.MarketTrade, mktTradePersister);
-        var messagesPublisher = getPublisher(Messaging.Topics.Message, messagesPersister);
         var quoteStatusPublisher = getPublisher(Messaging.Topics.QuoteStatus);
         var targetBasePositionPublisher = getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister);
         var tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
         var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
         var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
-
-        var messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
-        messages.publish("start up");
 
         var getReceiver = classes.getReceiver;
         var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
@@ -355,8 +346,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
 
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, paramsRepo, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-            tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, cleanAllClosedOrdersReceiver, cleanAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
-        var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
+            tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, cleanAllClosedOrdersReceiver, cleanAllOrdersReceiver, orderCache, initOrders, initTrades);
+        var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, orderBroker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
         var startQuoting = (/*timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 &&*/ initActive.active);

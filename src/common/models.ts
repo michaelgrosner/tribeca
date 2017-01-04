@@ -396,10 +396,6 @@ export class Notepad {
     constructor(public content: string) { }
 }
 
-export class Message implements ITimestamped {
-    constructor(public text: string, public time: moment.Moment) {}
-}
-
 export class RegularFairValue {
     constructor(public time: moment.Moment, public value: number) {}
 }
