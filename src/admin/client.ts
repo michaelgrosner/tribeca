@@ -28,7 +28,6 @@ import Shared = require("./shared_directives");
 import Pair = require("./pair");
 import MarketQuoting = require("./market-quoting");
 import MarketTrades = require("./market-trades");
-import Messages = require("./messages");
 import WalletPosition = require("./wallet-position");
 import TargetBasePosition = require("./target-base-position");
 import TradeSafety = require("./trade-safety");
@@ -200,7 +199,6 @@ angular.module('tribeca', [
         Trades.tradeListDirective,
         MarketQuoting.marketQuotingDirective,
         MarketTrades.marketTradesDirective,
-        Messages.messagesDirective,
         WalletPosition.walletPositionDirective,
         TargetBasePosition.targetBasePositionDirective,
         TradeSafety.tradeSafetyDirective,
