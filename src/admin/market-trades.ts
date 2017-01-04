@@ -27,7 +27,9 @@ class DisplayMarketTrade {
 
   make_side: string;
 
-  constructor(trade: Models.MarketTrade) {
+  constructor(
+    public trade: Models.MarketTrade
+  ) {
     this.price = DisplayMarketTrade.round(trade.price);
     this.size = DisplayMarketTrade.round(trade.size);
     this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));

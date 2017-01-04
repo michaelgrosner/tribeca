@@ -27,7 +27,9 @@ class DisplayOrderStatusClassReport {
   quantity: number;
   side: Models.Side;
 
-  constructor(public osr: Models.OrderStatusReport) {
+  constructor(
+    public osr: Models.OrderStatusReport
+  ) {
     this.orderId = osr.orderId;
     this.side = osr.side;
     this.quantity = osr.quantity;
