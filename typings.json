@@ -26,5 +26,8 @@
     "socket.io": "registry:dt/socket.io#1.4.4+20160317120654",
     "socket.io-client": "registry:dt/socket.io-client#1.4.4+20160317120654",
     "ws": "registry:dt/ws#0.0.0+20160317120654"
+  },
+  "globalDependencies": {
+    "es6-shim": "registry:dt/es6-shim#0.31.2+20160726072212"
   }
 }
