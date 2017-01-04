@@ -5,6 +5,7 @@
 
 import angular = require("angular");
 import io = require("socket.io-client");
+
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 
