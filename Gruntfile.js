@@ -38,7 +38,7 @@ module.exports = function (grunt) {
                 src: serviceFiles,
                 outDir: 'tribeca',
                 options: {
-                    target: 'es5',
+                    target: 'es6',
                     module: 'commonjs'
                 }
             },
@@ -47,7 +47,7 @@ module.exports = function (grunt) {
                 src: adminFiles,
                 outDir: 'tribeca/service/admin/js',
                 options: {
-                    target: 'es5',
+                    target: 'es6',
                     module: 'commonjs'
                 }
             }
@@ -61,7 +61,7 @@ module.exports = function (grunt) {
                 dest: "tribeca/service/admin"
             }
         },
-        
+
         browserify: {
             dist: {
                 files: {
