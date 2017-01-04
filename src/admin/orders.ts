@@ -5,7 +5,6 @@
 
 import angular = require('angular');
 import moment = require('moment');
-
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import Shared = require('./shared_directives');
