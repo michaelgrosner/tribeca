@@ -894,7 +894,7 @@
     },
     "es6-promise": {
       "version": "0.1.2",
-      "from": "es6-promise@>=0.1.1 <0.2.0",
+      "from": "https://registry.npmjs.org/es6-promise/-/es6-promise-0.1.2.tgz",
       "resolved": "https://registry.npmjs.org/es6-promise/-/es6-promise-0.1.2.tgz"
     },
     "es6-shim": {
