@@ -122,7 +122,7 @@ class TradesListController {
       }
     };
 
-    var addTrade = (t: Models.Trade) => {
+    var addTrade = t => {
       if (t.Kqty<0) {
         for(var i = 0;i<this.trade_statuses.length;i++) {
           if (this.trade_statuses[i].tradeId==t.tradeId) {
@@ -147,7 +147,7 @@ class TradesListController {
             this.trade_statuses[i].sortTime = this.trade_statuses[i].Ktime ? this.trade_statuses[i].Ktime : this.trade_statuses[i].time;
             if (this.trade_statuses[i].Kqty >= this.trade_statuses[i].quantity)
               this.trade_statuses[i].side = 'K';
-            if (this.gridApi)
+            if (this.gridApi && uiGridConstants)
               this.gridApi.grid.notifyDataChange(uiGridConstants.dataChange.ALL);
             if (t.loadedFromDB === false && this.audio) {
               var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
