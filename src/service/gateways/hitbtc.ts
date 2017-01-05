@@ -15,6 +15,7 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
+import Q = require("q");
 import util = require("util");
 var shortId = require("shortid");
 var SortedArray = require("collections/sorted-array");

@@ -1,4 +1,4 @@
-/// <reference path="../../typings/main.d.ts" />
+import moment = require("moment");
 
 export interface ITimestamped {
     time : moment.Moment;

@@ -6,6 +6,7 @@ import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 var uuid = require('node-uuid');
+import Q = require("q");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
