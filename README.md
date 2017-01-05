@@ -4,7 +4,7 @@
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/docs/web_ui_preview.png)
 
-Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
+Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
 
 ### Docker Installation
 
