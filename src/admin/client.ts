@@ -211,7 +211,7 @@ angular.module('tribeca', [
     templateUrl: 'ui.html',
     restrict: 'E',
     transclude: false,
-    controller: uiController,
+    controller: ['$scope', '$window', '$timeout', '$log', 'subscriberFactory', 'fireFactory', uiController],
     controllerAs: 'uiScope',
     scope: {},
     bindToController: true

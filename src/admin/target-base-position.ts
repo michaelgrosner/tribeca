@@ -39,7 +39,7 @@ angular.module(targetBasePositionDirective, [Shared.sharedDirectives])
     template: '<span>{{ targetBasePositionScope.targetBasePosition|number:2 }}</span>',
     restrict: 'E',
     transclude: false,
-    controller: TargetBasePositionController,
+    controller: ['$scope', '$log', 'subscriberFactory', TargetBasePositionController],
     controllerAs: 'targetBasePositionScope',
     scope: {},
     bindToController: true

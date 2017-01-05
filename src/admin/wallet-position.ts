@@ -97,7 +97,7 @@ angular.module(walletPositionDirective, ['ui.bootstrap', Shared.sharedDirectives
     </div>`,
     restrict: 'E',
     transclude: false,
-    controller: WalletPositionController,
+    controller: ['$scope', '$log', 'subscriberFactory', WalletPositionController],
     controllerAs: 'walletPositionScope',
     scope: {},
     bindToController: true
