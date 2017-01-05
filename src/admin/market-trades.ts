@@ -148,7 +148,7 @@ angular.module(marketTradesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedD
     </div>`,
     restrict: 'E',
     transclude: false,
-    controller: MarketTradesController,
+    controller: ['$scope', '$log', 'subscriberFactory', 'uiGridConstants', MarketTradesController],
     controllerAs: 'marketTradesScope',
     scope: {},
     bindToController: true

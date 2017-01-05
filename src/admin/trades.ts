@@ -205,7 +205,7 @@ angular.module(tradeListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDire
     </div>`,
     restrict: 'E',
     transclude: false,
-    controller: TradesListController,
+    controller: ['$scope', '$log', 'subscriberFactory', 'uiGridConstants', TradesListController],
     controllerAs: 'tradeListScope',
     scope: {},
     bindToController: true

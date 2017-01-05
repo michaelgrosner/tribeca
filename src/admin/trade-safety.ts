@@ -61,7 +61,7 @@ angular.module(tradeSafetyDirective, [Shared.sharedDirectives])
     </div>`,
     restrict: 'E',
     transclude: false,
-    controller: TradeSafetyController,
+    controller: ['$scope', '$log', 'subscriberFactory', TradeSafetyController],
     controllerAs: 'tradeSafetyScope',
     scope: {},
     bindToController: true

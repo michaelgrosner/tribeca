@@ -50,7 +50,7 @@ angular.module(fairValueChartDirective, [Shared.sharedDirectives])
     template: '',//'<div>{{ fairValueChartScope.fairValueChart|number:2 }}</div>',
     restrict: 'E',
     transclude: false,
-    controller: FairValueChartController,
+    controller: ['$scope', '$log', 'subscriberFactory', FairValueChartController],
     controllerAs: 'fairValueChartScope',
     scope: {},
     bindToController: true

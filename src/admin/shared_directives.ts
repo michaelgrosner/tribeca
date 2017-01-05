@@ -91,10 +91,10 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
 export var sharedDirectives = "sharedDirectives";
 
 angular.module(sharedDirectives, ['ui.bootstrap'])
-       .directive('mypopover', mypopover)
+       .directive('mypopover', ['$compile', '$templateCache', mypopover])
        .directive('bindOnce', bindOnce)
        .factory("socket", () : SocketIOClient.Socket => io())
-       .service("subscriberFactory", SubscriberFactory)
-       .service("fireFactory", FireFactory)
+       .service("subscriberFactory", ['socket', '$log', SubscriberFactory])
+       .service("fireFactory", ['socket', '$log', FireFactory])
        .filter("momentFullDate", () => Models.toUtcFormattedTime)
        .filter("momentShortDate", () => Models.toShortTimeString);

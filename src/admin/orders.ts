@@ -186,7 +186,7 @@ angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDire
     </div>`,
     restrict: 'E',
     transclude: false,
-    controller: OrderListController,
+    controller: ['$scope', '$log', 'subscriberFactory', 'fireFactory', 'uiGridConstants', OrderListController],
     controllerAs: 'orderListScope',
     scope: {},
     bindToController: true

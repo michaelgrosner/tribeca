@@ -231,7 +231,7 @@ angular.module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.shared
     </table>`,
     restrict: 'E',
     transclude: false,
-    controller: MarketQuotingController,
+    controller: ['$scope', '$log', 'subscriberFactory', MarketQuotingController],
     controllerAs: 'marketQuotingScope',
     scope: {},
     bindToController: true
