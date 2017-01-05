@@ -162,7 +162,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
     private tryToMatch = (orders: Models.BrokeredOrder[], marketSides: Models.MarketSide[], side: Models.Side) => {
         if (orders.length === 0 || marketSides.length === 0)
-            return _.indexBy(orders, k => k.orderId);
+            return _.keyBy(orders, k => k.orderId);
 
         var cmp = side === Models.Side.Ask ? (m, o) => o < m : (m, o) => o > m;
         _.forEach(orders, order => {
@@ -203,7 +203,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         if (liveOrders.length > 5)
             console.warn("more than 5 outstanding " + Models.Side[side] + " orders open");
 
-        return _.indexBy(liveOrders, k => k.orderId);
+        return _.keyBy(liveOrders, k => k.orderId);
     };
 
     private onMarketTrade = (trade : Models.MarketTrade) => {

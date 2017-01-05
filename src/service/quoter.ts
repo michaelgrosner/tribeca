@@ -9,6 +9,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import _ = require('lodash');
+import moment = require("moment");
 
 class QuoteOrder {
     constructor(public quote: Models.Quote, public orderId: string) { }

@@ -10,9 +10,8 @@ WORKDIR tribeca
 # Chose the branch you want to build. Leave as it is if you want to build the master branch (recommanded).
 # RUN git checkout -B YOUR-NAME-OF-THE-BRANCH --track remotes/origin/NAME-OF-THE-BRANCH-IN-GITHUB
 
-RUN npm install -g grunt-cli typings@2.1.0 forever
+RUN npm install -g grunt-cli forever
 RUN npm install
-RUN typings install
 RUN grunt compile
 
 EXPOSE 3000 5000

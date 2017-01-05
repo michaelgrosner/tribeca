@@ -1,5 +1,3 @@
-/// <reference path="../../typings/main.d.ts" />
-
 import Models = require("../common/models");
 import moment = require('moment');
 import events = require("events");
