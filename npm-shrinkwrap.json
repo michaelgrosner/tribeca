@@ -32,6 +32,11 @@
       "from": "@types/lodash@latest",
       "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.45.tgz"
     },
+    "@types/marked": {
+      "version": "0.0.28",
+      "from": "@types/marked@latest",
+      "resolved": "https://registry.npmjs.org/@types/marked/-/marked-0.0.28.tgz"
+    },
     "@types/mime": {
       "version": "0.0.29",
       "from": "@types/mime@*",
@@ -842,7 +847,7 @@
     },
     "es6-promise": {
       "version": "0.1.2",
-      "from": "https://registry.npmjs.org/es6-promise/-/es6-promise-0.1.2.tgz",
+      "from": "es6-promise@>=0.1.1 <0.2.0",
       "resolved": "https://registry.npmjs.org/es6-promise/-/es6-promise-0.1.2.tgz"
     },
     "es6-shim": {
@@ -1245,7 +1250,7 @@
     },
     "grunt-ts": {
       "version": "6.0.0-beta.3",
-      "from": "grunt-ts@6.0.0-beta.3",
+      "from": "https://registry.npmjs.org/grunt-ts/-/grunt-ts-6.0.0-beta.3.tgz",
       "resolved": "https://registry.npmjs.org/grunt-ts/-/grunt-ts-6.0.0-beta.3.tgz",
       "dependencies": {
         "chokidar": {
@@ -1302,7 +1307,7 @@
     },
     "heapdump": {
       "version": "0.3.7",
-      "from": "https://registry.npmjs.org/heapdump/-/heapdump-0.3.7.tgz",
+      "from": "heapdump@latest",
       "resolved": "https://registry.npmjs.org/heapdump/-/heapdump-0.3.7.tgz"
     },
     "hoek": {
