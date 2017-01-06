@@ -84,7 +84,7 @@ Input your exchange connectivity information, account information, and API keys 
 
 Once `tribeca` is up and running, visit port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
 
-If you want to use https, please create near `tribeca.json` (usually at `tribeca/service`) the folder `sslcert` and place inside the files `server.key` and `server.crt`.
+If you want to use https, please create near `tribeca.json` (usually at `tribeca/service`) the folder `sslcert` and place inside the files `server.key` and `server.crt` (see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html)).
 
 ### REST API
 
