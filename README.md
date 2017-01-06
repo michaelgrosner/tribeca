@@ -4,7 +4,7 @@
 
 `tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
-![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/docs/web_ui_preview.png)
+![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
 Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
 
