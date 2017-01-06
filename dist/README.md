@@ -17,3 +17,6 @@ Sample configuration files, must be located inside the compiled `service` folder
  $ vim tribeca/service/tribeca.json
 ```
 Please note that inside the git clone folder `tribeca`, the compiler generates another subfolder also called `tribeca`, where the `service` folder is located.
+
+### Dockerfile
+see [Docker Installation](https://github.com/ctubio/tribeca#docker-installation) section.
