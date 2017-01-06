@@ -14,9 +14,9 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 2. Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
-3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/ctubio/tribeca#configuration). Input your exchange connectivity information, account information, and mongoDB credentials.
+3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/ctubio/tribeca#configuration). Input your exchange connectivity information, account information, and mongoDB credentials.
 
-4. Save the Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
+4. Save your new Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
 5. Run the container `docker run -p 3000:3000 --link tribeca-mongo:mongo --name tribeca -d tribeca`. If you run `docker ps`, you should see tribeca and mongo containers running.
 
