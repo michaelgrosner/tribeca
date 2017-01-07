@@ -106,7 +106,7 @@ describe("BacktestGatewayTests", () => {
         var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
 
         gateway.MarketData.once(m => {
-            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Null));
+            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Null, false));
         });
 
         var gotTrade = false;
@@ -124,6 +124,6 @@ describe("BacktestGatewayTests", () => {
 
         gateway.run();
 
-        assert(gotTrade === true, "never got trade");
+        assert(gotTrade !== false, "never got trade");
     });
 });
