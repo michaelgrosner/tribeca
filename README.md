@@ -6,7 +6,7 @@
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
-Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
+Runs on the latest node.js (v6 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
 
 ### Docker Installation
 
@@ -22,7 +22,7 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Manual Installation
 
-1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure TypeScript 2.1.4, and optionally, forever are installed (`npm install -g typescript forever`).
+1. Ensure your target machine has node v6 (or greater) and mongoDB v3 or greater. Also, ensure TypeScript 2.1.4, and optionally, forever are installed (`npm install -g typescript forever`).
 
 2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
 
