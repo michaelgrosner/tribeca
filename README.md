@@ -132,6 +132,12 @@ The metrics send are:
 
 5. More performant UI
 
+### Unreleased Changelog:
+
+Added architecture fully aligned with angular 2.
+
+Added npm install scripts instead of grunt tasks.
+
 ### Release 2.0 Changelog:
 
 Added new quoting styles PingPong, Boomerang, AK-47.
