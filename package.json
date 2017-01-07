@@ -2,10 +2,6 @@
   "name": "tribeca",
   "version": "2.0.0",
   "description": "A high frequency, market making cryptocurrency trading platform",
-  "main": "Gruntfile.js",
-  "directories": {
-    "test": "test"
-  },
   "dependencies": {
     "@angular/core": "^2.4.1",
     "@types/angular": "^1.5.22",
