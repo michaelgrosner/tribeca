@@ -108,6 +108,10 @@ The metrics send are:
  * Total amount available in wallet and held in open trades in BTC currency
  * Total amount available in wallet and held in open trades in Fiat currency
 
+### TEST UNITS
+
+Feel free to run `npm test` anytime.
+
 ### KNOWN BUGS:
 
 1. Occasionnaly trades would not be correclty cancelled. (Coinbase seems to cancel orders always OK; what otherexchanges fail occasionnaly?)
