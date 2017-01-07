@@ -22,25 +22,23 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Manual Installation
 
-1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 2.1.4, grunt, and, optionally, forever are installed (`npm install -g grunt-cli typescript forever`).
+1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 2.1.4, and optionally, forever are installed (`npm install -g typescript forever`).
 
-2. Clone the repository.
+2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
 
-3. In the cloned repository directory, `npm install` to pull in all dependencies.
+3. In the cloned repository directory, `npm install` to pull in all dependencies and compile typescript to javascript.
 
-4. Compile typescript to javascript via `grunt compile`.
+4. cd to the outputted JS files, in `tribeca/service`.
 
-5. cd to the outputted JS files, in `tribeca/service`.
+5. (optional) `mkdir sslcert` and generate `server.key` and `server.crt` files (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
 
-6. (optional) `mkdir sslcert` and generate `server.key` and `server.crt` files (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
+6. (optional) Setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
 
-7. (optional) Setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
+7. Create a `tribeca.json` file based off the provided `dist/dev-tribeca.json` or `dist/prod-tribeca.json` files and save it in the current `service` directory. Modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section) and point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-8. Create a `tribeca.json` file based off the provided `dist/dev-tribeca.json` or `dist/prod-tribeca.json` files and save it in the current `service` directory. Modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section) and point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
+8. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` or run the app from within service folder `tribeca/service` (like `dist/tribeca-init.sh` does).
 
-9. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` or run the app from within service folder `tribeca/service` (like `dist/tribeca-init.sh` does).
-
-10. Run `forever start main.js` to start the app (from `tribeca/service` folder to avoid setting environment variables) or `service tribeca start` if the init.d script `dist/tribeca-init.sh` is installed).
+9. Run `forever start main.js` to start the app (from `tribeca/service` folder to avoid setting environment variables) or `service tribeca start` if the init.d script `dist/tribeca-init.sh` is installed).
 
 ### Configuration
 
