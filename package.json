@@ -11,7 +11,6 @@
     "@types/jquery": "^2.0.39",
     "@types/lodash": "^4.14.47",
     "@types/marked": "0.0.28",
-    "@types/mocha": "^2.2.36",
     "@types/moment": "^2.13.0",
     "@types/node": "^6.0.58",
     "@types/q": "0.0.32",
@@ -54,6 +53,7 @@
     "zone.js": "^0.7.4"
   },
   "devDependencies": {
+    "@types/mocha": "^2.2.36",
     "mocha": "3.2.0",
     "ts-node": "^2.0.0"
   },

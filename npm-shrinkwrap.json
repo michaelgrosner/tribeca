@@ -52,11 +52,6 @@
       "from": "@types/mime@*",
       "resolved": "https://registry.npmjs.org/@types/mime/-/mime-0.0.29.tgz"
     },
-    "@types/mocha": {
-      "version": "2.2.36",
-      "from": "@types/mocha@latest",
-      "resolved": "https://registry.npmjs.org/@types/mocha/-/mocha-2.2.36.tgz"
-    },
     "@types/moment": {
       "version": "2.13.0",
       "from": "@types/moment@latest",
