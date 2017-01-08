@@ -2,13 +2,15 @@
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 
-import angular = require("angular");
-import io = require("socket.io-client");
+import {Injectable, Directive, ElementRef, Pipe, PipeTransform} from '@angular/core';
+import moment = require('moment');
 
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 
-var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
+@Directive({})
+export class Mypopover {
+  constructor($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) {
     var getTemplate = (contentType, template_url) => {
         var template = '';
         switch (contentType) {
@@ -33,19 +35,24 @@ var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCac
             });
         }
     };
-};
+  }
+}
 
-var bindOnce = () => {
+@Directive({})
+export class BindOnceDirective {
+  constructor(el: ElementRef) {
     return {
-        scope: true,
-        link: ($scope) => {
-            setTimeout(() => {
-                $scope.$destroy();
-            }, 0);
-        }
+      scope: true,
+      link: ($scope) => {
+        setTimeout(() => {
+          $scope.$destroy();
+        }, 0);
+      }
     }
-};
+  }
+}
 
+@Injectable()
 export class FireFactory {
     constructor(private socket : any, private $log : ng.ILogService) {}
 
@@ -54,6 +61,7 @@ export class FireFactory {
     }
 }
 
+@Injectable()
 export class SubscriberFactory {
     constructor(private socket : any, private $log : ng.ILogService) {}
 
@@ -62,7 +70,7 @@ export class SubscriberFactory {
     }
 }
 
-export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
+class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     private _wrapped : Messaging.ISubscribe<T>;
 
     constructor(private _scope : ng.IScope, topic : string, io : any, log : (...args: any[]) => void) {
@@ -88,13 +96,37 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     public get connected() { return this._wrapped.connected; }
 }
 
-export var sharedDirectives = "sharedDirectives";
+@Pipe({
+    name: 'momentFullDate',
+})
+export class MomentFullDatePipe implements PipeTransform {
+  constructor() { }
 
-angular.module(sharedDirectives, ['ui.bootstrap'])
-       .directive('mypopover', ['$compile', '$templateCache', mypopover])
-       .directive('bindOnce', bindOnce)
-       .factory("socket", () : SocketIOClient.Socket => io())
-       .service("subscriberFactory", ['socket', '$log', SubscriberFactory])
-       .service("fireFactory", ['socket', '$log', FireFactory])
-       .filter("momentFullDate", () => Models.toUtcFormattedTime)
-       .filter("momentShortDate", () => Models.toShortTimeString);
+  transform(value: moment.Moment, args: any[]): any {
+    if (!value) return;
+    return Models.toUtcFormattedTime(value);
+  }
+}
+
+@Pipe({
+    name: 'momentShortDate',
+})
+export class MomentShortDatePipe implements PipeTransform {
+  constructor() { }
+
+  transform(value: moment.Moment, args: any[]): any {
+    if (!value) return;
+    return Models.toShortTimeString(value);
+  }
+}
+
+// export var sharedDirectives = "sharedDirectives";
+
+// angular.module(sharedDirectives, ['ui.bootstrap'])
+       // .directive('mypopover', ['$compile', '$templateCache', mypopover])
+       // .directive('bindOnce', bindOnce)
+       // .factory("socket", () : SocketIOClient.Socket => io())
+       // .service("subscriberFactory", ['socket', '$log', SubscriberFactory])
+       // .service("fireFactory", ['socket', '$log', FireFactory])
+       // .filter("momentFullDatePipe", () => Models.toUtcFormattedTime)
+       // .filter("momentShortDate", () => Models.toShortTimeString);

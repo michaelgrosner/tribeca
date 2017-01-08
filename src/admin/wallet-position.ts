@@ -3,13 +3,30 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require('angular');
+import {Component} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 
-class WalletPositionController {
+@Component({
+  selector: 'walletPosition',
+  template: `<div class="positions">
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span>
+        <br/>(<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ baseCurrency }}:&nbsp;<span ng-class="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">{{ basePosition|currency:"B":3 }}</span>
+        <br/>(<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2">
+        <small>Value: </small><b>{{ value|currency:"B":5 }}</b>
+        <br/><b>{{ quoteValue|currency:undefined:2 }}</b>
+      </h4>
+    </div>`
+})
+export class WalletPositionComponent {
 
   public baseCurrency: string;
   public basePosition: number;
@@ -26,7 +43,7 @@ class WalletPositionController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory
+    subscriberFactory: SubscriberFactory
   ) {
     var clearPosition = () => {
       this.baseCurrency = null;
@@ -76,29 +93,3 @@ class WalletPositionController {
     });
   }
 }
-
-export var walletPositionDirective = 'walletPositionDirective';
-
-angular.module(walletPositionDirective, ['ui.bootstrap', Shared.sharedDirectives])
-  .directive('walletPosition', (): ng.IDirective => { return {
-    template: `<div class="positions">
-      <h4 class="col-md-12 col-xs-2"><small>
-        {{ walletPositionScope.quoteCurrency }}:&nbsp;<span ng-class="walletPositionScope.quotePosition + walletPositionScope.quoteHeldPosition > walletPositionScope.buySize * walletPositionScope.fv ? 'text-danger' : 'text-muted'">{{ walletPositionScope.quotePosition|currency:undefined:2 }}</span>
-        <br/>(<span ng-class="walletPositionScope.quoteHeldPosition ? 'buy' : 'text-muted'">{{ walletPositionScope.quoteHeldPosition|currency:undefined:2 }}</span>)
-      </small></h4>
-      <h4 class="col-md-12 col-xs-2"><small>
-        {{ walletPositionScope.baseCurrency }}:&nbsp;<span ng-class="walletPositionScope.basePosition + walletPositionScope.baseHeldPosition > walletPositionScope.sellSize ? 'text-danger' : 'text-muted'">{{ walletPositionScope.basePosition|currency:"B":3 }}</span>
-        <br/>(<span ng-class="walletPositionScope.baseHeldPosition ? 'sell' : 'text-muted'">{{ walletPositionScope.baseHeldPosition|currency:"B":3 }}</span>)
-      </small></h4>
-      <h4 class="col-md-12 col-xs-2">
-        <small>Value: </small><b>{{ walletPositionScope.value|currency:"B":5 }}</b>
-        <br/><b>{{ walletPositionScope.quoteValue|currency:undefined:2 }}</b>
-      </h4>
-    </div>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', WalletPositionController],
-    controllerAs: 'walletPositionScope',
-    scope: {},
-    bindToController: true
-  }});

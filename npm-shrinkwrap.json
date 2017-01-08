@@ -2,10 +2,40 @@
   "name": "tribeca",
   "version": "2.0.0",
   "dependencies": {
+    "@angular/common": {
+      "version": "2.4.2",
+      "from": "@angular/common@latest",
+      "resolved": "https://registry.npmjs.org/@angular/common/-/common-2.4.2.tgz"
+    },
+    "@angular/compiler": {
+      "version": "2.4.2",
+      "from": "@angular/compiler@latest",
+      "resolved": "https://registry.npmjs.org/@angular/compiler/-/compiler-2.4.2.tgz"
+    },
     "@angular/core": {
       "version": "2.4.2",
       "from": "@angular/core@2.4.2",
       "resolved": "https://registry.npmjs.org/@angular/core/-/core-2.4.2.tgz"
+    },
+    "@angular/forms": {
+      "version": "2.4.2",
+      "from": "@angular/forms@latest",
+      "resolved": "https://registry.npmjs.org/@angular/forms/-/forms-2.4.2.tgz"
+    },
+    "@angular/platform-browser": {
+      "version": "2.4.2",
+      "from": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-2.4.2.tgz",
+      "resolved": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-2.4.2.tgz"
+    },
+    "@angular/platform-browser-dynamic": {
+      "version": "2.4.2",
+      "from": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-2.4.2.tgz",
+      "resolved": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-2.4.2.tgz"
+    },
+    "@ng-bootstrap/ng-bootstrap": {
+      "version": "1.0.0-alpha.16",
+      "from": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.16.tgz",
+      "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.16.tgz"
     },
     "@types/angular": {
       "version": "1.5.23",
@@ -128,11 +158,6 @@
       "version": "1.6.1",
       "from": "angular@1.6.1",
       "resolved": "https://registry.npmjs.org/angular/-/angular-1.6.1.tgz"
-    },
-    "angular-ui-bootstrap": {
-      "version": "2.4.0",
-      "from": "angular-ui-bootstrap@2.4.0",
-      "resolved": "https://registry.npmjs.org/angular-ui-bootstrap/-/angular-ui-bootstrap-2.4.0.tgz"
     },
     "angularjs": {
       "version": "0.0.1",
@@ -1458,6 +1483,11 @@
           "resolved": "https://registry.npmjs.org/isarray/-/isarray-1.0.0.tgz"
         }
       }
+    },
+    "reflect-metadata": {
+      "version": "0.1.9",
+      "from": "reflect-metadata@latest",
+      "resolved": "https://registry.npmjs.org/reflect-metadata/-/reflect-metadata-0.1.9.tgz"
     },
     "request": {
       "version": "2.79.0",

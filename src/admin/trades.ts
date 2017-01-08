@@ -3,12 +3,12 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require('angular');
+import {NgModule, Component} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 
 class DisplayTrade {
   tradeId: string;
@@ -50,7 +50,13 @@ class DisplayTrade {
   }
 }
 
-class TradesListController {
+@Component({
+  selector: 'tradeList',
+  template: `<div>
+      <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div>
+    </div>`
+})
+export class TradesComponent {
 
   public trade_statuses : DisplayTrade[];
   public exch : Models.Exchange;
@@ -62,12 +68,12 @@ class TradesListController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory,
+    subscriberFactory: SubscriberFactory,
     uiGridConstants: any
   ) {
     this.trade_statuses = [];
     this.gridOptions = {
-      data: 'tradeListScope.trade_statuses',
+      data: 'trade_statuses',
       treeRowHeaderAlwaysVisible: false,
       primaryKey: 'tradeId',
       groupsCollapsedByDefault: true,
@@ -195,18 +201,3 @@ class TradesListController {
     });
   }
 }
-
-export var tradeListDirective = 'tradeListDirective';
-
-angular.module(tradeListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-  .directive('tradeList', (): ng.IDirective => { return {
-    template: `<div>
-      <div ui-grid="tradeListScope.gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div>
-    </div>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', 'uiGridConstants', TradesListController],
-    controllerAs: 'tradeListScope',
-    scope: {},
-    bindToController: true
-  }});

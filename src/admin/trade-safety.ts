@@ -2,13 +2,23 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import angular = require('angular');
+import {NgModule, Component} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 
-class TradeSafetyController {
+@Component({
+  selector: 'tradeSafety',
+  template: `<div>
+      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety|number:2 }}</span>,
+      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety|number:2 }}</span>,
+      BuyTS: {{ buySafety|number:2 }},
+      SellTS: {{ sellSafety|number:2 }},
+      TotalTS: {{ tradeSafetyValue|number:2 }}
+    </div>`
+})
+export class TradeSafetyComponent {
 
   public buySafety: number;
   public sellSafety: number;
@@ -19,7 +29,7 @@ class TradeSafetyController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory
+    subscriberFactory: SubscriberFactory
   ) {
     var updateValue = (value : Models.TradeSafety) => {
       if (value == null) return;
@@ -47,22 +57,3 @@ class TradeSafetyController {
     });
   }
 }
-
-export var tradeSafetyDirective = 'tradeSafetyDirective';
-
-angular.module(tradeSafetyDirective, [Shared.sharedDirectives])
-  .directive('tradeSafety', (): ng.IDirective => { return {
-    template: `<div>
-      BuyPing: <span class="{{ tradeSafetyScope.buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyScope.buySizeSafety|number:2 }}</span>,
-      SellPing: <span class="{{ tradeSafetyScope.sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyScope.sellSizeSafety|number:2 }}</span>,
-      BuyTS: {{ tradeSafetyScope.buySafety|number:2 }},
-      SellTS: {{ tradeSafetyScope.sellSafety|number:2 }},
-      TotalTS: {{ tradeSafetyScope.tradeSafetyValue|number:2 }}
-    </div>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', TradeSafetyController],
-    controllerAs: 'tradeSafetyScope',
-    scope: {},
-    bindToController: true
-  }});

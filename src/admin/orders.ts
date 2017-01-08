@@ -3,11 +3,12 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require('angular');
+import {NgModule, Component} from '@angular/core';
 import moment = require('moment');
+
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory, FireFactory} from './shared_directives';
 
 class DisplayOrderStatusReport {
   orderId: string;
@@ -79,7 +80,13 @@ class DisplayOrderStatusReport {
   };
 }
 
-class OrderListController {
+@Component({
+  selector: 'orderList',
+  template: `<div>
+      <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div>
+    </div>`
+})
+export class OrdersComponent {
 
   public order_statuses: DisplayOrderStatusReport[];
   public gridOptions: any;
@@ -87,15 +94,15 @@ class OrderListController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory,
-    fireFactory: Shared.FireFactory,
+    subscriberFactory: SubscriberFactory,
+    fireFactory: FireFactory,
     uiGridConstants: any
   ) {
     var fireCxl = fireFactory.getFire(Messaging.Topics.CancelOrder);
 
     this.order_statuses = [];
     this.gridOptions = {
-      data: 'orderListScope.order_statuses',
+      data: 'order_statuses',
       primaryKey: 'orderId',
       groupsCollapsedByDefault: true,
       treeRowHeaderAlwaysVisible: false,
@@ -177,17 +184,3 @@ class OrderListController {
   }
 }
 
-export var orderListDirective = 'orderListDirective';
-
-angular.module(orderListDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-  .directive('orderList', (): ng.IDirective => { return {
-    template: `<div>
-      <div ui-grid="orderListScope.gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div>
-    </div>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', 'fireFactory', 'uiGridConstants', OrderListController],
-    controllerAs: 'orderListScope',
-    scope: {},
-    bindToController: true
-  }});

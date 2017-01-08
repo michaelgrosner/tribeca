@@ -2,12 +2,11 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import angular = require('angular');
 import _ = require('lodash');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {FireFactory, SubscriberFactory} from './shared_directives';
 
 class FormViewModel<T> {
   master: T;
@@ -109,8 +108,8 @@ export class DisplayPair {
 
   constructor(
     public scope: ng.IScope,
-    subscriberFactory: Shared.SubscriberFactory,
-    fireFactory: Shared.FireFactory
+    subscriberFactory: SubscriberFactory,
+    fireFactory: FireFactory
   ) {
 
     var setConnectStatus = (cs: Models.ConnectivityStatus) => {

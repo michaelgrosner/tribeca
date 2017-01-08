@@ -3,11 +3,11 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require('angular');
+import {Component} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 
 class DisplayLevel {
   bidPrice: number;
@@ -38,7 +38,36 @@ class DisplayOrderStatusClassReport {
   }
 }
 
-class MarketQuotingController {
+@Component({
+  selector: 'marketQuoting',
+  template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
+      <tr class="active">
+        <th></th>
+        <th>bidSz</th>
+        <th>bidPx</th>
+        <th>FV</th>
+        <th>askPx</th>
+        <th>askSz</th>
+      </tr>
+      <tr class="info">
+        <td class="text-left">q</td>
+        <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
+        <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
+        <td class="fairvalue">{{ fairValue|number:2 }}</td>
+        <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx|number:2 }}</td>
+        <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
+      </tr>
+      <tr class="active" ng-repeat="level in levels">
+        <td class="text-left">mkt{{ $index }}</td>
+        <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
+        <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
+        <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
+        <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
+        <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
+      </tr>
+    </table>`
+})
+export class MarketQuotingComponent {
 
   public levels: DisplayLevel[];
   public fairValue: number;
@@ -54,7 +83,7 @@ class MarketQuotingController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory
+    subscriberFactory: SubscriberFactory
   ) {
     var clearMarket = () => {
         this.levels = [];
@@ -198,41 +227,3 @@ class MarketQuotingController {
     clearQuote();
   }
 }
-
-export var marketQuotingDirective = 'marketQuotingDirective';
-
-angular.module(marketQuotingDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-  .directive('marketQuoting', (): ng.IDirective => { return {
-    template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
-      <tr class="active">
-        <th></th>
-        <th>bidSz</th>
-        <th>bidPx</th>
-        <th>FV</th>
-        <th>askPx</th>
-        <th>askSz</th>
-      </tr>
-      <tr class="info">
-        <td class="text-left">q</td>
-        <td ng-class="marketQuotingScope.bidIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qBidSz|number:2 }}</td>
-        <td ng-class="marketQuotingScope.bidIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qBidPx|number:2 }}</td>
-        <td class="fairvalue">{{ marketQuotingScope.fairValue|number:2 }}</td>
-        <td ng-class="marketQuotingScope.askIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qAskPx|number:2 }}</td>
-        <td ng-class="marketQuotingScope.askIsLive ? 'text-danger' : 'text-muted'">{{ marketQuotingScope.qAskSz|number:2 }}</td>
-      </tr>
-      <tr class="active" ng-repeat="level in marketQuotingScope.levels">
-        <td class="text-left">mkt{{ $index }}</td>
-        <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
-        <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
-        <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
-        <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
-        <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
-      </tr>
-    </table>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', MarketQuotingController],
-    controllerAs: 'marketQuotingScope',
-    scope: {},
-    bindToController: true
-  }});
