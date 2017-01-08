@@ -10,7 +10,7 @@ import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({
-  selector: 'walletPosition',
+  selector: 'wallet-position',
   template: `<div class="positions">
       <h4 class="col-md-12 col-xs-2"><small>
         {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span>
@@ -40,11 +40,9 @@ export class WalletPositionComponent {
   public sellSize: number;
   public fv: number;
 
-  constructor(
-    $scope: ng.IScope,
-    $log: ng.ILogService,
-    subscriberFactory: SubscriberFactory
-  ) {
+  $scope: ng.IScope;
+  subscriberFactory: SubscriberFactory;
+  constructor() {
     var clearPosition = () => {
       this.baseCurrency = null;
       this.quoteCurrency = null;
@@ -79,17 +77,17 @@ export class WalletPositionComponent {
       this.sellSize = qp.sellSize;
     };
 
-    var subscriberQPChange = subscriberFactory.getSubscriber($scope, Messaging.Topics.QuotingParametersChange)
-      .registerDisconnectedHandler(clearQP)
-      .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
+    // var subscriberQPChange = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.QuotingParametersChange)
+      // .registerDisconnectedHandler(clearQP)
+      // .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
 
-    var subscriberPosition = subscriberFactory.getSubscriber($scope, Messaging.Topics.Position)
-      .registerDisconnectedHandler(clearPosition)
-      .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
+    // var subscriberPosition = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.Position)
+      // .registerDisconnectedHandler(clearPosition)
+      // .registerSubscriber(updatePosition, us => us.forEach(updatePosition));
 
-    $scope.$on('$destroy', () => {
-      subscriberQPChange.disconnect();
-      subscriberPosition.disconnect();
-    });
+    // this.$scope.$on('$destroy', () => {
+      // subscriberQPChange.disconnect();
+      // subscriberPosition.disconnect();
+    // });
   }
 }

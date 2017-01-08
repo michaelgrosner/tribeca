@@ -2,45 +2,78 @@
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 
-import {Injectable, Directive, ElementRef, Pipe, PipeTransform} from '@angular/core';
+import {NgModule, Inject, Injectable, Component, ElementRef, Pipe, PipeTransform} from '@angular/core';
 import moment = require('moment');
+import * as io from 'socket.io-client';
 
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 
-@Directive({})
-export class Mypopover {
-  constructor($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) {
-    var getTemplate = (contentType, template_url) => {
-        var template = '';
-        switch (contentType) {
-            case 'user':
-                template = <any>$templateCache.get(template_url);
-                break;
-        }
-        return template;
-    };
-    return {
-        restrict: "A",
-        link: (scope, element, attrs) => {
-            var popOverContent = $compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
-            var options = {
-                content: popOverContent,
-                placement: attrs.dataPlacement,
-                html: true,
-                date: scope.date
-            };
-            (<any>jQuery(element)).popover(options).click((e) => {
-                e.preventDefault();
-            });
-        }
-    };
-  }
-}
+// @Component({
+    // selector: '[mypopover]',
+    // template: `<form style="margin: 20px" class="form-horizontal" novalidate role="form">
+        // <div class="form-group">
+            // <label>Side</label>
+            // <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
+        // </div>
+        // <div class="form-group">
+            // <label>Price</label>
+            // <input class="form-control input-sm" type="number" ng-model="order.price" />
+        // </div>
+        // <div class="form-group">
+            // <label>Size</label>
+            // <input class="form-control input-sm" type="number" ng-model="order.quantity" />
+        // </div>
+        // <div class="form-group">
+            // <label>TIF</label>
+            // <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
+        // </div>
+        // <div class="form-group">
+            // <label>Type</label>
+            // <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
+        // </div>
+        // <button type="button"
+                // class="btn btn-success"
+                // onclick="jQuery('#order_form').popover('hide');"
+                // ng-click="order.submit()">Submit</button>
+    // </form>`
+// })
+// export class MypopoverComponent {
+  // $compile : ng.ICompileService;
+  // $templateCache : ng.ITemplateCacheService;
+  // constructor() {
+    // var getTemplate = (contentType, template_url) => {
+        // var template = '';
+        // switch (contentType) {
+            // case 'user':
+                // template = <any>this.$templateCache.get(template_url);
+                // break;
+        // }
+        // return template;
+    // };
+    // return {
+        // restrict: "A",
+        // link: (scope, element, attrs) => {
+            // var popOverContent = this.$compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
+            // var options = {
+                // content: popOverContent,
+                // placement: attrs.dataPlacement,
+                // html: true,
+                // date: scope.date
+            // };
+            // (<any>jQuery(element)).popover(options).click((e) => {
+                // e.preventDefault();
+            // });
+        // }
+    // };
+  // }
+// }
 
-@Directive({})
-export class BindOnceDirective {
-  constructor(el: ElementRef) {
+@Pipe({
+    name: 'bindOnce',
+})
+export class BindOncePipe {
+  constructor(/*el:ElementRef*/) {
     return {
       scope: true,
       link: ($scope) => {
@@ -54,7 +87,10 @@ export class BindOnceDirective {
 
 @Injectable()
 export class FireFactory {
-    constructor(private socket : any, private $log : ng.ILogService) {}
+    socket: SocketIOClient.Socket;
+    $log : ng.ILogService;
+
+    constructor() {}
 
     public getFire = <T>(topic : string) : Messaging.IFire<T> => {
         return new Messaging.Fire<T>(topic, this.socket, this.$log.info);
@@ -63,7 +99,10 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    constructor(private socket : any, private $log : ng.ILogService) {}
+    socket: SocketIOClient.Socket;
+    $log : ng.ILogService;
+
+    constructor() {}
 
     public getSubscriber = <T>(scope : ng.IScope, topic : string) : Messaging.ISubscribe<T> => {
         return new EvalAsyncSubscriber<T>(scope, topic, this.socket, this.$log.info);
@@ -100,7 +139,7 @@ class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     name: 'momentFullDate',
 })
 export class MomentFullDatePipe implements PipeTransform {
-  constructor() { }
+  constructor() {}
 
   transform(value: moment.Moment, args: any[]): any {
     if (!value) return;
@@ -112,11 +151,23 @@ export class MomentFullDatePipe implements PipeTransform {
     name: 'momentShortDate',
 })
 export class MomentShortDatePipe implements PipeTransform {
-  constructor() { }
+  constructor() {}
 
   transform(value: moment.Moment, args: any[]): any {
     if (!value) return;
     return Models.toShortTimeString(value);
+  }
+}
+
+function _window(): any {
+  // return the native window obj
+  return window;
+}
+
+@Injectable()
+export class WindowRef {
+  get nativeWindow(): any {
+    return _window();
   }
 }
 
@@ -130,3 +181,27 @@ export class MomentShortDatePipe implements PipeTransform {
        // .service("fireFactory", ['socket', '$log', FireFactory])
        // .filter("momentFullDatePipe", () => Models.toUtcFormattedTime)
        // .filter("momentShortDate", () => Models.toShortTimeString);
+@NgModule({
+    declarations: [
+      // MypopoverComponent,
+      BindOncePipe,
+      MomentFullDatePipe,
+      MomentShortDatePipe
+    ],
+    providers: [
+      /*'ui.grid',*/
+      FireFactory,
+      SubscriberFactory
+      // ,{
+        // provide: 'socket',
+        // useFactory: io
+      // }
+    ],
+    exports: [
+      // MypopoverComponent,
+      BindOncePipe,
+      MomentFullDatePipe,
+      MomentShortDatePipe
+    ]
+})
+export class SharedModule {}

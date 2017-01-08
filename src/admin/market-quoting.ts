@@ -39,33 +39,34 @@ class DisplayOrderStatusClassReport {
 }
 
 @Component({
-  selector: 'marketQuoting',
-  template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
-      <tr class="active">
-        <th></th>
-        <th>bidSz</th>
-        <th>bidPx</th>
-        <th>FV</th>
-        <th>askPx</th>
-        <th>askSz</th>
-      </tr>
-      <tr class="info">
-        <td class="text-left">q</td>
-        <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
-        <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
-        <td class="fairvalue">{{ fairValue|number:2 }}</td>
-        <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx|number:2 }}</td>
-        <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
-      </tr>
-      <tr class="active" ng-repeat="level in levels">
-        <td class="text-left">mkt{{ $index }}</td>
-        <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
-        <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
-        <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
-        <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
-        <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
-      </tr>
-    </table>`
+  selector: 'market-quoting',
+  template: 'TEMPLATE',
+  // template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
+      // <tr class="active">
+        // <th></th>
+        // <th>bidSz</th>
+        // <th>bidPx</th>
+        // <th>FV</th>
+        // <th>askPx</th>
+        // <th>askSz</th>
+      // </tr>
+      // <tr class="info">
+        // <td class="text-left">q</td>
+        // <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
+        // <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
+        // <td class="fairvalue">{{ fairValue|number:2 }}</td>
+        // <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx|number:2 }}</td>
+        // <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
+      // </tr>
+      // <tr class="active" ng-repeat="level in levels">
+        // <td class="text-left">mkt{{ $index }}</td>
+        // <td ng-class="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,trasnparent {{ level.bidPercent|number:2 }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent|number:2 }}%,transparent {{ level.bidPercent|number:2 }}%);">{{ level.bidSize|number:2 }}</div></td>
+        // <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
+        // <td><span ng-show="level.diffWidth > 0">{{ level.diffWidth|number:2 }}</span></td>
+        // <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
+        // <td ng-class="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,trasnparent {{ level.askPercent|number:2 }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent|number:2 }}%,transparent {{ level.askPercent|number:2 }}%);">{{ level.askSize|number:2 }}</div></td>
+      // </tr>
+    // </table>`
 })
 export class MarketQuotingComponent {
 
@@ -80,11 +81,9 @@ export class MarketQuotingComponent {
   public bidIsLive: boolean;
   public askIsLive: boolean;
 
-  constructor(
-    $scope: ng.IScope,
-    $log: ng.ILogService,
-    subscriberFactory: SubscriberFactory
-  ) {
+  $scope: ng.IScope;
+  subscriberFactory: SubscriberFactory;
+  constructor() {
     var clearMarket = () => {
         this.levels = [];
     };
@@ -206,23 +205,23 @@ export class MarketQuotingComponent {
       this.fairValue = fv.price;
     };
 
-    var subscribers = [];
+    // var subscribers = [];
 
-    var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
-      var subscriber = subscriberFactory.getSubscriber<T>($scope, topic)
-        .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
-        .registerDisconnectedHandler(clearFn);
-      subscribers.push(subscriber);
-    };
+    // var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
+      // var subscriber = this.subscriberFactory.getSubscriber<T>(this.$scope, topic)
+        // .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
+        // .registerDisconnectedHandler(clearFn);
+      // subscribers.push(subscriber);
+    // };
 
-    makeSubscriber<Models.Market>(Messaging.Topics.MarketData, updateMarket, clearMarket);
-    makeSubscriber<Models.OrderStatusReport>(Messaging.Topics.OrderStatusReports, updateQuote, clearQuote);
-    makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, updateQuoteStatus, clearQuoteStatus);
-    makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
+    // makeSubscriber<Models.Market>(Messaging.Topics.MarketData, updateMarket, clearMarket);
+    // makeSubscriber<Models.OrderStatusReport>(Messaging.Topics.OrderStatusReports, updateQuote, clearQuote);
+    // makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, updateQuoteStatus, clearQuoteStatus);
+    // makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, updateFairValue, clearFairValue);
 
-    $scope.$on('$destroy', () => {
-      subscribers.forEach(d => d.disconnect());
-    });
+    // this.$scope.$on('$destroy', () => {
+      // subscribers.forEach(d => d.disconnect());
+    // });
 
     clearQuote();
   }

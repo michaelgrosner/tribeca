@@ -10,18 +10,16 @@ import {SubscriberFactory} from './shared_directives';
 //import Highcharts = require('highcharts-ng');
 
 @Component({
-  selector: 'fairValueChart',
+  selector: 'fair-value-chart',
   template: ''
 })
 export class FairValueChartComponent {
 
   public fairValueChart: number;
 
-  constructor(
-    $scope: ng.IScope,
-    $log: ng.ILogService,
-    subscriberFactory: SubscriberFactory
-  ) {
+  $scope: ng.IScope;
+  subscriberFactory: SubscriberFactory;
+  constructor() {
     var clear = () => {
       this.fairValueChart = 0;
     };
@@ -36,13 +34,13 @@ export class FairValueChartComponent {
       // this.fairValueChart = fv.price;
     };
 
-    var subscriberFairValue = subscriberFactory.getSubscriber($scope, Messaging.Topics.FairValue)
-      .registerConnectHandler(clear)
-      .registerDisconnectedHandler(clear)
-      .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
+    // var subscriberFairValue = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.FairValue)
+      // .registerConnectHandler(clear)
+      // .registerDisconnectedHandler(clear)
+      // .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
 
-    $scope.$on('$destroy', () => {
-      subscriberFairValue.disconnect();
-    });
+    // this.$scope.$on('$destroy', () => {
+      // subscriberFairValue.disconnect();
+    // });
   }
 }
