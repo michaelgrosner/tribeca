@@ -9,7 +9,7 @@ import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({
-  selector: 'tradeSafety',
+  selector: 'trade-safety',
   template: `<div>
       BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety|number:2 }}</span>,
       SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety|number:2 }}</span>,
@@ -26,11 +26,9 @@ export class TradeSafetyComponent {
   public sellSizeSafety: number;
   public tradeSafetyValue: number;
 
-  constructor(
-    $scope: ng.IScope,
-    $log: ng.ILogService,
-    subscriberFactory: SubscriberFactory
-  ) {
+  $scope: ng.IScope;
+  subscriberFactory: SubscriberFactory;
+  constructor() {
     var updateValue = (value : Models.TradeSafety) => {
       if (value == null) return;
       this.tradeSafetyValue = value.combined;
@@ -48,12 +46,12 @@ export class TradeSafetyComponent {
       this.sellSizeSafety = null;
     };
 
-    var subscriberTradeSafetyValue = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
-      .registerDisconnectedHandler(clear)
-      .registerSubscriber(updateValue, us => us.forEach(updateValue));
+    // var subscriberTradeSafetyValue = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.TradeSafetyValue)
+      // .registerDisconnectedHandler(clear)
+      // .registerSubscriber(updateValue, us => us.forEach(updateValue));
 
-    $scope.$on('$destroy', () => {
-        subscriberTradeSafetyValue.disconnect();
-    });
+    // this.$scope.$on('$destroy', () => {
+        // subscriberTradeSafetyValue.disconnect();
+    // });
   }
 }

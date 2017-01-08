@@ -16,7 +16,7 @@ import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
-import {NgModule, Component} from '@angular/core';
+import {NgModule, Component, ValueProvider, Inject, enableProdMode} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
@@ -29,7 +29,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {FireFactory, SubscriberFactory, Mypopover, BindOnceDirective, MomentFullDatePipe, MomentShortDatePipe} from './shared_directives';
+import {SharedModule, WindowRef, FireFactory, SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
@@ -71,7 +71,6 @@ class DisplayOrder {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-
     this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
   }
 
@@ -84,7 +83,269 @@ class DisplayOrder {
 
 @Component({
   selector: 'ui',
-  templateUrl: 'ui.html'
+  template: `<div>
+    <div ng-if="!connected">
+        Not connected
+    </div>
+
+    <div ng-if="connected">
+        <div class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#" ng-click="changeTheme()">tribeca</a> <small title="Memory Used" style="margin-top: 6px;display: inline-block;">{{ memory }}</small>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><p class="navbar-text">Target Base Position: <target-base-position></target-base-position></p></li>
+                        <li><p class="navbar-text"><trade-safety></trade-safety></p></li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-primary navbar-btn"
+                                    id="order_form"
+                                    mypopover popover-template="order_form.html"
+                                    data-placement="bottom">Submit order
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-danger navbar-btn"
+                                    ng-click="cancelAllOrders()"
+                                    data-placement="bottom">Cancel All Open Orders
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-info navbar-btn"
+                                    ng-click="cleanAllClosedOrders()"
+                                    ng-show="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                    data-placement="bottom">Clean All Closed Pongs
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button"
+                                    class="btn btn-danger navbar-btn"
+                                    ng-click="cleanAllOrders()"
+                                    ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                    data-placement="bottom">Clean All Open Pings
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            <div>
+                <div style="padding: 5px" ng-class="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                    <div class="row">
+                        <div class="col-md-1 col-xs-12 text-center">
+                            <div class="row img-rounded exchange">
+                                <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
+                                    {{ pair_name }}
+                                </button>
+
+                                <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
+                                <wallet-position></wallet-position>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 col-xs-12">
+                            <market-quoting></market-quoting>
+                        </div>
+
+                        <div class="col-md-6 col-xs-12">
+                            <trade-list></trade-list>
+                        </div>
+
+                        <div class="col-md-2 col-xs-12">
+                            <market-trades></market-trades>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 col-xs-12">
+                            <div class="row">
+                                <table class="table table-responsive table-bordered">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>mode</th>
+                                            <th ng-show="pair.quotingParameters.display.mode==7">bullets</th>
+                                            <th ng-show="pair.quotingParameters.display.mode==7">magazine</th>
+                                            <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
+                                            <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
+                                            <th>fv</th>
+                                            <th>apMode</th>
+                                            <th>width</th>
+                                            <th>bidSz</th>
+                                            <th>askSz</th>
+                                            <th>tbp</th>
+                                            <th>pDiv</th>
+                                            <th>ewma?</th>
+                                            <th>apr?</th>
+                                            <th>trds</th>
+                                            <th>/sec</th>
+                                            <th>audio?</th>
+                                            <th colspan="2">
+                                                <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                                    Applied
+                                                </span>
+                                                <span ng-if="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                                    Pending
+                                                </span>
+                                                <span ng-if="!pair.quotingParameters.connected" class="text-danger">
+                                                    Not Connected
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="active">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.mode"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
+                                            </td>
+                                            <td style="width:78px;" ng-show="pair.quotingParameters.display.mode==7">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.bullets">
+                                            </td>
+                                            <td style="width:121px;" ng-show="pair.quotingParameters.display.mode==7">
+                                                <select class="form-control input-sm"
+                                                   ng-model="pair.quotingParameters.display.magazine"
+                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availableMagazine"></select>
+                                            </td>
+                                            <td style="width:142px;" ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <select class="form-control input-sm"
+                                                   ng-model="pair.quotingParameters.display.pingAt"
+                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availablePingAt"></select>
+                                            </td>
+                                            <td style="width:148px;" ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <select class="form-control input-sm"
+                                                   ng-model="pair.quotingParameters.display.pongAt"
+                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availablePongAt"></select>
+                                            </td>
+                                            <td style="width:88px;">
+                                                <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.fvModel"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
+                                            </td>
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    ng-model="pair.quotingParameters.display.autoPositionMode"
+                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableAutoPositionModes"></select>
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.width">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.buySize">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.sellSize">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.targetBasePosition">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.positionDivergence">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.ewmaProtection">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.tradesPerMinute">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   ng-model="pair.quotingParameters.display.tradeRateSeconds">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   ng-model="pair.quotingParameters.display.audio">
+                                            </td>
+                                            <td>
+                                                <input class="btn btn-default btn col-md-1 col-xs-6"
+                                                    style="width:55px"
+                                                    type="button"
+                                                    ng-click="pair.quotingParameters.reset()"
+                                                    value="Reset" />
+                                            </td>
+                                            <td>
+                                                <input class="btn btn-default btn col-md-1 col-xs-6"
+                                                    style="width:50px"
+                                                    type="submit"
+                                                    ng-click="pair.quotingParameters.submit()"
+                                                    value="Save" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-10 col-xs-12">
+                            <order-list></order-list>
+                        </div>
+                        <div  class="col-md-2 col-xs-12">
+                          <textarea ng-model="notepad" ng-change="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+          <div class="container-fluid">
+              <div class="row">
+                  <div class="col-md-4 col-xs-12">
+                  </div>
+                  <div class="col-md-4 col-xs-12">
+                      <fair-value-chart></fair-value-chart>
+                  </div>
+                  <div class="col-md-4 col-xs-12">
+                  </div>
+              </div>
+          </div>
+        </div>
+    </div>
+    <address class="text-center">
+      <small>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/HOWTO.md" target="_blank">HOWTO</a>
+      </small>
+    </address>
+  </div>`
 })
 class ClientComponent {
 
@@ -102,26 +363,26 @@ class ClientComponent {
   public changeNotepad = (content: string) => {};
 
   constructor(
-    $scope : ng.IScope,
-    $window: ng.IWindowService,
-    $timeout : ng.ITimeoutService,
-    $log : ng.ILogService,
-    subscriberFactory : SubscriberFactory,
-    fireFactory : FireFactory
+    // private $scope : ng.IScope,
+    // private winRef: WindowRef,
+    // @Inject('$log') private $log: ILogService,
+    // private subscriberFactory : SubscriberFactory,
+    // private fireFactory : FireFactory
   ) {
-    var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
-    this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
+    // var $window = winRef.nativeWindow;
+    // var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
+    // this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
 
-    var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
-    this.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
+    // var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
+    // this.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
 
-    var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
-    this.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
+    // var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
+    // this.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
 
-    var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
-    this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
+    // var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
+    // this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
 
-    this.order = new DisplayOrder(fireFactory, $log);
+    // this.order = new DisplayOrder(fireFactory, $log);
     this.pair = null;
 
     var unit = ['', 'K', 'M', 'G', 'T', 'P'];
@@ -144,7 +405,7 @@ class ClientComponent {
       user_theme = user_theme!==null?(user_theme==''?'-dark':''):(system_theme==''?'-dark':'');
       system_theme = user_theme;
       setTheme();
-      $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
+      // $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var getTheme = (hour: number) => {
@@ -165,13 +426,13 @@ class ClientComponent {
     var onAdvert = (pa : Models.ProductAdvertisement) => {
       // $log.info("advert", pa);
       this.connected = true;
-      $window.document.title = 'tribeca ['+pa.environment+']';
+      // $window.document.title = 'tribeca ['+pa.environment+']';
       system_theme = getTheme(moment.utc().hours());
       setTheme();
       this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
       this.exch_name = Models.Exchange[pa.exchange];
-      this.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
-      $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
+      // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
+      // $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var reset = (reason : string) => {
@@ -186,28 +447,28 @@ class ClientComponent {
     };
     reset("startup");
 
-    var subscriberProductAdvertisement = subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
-      .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-      .registerDisconnectedHandler(() => reset("disconnect"));
+    // var subscriberProductAdvertisement = subscriberFactory.getSubscriber(this, Messaging.Topics.ProductAdvertisement)
+      // .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
+      // .registerDisconnectedHandler(() => reset("disconnect"));
 
-    var subscriberApplicationState = subscriberFactory.getSubscriber($scope, Messaging.Topics.ApplicationState)
-      .registerSubscriber(onAppState, a => a.forEach(onAppState))
-      .registerDisconnectedHandler(() => reset("disconnect"));
+    // var subscriberApplicationState = subscriberFactory.getSubscriber(this, Messaging.Topics.ApplicationState)
+      // .registerSubscriber(onAppState, a => a.forEach(onAppState))
+      // .registerDisconnectedHandler(() => reset("disconnect"));
 
-    var subscriberNotepad = subscriberFactory.getSubscriber($scope, Messaging.Topics.Notepad)
-      .registerSubscriber(onNotepad, a => a.forEach(onNotepad))
-      .registerDisconnectedHandler(() => reset("disconnect"));
+    // var subscriberNotepad = subscriberFactory.getSubscriber(this, Messaging.Topics.Notepad)
+      // .registerSubscriber(onNotepad, a => a.forEach(onNotepad))
+      // .registerDisconnectedHandler(() => reset("disconnect"));
 
-    $scope.$on('$destroy', () => {
-      subscriberProductAdvertisement.disconnect();
-      subscriberApplicationState.disconnect();
-      subscriberNotepad.disconnect();
-    });
+    // this.$on('$destroy', () => {
+      // subscriberProductAdvertisement.disconnect();
+      // subscriberApplicationState.disconnect();
+      // subscriberNotepad.disconnect();
+    // });
   }
 }
 
 @NgModule({
-  imports: [BrowserModule, NgbModule.forRoot()],
+  imports: [BrowserModule, SharedModule, NgbModule.forRoot()],
   bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,
@@ -219,16 +480,16 @@ class ClientComponent {
     WalletPositionComponent,
     TargetBasePositionComponent,
     TradeSafetyComponent,
-    BindOnceDirective,
-    Mypopover,
-    MomentFullDatePipe,
-    MomentShortDatePipe
   ],
-  providers:[ /*'ui.grid',*/ FireFactory, SubscriberFactory, {
-    provide: 'socket',
-    useFactory: io
-  }]
+  providers: [
+    // ng.IScope,
+    // WindowRef,
+    // ILogService,
+    // SubscriberFactory,
+    // FireFactory
+  ]
 })
 class ClientModule {}
 
+enableProdMode();
 platformBrowserDynamic().bootstrapModule(ClientModule);

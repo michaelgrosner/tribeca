@@ -68,7 +68,7 @@ class DisplayMarketTrade {
 }
 
 @Component({
-  selector: 'marketTrades',
+  selector: 'market-trades',
   template: `<div>
       <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div>
     </div>`
@@ -78,51 +78,49 @@ export class MarketTradesComponent {
   public marketTrades: DisplayMarketTrade[];
   public marketTradeOptions: Object;
 
-  constructor(
-    $scope: ng.IScope,
-    $log: ng.ILogService,
-    subscriberFactory: SubscriberFactory,
-    uiGridConstants: any
-  ) {
+  $scope: ng.IScope;
+  subscriberFactory: SubscriberFactory;
+  uiGridConstants: any;
+  constructor() {
     this.marketTrades = [];
-    this.marketTradeOptions = {
-      data: 'marketTrades',
-      showGroupPanel: false,
-      rowHeight: 20,
-      headerRowHeight: 20,
-      groupsCollapsedByDefault: true,
-      enableColumnResize: true,
-      sortInfo: { fields: ['time'], directions: ['desc'] },
-      columnDefs: [
-        { width: 90, field: 'time', displayName: 'time', cellFilter: "momentShortDate",
-          sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-          sort: { direction: uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            return 'fs11px '+(!row.entity.recent ? "text-muted" : "");
-        } },
-        { width: 60, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            return (row.entity.make_side === 'Ask') ? "sell" : "buy";
-        } },
-        { width: 50, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            return (row.entity.make_side === 'Ask') ? "sell" : "buy";
-        } },
-        { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          if (grid.getCellValue(row, col) === 'Bid') {
-            return 'buy';
-          }
-          else if (grid.getCellValue(row, col) === 'Ask') {
-            return "sell";
-          }
-        }},
-        { width: 40, field: 'qBz', displayName: 'qBz' },
-        { width: 50, field: 'qB', displayName: 'qB' },
-        { width: 50, field: 'qA', displayName: 'qA' },
-        { width: 40, field: 'qAz', displayName: 'qAz' },
-        { width: 40, field: 'mBz', displayName: 'mBz' },
-        { width: 50, field: 'mB', displayName: 'mB' },
-        { width: 50, field: 'mA', displayName: 'mA' },
-        { width: 40, field: 'mAz', displayName: 'mAz' }
-      ]
-    };
+    // this.marketTradeOptions = {
+      // data: 'marketTrades',
+      // showGroupPanel: false,
+      // rowHeight: 20,
+      // headerRowHeight: 20,
+      // groupsCollapsedByDefault: true,
+      // enableColumnResize: true,
+      // sortInfo: { fields: ['time'], directions: ['desc'] },
+      // columnDefs: [
+        // { width: 90, field: 'time', displayName: 'time', cellFilter: "momentShortDate",
+          // sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+          // sort: { direction: this.uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            // return 'fs11px '+(!row.entity.recent ? "text-muted" : "");
+        // } },
+        // { width: 60, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            // return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+        // } },
+        // { width: 50, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+            // return (row.entity.make_side === 'Ask') ? "sell" : "buy";
+        // } },
+        // { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
+          // if (grid.getCellValue(row, col) === 'Bid') {
+            // return 'buy';
+          // }
+          // else if (grid.getCellValue(row, col) === 'Ask') {
+            // return "sell";
+          // }
+        // }},
+        // { width: 40, field: 'qBz', displayName: 'qBz' },
+        // { width: 50, field: 'qB', displayName: 'qB' },
+        // { width: 50, field: 'qA', displayName: 'qA' },
+        // { width: 40, field: 'qAz', displayName: 'qAz' },
+        // { width: 40, field: 'mBz', displayName: 'mBz' },
+        // { width: 50, field: 'mB', displayName: 'mB' },
+        // { width: 50, field: 'mA', displayName: 'mA' },
+        // { width: 40, field: 'mAz', displayName: 'mAz' }
+      // ]
+    // };
 
     var addNewMarketTrade = (u: Models.MarketTrade) => {
       if (u != null)
@@ -135,12 +133,12 @@ export class MarketTradesComponent {
           this.marketTrades[i].recent = false;
     };
 
-    var subscriberMarketTrade = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
-      .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
-      .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+    // var subscriberMarketTrade = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.MarketTrade)
+      // .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
+      // .registerDisconnectedHandler(() => this.marketTrades.length = 0);
 
-    $scope.$on('$destroy', () => {
-      subscriberMarketTrade.disconnect();
-    });
+    // this.$scope.$on('$destroy', () => {
+      // subscriberMarketTrade.disconnect();
+    // });
   }
 }
