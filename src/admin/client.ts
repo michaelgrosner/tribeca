@@ -11,26 +11,34 @@
 /// <reference path="trades.ts"/>
 /// <reference path="pair.ts"/>
 
+import 'zone.js';
+import 'reflect-metadata';
+
 (<any>global).jQuery = require("jquery");
-import angular = require("angular");
+
+import {NgModule, Component} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+
 import moment = require("moment");
+import io = require("socket.io-client");
 
-var ui_bootstrap = require("angular-ui-bootstrap");
-var ngGrid = require("../ui-grid.min");
-var bootstrap = require("../bootstrap.min");
+import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+// var ngGrid = require("../ui-grid.min");
+// var bootstrap = require("../bootstrap.min");
 
-import Models = require("../common/models");
-import Messaging = require("../common/messaging");
-import Shared = require("./shared_directives");
-import FairValueChart = require("./fairvalue-chart");
-import WalletPosition = require("./wallet-position");
-import TargetBasePosition = require("./target-base-position");
-import MarketQuoting = require("./market-quoting");
-import MarketTrades = require("./market-trades");
-import TradeSafety = require("./trade-safety");
-import Orders = require("./orders");
-import Trades = require("./trades");
-import Pair = require("./pair");
+import Models = require('../common/models');
+import Messaging = require('../common/messaging');
+import {FireFactory, SubscriberFactory, Mypopover, BindOnceDirective, MomentFullDatePipe, MomentShortDatePipe} from './shared_directives';
+import Pair = require('./pair');
+import {FairValueChartComponent} from './fairvalue-chart';
+import {WalletPositionComponent} from './wallet-position';
+import {TargetBasePositionComponent} from './target-base-position';
+import {MarketQuotingComponent} from './market-quoting';
+import {MarketTradesComponent} from './market-trades';
+import {TradeSafetyComponent} from './trade-safety';
+import {OrdersComponent} from './orders';
+import {TradesComponent} from './trades';
 
 class DisplayOrder {
   side : string;
@@ -57,7 +65,7 @@ class DisplayOrder {
   private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    fireFactory : Shared.FireFactory,
+    fireFactory : FireFactory,
     private _log : ng.ILogService
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side);
@@ -74,7 +82,11 @@ class DisplayOrder {
   };
 }
 
-class uiController {
+@Component({
+  selector: 'ui',
+  templateUrl: 'ui.html'
+})
+class ClientComponent {
 
   public memory: string;
   public notepad: string;
@@ -94,8 +106,8 @@ class uiController {
     $window: ng.IWindowService,
     $timeout : ng.ITimeoutService,
     $log : ng.ILogService,
-    subscriberFactory : Shared.SubscriberFactory,
-    fireFactory : Shared.FireFactory
+    subscriberFactory : SubscriberFactory,
+    fireFactory : FireFactory
   ) {
     var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
@@ -194,25 +206,29 @@ class uiController {
   }
 }
 
-angular.module('tribeca', [
-    'ui.bootstrap',
-    'ui.grid',
-    FairValueChart.fairValueChartDirective,
-    Orders.orderListDirective,
-    Trades.tradeListDirective,
-    MarketQuoting.marketQuotingDirective,
-    MarketTrades.marketTradesDirective,
-    WalletPosition.walletPositionDirective,
-    TargetBasePosition.targetBasePositionDirective,
-    TradeSafety.tradeSafetyDirective,
-    Shared.sharedDirectives
-  ])
-  .directive('ui', (): ng.IDirective => { return {
-    templateUrl: 'ui.html',
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$window', '$timeout', '$log', 'subscriberFactory', 'fireFactory', uiController],
-    controllerAs: 'uiScope',
-    scope: {},
-    bindToController: true
-  }});
+@NgModule({
+  imports: [BrowserModule, NgbModule.forRoot()],
+  bootstrap: [ClientComponent],
+  declarations: [
+    ClientComponent,
+    FairValueChartComponent,
+    OrdersComponent,
+    TradesComponent,
+    MarketQuotingComponent,
+    MarketTradesComponent,
+    WalletPositionComponent,
+    TargetBasePositionComponent,
+    TradeSafetyComponent,
+    BindOnceDirective,
+    Mypopover,
+    MomentFullDatePipe,
+    MomentShortDatePipe
+  ],
+  providers:[ /*'ui.grid',*/ FireFactory, SubscriberFactory, {
+    provide: 'socket',
+    useFactory: io
+  }]
+})
+class ClientModule {}
+
+platformBrowserDynamic().bootstrapModule(ClientModule);

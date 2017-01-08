@@ -2,21 +2,25 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import angular = require('angular');
+import {Component} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 //import Highcharts = require('highcharts-ng');
 
-class FairValueChartController {
+@Component({
+  selector: 'fairValueChart',
+  template: ''
+})
+export class FairValueChartComponent {
 
   public fairValueChart: number;
 
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory
+    subscriberFactory: SubscriberFactory
   ) {
     var clear = () => {
       this.fairValueChart = 0;
@@ -42,16 +46,3 @@ class FairValueChartController {
     });
   }
 }
-
-export var fairValueChartDirective = 'fairValueChartDirective';
-
-angular.module(fairValueChartDirective, [Shared.sharedDirectives])
-  .directive('fairValueChart', (): ng.IDirective => { return {
-    template: '',//'<div>{{ fairValueChartScope.fairValueChart|number:2 }}</div>',
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', FairValueChartController],
-    controllerAs: 'fairValueChartScope',
-    scope: {},
-    bindToController: true
-  }});

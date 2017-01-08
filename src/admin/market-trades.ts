@@ -3,12 +3,12 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import angular = require('angular');
+import {NgModule, Component} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import Shared = require('./shared_directives');
+import {SubscriberFactory} from './shared_directives';
 
 class DisplayMarketTrade {
   price: number;
@@ -67,7 +67,13 @@ class DisplayMarketTrade {
   }
 }
 
-class MarketTradesController {
+@Component({
+  selector: 'marketTrades',
+  template: `<div>
+      <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div>
+    </div>`
+})
+export class MarketTradesComponent {
 
   public marketTrades: DisplayMarketTrade[];
   public marketTradeOptions: Object;
@@ -75,12 +81,12 @@ class MarketTradesController {
   constructor(
     $scope: ng.IScope,
     $log: ng.ILogService,
-    subscriberFactory: Shared.SubscriberFactory,
+    subscriberFactory: SubscriberFactory,
     uiGridConstants: any
   ) {
     this.marketTrades = [];
     this.marketTradeOptions = {
-      data: 'marketTradesScope.marketTrades',
+      data: 'marketTrades',
       showGroupPanel: false,
       rowHeight: 20,
       headerRowHeight: 20,
@@ -138,18 +144,3 @@ class MarketTradesController {
     });
   }
 }
-
-export var marketTradesDirective = 'marketTradesDirective';
-
-angular.module(marketTradesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
-  .directive('marketTrades', (): ng.IDirective => { return {
-    template: `<div>
-      <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradesScope.marketTradeOptions"></div>
-    </div>`,
-    restrict: 'E',
-    transclude: false,
-    controller: ['$scope', '$log', 'subscriberFactory', 'uiGridConstants', MarketTradesController],
-    controllerAs: 'marketTradesScope',
-    scope: {},
-    bindToController: true
-  }});
