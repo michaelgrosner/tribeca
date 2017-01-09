@@ -46,7 +46,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
+import {/*SharedModule, FireFactory,*/ SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
@@ -82,17 +82,17 @@ class DisplayOrder {
   private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    fireFactory : FireFactory
+    // fireFactory : FireFactory
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
+    // this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
   }
 
   public submit = () => {
     var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-    this._fire.fire(msg);
+    // this._fire.fire(msg);
   };
 }
 
@@ -368,7 +368,7 @@ class ClientComponent implements OnInit, OnDestroy {
   public notepad: string;
   public connected: boolean;
   public order: DisplayOrder;
-  public pair: Pair.DisplayPair;
+  // public pair: Pair.DisplayPair;
   public exch_name: string;
   public pair_name: string;
   public cancelAllOrders = () => {};
@@ -381,11 +381,9 @@ class ClientComponent implements OnInit, OnDestroy {
   subscriberApplicationState: any;
   subscriberNotepad: any;
 
-  constructor(
-    // $scope : ng.IScope,
-    private subscriberFactory : SubscriberFactory
-    // fireFactory : FireFactory
-  ) {
+  // $scope : ng.IScope,
+  // fireFactory : FireFactory
+  constructor(@Inject(SubscriberFactory) private subscriberFactory:SubscriberFactory) {
     // var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     // this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
 
@@ -399,7 +397,7 @@ class ClientComponent implements OnInit, OnDestroy {
     // this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
 
     // this.order = new DisplayOrder(fireFactory);
-    this.pair = null;
+    // this.pair = null;
 
     var unit = ['', 'K', 'M', 'G', 'T', 'P'];
 
@@ -444,8 +442,8 @@ class ClientComponent implements OnInit, OnDestroy {
       window.document.title = 'tribeca ['+pa.environment+']';
       system_theme = getTheme(moment.utc().hours());
       setTheme();
-      this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
-      this.exch_name = Models.Exchange[pa.exchange];
+      // this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+      // this.exch_name = Models.Exchange[pa.exchange];
       // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
       window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
@@ -455,9 +453,9 @@ class ClientComponent implements OnInit, OnDestroy {
       this.pair_name = null;
       this.exch_name = null;
 
-      if (this.pair !== null)
-        this.pair.dispose();
-      this.pair = null;
+      // if (this.pair !== null)
+        // this.pair.dispose();
+      // this.pair = null;
     };
     reset("startup");
   }
@@ -491,7 +489,7 @@ class ClientComponent implements OnInit, OnDestroy {
 }
 
 @NgModule({
-  imports: [BrowserModule, SharedModule, NgbModule.forRoot()],
+  imports: [BrowserModule, /*SharedModule,*/ NgbModule.forRoot()],
   bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,
@@ -508,7 +506,7 @@ class ClientComponent implements OnInit, OnDestroy {
     // ng.IScope,
     // ILogService,
     // {
-      // provide: 'socket',
+      // provide: 'io.Socket',
       // useFactory: io
     // },
     // FireFactory,
