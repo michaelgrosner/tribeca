@@ -29,7 +29,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SharedModule, WindowRef, FireFactory, SubscriberFactory} from './shared_directives';
+import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
@@ -65,8 +65,7 @@ class DisplayOrder {
   private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    fireFactory : FireFactory,
-    private _log : ng.ILogService
+    fireFactory : FireFactory
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
@@ -76,7 +75,6 @@ class DisplayOrder {
 
   public submit = () => {
     var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-    // this._log.info("submitting order", msg);
     this._fire.fire(msg);
   };
 }
@@ -363,13 +361,10 @@ class ClientComponent {
   public changeNotepad = (content: string) => {};
 
   constructor(
-    // private $scope : ng.IScope,
-    // private winRef: WindowRef,
-    // @Inject('$log') private $log: ILogService,
-    // private subscriberFactory : SubscriberFactory,
-    // private fireFactory : FireFactory
+    // $scope : ng.IScope,
+    // subscriberFactory : SubscriberFactory,
+    // fireFactory : FireFactory
   ) {
-    // var $window = winRef.nativeWindow;
     // var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     // this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
 
@@ -382,7 +377,7 @@ class ClientComponent {
     // var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
     // this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
 
-    // this.order = new DisplayOrder(fireFactory, $log);
+    // this.order = new DisplayOrder(fireFactory);
     this.pair = null;
 
     var unit = ['', 'K', 'M', 'G', 'T', 'P'];
@@ -405,7 +400,7 @@ class ClientComponent {
       user_theme = user_theme!==null?(user_theme==''?'-dark':''):(system_theme==''?'-dark':'');
       system_theme = user_theme;
       setTheme();
-      // $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
+      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var getTheme = (hour: number) => {
@@ -424,19 +419,17 @@ class ClientComponent {
     };
 
     var onAdvert = (pa : Models.ProductAdvertisement) => {
-      // $log.info("advert", pa);
       this.connected = true;
-      // $window.document.title = 'tribeca ['+pa.environment+']';
+      window.document.title = 'tribeca ['+pa.environment+']';
       system_theme = getTheme(moment.utc().hours());
       setTheme();
       this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
       this.exch_name = Models.Exchange[pa.exchange];
       // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
-      // $window.setTimeout(function(){$window.dispatchEvent(new Event('resize'));}, 1000);
+      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
     };
 
     var reset = (reason : string) => {
-      // $log.info("reset", reason);
       this.connected = false;
       this.pair_name = null;
       this.exch_name = null;
@@ -483,13 +476,16 @@ class ClientComponent {
   ],
   providers: [
     // ng.IScope,
-    // WindowRef,
     // ILogService,
-    // SubscriberFactory,
-    // FireFactory
+    // {
+      // provide: 'socket',
+      // useFactory: io
+    // },
+    // FireFactory,
+    // SubscriberFactory
   ]
 })
 class ClientModule {}
 
-enableProdMode();
+// enableProdMode();
 platformBrowserDynamic().bootstrapModule(ClientModule);

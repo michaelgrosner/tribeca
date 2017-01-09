@@ -11,7 +11,7 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'fair-value-chart',
-  template: ''
+  template: '{{ fairValueChart }}'
 })
 export class FairValueChartComponent {
 
@@ -31,7 +31,7 @@ export class FairValueChartComponent {
         return;
       }
 
-      // this.fairValueChart = fv.price;
+      this.fairValueChart = fv.price;
     };
 
     // var subscriberFairValue = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.FairValue)

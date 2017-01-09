@@ -154,6 +154,11 @@
       "from": "agentkeepalive@3.0.0",
       "resolved": "https://registry.npmjs.org/agentkeepalive/-/agentkeepalive-3.0.0.tgz"
     },
+    "angularjs": {
+      "version": "0.0.1",
+      "from": "angularjs@latest",
+      "resolved": "https://registry.npmjs.org/angularjs/-/angularjs-0.0.1.tgz"
+    },
     "ansi-regex": {
       "version": "2.0.0",
       "from": "ansi-regex@>=2.0.0 <3.0.0",

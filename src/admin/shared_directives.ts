@@ -87,33 +87,27 @@ export class BindOncePipe {
 
 @Injectable()
 export class FireFactory {
-    socket: SocketIOClient.Socket;
-    $log : ng.ILogService;
-
-    constructor() {}
+    constructor(private socket: SocketIOClient.Socket) {}
 
     public getFire = <T>(topic : string) : Messaging.IFire<T> => {
-        return new Messaging.Fire<T>(topic, this.socket, this.$log.info);
+        return new Messaging.Fire<T>(topic, this.socket);
     }
 }
 
 @Injectable()
 export class SubscriberFactory {
-    socket: SocketIOClient.Socket;
-    $log : ng.ILogService;
-
-    constructor() {}
+    constructor(private socket: SocketIOClient.Socket) {}
 
     public getSubscriber = <T>(scope : ng.IScope, topic : string) : Messaging.ISubscribe<T> => {
-        return new EvalAsyncSubscriber<T>(scope, topic, this.socket, this.$log.info);
+        return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
     }
 }
 
 class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     private _wrapped : Messaging.ISubscribe<T>;
 
-    constructor(private _scope : ng.IScope, topic : string, io : any, log : (...args: any[]) => void) {
-        this._wrapped = new Messaging.Subscriber<T>(topic, io, log);
+    constructor(private _scope : ng.IScope, topic : string, io : any) {
+        this._wrapped = new Messaging.Subscriber<T>(topic, io);
     }
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
@@ -159,18 +153,6 @@ export class MomentShortDatePipe implements PipeTransform {
   }
 }
 
-function _window(): any {
-  // return the native window obj
-  return window;
-}
-
-@Injectable()
-export class WindowRef {
-  get nativeWindow(): any {
-    return _window();
-  }
-}
-
 // export var sharedDirectives = "sharedDirectives";
 
 // angular.module(sharedDirectives, ['ui.bootstrap'])
@@ -188,15 +170,15 @@ export class WindowRef {
       MomentFullDatePipe,
       MomentShortDatePipe
     ],
-    providers: [
+    // providers: [
       /*'ui.grid',*/
-      FireFactory,
-      SubscriberFactory
+      // FireFactory,
+      // SubscriberFactory
       // ,{
         // provide: 'socket',
         // useFactory: io
       // }
-    ],
+    // ],
     exports: [
       // MypopoverComponent,
       BindOncePipe,
