@@ -216,7 +216,7 @@ var liveTradingSetup = () => {
     };
 
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
+        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null);
         if (persister)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
         else
@@ -224,7 +224,7 @@ var liveTradingSetup = () => {
     };
 
     var getReceiver = <T>(topic: string) : Messaging.IReceive<T> =>
-        new Messaging.Receiver<T>(topic, io, messagingLog.info.bind(messagingLog));
+        new Messaging.Receiver<T>(topic, io);
 
     var db = Persister.loadDb(config);
 

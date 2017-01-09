@@ -25,6 +25,7 @@
     "@types/socket.io-client": "^1.4.29",
     "@types/ws": "0.0.37",
     "agentkeepalive": "^3.0.0",
+    "angularjs": "0.0.1",
     "basic-auth": "^1.1.0",
     "basic-auth-connect": "1.0.0",
     "body-parser": "^1.15.2",
