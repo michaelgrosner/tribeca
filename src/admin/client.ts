@@ -28,8 +28,8 @@ import 'core-js/es6/reflect';
 import 'core-js/es7/reflect';
 import 'zone.js/dist/zone';
 
-// import 'zone.js';
-// import 'reflect-metadata';
+import 'zone.js';
+import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
@@ -38,7 +38,6 @@ import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
 import moment = require("moment");
-import io = require("socket.io-client");
 
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 // var ngGrid = require("../ui-grid.min");
@@ -46,7 +45,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {/*SharedModule, FireFactory,*/ SubscriberFactory} from './shared_directives';
+import {SharedModule, /*FireFactory,*/ SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
@@ -374,12 +373,14 @@ class ClientComponent implements OnInit, OnDestroy {
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
-  public changeTheme = () => {};
   public changeNotepad = (content: string) => {};
 
   subscriberProductAdvertisement: any;
   subscriberApplicationState: any;
   subscriberNotepad: any;
+
+  user_theme: string;
+  system_theme: string;
 
   // $scope : ng.IScope,
   // fireFactory : FireFactory
@@ -399,65 +400,64 @@ class ClientComponent implements OnInit, OnDestroy {
     // this.order = new DisplayOrder(fireFactory);
     // this.pair = null;
 
-    var unit = ['', 'K', 'M', 'G', 'T', 'P'];
-
-    var bytesToSize = (input:number, precision:number) => {
-      var index = Math.floor(Math.log(input) / Math.log(1024));
-      if (index >= unit.length) return input + 'B';
-      return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
-    };
-
-    var user_theme = null;
-    var system_theme = null;
-
-    var setTheme = () => {
-      if (jQuery('#daynight').attr('href')!='/css/bootstrap-theme'+system_theme+'.min.css')
-        jQuery('#daynight').attr('href', '/css/bootstrap-theme'+system_theme+'.min.css');
-    };
-
-    this.changeTheme = () => {
-      user_theme = user_theme!==null?(user_theme==''?'-dark':''):(system_theme==''?'-dark':'');
-      system_theme = user_theme;
-      setTheme();
-      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
-    };
-
-    var getTheme = (hour: number) => {
-      return user_theme!==null?user_theme:((hour<9 || hour>=21)?'-dark':'');
-    };
 
     this.notepad = null;
     var onNotepad = (np : Models.Notepad) => {
       this.notepad = np ? np.content : "";
     };
 
-    var onAppState = (as : Models.ApplicationState) => {
-      this.memory = bytesToSize(as.memory, 3);
-      system_theme = getTheme(as.hour);
-      setTheme();
-    };
+    this.reset("startup");
+  }
 
-    var onAdvert = (pa : Models.ProductAdvertisement) => {
-      this.connected = true;
-      window.document.title = 'tribeca ['+pa.environment+']';
-      system_theme = getTheme(moment.utc().hours());
-      setTheme();
-      // this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
-      // this.exch_name = Models.Exchange[pa.exchange];
-      // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
-      window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
-    };
+  private reset = (reason : string) => {
+    this.connected = false;
+    this.pair_name = null;
+    this.exch_name = null;
 
-    var reset = (reason : string) => {
-      this.connected = false;
-      this.pair_name = null;
-      this.exch_name = null;
+    // if (this.pair !== null)
+      // this.pair.dispose();
+    // this.pair = null;
+  };
 
-      // if (this.pair !== null)
-        // this.pair.dispose();
-      // this.pair = null;
-    };
-    reset("startup");
+  private unit = ['', 'K', 'M', 'G', 'T', 'P'];
+
+  private bytesToSize = (input:number, precision:number) => {
+    var index = Math.floor(Math.log(input) / Math.log(1024));
+    if (index >= this.unit.length) return input + 'B';
+    return (input / Math.pow(1024, index)).toFixed(precision) + this.unit[index] + 'B'
+  }
+
+  private onAppState = (as : Models.ApplicationState) => {
+    this.memory = this.bytesToSize(as.memory, 3);
+    this.system_theme = this.getTheme(as.hour);
+    this.setTheme();
+  }
+
+  private setTheme = () => {
+    if (jQuery('#daynight').attr('href')!='/css/bootstrap-theme'+this.system_theme+'.min.css')
+      jQuery('#daynight').attr('href', '/css/bootstrap-theme'+this.system_theme+'.min.css');
+  }
+
+  public changeTheme = () => {
+    this.user_theme = this.user_theme!==null?(this.user_theme==''?'-dark':''):(this.system_theme==''?'-dark':'');
+    this.system_theme = this.user_theme;
+    this.setTheme();
+    window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
+  }
+
+  private getTheme = (hour: number) => {
+    return this.user_theme!==null?this.user_theme:((hour<9 || hour>=21)?'-dark':'');
+  }
+
+  private onAdvert = (pa : Models.ProductAdvertisement) => {
+    this.connected = true;
+    window.document.title = 'tribeca ['+pa.environment+']';
+    this.system_theme = this.getTheme(moment.utc().hours());
+    this.setTheme();
+    // this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+    // this.exch_name = Models.Exchange[pa.exchange];
+    // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
+    window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
   }
 
   ngOnInit() {
@@ -466,12 +466,11 @@ class ClientComponent implements OnInit, OnDestroy {
     // });
 
     this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ProductAdvertisement)
-      // .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-      // .registerDisconnectedHandler(() => reset("disconnect"))
-      ;
+      .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
+      .registerDisconnectedHandler(() => this.reset("disconnect"));
 
     // this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ApplicationState)
-      // .registerSubscriber(onAppState, a => a.forEach(onAppState))
+      // .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState))
       // .registerDisconnectedHandler(() => reset("disconnect"));
 
     // this.subscriberNotepad = this.subscriberFactory.getSubscriber(this, Messaging.Topics.Notepad)
@@ -488,8 +487,10 @@ class ClientComponent implements OnInit, OnDestroy {
   }
 }
 
+// const ioFactory = (): SocketIOClient.Socket => io();
+
 @NgModule({
-  imports: [BrowserModule, /*SharedModule,*/ NgbModule.forRoot()],
+  imports: [BrowserModule, SharedModule, NgbModule.forRoot()],
   bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,
@@ -501,16 +502,6 @@ class ClientComponent implements OnInit, OnDestroy {
     WalletPositionComponent,
     TargetBasePositionComponent,
     TradeSafetyComponent,
-  ],
-  providers: [
-    // ng.IScope,
-    // ILogService,
-    // {
-      // provide: 'io.Socket',
-      // useFactory: io
-    // },
-    // FireFactory,
-    SubscriberFactory
   ]
 })
 class ClientModule {}

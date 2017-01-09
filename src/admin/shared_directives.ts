@@ -96,7 +96,10 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    constructor(@Inject(io.Socket) private socket: SocketIOClient.Socket) {}
+    socket: any;
+    constructor(@Inject('socket') socket: any) {
+      this.socket = socket;
+    }
 
     public getSubscriber = <T>(scope : any, topic : string) : Messaging.ISubscribe<T> => {
         return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
@@ -173,11 +176,11 @@ export class MomentShortDatePipe implements PipeTransform {
     providers: [
       /*'ui.grid',*/
       // FireFactory,
-      SubscriberFactory
-      // ,{
-        // provide: 'socket',
-        // useFactory: io
-      // }
+      SubscriberFactory,
+      ,{
+        provide: 'socket',
+        useValue: io()
+      }
     ],
     exports: [
       // MypopoverComponent,
