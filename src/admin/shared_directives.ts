@@ -96,9 +96,9 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    constructor(private socket: SocketIOClient.Socket) {}
+    private socket;
 
-    public getSubscriber = <T>(scope : ng.IScope, topic : string) : Messaging.ISubscribe<T> => {
+    public getSubscriber = <T>(scope : any, topic : string) : Messaging.ISubscribe<T> => {
         return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
     }
 }
@@ -106,7 +106,7 @@ export class SubscriberFactory {
 class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     private _wrapped : Messaging.ISubscribe<T>;
 
-    constructor(private _scope : ng.IScope, topic : string, io : any) {
+    constructor(private _scope : any, topic : string, io : any) {
         this._wrapped = new Messaging.Subscriber<T>(topic, io);
     }
 
@@ -170,15 +170,15 @@ export class MomentShortDatePipe implements PipeTransform {
       MomentFullDatePipe,
       MomentShortDatePipe
     ],
-    // providers: [
+    providers: [
       /*'ui.grid',*/
       // FireFactory,
-      // SubscriberFactory
+      SubscriberFactory
       // ,{
         // provide: 'socket',
         // useFactory: io
       // }
-    // ],
+    ],
     exports: [
       // MypopoverComponent,
       BindOncePipe,

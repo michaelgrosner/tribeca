@@ -10,13 +10,30 @@
 /// <reference path="orders.ts"/>
 /// <reference path="trades.ts"/>
 /// <reference path="pair.ts"/>
+import 'core-js/es6/symbol';
+import 'core-js/es6/object';
+import 'core-js/es6/function';
+import 'core-js/es6/parse-int';
+import 'core-js/es6/parse-float';
+import 'core-js/es6/number';
+import 'core-js/es6/math';
+import 'core-js/es6/string';
+import 'core-js/es6/date';
+import 'core-js/es6/array';
+import 'core-js/es6/regexp';
+import 'core-js/es6/map';
+import 'core-js/es6/set';
+import 'core-js/es6/reflect';
 
-import 'zone.js';
-import 'reflect-metadata';
+import 'core-js/es7/reflect';
+import 'zone.js/dist/zone';
+
+// import 'zone.js';
+// import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
-import {NgModule, Component, ValueProvider, Inject, enableProdMode} from '@angular/core';
+import {NgModule, Component, ValueProvider, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
@@ -345,7 +362,7 @@ class DisplayOrder {
     </address>
   </div>`
 })
-class ClientComponent {
+class ClientComponent implements OnInit, OnDestroy {
 
   public memory: string;
   public notepad: string;
@@ -360,9 +377,13 @@ class ClientComponent {
   public changeTheme = () => {};
   public changeNotepad = (content: string) => {};
 
+  subscriberProductAdvertisement: any;
+  subscriberApplicationState: any;
+  subscriberNotepad: any;
+
   constructor(
     // $scope : ng.IScope,
-    // subscriberFactory : SubscriberFactory,
+    private subscriberFactory : SubscriberFactory
     // fireFactory : FireFactory
   ) {
     // var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
@@ -439,24 +460,33 @@ class ClientComponent {
       this.pair = null;
     };
     reset("startup");
+  }
 
-    // var subscriberProductAdvertisement = subscriberFactory.getSubscriber(this, Messaging.Topics.ProductAdvertisement)
+  ngOnInit() {
+    // this.connection = this.chatService.getMessages().subscribe(message => {
+      // this.messages.push(message);
+    // });
+
+    this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ProductAdvertisement)
       // .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-      // .registerDisconnectedHandler(() => reset("disconnect"));
+      // .registerDisconnectedHandler(() => reset("disconnect"))
+      ;
 
-    // var subscriberApplicationState = subscriberFactory.getSubscriber(this, Messaging.Topics.ApplicationState)
+    // this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ApplicationState)
       // .registerSubscriber(onAppState, a => a.forEach(onAppState))
       // .registerDisconnectedHandler(() => reset("disconnect"));
 
-    // var subscriberNotepad = subscriberFactory.getSubscriber(this, Messaging.Topics.Notepad)
+    // this.subscriberNotepad = this.subscriberFactory.getSubscriber(this, Messaging.Topics.Notepad)
       // .registerSubscriber(onNotepad, a => a.forEach(onNotepad))
       // .registerDisconnectedHandler(() => reset("disconnect"));
 
-    // this.$on('$destroy', () => {
-      // subscriberProductAdvertisement.disconnect();
-      // subscriberApplicationState.disconnect();
-      // subscriberNotepad.disconnect();
-    // });
+  }
+
+  ngOnDestroy() {
+    // this.connection.unsubscribe();
+    this.subscriberProductAdvertisement.disconnect();
+    // this.subscriberApplicationState.disconnect();
+    // this.subscriberNotepad.disconnect();
   }
 }
 
@@ -482,7 +512,7 @@ class ClientComponent {
       // useFactory: io
     // },
     // FireFactory,
-    // SubscriberFactory
+    SubscriberFactory
   ]
 })
 class ClientModule {}
