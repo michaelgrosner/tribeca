@@ -96,7 +96,7 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    private socket;
+    constructor(@Inject(io.Socket) private socket: SocketIOClient.Socket) {}
 
     public getSubscriber = <T>(scope : any, topic : string) : Messaging.ISubscribe<T> => {
         return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
