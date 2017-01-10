@@ -22,6 +22,11 @@
       "from": "@angular/forms@latest",
       "resolved": "https://registry.npmjs.org/@angular/forms/-/forms-2.4.2.tgz"
     },
+    "@angular/http": {
+      "version": "2.4.2",
+      "from": "@angular/http@>=2.4.2 <3.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/http/-/http-2.4.2.tgz"
+    },
     "@angular/platform-browser": {
       "version": "2.4.2",
       "from": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-2.4.2.tgz",
@@ -32,10 +37,15 @@
       "from": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-2.4.2.tgz",
       "resolved": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-2.4.2.tgz"
     },
+    "@angular/router": {
+      "version": "3.4.2",
+      "from": "@angular/router@>=3.4.2 <4.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/router/-/router-3.4.2.tgz"
+    },
     "@ng-bootstrap/ng-bootstrap": {
-      "version": "1.0.0-alpha.16",
-      "from": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.16.tgz",
-      "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.16.tgz"
+      "version": "1.0.0-alpha.18",
+      "from": "@ng-bootstrap/ng-bootstrap@1.0.0-alpha.18",
+      "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.18.tgz"
     },
     "@types/angular": {
       "version": "1.5.23",
@@ -68,9 +78,9 @@
       "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.39.tgz"
     },
     "@types/lodash": {
-      "version": "4.14.47",
-      "from": "@types/lodash@4.14.47",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.47.tgz"
+      "version": "4.14.48",
+      "from": "@types/lodash@4.14.48",
+      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.48.tgz"
     },
     "@types/marked": {
       "version": "0.0.28",
@@ -82,15 +92,10 @@
       "from": "@types/mime@*",
       "resolved": "https://registry.npmjs.org/@types/mime/-/mime-0.0.29.tgz"
     },
-    "@types/moment": {
-      "version": "2.13.0",
-      "from": "@types/moment@latest",
-      "resolved": "https://registry.npmjs.org/@types/moment/-/moment-2.13.0.tgz"
-    },
     "@types/node": {
-      "version": "6.0.58",
-      "from": "@types/node@6.0.58",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-6.0.58.tgz"
+      "version": "6.0.59",
+      "from": "@types/node@6.0.59",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-6.0.59.tgz"
     },
     "@types/q": {
       "version": "0.0.32",
@@ -153,11 +158,6 @@
       "version": "3.0.0",
       "from": "agentkeepalive@3.0.0",
       "resolved": "https://registry.npmjs.org/agentkeepalive/-/agentkeepalive-3.0.0.tgz"
-    },
-    "angularjs": {
-      "version": "0.0.1",
-      "from": "angularjs@latest",
-      "resolved": "https://registry.npmjs.org/angularjs/-/angularjs-0.0.1.tgz"
     },
     "ansi-regex": {
       "version": "2.0.0",
@@ -279,11 +279,6 @@
       "version": "1.0.2",
       "from": "better-assert@>=1.0.0 <1.1.0",
       "resolved": "https://registry.npmjs.org/better-assert/-/better-assert-1.0.2.tgz"
-    },
-    "bindings": {
-      "version": "1.2.1",
-      "from": "bindings@>=1.2.0 <1.3.0",
-      "resolved": "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz"
     },
     "blob": {
       "version": "0.0.4",
@@ -437,11 +432,6 @@
       "version": "1.0.3",
       "from": "buffer-xor@>=1.0.2 <2.0.0",
       "resolved": "https://registry.npmjs.org/buffer-xor/-/buffer-xor-1.0.3.tgz"
-    },
-    "bufferutil": {
-      "version": "1.3.0",
-      "from": "bufferutil@1.3.0",
-      "resolved": "https://registry.npmjs.org/bufferutil/-/bufferutil-1.3.0.tgz"
     },
     "builtin-status-codes": {
       "version": "3.0.0",
@@ -1279,7 +1269,8 @@
     "nan": {
       "version": "2.4.0",
       "from": "nan@>=2.4.0 <2.5.0",
-      "resolved": "https://registry.npmjs.org/nan/-/nan-2.4.0.tgz"
+      "resolved": "https://registry.npmjs.org/nan/-/nan-2.4.0.tgz",
+      "optional": true
     },
     "ncp": {
       "version": "2.0.0",
@@ -1772,6 +1763,11 @@
       "from": "tough-cookie@>=2.3.0 <2.4.0",
       "resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.2.tgz"
     },
+    "ts-helpers": {
+      "version": "1.1.2",
+      "from": "ts-helpers@>=1.1.2 <2.0.0",
+      "resolved": "https://registry.npmjs.org/ts-helpers/-/ts-helpers-1.1.2.tgz"
+    },
     "tty-browserify": {
       "version": "0.0.0",
       "from": "tty-browserify@>=0.0.0 <0.1.0",
@@ -1824,11 +1820,6 @@
           "resolved": "https://registry.npmjs.org/punycode/-/punycode-1.3.2.tgz"
         }
       }
-    },
-    "utf-8-validate": {
-      "version": "2.0.0",
-      "from": "utf-8-validate@2.0.0",
-      "resolved": "https://registry.npmjs.org/utf-8-validate/-/utf-8-validate-2.0.0.tgz"
     },
     "util": {
       "version": "0.10.3",
