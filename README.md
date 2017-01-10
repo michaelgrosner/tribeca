@@ -112,6 +112,8 @@ Feel free to run `npm test` anytime.
 
 3. Orders do not last more than a few miliseconds on OkCoin.
 
+4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
+
 ### TODO:
 
 -1. concurrent exchanges, display charts, chat room
