@@ -1,4 +1,4 @@
-FROM node:5
+FROM node:6
 RUN apt-get update
 
 RUN apt-get install -y git
@@ -11,7 +11,7 @@ WORKDIR tribeca
 # RUN git checkout -B YOUR-NAME-OF-THE-BRANCH --track remotes/origin/NAME-OF-THE-BRANCH-IN-GITHUB
 
 RUN npm install -g forever
-RUN npm install
+RUN npm install --unsafe-perm
 
 EXPOSE 3000 5000
 
