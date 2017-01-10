@@ -2,7 +2,7 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import {NgModule, Component} from '@angular/core';
+import {NgZone, Component, Inject} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -26,9 +26,10 @@ export class TradeSafetyComponent {
   public sellSizeSafety: number;
   public tradeSafetyValue: number;
 
-  $scope: ng.IScope;
-  subscriberFactory: SubscriberFactory;
-  constructor() {
+  constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+  ) {
     var updateValue = (value : Models.TradeSafety) => {
       if (value == null) return;
       this.tradeSafetyValue = value.combined;

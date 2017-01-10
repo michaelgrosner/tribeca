@@ -2,7 +2,7 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import {Component} from '@angular/core';
+import {NgZone, Component, Inject} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -15,32 +15,38 @@ import {SubscriberFactory} from './shared_directives';
 })
 export class FairValueChartComponent {
 
-  public fairValueChart: number;
+  private fairValueChart: number;
 
-  $scope: ng.IScope;
-  subscriberFactory: SubscriberFactory;
-  constructor() {
-    var clear = () => {
-      this.fairValueChart = 0;
-    };
-    clear();
+  private subscriberFairValue: any;
 
-    var addFairValue = (fv: Models.FairValue) => {
-      if (fv == null) {
-        clear();
-        return;
-      }
+  constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+  ) {
+    this.clear();
+  }
 
-      this.fairValueChart = fv.price;
-    };
+  ngOnInit() {
+    this.subscriberFairValue = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.FairValue)
+      .registerConnectHandler(this.clear)
+      .registerDisconnectedHandler(this.clear)
+      .registerSubscriber(this.addFairValue, fv => fv.forEach(this.addFairValue));
+  }
 
-    // var subscriberFairValue = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.FairValue)
-      // .registerConnectHandler(clear)
-      // .registerDisconnectedHandler(clear)
-      // .registerSubscriber(addFairValue, fv => fv.forEach(addFairValue));
+  ngOnDestroy() {
+    this.subscriberFairValue.disconnect();
+  }
 
-    // this.$scope.$on('$destroy', () => {
-      // subscriberFairValue.disconnect();
-    // });
+  private clear = () => {
+    this.fairValueChart = 0;
+  }
+
+  private addFairValue = (fv: Models.FairValue) => {
+    if (fv == null) {
+      this.clear();
+      return;
+    }
+
+    this.fairValueChart = fv.price;
   }
 }

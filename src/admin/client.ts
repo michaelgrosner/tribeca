@@ -16,7 +16,7 @@ import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
-import {NgModule, NgZone, Component, ValueProvider, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
+import {NgModule, NgZone, Component, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
@@ -51,7 +51,7 @@ class DisplayOrder {
   availableOrderTypes : string[];
 
   private static getNames<T>(enumObject : T) {
-    var names : string[] = [];
+    var names: string[] = [];
     for (var mem in enumObject) {
       if (!enumObject.hasOwnProperty(mem)) continue;
       if (parseInt(mem, 10) >= 0) {
@@ -61,10 +61,10 @@ class DisplayOrder {
     return names;
   }
 
-  private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
+  private _fire: Messaging.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    fireFactory : FireFactory
+    fireFactory: FireFactory
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
@@ -358,40 +358,65 @@ class ClientComponent implements OnInit, OnDestroy {
   public cleanAllOrders = () => {};
   public changeNotepad = (content: string) => {};
 
-  subscriberProductAdvertisement: any;
-  subscriberApplicationState: any;
-  subscriberNotepad: any;
+  private subscriberProductAdvertisement: any;
+  private subscriberApplicationState: any;
+  private subscriberNotepad: any;
 
-  user_theme: string = null;
-  system_theme: string = null;
+  private user_theme: string = null;
+  private system_theme: string = null;
 
-  constructor(@Inject(NgZone) private zone: NgZone, @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory, @Inject(FireFactory) private fireFactory: FireFactory) {
-    var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
-    this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
+  constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
+    @Inject(FireFactory) private fireFactory: FireFactory
+  ) {
+    this.cancelAllOrders = () => fireFactory
+      .getFire(Messaging.Topics.CancelAllOrders)
+      .fire(new Models.CancelAllOrdersRequest());
 
-    var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
-    this.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
+    this.cleanAllClosedOrders = () => fireFactory
+      .getFire(Messaging.Topics.CleanAllClosedOrders)
+      .fire(new Models.CleanAllClosedOrdersRequest());
 
-    var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
-    this.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
+    this.cleanAllOrders = () => fireFactory
+      .getFire(Messaging.Topics.CleanAllOrders)
+      .fire(new Models.CleanAllOrdersRequest());
 
-    var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
-    this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
+    this.changeNotepad = (content:string) => fireFactory
+      .getFire(Messaging.Topics.ChangeNotepad)
+      .fire(new Models.Notepad(content));
 
     this.order = new DisplayOrder(fireFactory);
-    this.pair = null;
-
-
     this.notepad = null;
+    this.pair = null;
+    this.reset();
+  }
 
-    this.reset("startup");
+  ngOnInit() {
+    this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
+      .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
+      .registerDisconnectedHandler(() => this.reset());
+
+    this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ApplicationState)
+      .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState))
+      .registerDisconnectedHandler(() => this.reset());
+
+    this.subscriberNotepad = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Notepad)
+      .registerSubscriber(this.onNotepad, a => a.forEach(this.onNotepad))
+      .registerDisconnectedHandler(() => this.reset());
+  }
+
+  ngOnDestroy() {
+    this.subscriberProductAdvertisement.disconnect();
+    this.subscriberApplicationState.disconnect();
+    this.subscriberNotepad.disconnect();
   }
 
   private onNotepad = (np : Models.Notepad) => {
     this.notepad = np ? np.content : "";
   }
 
-  private reset = (reason : string) => {
+  private reset = () => {
     this.connected = false;
     this.pair_name = null;
     this.exch_name = null;
@@ -399,7 +424,7 @@ class ClientComponent implements OnInit, OnDestroy {
     if (this.pair !== null)
       this.pair.dispose();
     this.pair = null;
-  };
+  }
 
   private unit = ['', 'K', 'M', 'G', 'T', 'P'];
 
@@ -440,27 +465,6 @@ class ClientComponent implements OnInit, OnDestroy {
     this.exch_name = Models.Exchange[pa.exchange];
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
-  }
-
-  ngOnInit() {
-    this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
-      .registerDisconnectedHandler(() => this.reset("disconnect"));
-
-    this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ApplicationState)
-      .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState))
-      .registerDisconnectedHandler(() => this.reset("disconnect"));
-
-    this.subscriberNotepad = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Notepad)
-      .registerSubscriber(this.onNotepad, a => a.forEach(this.onNotepad))
-      .registerDisconnectedHandler(() => this.reset("disconnect"));
-
-  }
-
-  ngOnDestroy() {
-    this.subscriberProductAdvertisement.disconnect();
-    this.subscriberApplicationState.disconnect();
-    this.subscriberNotepad.disconnect();
   }
 }
 
