@@ -92,7 +92,7 @@ class DisplayOrder {
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#" ng-click="changeTheme()">tribeca</a> <small title="Memory Used" style="margin-top: 6px;display: inline-block;">{{ memory }}</small>
+                    <a class="navbar-brand" href="#" (click)="changeTheme()">tribeca</a> <small title="Memory Used" style="margin-top: 6px;display: inline-block;">{{ memory }}</small>
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav navbar-right">
@@ -109,14 +109,14 @@ class DisplayOrder {
                         <li>
                             <button type="button"
                                     class="btn btn-danger navbar-btn"
-                                    ng-click="cancelAllOrders()"
+                                    (click)="cancelAllOrders()"
                                     data-placement="bottom">Cancel All Open Orders
                             </button>
                         </li>
                         <li>
                             <button type="button"
                                     class="btn btn-info navbar-btn"
-                                    ng-click="cleanAllClosedOrders()"
+                                    (click)="cleanAllClosedOrders()"
                                     ng-show="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Closed Pongs
                             </button>
@@ -124,7 +124,7 @@ class DisplayOrder {
                         <li>
                             <button type="button"
                                     class="btn btn-danger navbar-btn"
-                                    ng-click="cleanAllOrders()"
+                                    (click)="cleanAllOrders()"
                                     ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Open Pings
                             </button>
@@ -140,7 +140,7 @@ class DisplayOrder {
                     <div class="row">
                         <div class="col-md-1 col-xs-12 text-center">
                             <div class="row img-rounded exchange">
-                                <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
+                                <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" (click)="pair.active.submit()">
                                     {{ pair_name }}
                                 </button>
 
@@ -294,14 +294,14 @@ class DisplayOrder {
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:55px"
                                                     type="button"
-                                                    ng-click="pair.quotingParameters.reset()"
+                                                    (click)="pair.quotingParameters.reset()"
                                                     value="Reset" />
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:50px"
                                                     type="submit"
-                                                    ng-click="pair.quotingParameters.submit()"
+                                                    (click)="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
                                         </tr>
