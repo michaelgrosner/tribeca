@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgModule, Component} from '@angular/core';
+import {Component} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
