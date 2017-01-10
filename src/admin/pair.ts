@@ -2,6 +2,8 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
+import {NgZone} from '@angular/core';
+
 import _ = require('lodash');
 
 import Models = require('../common/models');
@@ -107,7 +109,7 @@ export class DisplayPair {
   private _subscribers: Messaging.ISubscribe<any>[] = [];
 
   constructor(
-    public scope: ng.IScope,
+    public zone: NgZone,
     subscriberFactory: SubscriberFactory,
     fireFactory: FireFactory
   ) {
@@ -116,15 +118,15 @@ export class DisplayPair {
       this.connected = cs == Models.ConnectivityStatus.Connected;
     };
 
-    var connectivitySubscriber = subscriberFactory.getSubscriber(scope, Messaging.Topics.ExchangeConnectivity)
+    var connectivitySubscriber = subscriberFactory.getSubscriber(zone, Messaging.Topics.ExchangeConnectivity)
       .registerSubscriber(setConnectStatus, cs => cs.forEach(setConnectStatus));
     this._subscribers.push(connectivitySubscriber);
 
-    var activeSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.ActiveChange);
+    var activeSub = subscriberFactory.getSubscriber(zone, Messaging.Topics.ActiveChange);
     this.active = new QuotingButtonViewModel(activeSub, fireFactory.getFire(Messaging.Topics.ActiveChange));
     this._subscribers.push(activeSub);
 
-    var qpSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange);
+    var qpSub = subscriberFactory.getSubscriber(zone, Messaging.Topics.QuotingParametersChange);
     this.quotingParameters = new DisplayQuotingParameters(qpSub, fireFactory.getFire(Messaging.Topics.QuotingParametersChange));
     this._subscribers.push(qpSub);
   }

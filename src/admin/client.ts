@@ -33,7 +33,7 @@ import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
-import {NgModule, Component, ValueProvider, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
+import {NgModule, NgZone, Component, ValueProvider, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
@@ -45,7 +45,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SharedModule, /*FireFactory,*/ SubscriberFactory} from './shared_directives';
+import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
@@ -81,28 +81,28 @@ class DisplayOrder {
   private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    // fireFactory : FireFactory
+    fireFactory : FireFactory
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    // this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
+    this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
   }
 
   public submit = () => {
     var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-    // this._fire.fire(msg);
+    this._fire.fire(msg);
   };
 }
 
 @Component({
   selector: 'ui',
   template: `<div>
-    <div ng-if="!connected">
+    <div *ngIf="!connected">
         Not connected
     </div>
 
-    <div ng-if="connected">
+    <div *ngIf="connected">
         <div class="navbar navbar-default" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -367,7 +367,7 @@ class ClientComponent implements OnInit, OnDestroy {
   public notepad: string;
   public connected: boolean;
   public order: DisplayOrder;
-  // public pair: Pair.DisplayPair;
+  public pair: Pair.DisplayPair;
   public exch_name: string;
   public pair_name: string;
   public cancelAllOrders = () => {};
@@ -379,34 +379,33 @@ class ClientComponent implements OnInit, OnDestroy {
   subscriberApplicationState: any;
   subscriberNotepad: any;
 
-  user_theme: string;
-  system_theme: string;
+  user_theme: string = null;
+  system_theme: string = null;
 
-  // $scope : ng.IScope,
-  // fireFactory : FireFactory
-  constructor(@Inject(SubscriberFactory) private subscriberFactory:SubscriberFactory) {
-    // var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
-    // this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
+  constructor(@Inject(NgZone) private zone: NgZone, @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory, @Inject(FireFactory) private fireFactory: FireFactory) {
+    var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
+    this.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
 
-    // var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
-    // this.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
+    var cleanAllClosedFirer = fireFactory.getFire(Messaging.Topics.CleanAllClosedOrders);
+    this.cleanAllClosedOrders = () => cleanAllClosedFirer.fire(new Models.CleanAllClosedOrdersRequest());
 
-    // var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
-    // this.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
+    var cleanAllFirer = fireFactory.getFire(Messaging.Topics.CleanAllOrders);
+    this.cleanAllOrders = () => cleanAllFirer.fire(new Models.CleanAllOrdersRequest());
 
-    // var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
-    // this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
+    var changeNotepadFirer = fireFactory.getFire(Messaging.Topics.ChangeNotepad);
+    this.changeNotepad = (content:string) => changeNotepadFirer.fire(new Models.Notepad(content));
 
-    // this.order = new DisplayOrder(fireFactory);
-    // this.pair = null;
+    this.order = new DisplayOrder(fireFactory);
+    this.pair = null;
 
 
     this.notepad = null;
-    var onNotepad = (np : Models.Notepad) => {
-      this.notepad = np ? np.content : "";
-    };
 
     this.reset("startup");
+  }
+
+  private onNotepad = (np : Models.Notepad) => {
+    this.notepad = np ? np.content : "";
   }
 
   private reset = (reason : string) => {
@@ -414,9 +413,9 @@ class ClientComponent implements OnInit, OnDestroy {
     this.pair_name = null;
     this.exch_name = null;
 
-    // if (this.pair !== null)
-      // this.pair.dispose();
-    // this.pair = null;
+    if (this.pair !== null)
+      this.pair.dispose();
+    this.pair = null;
   };
 
   private unit = ['', 'K', 'M', 'G', 'T', 'P'];
@@ -454,40 +453,33 @@ class ClientComponent implements OnInit, OnDestroy {
     window.document.title = 'tribeca ['+pa.environment+']';
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
-    // this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
-    // this.exch_name = Models.Exchange[pa.exchange];
-    // this.pair = new Pair.DisplayPair(this, subscriberFactory, fireFactory);
+    this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+    this.exch_name = Models.Exchange[pa.exchange];
+    this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
   }
 
   ngOnInit() {
-    // this.connection = this.chatService.getMessages().subscribe(message => {
-      // this.messages.push(message);
-    // });
-
-    this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ProductAdvertisement)
+    this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
       .registerDisconnectedHandler(() => this.reset("disconnect"));
 
-    // this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this, Messaging.Topics.ApplicationState)
-      // .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState))
-      // .registerDisconnectedHandler(() => reset("disconnect"));
+    this.subscriberApplicationState = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ApplicationState)
+      .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState))
+      .registerDisconnectedHandler(() => this.reset("disconnect"));
 
-    // this.subscriberNotepad = this.subscriberFactory.getSubscriber(this, Messaging.Topics.Notepad)
-      // .registerSubscriber(onNotepad, a => a.forEach(onNotepad))
-      // .registerDisconnectedHandler(() => reset("disconnect"));
+    this.subscriberNotepad = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Notepad)
+      .registerSubscriber(this.onNotepad, a => a.forEach(this.onNotepad))
+      .registerDisconnectedHandler(() => this.reset("disconnect"));
 
   }
 
   ngOnDestroy() {
-    // this.connection.unsubscribe();
     this.subscriberProductAdvertisement.disconnect();
-    // this.subscriberApplicationState.disconnect();
-    // this.subscriberNotepad.disconnect();
+    this.subscriberApplicationState.disconnect();
+    this.subscriberNotepad.disconnect();
   }
 }
-
-// const ioFactory = (): SocketIOClient.Socket => io();
 
 @NgModule({
   imports: [BrowserModule, SharedModule, NgbModule.forRoot()],
@@ -506,5 +498,5 @@ class ClientComponent implements OnInit, OnDestroy {
 })
 class ClientModule {}
 
-// enableProdMode();
+enableProdMode();
 platformBrowserDynamic().bootstrapModule(ClientModule);

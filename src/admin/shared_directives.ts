@@ -87,7 +87,7 @@ export class BindOncePipe {
 
 @Injectable()
 export class FireFactory {
-    constructor(private socket: SocketIOClient.Socket) {}
+    constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
 
     public getFire = <T>(topic : string) : Messaging.IFire<T> => {
         return new Messaging.Fire<T>(topic, this.socket);
@@ -96,10 +96,7 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    socket: any;
-    constructor(@Inject('socket') socket: any) {
-      this.socket = socket;
-    }
+    constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
 
     public getSubscriber = <T>(scope : any, topic : string) : Messaging.ISubscribe<T> => {
         return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
@@ -115,16 +112,16 @@ class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
 
     public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
         return this._wrapped.registerSubscriber(
-            x => this._scope.$evalAsync(() => incrementalHandler(x)),
-            xs => this._scope.$evalAsync(() => snapshotHandler(xs)))
+            x => this._scope.run(() => incrementalHandler(x)),
+            xs => this._scope.run(() => snapshotHandler(xs)))
     };
 
     public registerDisconnectedHandler = (handler : () => void) => {
-        return this._wrapped.registerDisconnectedHandler(() => this._scope.$evalAsync(handler));
+        return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
     };
 
     public registerConnectHandler = (handler : () => void) => {
-        return this._wrapped.registerConnectHandler(() => this._scope.$evalAsync(handler));
+        return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
     };
 
     public disconnect = () => this._wrapped.disconnect();
@@ -175,12 +172,12 @@ export class MomentShortDatePipe implements PipeTransform {
     ],
     providers: [
       /*'ui.grid',*/
-      // FireFactory,
-      SubscriberFactory,
-      ,{
+      {
         provide: 'socket',
         useValue: io()
-      }
+      },
+      SubscriberFactory,
+      FireFactory,
     ],
     exports: [
       // MypopoverComponent,
