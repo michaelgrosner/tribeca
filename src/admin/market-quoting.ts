@@ -89,7 +89,6 @@ export class MarketQuotingComponent {
   ) {
     this.clearMarket();
     this.clearQuote();
-    this.clearQuote();
   }
 
   ngOnInit() {
