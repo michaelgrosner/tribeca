@@ -17,6 +17,7 @@ import 'reflect-metadata';
 (<any>global).jQuery = require("jquery");
 
 import {NgModule, NgZone, Component, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
+import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
@@ -117,7 +118,7 @@ class DisplayOrder {
                             <button type="button"
                                     class="btn btn-info navbar-btn"
                                     (click)="cleanAllClosedOrders()"
-                                    ng-show="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                    *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Closed Pongs
                             </button>
                         </li>
@@ -125,7 +126,7 @@ class DisplayOrder {
                             <button type="button"
                                     class="btn btn-danger navbar-btn"
                                     (click)="cleanAllOrders()"
-                                    ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                    *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
                                     data-placement="bottom">Clean All Open Pings
                             </button>
                         </li>
@@ -136,11 +137,11 @@ class DisplayOrder {
 
         <div class="container-fluid">
             <div>
-                <div style="padding: 5px" ng-class="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                <div style="padding: 5px" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div class="row">
                         <div class="col-md-1 col-xs-12 text-center">
                             <div class="row img-rounded exchange">
-                                <button class="col-md-12 col-xs-3" ng-class="pair.active.getClass()" (click)="pair.active.submit()">
+                                <button class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
                                     {{ pair_name }}
                                 </button>
 
@@ -169,10 +170,10 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>mode</th>
-                                            <th ng-show="pair.quotingParameters.display.mode==7">bullets</th>
-                                            <th ng-show="pair.quotingParameters.display.mode==7">magazine</th>
-                                            <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
-                                            <th ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
+                                            <th *ngIf="pair.quotingParameters.display.mode==7">bullets</th>
+                                            <th *ngIf="pair.quotingParameters.display.mode==7">magazine</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
                                             <th>fv</th>
                                             <th>apMode</th>
                                             <th>width</th>
@@ -186,13 +187,13 @@ class DisplayOrder {
                                             <th>/sec</th>
                                             <th>audio?</th>
                                             <th colspan="2">
-                                                <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                                <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
                                                     Applied
                                                 </span>
-                                                <span ng-if="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                                <span *ngIf="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
                                                     Pending
                                                 </span>
-                                                <span ng-if="!pair.quotingParameters.connected" class="text-danger">
+                                                <span *ngIf="!pair.quotingParameters.connected" class="text-danger">
                                                     Not Connected
                                                 </span>
                                             </th>
@@ -202,93 +203,99 @@ class DisplayOrder {
                                         <tr class="active">
                                             <td style="width:121px;">
                                                 <select class="form-control input-sm"
-                                                    ng-model="pair.quotingParameters.display.mode"
-                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
+                                                  [ngModel]="pair.quotingParameters.display.mode">
+                                                  <option *ngFor="let option of pair.quotingParameters.availableQuotingModes" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
-                                            <td style="width:78px;" ng-show="pair.quotingParameters.display.mode==7">
+                                            <td style="width:78px;" *ngIf="pair.quotingParameters.display.mode==7">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.bullets">
+                                                   [ngModel]="pair.quotingParameters.display.bullets">
                                             </td>
-                                            <td style="width:121px;" ng-show="pair.quotingParameters.display.mode==7">
+                                            <td style="width:121px;" *ngIf="pair.quotingParameters.display.mode==7">
                                                 <select class="form-control input-sm"
-                                                   ng-model="pair.quotingParameters.display.magazine"
-                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availableMagazine"></select>
+                                                   [ngModel]="pair.quotingParameters.display.magazine">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableMagazine" [ngValue]="option.val">{{option.str}}</option>
+                                                 </select>
                                             </td>
-                                            <td style="width:142px;" ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="width:142px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
-                                                   ng-model="pair.quotingParameters.display.pingAt"
-                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availablePingAt"></select>
+                                                   [ngModel]="pair.quotingParameters.display.pingAt">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
-                                            <td style="width:148px;" ng-show="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="width:148px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
-                                                   ng-model="pair.quotingParameters.display.pongAt"
-                                                   ng-options="x.val as x.str for x in pair.quotingParameters.availablePongAt"></select>
+                                                   [ngModel]="pair.quotingParameters.display.pongAt">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"
-                                                    ng-model="pair.quotingParameters.display.fvModel"
-                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
+                                                    [ngModel]="pair.quotingParameters.display.fvModel">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableFvModels" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
                                             <td style="width:121px;">
                                                 <select class="form-control input-sm"
-                                                    ng-model="pair.quotingParameters.display.autoPositionMode"
-                                                    ng-options="x.val as x.str for x in pair.quotingParameters.availableAutoPositionModes"></select>
+                                                    [ngModel]="pair.quotingParameters.display.autoPositionMode">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.width">
+                                                   [ngModel]="pair.quotingParameters.display.width">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.buySize">
+                                                   [ngModel]="pair.quotingParameters.display.buySize">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.sellSize">
+                                                   [ngModel]="pair.quotingParameters.display.sellSize">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.targetBasePosition">
+                                                   [ngModel]="pair.quotingParameters.display.targetBasePosition">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.positionDivergence">
+                                                   [ngModel]="pair.quotingParameters.display.positionDivergence">
                                             </td>
                                             <td>
                                                 <input type="checkbox"
-                                                   ng-model="pair.quotingParameters.display.ewmaProtection">
+                                                   [ngModel]="pair.quotingParameters.display.ewmaProtection">
                                             </td>
                                             <td>
                                                 <input type="checkbox"
-                                                   ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                                   [ngModel]="pair.quotingParameters.display.aggressivePositionRebalancing">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.tradesPerMinute">
+                                                   [ngModel]="pair.quotingParameters.display.tradesPerMinute">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   ng-model="pair.quotingParameters.display.tradeRateSeconds">
+                                                   [ngModel]="pair.quotingParameters.display.tradeRateSeconds">
                                             </td>
                                             <td>
                                                 <input type="checkbox"
-                                                   ng-model="pair.quotingParameters.display.audio">
+                                                   [ngModel]="pair.quotingParameters.display.audio">
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
@@ -318,7 +325,7 @@ class DisplayOrder {
                             <order-list></order-list>
                         </div>
                         <div  class="col-md-2 col-xs-12">
-                          <textarea ng-model="notepad" ng-change="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
+                          <textarea [ngModel]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
                       </div>
                     </div>
                 </div>
@@ -469,7 +476,12 @@ class ClientComponent implements OnInit, OnDestroy {
 }
 
 @NgModule({
-  imports: [BrowserModule, SharedModule, NgbModule.forRoot()],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    SharedModule,
+    NgbModule.forRoot()
+  ],
   bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,

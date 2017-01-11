@@ -10,8 +10,7 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'target-base-position',
-  template: 'TEMPLATE'
-  // template: '<span>{{ targetBasePosition|number:2 }}</span>'
+  template: `<span>{{ targetBasePosition | number:'1.2-2' }}</span>`
 })
 export class TargetBasePositionComponent {
 

@@ -11,21 +11,20 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'wallet-position',
-  template: 'TEMPLATE'
-  // template: `<div class="positions">
-      // <h4 class="col-md-12 col-xs-2"><small>
-        // {{ quoteCurrency }}:&nbsp;<span ng-class="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition|currency:undefined:2 }}</span>
-        // <br/>(<span ng-class="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition|currency:undefined:2 }}</span>)
-      // </small></h4>
-      // <h4 class="col-md-12 col-xs-2"><small>
-        // {{ baseCurrency }}:&nbsp;<span ng-class="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">{{ basePosition|currency:"B":3 }}</span>
-        // <br/>(<span ng-class="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition|currency:"B":3 }}</span>)
-      // </small></h4>
-      // <h4 class="col-md-12 col-xs-2">
-        // <small>Value: </small><b>{{ value|currency:"B":5 }}</b>
-        // <br/><b>{{ quoteValue|currency:undefined:2 }}</b>
-      // </h4>
-    // </div>`
+  template: `<div class="positions">
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ quoteCurrency }}:&nbsp;<span [ngClass]="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition | currency:'USD':true:'1.2-2' }}</span>
+        <br/>(<span [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | currency:'USD':true:'1.2-2' }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2"><small>
+        {{ baseCurrency }}:&nbsp;<span [ngClass]="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">B{{ basePosition | number:'1.3-3' }}</span>
+        <br/>(<span [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">B{{ baseHeldPosition | number:'1.3-3' }}</span>)
+      </small></h4>
+      <h4 class="col-md-12 col-xs-2">
+        <small>Value: </small><b>B{{ value | number:'1.5-5' }}</b>
+        <br/><b>{{ quoteValue | currency:'USD':true:'1.2-2' }}</b>
+      </h4>
+    </div>`
 })
 export class WalletPositionComponent {
 
@@ -50,7 +49,6 @@ export class WalletPositionComponent {
   ) {}
 
   ngOnInit() {
-
     this.subscriberQPChange = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
       .registerDisconnectedHandler(this.clearQP)
       .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
