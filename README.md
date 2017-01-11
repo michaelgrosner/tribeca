@@ -30,7 +30,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 8. Run `npm start` in the root folder to start the app, or `service tribeca start` anywhere if the init.d script `dist/tribeca-init.sh` is installed).
 
-9. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run it manually from other locations with `nodejs path/to/main.js` or `forever start main.js`.
+9. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations like `nodejs path/to/main.js` or `forever start path/to/main.js`.
 
 ### Configuration
 
