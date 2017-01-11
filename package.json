@@ -64,13 +64,13 @@
   },
   "scripts": {
     "test": "mocha --require ts-node/register test/*.ts",
-    "start": "cd tribeca/service && forever start -a -l /dev/null main.js; cd - > /dev/null 2>&1",
-    "stop": "cd tribeca/service && forever stop -a -l /dev/null main.js; cd - > /dev/null 2>&1",
     "postinstall": "npm run compile-service && npm run compile-admin && npm run compile-static && npm run compile-bundle",
     "compile-service": "tsc -t ES6 -m commonjs --outDir tribeca src/service/*.ts src/service/*/*.ts src/common/*.ts",
     "compile-admin": "tsc --experimentalDecorators -t ES6 -m commonjs --outDir tribeca/service/admin/js src/admin/*.ts src/common/*.ts",
     "compile-static": "cp -R src/static/* tribeca/service/admin/",
-    "compile-bundle": "browserify tribeca/service/admin/js/admin/client.js -o tribeca/service/admin/js/admin/bundle.min.js"
+    "compile-bundle": "browserify tribeca/service/admin/js/admin/client.js -o tribeca/service/admin/js/admin/bundle.min.js",
+    "start": "cd tribeca/service && forever start -a -l /dev/null main.js; cd - > /dev/null 2>&1",
+    "stop": "cd tribeca/service && forever stop -a -l /dev/null main.js; cd - > /dev/null 2>&1"
   },
   "repository": {
     "type": "git",
