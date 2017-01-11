@@ -62,15 +62,16 @@
     "mocha": "3.2.0",
     "ts-node": "^2.0.0"
   },
+  "main": "./tribeca.js",
   "scripts": {
     "test": "mocha --require ts-node/register test/*.ts",
     "postinstall": "npm run compile-service && npm run compile-admin && npm run compile-static && npm run compile-bundle",
-    "compile-service": "tsc -t ES6 -m commonjs --outDir tribeca src/service/*.ts src/service/*/*.ts src/common/*.ts",
-    "compile-admin": "tsc --experimentalDecorators -t ES6 -m commonjs --outDir tribeca/service/admin/js src/admin/*.ts src/common/*.ts",
-    "compile-static": "cp -R src/static/* tribeca/service/admin/",
-    "compile-bundle": "browserify tribeca/service/admin/js/admin/client.js -o tribeca/service/admin/js/admin/bundle.min.js",
-    "start": "cd tribeca/service && forever start -a -l /dev/null main.js; cd - > /dev/null 2>&1",
-    "stop": "cd tribeca/service && forever stop -a -l /dev/null main.js; cd - > /dev/null 2>&1"
+    "compile-service": "tsc -t ES6 -m commonjs --outDir app src/service/*.ts src/service/*/*.ts src/common/*.ts",
+    "compile-admin": "tsc --experimentalDecorators -t ES6 -m commonjs --outDir app/service/admin/js src/admin/*.ts src/common/*.ts",
+    "compile-static": "cp -R src/static/* app/service/admin/",
+    "compile-bundle": "browserify app/service/admin/js/admin/client.js -o app/service/admin/js/admin/bundle.min.js",
+    "start": "forever start -a -l /dev/null tribeca.js",
+    "stop": "forever stop -a -l /dev/null tribeca.js"
   },
   "repository": {
     "type": "git",

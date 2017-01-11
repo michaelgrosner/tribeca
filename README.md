@@ -20,17 +20,15 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 3. In the cloned repository directory, `npm install` to pull in all dependencies and also compile TypeScript to CommonJS.
 
-4. After the installer runs the compiler, `cd` to the outputted JS files, in `tribeca/service`.
+4. (optional) Replace the certificate at `etc/sslcert` folder with your own. (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
 
-5. (optional) `mkdir sslcert` and generate `server.key` and `server.crt` files (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
+5. (optional) Setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
 
-6. (optional) Setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
+6. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section). Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-7. Create a `tribeca.json` file based off the provided `dist/dev-tribeca.json` or `dist/prod-tribeca.json` files and save it in the current `service` directory. Modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section) and point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
+7. Run `npm start` in the root folder to start the app, or `service tribeca start` anywhere if the init.d script `dist/tribeca-init.sh` is installed).
 
-8. Run `npm start` in the root folder to start the app, or `service tribeca start` anywhere if the init.d script `dist/tribeca-init.sh` is installed).
-
-9. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/main.js` or with forever globally installed `forever start path/to/main.js`. The environment variable is not needed if the working directory is the `tribeca/service` folder where `tribeca.json` is located.
+8. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js` or with forever globally installed `forever start path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
 
 ### Configuration
 
@@ -76,9 +74,9 @@ Input your exchange connectivity information, account information, and API keys 
 
 ### Web UI
 
-Once `tribeca` is up and running, visit port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
+Once `tribeca` is up and running, visit HTTPS port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs.
 
-If you want to use https, please create near `tribeca.json` (usually at `tribeca/service`) the folder `sslcert` and place inside the files `server.key` and `server.crt` (see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html)).
+If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
 ### REST API
 

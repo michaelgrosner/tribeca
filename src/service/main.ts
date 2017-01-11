@@ -159,8 +159,8 @@ var liveTradingSetup = () => {
     var web_server;
     try {
       web_server = https.createServer({
-        key: fs.readFileSync('./sslcert/server.key', 'utf8'),
-        cert: fs.readFileSync('./sslcert/server.crt', 'utf8')
+        key: fs.readFileSync('./etc/sslcert/server.key', 'utf8'),
+        cert: fs.readFileSync('./etc/sslcert/server.crt', 'utf8')
       }, app);
     } catch (e) {
       web_server = http.createServer(app)
@@ -184,7 +184,7 @@ var liveTradingSetup = () => {
 
     app.get("/view/*.md", (req: express.Request, res: express.Response) => {
       try {
-        res.send(marked(fs.readFileSync('./../../'+req.path.replace('/view/','').replace('.md','')+'.md', 'utf8')));
+        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('.md','')+'.md', 'utf8')));
       } catch (e) {
         res.send('Document Not Found, but today is a beautiful day.');
       }
