@@ -14,7 +14,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 ### Manual Installation
 
-1. Ensure your target machine has node v6 or greater (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`). Optionally (to run it continuously), ensure forever is installed (`npm install -g forever`).
+1. Ensure your target machine has node v6 or greater (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
 
 2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
 
@@ -28,9 +28,9 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 7. Create a `tribeca.json` file based off the provided `dist/dev-tribeca.json` or `dist/prod-tribeca.json` files and save it in the current `service` directory. Modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section) and point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-8. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` or run the app from within service folder `tribeca/service` (like `dist/tribeca-init.sh` does).
+8. Run `npm start` in the root folder to start the app, or `service tribeca start` anywhere if the init.d script `dist/tribeca-init.sh` is installed).
 
-9. Run `forever start main.js` to start the app (from `tribeca/service` folder to avoid setting environment variables) or `service tribeca start` if the init.d script `dist/tribeca-init.sh` is installed).
+9. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run it manually from other locations with `nodejs path/to/main.js` or `forever start main.js`.
 
 ### Configuration
 
