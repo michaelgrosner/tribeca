@@ -3,6 +3,7 @@ import moment = require('moment');
 import events = require("events");
 import util = require("util");
 import bunyan = require("bunyan");
+import fs = require("fs");
 import _ = require("lodash");
 
 require('events').EventEmitter.prototype._maxListeners = 100;
@@ -30,6 +31,8 @@ export function log(name: string) : bunyan.Logger {
         return bunyan.createLogger({name: name, stream: process.stdout, level: bunyan.FATAL});
     }
 
+    if (!fs.existsSync('./log')) fs.mkdirSync('./log');
+
     return bunyan.createLogger({
         name: name,
         streams: [{
@@ -37,7 +40,7 @@ export function log(name: string) : bunyan.Logger {
             stream: process.stdout            // log INFO and above to stdout
         }, {
             level: 'info',
-            path: './tribeca.log'  // log ERROR and above to a file
+            path: './log/tribeca.log'  // log ERROR and above to a file
         }
     ]});
 }

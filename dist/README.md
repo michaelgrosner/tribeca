@@ -9,16 +9,15 @@ To turn tribeca into a daemon, you may want to run the following command:
 ```
 Please make sure to correctly setup the value of `TRIBECA_SERVICE_PATH` variable hardcoded into the script.
 
-Log messages will be saved in `tribeca/service/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
+Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
 
 ### *-tribeca.json
-Sample configuration files, must be located inside the compiled `service` folder, to initialize your configurations:
+Sample configuration files, must be located inside `etc` folder, to initialize your configurations:
 ```
  $ cd /path/to/tribeca
- $ cp dist/prod-tribeca.json tribeca/service/tribeca.json
- $ vim tribeca/service/tribeca.json
+ $ cp etc/tribeca.json.dist etc/tribeca.json
+ $ vim etc/tribeca.json
 ```
-Please note that inside the git clone folder `tribeca`, the compiler generates another subfolder also called `tribeca`, where the `service` folder is located.
 
 ### Dockerfile
 To run tribeca under winy or mac, make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):

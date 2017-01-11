@@ -8,9 +8,9 @@
 # Short-Description: Start tribeca daemons
 ### END INIT INFO
 
-TRIBECA_SERVICE_PATH=/home/user/tribeca/tribeca/service
+TRIBECA_SERVICE_PATH=/home/user/path/to/tribeca
 
-DAEMON=main.js
+DAEMON=tribeca.js
 cd $TRIBECA_SERVICE_PATH
 case "$1" in
     start)
