@@ -39,7 +39,7 @@ class FormViewModel<T> {
   };
 
   public update = (p: T) => {
-    console.log("updating parameters", p);
+    // console.log("updating parameters", p);
     this.master = _.cloneDeep(p);
     this.display = _.cloneDeep(p);
     this.pending = false;
@@ -132,7 +132,6 @@ export class DisplayPair {
   }
 
   public dispose = () => {
-    // console.log("dispose client");
     this._subscribers.forEach(s => s.disconnect());
   };
 
