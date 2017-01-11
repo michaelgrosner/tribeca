@@ -48,9 +48,9 @@
       "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.18.tgz"
     },
     "@types/angular": {
-      "version": "1.5.23",
-      "from": "@types/angular@1.5.23",
-      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.5.23.tgz"
+      "version": "1.6.0",
+      "from": "@types/angular@1.6.0",
+      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.0.tgz"
     },
     "@types/bunyan": {
       "version": "0.0.34",
@@ -93,9 +93,9 @@
       "resolved": "https://registry.npmjs.org/@types/mime/-/mime-0.0.29.tgz"
     },
     "@types/node": {
-      "version": "6.0.59",
-      "from": "@types/node@6.0.59",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-6.0.59.tgz"
+      "version": "7.0.0",
+      "from": "@types/node@7.0.0",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.0.tgz"
     },
     "@types/q": {
       "version": "0.0.32",
@@ -469,9 +469,9 @@
       "resolved": "https://registry.npmjs.org/browserify-zlib/-/browserify-zlib-0.1.4.tgz"
     },
     "bson": {
-      "version": "1.0.3",
-      "from": "bson@>=1.0.3 <1.1.0",
-      "resolved": "https://registry.npmjs.org/bson/-/bson-1.0.3.tgz"
+      "version": "1.0.4",
+      "from": "bson@>=1.0.4 <1.1.0",
+      "resolved": "https://registry.npmjs.org/bson/-/bson-1.0.4.tgz"
     },
     "buffer": {
       "version": "4.9.1",
@@ -1531,9 +1531,9 @@
       "resolved": "https://registry.npmjs.org/moment/-/moment-2.17.1.tgz"
     },
     "mongodb": {
-      "version": "2.2.19",
-      "from": "mongodb@2.2.19",
-      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-2.2.19.tgz",
+      "version": "2.2.20",
+      "from": "mongodb@2.2.20",
+      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-2.2.20.tgz",
       "dependencies": {
         "isarray": {
           "version": "1.0.0",
@@ -1548,9 +1548,9 @@
       }
     },
     "mongodb-core": {
-      "version": "2.1.4",
-      "from": "mongodb-core@2.1.4",
-      "resolved": "https://registry.npmjs.org/mongodb-core/-/mongodb-core-2.1.4.tgz"
+      "version": "2.1.5",
+      "from": "mongodb-core@2.1.5",
+      "resolved": "https://registry.npmjs.org/mongodb-core/-/mongodb-core-2.1.5.tgz"
     },
     "ms": {
       "version": "0.7.1",
