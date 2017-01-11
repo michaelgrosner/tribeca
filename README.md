@@ -22,7 +22,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 4. (optional) Replace the certificate at `etc/sslcert` folder with your own. (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
 
-5. (optional) Setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
+5. (optional) Install forever globally (`npm i -g forever`) and setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
 
 6. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section). Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
