@@ -16,7 +16,7 @@ export class TargetBasePositionComponent {
 
   private targetBasePosition: number;
 
-  private subscriberTargetBasePosition: any;
+  private subscriberTargetBasePosition: Messaging.ISubscribe<Models.TargetBasePositionValue>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,

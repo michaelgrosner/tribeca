@@ -40,8 +40,8 @@ export class WalletPositionComponent {
   public sellSize: number;
   public fv: number;
 
-  private subscriberQPChange: any;
-  private subscriberPosition: any;
+  private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
+  private subscriberPosition: Messaging.ISubscribe<Models.PositionReport>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -92,7 +92,7 @@ export class WalletPositionComponent {
     this.fv = position.quoteValue / position.value;
   }
 
-  private updateQP = qp => {
+  private updateQP = (qp: Models.QuotingParameters) => {
     this.buySize = qp.buySize;
     this.sellSize = qp.sellSize;
   }

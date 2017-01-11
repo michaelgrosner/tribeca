@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgModule, Component} from '@angular/core';
+import {NgZone, Component, Inject} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -65,10 +65,14 @@ export class TradesComponent {
   public gridApi : any;
   public audio: boolean;
 
-  $scope: ng.IScope;
-  subscriberFactory: SubscriberFactory;
+  private subscriberTrades: Messaging.ISubscribe<Models.Trade>;
+  private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
+
   uiGridConstants: any;
-  constructor() {
+  constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+  ) {
     this.trade_statuses = [];
     // this.gridOptions = {
       // data: 'trade_statuses',
@@ -126,76 +130,79 @@ export class TradesComponent {
       // }
     // };
 
-    var addTrade = t => {
-      if (t.Kqty<0) {
-        for(var i = 0;i<this.trade_statuses.length;i++) {
-          if (this.trade_statuses[i].tradeId==t.tradeId) {
-            this.trade_statuses.splice(i, 1);
-            break;
-          }
+  }
+
+  ngOnInit() {
+    this.subscriberTrades = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Trades)
+      .registerConnectHandler(() => this.trade_statuses.length = 0)
+      .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
+      .registerSubscriber(this.addTrade, trades => trades.forEach(this.addTrade));
+
+    this.subscriberQPChange = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
+      .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
+      .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
+  }
+
+  ngOnDestroy() {
+    this.subscriberTrades.disconnect();
+    this.subscriberQPChange.disconnect();
+  }
+
+  private addTrade = (t: Models.Trade) => {
+    if (t.Kqty<0) {
+      for(var i = 0;i<this.trade_statuses.length;i++) {
+        if (this.trade_statuses[i].tradeId==t.tradeId) {
+          this.trade_statuses.splice(i, 1);
+          break;
         }
-      } else {
-        var exists = false;
-        for(var i = 0;i<this.trade_statuses.length;i++) {
-          if (this.trade_statuses[i].tradeId==t.tradeId) {
-            exists = true;
-            this.trade_statuses[i].time = (moment.isMoment(t.time) ? t.time : moment(t.time));
-            var merged = (this.trade_statuses[i].quantity != t.quantity);
-            this.trade_statuses[i].quantity = t.quantity;
-            this.trade_statuses[i].value = t.value;
-            this.trade_statuses[i].Ktime = (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime));
-            this.trade_statuses[i].Kqty = t.Kqty;
-            this.trade_statuses[i].Kprice = t.Kprice;
-            this.trade_statuses[i].Kvalue = t.Kvalue;
-            this.trade_statuses[i].Kdiff = t.Kdiff?t.Kdiff:null;
-            this.trade_statuses[i].sortTime = this.trade_statuses[i].Ktime ? this.trade_statuses[i].Ktime : this.trade_statuses[i].time;
-            if (this.trade_statuses[i].Kqty >= this.trade_statuses[i].quantity)
-              this.trade_statuses[i].side = 'K';
-            if (this.gridApi && this.uiGridConstants)
-              this.gridApi.grid.notifyDataChange(this.uiGridConstants.dataChange.ALL);
-            if (t.loadedFromDB === false && this.audio) {
-              var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
-              audio.volume = 0.5;
-              audio.play();
-            }
-            break;
-          }
-        }
-        if (!exists) {
-          this.trade_statuses.push(new DisplayTrade(t));
+      }
+    } else {
+      var exists = false;
+      for(var i = 0;i<this.trade_statuses.length;i++) {
+        if (this.trade_statuses[i].tradeId==t.tradeId) {
+          exists = true;
+          this.trade_statuses[i].time = (moment.isMoment(t.time) ? t.time : moment(t.time));
+          var merged = (this.trade_statuses[i].quantity != t.quantity);
+          this.trade_statuses[i].quantity = t.quantity;
+          this.trade_statuses[i].value = t.value;
+          this.trade_statuses[i].Ktime = (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime));
+          this.trade_statuses[i].Kqty = t.Kqty;
+          this.trade_statuses[i].Kprice = t.Kprice;
+          this.trade_statuses[i].Kvalue = t.Kvalue;
+          this.trade_statuses[i].Kdiff = t.Kdiff?t.Kdiff:null;
+          this.trade_statuses[i].sortTime = this.trade_statuses[i].Ktime ? this.trade_statuses[i].Ktime : this.trade_statuses[i].time;
+          if (this.trade_statuses[i].Kqty >= this.trade_statuses[i].quantity)
+            this.trade_statuses[i].side = 'K';
+          if (this.gridApi && this.uiGridConstants)
+            this.gridApi.grid.notifyDataChange(this.uiGridConstants.dataChange.ALL);
           if (t.loadedFromDB === false && this.audio) {
-            var audio = new Audio('/audio/boom.mp3');
+            var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
             audio.play();
           }
+          break;
         }
       }
-    };
+      if (!exists) {
+        this.trade_statuses.push(new DisplayTrade(t));
+        if (t.loadedFromDB === false && this.audio) {
+          var audio = new Audio('/audio/boom.mp3');
+          audio.volume = 0.5;
+          audio.play();
+        }
+      }
+    }
+  }
 
-    var updateQP = qp => {
-      this.audio = qp.audio;
-      var modGrid = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
-      ['Kqty','Kprice','Kvalue','Kdiff','Ktime'].map(r => {
-        this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r)].visible = modGrid;
-      });
-      [['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(r => {
-        this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r[0])].displayName = modGrid ? r[1] : r[1].replace('Ping','');
-      });
-      if (this.gridApi) this.gridApi.grid.refresh();
-    };
-
-    // var subscriberTrades = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.Trades)
-      // .registerConnectHandler(() => this.trade_statuses.length = 0)
-      // .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
-      // .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
-
-    // var subscriberQPChange = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.QuotingParametersChange)
-      // .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
-      // .registerSubscriber(updateQP, qp => qp.forEach(updateQP));
-
-    // this.$scope.$on('$destroy', () => {
-      // subscriberTrades.disconnect();
-      // subscriberQPChange.disconnect();
-    // });
+  private updateQP = (qp: Models.QuotingParameters) => {
+    this.audio = qp.audio;
+    var modGrid = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
+    ['Kqty','Kprice','Kvalue','Kdiff','Ktime'].map(r => {
+      // this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r)].visible = modGrid;
+    });
+    [['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(r => {
+      // this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r[0])].displayName = modGrid ? r[1] : r[1].replace('Ping','');
+    });
+    // if (this.gridApi) this.gridApi.grid.refresh();
   }
 }

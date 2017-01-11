@@ -17,7 +17,7 @@ export class FairValueChartComponent {
 
   private fairValueChart: number;
 
-  private subscriberFairValue: any;
+  private subscriberFairValue: Messaging.ISubscribe<Models.FairValue>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
