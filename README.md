@@ -18,17 +18,19 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
 
-3. In the cloned repository directory, `npm install` to pull in all dependencies and also compile TypeScript to CommonJS.
+3. In the toplevel path of the git cloned repository, `npm install`. This will install all local dependencies in `node_modules` folder and also compile TypeScript in `src` folder to CommonJS in `app` folder.
 
-4. (optional) Replace the certificate at `etc/sslcert` folder with your own. (see [web ui](https://github.com/ctubio/tribeca#web-ui) section).
+4. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys, see [configuration](https://github.com/ctubio/tribeca#configuration) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-5. (optional) Install forever globally (`npm i -g forever`) and setup the system daemon script `dist/tribeca-init.sh` (see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder).
+5. In the toplevel path of the git cloned repository, `npm start`, or `service tribeca start` anywhere if the optional init script `dist/tribeca-init.sh` is installed.
 
-6. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys (see [configuration](https://github.com/ctubio/tribeca#configuration) section). Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
+Optional:
 
-7. Run `npm start` in the root folder to start the app, or `service tribeca start` anywhere if the init.d script `dist/tribeca-init.sh` is installed).
+1. Install the system daemon script `dist/tribeca-init.sh`, it requires forever (`npm i -g forever`), see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder.
 
-8. (optional) Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js` or with forever globally installed `forever start path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
+2. Replace the certificate at `etc/sslcert` folder with your own, see [web ui](https://github.com/ctubio/tribeca#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
+
+3. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js` or with forever globally installed `forever start path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
 
 ### Configuration
 
