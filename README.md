@@ -14,7 +14,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 ### Manual Installation
 
-1. Ensure your target machine has node v6 (or greater) and mongoDB v3 or greater. Also, ensure TypeScript 2.1.4, and optionally, forever are installed (`npm install -g typescript forever`).
+1. Ensure your target machine has node v6 or greater (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`). Optionally (to run it continuously), ensure forever is installed (`npm install -g forever`).
 
 2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
 
