@@ -132,7 +132,7 @@ Feel free to run `npm test` anytime.
 
 ### Unreleased Changelog:
 
-Added architecture fully aligned with angular 2.
+Added nodejs6, typescript2 and angular2.
 
 Added npm install scripts instead of grunt tasks.
 
