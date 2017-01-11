@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {Component} from '@angular/core';
+import {NgZone, Component, Inject} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -78,10 +78,13 @@ export class MarketTradesComponent {
   public marketTrades: DisplayMarketTrade[];
   public marketTradeOptions: Object;
 
-  $scope: ng.IScope;
-  subscriberFactory: SubscriberFactory;
+  private subscriberMarketTrade: Messaging.ISubscribe<Models.MarketTrade>;
+
   uiGridConstants: any;
-  constructor() {
+  constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+  ) {
     this.marketTrades = [];
     // this.marketTradeOptions = {
       // data: 'marketTrades',
@@ -121,24 +124,26 @@ export class MarketTradesComponent {
         // { width: 40, field: 'mAz', displayName: 'mAz' }
       // ]
     // };
+  }
 
-    var addNewMarketTrade = (u: Models.MarketTrade) => {
-      if (u != null)
-        this.marketTrades.push(new DisplayMarketTrade(u));
+  ngOnInit() {
+    this.subscriberMarketTrade = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.MarketTrade)
+      .registerSubscriber(this.addNewMarketTrade, x => x.forEach(this.addNewMarketTrade))
+      .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+  }
 
-      for(var i=this.marketTrades.length-1;i>-1;i--)
-        if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 3600000)
-          this.marketTrades.splice(i,1);
-        else if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 7000)
-          this.marketTrades[i].recent = false;
-    };
+  ngOnDestroy() {
+    this.subscriberMarketTrade.disconnect();
+  }
 
-    // var subscriberMarketTrade = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.MarketTrade)
-      // .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
-      // .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+  private addNewMarketTrade = (u: Models.MarketTrade) => {
+    if (u != null)
+      this.marketTrades.push(new DisplayMarketTrade(u));
 
-    // this.$scope.$on('$destroy', () => {
-      // subscriberMarketTrade.disconnect();
-    // });
+    for(var i=this.marketTrades.length-1;i>-1;i--)
+      if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 3600000)
+        this.marketTrades.splice(i,1);
+      else if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 7000)
+        this.marketTrades[i].recent = false;
   }
 }

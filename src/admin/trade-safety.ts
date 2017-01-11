@@ -26,7 +26,7 @@ export class TradeSafetyComponent {
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
 
-  private subscriberTradeSafetyValue: any;
+  private subscriberTradeSafetyValue: Messaging.ISubscribe<Models.TradeSafety>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,

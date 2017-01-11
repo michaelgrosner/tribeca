@@ -80,7 +80,7 @@ export class MarketQuotingComponent {
   public bidIsLive: boolean;
   public askIsLive: boolean;
 
-  private subscribers: any[] = [];
+  private subscribers: Messaging.ISubscribe<any>[] = [];
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -92,10 +92,11 @@ export class MarketQuotingComponent {
 
   ngOnInit() {
     var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
-      var subscriber = this.subscriberFactory.getSubscriber<T>(this.zone, topic)
-        .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
-        .registerDisconnectedHandler(clearFn);
-      this.subscribers.push(subscriber);
+      this.subscribers.push(
+        this.subscriberFactory.getSubscriber<T>(this.zone, topic)
+          .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
+          .registerDisconnectedHandler(clearFn)
+      );
     };
 
     makeSubscriber<Models.Market>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);

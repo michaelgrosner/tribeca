@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgModule, Component} from '@angular/core';
+import {NgZone, Component, Inject} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -91,13 +91,17 @@ export class OrdersComponent {
   public order_statuses: DisplayOrderStatusReport[];
   public gridOptions: any;
 
-  $scope: ng.IScope;
-  subscriberFactory: SubscriberFactory;
-  fireFactory: FireFactory;
+  private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
+  private subscriberOSR: Messaging.ISubscribe<Models.OrderStatusReport>;
+
   uiGridConstants: any;
   constructor(
+    @Inject(NgZone) private zone: NgZone,
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
+    @Inject(FireFactory) private fireFactory: FireFactory
   ) {
-    // var fireCxl = this.fireFactory.getFire(Messaging.Topics.CancelOrder);
+    this.fireCxl = this.fireFactory
+      .getFire(Messaging.Topics.CancelOrder);
 
     this.order_statuses = [];
     // this.gridOptions = {
@@ -154,32 +158,35 @@ export class OrdersComponent {
       // ]
     // };
 
-    // var addOrderRpt = (o: Models.OrderStatusReport) => {
-      // var idx = -1;
-      // for(var i=0;i<this.order_statuses.length;i++)
-        // if (this.order_statuses[i].orderId==o.orderId) {idx=i; break;}
-      // if (idx!=-1) {
-        // if (o.leavesQuantity) {
-          // var existing = this.order_statuses[idx];
-          // if (existing.version < o.version)
-            // existing.updateWith(o);
-        // } else this.order_statuses.splice(idx,1);
-      // } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
-        // this.order_statuses.push(new DisplayOrderStatusReport(o, fireCxl));
-    // };
+  }
 
-    var clear = () => {
-      this.order_statuses.length = 0;
-    };
+  ngOnInit() {
+    this.subscriberOSR = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
+      .registerConnectHandler(this.clear)
+      .registerDisconnectedHandler(this.clear)
+      .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));
+  }
 
-    // var subscriberOSR = this.subscriberFactory.getSubscriber(this.$scope, Messaging.Topics.OrderStatusReports)
-      // .registerConnectHandler(clear)
-      // .registerDisconnectedHandler(clear)
-      // .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
+  ngOnDestroy() {
+    this.subscriberOSR.disconnect();
+  }
 
-    // this.$scope.$on('$destroy', () => {
-      // subscriberOSR.disconnect();
-    // });
+  private clear = () => {
+    this.order_statuses.length = 0;
+  }
+
+  private addOrderRpt = (o: Models.OrderStatusReport) => {
+    var idx = -1;
+    for(var i=0;i<this.order_statuses.length;i++)
+      if (this.order_statuses[i].orderId==o.orderId) {idx=i; break;}
+    if (idx!=-1) {
+      if (o.leavesQuantity) {
+        var existing = this.order_statuses[idx];
+        if (existing.version < o.version)
+          existing.updateWith(o);
+      } else this.order_statuses.splice(idx,1);
+    } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
+      this.order_statuses.push(new DisplayOrderStatusReport(o, this.fireCxl));
   }
 }
 
