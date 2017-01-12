@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.37",
-    "mocha": "3.2.0",
+    "mocha": "^3.2.0",
     "ts-node": "^2.0.0"
   },
   "main": "./tribeca.js",

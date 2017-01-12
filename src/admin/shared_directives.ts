@@ -93,14 +93,7 @@ export class MomentShortDatePipe implements PipeTransform {
   }
 }
 
-// export var sharedDirectives = "sharedDirectives";
-
-// angular.module(sharedDirectives, ['ui.bootstrap'])
-       // .directive('mypopover', ['$compile', '$templateCache', mypopover])
        // .directive('bindOnce', bindOnce)
-       // .factory("socket", () : SocketIOClient.Socket => io())
-       // .service("subscriberFactory", ['socket', '$log', SubscriberFactory])
-       // .service("fireFactory", ['socket', '$log', FireFactory])
        // .filter("momentFullDatePipe", () => Models.toUtcFormattedTime)
        // .filter("momentShortDate", () => Models.toShortTimeString);
 @NgModule({
@@ -110,7 +103,6 @@ export class MomentShortDatePipe implements PipeTransform {
       MomentShortDatePipe
     ],
     providers: [
-      /*'ui.grid',*/
       {
         provide: 'socket',
         useValue: io()

@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -67,7 +67,7 @@ class DisplayOrderStatusClassReport {
       </tr>
     </table>`
 })
-export class MarketQuotingComponent {
+export class MarketQuotingComponent implements OnInit, OnDestroy {
 
   public levels: DisplayLevel[];
   public fairValue: number;

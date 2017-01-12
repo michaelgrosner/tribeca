@@ -17,15 +17,15 @@ import 'reflect-metadata';
 (<any>global).jQuery = require("jquery");
 
 import {NgModule, NgZone, Component, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
+import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+import {AgGridModule} from 'ag-grid-ng2/main';
 import {PopoverModule} from "ng2-popover";
 
 import moment = require("moment");
 
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
-// var ngGrid = require("../ui-grid.min");
 // var bootstrap = require("../bootstrap.min");
 
 import Models = require('../common/models');
@@ -520,6 +520,7 @@ class ClientComponent implements OnInit, OnDestroy {
     BrowserModule,
     FormsModule,
     PopoverModule,
+    AgGridModule.withComponents([]),
     NgbModule.forRoot()
   ],
   bootstrap: [ClientComponent],

@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -56,7 +56,7 @@ class DisplayTrade {
       <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div>
     </div>`
 })
-export class TradesComponent {
+export class TradesComponent implements OnInit, OnDestroy {
 
   public trade_statuses : DisplayTrade[];
   public exch : Models.Exchange;

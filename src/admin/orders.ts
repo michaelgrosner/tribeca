@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -86,7 +86,7 @@ class DisplayOrderStatusReport {
       <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div>
     </div>`
 })
-export class OrdersComponent {
+export class OrdersComponent implements OnInit, OnDestroy {
 
   public order_statuses: DisplayOrderStatusReport[];
   public gridOptions: any;
