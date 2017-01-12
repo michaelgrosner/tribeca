@@ -2,7 +2,7 @@
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 
-import {NgModule, Inject, Injectable, Component, ElementRef, Pipe, PipeTransform} from '@angular/core';
+import {NgModule, Inject, Injectable, Pipe, PipeTransform} from '@angular/core';
 import moment = require('moment');
 import * as io from 'socket.io-client';
 
@@ -105,7 +105,6 @@ export class MomentShortDatePipe implements PipeTransform {
        // .filter("momentShortDate", () => Models.toShortTimeString);
 @NgModule({
     declarations: [
-      // MypopoverComponent,
       // BindOncePipe,
       MomentFullDatePipe,
       MomentShortDatePipe
@@ -120,7 +119,6 @@ export class MomentShortDatePipe implements PipeTransform {
       FireFactory,
     ],
     exports: [
-      // MypopoverComponent,
       // BindOncePipe,
       MomentFullDatePipe,
       MomentShortDatePipe
