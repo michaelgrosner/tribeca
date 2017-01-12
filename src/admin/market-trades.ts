@@ -69,11 +69,15 @@ class DisplayMarketTrade {
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-ng2 style="height: 180px;" #agGrid class="ag-material" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #agGrid
+    class="ag-fresh"
+    style="height: 180px;width: 100%;"
+    rowHeight="50"
+    [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class MarketTradesComponent implements OnInit, OnDestroy {
 
-  private gridOptions: GridOptions = {};
+  private gridOptions: GridOptions = <GridOptions>{};
 
   private subscriberMarketTrade: Messaging.ISubscribe<Models.MarketTrade>;
 
@@ -103,8 +107,8 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
 
   private createColumnDefs = () => {
     return [
-        { width: 90, field: 'time', headerName: 'time', cellFilter: "momentShortDate",
-          comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+        { width: 90, field: 'time', headerName: 'time', /*cellFilter: "momentShortDate",*/
+          /*comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),*/
           sort: 'desc', cellClass: (params) => {
             return 'fs11px '+(!params.data.recent ? "text-muted" : "");
         } },
@@ -131,12 +135,13 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
 
   private addRowData = (u: Models.MarketTrade) => {
     if (u != null)
-      this.gridOptions.rowData.push(new DisplayMarketTrade(u));
+      this.gridOptions.api.addItems([new DisplayMarketTrade(u)]);
 
-    for(var i=this.gridOptions.rowData.length-1;i>-1;i--)
-      if (Math.abs(moment.utc().valueOf() - this.gridOptions.rowData[i].time.valueOf()) > 3600000)
-        this.gridOptions.rowData.splice(i,1);
-      else if (Math.abs(moment.utc().valueOf() - this.gridOptions.rowData[i].time.valueOf()) > 7000)
-        this.gridOptions.rowData[i].recent = false;
+    this.gridOptions.api.forEachNode((node) => {
+      if (Math.abs(moment.utc().valueOf() - node.data.time.valueOf()) > 3600000)
+        this.gridOptions.api.removeItems([node]);
+      else if (Math.abs(moment.utc().valueOf() - node.data.time.valueOf()) > 7000)
+        node.data.recent = false;
+    });
   }
 }
