@@ -2,7 +2,7 @@
 
 ![status](https://david-dm.org/ctubio/tribeca.svg)
 
-`tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
+`tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
@@ -50,7 +50,7 @@ See [etc](https://github.com/ctubio/tribeca/tree/master/etc) folder.
 
 1. Open your web browser to connect to HTTPS port `3000` of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
-2. Read up on how to use tribeca and market making in the [wiki](https://github.com/ctubio/tribeca/blob/master/HOWTO.md).
+2. Read up on how to use tribeca and market making in the [manual](https://github.com/ctubio/tribeca/blob/master/MANUAL.md).
 
 3. Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
 

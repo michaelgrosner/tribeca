@@ -384,7 +384,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/HOWTO.md" target="_blank">HOWTO</a>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a>
       </small>
     </address>
   </div>`
