@@ -13,14 +13,6 @@ Also this script depends on forever begin globally installed (`npm i -g forever`
 
 Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
 
-### *-tribeca.json
-Sample configuration files, must be located inside `etc` folder, to initialize your configurations:
-```
- $ cd /path/to/tribeca
- $ cp etc/tribeca.json.dist etc/tribeca.json
- $ vim etc/tribeca.json
-```
-
 ### Dockerfile
 To run tribeca under winy or mac, make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):
 
@@ -28,7 +20,7 @@ To run tribeca under winy or mac, make use of the [Dockerfile](https://raw.githu
 
 2. Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
-3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/ctubio/tribeca#configuration). Input your exchange connectivity information, account information, and mongoDB credentials.
+3. Copy the repository [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile) into a text editor. Change the environment variables to match your desired [configuration](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). Input your exchange connectivity information, account information, and mongoDB credentials.
 
 4. Save your new Dockerfile, preferably in a secure location and in an empty directory. Build the image from the Dockerfile `docker build -t tribeca .`
 
