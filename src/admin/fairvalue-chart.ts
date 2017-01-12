@@ -2,7 +2,7 @@
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -13,7 +13,7 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'fair-value-chart',
   template: ''//'{{ fairValueChart }}'
 })
-export class FairValueChartComponent {
+export class FairValueChartComponent implements OnInit, OnDestroy {
 
   private fairValueChart: number;
 

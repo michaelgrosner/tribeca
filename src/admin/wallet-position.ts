@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 /// <amd-dependency path='ui.bootstrap'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -26,7 +26,7 @@ import {SubscriberFactory} from './shared_directives';
       </h4>
     </div>`
 })
-export class WalletPositionComponent {
+export class WalletPositionComponent implements OnInit, OnDestroy {
 
   public baseCurrency: string;
   public basePosition: number;

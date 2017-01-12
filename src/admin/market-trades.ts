@@ -1,9 +1,9 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
-/// <amd-dependency path='ui.bootstrap'/>
 
-import {NgZone, Component, Inject} from '@angular/core';
+import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {GridOptions} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -69,81 +69,74 @@ class DisplayMarketTrade {
 
 @Component({
   selector: 'market-trades',
-  template: `<div>
-      <div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div>
-    </div>`
+  template: `<ag-grid-ng2 style="height: 180px;" #agGrid class="ag-material" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
-export class MarketTradesComponent {
+export class MarketTradesComponent implements OnInit, OnDestroy {
 
-  public marketTrades: DisplayMarketTrade[];
-  public marketTradeOptions: Object;
+  private gridOptions: GridOptions = {};
 
   private subscriberMarketTrade: Messaging.ISubscribe<Models.MarketTrade>;
 
-  uiGridConstants: any;
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {
-    this.marketTrades = [];
-    // this.marketTradeOptions = {
-      // data: 'marketTrades',
+  ) {}
+      // class="table table-striped table-hover table-condensed"
       // showGroupPanel: false,
       // rowHeight: 20,
       // headerRowHeight: 20,
       // groupsCollapsedByDefault: true,
       // enableColumnResize: true,
-      // sortInfo: { fields: ['time'], directions: ['desc'] },
-      // columnDefs: [
-        // { width: 90, field: 'time', displayName: 'time', cellFilter: "momentShortDate",
-          // sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-          // sort: { direction: this.uiGridConstants.DESC, priority: 1}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            // return 'fs11px '+(!row.entity.recent ? "text-muted" : "");
-        // } },
-        // { width: 60, field: 'price', displayName: 'px', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            // return (row.entity.make_side === 'Ask') ? "sell" : "buy";
-        // } },
-        // { width: 50, field: 'size', displayName: 'sz', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            // return (row.entity.make_side === 'Ask') ? "sell" : "buy";
-        // } },
-        // { width: 40, field: 'make_side', displayName: 'ms' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (grid.getCellValue(row, col) === 'Bid') {
-            // return 'buy';
-          // }
-          // else if (grid.getCellValue(row, col) === 'Ask') {
-            // return "sell";
-          // }
-        // }},
-        // { width: 40, field: 'qBz', displayName: 'qBz' },
-        // { width: 50, field: 'qB', displayName: 'qB' },
-        // { width: 50, field: 'qA', displayName: 'qA' },
-        // { width: 40, field: 'qAz', displayName: 'qAz' },
-        // { width: 40, field: 'mBz', displayName: 'mBz' },
-        // { width: 50, field: 'mB', displayName: 'mB' },
-        // { width: 50, field: 'mA', displayName: 'mA' },
-        // { width: 40, field: 'mAz', displayName: 'mAz' }
-      // ]
-    // };
-  }
 
   ngOnInit() {
+    this.gridOptions.rowData = [];
+    this.gridOptions.columnDefs = this.createColumnDefs();
+
     this.subscriberMarketTrade = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.MarketTrade)
-      .registerSubscriber(this.addNewMarketTrade, x => x.forEach(this.addNewMarketTrade))
-      .registerDisconnectedHandler(() => this.marketTrades.length = 0);
+      .registerSubscriber(this.addRowData, x => x.forEach(this.addRowData))
+      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0);
   }
 
   ngOnDestroy() {
     this.subscriberMarketTrade.disconnect();
   }
 
-  private addNewMarketTrade = (u: Models.MarketTrade) => {
-    if (u != null)
-      this.marketTrades.push(new DisplayMarketTrade(u));
+  private createColumnDefs = () => {
+    return [
+        { width: 90, field: 'time', headerName: 'time', cellFilter: "momentShortDate",
+          comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+          sort: 'desc', cellClass: (params) => {
+            return 'fs11px '+(!params.data.recent ? "text-muted" : "");
+        } },
+        { width: 60, field: 'price', headerName: 'px', cellClass: (params) => {
+            return (params.data.make_side === 'Ask') ? "sell" : "buy";
+        } },
+        { width: 50, field: 'size', headerName: 'sz', cellClass: (params) => {
+            return (params.data.make_side === 'Ask') ? "sell" : "buy";
+        } },
+        { width: 40, field: 'make_side', headerName: 'ms' , cellClass: (params) => {
+          if (params.value === 'Bid') return 'buy';
+          else if (params.value === 'Ask') return "sell";
+        }},
+        { width: 40, field: 'qBz', headerName: 'qBz' },
+        { width: 50, field: 'qB', headerName: 'qB' },
+        { width: 50, field: 'qA', headerName: 'qA' },
+        { width: 40, field: 'qAz', headerName: 'qAz' },
+        { width: 40, field: 'mBz', headerName: 'mBz' },
+        { width: 50, field: 'mB', headerName: 'mB' },
+        { width: 50, field: 'mA', headerName: 'mA' },
+        { width: 40, field: 'mAz', headerName: 'mAz' }
+    ];
+  }
 
-    for(var i=this.marketTrades.length-1;i>-1;i--)
-      if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 3600000)
-        this.marketTrades.splice(i,1);
-      else if (Math.abs(moment.utc().valueOf() - this.marketTrades[i].time.valueOf()) > 7000)
-        this.marketTrades[i].recent = false;
+  private addRowData = (u: Models.MarketTrade) => {
+    if (u != null)
+      this.gridOptions.rowData.push(new DisplayMarketTrade(u));
+
+    for(var i=this.gridOptions.rowData.length-1;i>-1;i--)
+      if (Math.abs(moment.utc().valueOf() - this.gridOptions.rowData[i].time.valueOf()) > 3600000)
+        this.gridOptions.rowData.splice(i,1);
+      else if (Math.abs(moment.utc().valueOf() - this.gridOptions.rowData[i].time.valueOf()) > 7000)
+        this.gridOptions.rowData[i].recent = false;
   }
 }
