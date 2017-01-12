@@ -4,11 +4,10 @@ RUN apt-get update
 RUN apt-get install -y git
 
 RUN git clone https://github.com/ctubio/tribeca.git
+# Otherwise, choose the branch you want to build:
+#RUN git clone -b CUSTOM_BRANCH_NAME https://github.com/ctubio/tribeca.git
 
 WORKDIR tribeca
-
-# Chose the branch you want to build. Leave as it is if you want to build the master branch (recommanded).
-# RUN git checkout -B YOUR-NAME-OF-THE-BRANCH --track remotes/origin/NAME-OF-THE-BRANCH-IN-GITHUB
 
 RUN npm install --unsafe-perm
 
@@ -63,4 +62,4 @@ ENV BitfinexOrderDestination Bitfinex
 #ENV CoinbaseRestUrl https://api.gdax.com
 #ENV CoinbaseWebsocketUrl wss://ws-feed.gdax.com
 
-CMD ["forever", "tribeca.js"]
+CMD ["node_modules/.bin/forever", "tribeca.js"]

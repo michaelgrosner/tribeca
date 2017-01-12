@@ -1,6 +1,6 @@
 etc/tribeca.json
 app
-log
+*log
 test/src
 node_modules
 *.js.map
