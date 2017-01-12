@@ -13,17 +13,17 @@ RUN npm install --unsafe-perm
 
 EXPOSE 3000 5000
 
-# General config properties. Properties with `NULL` should be replaced with your own exchange account information.
+# General config properties. Replace with your own exchange account information:
 ENV TRIBECA_MODE dev
-ENV EXCHANGE null
+ENV EXCHANGE NULL
 ENV TradedPair BTC/USD
 ENV WebClientUsername NULL
 ENV WebClientPassword NULL
 ENV WebClientListenPort 3000
-# IP to access mongo instance. If you are on a mac, run `boot2docker ip` and replace `tribeca-mongo`.
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
 
-# DEV
+# Set options only for your desired EXCHANGE:
+
 ## HitBtc
 ENV HitBtcPullUrl http://demo-api.hitbtc.com
 ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
@@ -32,34 +32,26 @@ ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
 ENV HitBtcApiKey NULL
 ENV HitBtcSecret NULL
 ENV HitBtcOrderDestination HitBtc
-## Coinbase
-## Use GDAX keys
+
+## Coinbase (GDAX keys)
 ENV CoinbaseRestUrl https://api-public.sandbox.gdax.com
 ENV CoinbaseWebsocketUrl wss://ws-feed-public.sandbox.gdax.com
 ENV CoinbasePassphrase NULL
 ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
 ENV CoinbaseOrderDestination Coinbase
+
 ## OkCoin
 ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
 ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
 ENV OkCoinApiKey NULL
 ENV OkCoinSecretKey NULL
 ENV OkCoinOrderDestination OkCoin
+
 ## Bitfinex
 ENV BitfinexHttpUrl https://api.bitfinex.com/v1
 ENV BitfinexKey NULL
 ENV BitfinexSecret NULL
 ENV BitfinexOrderDestination Bitfinex
-
-# PROD - values provided for reference.
-## HitBtc
-#ENV HitBtcPullUrl http://api.hitbtc.com
-#ENV HitBtcOrderEntryUrl wss://api.hitbtc.com:8080
-#ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
-#ENV HitBtcSocketIoUrl https://api.hitbtc.com:8081
-## Coinbase
-#ENV CoinbaseRestUrl https://api.gdax.com
-#ENV CoinbaseWebsocketUrl wss://ws-feed.gdax.com
 
 CMD ["node_modules/.bin/forever", "tribeca.js"]
