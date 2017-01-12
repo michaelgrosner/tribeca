@@ -11,7 +11,7 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'fair-value-chart',
-  template: '{{ fairValueChart }}'
+  template: ''//'{{ fairValueChart }}'
 })
 export class FairValueChartComponent {
 
@@ -27,14 +27,14 @@ export class FairValueChartComponent {
   }
 
   ngOnInit() {
-    this.subscriberFairValue = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.FairValue)
-      .registerConnectHandler(this.clear)
-      .registerDisconnectedHandler(this.clear)
-      .registerSubscriber(this.addFairValue, fv => fv.forEach(this.addFairValue));
+    // this.subscriberFairValue = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.FairValue)
+      // .registerConnectHandler(this.clear)
+      // .registerDisconnectedHandler(this.clear)
+      // .registerSubscriber(this.addFairValue, fv => fv.forEach(this.addFairValue));
   }
 
   ngOnDestroy() {
-    this.subscriberFairValue.disconnect();
+    // this.subscriberFairValue.disconnect();
   }
 
   private clear = () => {

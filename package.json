@@ -44,6 +44,7 @@
     "marked": "0.3.6",
     "moment": "^2.17.1",
     "mongodb": "^2.2.20",
+    "ng2-popover": "0.0.13",
     "node-uuid": "1.4.7",
     "q": "1.4.1",
     "reflect-metadata": "^0.1.9",

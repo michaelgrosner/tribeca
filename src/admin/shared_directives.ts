@@ -9,81 +9,21 @@ import * as io from 'socket.io-client';
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 
-// @Component({
-    // selector: '[mypopover]',
-    // template: `<form style="margin: 20px" class="form-horizontal" novalidate role="form">
-        // <div class="form-group">
-            // <label>Side</label>
-            // <select class="form-control input-sm" ng-model="order.side" ng-options="x for x in order.availableSides"></select>
-        // </div>
-        // <div class="form-group">
-            // <label>Price</label>
-            // <input class="form-control input-sm" type="number" ng-model="order.price" />
-        // </div>
-        // <div class="form-group">
-            // <label>Size</label>
-            // <input class="form-control input-sm" type="number" ng-model="order.quantity" />
-        // </div>
-        // <div class="form-group">
-            // <label>TIF</label>
-            // <select class="form-control input-sm" ng-model="order.timeInForce" ng-options="x for x in order.availableTifs"></select>
-        // </div>
-        // <div class="form-group">
-            // <label>Type</label>
-            // <select class="form-control input-sm" ng-model="order.orderType" ng-options="x for x in order.availableOrderTypes"></select>
-        // </div>
-        // <button type="button"
-                // class="btn btn-success"
-                // onclick="jQuery('#order_form').popover('hide');"
-                // ng-click="order.submit()">Submit</button>
-    // </form>`
+// @Pipe({
+    // name: 'bindOnce',
 // })
-// export class MypopoverComponent {
-  // $compile : ng.ICompileService;
-  // $templateCache : ng.ITemplateCacheService;
-  // constructor() {
-    // var getTemplate = (contentType, template_url) => {
-        // var template = '';
-        // switch (contentType) {
-            // case 'user':
-                // template = <any>this.$templateCache.get(template_url);
-                // break;
-        // }
-        // return template;
-    // };
+// export class BindOncePipe {
+  // constructor(/*el:ElementRef*/) {
     // return {
-        // restrict: "A",
-        // link: (scope, element, attrs) => {
-            // var popOverContent = this.$compile("<div>" + getTemplate("user", attrs.popoverTemplate) + "</div>")(scope);
-            // var options = {
-                // content: popOverContent,
-                // placement: attrs.dataPlacement,
-                // html: true,
-                // date: scope.date
-            // };
-            // (<any>jQuery(element)).popover(options).click((e) => {
-                // e.preventDefault();
-            // });
-        // }
-    // };
+      // scope: true,
+      // link: ($scope) => {
+        // setTimeout(() => {
+          // $scope.$destroy();
+        // }, 0);
+      // }
+    // }
   // }
 // }
-
-@Pipe({
-    name: 'bindOnce',
-})
-export class BindOncePipe {
-  constructor(/*el:ElementRef*/) {
-    return {
-      scope: true,
-      link: ($scope) => {
-        setTimeout(() => {
-          $scope.$destroy();
-        }, 0);
-      }
-    }
-  }
-}
 
 @Injectable()
 export class FireFactory {
@@ -166,7 +106,7 @@ export class MomentShortDatePipe implements PipeTransform {
 @NgModule({
     declarations: [
       // MypopoverComponent,
-      BindOncePipe,
+      // BindOncePipe,
       MomentFullDatePipe,
       MomentShortDatePipe
     ],
@@ -181,7 +121,7 @@ export class MomentShortDatePipe implements PipeTransform {
     ],
     exports: [
       // MypopoverComponent,
-      BindOncePipe,
+      // BindOncePipe,
       MomentFullDatePipe,
       MomentShortDatePipe
     ]

@@ -20,6 +20,7 @@ import {NgModule, NgZone, Component, Inject, OnInit, OnDestroy, enableProdMode} 
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+import {PopoverModule} from "ng2-popover";
 
 import moment = require("moment");
 
@@ -103,9 +104,45 @@ class DisplayOrder {
                             <button type="button"
                                     class="btn btn-primary navbar-btn"
                                     id="order_form"
-                                    mypopover popover-template="order_form.html"
-                                    data-placement="bottom">Submit order
+                                    [popover]="myPopover">Submit order
                             </button>
+                            <popover-content #myPopover
+                                    placement="bottom"
+                                    [animation]="true"
+                                    [closeOnClickOutside]="true">
+                                    <div class="text-center">
+                                      <div class="form-group">
+                                          <label>Side</label>
+                                          <select class="form-control input-sm" [(ngModel)]="order.side">
+                                            <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
+                                          </select>
+                                      </div>
+                                      <div class="form-group">
+                                          <label>Price</label>
+                                          <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
+                                      </div>
+                                      <div class="form-group">
+                                          <label>Size</label>
+                                          <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
+                                      </div>
+                                      <div class="form-group">
+                                          <label>TIF</label>
+                                          <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                            <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
+                                          </select>
+                                      </div>
+                                      <div class="form-group">
+                                          <label>Type</label>
+                                          <select class="form-control input-sm" [(ngModel)]="order.orderType">
+                                            <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
+                                          </select>
+                                      </div>
+                                      <button type="button"
+                                          class="btn btn-success"
+                                          (click)="myPopover.hide()"
+                                          (click)="order.submit()">Submit</button>
+                                    </div>
+                            </popover-content>
                         </li>
                         <li>
                             <button type="button"
@@ -393,13 +430,14 @@ class ClientComponent implements OnInit, OnDestroy {
       .getFire(Messaging.Topics.ChangeNotepad)
       .fire(new Models.Notepad(content));
 
-    this.order = new DisplayOrder(fireFactory);
     this.notepad = null;
     this.pair = null;
     this.reset();
   }
 
   ngOnInit() {
+    this.order = new DisplayOrder(this.fireFactory);
+
     this.subscriberProductAdvertisement = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
       .registerDisconnectedHandler(() => this.reset());
@@ -477,9 +515,10 @@ class ClientComponent implements OnInit, OnDestroy {
 
 @NgModule({
   imports: [
+    SharedModule,
     BrowserModule,
     FormsModule,
-    SharedModule,
+    PopoverModule,
     NgbModule.forRoot()
   ],
   bootstrap: [ClientComponent],
