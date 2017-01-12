@@ -84,32 +84,6 @@ The metrics send are:
 
 Feel free to run `npm test` anytime.
 
-### KNOWN BUGS:
-
-1. Occasionnaly trades would not be correclty cancelled. (Coinbase seems to cancel orders always OK; what otherexchanges fail occasionnaly?)
-
-2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
-
-3. Orders do not last more than a few miliseconds on OkCoin.
-
-4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
-
-### TODO:
-
--1. concurrent exchanges, display charts, chat room
-
-0. Migrate to angular 2 and typescript 2
-
-1. Add new exchanges
-
-2. Add new, smarter trading strategies (as always!)
-
-3. Support for currency pairs which do not trade in $0.01 increments (LTC, DOGE)
-
-4. More documentation
-
-5. More performant UI
-
 ### Unreleased Changelog:
 
 Added nodejs6, typescript2 and angular2.
