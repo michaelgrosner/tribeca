@@ -2,11 +2,21 @@
 
 ![status](https://david-dm.org/ctubio/tribeca.svg)
 
-`tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca#configuration). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
+`tribeca` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/HOWTO.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
 Runs on the latest node.js (v6 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
+
+### Compatible Exchanges
+
+1. Coinbase
+
+2. HitBTC
+
+3. OKCoin
+
+4. Bitfinex
 
 ### Docker Installation
 
@@ -20,7 +30,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 3. In the toplevel path of the git cloned repository, `npm install`. This will install all local dependencies in `node_modules` folder and also compile TypeScript in `src` folder to CommonJS in `app` folder.
 
-4. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys, see [configuration](https://github.com/ctubio/tribeca#configuration) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
+4. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys, see [configuration](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
 5. In the toplevel path of the git cloned repository, `npm start`, or `service tribeca start` anywhere if the optional init script `dist/tribeca-init.sh` is installed.
 
@@ -34,41 +44,11 @@ Optional:
 
 ### Configuration
 
-  * EXCHANGE
-
-    1. `coinbase` - uses the WebSocket API. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
-
-    2. `hitbtc` - WebSocket + socket.io API. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
-
-    3. `okcoin` - Websocket.Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
-
-    4. `bitfinex` REST API only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
-
-    5. `null` - Test in-memory exchange. No exchange-specific config needed.
-
-  * TRIBECA_MODE
-
-    1. `prod`
-
-    2. `dev`
-
-  * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
-
-  * TradedPair - The following currency pairs are supported on these exchanges:
-
-    1. `BTC/USD` - Coinbase, HitBtc, OkCoin, Null
-
-    2. `BTC/EUR` - Coinbase, HitBtc, Null
-
-    3. `BTC/GBP` - Coinbase, Null
-
-  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
-
-Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on.
+See [etc](https://github.com/ctubio/tribeca/tree/master/etc) folder.
 
 ### Application Usage
 
-1. Open your web browser to connect to port 3000 of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
+1. Open your web browser to connect to HTTPS port `3000` of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
 2. Read up on how to use tribeca and market making in the [wiki](https://github.com/ctubio/tribeca/blob/master/HOWTO.md).
 
