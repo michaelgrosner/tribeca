@@ -131,9 +131,9 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
       this.gridOptions.api.addItems([new DisplayMarketTrade(u)]);
 
     this.gridOptions.api.forEachNode((node) => {
-      if (Math.abs(moment.utc().valueOf() - node.data.time.valueOf()) > 3600000)
+      if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 3600000)
         this.gridOptions.api.removeItems([node]);
-      else if (Math.abs(moment.utc().valueOf() - node.data.time.valueOf()) > 7000)
+      else if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 7000)
         node.data.recent = false;
     });
   }
