@@ -361,7 +361,7 @@ class DisplayOrder {
                             <order-list></order-list>
                         </div>
                         <div  class="col-md-2 col-xs-12">
-                          <textarea [ngModel]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
+                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
                       </div>
                     </div>
                 </div>
