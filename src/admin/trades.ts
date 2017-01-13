@@ -52,11 +52,10 @@ class DisplayTrade {
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 400px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 187px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class TradesComponent implements OnInit, OnDestroy {
 
-  public trade_statuses : DisplayTrade[];
   private gridOptions: GridOptions = <GridOptions>{};
 
   public exch : Models.Exchange;
@@ -69,129 +68,113 @@ export class TradesComponent implements OnInit, OnDestroy {
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {
-    this.trade_statuses = [];
-    // this.gridOptions = {
-      // data: 'trade_statuses',
-      // treeRowHeaderAlwaysVisible: false,
-      // primaryKey: 'tradeId',
-      // groupsCollapsedByDefault: true,
-      // enableColumnResize: true,
-      // sortInfo: {fields: ['sortTime'], directions: ['desc']},
-      // rowHeight: 20,
-      // headerRowHeight: 20,
-      // columnDefs: [
-        // {field:'sortTime', visible: false,
-          // sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-          // sort: { direction: this.uiGridConstants.DESC, priority: 1} },
-        // {width: 121, field:'time', displayName:'t', cellFilter: 'momentFullDate', cellClass: 'fs11px' },
-        // {width: 121, field:'Ktime', visible:false, displayName:'timePong', cellFilter: 'momentFullDate', cellClass: 'fs11px' },
-        // {width: 42, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (grid.getCellValue(row, col) === 'Buy') {
-            // return 'buy';
-          // }
-          // else if (grid.getCellValue(row, col) === 'Sell') {
-            // return "sell";
-          // }
-          // else if (grid.getCellValue(row, col) === 'K') {
-            // return "kira";
-          // }
-          // else {
-            // return "unknown";
-          // }
-        // }},
-        // {width: 65, field:'price', displayName:'px', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return row.entity.side === 'Sell' ? "sell" : "buy";
-        // }},
-        // {width: 65, field:'quantity', displayName:'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return row.entity.side === 'Sell' ? "sell" : "buy";
-        // }},
-        // {width: 69, field:'value', displayName:'val', cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price > row.entity.Kprice) ? "sell" : "buy"; else return row.entity.side === 'Sell' ? "sell" : "buy";
-        // }},
-        // {width: 69, field:'Kvalue', displayName:'valPong', visible:false, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return row.entity.Kqty ? ((row.entity.price < row.entity.Kprice) ? "sell" : "buy") : "";
-        // }},
-        // {width: 65, field:'Kqty', displayName:'qtyPong', visible:false, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return row.entity.Kqty ? ((row.entity.price < row.entity.Kprice) ? "sell" : "buy") : "";
-        // }},
-        // {width: 65, field:'Kprice', displayName:'pxPong', visible:false, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return (row.entity.price < row.entity.Kprice) ? "sell" : "buy"; else return row.entity.Kqty ? ((row.entity.price < row.entity.Kprice) ? "sell" : "buy") : "";
-        // }},
-        // {width: 65, field:'Kdiff', displayName:'Kdiff', visible:false, cellFilter: 'currency:"$":3', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (row.entity.side === 'K') return "kira"; else return "";
-        // }}
-      // ],
-      // onRegisterApi: function(gridApi) {
-        // this.gridApi = gridApi;
-      // }
-    // };
-
-  }
+  ) {}
 
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
 
-    this.subscriberTrades = this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.Trades)
-      .registerConnectHandler(() => this.trade_statuses.length = 0)
-      .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
-      .registerSubscriber(this.addRowData, trades => trades.forEach(this.addRowData));
-
     this.subscriberQPChange = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
-      .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
       .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
+
+    this.subscriberTrades = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.Trades)
+      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
+      .registerSubscriber(this.addRowData, trades => trades.forEach(this.addRowData));
   }
 
   ngOnDestroy() {
-    this.subscriberTrades.disconnect();
     this.subscriberQPChange.disconnect();
+    this.subscriberTrades.disconnect();
   }
 
   private createColumnDefs = () => {
     return [
+      {field:'sortTime', hide: true,
+        comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+        sort: 'desc' },
+      {width: 121, field:'time', headerName:'t', cellRenderer:(params) => {
+          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
+        }, cellClass: 'fs11px' },
+      {width: 121, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
+          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
+        }, cellClass: 'fs11px' },
+      {width: 42, field:'side', headerName:'side', cellClass: (params) => {
+        if (params.value === 'Buy') return 'buy';
+        else if (params.value === 'Sell') return "sell";
+        else if (params.value === 'K') return "kira";
+        else return "unknown";
+      }},
+      {width: 65, field:'price', headerName:'px', cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      }, cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+      }},
+      {width: 65, field:'quantity', headerName:'qty', cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+      }},
+      {width: 69, field:'value', headerName:'val', cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      }, cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+      }},
+      {width: 69, field:'Kvalue', headerName:'valPong', hide:true, cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      }, cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+      }},
+      {width: 65, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+      }},
+      {width: 65, field:'Kprice', headerName:'pxPong', hide:true, cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      }, cellClass: (params) => {
+        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+      }},
+      {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      }, cellClass: (params) => {
+        if (params.data.side === 'K') return "kira"; else return "";
+      }}
     ];
   }
 
   private addRowData = (t: Models.Trade) => {
+    this.gridOptions.api.forEachNode((node) => {
+    });
     if (t.Kqty<0) {
-      for(var i = 0;i<this.trade_statuses.length;i++) {
-        if (this.trade_statuses[i].tradeId==t.tradeId) {
-          this.trade_statuses.splice(i, 1);
-          break;
-        }
-      }
+      this.gridOptions.api.forEachNode((node) => {
+        if (node.data.tradeId==t.tradeId)
+          this.gridOptions.api.removeItems([node]);
+      });
     } else {
       var exists = false;
-      for(var i = 0;i<this.trade_statuses.length;i++) {
-        if (this.trade_statuses[i].tradeId==t.tradeId) {
+      this.gridOptions.api.forEachNode((node) => {
+        if (node.data.tradeId==t.tradeId) {
           exists = true;
-          this.trade_statuses[i].time = (moment.isMoment(t.time) ? t.time : moment(t.time));
-          var merged = (this.trade_statuses[i].quantity != t.quantity);
-          this.trade_statuses[i].quantity = t.quantity;
-          this.trade_statuses[i].value = t.value;
-          this.trade_statuses[i].Ktime = (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime));
-          this.trade_statuses[i].Kqty = t.Kqty;
-          this.trade_statuses[i].Kprice = t.Kprice;
-          this.trade_statuses[i].Kvalue = t.Kvalue;
-          this.trade_statuses[i].Kdiff = t.Kdiff?t.Kdiff:null;
-          this.trade_statuses[i].sortTime = this.trade_statuses[i].Ktime ? this.trade_statuses[i].Ktime : this.trade_statuses[i].time;
-          if (this.trade_statuses[i].Kqty >= this.trade_statuses[i].quantity)
-            this.trade_statuses[i].side = 'K';
-          // if (this.gridApi && this.uiGridConstants)
-            // this.gridApi.grid.notifyDataChange(this.uiGridConstants.dataChange.ALL);
+          node.data.time = (moment.isMoment(t.time) ? t.time : moment(t.time));
+          var merged = (node.data.quantity != t.quantity);
+          node.data.quantity = t.quantity;
+          node.data.value = t.value;
+          node.data.Ktime = (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime));
+          node.data.Kqty = t.Kqty;
+          node.data.Kprice = t.Kprice;
+          node.data.Kvalue = t.Kvalue;
+          node.data.Kdiff = t.Kdiff?t.Kdiff:null;
+          node.data.sortTime = node.data.Ktime ? node.data.Ktime : node.data.time;
+          if (node.data.Kqty >= node.data.quantity)
+            node.data.side = 'K';
+          // this.gridOptions.api.refreshView();
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
             audio.play();
           }
-          break;
         }
-      }
+      });
       if (!exists) {
-        this.trade_statuses.push(new DisplayTrade(t));
+        this.gridOptions.api.addItems([new DisplayTrade(t)]);
         if (t.loadedFromDB === false && this.audio) {
           var audio = new Audio('/audio/boom.mp3');
           audio.volume = 0.5;
@@ -205,11 +188,13 @@ export class TradesComponent implements OnInit, OnDestroy {
     this.audio = qp.audio;
     var modGrid = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
     ['Kqty','Kprice','Kvalue','Kdiff','Ktime'].map(r => {
-      // this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r)].visible = modGrid;
+      this.gridOptions.columnApi.setColumnVisible(r, modGrid);
     });
-    [['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(r => {
-      // this.gridOptions.columnDefs[this.gridOptions.columnDefs.map(e => { return e.field; }).indexOf(r[0])].displayName = modGrid ? r[1] : r[1].replace('Ping','');
+    this.gridOptions.columnDefs.map((r:any) => {
+      [['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
+        if (r.field == t[0]) r.headerName = modGrid ? t[1] : t[1].replace('Ping','');
+      });
+      return r;
     });
-    // if (this.gridApi) this.gridApi.grid.refresh();
   }
 }

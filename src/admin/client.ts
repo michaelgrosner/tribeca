@@ -509,7 +509,6 @@ class ClientComponent implements OnInit, OnDestroy {
     AgGridModule.withComponents([]),
     NgbModule.forRoot()
   ],
-  bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,
     OrdersComponent,
@@ -519,7 +518,8 @@ class ClientComponent implements OnInit, OnDestroy {
     WalletPositionComponent,
     TargetBasePositionComponent,
     TradeSafetyComponent,
-  ]
+  ],
+  bootstrap: [ClientComponent]
 })
 class ClientModule {}
 

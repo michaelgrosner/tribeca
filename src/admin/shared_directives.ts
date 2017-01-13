@@ -1,29 +1,12 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-/// <amd-dependency path="ui.bootstrap"/>
 
-import {NgModule, Inject, Injectable, Pipe, PipeTransform} from '@angular/core';
+import {NgModule, Injectable, Inject} from '@angular/core';
 import moment = require('moment');
 import * as io from 'socket.io-client';
 
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
-
-// @Pipe({
-    // name: 'bindOnce',
-// })
-// export class BindOncePipe {
-  // constructor(/*el:ElementRef*/) {
-    // return {
-      // scope: true,
-      // link: ($scope) => {
-        // setTimeout(() => {
-          // $scope.$destroy();
-        // }, 0);
-      // }
-    // }
-  // }
-// }
 
 @Injectable()
 export class FireFactory {
@@ -69,51 +52,14 @@ class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     public get connected() { return this._wrapped.connected; }
 }
 
-@Pipe({
-    name: 'momentFullDate',
-})
-export class MomentFullDatePipe implements PipeTransform {
-  constructor() {}
-
-  transform(value: moment.Moment, args: any[]): any {
-    if (!value) return;
-    return Models.toUtcFormattedTime(value);
-  }
-}
-
-@Pipe({
-    name: 'momentShortDate',
-})
-export class MomentShortDatePipe implements PipeTransform {
-  constructor() {}
-
-  transform(value: moment.Moment, args: any[]): any {
-    if (!value) return;
-    return Models.toShortTimeString(value);
-  }
-}
-
-       // .directive('bindOnce', bindOnce)
-       // .filter("momentFullDatePipe", () => Models.toUtcFormattedTime)
-       // .filter("momentShortDate", () => Models.toShortTimeString);
 @NgModule({
-    declarations: [
-      // BindOncePipe,
-      MomentFullDatePipe,
-      MomentShortDatePipe
-    ],
-    providers: [
-      {
-        provide: 'socket',
-        useValue: io()
-      },
-      SubscriberFactory,
-      FireFactory,
-    ],
-    exports: [
-      // BindOncePipe,
-      MomentFullDatePipe,
-      MomentShortDatePipe
-    ]
+  providers: [
+    SubscriberFactory,
+    FireFactory,
+    {
+      provide: 'socket',
+      useValue: io()
+    }
+  ]
 })
 export class SharedModule {}
