@@ -69,11 +69,7 @@ class DisplayMarketTrade {
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-ng2 #agGrid
-    class="ag-fresh"
-    style="height: 180px;width: 100%;"
-    rowHeight="50"
-    [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #agGrid class="ag-fresh ag-dark" style="height: 180px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class MarketTradesComponent implements OnInit, OnDestroy {
 
@@ -85,12 +81,6 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
   ) {}
-      // class="table table-striped table-hover table-condensed"
-      // showGroupPanel: false,
-      // rowHeight: 20,
-      // headerRowHeight: 20,
-      // groupsCollapsedByDefault: true,
-      // enableColumnResize: true,
 
   ngOnInit() {
     this.gridOptions.rowData = [];
@@ -107,8 +97,10 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
 
   private createColumnDefs = () => {
     return [
-        { width: 90, field: 'time', headerName: 'time', /*cellFilter: "momentShortDate",*/
-          /*comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),*/
+        { width: 90, field: 'time', headerName: 'time', cellRenderer:(params) => {
+          return (params.value) ? Models.toShortTimeString(params.value) : '';
+        },
+          comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
           sort: 'desc', cellClass: (params) => {
             return 'fs11px '+(!params.data.recent ? "text-muted" : "");
         } },
