@@ -13,6 +13,7 @@
     (not sure if a bug or a feature, pending investigation!)
 
 4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
+    (roadmap at https://github.com/mishoo/UglifyJS2/issues/448#issuecomment-245936071)
 
 5. ag-grid css is also not minified.
 
