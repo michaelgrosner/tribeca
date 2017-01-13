@@ -100,6 +100,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
+    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
 
     this.fireCxl = this.fireFactory
       .getFire(Messaging.Topics.CancelOrder);

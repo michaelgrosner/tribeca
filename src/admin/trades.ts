@@ -73,6 +73,7 @@ export class TradesComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
+    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
 
     this.subscriberQPChange = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
@@ -141,8 +142,6 @@ export class TradesComponent implements OnInit, OnDestroy {
   }
 
   private addRowData = (t: Models.Trade) => {
-    this.gridOptions.api.forEachNode((node) => {
-    });
     if (t.Kqty<0) {
       this.gridOptions.api.forEachNode((node) => {
         if (node.data.tradeId==t.tradeId)
@@ -165,7 +164,7 @@ export class TradesComponent implements OnInit, OnDestroy {
           node.data.sortTime = node.data.Ktime ? node.data.Ktime : node.data.time;
           if (node.data.Kqty >= node.data.quantity)
             node.data.side = 'K';
-          // this.gridOptions.api.refreshView();
+          this.gridOptions.api.refreshView();
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
@@ -196,5 +195,6 @@ export class TradesComponent implements OnInit, OnDestroy {
       });
       return r;
     });
+    this.gridOptions.api.refreshHeader();
   }
 }

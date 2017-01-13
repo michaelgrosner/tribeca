@@ -274,10 +274,11 @@
   color: #000;
 }
 .ag-dark .ag-overlay-no-rows-center {
-  background-color: #fff;
-  border: 1px solid #808080;
+  background-color: #333333;
+  border: 1px solid #4c4c4c;
   border-radius: 10px;
   padding: 10px;
+  color:#737373;
 }
 .ag-dark .ag-group-cell-entire-row {
   background-color: #302e2e;
@@ -531,9 +532,9 @@
 
 
 ag-grid-ng2 {height:273px!important;}.navbar-text b {color:yellow;}.fs11px {font-size:11px;}
-.positions .sell,ag-grid-ng2 .sell {color: #ff8e8c;}
-.positions .buy,ag-grid-ng2 .buy {color: #8de2ff;}
-ag-grid-ng2.kira {color: #7bff7b;}
+.positions .sell,.ag-cell.sell {color: #ff8e8c;}
+.positions .buy,.ag-cell.buy {color: #8de2ff;}
+.ag-cell.kira {color: #7bff7b;}
 .ephemeralnotepad {background-color:#111;padding:5px;line-height:21px;font-size:21px;}
 .ephemeralnotepad::-webkit-input-placeholder{font-size:13px;line-height:13px;}
 .ephemeralnotepad::-moz-placeholder{font-size:13px;line-height:13px;}
