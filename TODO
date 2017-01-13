@@ -11,9 +11,9 @@
 
 ### TODO:
 
--1. Concurrent exchanges, display charts, chat room
+-1. Concurrent exchanges
 
-0. Migrate grids to angular 2
+0. Display charts and chat room
 
 1. Add new exchanges
 

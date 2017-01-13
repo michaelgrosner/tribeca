@@ -82,11 +82,10 @@ class DisplayOrderStatusReport {
 
 @Component({
   selector: 'order-list',
-  template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 400px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 273px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-ng2>`
 })
 export class OrdersComponent implements OnInit, OnDestroy {
 
-  public order_statuses: DisplayOrderStatusReport[];
   private gridOptions: GridOptions = <GridOptions>{};
 
   private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
@@ -96,75 +95,18 @@ export class OrdersComponent implements OnInit, OnDestroy {
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
     @Inject(FireFactory) private fireFactory: FireFactory
-  ) {
-    this.fireCxl = this.fireFactory
-      .getFire(Messaging.Topics.CancelOrder);
-
-    this.order_statuses = [];
-    // this.gridOptions = {
-      // data: 'order_statuses',
-      // primaryKey: 'orderId',
-      // groupsCollapsedByDefault: true,
-      // treeRowHeaderAlwaysVisible: false,
-      // enableColumnResize: true,
-      // rowHeight: 20,
-      // headerRowHeight: 20,
-      // sortInfo: {fields: ['price'], directions: ['desc']},
-      // columnDefs: [
-        // { width: 140, field: 'time', displayName: 'time', cellFilter: "momentFullDate",
-          // sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-          // sort: { direction: this.uiGridConstants.DESC, priority: 2}, cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            // return Math.abs(moment.utc().valueOf() - row.entity.time.valueOf()) > 7000 ? "text-muted" : "";
-        // }  },
-        // { width: 90, field: 'orderId', displayName: 'id' },
-        // { width: 35, field: 'computationalLatency', displayName: 'lat'},
-        // { width: 35, field: 'version', displayName: 'v' },
-        // { width: 120, field: 'orderStatus', displayName: 'status', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // return row.entity.orderStatus == "New" ? "text-muted" : "";
-        // }  },
-        // { width: 50, field: 'side', displayName: 'side' , cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // if (grid.getCellValue(row, col) === 'Bid') {
-            // return 'buy';
-          // }
-          // else if (grid.getCellValue(row, col) === 'Ask') {
-            // return "sell";
-          // }
-        // }},
-        // { width: 60, field: 'leavesQuantity', displayName: 'lvQty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // return (row.entity.side === 'Ask') ? "sell" : "buy";
-        // } },
-        // { width: 65, field: 'price', displayName: 'px',
-        // sort: { direction: this.uiGridConstants.DESC, priority: 1}, cellFilter: 'currency', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-            // return (row.entity.side === 'Ask') ? "sell" : "buy";
-        // } },
-        // { width: 60, field: 'quantity', displayName: 'qty', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // return (row.entity.side === 'Ask') ? "sell" : "buy";
-        // }},
-        // { width: 60, field: 'value', displayName: 'value', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
-          // return (row.entity.side === 'Ask') ? "sell" : "buy";
-        // }},
-        // { width: 50, field: 'orderType', displayName: 'type' },
-        // { width: 50, field: 'tif', displayName: 'tif' },
-        // { width: 60, field: 'lastQuantity', displayName: 'lQty' },
-        // { width: 65, field: 'lastPrice', displayName: 'lPx', cellFilter: 'currency' },
-        // { width: 60, field: 'cumQuantity', displayName: 'cum' },
-        // { width: 65, field: 'averagePrice', displayName: 'avg', cellFilter: 'currency' },
-        // { width: 40, field: 'liquidity', displayName: 'liq' },
-        // { width: "*", field: 'rejectMessage', displayName: 'msg' },
-        // { width: 40, name: "cancel", displayName: 'cxl', cellTemplate: '<button type="button" class="btn btn-danger btn-xs" ng-click="row.entity.cancel()"><span class="glyphicon glyphicon-remove"></span></button>' },
-      // ]
-    // };
-
-  }
+  ) {}
 
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
 
+    this.fireCxl = this.fireFactory
+      .getFire(Messaging.Topics.CancelOrder);
+
     this.subscriberOSR = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
-      .registerConnectHandler(this.clear)
-      .registerDisconnectedHandler(this.clear)
+      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData, os => os.forEach(this.addRowData));
   }
 
@@ -174,25 +116,74 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private createColumnDefs = () => {
     return [
+      { width: 140, field: 'time', headerName: 'time', cellRenderer:(params) => {
+          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
+        },
+        comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+        cellClass: (params) => {
+          return Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? "text-muted" : "";
+      }  },
+      { width: 90, field: 'orderId', headerName: 'id' },
+      { width: 35, field: 'computationalLatency', headerName: 'lat'},
+      { width: 35, field: 'version', headerName: 'v' },
+      { width: 120, field: 'orderStatus', headerName: 'status', cellClass: (params) => {
+        return params.data.orderStatus == "New" ? "text-muted" : "";
+      }  },
+      { width: 50, field: 'side', headerName: 'side' , cellClass: (params) => {
+        if (params.value === 'Bid') return 'buy';
+        else if (params.value === 'Ask') return "sell";
+      }},
+      { width: 60, field: 'leavesQuantity', headerName: 'lvQty', cellClass: (params) => {
+        return (params.data.side === 'Ask') ? "sell" : "buy";
+      } },
+      { width: 65, field: 'price', headerName: 'px',
+      sort: 'desc',  cellClass: (params) => {
+        return (params.data.side === 'Ask') ? "sell" : "buy";
+      }, cellRenderer: (params) => {
+          return params.value ? '$'+params.value : '';
+      } },
+      { width: 60, field: 'quantity', headerName: 'qty', cellClass: (params) => {
+        return (params.data.side === 'Ask') ? "sell" : "buy";
+      }},
+      { width: 60, field: 'value', headerName: 'value', cellClass: (params) => {
+        return (params.data.side === 'Ask') ? "sell" : "buy";
+      }},
+      { width: 50, field: 'orderType', headerName: 'type' },
+      { width: 50, field: 'tif', headerName: 'tif' },
+      // { width: 60, field: 'lastQuantity', headerName: 'lQty' },
+      // { width: 65, field: 'lastPrice', headerName: 'lPx', cellRenderer: (params) => {
+          // return params.value ? '$'+params.value : '';
+      // } },
+      // { width: 60, field: 'cumQuantity', headerName: 'cum' },
+      // { width: 65, field: 'averagePrice', headerName: 'avg', cellRenderer: (params) => {
+          // return params.value ? '$'+params.value : '';
+      // } },
+      // { width: 40, field: 'liquidity', headerName: 'liq' },
+      // { minWidth: 69, field: 'rejectMessage', headerName: 'msg' },
+      { width: 40, name: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
+      } },
     ];
   }
 
-  private clear = () => {
-    this.gridOptions.api.setRowData([]);
+  public onCellClicked = ($event) => {
+    if ($event.event.target.getAttribute("data-action-type")=='remove')
+      $event.data.cancel();
   }
 
   private addRowData = (o: Models.OrderStatusReport) => {
-    var idx = -1;
-    for(var i=0;i<this.order_statuses.length;i++)
-      if (this.order_statuses[i].orderId==o.orderId) {idx=i; break;}
-    if (idx!=-1) {
-      if (o.leavesQuantity) {
-        var existing = this.order_statuses[idx];
-        if (existing.version < o.version)
-          existing.updateWith(o);
-      } else this.order_statuses.splice(idx,1);
-    } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
-      this.order_statuses.push(new DisplayOrderStatusReport(o, this.fireCxl));
+    let exists: boolean = false;
+    this.gridOptions.api.forEachNode((node) => {
+      if (!exists && node.data.orderId==o.orderId) {
+        if (o.leavesQuantity) {
+          if (node.data.version < o.version)
+            node.data.updateWith(o);
+        } else this.gridOptions.api.removeItems([node]);
+        exists = true;
+      }
+    });
+    if (!exists && (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New))
+      this.gridOptions.api.addItems([new DisplayOrderStatusReport(o, this.fireCxl)]);
   }
 }
 
