@@ -1,7 +1,6 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts"/>
 /// <reference path="shared_directives.ts"/>
-/// <reference path="fairvalue-chart.ts"/>
 /// <reference path="wallet-position.ts"/>
 /// <reference path="target-base-position.ts"/>
 /// <reference path="market-quoting.ts"/>
@@ -32,7 +31,6 @@ import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
-import {FairValueChartComponent} from './fairvalue-chart';
 import {WalletPositionComponent} from './wallet-position';
 import {TargetBasePositionComponent} from './target-base-position';
 import {MarketQuotingComponent} from './market-quoting';
@@ -368,18 +366,6 @@ class DisplayOrder {
                     </div>
                 </div>
             </div>
-
-          <div class="container-fluid">
-              <div class="row">
-                  <div class="col-md-4 col-xs-12">
-                  </div>
-                  <div class="col-md-4 col-xs-12">
-                      <fair-value-chart></fair-value-chart>
-                  </div>
-                  <div class="col-md-4 col-xs-12">
-                  </div>
-              </div>
-          </div>
         </div>
     </div>
     <address class="text-center">
@@ -526,7 +512,6 @@ class ClientComponent implements OnInit, OnDestroy {
   bootstrap: [ClientComponent],
   declarations: [
     ClientComponent,
-    FairValueChartComponent,
     OrdersComponent,
     TradesComponent,
     MarketQuotingComponent,

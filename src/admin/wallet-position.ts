@@ -49,11 +49,13 @@ export class WalletPositionComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.subscriberQPChange = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
+    this.subscriberQPChange = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
       .registerDisconnectedHandler(this.clearQP)
       .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
 
-    this.subscriberPosition = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Position)
+    this.subscriberPosition = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.Position)
       .registerDisconnectedHandler(this.clearPosition)
       .registerSubscriber(this.updatePosition, us => us.forEach(this.updatePosition));
   }

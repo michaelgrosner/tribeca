@@ -24,7 +24,8 @@ export class TargetBasePositionComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.subscriberTargetBasePosition = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.TargetBasePosition)
+    this.subscriberTargetBasePosition = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.TargetBasePosition)
       .registerDisconnectedHandler(() => this.targetBasePosition = null)
       .registerSubscriber(this.update, us => us.forEach(this.update));
   }
