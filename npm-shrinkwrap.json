@@ -63,9 +63,9 @@
       "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.0.tgz"
     },
     "@types/bunyan": {
-      "version": "0.0.34",
-      "from": "@types/bunyan@>=0.0.34 <0.0.35",
-      "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.34.tgz"
+      "version": "0.0.35",
+      "from": "@types/bunyan@0.0.35",
+      "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.35.tgz"
     },
     "@types/express": {
       "version": "4.0.34",
@@ -1443,9 +1443,9 @@
       "resolved": "https://registry.npmjs.org/moment/-/moment-2.17.1.tgz"
     },
     "mongodb": {
-      "version": "2.2.20",
-      "from": "mongodb@>=2.2.20 <3.0.0",
-      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-2.2.20.tgz",
+      "version": "2.2.21",
+      "from": "mongodb@2.2.21",
+      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-2.2.21.tgz",
       "dependencies": {
         "readable-stream": {
           "version": "2.1.5",
@@ -1455,9 +1455,9 @@
       }
     },
     "mongodb-core": {
-      "version": "2.1.5",
-      "from": "mongodb-core@2.1.5",
-      "resolved": "https://registry.npmjs.org/mongodb-core/-/mongodb-core-2.1.5.tgz"
+      "version": "2.1.6",
+      "from": "mongodb-core@2.1.6",
+      "resolved": "https://registry.npmjs.org/mongodb-core/-/mongodb-core-2.1.6.tgz"
     },
     "ms": {
       "version": "0.7.1",
