@@ -58,6 +58,8 @@ Once `tribeca` is up and running, visit HTTPS port `3000` of the machine on whic
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
+In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
+
 ### REST API
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
