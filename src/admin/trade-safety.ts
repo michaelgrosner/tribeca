@@ -34,7 +34,8 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.subscriberTradeSafetyValue = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
+    this.subscriberTradeSafetyValue = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
       .registerDisconnectedHandler(this.clear)
       .registerSubscriber(this.updateValue, us => us.forEach(this.updateValue));
   }

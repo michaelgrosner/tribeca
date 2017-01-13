@@ -1,9 +1,9 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
-/// <amd-dependency path='ui.bootstrap'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {GridOptions} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -52,23 +52,20 @@ class DisplayTrade {
 
 @Component({
   selector: 'trade-list',
-  template: `<div>
-      <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 180px" ></div>
-    </div>`
+  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 400px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class TradesComponent implements OnInit, OnDestroy {
 
   public trade_statuses : DisplayTrade[];
+  private gridOptions: GridOptions = <GridOptions>{};
+
   public exch : Models.Exchange;
   public pair : Models.CurrencyPair;
-  public gridOptions : any;
-  public gridApi : any;
   public audio: boolean;
 
   private subscriberTrades: Messaging.ISubscribe<Models.Trade>;
   private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
 
-  uiGridConstants: any;
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
@@ -133,12 +130,17 @@ export class TradesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscriberTrades = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.Trades)
+    this.gridOptions.rowData = [];
+    this.gridOptions.columnDefs = this.createColumnDefs();
+
+    this.subscriberTrades = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.Trades)
       .registerConnectHandler(() => this.trade_statuses.length = 0)
       .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
-      .registerSubscriber(this.addTrade, trades => trades.forEach(this.addTrade));
+      .registerSubscriber(this.addRowData, trades => trades.forEach(this.addRowData));
 
-    this.subscriberQPChange = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
+    this.subscriberQPChange = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
       .registerDisconnectedHandler(() => this.trade_statuses.length = 0)
       .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
   }
@@ -148,7 +150,12 @@ export class TradesComponent implements OnInit, OnDestroy {
     this.subscriberQPChange.disconnect();
   }
 
-  private addTrade = (t: Models.Trade) => {
+  private createColumnDefs = () => {
+    return [
+    ];
+  }
+
+  private addRowData = (t: Models.Trade) => {
     if (t.Kqty<0) {
       for(var i = 0;i<this.trade_statuses.length;i++) {
         if (this.trade_statuses[i].tradeId==t.tradeId) {
@@ -173,8 +180,8 @@ export class TradesComponent implements OnInit, OnDestroy {
           this.trade_statuses[i].sortTime = this.trade_statuses[i].Ktime ? this.trade_statuses[i].Ktime : this.trade_statuses[i].time;
           if (this.trade_statuses[i].Kqty >= this.trade_statuses[i].quantity)
             this.trade_statuses[i].side = 'K';
-          if (this.gridApi && this.uiGridConstants)
-            this.gridApi.grid.notifyDataChange(this.uiGridConstants.dataChange.ALL);
+          // if (this.gridApi && this.uiGridConstants)
+            // this.gridApi.grid.notifyDataChange(this.uiGridConstants.dataChange.ALL);
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;

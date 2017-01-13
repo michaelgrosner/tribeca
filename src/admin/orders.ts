@@ -1,9 +1,9 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
-/// <amd-dependency path='ui.bootstrap'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {GridOptions} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -82,19 +82,16 @@ class DisplayOrderStatusReport {
 
 @Component({
   selector: 'order-list',
-  template: `<div>
-      <div ui-grid="gridOptions" class="table table-striped table-hover table-condensed" style="height: 400px"></div>
-    </div>`
+  template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 400px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class OrdersComponent implements OnInit, OnDestroy {
 
   public order_statuses: DisplayOrderStatusReport[];
-  public gridOptions: any;
+  private gridOptions: GridOptions = <GridOptions>{};
 
   private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
   private subscriberOSR: Messaging.ISubscribe<Models.OrderStatusReport>;
 
-  uiGridConstants: any;
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
@@ -161,21 +158,30 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscriberOSR = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
+    this.gridOptions.rowData = [];
+    this.gridOptions.columnDefs = this.createColumnDefs();
+
+    this.subscriberOSR = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
       .registerConnectHandler(this.clear)
       .registerDisconnectedHandler(this.clear)
-      .registerSubscriber(this.addOrderRpt, os => os.forEach(this.addOrderRpt));
+      .registerSubscriber(this.addRowData, os => os.forEach(this.addRowData));
   }
 
   ngOnDestroy() {
     this.subscriberOSR.disconnect();
   }
 
-  private clear = () => {
-    this.order_statuses.length = 0;
+  private createColumnDefs = () => {
+    return [
+    ];
   }
 
-  private addOrderRpt = (o: Models.OrderStatusReport) => {
+  private clear = () => {
+    this.gridOptions.api.setRowData([]);
+  }
+
+  private addRowData = (o: Models.OrderStatusReport) => {
     var idx = -1;
     for(var i=0;i<this.order_statuses.length;i++)
       if (this.order_statuses[i].orderId==o.orderId) {idx=i; break;}

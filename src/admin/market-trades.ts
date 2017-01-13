@@ -69,7 +69,7 @@ class DisplayMarketTrade {
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-ng2 #agGrid class="ag-fresh ag-dark" style="height: 180px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #marketList class="ag-fresh ag-dark" style="height: 180px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class MarketTradesComponent implements OnInit, OnDestroy {
 
@@ -83,12 +83,12 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
 
-    this.subscriberMarketTrade = this.subscriberFactory.getSubscriber(this.zone, Messaging.Topics.MarketTrade)
+    this.subscriberMarketTrade = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.MarketTrade)
       .registerSubscriber(this.addRowData, x => x.forEach(this.addRowData))
-      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0);
+      .registerDisconnectedHandler(() => this.gridOptions.api.setRowData([]));
   }
 
   ngOnDestroy() {
