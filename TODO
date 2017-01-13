@@ -7,7 +7,11 @@
 
 3. Orders do not last more than a few miliseconds on OkCoin.
 
-4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
+4. Browserify does not minify es6 yet, so bundle.min.js is not really minified
+
+5. TradesComponent.updateQP does nothing (but is harmless so low priority).
+
+6. TradesComponent.addRowData doesn't not sort new records by sortTime (but is harmless so low priority).
 
 ### TODO:
 
