@@ -2,16 +2,21 @@
 
 1. Occasionnaly trades would not be correclty cancelled.
     (Coinbase seems to cancel orders always OK; what other exchanges fail occasionnaly?)
+      ((After looking at it, It seems more likely that a trade can be left behind when tribeca crashes.))
 
 2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
+    (not sure if a bug or a feature, pending investigation!)
 
 3. Orders do not last more than a few miliseconds on OkCoin.
+    (not sure if a bug or a feature, pending investigation!)
 
-4. Browserify does not minify es6 yet, so bundle.min.js is not really minified
+4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
 
-5. TradesComponent.updateQP does nothing (but is harmless so low priority).
+5. ag-grid css is also not minified.
 
-6. TradesComponent.addRowData doesn't not sort new records by sortTime (but is harmless so low priority).
+6. TradesComponent.updateQP does nothing (but is harmless so low priority).
+
+7. TradesComponent.addRowData does not sort new records by sortTime (but is harmless so low priority).
 
 ### TODO:
 
