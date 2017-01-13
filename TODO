@@ -1,10 +1,12 @@
 ### KNOWN BUGS:
 
 1. Occasionnaly trades would not be correclty cancelled.
+   After looking at it, It seems more likely that a trade can be left behind when tribeca crashes.
     (Coinbase seems to cancel orders always OK; what other exchanges fail occasionnaly?)
-      ((After looking at it, It seems more likely that a trade can be left behind when tribeca crashes.))
+    (Tribeca already attempts to close [and i found this to be working always] trades before exit or if a unhandled exception occurs, will delete this TODO soon)
 
 2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
+   Actually, I think that tribeca keeps adding a value to EwmaBasic even when it reaches 0 or the size of portfolio even if it not shown.
     (not sure if a bug or a feature, pending investigation!)
 
 3. Orders do not last more than a few miliseconds on OkCoin.
