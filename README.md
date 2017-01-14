@@ -1,4 +1,8 @@
-![status](https://david-dm.org/ctubio/tribeca.svg)
+[![Release](https://img.shields.io/github/release/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/releases)
+![Status](https://img.shields.io/david/ctubio/tribeca.svg)
+[![Platform](https://img.shields.io/badge/platform-unix--like-lightgray.svg)](https://www.gnu.org/)
+[![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](LICENSE)
+[![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](COPYING)
 
 `tribeca.js` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
