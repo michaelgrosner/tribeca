@@ -84,7 +84,7 @@ Feel free to run `npm test` anytime.
 
 To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
 
-To piped the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
+To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
 To save the output in `log/tribeca.log` file, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
 
