@@ -24,21 +24,19 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 1. Ensure your target machine has node v6 or greater (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
 
-2. Clone the repository somewhere with `git clone ssh://git@github.com/ctubio/tribeca`.
+2. Run `git clone ssh://git@github.com/ctubio/tribeca` in any location that you wish.
 
-3. In the toplevel path of the git cloned repository, `npm install`. This will install all local dependencies in `node_modules` folder and also compile TypeScript in `src` folder to CommonJS in `app` folder.
+3. Copy `etc/tribeca.json.dist` to `etc/tribeca.json` and modify the configuration options, see [configuration](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-4. Copy `etc/tribeca.json.dist` to `etc/tribeca.json`, and modify the config keys, see [configuration](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
-
-5. In the toplevel path of the git cloned repository, `npm start`, or `service tribeca start` anywhere if the optional init script `dist/tribeca-init.sh` is installed.
+4. Run `npm start` in the toplevel path of the git cloned repository. This will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before, then it runs `tribeca.js` in the background using [forever](https://www.npmjs.com/package/forever).
 
 Optional:
 
-1. Install the system daemon script `dist/tribeca-init.sh`, it requires forever (`npm i -g forever`), see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder.
+1. Install the system daemon script `dist/tribeca-init.sh` (to make use of `service tribeca start` from anywhere instead of `cd path/to/tribeca && npm start`) see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder.
 
 2. Replace the certificate at `etc/sslcert` folder with your own, see [web ui](https://github.com/ctubio/tribeca#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
-3. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js` or with forever globally installed `forever start path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
+3. Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
 
 ### Configuration
 
@@ -80,15 +78,21 @@ The metrics send are:
  * Total amount available in wallet and held in open trades in BTC currency
  * Total amount available in wallet and held in open trades in Fiat currency
 
-### TEST UNITS
+### Test units and Build notes
 
 Feel free to run `npm test` anytime.
+
+To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
+
+To piped the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
+
+To save the output in `log/tribeca.log` file, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
 
 ### Unreleased Changelog:
 
 Added nodejs6, typescript2 and angular2.
 
-Added npm install scripts instead of grunt tasks.
+Added cleanup of global dependencies, source code and installation steps.
 
 ### Release 2.0 Changelog:
 
