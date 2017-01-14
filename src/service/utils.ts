@@ -24,7 +24,7 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
     return timeProvider.utcNow();
 }
 
-export function log(name: string) : bunyan.Logger {
+export function log(name: string): bunyan {
     // don't log while testing
     const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
     if (isRunFromMocha) {
