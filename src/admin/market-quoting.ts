@@ -12,14 +12,14 @@ import {SubscriberFactory} from './shared_directives';
 class DisplayLevel {
   bidPrice: number;
   bidSize: number;
-  bidPercent: number;
   askPrice: number;
   askSize: number;
-  askPercent: number;
   diffWidth: number;
 
   bidClass: string;
   askClass: string;
+  bidClassVisual: string;
+  askClassVisual: string;
 }
 
 class DisplayOrderStatusClassReport {
@@ -57,13 +57,13 @@ class DisplayOrderStatusClassReport {
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.2-2' }}</td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.2-2' }}</td>
       </tr>
-      <tr class="active" *ngFor="let level of levels">
-        <td class="text-left">mkt{{ $index }}</td>
-        <td [ngClass]="level.bidClass"><div style="width:100%;background: -webkit-linear-gradient(left, #8de2ff {{ level.bidPercent | number:'1.2-2' }}%,trasnparent {{ level.bidPercent | number:'1.2-2' }}%);background: -moz-linear-gradient(left, #8de2ff {{ level.bidPercent | number:'1.2-2' }}%,transparent {{ level.bidPercent | number:'1.2-2' }}%);background: -ms-linear-gradient(left, #8de2ff {{ level.bidPercent | number:'1.2-2' }}%,transparent {{ level.bidPercent | number:'1.2-2' }}%);background: -o-linear-gradient(left, #8de2ff {{ level.bidPercent | number:'1.2-2' }}%,transparent {{ level.bidPercent | number:'1.2-2' }}%);background: linear-gradient(to right, #8de2ff {{ level.bidPercent | number:'1.2-2' }}%,transparent {{ level.bidPercent | number:'1.2-2' }}%);">{{ level.bidSize | number:'1.2-2' }}</div></td>
+      <tr class="active" *ngFor="let level of levels; let i = index">
+        <td class="text-left">mkt{{ i }}</td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div>{{ level.bidSize | number:'1.2-2' }}</td>
         <td [ngClass]="level.bidClass">{{ level.bidPrice | number:'1.2-2' }}</td>
         <td><span *ngIf="level.diffWidth > 0">{{ level.diffWidth | number:'1.2-2' }}</span></td>
         <td [ngClass]="level.askClass">{{ level.askPrice | number:'1.2-2' }}</td>
-        <td [ngClass]="level.askClass"><div style="width:100%;background: -webkit-linear-gradient(left, #ff8e8c {{ level.askPercent | number:'1.2-2' }}%,trasnparent {{ level.askPercent | number:'1.2-2' }}%);background:    -moz-linear-gradient(left, #ff8e8c {{ level.askPercent | number:'1.2-2' }}%,transparent {{ level.askPercent | number:'1.2-2' }}%);background:     -ms-linear-gradient(left, #ff8e8c {{ level.askPercent | number:'1.2-2' }}%,transparent {{ level.askPercent | number:'1.2-2' }}%);background:      -o-linear-gradient(left, #ff8e8c {{ level.askPercent | number:'1.2-2' }}%,transparent {{ level.askPercent | number:'1.2-2' }}%);background:         linear-gradient(to right, #ff8e8c {{ level.askPercent | number:'1.2-2' }}%,transparent {{ level.askPercent | number:'1.2-2' }}%);">{{ level.askSize | number:'1.2-2' }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div>{{ level.askSize | number:'1.2-2' }}</td>
       </tr>
     </table>`
 })
@@ -163,10 +163,6 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
         this.levels[i] = new DisplayLevel();
       this.levels[i].bidPrice = update.bids[i].price;
       this.levels[i].bidSize = update.bids[i].size;
-      this.levels[i].bidPercent = Math.max(Math.min((Math.log(update.bids[i].size)/Math.log(2))*4,19),1);
-      if (i < update.asks.length)
-        this.levels[i].askPercent = Math.max(Math.min((Math.log(update.asks[i].size)/Math.log(2))*4,19),1);
-
       this.levels[i].diffWidth = i==0
         ? this.levels[i].askPrice - this.levels[i].bidPrice : (
           (i==1 && this.qAskPx && this.qBidPx)
@@ -206,16 +202,18 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
       var tol = .005;
       for (var i = 0; i < this.levels.length; i++) {
         var level = this.levels[i];
-        level.bidClass = 'active';
+        level.bidClass = 'active ';
         var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
         for (var j = 0; j < bids.length; j++)
           if (Math.abs(bids[j].price - level.bidPrice) < tol)
-            level.bidClass = 'success buy';
-        level.askClass = 'active';
+            level.bidClass = 'success buy ';
+        level.bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.bidSize)/Math.log(2))*4,19),1)));
+        level.askClass = 'active ';
         var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
         for (var j = 0; j < asks.length; j++)
           if (Math.abs(asks[j].price - level.askPrice) < tol)
-            level.askClass = 'success sell';
+            level.askClass = 'success sell ';
+        level.askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.askSize)/Math.log(2))*4,19),1)));
       }
     }
   }
