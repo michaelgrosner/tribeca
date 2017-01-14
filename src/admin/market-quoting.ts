@@ -59,11 +59,11 @@ class DisplayOrderStatusClassReport {
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
         <td class="text-left">mkt{{ i }}</td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div>{{ level.bidSize | number:'1.2-2' }}</td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.bidSize | number:'1.2-2' }}</div></td>
         <td [ngClass]="level.bidClass">{{ level.bidPrice | number:'1.2-2' }}</td>
         <td><span *ngIf="level.diffWidth > 0">{{ level.diffWidth | number:'1.2-2' }}</span></td>
         <td [ngClass]="level.askClass">{{ level.askPrice | number:'1.2-2' }}</td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div>{{ level.askSize | number:'1.2-2' }}</td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.askSize | number:'1.2-2' }}</div></td>
       </tr>
     </table>`
 })
