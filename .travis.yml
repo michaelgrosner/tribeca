@@ -1,0 +1,21 @@
+sudo: false
+
+dist: trusty
+
+branches:
+  only:
+    - master
+
+language: node_js
+
+node_js:
+  - 6
+  - 6.1
+
+install: npm install
+
+script: npm test
+
+notifications:
+  email:
+    on_success: never
