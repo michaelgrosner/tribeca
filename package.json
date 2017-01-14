@@ -76,8 +76,9 @@
     "compile-static": "cp -R src/static/* app/service/admin/",
     "compile-bundle": "browserify app/service/admin/js/admin/client.js -o app/service/admin/js/admin/bundle.min.js",
     "restart": "npm stop && npm start",
-    "start": "forever start -a -l /dev/null tribeca.js",
-    "stop": "forever stop -a -l /dev/null tribeca.js || :"
+    "stop": "forever stop -a -l /dev/null tribeca.js || :",
+    "start": "npm run test-compile && forever start -a -l /dev/null tribeca.js",
+    "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install"
   },
   "repository": {
     "type": "git",

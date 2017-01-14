@@ -5,34 +5,24 @@
 # Required-Stop:     $local_fs $syslog $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start tribeca daemons
+# Short-Description: Start npm forever tribeca daemon
 ### END INIT INFO
 
 DAEMON_TOPLEVEL_PATH=/home/user/path/to/tribeca
 
-DAEMON=tribeca.js
-cd $TRIBECA_SERVICE_PATH
+cd $DAEMON_TOPLEVEL_PATH
 case "$1" in
     start)
-        forever start -a -l /dev/null $DAEMON
+        npm start
         ;;
     stop)
-        forever stop -a -l /dev/null $DAEMON
-        ;;
-    stopall)
-        forever stopall
-        ;;
-    restartall)
-        forever restartall
+        npm stop
         ;;
     reload|restart)
-        forever restart -a -l /dev/null $DAEMON
-        ;;
-    list)
-        forever list
+        npm restart
         ;;
     *)
-        echo "Usage: /etc/init.d/tribeca {start|stop|restart|reload|stopall|restartall|list}"
+        echo "Usage: /etc/init.d/tribeca {start|stop|restart|reload}"
         exit 1
         ;;
 esac

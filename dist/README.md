@@ -9,8 +9,6 @@ To turn tribeca into a daemon, you may want to run the following command:
 ```
 Please make sure to correctly setup the value of `DAEMON_TOPLEVEL_PATH` variable hardcoded into the script.
 
-Also this script depends on forever begin globally installed (`npm i -g forever`).
-
 Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
 
 ### Dockerfile
