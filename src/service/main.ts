@@ -182,9 +182,9 @@ var liveTradingSetup = () => {
     var webport = config.GetNumber("WebClientListenPort");
     web_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
 
-    app.get("/view/*.md", (req: express.Request, res: express.Response) => {
+    app.get("/view/*", (req: express.Request, res: express.Response) => {
       try {
-        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('.md','')+'.md', 'utf8')));
+        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
       } catch (e) {
         res.send('Document Not Found, but today is a beautiful day.');
       }
