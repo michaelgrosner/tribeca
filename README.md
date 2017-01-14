@@ -28,7 +28,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 3. Copy `etc/tribeca.json.dist` to `etc/tribeca.json` and modify the configuration options, see [configuration](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/tribeca`).
 
-4. Run `npm start` in the toplevel path of the git cloned repository. This will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before, then it runs `tribeca.js` in the background using [forever](https://www.npmjs.com/package/forever).
+4. Run `npm start` in the toplevel path of the git cloned repository. This will run `tribeca.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
 
 Optional:
 
