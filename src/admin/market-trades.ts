@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
-import {GridOptions, ColDef} from "ag-grid/main";
+import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -98,9 +98,9 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     this.subscriberMarketTrade.disconnect();
   }
 
-  private createColumnDefs = (): (ColDef)[] => {
+  private createColumnDefs = (): ColDef[] => {
     return [
-        { width: 90, field: 'time', headerName: 'time', cellRenderer:(params) => {
+        { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
           return (params.value) ? Models.toShortTimeString(params.value) : '';
         },
           comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
@@ -109,10 +109,14 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
         } },
         { width: 60, field: 'price', headerName: 'px', cellClass: (params) => {
             return (params.data.make_side === 'Ask') ? "sell" : "buy";
-        } },
+        }, cellRenderer:(params) => {
+          return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value);
+        }},
         { width: 50, field: 'size', headerName: 'sz', cellClass: (params) => {
             return (params.data.make_side === 'Ask') ? "sell" : "buy";
-        } },
+        }, cellRenderer:(params) => {
+          return new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value);
+        }},
         { width: 40, field: 'make_side', headerName: 'ms' , cellClass: (params) => {
           if (params.value === 'Bid') return 'buy';
           else if (params.value === 'Ask') return "sell";
@@ -132,7 +136,7 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     if (u != null)
       this.gridOptions.api.addItems([new DisplayMarketTrade(u)]);
 
-    this.gridOptions.api.forEachNode((node) => {
+    this.gridOptions.api.forEachNode((node: RowNode) => {
       if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 3600000)
         this.gridOptions.api.removeItems([node]);
       else if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 7000)

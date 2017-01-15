@@ -2,7 +2,6 @@
 /// <reference path="../common/messaging.ts"/>
 /// <reference path="shared_directives.ts"/>
 /// <reference path="wallet-position.ts"/>
-/// <reference path="target-base-position.ts"/>
 /// <reference path="market-quoting.ts"/>
 /// <reference path="market-trades.ts"/>
 /// <reference path="trade-safety.ts"/>
@@ -24,15 +23,11 @@ import {PopoverModule} from "ng2-popover";
 
 import moment = require("moment");
 
-import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
-// var bootstrap = require("../bootstrap.min");
-
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
 import Pair = require('./pair');
 import {WalletPositionComponent} from './wallet-position';
-import {TargetBasePositionComponent} from './target-base-position';
 import {MarketQuotingComponent} from './market-quoting';
 import {MarketTradesComponent} from './market-trades';
 import {TradeSafetyComponent} from './trade-safety';
@@ -97,7 +92,6 @@ class DisplayOrder {
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><p class="navbar-text">Target Base Position: <target-base-position></target-base-position></p></li>
                         <li><p class="navbar-text"><trade-safety></trade-safety></p></li>
                         <li>
                             <button type="button"
@@ -180,20 +174,16 @@ class DisplayOrder {
                                 <button class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
                                     {{ pair_name }}
                                 </button>
-
                                 <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
                                 <wallet-position></wallet-position>
                             </div>
                         </div>
-
                         <div class="col-md-3 col-xs-12">
                             <market-quoting></market-quoting>
                         </div>
-
                         <div class="col-md-6 col-xs-12">
-                            <trade-list></trade-list>
+                            <order-list></order-list>
                         </div>
-
                         <div class="col-md-2 col-xs-12">
                             <market-trades></market-trades>
                         </div>
@@ -357,10 +347,12 @@ class DisplayOrder {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-10 col-xs-12">
-                            <order-list></order-list>
+                        <div class="col-md-5 col-xs-12">
                         </div>
-                        <div  class="col-md-2 col-xs-12">
+                        <div class="col-md-6 col-xs-12">
+                            <trade-list></trade-list>
+                        </div>
+                        <div class="col-md-1 col-xs-12">
                           <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
                       </div>
                     </div>
@@ -504,8 +496,7 @@ class ClientComponent implements OnInit, OnDestroy {
     BrowserModule,
     FormsModule,
     PopoverModule,
-    AgGridModule.withComponents([]),
-    NgbModule.forRoot()
+    AgGridModule.withComponents([])
   ],
   declarations: [
     ClientComponent,
@@ -514,7 +505,6 @@ class ClientComponent implements OnInit, OnDestroy {
     MarketQuotingComponent,
     MarketTradesComponent,
     WalletPositionComponent,
-    TargetBasePositionComponent,
     TradeSafetyComponent,
   ],
   bootstrap: [ClientComponent]

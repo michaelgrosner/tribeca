@@ -1,7 +1,6 @@
 /// <reference path='../common/models.ts' />
 /// <reference path='../common/messaging.ts' />
 /// <reference path='shared_directives.ts'/>
-/// <amd-dependency path='ui.bootstrap'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 
@@ -43,27 +42,27 @@ class DisplayOrderStatusClassReport {
   template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
       <tr class="active">
         <th></th>
-        <th>bidSz</th>
+        <th>bidSz&nbsp;</th>
         <th>bidPx</th>
         <th>FV</th>
         <th>askPx</th>
-        <th>askSz</th>
+        <th>askSz&nbsp;</th>
       </tr>
       <tr class="info">
         <td class="text-left">q</td>
-        <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.2-2' }}</td>
+        <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.3-3' }}</td>
         <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.2-2' }}</td>
         <td class="fairvalue">{{ fairValue | number:'1.2-2' }}</td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.2-2' }}</td>
-        <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.2-2' }}</td>
+        <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.3-3' }}</td>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
         <td class="text-left">mkt{{ i }}</td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.bidSize | number:'1.2-2' }}</div></td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.bidSize | number:'1.3-3' }}</div></td>
         <td [ngClass]="level.bidClass">{{ level.bidPrice | number:'1.2-2' }}</td>
         <td><span *ngIf="level.diffWidth > 0">{{ level.diffWidth | number:'1.2-2' }}</span></td>
         <td [ngClass]="level.askClass">{{ level.askPrice | number:'1.2-2' }}</td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.askSize | number:'1.2-2' }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.askSize | number:'1.3-3' }}</div></td>
       </tr>
     </table>`
 })
