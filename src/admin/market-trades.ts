@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
-import {GridOptions} from "ag-grid/main";
+import {GridOptions, ColDef} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -85,6 +85,7 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
+    this.gridOptions.enableSorting = true;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
 
     this.subscriberMarketTrade = this.subscriberFactory
@@ -97,7 +98,7 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     this.subscriberMarketTrade.disconnect();
   }
 
-  private createColumnDefs = () => {
+  private createColumnDefs = (): (ColDef)[] => {
     return [
         { width: 90, field: 'time', headerName: 'time', cellRenderer:(params) => {
           return (params.value) ? Models.toShortTimeString(params.value) : '';
