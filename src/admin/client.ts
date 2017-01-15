@@ -481,7 +481,6 @@ class ClientComponent implements OnInit, OnDestroy {
     this.user_theme = this.user_theme!==null?(this.user_theme==''?'-dark':''):(this.system_theme==''?'-dark':'');
     this.system_theme = this.user_theme;
     this.setTheme();
-    window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
   }
 
   private getTheme = (hour: number) => {
@@ -496,7 +495,6 @@ class ClientComponent implements OnInit, OnDestroy {
     this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
     this.exch_name = Models.Exchange[pa.exchange];
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
-    window.setTimeout(function(){window.dispatchEvent(new Event('resize'));}, 1000);
   }
 }
 
