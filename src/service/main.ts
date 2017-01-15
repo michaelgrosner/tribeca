@@ -438,7 +438,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             var delta = process.hrtime(start);
             var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
             var n = ms - interval;
-            if (n > 25)
+            if (n > 69)
                 mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
             start = process.hrtime();
         }, interval).unref();
