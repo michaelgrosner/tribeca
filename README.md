@@ -73,9 +73,9 @@ Tribeca also exposes a REST API of all it's data. It's all the same data you wou
 
 ### Grafana + InfluxDB + CollectD
 
-Tribeca send metrics periodically to [StatsD plugin of CollectD](https://collectd.org/wiki/index.php/Plugin:StatsD) on default port 8125
+Tribeca send metrics periodically to [StatsD plugin of CollectD](https://collectd.org/wiki/index.php/Plugin:StatsD) on default port localhost:8125
 
-You can setup a Grafana instance with a InfluxDB datasource to read the metrics from CollectD send by Tribeca.
+You can setup a Grafana instance with a InfluxDB datasource to read the metrics from CollectD send by Tribeca like [this guy](https://sonnguyen.ws/monitor-server-with-collectd-influxdb-and-grafana/).
 
 The metrics send are:
 
