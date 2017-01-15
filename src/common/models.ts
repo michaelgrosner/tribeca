@@ -308,9 +308,9 @@ export class Quote {
     constructor(public price: number,
                 public size: number) {}
 
-    private static Tol = 1e-3;
+    private Tol = 1e-3;
     public equals(other: Quote) {
-        return Math.abs(this.price - other.price) < Quote.Tol && Math.abs(this.size - other.size) < Quote.Tol;
+        return Math.abs(this.price - other.price) < this.Tol && Math.abs(this.size - other.size) < this.Tol;
     }
 }
 

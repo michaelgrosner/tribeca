@@ -13,7 +13,7 @@
     "@angular/platform-browser-dynamic": "^2.4.3",
     "@angular/router": "^3.4.3",
     "@ng-bootstrap/ng-bootstrap": "^1.0.0-alpha.18",
-    "@types/angular": "^1.6.0",
+    "@types/angular": "^1.6.1",
     "@types/bunyan": "0.0.35",
     "@types/express": "^4.0.34",
     "@types/express-serve-static-core": "^4.0.40",
@@ -64,12 +64,16 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.37",
+    "istanbul": "^1.0.0-alpha",
+    "istanbul-coveralls": "^1.0.3",
     "mocha": "^3.2.0",
     "ts-node": "^2.0.0"
   },
   "main": "./tribeca.js",
   "scripts": {
-    "test": "mocha --require ts-node/register test/*.ts",
+    "test": "mocha --compilers ts:ts-node/register test/*.ts",
+    "test-cov": "ts-node node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --compilers ts:ts-node/register test/*.ts",
+    "send-cov": "cd test && istanbul-coveralls",
     "postinstall": "npm run compile-service && npm run compile-admin && npm run compile-static && npm run compile-bundle",
     "compile-service": "tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/service/*.ts src/service/*/*.ts src/common/*.ts",
     "compile-admin": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/service/admin/js src/admin/*.ts src/common/*.ts",
