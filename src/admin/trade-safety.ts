@@ -13,6 +13,7 @@ import {SubscriberFactory} from './shared_directives';
   template: `<div>
       BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span>,
       SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span>,
+      Target Base Position: {{ targetBasePosition | number:'1.2-2' }},
       BuyTS: {{ buySafety | number:'1.2-2' }},
       SellTS: {{ sellSafety | number:'1.2-2' }},
       TotalTS: {{ tradeSafetyValue | number:'1.2-2' }}
@@ -22,10 +23,12 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
 
   private buySafety: number;
   private sellSafety: number;
+  private targetBasePosition: number;
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
 
+  private subscriberTargetBasePosition: Messaging.ISubscribe<Models.TargetBasePositionValue>;
   private subscriberTradeSafetyValue: Messaging.ISubscribe<Models.TradeSafety>;
 
   constructor(
@@ -34,6 +37,11 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.subscriberTargetBasePosition = this.subscriberFactory
+      .getSubscriber(this.zone, Messaging.Topics.TargetBasePosition)
+      .registerDisconnectedHandler(() => this.targetBasePosition = null)
+      .registerSubscriber(this.updateTargetBasePosition, us => us.forEach(this.updateTargetBasePosition));
+
     this.subscriberTradeSafetyValue = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
       .registerDisconnectedHandler(this.clear)
@@ -41,7 +49,13 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.subscriberTargetBasePosition.disconnect();
     this.subscriberTradeSafetyValue.disconnect();
+  }
+
+  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
+    if (value == null) return;
+    this.targetBasePosition = value.data;
   }
 
   private updateValue = (value : Models.TradeSafety) => {

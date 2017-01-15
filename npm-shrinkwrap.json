@@ -52,11 +52,6 @@
       "from": "@angular/tsc-wrapped@0.5.1",
       "resolved": "https://registry.npmjs.org/@angular/tsc-wrapped/-/tsc-wrapped-0.5.1.tgz"
     },
-    "@ng-bootstrap/ng-bootstrap": {
-      "version": "1.0.0-alpha.18",
-      "from": "@ng-bootstrap/ng-bootstrap@>=1.0.0-alpha.18 <2.0.0",
-      "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.18.tgz"
-    },
     "@types/angular": {
       "version": "1.6.1",
       "from": "@types/angular@>=1.6.1 <2.0.0",

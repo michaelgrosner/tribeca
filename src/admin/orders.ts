@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
-import {GridOptions, ColDef} from "ag-grid/main";
+import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -82,7 +82,7 @@ class DisplayOrderStatusReport {
 
 @Component({
   selector: 'order-list',
-  template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 273px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 187px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-ng2>`
 })
 export class OrdersComponent implements OnInit, OnDestroy {
 
@@ -101,7 +101,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.gridOptions.rowData = [];
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
-    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
+    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">not trading</span>`;
 
     this.fireCxl = this.fireFactory
       .getFire(Messaging.Topics.CancelOrder);
@@ -118,47 +118,53 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private createColumnDefs = (): ColDef[] => {
     return [
-      { width: 140, field: 'time', headerName: 'time', cellRenderer:(params) => {
-          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
+      { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
+          return (params.value) ? Models.toShortTimeString(params.value) : '';
         },
         comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
         cellClass: (params) => {
-          return Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? "text-muted" : "";
+          return 'fs11px'+(Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? " text-muted" : "");
       }  },
       { width: 90, field: 'orderId', headerName: 'id' },
       { width: 35, field: 'computationalLatency', headerName: 'lat'},
-      { width: 35, field: 'version', headerName: 'v' },
-      { width: 120, field: 'orderStatus', headerName: 'status', cellClass: (params) => {
+      // { width: 35, field: 'version', headerName: 'v' },
+      { width: 110, field: 'orderStatus', headerName: 'status', cellClass: (params) => {
         return params.data.orderStatus == "New" ? "text-muted" : "";
       }  },
-      { width: 50, field: 'side', headerName: 'side' , cellClass: (params) => {
+      { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }},
       { width: 60, field: 'leavesQuantity', headerName: 'lvQty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      } },
+      }, cellRenderer:(params) => {
+        return params.value?new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value):'';
+      }},
       { width: 65, field: 'price', headerName: 'px',
       sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRenderer: (params) => {
-          return params.value ? '$'+params.value : '';
+      }, cellRenderer:(params) => {
+        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
       } },
       { width: 60, field: 'quantity', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
+      }, cellRenderer:(params) => {
+        return new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value);
       }},
       { width: 60, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
+      }, cellRenderer:(params) => {
+        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
       }},
-      { width: 50, field: 'orderType', headerName: 'type' },
+      { width: 45, field: 'orderType', headerName: 'type' },
       { width: 50, field: 'tif', headerName: 'tif' },
       // { width: 60, field: 'lastQuantity', headerName: 'lQty' },
-      // { width: 65, field: 'lastPrice', headerName: 'lPx', cellRenderer: (params) => {
-          // return params.value ? '$'+params.value : '';
+      // { width: 65, field: 'lastPrice', headerName: 'lPx', cellRenderer:(params) => {
+        // return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
       // } },
       // { width: 60, field: 'cumQuantity', headerName: 'cum' },
-      // { width: 65, field: 'averagePrice', headerName: 'avg', cellRenderer: (params) => {
-          // return params.value ? '$'+params.value : '';
+      // { width: 65, field: 'averagePrice', headerName: 'avg', cellRenderer:(params) => {
+        // return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
       // } },
       // { width: 40, field: 'liquidity', headerName: 'liq' },
       // { minWidth: 69, field: 'rejectMessage', headerName: 'msg' },
@@ -175,7 +181,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private addRowData = (o: Models.OrderStatusReport) => {
     let exists: boolean = false;
-    this.gridOptions.api.forEachNode((node) => {
+    this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
         if (o.leavesQuantity) {
           if (node.data.version < o.version)
