@@ -58,9 +58,9 @@
       "resolved": "https://registry.npmjs.org/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-1.0.0-alpha.18.tgz"
     },
     "@types/angular": {
-      "version": "1.6.0",
-      "from": "@types/angular@>=1.6.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.0.tgz"
+      "version": "1.6.1",
+      "from": "@types/angular@>=1.6.1 <2.0.0",
+      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.1.tgz"
     },
     "@types/bunyan": {
       "version": "0.0.35",
@@ -168,9 +168,9 @@
       "resolved": "https://registry.npmjs.org/agentkeepalive/-/agentkeepalive-3.0.0.tgz"
     },
     "ansi-regex": {
-      "version": "2.0.0",
+      "version": "2.1.1",
       "from": "ansi-regex@>=2.0.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-2.0.0.tgz"
+      "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-2.1.1.tgz"
     },
     "ansi-styles": {
       "version": "2.2.1",
@@ -1444,7 +1444,7 @@
     },
     "mongodb": {
       "version": "2.2.21",
-      "from": "mongodb@2.2.21",
+      "from": "mongodb@>=2.2.21 <3.0.0",
       "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-2.2.21.tgz",
       "dependencies": {
         "readable-stream": {
@@ -2012,9 +2012,9 @@
       "resolved": "https://registry.npmjs.org/source-map-support/-/source-map-support-0.4.8.tgz"
     },
     "sshpk": {
-      "version": "1.10.1",
+      "version": "1.10.2",
       "from": "sshpk@>=1.7.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/sshpk/-/sshpk-1.10.1.tgz",
+      "resolved": "https://registry.npmjs.org/sshpk/-/sshpk-1.10.2.tgz",
       "dependencies": {
         "assert-plus": {
           "version": "1.0.0",
@@ -2163,9 +2163,9 @@
       "resolved": "https://registry.npmjs.org/ts-helpers/-/ts-helpers-1.1.2.tgz"
     },
     "tsickle": {
-      "version": "0.2.3",
+      "version": "0.2.4",
       "from": "tsickle@>=0.2.0 <0.3.0",
-      "resolved": "https://registry.npmjs.org/tsickle/-/tsickle-0.2.3.tgz"
+      "resolved": "https://registry.npmjs.org/tsickle/-/tsickle-0.2.4.tgz"
     },
     "tty-browserify": {
       "version": "0.0.0",
@@ -2321,7 +2321,7 @@
     },
     "zone.js": {
       "version": "0.7.5",
-      "from": "zone.js@>=0.7.4 <0.8.0",
+      "from": "zone.js@>=0.7.5 <0.8.0",
       "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.7.5.tgz"
     }
   }

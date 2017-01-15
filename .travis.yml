@@ -2,19 +2,20 @@ sudo: false
 
 dist: trusty
 
-branches:
-  only:
-    - master
-
 language: node_js
 
 node_js:
   - 6
   - 6.1
 
+branches:
+  only: master
+
 install: npm install
 
-script: npm test
+script: npm run test-cov
+
+after_success: npm run send-cov
 
 notifications:
   email:

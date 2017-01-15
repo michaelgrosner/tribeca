@@ -1,7 +1,7 @@
 etc/tribeca.json
 app
 *log
-test/src
+test/coverage
 node_modules
 *.js.map
 .DS_Store

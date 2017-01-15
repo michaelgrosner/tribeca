@@ -172,7 +172,34 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                     var px = order.price;
                     if (order.type === Models.OrderType.Market) px = mkt.price;
 
-                    var update : Models.OrderStatusReport = { orderId: order.orderId, lastPrice: px };
+                    var update : Models.OrderStatusReport = new Models.OrderStatusReportImpl(
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      order.orderId,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      px,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null
+                    );
                     if (mkt.size >= order.quantity) {
                         update.orderStatus = Models.OrderStatus.Complete;
                         update.lastQuantity = order.quantity;
@@ -276,11 +303,11 @@ class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Null;
     }
 
-    private static AllPairs = [
+    public AllPairs = [
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD)
     ];
     public get supportedCurrencyPairs() {
-        return BacktestGatewayDetails.AllPairs;
+        return this.AllPairs;
     }
 }
 
