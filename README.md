@@ -97,6 +97,8 @@ To pipe the output to stdout, execute the application in the foreground with `no
 
 To save the output in `log/tribeca.log` file, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
 
+Later you can scroll the color-formatted output in the log file with `npm run log`.
+
 ### Unreleased Changelog:
 
 Added nodejs6, typescript2 and angular2.
