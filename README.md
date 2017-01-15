@@ -8,7 +8,7 @@
 [![Build Status](https://img.shields.io/travis/ctubio/tribeca/master.svg?label=test%suite)](https://travis-ci.org/ctubio/tribeca)
 [![Quality Status](https://img.shields.io/codacy/grade/21564745dbb0449ca05912f77d484b0c/master.svg)](https://www.codacy.com/app/ctubio/tribeca)
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/tribeca/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/tribeca?branch=master)
-![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)
+[![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)](https://david-dm.org/ctubio/tribeca)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 
 Runs on the latest node.js (v6 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
