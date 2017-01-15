@@ -3,7 +3,7 @@
 /// <reference path='shared_directives.ts'/>
 
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
-import {GridOptions} from "ag-grid/main";
+import {GridOptions, ColDef} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
@@ -99,6 +99,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.gridOptions.rowData = [];
+    this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
 
@@ -115,7 +116,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.subscriberOSR.disconnect();
   }
 
-  private createColumnDefs = () => {
+  private createColumnDefs = (): ColDef[] => {
     return [
       { width: 140, field: 'time', headerName: 'time', cellRenderer:(params) => {
           return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
@@ -161,7 +162,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       // } },
       // { width: 40, field: 'liquidity', headerName: 'liq' },
       // { minWidth: 69, field: 'rejectMessage', headerName: 'msg' },
-      { width: 40, name: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+      { width: 40, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
       } },
     ];

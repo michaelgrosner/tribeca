@@ -17,9 +17,7 @@
 
 5. ag-grid css is also not minified.
 
-6. TradesComponent.updateQP does nothing (but is harmless so low priority).
-
-7. TradesComponent.addRowData does not sort new records by sortTime (but is harmless so low priority).
+6. TradesComponent.addRowData does not sort new records by sortTime (but is harmless so low priority).
 
 ### TODO:
 

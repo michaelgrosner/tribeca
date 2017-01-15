@@ -105,6 +105,8 @@ Added nodejs6, typescript2 and angular2.
 
 Added cleanup of global dependencies, source code and installation steps.
 
+Added david-dm, travis-ci, coveralls and codacy.
+
 ### Release 2.0 Changelog:
 
 Added new quoting styles PingPong, Boomerang, AK-47.
