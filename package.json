@@ -64,6 +64,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.37",
+    "codacy-coverage": "^2.0.0",
     "istanbul": "^1.0.0-alpha",
     "istanbul-coveralls": "^1.0.3",
     "mocha": "^3.2.0",
@@ -72,8 +73,8 @@
   "main": "./tribeca.js",
   "scripts": {
     "test": "mocha --compilers ts:ts-node/register test/*.ts",
-    "test-cov": "ts-node node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --compilers ts:ts-node/register test/*.ts",
-    "send-cov": "cd test && istanbul-coveralls",
+    "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --compilers ts:ts-node/register test/*.ts",
+    "send-cov": "cd test && cat coverage/lcov.info | codacy-coverage && istanbul-coveralls",
     "postinstall": "npm run compile-service && npm run compile-admin && npm run compile-static && npm run compile-bundle",
     "compile-service": "tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/service/*.ts src/service/*/*.ts src/common/*.ts",
     "compile-admin": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/service/admin/js src/admin/*.ts src/common/*.ts",
