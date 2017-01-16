@@ -128,3 +128,5 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 nope. but you can donate to your favorite developer today! (or tomorrow!)
 
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
+
+or donate your time in the topical IRC channel **##tradingBot** at irc.domirc.net on port 6697 (SSL), or 6667 (plain) with programming or financial suggestions.
