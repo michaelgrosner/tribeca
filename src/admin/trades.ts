@@ -23,7 +23,6 @@ class DisplayTrade {
   Kprice: number;
   Kvalue: number;
   Kdiff: number;
-  sortTime: moment.Moment;
 
   constructor(
     public trade: Models.Trade
@@ -40,7 +39,6 @@ class DisplayTrade {
     this.Kprice = trade.Kprice ? trade.Kprice : null;
     this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
     this.Kdiff = (trade.Kdiff && trade.Kdiff!=0) ? trade.Kdiff : null;
-    this.sortTime = this.Ktime ? this.Ktime : this.time;
 
     if (trade.liquidity === 0 || trade.liquidity === 1) {
       this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
@@ -93,14 +91,11 @@ export class TradesComponent implements OnInit, OnDestroy {
 
   private createColumnDefs = (): ColDef[] => {
     return [
-      {field:'sortTime', hide: true,/*cellRenderer:(params) => {
-          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
-        },headerName:'h',width: 121,*/
-        comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-        sort: 'desc' },
       {width: 121, field:'time', headerName:'t', cellRenderer:(params) => {
           return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
-        }, cellClass: 'fs11px' },
+        }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
+          return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
+      }, sort: 'desc'},
       {width: 121, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
           return (params.value && params.value!='Invalid date') ? Models.toUtcFormattedTime(params.value) : '';
         }, cellClass: 'fs11px' },
@@ -155,17 +150,15 @@ export class TradesComponent implements OnInit, OnDestroy {
           node.data.Kprice = t.Kprice;
           node.data.Kvalue = t.Kvalue;
           node.data.Kdiff = t.Kdiff?t.Kdiff:null;
-          node.data.sortTime = node.data.Ktime ? node.data.Ktime : node.data.time;
           if (node.data.Kqty >= node.data.quantity)
             node.data.side = 'K';
-          // this.gridOptions.api.refreshRows([node]);
-          this.gridOptions.api.removeItems([node]);
+          // this.gridOptions.api.removeItems([node]);
+          // this.gridOptions.api.addItems([node]);
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
             audio.play();
           }
-          this.gridOptions.api.addItems([node]);
         }
       });
       if (!exists) {
@@ -176,6 +169,7 @@ export class TradesComponent implements OnInit, OnDestroy {
           audio.play();
         }
       }
+      // this.gridOptions.api.refreshView();
     }
   }
 
