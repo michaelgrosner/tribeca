@@ -8,7 +8,7 @@ import moment = require('moment');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SubscriberFactory, FireFactory} from './shared_directives';
+import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 class DisplayOrderStatusReport {
   orderId: string;
@@ -137,35 +137,23 @@ export class OrdersComponent implements OnInit, OnDestroy {
       }},
       { width: 60, field: 'leavesQuantity', headerName: 'lvQty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value):'';
-      }},
+      }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 65, field: 'price', headerName: 'px',
       sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      } },
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 60, field: 'quantity', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value);
-      }},
+      }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 60, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      }},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 45, field: 'orderType', headerName: 'type' },
       { width: 50, field: 'tif', headerName: 'tif' },
       // { width: 60, field: 'lastQuantity', headerName: 'lQty' },
-      // { width: 65, field: 'lastPrice', headerName: 'lPx', cellRenderer:(params) => {
-        // return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      // } },
+      // { width: 65, field: 'lastPrice', headerName: 'lPx', cellRendererFramework: QuoteCurrencyCellComponent},
       // { width: 60, field: 'cumQuantity', headerName: 'cum' },
-      // { width: 65, field: 'averagePrice', headerName: 'avg', cellRenderer:(params) => {
-        // return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      // } },
+      // { width: 65, field: 'averagePrice', headerName: 'avg', cellRendererFramework: QuoteCurrencyCellComponent},
       // { width: 40, field: 'liquidity', headerName: 'liq' },
       // { minWidth: 69, field: 'rejectMessage', headerName: 'msg' },
       { width: 40, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {

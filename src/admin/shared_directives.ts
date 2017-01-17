@@ -1,7 +1,9 @@
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 
-import {NgModule, Injectable, Inject} from '@angular/core';
+import {NgModule, Component, Injectable, Inject} from '@angular/core';
+import {AgRendererComponent} from 'ag-grid-ng2/main';
+
 import moment = require('moment');
 import * as io from 'socket.io-client';
 
@@ -50,6 +52,33 @@ class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     public disconnect = () => this._wrapped.disconnect();
 
     public get connected() { return this._wrapped.connected; }
+}
+
+@Component({
+    selector: 'base-currency-cell',
+    template: `{{ params.value | number:'1.3-3' }}`
+})
+export class BaseCurrencyCellComponent implements AgRendererComponent {
+  private params:any;
+
+  agInit(params:any):void {
+    this.params = params;
+  }
+}
+
+@Component({
+    selector: 'quote-currency-cell',
+    template: `{{ params.value | currency:symbol:true:'1.2-2' }}`
+})
+export class QuoteCurrencyCellComponent implements AgRendererComponent {
+  private params:any;
+  private symbol:string = 'USD';
+
+  agInit(params:any):void {
+    this.params = params;
+    if ('osr' in params.node.data)
+      this.symbol = Models.Currency[params.node.data.osr.pair.quote];
+  }
 }
 
 @NgModule({

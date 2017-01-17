@@ -25,7 +25,7 @@ import moment = require("moment");
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SharedModule, FireFactory, SubscriberFactory} from './shared_directives';
+import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 import Pair = require('./pair');
 import {WalletPositionComponent} from './wallet-position';
 import {MarketQuotingComponent} from './market-quoting';
@@ -496,7 +496,10 @@ class ClientComponent implements OnInit, OnDestroy {
     BrowserModule,
     FormsModule,
     PopoverModule,
-    AgGridModule.withComponents([])
+    AgGridModule.withComponents([
+      BaseCurrencyCellComponent,
+      QuoteCurrencyCellComponent
+    ])
   ],
   declarations: [
     ClientComponent,
@@ -506,6 +509,8 @@ class ClientComponent implements OnInit, OnDestroy {
     MarketTradesComponent,
     WalletPositionComponent,
     TradeSafetyComponent,
+    BaseCurrencyCellComponent,
+    QuoteCurrencyCellComponent
   ],
   bootstrap: [ClientComponent]
 })

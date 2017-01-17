@@ -8,7 +8,7 @@ import moment = require('moment');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SubscriberFactory} from './shared_directives';
+import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 class DisplayMarketTrade {
   price: number;
@@ -109,14 +109,10 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
         } },
         { width: 60, field: 'price', headerName: 'px', cellClass: (params) => {
             return (params.data.make_side === 'Ask') ? "sell" : "buy";
-        }, cellRenderer:(params) => {
-          return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value);
-        }},
+        }, cellRendererFramework: QuoteCurrencyCellComponent},
         { width: 50, field: 'size', headerName: 'sz', cellClass: (params) => {
             return (params.data.make_side === 'Ask') ? "sell" : "buy";
-        }, cellRenderer:(params) => {
-          return new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value);
-        }},
+        }, cellRendererFramework: BaseCurrencyCellComponent},
         { width: 40, field: 'make_side', headerName: 'ms' , cellClass: (params) => {
           if (params.value === 'Bid') return 'buy';
           else if (params.value === 'Ask') return "sell";

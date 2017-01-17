@@ -8,7 +8,7 @@ import moment = require('moment');
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SubscriberFactory} from './shared_directives';
+import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 class DisplayTrade {
   tradeId: string;
@@ -112,39 +112,25 @@ export class TradesComponent implements OnInit, OnDestroy {
       }},
       {width: 65, field:'price', headerName:'px', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value);
-      }},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'quantity', headerName:'qty', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value);
-      }},
+      }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerName:'val', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
-      }, cellRenderer:(params) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value);
-      }},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 69, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      }},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', {  maximumFractionDigits: 3, minimumFractionDigits: 3 }).format(params.value):'';
-      }},
+      }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 65, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      }},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
-      }, cellRenderer:(params) => {
-        return params.value?new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',  maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(params.value):'';
-      }}
+      }, cellRendererFramework: QuoteCurrencyCellComponent}
     ];
   }
 
@@ -172,12 +158,14 @@ export class TradesComponent implements OnInit, OnDestroy {
           node.data.sortTime = node.data.Ktime ? node.data.Ktime : node.data.time;
           if (node.data.Kqty >= node.data.quantity)
             node.data.side = 'K';
-          this.gridOptions.api.refreshRows([node]);
+          // this.gridOptions.api.refreshRows([node]);
+          this.gridOptions.api.removeItems([node]);
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
             audio.play();
           }
+          this.gridOptions.api.addItems([node]);
         }
       });
       if (!exists) {
