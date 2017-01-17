@@ -6,7 +6,7 @@ import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
-import {SubscriberFactory} from './shared_directives';
+import {SubscriberFactory, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'wallet-position',
