@@ -12,15 +12,15 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'wallet-position',
   template: `<div class="positions">
       <h4 class="col-md-12 col-xs-2"><small>
-        {{ quoteCurrency }}:&nbsp;<span [ngClass]="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition | currency:'USD':true:'1.2-2' }}</span>
-        <br/>(<span [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | currency:'USD':true:'1.2-2' }}</span>)
+        {{ quoteCurrency }}:&nbsp;<span [ngClass]="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition | currency:quoteCurrency:true:'1.2-2' }}</span>
+        <br/>(<span [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | currency:quoteCurrency:true:'1.2-2' }}</span>)
       </small></h4>
       <h4 class="col-md-12 col-xs-2"><small>
         {{ baseCurrency }}:&nbsp;<span [ngClass]="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'"><span style="font-size: 82%;" class="glyphicon glyphicon-bitcoin"></span>{{ basePosition | number:'1.3-3' }}</span>
         <br/>(<span [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'"><span style="font-size: 82%;" class="glyphicon glyphicon-bitcoin"></span>{{ baseHeldPosition | number:'1.3-3' }}</span>)
       </small></h4>
       <h4 class="col-md-12 col-xs-2">
-        <small>Value:</small><br><b><span style="font-size: 76%;" class="glyphicon glyphicon-bitcoin"></span>{{ value | number:'1.5-5' }}</b><br/><b>{{ quoteValue | currency:'USD':true:'1.2-2' }}</b>
+        <small>Value:</small><br><b><span style="font-size: 76%;" class="glyphicon glyphicon-bitcoin"></span>{{ value | number:'1.5-5' }}</b><br/><b>{{ quoteValue | currency:quoteCurrency:true:'1.2-2' }}</b>
       </h4>
     </div>`
 })
