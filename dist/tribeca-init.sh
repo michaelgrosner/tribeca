@@ -8,21 +8,25 @@
 # Short-Description: Start npm forever tribeca daemon
 ### END INIT INFO
 
+DAEMON_USER=user
 DAEMON_TOPLEVEL_PATH=/home/user/path/to/tribeca
 
 cd $DAEMON_TOPLEVEL_PATH
 case "$1" in
     start)
-        npm start
+        su $DAEMON_USER -c "./node_modules/.bin/forever start -a -l /dev/null tribeca.js"
         ;;
     stop)
-        npm stop
+        su $DAEMON_USER -c "./node_modules/.bin/forever stop -a -l /dev/null tribeca.js"
+        ;;
+    list)
+        su $DAEMON_USER -c "./node_modules/.bin/forever list"
         ;;
     reload|restart)
-        npm restart
+        su $DAEMON_USER -c "./node_modules/.bin/forever restart -a -l /dev/null tribeca.js"
         ;;
     *)
-        echo "Usage: /etc/init.d/tribeca {start|stop|restart|reload}"
+        echo "Usage: /etc/init.d/tribeca {start|stop|list|restart|reload}"
         exit 1
         ;;
 esac
