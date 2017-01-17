@@ -176,3 +176,5 @@ Lets say that you have a great idea about how to profitably make markets and are
 # How can I test new trading strategies?
 
 Tribeca is packaged with a backtesting mode.
+
+To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts`.
