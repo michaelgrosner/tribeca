@@ -1,3 +1,5 @@
+[***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
+
 [![Release](https://img.shields.io/github/release/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/releases)
 [![Platform](https://img.shields.io/badge/platform-unix--like-lightgray.svg)](https://www.gnu.org/)
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/tribeca/master/LICENSE)
