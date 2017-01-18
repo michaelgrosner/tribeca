@@ -16,7 +16,7 @@
 
 5. ag-grid css is also not minified.
 
-6. TradesComponent.addRowData does not sort new records by sortTime (but is harmless so low priority).
+6. TradesComponent.addRowData does not sort updated records (but is harmless so low priority).
 
 7. Display components of ag-grid have all scoped variables published instead of just the public expected ones for the visible grid cells (useless ui bandwidth in all 3 ag-grid).
 
@@ -24,7 +24,7 @@
 
 -1. Concurrent exchanges
 
-0. Display charts and chat room
+0. Display charts
 
 1. Add new exchanges
 

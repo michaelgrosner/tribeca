@@ -26,7 +26,7 @@ class DisplayTrade {
   quoteSymbol: string;
 
   constructor(
-    public trade: Models.Trade
+    private trade: Models.Trade
   ) {
     this.tradeId = trade.tradeId;
     this.side = (trade.Kqty >= trade.quantity) ? 'K' : (trade.side === Models.Side.Ask ? "Sell" : "Buy");

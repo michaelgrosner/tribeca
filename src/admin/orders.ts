@@ -21,19 +21,18 @@ class DisplayOrderStatusReport {
   orderType: string;
   tif: string;
   computationalLatency: number;
-  lastQuantity: number;
-  lastPrice: number;
+  // lastQuantity: number;
+  // lastPrice: number;
   leavesQuantity: number;
-  cumQuantity: number;
-  averagePrice: number;
-  liquidity: string;
-  rejectMessage: string;
-  version: number;
-  trackable: string;
+  // cumQuantity: number;
+  // averagePrice: number;
+  // liquidity: string;
+  // rejectMessage: string;
+  // version: number;
   quoteSymbol: string;
 
   constructor(
-    public osr: Models.OrderStatusReport,
+    private osr: Models.OrderStatusReport,
     private _fireCxl: Messaging.IFire<Models.OrderStatusReport>
   ) {
     this.orderId = osr.orderId;
@@ -50,15 +49,14 @@ class DisplayOrderStatusReport {
     this.orderType = Models.OrderType[osr.type];
     this.tif = Models.TimeInForce[osr.timeInForce];
     this.computationalLatency = osr.computationalLatency;
-    this.lastQuantity = osr.lastQuantity;
-    this.lastPrice = osr.lastPrice;
+    // this.lastQuantity = osr.lastQuantity;
+    // this.lastPrice = osr.lastPrice;
     this.leavesQuantity = osr.leavesQuantity;
-    this.cumQuantity = osr.cumQuantity;
-    this.averagePrice = osr.averagePrice;
-    this.liquidity = Models.Liquidity[osr.liquidity];
-    this.rejectMessage = osr.rejectMessage;
-    this.version = osr.version;
-    this.trackable = osr.orderId + ":" + osr.version;
+    // this.cumQuantity = osr.cumQuantity;
+    // this.averagePrice = osr.averagePrice;
+    // this.liquidity = Models.Liquidity[osr.liquidity];
+    // this.rejectMessage = osr.rejectMessage;
+    // this.version = osr.version;
     this.quoteSymbol = Models.Currency[osr.pair.quote];
   };
 

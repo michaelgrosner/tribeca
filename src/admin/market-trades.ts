@@ -30,7 +30,7 @@ class DisplayMarketTrade {
   quoteSymbol: string;
 
   constructor(
-    public trade: Models.MarketTrade
+    private trade: Models.MarketTrade
   ) {
     this.price = DisplayMarketTrade.round(trade.price);
     this.size = DisplayMarketTrade.round(trade.size);
