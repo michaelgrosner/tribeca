@@ -190,9 +190,9 @@ class DisplayOrder {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12 col-xs-12">
+                        <div class="col-md-9 col-xs-12">
                             <div class="row">
-                                <table class="table table-responsive table-bordered">
+                                <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
                                             <th>mode</th>
@@ -200,11 +200,69 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.mode==7">magazine</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
-                                            <th>fv</th>
-                                            <th>apMode</th>
                                             <th>width</th>
                                             <th>bidSz</th>
                                             <th>askSz</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="active">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                  [(ngModel)]="pair.quotingParameters.display.mode">
+                                                  <option *ngFor="let option of pair.quotingParameters.availableQuotingModes" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="width:78px;" *ngIf="pair.quotingParameters.display.mode==7">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.bullets">
+                                            </td>
+                                            <td style="width:99px;" *ngIf="pair.quotingParameters.display.mode==7">
+                                                <select class="form-control input-sm"
+                                                   [(ngModel)]="pair.quotingParameters.display.magazine">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableMagazine" [ngValue]="option.val">{{option.str}}</option>
+                                                 </select>
+                                            </td>
+                                            <td style="width:142px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <select class="form-control input-sm"
+                                                   [(ngModel)]="pair.quotingParameters.display.pingAt">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="width:148px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <select class="form-control input-sm"
+                                                   [(ngModel)]="pair.quotingParameters.display.pongAt">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input class="width-option form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.width">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.buySize">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sellSize">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table table-responsive table-bordered">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>fv</th>
+                                            <th>apMode</th>
                                             <th>tbp</th>
                                             <th>pDiv</th>
                                             <th>ewma?</th>
@@ -227,36 +285,6 @@ class DisplayOrder {
                                     </thead>
                                     <tbody>
                                         <tr class="active">
-                                            <td style="width:121px;">
-                                                <select class="form-control input-sm"
-                                                  [(ngModel)]="pair.quotingParameters.display.mode">
-                                                  <option *ngFor="let option of pair.quotingParameters.availableQuotingModes" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
-                                            <td style="width:78px;" *ngIf="pair.quotingParameters.display.mode==7">
-                                                <input class="form-control input-sm"
-                                                   type="number"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.bullets">
-                                            </td>
-                                            <td style="width:121px;" *ngIf="pair.quotingParameters.display.mode==7">
-                                                <select class="form-control input-sm"
-                                                   [(ngModel)]="pair.quotingParameters.display.magazine">
-                                                   <option *ngFor="let option of pair.quotingParameters.availableMagazine" [ngValue]="option.val">{{option.str}}</option>
-                                                 </select>
-                                            </td>
-                                            <td style="width:142px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
-                                                <select class="form-control input-sm"
-                                                   [(ngModel)]="pair.quotingParameters.display.pingAt">
-                                                   <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
-                                            <td style="width:148px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
-                                                <select class="form-control input-sm"
-                                                   [(ngModel)]="pair.quotingParameters.display.pongAt">
-                                                   <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.fvModel">
@@ -268,24 +296,6 @@ class DisplayOrder {
                                                     [(ngModel)]="pair.quotingParameters.display.autoPositionMode">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
-                                            </td>
-                                            <td>
-                                                <input class="width-option form-control input-sm"
-                                                   type="number"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.width">
-                                            </td>
-                                            <td>
-                                                <input class="form-control input-sm"
-                                                   type="number"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.buySize">
-                                            </td>
-                                            <td>
-                                                <input class="form-control input-sm"
-                                                   type="number"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
@@ -339,22 +349,20 @@ class DisplayOrder {
                                             </td>
                                         </tr>
                                     </tbody>
-
                                 </table>
                             </div>
-
+                        </div>
+                        <div class="col-md-3 col-xs-12">
+                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:114px;width: 100%;max-width: 100%;"></textarea>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-5 col-xs-12">
+                        <div class="col-md-6 col-xs-12">
                         </div>
                         <div class="col-md-6 col-xs-12">
                             <trade-list></trade-list>
                         </div>
-                        <div class="col-md-1 col-xs-12">
-                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:273px;width: 100%;max-width: 100%;"></textarea>
-                      </div>
                     </div>
                 </div>
             </div>
