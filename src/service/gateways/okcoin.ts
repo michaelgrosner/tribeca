@@ -397,6 +397,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
             case "usd": return Models.Currency.USD;
             case "ltc": return Models.Currency.LTC;
             case "btc": return Models.Currency.BTC;
+            case "cny": return Models.Currency.CNY;
             default: throw new Error("Unsupported currency " + name);
         }
     }
@@ -462,6 +463,7 @@ function GetCurrencyEnum(c: string) : Models.Currency {
         case "usd": return Models.Currency.USD;
         case "ltc": return Models.Currency.LTC;
         case "btc": return Models.Currency.BTC;
+        case "cny": return Models.Currency.CNY;
         default: throw new Error("Unsupported currency " + c);
     }
 }
@@ -471,6 +473,7 @@ function GetCurrencySymbol(c: Models.Currency) : string {
         case Models.Currency.USD: return "usd";
         case Models.Currency.LTC: return "ltc";
         case Models.Currency.BTC: return "btc";
+        case Models.Currency.CNY: return "cny";
         default: throw new Error("Unsupported currency " + Models.Currency[c]);
     }
 }
