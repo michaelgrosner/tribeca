@@ -534,5 +534,5 @@ ag-grid-ng2 {height:273px!important;}.navbar-text b {color:yellow;}.fs11px {font
 .ephemeralnotepad {background-color:#111;padding:5px;line-height:21px;font-size:21px;}
 .ephemeralnotepad::-webkit-input-placeholder{font-size:11px;line-height:13px;}
 .ephemeralnotepad::-moz-placeholder{font-size:11px;line-height:13px;}
-td.fairvalue{color:#0d0;}.exchange{background:black;padding-bottom:7px;}
+td.fairvalue,input.width-option{color:#0d0;}.exchange{background:black;padding-bottom:7px;}
 h4{margin-bottom:6px!important;}

@@ -270,7 +270,7 @@ class DisplayOrder {
                                                 </select>
                                             </td>
                                             <td>
-                                                <input class="form-control input-sm"
+                                                <input class="width-option form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.width">
