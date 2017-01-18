@@ -403,6 +403,9 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
     private trigger = () => {
         this._http.post("userinfo.do", {}).then(msg => {
+            if (!(<any>msg.data).result)
+              this._log.error('Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+
             var free = (<any>msg.data).info.funds.free;
             var freezed = (<any>msg.data).info.funds.freezed;
 
