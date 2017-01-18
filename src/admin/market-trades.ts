@@ -27,6 +27,7 @@ class DisplayMarketTrade {
   mBz: number;
 
   make_side: string;
+  quoteSymbol: string;
 
   constructor(
     public trade: Models.MarketTrade
@@ -59,7 +60,8 @@ class DisplayMarketTrade {
 
     this.make_side = Models.Side[trade.make_side];
 
-    this.recent = true;
+    this.recent = true
+    this.quoteSymbol = Models.Currency[trade.pair.quote];
   }
 
   private static round(num: number) {

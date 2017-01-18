@@ -68,16 +68,16 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
 
 @Component({
     selector: 'quote-currency-cell',
-    template: `{{ params.value | currency:symbol:true:'1.2-2' }}`
+    template: `{{ params.value | currency:quoteSymbol:true:'1.2-2' }}`
 })
 export class QuoteCurrencyCellComponent implements AgRendererComponent {
   private params:any;
-  private symbol:string = 'USD';
+  private quoteSymbol:string = 'USD';
 
   agInit(params:any):void {
     this.params = params;
-    if ('osr' in params.node.data)
-      this.symbol = Models.Currency[params.node.data.osr.pair.quote];
+    if ('quoteSymbol' in params.node.data)
+      this.quoteSymbol = params.node.data.quoteSymbol;
   }
 }
 
