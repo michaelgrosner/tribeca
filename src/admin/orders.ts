@@ -30,6 +30,7 @@ class DisplayOrderStatusReport {
   rejectMessage: string;
   version: number;
   trackable: string;
+  quoteSymbol: string;
 
   constructor(
     public osr: Models.OrderStatusReport,
@@ -58,6 +59,7 @@ class DisplayOrderStatusReport {
     this.rejectMessage = osr.rejectMessage;
     this.version = osr.version;
     this.trackable = osr.orderId + ":" + osr.version;
+    this.quoteSymbol = Models.Currency[osr.pair.quote];
   };
 
   private static getOrderStatus(o: Models.OrderStatusReport): string {

@@ -23,6 +23,7 @@ class DisplayTrade {
   Kprice: number;
   Kvalue: number;
   Kdiff: number;
+  quoteSymbol: string;
 
   constructor(
     public trade: Models.Trade
@@ -39,6 +40,7 @@ class DisplayTrade {
     this.Kprice = trade.Kprice ? trade.Kprice : null;
     this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
     this.Kdiff = (trade.Kdiff && trade.Kdiff!=0) ? trade.Kdiff : null;
+    this.quoteSymbol = Models.Currency[trade.pair.quote];
 
     if (trade.liquidity === 0 || trade.liquidity === 1) {
       this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
@@ -152,8 +154,6 @@ export class TradesComponent implements OnInit, OnDestroy {
           node.data.Kdiff = t.Kdiff?t.Kdiff:null;
           if (node.data.Kqty >= node.data.quantity)
             node.data.side = 'K';
-          // this.gridOptions.api.removeItems([node]);
-          // this.gridOptions.api.addItems([node]);
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
@@ -169,7 +169,7 @@ export class TradesComponent implements OnInit, OnDestroy {
           audio.play();
         }
       }
-      // this.gridOptions.api.refreshView();
+      this.gridOptions.api.refreshView();
     }
   }
 
