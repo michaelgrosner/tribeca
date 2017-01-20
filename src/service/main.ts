@@ -116,7 +116,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, moment.utc());
-var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.PingAt.BothSides, Models.PongAt.LowMarginPing, Models.QuotingMode.AK47, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, 5, Models.Magazine.Slow, .095, 2*.095, .095, 3, .1);
+var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.PingAt.BothSides, Models.PongAt.LowMarginPing, Models.QuotingMode.AK47, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, 5, 0.5, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);

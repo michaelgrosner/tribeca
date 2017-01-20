@@ -70,7 +70,6 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   availableAutoPositionModes = [];
   availablePingAt = [];
   availablePongAt = [];
-  availableMagazine = [];
 
   constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
     fire: Messaging.IFire<Models.QuotingParameters>) {
@@ -81,7 +80,6 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
     this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
     this.availablePongAt = DisplayQuotingParameters.getMapping(Models.PongAt);
-    this.availableMagazine = DisplayQuotingParameters.getMapping(Models.Magazine);
   }
 
   private static getMapping<T>(enumObject: T) {

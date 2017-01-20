@@ -66,10 +66,10 @@ export class Quoter {
 
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
+    public quotesSent: QuoteOrder[] = [];
+
     private _activeQuote: QuoteOrder[] = [];
     private _exchange: Models.Exchange;
-
-    public quotesSent: QuoteOrder[] = [];
 
     constructor(private _broker: Interfaces.IOrderBroker,
         private _exchBroker: Interfaces.IBroker,
@@ -89,48 +89,30 @@ export class ExchangeQuoter {
         }
     };
 
-    private highestAskPrice: number;
-    private highestBidPrice: number;
-
     public updateQuote = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
-        if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
-            return Models.QuoteSent.UnableToSend;
+      if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
+        return Models.QuoteSent.UnableToSend;
 
-        if (this._activeQuote.length) {
-            if (this._activeQuote.filter(o => q.data.price === o.quote.price).length) {
-              if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-                this.cancelHigherQuotes(q);
-                if (this._qlParamRepo.latest.magazine === Models.Magazine.Ludicrous || (this._qlParamRepo.latest.magazine === Models.Magazine.Fast && this.quotesSent.length<this._qlParamRepo.latest.bullets)) {
-                  if (this._side === Models.Side.Bid && this.highestBidPrice!==null) {
-                    q.data.price = Utils.roundFloat(this.highestBidPrice - .01);
-                    this.highestBidPrice = q.data.price;
-                  } else if (this._side === Models.Side.Ask && this.highestAskPrice!==null) {
-                    q.data.price = Utils.roundFloat(this.highestAskPrice + .01);
-                    this.highestAskPrice = q.data.price;
-                  }
-                  if (this.quotesSent.filter(o => q.data.price === o.quote.price).length)
-                    return Models.QuoteSent.UnsentDuplicate;
-                  if (this._qlParamRepo.latest.magazine === Models.Magazine.Fast)
-                    this.stopLowest(q.time);
-                } else
-                  return Models.QuoteSent.UnsentDuplicate;
-              } else
-                return Models.QuoteSent.UnsentDuplicate;
-            }
+      let dupe = this._activeQuote.filter(o => q.data.price === o.quote.price).length;
 
-            return (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this.quotesSent.length<this._qlParamRepo.latest.bullets)
-              ? this.start(q) : this.modify(q);
-        }
-        return this.start(q);
+      if (this._qlParamRepo.latest.mode !== Models.QuotingMode.AK47)
+        return this._activeQuote.length
+          ? (dupe ? Models.QuoteSent.UnsentDuplicate : this.modify(q))
+          : this.start(q);
+
+      if (this.quotesSent.length >= this._qlParamRepo.latest.bullets)
+        return dupe ? Models.QuoteSent.UnsentDuplicate : this.modify(q);
+
+      return this.start(q);
     };
 
-    public cancelHigherQuotes = (q: Models.Timestamped<Models.Quote>) => {
+    public cancelHigherQuotes = (price: number, time: moment.Moment) => {
       this._activeQuote.filter(o =>
         this._side === Models.Side.Bid
-          ? q.data.price < o.quote.price
-          : q.data.price > o.quote.price
+          ? price < o.quote.price
+          : price > o.quote.price
       ).map(o => {
-        var cxl = new Models.OrderCancel(o.orderId, this._exchange, q.time);
+        var cxl = new Models.OrderCancel(o.orderId, this._exchange, time);
         this._broker.cancelOrder(cxl);
         this._activeQuote = this._activeQuote.filter(q => q.orderId !== cxl.origOrderId);
       });
@@ -159,26 +141,36 @@ export class ExchangeQuoter {
     };
 
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
-        var existing = this._activeQuote.filter(o => q.data.price === o.quote.price);
-        if (existing.length) {
+        let price: number = q.data.price;
+        if (this._activeQuote.filter(o =>
+          price + this._qlParamRepo.latest.range - 0.01 >= o.quote.price
+          && price - this._qlParamRepo.latest.range - 0.01 <= o.quote.price
+        ).length) {
+          if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+            if (this.quotesSent.length<this._qlParamRepo.latest.bullets) {
+              price = Utils.roundFloat(
+                _.last(this._activeQuote).quote.price
+                + (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ))
+              );
+              if (this.quotesSent.filter(o => price === o.quote.price).length)
+                return Models.QuoteSent.UnsentDuplicate;
+              this.cancelHigherQuotes(q.data.price, q.time);
+            } else
+              return Models.QuoteSent.UnsentDuplicate;
+          } else
             return Models.QuoteSent.UnsentDuplicate;
         }
+        q.data.price = price;
+        var quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
+          new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
+            price, Models.TimeInForce.GTC, this._exchange, q.time, true)
+        ).sentOrderClientId);
 
-        var newOrder = new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
-            q.data.price, Models.TimeInForce.GTC, this._exchange, q.time, true);
-        var sent = this._broker.sendOrder(newOrder);
-
-        var quoteOrder = new QuoteOrder(q.data, sent.sentOrderClientId);
         this.quotesSent.push(quoteOrder);
         this._activeQuote.push(quoteOrder);
-
-        if (this._side === Models.Side.Bid) {
+        if (this._side === Models.Side.Bid)
           this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
-          this.highestBidPrice = _.last(this._activeQuote).quote.price;
-        } else {
-          this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
-          this.highestAskPrice = _.last(this._activeQuote).quote.price;
-        }
+        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
 
         return Models.QuoteSent.First;
     };
@@ -187,17 +179,16 @@ export class ExchangeQuoter {
         if (!this._activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
-
         var cxl = new Models.OrderCancel(this._activeQuote.shift().orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
         this._activeQuote = this._activeQuote.filter(q => q.orderId !== cxl.origOrderId);
+
         return Models.QuoteSent.Delete;
     };
 
     private stop = (t: moment.Moment): Models.QuoteSent => {
-        if (!this._activeQuote.length) {
+        if (!this._activeQuote.length)
             return Models.QuoteSent.UnsentDelete;
-        }
 
         _.map(this._activeQuote, (q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
         this._activeQuote = [];

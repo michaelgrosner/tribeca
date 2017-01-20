@@ -171,12 +171,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
     let exists: boolean = false;
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
-        node.data.updateWith(o);
         switch (o.orderStatus) {
           case Models.OrderStatus.Cancelled:
           case Models.OrderStatus.Complete:
           case Models.OrderStatus.Rejected:
             this.gridOptions.api.removeItems([node]);
+            break;
+          default:
+            node.data.updateWith(o);
         }
         exists = true;
       }

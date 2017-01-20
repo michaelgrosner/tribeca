@@ -67,15 +67,6 @@ export enum TimeInForce { IOC, FOK, GTC }
 export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 export enum Liquidity { Make, Take }
 
-export enum MarketDataFlag {
-    Unknown = 0,
-    NoChange = 1,
-    First = 1 << 1,
-    PriceChanged = 1 << 2,
-    SizeChanged = 1 << 3,
-    PriceAndSizeChanged = 1 << 4
-}
-
 export interface Order {
     side : Side;
     quantity : number;
@@ -345,7 +336,6 @@ export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { LowMarginPing, HighMarginPing }
-export enum Magazine { Slow, Fast, Ludicrous }
 
 export class QuotingParameters {
     constructor(public width: number,
@@ -364,7 +354,7 @@ export class QuotingParameters {
                 public tradeRateSeconds: number,
                 public audio: boolean,
                 public bullets: number,
-                public magazine: number,
+                public range: number,
                 public longEwma: number,
                 public shortEwma: number,
                 public quotingEwma: number,
