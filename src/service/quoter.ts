@@ -143,8 +143,8 @@ export class ExchangeQuoter {
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         let price: number = q.data.price;
         if (this._activeQuote.filter(o =>
-          price + this._qlParamRepo.latest.range - 0.01 >= o.quote.price
-          && price - this._qlParamRepo.latest.range - 0.01 <= o.quote.price
+          price + this._qlParamRepo.latest.range - 1e-2 >= o.quote.price
+          && price - this._qlParamRepo.latest.range - 1e-2 <= o.quote.price
         ).length) {
           if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
             if (this.quotesSent.length<this._qlParamRepo.latest.bullets) {
