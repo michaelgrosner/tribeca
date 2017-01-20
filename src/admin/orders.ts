@@ -123,14 +123,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
         else node.setData(Object.assign(node.data, {
           time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
           status: Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
-            if (o.pendingCancel)
-              return ",PndCxl";
-            else if (o.pendingReplace)
-              return ",PndRpl";
-            else if (o.partiallyFilled)
-              return ",PartFill";
-            else if (o.cancelRejected)
-              return ",CxlRj";
+            if (o.pendingCancel) return ",PndCxl";
+            else if (o.pendingReplace) return ",PndRpl";
+            else if (o.partiallyFilled) return ",PartFill";
+            else if (o.cancelRejected) return ",CxlRj";
             return "";
           })(o.orderStatus),
           price: o.price,
@@ -148,14 +144,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
         o.exchange,
         (moment.isMoment(o.time) ? o.time : moment(o.time)),
         Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
-          if (o.pendingCancel)
-            return ",PndCxl";
-          else if (o.pendingReplace)
-            return ",PndRpl";
-          else if (o.partiallyFilled)
-            return ",PartFill";
-          else if (o.cancelRejected)
-            return ",CxlRj";
+          if (o.pendingCancel) return ",PndCxl";
+          else if (o.pendingReplace) return ",PndRpl";
+          else if (o.partiallyFilled) return ",PartFill";
+          else if (o.cancelRejected) return ",CxlRj";
           return "";
         })(o.orderStatus),
         o.price,
