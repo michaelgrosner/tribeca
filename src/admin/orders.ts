@@ -10,24 +10,6 @@ import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
-class DisplayOrderStatusReport {
-  constructor(
-    public orderId: string,
-    public exchange: number,
-    public time: moment.Moment,
-    public status: string,
-    public price: number,
-    public quantity: number,
-    public value: number,
-    public side: string,
-    public type: string,
-    public tif: string,
-    public lat: number,
-    public lvQty: number,
-    public quoteSymbol: string
-  ) {}
-}
-
 @Component({
   selector: 'order-list',
   template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 187px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-ng2>`
@@ -139,27 +121,27 @@ export class OrdersComponent implements OnInit, OnDestroy {
       }
     });
     if (!exists && !isClosed)
-      this.gridOptions.api.addItems([new DisplayOrderStatusReport(
-        o.orderId,
-        o.exchange,
-        (moment.isMoment(o.time) ? o.time : moment(o.time)),
-        Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
+      this.gridOptions.api.addItems([{
+        orderId: o.orderId,
+        exchange: o.exchange,
+        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+        status: Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
           if (o.pendingCancel) return ",PndCxl";
           else if (o.pendingReplace) return ",PndRpl";
           else if (o.partiallyFilled) return ",PartFill";
           else if (o.cancelRejected) return ",CxlRj";
           return "";
         })(o.orderStatus),
-        o.price,
-        o.quantity,
-        Math.round(o.price * o.quantity * 100) / 100,
-        Models.Side[o.side],
-        Models.OrderType[o.type],
-        Models.TimeInForce[o.timeInForce],
-        o.computationalLatency,
-        o.leavesQuantity,
-        Models.Currency[o.pair.quote]
-      )]);
+        price: o.price,
+        quantity: o.quantity,
+        value: Math.round(o.price * o.quantity * 100) / 100,
+        side: Models.Side[o.side],
+        type: Models.OrderType[o.type],
+        tif: Models.TimeInForce[o.timeInForce],
+        lat: o.computationalLatency,
+        lvQty: o.leavesQuantity,
+        quoteSymbol: Models.Currency[o.pair.quote]
+      }]);
   }
 }
 
