@@ -1,5 +1,7 @@
 ### KNOWN BUGS:
 
+0. All ui components have *all* scoped variables published instead of just the visible ones (useless ui bandwidth and client cpu everywhere).
+
 1. Occasionnaly trades would not be correclty cancelled.
    After looking at it, It seems more likely that a trade can be left behind when tribeca crashes.
     (Seems like OkCoin is prone to failure, but Coinbase does not suffer from this bug)
@@ -17,8 +19,6 @@
 5. ag-grid css is also not minified.
 
 6. TradesComponent.addRowData does not sort updated records (but is harmless so low priority).
-
-7. Display components of ag-grid have all scoped variables published instead of just the public expected ones for the visible grid cells (useless ui bandwidth in all 3 ag-grid).
 
 ### TODO:
 
