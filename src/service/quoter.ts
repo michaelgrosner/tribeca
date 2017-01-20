@@ -152,6 +152,7 @@ export class ExchangeQuoter {
                 _.last(this._activeQuote).quote.price
                 + (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ))
               );
+              q.data.price = price;
               if (this.quotesSent.filter(o => price === o.quote.price).length)
                 return Models.QuoteSent.UnsentDuplicate;
               this.cancelHigherQuotes(q.data.price, q.time);
@@ -160,7 +161,7 @@ export class ExchangeQuoter {
           } else
             return Models.QuoteSent.UnsentDuplicate;
         }
-        q.data.price = price;
+
         var quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
           new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             price, Models.TimeInForce.GTC, this._exchange, q.time, true)
