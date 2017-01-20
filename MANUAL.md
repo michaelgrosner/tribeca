@@ -85,15 +85,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
 
-* `bullets` - maximum amount of trades placed in each side (only affects `AK-47`)
+* `bullets` - maximum amount of trades placed in each side (only affects `AK-47`).
 
-* `magazine` (only affects `AK-47`)
-
-  * `Slow` - Tribeca will not try to make forced orders, only will place orders like in `Boomerang`, but allowing multiple at once and canceling the worsts.
-
-  * `Fast` - Force orders (increase/decrease price by 0.01 from the best matching `width`) until have as much concurrent `bullets` as configured, then place new orders as in `Slow`.
-
-  * `Ludicrous` - Same as `Fast` but after fire as much `bullets` as configured, cancel them as soon as possible, and repeat the process again forever as in `Fast` (be aware: it may effectively consume all possible CPU/RAM/Network).
+* `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
 
 * `pingAt` (Pongs are always placed in both sides, only affects `PingPong`, `Boomerang` and `AK-47`)
 
@@ -123,15 +117,17 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
+* `width` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` shall never be violated.
+
+* `bidSz` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
+
+* `askSz` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
+
 * `apMode`
 
   * `Off` - Tribeca will not try to automatically manage positions.
 
   * `EwmaBasic` - Tribeca will use a 200 minute and 100 minute exponential weighted moving average calculation to buy up BTC when the 100 minute line crosses over the 200 minute line, and sell BTC when the reverse happens. The values of 100mins and 200mins are currently not exposed in the UI, but are represented in the code as `shortEwma` and `longEwma`.
-
-* `width` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` shall never be violated.
-
-* `size` - Maximum size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
 
 * `tbp` - Only used when `apMode` is `Off`. Sets a static "Target Base Position" for Tribeca to stay near. In off auto-position mode, Tribeca will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Off`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 

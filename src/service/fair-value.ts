@@ -2,7 +2,6 @@
 /// <reference path="../common/messaging.ts" />
 /// <reference path="config.ts" />
 /// <reference path="utils.ts" />
-/// <reference path="quoter.ts"/>
 /// <reference path="safety.ts"/>
 /// <reference path="persister.ts"/>
 /// <reference path="statistics.ts"/>
@@ -14,7 +13,6 @@ import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Quoter = require("./quoter");
 import Safety = require("./safety");
 import util = require("util");
 import _ = require("lodash");
