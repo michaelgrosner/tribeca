@@ -261,7 +261,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected =  true;
+            osr.cancelRejected = true;
             osr.leavesQuantity = 0;
         }
 
