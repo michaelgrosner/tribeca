@@ -10,46 +10,6 @@ import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
-class DisplayTrade {
-  tradeId: string;
-  time: moment.Moment;
-  price: number;
-  quantity: number;
-  side: string;
-  value: number;
-  liquidity: string;
-  Ktime: moment.Moment;
-  Kqty: number;
-  Kprice: number;
-  Kvalue: number;
-  Kdiff: number;
-  quoteSymbol: string;
-
-  constructor(
-    private trade: Models.Trade
-  ) {
-    this.tradeId = trade.tradeId;
-    this.side = (trade.Kqty >= trade.quantity) ? 'K' : (trade.side === Models.Side.Ask ? "Sell" : "Buy");
-    this.time = (moment.isMoment(trade.time) ? trade.time : moment(trade.time));
-    this.price = trade.price;
-    this.quantity = trade.quantity;
-    this.value = trade.value;
-    if (trade.Ktime && <any>trade.Ktime=='Invalid date') trade.Ktime = null;
-    this.Ktime = trade.Ktime ? (moment.isMoment(trade.Ktime) ? trade.Ktime : moment(trade.Ktime)) : null;
-    this.Kqty = trade.Kqty ? trade.Kqty : null;
-    this.Kprice = trade.Kprice ? trade.Kprice : null;
-    this.Kvalue = trade.Kvalue ? trade.Kvalue : null;
-    this.Kdiff = (trade.Kdiff && trade.Kdiff!=0) ? trade.Kdiff : null;
-    this.quoteSymbol = Models.Currency[trade.pair.quote];
-
-    if (trade.liquidity === 0 || trade.liquidity === 1) {
-      this.liquidity = Models.Liquidity[trade.liquidity].charAt(0);
-    } else {
-      this.liquidity = "?";
-    }
-  }
-}
-
 @Component({
   selector: 'trade-list',
   template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 273px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
@@ -138,22 +98,23 @@ export class TradesComponent implements OnInit, OnDestroy {
           this.gridOptions.api.removeItems([node]);
       });
     } else {
-      var exists = false;
+      let exists: boolean = false;
       this.gridOptions.api.forEachNode((node: RowNode) => {
-        if (node.data.tradeId==t.tradeId) {
+        if (!exists && node.data.tradeId==t.tradeId) {
           exists = true;
-          node.data.time = (moment.isMoment(t.time) ? t.time : moment(t.time));
-          var merged = (node.data.quantity != t.quantity);
-          node.data.quantity = t.quantity;
-          node.data.value = t.value;
+          let merged = (node.data.quantity != t.quantity);
           if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
-          node.data.Ktime = t.Ktime?(moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)):null;
-          node.data.Kqty = t.Kqty;
-          node.data.Kprice = t.Kprice;
-          node.data.Kvalue = t.Kvalue;
-          node.data.Kdiff = t.Kdiff?t.Kdiff:null;
-          if (node.data.Kqty >= node.data.quantity)
-            node.data.side = 'K';
+          node.setData(Object.assign(node.data, {
+            time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
+            quantity: t.quantity,
+            value: t.value,
+            Ktime: t.Ktime?(moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)):null,
+            Kqty: t.Kqty ? t.Kqty : null,
+            Kprice: t.Kprice ? t.Kprice : null,
+            Kvalue: t.Kvalue ? t.Kvalue : null,
+            Kdiff: t.Kdiff?t.Kdiff:null,
+            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy")
+          }));
           if (t.loadedFromDB === false && this.audio) {
             var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
             audio.volume = 0.5;
@@ -162,14 +123,28 @@ export class TradesComponent implements OnInit, OnDestroy {
         }
       });
       if (!exists) {
-        this.gridOptions.api.addItems([new DisplayTrade(t)]);
+        if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
+        this.gridOptions.api.addItems([{
+          tradeId: t.tradeId,
+          time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
+          price: t.price,
+          quantity: t.quantity,
+          side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
+          value: t.value,
+          liquidity: (t.liquidity === 0 || t.liquidity === 1) ? Models.Liquidity[t.liquidity].charAt(0) : '?',
+          Ktime: t.Ktime ? (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)) : null,
+          Kqty: t.Kqty ? t.Kqty : null,
+          Kprice: t.Kprice ? t.Kprice : null,
+          Kvalue: t.Kvalue ? t.Kvalue : null,
+          Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
+          quoteSymbol: Models.Currency[t.pair.quote]
+        }]);
         if (t.loadedFromDB === false && this.audio) {
           var audio = new Audio('/audio/boom.mp3');
           audio.volume = 0.5;
           audio.play();
         }
       }
-      this.gridOptions.api.refreshView();
     }
   }
 
