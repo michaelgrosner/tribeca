@@ -339,7 +339,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var gateway = classes.getExch(orderCache);
 
         if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
-            throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
+            throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + gateway.base.name() + " really supports the specified currencies defined in TradedPair configuration option.");
 
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
         paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
