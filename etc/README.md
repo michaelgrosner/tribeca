@@ -24,9 +24,9 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
   * TRIBECA_MODE
 
-    1. `prod`
+    1. `prod` - Same as `dev` but shows `prod` in the title.
 
-    2. `dev`
+    2. `dev` - Same as `prod` but shows `dev` in the title.
 
     1. `autoprod` - Same as `prod` but auto start trading on boot
 
