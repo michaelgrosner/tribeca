@@ -79,6 +79,7 @@ class OkCoinWebsocket {
 
         if (parameters !== null)
             subsReq.parameters = parameters;
+
         this._ws.send(JSON.stringify(subsReq));
     }
 
@@ -216,14 +217,15 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             price: order.price.toString(),
             amount: order.quantity.toString()};
 
-        this._ordersWaitingForAckQueue.push(order.orderId);
+        this._ordersWaitingForAckQueue.push([order.orderId, order.quantity]);
 
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o));
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
     private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
-        var orderId = this._ordersWaitingForAckQueue.shift();
+        var order = this._ordersWaitingForAckQueue.shift();
+        var orderId = order[0];
         if (typeof orderId === "undefined") {
             this._log.error("got an order ack when there was no order queued!", util.format(ts.data));
             return;
@@ -234,6 +236,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (ts.data.result === "true") {
             osr.exchangeId = ts.data.order_id.toString();
             osr.orderStatus = Models.OrderStatus.Working;
+            osr.leavesQuantity = order[1];
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
@@ -253,10 +256,13 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         if (ts.data.result === "true") {
             osr.orderStatus = Models.OrderStatus.Cancelled;
+            osr.leavesQuantity = 0;
+            osr.done = true;
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected = true;
+            osr.cancelRejected =  true;
+            osr.leavesQuantity = 0;
         }
 
         this.OrderUpdate.trigger(osr);

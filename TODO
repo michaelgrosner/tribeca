@@ -1,24 +1,17 @@
 ### KNOWN BUGS:
 
-0. All ui components have *all* scoped variables published instead of just the visible ones (useless ui bandwidth and client cpu everywhere).
+0. All ui non-grid components have *all* scoped variables published instead of just the visible ones (useless ui bandwidth and client cpu everywhere).
 
-1. Occasionnaly trades would not be correclty cancelled.
-   After looking at it, It seems more likely that a trade can be left behind when tribeca crashes.
-    (Seems like OkCoin is prone to failure, but Coinbase does not suffer from this bug)
-
-2. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
+1. Under EwmaBasic, when the TBP reaches 0 or the total size of the portfolio, it gets stuck there forever.
    Actually, I think that tribeca keeps adding a value to EwmaBasic even when it reaches 0 or the size of portfolio even if it not shown.
     (not sure if a bug or a feature, pending investigation!)
 
-3. Orders do not last more than a few miliseconds on OkCoin.
-    (confirmed, needs investigation)
-
-4. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
+2. Browserify does not minify es6 yet, so bundle.min.js is not really minified.
     (roadmap at https://github.com/mishoo/UglifyJS2/issues/448#issuecomment-245936071)
 
-5. ag-grid css is also not minified.
+3. ag-grid css is also not minified.
 
-6. TradesComponent.addRowData does not sort updated records (but is harmless so low priority).
+4. TradesComponent.addRowData does not sort updated records (but is harmless so low priority).
 
 ### TODO:
 
