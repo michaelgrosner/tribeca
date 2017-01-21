@@ -28,6 +28,10 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
     2. `dev`
 
+    1. `autoprod` - Same as `prod` but auto start trading on boot
+
+    2. `autodev` - Same as `dev` but auto start trading on boot
+
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
   * TradedPair - The following currency pairs are supported on these exchanges:
@@ -41,5 +45,7 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 
 Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on.
+
+If you set in your exchange the `OrderDestination` value as `Null`, all API calls will be redirect to NullGateway (testing mode).
 
 These options are also valid environment variables for the [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) file.

@@ -115,7 +115,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 }
 var pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
-var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, moment.utc());
+var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(config.GetString("TRIBECA_MODE").indexOf('auto')>-1, moment.utc());
 var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.PingAt.BothSides, Models.PongAt.LowMarginPing, Models.QuotingMode.AK47, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, 5, 0.5, .095, 2*.095, .095, 3, .1);
 
 var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
@@ -277,7 +277,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var tsvPersister = getPersister("tsv");
     var marketDataPersister = getPersister(Messaging.Topics.MarketData);
 
-    var activePersister = classes.getRepository(classes.startingActive, Messaging.Topics.ActiveChange);
     var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
 
     var exchange = classes.exchange;
@@ -288,7 +287,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
         paramsPersister.loadLatest(),
-        activePersister.loadLatest(),
+        defaultActive,
         rfvPersister.loadAll(50)
     ]).spread((initOrders: Models.OrderStatusReport[],
         initTrades: Models.Trade[],
@@ -298,13 +297,12 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         initRfv: Models.RegularFairValue[]) => {
 
         _.defaults(initParams, defaultQuotingParameters);
-        _.defaults(initActive, defaultActive);
 
         var orderCache = new Broker.OrderStateCache();
         var timeProvider = classes.timeProvider;
         var getPublisher = classes.getPublisher;
 
-        var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
+        var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE").replace('auto',''));
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
 
         var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
@@ -350,8 +348,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, orderBroker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 
-        var startQuoting = (/*timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 &&*/ initActive.active);
-        var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
+        var active = new Active.ActiveRepository(initActive.active, broker, activePublisher, activeReceiver);
 
         var quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
@@ -414,10 +411,6 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         }
 
         exitingEvent = () => {
-            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
-            mainLog.info("persisting active to", a.active);
-            activePersister.persist(a);
-
             orderBroker.cancelOpenOrders().then(n_cancelled => {
                 mainLog.info("Cancelled all", n_cancelled, "open orders");
                 completedSuccessfully.resolve(true);
