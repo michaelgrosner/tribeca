@@ -22,15 +22,16 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
     5. `null` - Test in-memory exchange. No exchange-specific config needed.
 
-  * TRIBECA_MODE
+  * TRIBECA_MODE - Any value is valid, and optionally can be prefixed with `auto` to start trading on boot, for example:
 
-    1. `prod` - Same as `dev` but shows `prod` in the title.
+    1. `bot #1` - Shows `bot #1` in the title.
 
-    2. `dev` - Same as `prod` but shows `dev` in the title.
+    2. `autobot #1` - Shows `bot #1` in the title and auto start trading on boot.
 
-    1. `autoprod` - Same as `prod` but auto start trading on boot
+    1. `My Bot` - Shows `My Bot` in the title.
 
-    2. `autodev` - Same as `dev` but auto start trading on boot
+    2. `autoMy Bot` - Shows `My Bot` in the title and auto start trading on boot.
+
 
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
