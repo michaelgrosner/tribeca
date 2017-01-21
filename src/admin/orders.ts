@@ -102,22 +102,25 @@ export class OrdersComponent implements OnInit, OnDestroy {
       if (!exists && node.data.orderId==o.orderId) {
         exists = true;
         if (isClosed) this.gridOptions.api.removeItems([node]);
-        else node.setData(Object.assign(node.data, {
-          time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-          status: Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
-            if (o.pendingCancel) return ",PndCxl";
-            else if (o.pendingReplace) return ",PndRpl";
-            else if (o.partiallyFilled) return ",PartFill";
-            else if (o.cancelRejected) return ",CxlRj";
-            return "";
-          })(o.orderStatus),
-          price: o.price,
-          quantity: o.quantity,
-          value: Math.round(o.price * o.quantity * 100) / 100,
-          tif: Models.TimeInForce[o.timeInForce],
-          lat: o.computationalLatency,
-          lvQty: o.leavesQuantity
-        }));
+        else {
+          node.setData(Object.assign(node.data, {
+            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+            status: Models.OrderStatus[o.orderStatus] + ((o: Models.OrderStatusReport) => {
+              if (o.pendingCancel) return ",PndCxl";
+              else if (o.pendingReplace) return ",PndRpl";
+              else if (o.partiallyFilled) return ",PartFill";
+              else if (o.cancelRejected) return ",CxlRj";
+              return "";
+            })(o.orderStatus),
+            price: o.price,
+            quantity: o.quantity,
+            value: Math.round(o.price * o.quantity * 100) / 100,
+            tif: Models.TimeInForce[o.timeInForce],
+            lat: o.computationalLatency,
+            lvQty: o.leavesQuantity
+          }));
+          this.gridOptions.api.refreshView();
+        }
       }
     });
     if (!exists && !isClosed)
