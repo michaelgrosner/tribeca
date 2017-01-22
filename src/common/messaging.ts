@@ -31,7 +31,7 @@ export class Publisher<T> implements IPublish<T> {
                 if (this._snapshot !== null) {
                     var snapshot = this._snapshot();
                     // this._log("socket", s.id, "asking for snapshot on topic", topic);
-                    s.emit(Prefixes.SNAPSHOT + "-" + topic, snapshot);
+                    s.compress(true).emit(Prefixes.SNAPSHOT + "-" + topic, snapshot);
                 }
             });
         };
@@ -43,7 +43,7 @@ export class Publisher<T> implements IPublish<T> {
         });
     }
 
-    public publish = (msg : T) => this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
+    public publish = (msg : T) => this._io.compress(true).emit(Prefixes.MESSAGE + "-" + this.topic, msg);
 
     public registerSnapshot = (generator : () => T[]) => {
         if (this._snapshot === null) {
@@ -102,7 +102,7 @@ export class Subscriber<T> implements ISubscribe<T> {
             this._connectHandler();
         }
 
-        this._socket.emit(Prefixes.SUBSCRIBE + "-" + this.topic);
+        this._socket.compress(true).emit(Prefixes.SUBSCRIBE + "-" + this.topic);
     };
 
     private onDisconnect = () => {
@@ -185,7 +185,7 @@ export class Fire<T> implements IFire<T> {
     }
 
     public fire = (msg : T) : void => {
-        this._socket.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
+        this._socket.compress(true).emit(Prefixes.MESSAGE + "-" + this.topic, msg);
     };
 }
 

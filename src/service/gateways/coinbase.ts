@@ -17,7 +17,7 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import _ = require('lodash');
 
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 import CoinbaseExchange = require("./coinbase-api");
 var SortedArrayMap = require("collections/sorted-array-map");
 
@@ -396,11 +396,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _cachedAsks: Models.MarketSide[] = null;
 
     private reevalBids = () => {
-        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 9), s => (<any>s).value.marketUpdate);
+        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 13), s => (<any>s).value.marketUpdate);
     };
 
     private reevalAsks = () => {
-        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 9), s => (<any>s).value.marketUpdate);
+        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 13), s => (<any>s).value.marketUpdate);
     };
 
     private onOrderBookChanged = (t: moment.Moment, side: Models.Side, price: number) => {

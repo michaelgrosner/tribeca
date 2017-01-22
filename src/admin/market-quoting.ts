@@ -8,35 +8,6 @@ import Models = require('../common/models');
 import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
-class DisplayLevel {
-  bidPrice: number;
-  bidSize: number;
-  askPrice: number;
-  askSize: number;
-  diffWidth: number;
-
-  bidClass: string;
-  askClass: string;
-  bidClassVisual: string;
-  askClassVisual: string;
-}
-
-class DisplayOrderStatusClassReport {
-  orderId: string;
-  price: number;
-  quantity: number;
-  side: Models.Side;
-
-  constructor(
-    public osr: Models.OrderStatusReport
-  ) {
-    this.orderId = osr.orderId;
-    this.side = osr.side;
-    this.quantity = osr.quantity;
-    this.price = osr.price;
-  }
-}
-
 @Component({
   selector: 'market-quoting',
   template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
@@ -68,14 +39,13 @@ class DisplayOrderStatusClassReport {
 })
 export class MarketQuotingComponent implements OnInit, OnDestroy {
 
-  public levels: DisplayLevel[];
+  public levels: any[];
   public fairValue: number;
-  public extVal: number;
   public qBidSz: number;
   public qBidPx: number;
   public qAskPx: number;
   public qAskSz: number;
-  public order_classes: DisplayOrderStatusClassReport[];
+  public order_classes: any[];
   public bidIsLive: boolean;
   public askIsLive: boolean;
 
@@ -126,10 +96,6 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     this.askIsLive = false;
   }
 
-  private clearExtVal = () => {
-    this.extVal = null;
-  }
-
   private updateMarket = (update: Models.Market) => {
     if (update == null) {
       this.clearMarket();
@@ -138,7 +104,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
 
     for (var i = 0; i < update.asks.length; i++) {
       if (i >= this.levels.length)
-        this.levels[i] = new DisplayLevel();
+        this.levels[i] = <any>{};
       this.levels[i].askPrice = update.asks[i].price;
       this.levels[i].askSize = update.asks[i].size;
     }
@@ -159,7 +125,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     }
     for (var i = 0; i < update.bids.length; i++) {
       if (i >= this.levels.length)
-        this.levels[i] = new DisplayLevel();
+        this.levels[i] = <any>{};
       this.levels[i].bidPrice = update.bids[i].price;
       this.levels[i].bidSize = update.bids[i].size;
       this.levels[i].diffWidth = i==0
@@ -173,14 +139,17 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   }
 
   private updateQuote = (o: Models.OrderStatusReport) => {
-    var idx = -1;
-    for(var i=0;i<this.order_classes.length;i++)
-      if (this.order_classes[i].orderId==o.orderId) {idx=i; break;}
-    if (idx!=-1) {
-      if (!o.leavesQuantity)
-        this.order_classes.splice(idx,1);
-    } else if (o.leavesQuantity)
-      this.order_classes.push(new DisplayOrderStatusClassReport(o));
+    if (o.orderStatus == Models.OrderStatus.Cancelled
+      || o.orderStatus == Models.OrderStatus.Complete
+      || o.orderStatus == Models.OrderStatus.Rejected
+    ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.orderId);
+    else if (!this.order_classes.filter(x => x.orderId === o.orderId).length)
+      this.order_classes.push({
+        orderId: o.orderId,
+        side: o.side,
+        quantity: o.quantity,
+        price: o.price
+      });
 
     this.updateQuoteClass();
   }
