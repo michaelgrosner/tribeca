@@ -78,96 +78,12 @@ class DisplayOrder {
   selector: 'ui',
   template: `<div>
     <div *ngIf="!connected">
-        Not connected
+        <h4 class="text-danger">Not connected</h4>
     </div>
-
     <div *ngIf="connected">
-        <div class="navbar navbar-default" role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#" (click)="changeTheme()">tribeca</a> <small title="Memory Used" style="margin-top: 6px;display: inline-block;">{{ memory }}</small>
-                </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><p class="navbar-text"><trade-safety></trade-safety></p></li>
-                        <li>
-                            <button type="button"
-                                    class="btn btn-primary navbar-btn"
-                                    id="order_form"
-                                    [popover]="myPopover">Submit order
-                            </button>
-                            <popover-content #myPopover
-                                    placement="bottom"
-                                    [animation]="true"
-                                    [closeOnClickOutside]="true">
-                                    <div class="text-center">
-                                      <div class="form-group">
-                                          <label>Side</label>
-                                          <select class="form-control input-sm" [(ngModel)]="order.side">
-                                            <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                          </select>
-                                      </div>
-                                      <div class="form-group">
-                                          <label>Price</label>
-                                          <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
-                                      </div>
-                                      <div class="form-group">
-                                          <label>Size</label>
-                                          <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
-                                      </div>
-                                      <div class="form-group">
-                                          <label>TIF</label>
-                                          <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
-                                            <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                                          </select>
-                                      </div>
-                                      <div class="form-group">
-                                          <label>Type</label>
-                                          <select class="form-control input-sm" [(ngModel)]="order.orderType">
-                                            <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                                          </select>
-                                      </div>
-                                      <button type="button"
-                                          class="btn btn-success"
-                                          (click)="myPopover.hide()"
-                                          (click)="order.submit()">Submit</button>
-                                    </div>
-                            </popover-content>
-                        </li>
-                        <li>
-                            <button type="button"
-                                    class="btn btn-danger navbar-btn"
-                                    (click)="cancelAllOrders()"
-                                    data-placement="bottom">Cancel All Open Orders
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button"
-                                    class="btn btn-info navbar-btn"
-                                    (click)="cleanAllClosedOrders()"
-                                    *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
-                                    data-placement="bottom">Clean All Closed Pongs
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button"
-                                    class="btn btn-danger navbar-btn"
-                                    (click)="cleanAllOrders()"
-                                    *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
-                                    data-placement="bottom">Clean All Open Pings
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
         <div class="container-fluid">
             <div>
-                <div style="padding: 5px" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                <div style="padding: 5px;padding-top:10px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div class="row">
                         <div class="col-md-1 col-xs-12 text-center">
                             <div class="row img-rounded exchange">
@@ -177,13 +93,87 @@ class DisplayOrder {
                                 <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
                                 <wallet-position></wallet-position>
                             </div>
+                            <div class="row">
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-primary navbar-btn"
+                                          id="order_form"
+                                          [popover]="myPopover">Submit order
+                                  </button>
+                                  <popover-content #myPopover
+                                          placement="right"
+                                          [animation]="true"
+                                          [closeOnClickOutside]="true">
+                                          <div class="text-center">
+                                            <div class="form-group">
+                                                <label>Side</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.side">
+                                                  <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Price</label>
+                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Size</label>
+                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label>TIF</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                                  <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Type</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.orderType">
+                                                  <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <button type="button"
+                                                class="btn btn-success"
+                                                (click)="myPopover.hide()"
+                                                (click)="order.submit()">Submit</button>
+                                          </div>
+                                  </popover-content>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-danger navbar-btn"
+                                          (click)="cancelAllOrders()"
+                                          data-placement="bottom">Cancel Open Orders
+                                  </button>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-info navbar-btn"
+                                          (click)="cleanAllClosedOrders()"
+                                          *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                          data-placement="bottom">Clean Closed Pongs
+                                  </button>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-danger navbar-btn"
+                                          (click)="cleanAllOrders()"
+                                          *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                          data-placement="bottom">Clean Open Pings
+                                  </button>
+                              </div>
+                            </div>
                         </div>
                         <div class="col-md-3 col-xs-12">
                             <market-quoting></market-quoting>
                         </div>
                         <div class="col-md-6 col-xs-12">
                           <div class="row">
-                            <order-list></order-list>
+                            <div class="col-md-2 col-xs-12" style="padding-left:0px;">
+                              <trade-safety></trade-safety>
+                            </div>
+                            <div class="col-md-10 col-xs-12" style="padding-right:0px;">
+                              <order-list></order-list>
+                            </div>
                           </div>
                           <div class="row">
                             <trade-list></trade-list>
@@ -367,7 +357,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="#" (click)="changeTheme()">changeTheme()</a> - <span title="RAM Used" style="margin-top: 6px;display: inline-block;">{{ memory }}</span> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
       </small>
     </address>
   </div>`
