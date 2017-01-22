@@ -85,106 +85,6 @@ class DisplayOrder {
             <div>
                 <div style="padding: 5px;padding-top:10px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div class="row">
-                        <div class="col-md-1 col-xs-12 text-center">
-                            <div class="row img-rounded exchange">
-                                <button class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                    {{ pair_name }}
-                                </button>
-                                <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
-                                <wallet-position></wallet-position>
-                            </div>
-                            <div class="row">
-                              <div>
-                                  <button type="button"
-                                          class="btn btn-primary navbar-btn"
-                                          id="order_form"
-                                          [popover]="myPopover">Submit order
-                                  </button>
-                                  <popover-content #myPopover
-                                          placement="right"
-                                          [animation]="true"
-                                          [closeOnClickOutside]="true">
-                                          <div class="text-center">
-                                            <div class="form-group">
-                                                <label>Side</label>
-                                                <select class="form-control input-sm" [(ngModel)]="order.side">
-                                                  <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Price</label>
-                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Size</label>
-                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
-                                            </div>
-                                            <div class="form-group">
-                                                <label>TIF</label>
-                                                <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
-                                                  <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Type</label>
-                                                <select class="form-control input-sm" [(ngModel)]="order.orderType">
-                                                  <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                                                </select>
-                                            </div>
-                                            <button type="button"
-                                                class="btn btn-success"
-                                                (click)="myPopover.hide()"
-                                                (click)="order.submit()">Submit</button>
-                                          </div>
-                                  </popover-content>
-                              </div>
-                              <div>
-                                  <button type="button"
-                                          class="btn btn-danger navbar-btn"
-                                          (click)="cancelAllOrders()"
-                                          data-placement="bottom">Cancel Open Orders
-                                  </button>
-                              </div>
-                              <div>
-                                  <button type="button"
-                                          class="btn btn-info navbar-btn"
-                                          (click)="cleanAllClosedOrders()"
-                                          *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
-                                          data-placement="bottom">Clean Closed Pongs
-                                  </button>
-                              </div>
-                              <div>
-                                  <button type="button"
-                                          class="btn btn-danger navbar-btn"
-                                          (click)="cleanAllOrders()"
-                                          *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
-                                          data-placement="bottom">Clean Open Pings
-                                  </button>
-                              </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-xs-12">
-                            <market-quoting></market-quoting>
-                        </div>
-                        <div class="col-md-6 col-xs-12">
-                          <div class="row">
-                            <div class="col-md-2 col-xs-12" style="padding-left:0px;">
-                              <trade-safety></trade-safety>
-                            </div>
-                            <div class="col-md-10 col-xs-12" style="padding-right:0px;">
-                              <order-list></order-list>
-                            </div>
-                          </div>
-                          <div class="row">
-                            <trade-list></trade-list>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-xs-12">
-                            <market-trades></market-trades>
-                        </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-9 col-xs-12">
                             <div class="row">
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
@@ -349,6 +249,103 @@ class DisplayOrder {
                         </div>
                         <div class="col-md-3 col-xs-12">
                           <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:114px;width: 100%;max-width: 100%;"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-1 col-xs-12 text-center">
+                            <div class="row img-rounded exchange">
+                                <button style="font-size:19px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
+                                    {{ exch_name }}
+                                </button>
+                                <h4 style="font-size: 20px;margin-top: 11px;margin-bottom: 0px!important;" class="col-md-12 col-xs-3">{{ pair_name }}</h4>
+                                <wallet-position></wallet-position>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-primary navbar-btn"
+                                          id="order_form"
+                                          [popover]="myPopover">Submit Order
+                                  </button>
+                                  <popover-content #myPopover
+                                          placement="right"
+                                          [animation]="true"
+                                          [closeOnClickOutside]="true">
+                                          <div class="text-center">
+                                            <div class="form-group">
+                                                <label>Side</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.side">
+                                                  <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Price</label>
+                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Size</label>
+                                                <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label>TIF</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                                  <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Type</label>
+                                                <select class="form-control input-sm" [(ngModel)]="order.orderType">
+                                                  <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
+                                                </select>
+                                            </div>
+                                            <button type="button"
+                                                class="btn btn-success"
+                                                (click)="myPopover.hide()"
+                                                (click)="order.submit()">Submit</button>
+                                          </div>
+                                  </popover-content>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-danger navbar-btn"
+                                          (click)="cancelAllOrders()"
+                                          data-placement="bottom">Cancel Orders
+                                  </button>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-info navbar-btn"
+                                          (click)="cleanAllClosedOrders()"
+                                          *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                          data-placement="bottom">Clean Pongs
+                                  </button>
+                              </div>
+                              <div>
+                                  <button type="button"
+                                          class="btn btn-danger navbar-btn"
+                                          (click)="cleanAllOrders()"
+                                          *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                          data-placement="bottom">Clean Pings
+                                  </button>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-xs-12">
+                            <market-quoting></market-quoting>
+                        </div>
+                        <div class="col-md-6 col-xs-12">
+                          <div class="row">
+                            <div class="col-md-2 col-xs-12" style="padding-left:0px;">
+                              <trade-safety></trade-safety>
+                            </div>
+                            <div class="col-md-10 col-xs-12" style="padding-right:0px;">
+                              <order-list></order-list>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <trade-list></trade-list>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-xs-12">
+                            <market-trades></market-trades>
                         </div>
                     </div>
                 </div>

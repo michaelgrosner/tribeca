@@ -19,7 +19,7 @@ import {SubscriberFactory} from './shared_directives';
         {{ baseCurrency }}:&nbsp;<span [ngClass]="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">฿{{ basePosition | number:'1.3-3' }}</span>
         <br/>(<span [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">฿{{ baseHeldPosition | number:'1.3-3' }}</span>)
       </small></h4>
-      <h4 class="col-md-12 col-xs-2">
+      <h4 class="col-md-12 col-xs-2" style="margin-top: 1px;margin-bottom: 10px!important;">
         <small>Value:</small><br>฿<b>{{ value | number:'1.5-5' }}</b><br/><b>{{ quoteValue | currency:quoteCurrency:true:'1.2-2' }}</b>
       </h4>
     </div>`
