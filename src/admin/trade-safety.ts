@@ -13,7 +13,7 @@ import {SubscriberFactory} from './shared_directives';
   template: `<div div class="tradeSafety">
       <div>BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span></div>
       <div>SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span></div>
-      <div>Target Base Position: {{ targetBasePosition | number:'1.2-2' }}</div>
+      <div>Target Base Position: <span class="text-danger">{{ targetBasePosition | number:'1.2-2' }}</span></div>
       <div>BuyTS: {{ buySafety | number:'1.2-2' }}</div>
       <div>SellTS: {{ sellSafety | number:'1.2-2' }}</div>
       <div>TotalTS: {{ tradeSafetyValue | number:'1.2-2' }}</div>
