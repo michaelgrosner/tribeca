@@ -14,8 +14,7 @@ import Q = require("q");
 import stream = require("stream");
 
 var shortId = require("shortid");
-var Deque = require("collections/deque");
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 
 enum TimedType {
     Interval,

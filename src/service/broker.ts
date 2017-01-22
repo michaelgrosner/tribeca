@@ -180,7 +180,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
             exchange: exch,
-            computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
+            latency: Utils.fastDiff(sent.sentTime, order.generatedTime),
             rejectMessage: order.msg};
         this.onOrderUpdate(rpt);
 
@@ -201,7 +201,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             price: replace.price,
             quantity: replace.quantity,
             time: sent.sentTime,
-            computationalLatency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
+            latency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
         this.onOrderUpdate(rpt);
 
         return new Models.SentOrder(rpt.orderId);
@@ -227,13 +227,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderStatus: Models.OrderStatus.Working,
             pendingCancel: true,
             time: sent.sentTime,
-            computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
+            latency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         this.onOrderUpdate(rpt);
     };
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
-      if (reTrades!=null && reTrades.length && this._qlParamRepo.latest.pongAt == Models.PongAt.LowMarginPing)
+      if (reTrades!=null && reTrades.length && this._qlParamRepo.latest.pongAt == Models.PongAt.HighMarginPing)
         reTrades.reverse();
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
@@ -338,7 +338,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
             getOrFallback(osr.liquidity, orig.liquidity),
             getOrFallback(osr.exchange, orig.exchange),
-            getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
+            getOrFallback(osr.latency, 0) + getOrFallback(orig.latency, 0),
             (typeof orig.version === "undefined") ? 0 : orig.version + 1,
             partiallyFilled,
             osr.pendingCancel,
@@ -562,13 +562,11 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     private skipInternalMetrics: boolean = false;
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
-        var idx = -1;
-        for(var i=0;i<this.osr.length;i++)
-          if (this.osr[i].orderId==o.orderId) {idx=i; break;}
-        if (idx!=-1) {
-            if (!o.leavesQuantity)
-              this.osr.splice(idx,1);
-        } else if (o.leavesQuantity || o.orderStatus == Models.OrderStatus.New)
+        if (o.orderStatus == Models.OrderStatus.Cancelled
+          || o.orderStatus == Models.OrderStatus.Complete
+          || o.orderStatus == Models.OrderStatus.Rejected
+        ) this.osr = this.osr.filter(x => x.orderId !== o.orderId);
+        else if (!this.osr.filter(x => x.orderId === o.orderId).length)
           this.osr.push(o);
 
         if (!this.osr.length || !this._report) return;

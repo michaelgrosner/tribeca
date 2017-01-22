@@ -12,7 +12,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 273px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 220px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class TradesComponent implements OnInit, OnDestroy {
 
@@ -115,10 +115,14 @@ export class TradesComponent implements OnInit, OnDestroy {
             Kdiff: t.Kdiff?t.Kdiff:null,
             side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy")
           }));
-          if (t.loadedFromDB === false && this.audio) {
-            var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
-            audio.volume = 0.5;
-            audio.play();
+          if (t.loadedFromDB === false) {
+            this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
+            this.gridOptions.api.refreshView();
+            if (this.audio) {
+              var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
+              audio.volume = 0.5;
+              audio.play();
+            }
           }
         }
       });

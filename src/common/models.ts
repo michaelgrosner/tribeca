@@ -162,7 +162,7 @@ export interface OrderStatusReport {
     averagePrice? : number;
     liquidity? : Liquidity;
     exchange? : Exchange;
-    computationalLatency? : number;
+    latency? : number;
     version? : number;
     preferPostOnly?: boolean;
 
@@ -192,7 +192,7 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
                 public averagePrice: number,
                 public liquidity: Liquidity,
                 public exchange: Exchange,
-                public computationalLatency: number,
+                public latency: number,
                 public version: number,
                 public partiallyFilled: boolean,
                 public pendingCancel: boolean,
@@ -221,7 +221,7 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
         components.push("type=" + OrderType[this.type]);
         components.push("version=" + this.version);
         if (typeof this.rejectMessage !== "undefined") components.push(this.rejectMessage);
-        if (typeof this.computationalLatency !== "undefined") components.push("computationalLatency=" + this.computationalLatency);
+        if (typeof this.latency !== "undefined") components.push("latency=" + this.latency);
         if (typeof this.lastQuantity !== "undefined") components.push("lastQuantity=" + this.lastQuantity);
         if (typeof this.lastPrice !== "undefined") components.push("lastPrice=" + this.lastPrice);
         if (typeof this.leavesQuantity !== "undefined") components.push("leavesQuantity=" + this.leavesQuantity);
