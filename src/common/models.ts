@@ -382,10 +382,6 @@ export class ApplicationState {
     constructor(public memory: number, public hour: number) { }
 }
 
-export class Notepad {
-    constructor(public content: string) { }
-}
-
 export class RegularFairValue {
     constructor(public time: moment.Moment, public value: number) {}
 }

@@ -331,7 +331,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
           timeProvider,
           getPublisher(Messaging.Topics.ApplicationState),
           getPublisher(Messaging.Topics.Notepad),
-          getReceiver(Messaging.Topics.ChangeNotepad)
+          getReceiver(Messaging.Topics.ChangeNotepad),
+          getPublisher(Messaging.Topics.ToggleConfigs),
+          getReceiver(Messaging.Topics.ToggleConfigs)
         );
 
         var gateway = classes.getExch(orderCache);

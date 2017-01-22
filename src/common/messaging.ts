@@ -240,6 +240,7 @@ export class Topics {
     static ProductAdvertisement = "pa";
     static ApplicationState = "as";
     static Notepad = "np";
+    static ToggleConfigs = "tg";
     static ChangeNotepad = "cn";
     static Position = "pos";
     static ExchangeConnectivity = "ec";
