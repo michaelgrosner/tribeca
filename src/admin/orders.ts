@@ -73,7 +73,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 45, field: 'type', headerName: 'type' },
-      { width: 35, field: 'tif', headerName: 'tif' },
+      { width: 40, field: 'tif', headerName: 'tif' },
       { width: 40, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
       } },
