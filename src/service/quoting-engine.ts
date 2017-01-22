@@ -98,14 +98,14 @@ export class QuotingEngine {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition);
+                unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
         }
 
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing)
-                unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition);
+                unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
         }
 
         var safety = this._safeties.latest;
