@@ -19,7 +19,7 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from 'ag-grid-ng2/main';
-import {PopoverModule} from "ng2-popover";
+import {PopoverModule} from "ngx-popover";
 
 import moment = require("moment");
 
@@ -182,7 +182,12 @@ class DisplayOrder {
                             <market-quoting></market-quoting>
                         </div>
                         <div class="col-md-6 col-xs-12">
+                          <div class="row">
                             <order-list></order-list>
+                          </div>
+                          <div class="row">
+                            <trade-list></trade-list>
+                          </div>
                         </div>
                         <div class="col-md-2 col-xs-12">
                             <market-trades></market-trades>
@@ -356,14 +361,6 @@ class DisplayOrder {
                           <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:114px;width: 100%;max-width: 100%;"></textarea>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-6 col-xs-12">
-                        </div>
-                        <div class="col-md-6 col-xs-12">
-                            <trade-list></trade-list>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -458,12 +455,12 @@ class ClientComponent implements OnInit, OnDestroy {
     this.pair = null;
   }
 
-  private unit = ['', 'K', 'M', 'G', 'T', 'P'];
 
   private bytesToSize = (input:number, precision:number) => {
-    var index = Math.floor(Math.log(input) / Math.log(1024));
-    if (index >= this.unit.length) return input + 'B';
-    return (input / Math.pow(1024, index)).toFixed(precision) + this.unit[index] + 'B'
+    let unit = ['', 'K', 'M', 'G', 'T', 'P'];
+    let index = Math.floor(Math.log(input) / Math.log(1024));
+    if (index >= unit.length) return input + 'B';
+    return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
   }
 
   private onAppState = (as : Models.ApplicationState) => {
