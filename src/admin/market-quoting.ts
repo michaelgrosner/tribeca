@@ -10,7 +10,7 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-quoting',
-  template: `<table class="table table-hover table-bordered table-condensed table-responsive text-center">
+  template: `<table class="marketQuoting table table-hover table-bordered table-condensed table-responsive text-center">
       <tr class="active">
         <th></th>
         <th>bidSz&nbsp;</th>

@@ -12,7 +12,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-ng2 #marketList class="ag-fresh ag-dark" style="height: 375px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #marketList class="ag-fresh ag-dark marketTrades" style="height: 406px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class MarketTradesComponent implements OnInit, OnDestroy {
 

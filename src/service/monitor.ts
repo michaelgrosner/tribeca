@@ -14,9 +14,9 @@ import moment = require("moment");
 
 export class ApplicationState {
 
-    private _app_state : Models.ApplicationState = null;
-
-    private _notepad : Models.Notepad = null;
+    private _app_state: Models.ApplicationState = null;
+    private _notepad: string = null;
+    private _toggleConfigs: boolean = true;
 
     private onTick = () => {
       this._app_state = new Models.ApplicationState(
@@ -28,20 +28,25 @@ export class ApplicationState {
 
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _appStatePublisher : Messaging.IPublish<Models.ApplicationState>,
-                private _notepadPublisher : Messaging.IPublish<Models.Notepad>,
-                private _changeNotepadReciever : Messaging.IReceive<Models.Notepad>) {
+                private _notepadPublisher : Messaging.IPublish<string>,
+                private _changeNotepadReciever : Messaging.IReceive<string>,
+                private _toggleConfigsPublisher : Messaging.IPublish<boolean>,
+                private _toggleConfigsReciever : Messaging.IReceive<boolean>) {
         _timeProvider.setInterval(this.onTick, moment.duration(69, "seconds"));
         this.onTick();
 
         _appStatePublisher.registerSnapshot(() => [this._app_state]);
+
         _notepadPublisher.registerSnapshot(() => [this._notepad]);
 
-        _changeNotepadReciever.registerReceiver((notepad : Models.Notepad) => {
-            // this._log.info("handling change notepad request");
+        _toggleConfigsPublisher.registerSnapshot(() => [this._toggleConfigs]);
+
+        _changeNotepadReciever.registerReceiver((notepad: string) => {
             this._notepad = notepad;
-                // .then(x => this._log.info("changed notepad", x),
-                      // e => this._log.error(e, "error when changing notepad!"))
-                      ;
+        });
+
+        _toggleConfigsReciever.registerReceiver((toggleConfigs: boolean) => {
+            this._toggleConfigs = toggleConfigs;
         });
     }
 }

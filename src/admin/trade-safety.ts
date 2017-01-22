@@ -10,13 +10,13 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'trade-safety',
-  template: `<div div class="tradeSafety">
-      <div>BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span></div>
-      <div>SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span></div>
-      <div>Target Base Position: <span class="text-danger">{{ targetBasePosition | number:'1.2-2' }}</span></div>
-      <div>BuyTS: {{ buySafety | number:'1.2-2' }}</div>
-      <div>SellTS: {{ sellSafety | number:'1.2-2' }}</div>
-      <div>TotalTS: {{ tradeSafetyValue | number:'1.2-2' }}</div>
+  template: `<div div class="tradeSafety img-rounded">
+      <div>BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span>,
+      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span>,
+      Target Base Position: <span class="text-danger">{{ targetBasePosition | number:'1.2-2' }}</span>,
+      BuyTS: {{ buySafety | number:'1.2-2' }},
+      SellTS: {{ sellSafety | number:'1.2-2' }},
+      TotalTS: {{ tradeSafetyValue | number:'1.2-2' }}</div>
     </div>`
 })
 export class TradeSafetyComponent implements OnInit, OnDestroy {
