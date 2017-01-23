@@ -107,9 +107,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `pongAt` (only affects `PingPong`, `Boomerang` and `AK-47`)
 
-  * `LowMarginPing` - Place new Pongs based on the lowest margin Ping in history.
+  * `ShortPingFairValue` - Place new Pongs based on the lowest margin Ping in history respecting the `width` from the `fair value`.
 
-  * `HighMarginPing` - Place new Pongs based on the highest margin Ping in history.
+  * `LongPingFairValue` - Place new Pongs based on the highest margin Ping in history respecting the `width` from the `fair value`.
+
+  * `ShortPingAggresive` - Place new Pongs based on the lowest margin Ping in history without respecting the `width` from the `fair value`.
+
+  * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `width` from the `fair value`.
 
 * `fv` - Sets the fair value calculation mode
 
