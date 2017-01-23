@@ -4,7 +4,9 @@
    Actually, I think that tribeca keeps adding a value to EwmaBasic even when it reaches 0 or the size of portfolio even if it not shown.
     (not sure if a bug or a feature, pending investigation!)
 
-3. ag-grid css is also not minified.
+2. ag-grid css is not minified.
+
+3. ag-grid cells are too small for long CNY values.
 
 ### TODO:
 
