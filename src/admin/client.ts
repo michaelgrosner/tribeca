@@ -409,7 +409,7 @@ class ClientComponent implements OnInit, OnDestroy {
       .fire(new Models.CleanAllOrdersRequest());
 
     this.changeNotepad = (content:string) => fireFactory
-      .getFire(Messaging.Topics.ChangeNotepad)
+      .getFire(Messaging.Topics.Notepad)
       .fire(content);
 
     this.toggleConfigs = (showConfigs:boolean) => fireFactory

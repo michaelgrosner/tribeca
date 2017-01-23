@@ -19,33 +19,38 @@ var metrics = new Lynx('localhost', 8125);
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
-    public get currentBook() : Models.Market { return this._currentBook; }
+    public get currentBook(): Models.Market { return this._currentBook; }
 
-    // private _log = Utils.log("md:broker");
-    private _currentBook : Models.Market = null;
-    private handleMarketData = (book : Models.Market) => {
+    private _currentBook: Models.Market = null;
+    private handleMarketData = (book: Models.Market) => {
         this._currentBook = book;
         this.MarketData.trigger(this.currentBook);
-        this._marketPublisher.publish(this.currentBook);
+        this._marketPublisher.publish(this.compress(this.currentBook));
         this._persister.persist(this.currentBook);
     };
 
+    private compress = (book: Models.Market) => {
+      let ret: Models.Timestamped<any[]> = new Models.Timestamped([[],[]], book.time);
+      book.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
+      book.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
+      return ret;
+    };
+
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,
+                private _marketPublisher : Messaging.IPublish<Models.Timestamped<any[]>>,
                 private _persister: Persister.IPersist<Models.Market>) {
-        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.compress(this.currentBook)]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
             if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
-            // this._log.info("MarkedData changed: " + Models.ConnectivityStatus[s]);
         });
     }
 }
 
 export class OrderStateCache implements Interfaces.IOrderStateCache {
-    public allOrders : { [orderId: string]: Models.OrderStatusReport } = {};
-    public exchIdsToClientIds : { [exchId: string] : string} = {};
+    public allOrders: { [orderId: string]: Models.OrderStatusReport } = {};
+    public exchIdsToClientIds: { [exchId: string]: string} = {};
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {

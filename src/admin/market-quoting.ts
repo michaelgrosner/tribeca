@@ -68,11 +68,10 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
       );
     };
 
-    makeSubscriber<Models.Market>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
+    makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
     makeSubscriber<Models.OrderStatusReport>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, this.updateFairValue, this.clearFairValue);
-
   }
 
   ngOnDestroy() {
@@ -96,17 +95,17 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     this.askIsLive = false;
   }
 
-  private updateMarket = (update: Models.Market) => {
+  private updateMarket = (update: Models.Timestamped<any[]>) => {
     if (update == null) {
       this.clearMarket();
       return;
     }
 
-    for (var i = 0; i < update.asks.length; i++) {
+    for (var i = 0; i < update.data[1].length; i++) {
       if (i >= this.levels.length)
         this.levels[i] = <any>{};
-      this.levels[i].askPrice = update.asks[i].price;
-      this.levels[i].askSize = update.asks[i].size;
+      this.levels[i].askPrice = update.data[1][i][0];
+      this.levels[i].askSize = update.data[1][i][1];
     }
 
     if (this.order_classes.length) {
@@ -123,11 +122,11 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
         this.qAskSz = ask.quantity;
       }
     }
-    for (var i = 0; i < update.bids.length; i++) {
+    for (var i = 0; i < update.data[0].length; i++) {
       if (i >= this.levels.length)
         this.levels[i] = <any>{};
-      this.levels[i].bidPrice = update.bids[i].price;
-      this.levels[i].bidSize = update.bids[i].size;
+      this.levels[i].bidPrice = update.data[0][i][0];
+      this.levels[i].bidSize = update.data[0][i][1];
       this.levels[i].diffWidth = i==0
         ? this.levels[i].askPrice - this.levels[i].bidPrice : (
           (i==1 && this.qAskPx && this.qBidPx)

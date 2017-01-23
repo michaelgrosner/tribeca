@@ -1,7 +1,7 @@
 import moment = require("moment");
 
 export interface ITimestamped {
-    time : moment.Moment;
+    time: moment.Moment;
 }
 
 export class Timestamped<T> implements ITimestamped {
