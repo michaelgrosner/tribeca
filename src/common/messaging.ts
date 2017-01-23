@@ -8,6 +8,35 @@ module Prefixes {
     export var MESSAGE = "m";
 }
 
+export class Topics {
+    static FairValue = "fv";
+    static Quote = "q";
+    static ActiveSubscription = "a";
+    static ActiveChange = "ac";
+    static MarketData = "md";
+    static QuotingParametersChange = "qp-sub";
+    static SafetySettings = "ss";
+    static Product = "p";
+    static OrderStatusReports = "osr";
+    static ProductAdvertisement = "pa";
+    static ApplicationState = "as";
+    static Notepad = "np";
+    static ToggleConfigs = "tg";
+    static Position = "pos";
+    static ExchangeConnectivity = "ec";
+    static SubmitNewOrder = "sno";
+    static CancelOrder = "cxl";
+    static MarketTrade = "mt";
+    static Trades = "t";
+    static ExternalValuation = "ev";
+    static QuoteStatus = "qs";
+    static TargetBasePosition = "tbp";
+    static TradeSafetyValue = "tsv";
+    static CancelAllOrders = "cao";
+    static CleanAllClosedOrders = "kko";
+    static CleanAllOrders = "kao";
+}
+
 export interface IPublish<T> {
     publish: (msg: T) => void;
     registerSnapshot: (generator: () => T[]) => IPublish<T>;
@@ -22,8 +51,12 @@ export class Publisher<T> implements IPublish<T> {
 
         var onConnection = s => {
             s.on(Prefixes.SUBSCRIBE + "-" + topic, () => {
-                if (this._snapshot !== null)
-                    s.emit(Prefixes.SNAPSHOT + "-" + topic, this._snapshot());
+                if (this._snapshot !== null) {
+                  let snap: T[] = this._snapshot();
+                  if (this.topic === Topics.MarketData)
+                    snap = this.compressMarketDataSnap(this._snapshot());
+                  s.emit(Prefixes.SNAPSHOT + "-" + topic, snap);
+                }
             });
         };
 
@@ -35,6 +68,8 @@ export class Publisher<T> implements IPublish<T> {
     }
 
     public publish = (msg: T) => {
+      if (this.topic === Topics.MarketData)
+        msg = this.compressMarketDataInc(msg);
       this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg)
     };
 
@@ -43,6 +78,19 @@ export class Publisher<T> implements IPublish<T> {
         else throw new Error("already registered snapshot generator for topic " + this.topic);
         return this;
     }
+
+    private compressMarketDataSnap = (data: T[]): T[] => {
+      let ret: T[] = [];
+      data.forEach(x => ret.push(this.compressMarketDataInc(x)));
+      return ret;
+    };
+
+    private compressMarketDataInc = (data: any): T => {
+      let ret: any = new Models.Timestamped([[],[]], data.time);
+      data.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
+      data.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
+      return ret;
+    };
 }
 
 export class NullPublisher<T> implements IPublish<T> {
@@ -213,33 +261,4 @@ export class Receiver<T> implements IReceive<T> {
             throw new Error("already registered receive handler for topic " + this.topic);
         }
     };
-}
-
-export class Topics {
-    static FairValue = "fv";
-    static Quote = "q";
-    static ActiveSubscription = "a";
-    static ActiveChange = "ac";
-    static MarketData = "md";
-    static QuotingParametersChange = "qp-sub";
-    static SafetySettings = "ss";
-    static Product = "p";
-    static OrderStatusReports = "osr";
-    static ProductAdvertisement = "pa";
-    static ApplicationState = "as";
-    static Notepad = "np";
-    static ToggleConfigs = "tg";
-    static Position = "pos";
-    static ExchangeConnectivity = "ec";
-    static SubmitNewOrder = "sno";
-    static CancelOrder = "cxl";
-    static MarketTrade = "mt";
-    static Trades = "t";
-    static ExternalValuation = "ev";
-    static QuoteStatus = "qs";
-    static TargetBasePosition = "tbp";
-    static TradeSafetyValue = "tsv";
-    static CancelAllOrders = "cao";
-    static CleanAllClosedOrders = "kko";
-    static CleanAllOrders = "kao";
 }
