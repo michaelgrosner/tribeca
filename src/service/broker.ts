@@ -25,21 +25,14 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     private handleMarketData = (book: Models.Market) => {
         this._currentBook = book;
         this.MarketData.trigger(this.currentBook);
-        this._marketPublisher.publish(this.compress(this.currentBook));
+        this._marketPublisher.publish(this.currentBook);
         this._persister.persist(this.currentBook);
     };
 
-    private compress = (book: Models.Market): Models.Timestamped<any[]> => {
-      let ret: Models.Timestamped<any[]> = new Models.Timestamped([[],[]], book.time);
-      book.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
-      book.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
-      return ret;
-    };
-
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Timestamped<any[]>>,
+                private _marketPublisher : Messaging.IPublish<Models.Market>,
                 private _persister: Persister.IPersist<Models.Market>) {
-        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.compress(this.currentBook)]);
+        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
@@ -238,7 +231,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
-      if (reTrades!=null && reTrades.length && (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFairValue || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggresive))
+      if (reTrades!=null && reTrades.length && (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggresive))
         reTrades.reverse();
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
