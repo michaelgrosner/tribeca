@@ -231,8 +231,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
       var gowhile = true;
-      if (reTrades!=null && reTrades.length && (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggresive))
-        reTrades.reverse();
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
         gowhile = false;
@@ -379,7 +377,22 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-              this._tradePersister.perfind(trade, trade.side, this._qlParamRepo.latest.width, trade.price).then(reTrades => { this._reTrade(reTrades, trade); });
+              this._reTrade(this._trades.filter((x: Models.Trade) => (
+                (trade.side==Models.Side.Bid?(x.price > (trade.price + this._qlParamRepo.latest.width)):(x.price < (trade.price - this._qlParamRepo.latest.width)))
+                && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
+                && ((x.quantity - x.Kqty) > 0)
+              )).sort((a: Models.Trade, b: Models.Trade) => (
+                (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggresive)
+                  ? (
+                  trade.side==Models.Side.Bid
+                    ? (a.price<b.price?1:(a.price>b.price?-1:0))
+                    : (a.price>b.price?1:(a.price<b.price?-1:0))
+                ) : (
+                  trade.side==Models.Side.Bid
+                    ? (a.price>b.price?1:(a.price<b.price?-1:0))
+                    : (a.price<b.price?1:(a.price>b.price?-1:0))
+                )
+              )), trade);
             else {
               this._tradePublisher.publish(trade);
               this._tradePersister.persist(trade);

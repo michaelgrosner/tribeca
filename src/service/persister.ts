@@ -58,7 +58,6 @@ export class LoaderSaver {
 
 export interface IPersist<T> {
     persist(data: T): void;
-    perfind(report: T, side: Models.Side, width?: number, price?: number): any;
     repersist(report: T, trade: Models.Trade): void;
 }
 
@@ -98,8 +97,6 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
         return deferred.promise;
     };
-
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number, _time?: moment.Moment): any => { };
 
     public repersist = (report: T, trade: Models.Trade) => { };
 
@@ -188,31 +185,6 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     this._log.error(err, "Unable to insert", this._dbName, report);
             });
         }).done();
-    };
-
-    public perfind = (report: T, side: Models.Side, width?: number, price?: number): any => {
-        var deferred = Q.defer<T[]>();
-        this.collection.then(coll => {
-            coll.find({ $and: [
-              { price: side==Models.Side.Bid?{ $gt: width+price }:{ $lt: price-width } },
-              { side: side==Models.Side.Bid?1:0 },
-              { $where: "this.quantity - this.Kqty > 0" }
-            ] }).limit(10000).project({ _id: 0 }).sort({ price: side==Models.Side.Bid?1:-1 })
-            .toArray((err, arr) => {
-                if (err) {
-                    deferred.reject(err);
-                }
-                else if (arr.length === 0) {
-                    deferred.resolve(null);
-                }
-                else {
-                    _.forEach(arr, p => this._loader(p, this._setDBFlag));
-                    deferred.resolve(arr);
-                }
-            });;
-        }).done();
-
-        return deferred.promise;
     };
 
     public repersist = (report: T, trade: Models.Trade) => {
