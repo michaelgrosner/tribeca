@@ -255,9 +255,8 @@ class DisplayOrder {
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                             <div class="row img-rounded exchange">
                                 <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                    {{ exch_name }}
+                                    {{ exch_name }}<br/>{{ pair_name }}
                                 </button>
-                                <h4 style="font-size: 20px;margin-top: 11px;margin-bottom: 0px!important;" class="col-md-12 col-xs-3">{{ pair_name }}</h4>
                                 <wallet-position></wallet-position>
                                 <div><b><a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></b></div>
                             </div>
