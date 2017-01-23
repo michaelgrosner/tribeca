@@ -127,8 +127,8 @@ export class ExchangeQuoter {
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         let price: number = q.data.price;
         if (this._activeQuote.filter(o =>
-          price + this._qlParamRepo.latest.range - 1e-2 >= o.quote.price
-          && price - this._qlParamRepo.latest.range - 1e-2 <= o.quote.price
+          (price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
+          && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
         ).length) {
           if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
             if (this.quotesSent.length<this._qlParamRepo.latest.bullets) {
@@ -136,10 +136,10 @@ export class ExchangeQuoter {
                 _.last(this._activeQuote).quote.price
                 + (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ))
               );
-              q.data.price = price;
               if (this.quotesSent.filter(o => price === o.quote.price).length)
                 return Models.QuoteSent.UnsentDuplicate;
               this.cancelHigherQuotes(q.data.price, q.time);
+              q.data.price = price;
             } else
               return Models.QuoteSent.UnsentDuplicate;
           } else
