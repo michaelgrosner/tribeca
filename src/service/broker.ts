@@ -29,7 +29,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
         this._persister.persist(this.currentBook);
     };
 
-    private compress = (book: Models.Market) => {
+    private compress = (book: Models.Market): Models.Timestamped<any[]> => {
       let ret: Models.Timestamped<any[]> = new Models.Timestamped([[],[]], book.time);
       book.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
       book.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
