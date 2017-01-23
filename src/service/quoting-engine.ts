@@ -115,26 +115,30 @@ export class QuotingEngine {
         }
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
-          if (unrounded.askSz && safety.buyPing && unrounded.askPx < safety.buyPing + params.width)
+          if (unrounded.askSz && safety.buyPing && (params.pongAt == Models.PongAt.ShortPingAggresive || params.pongAt == Models.PongAt.LongPingAggresive || unrounded.askPx < safety.buyPing + params.width))
             unrounded.askPx = safety.buyPing + params.width;
-          if (unrounded.bidSz && safety.sellPong && unrounded.bidPx > safety.sellPong - params.width)
+          if (unrounded.bidSz && safety.sellPong && (params.pongAt == Models.PongAt.ShortPingAggresive || params.pongAt == Models.PongAt.LongPingAggresive || unrounded.bidPx > safety.sellPong - params.width))
             unrounded.bidPx = safety.sellPong - params.width;
         }
 
         if (unrounded.askPx !== null)
-          for (var fai = 0; fai < filteredMkt.asks.length; fai++) {
+          for (var fai = 0; fai < filteredMkt.asks.length; fai++)
             if (filteredMkt.asks[fai].price > unrounded.askPx) {
-              unrounded.askPx = filteredMkt.asks[fai].price - .01;
-              break;
+              let bestAsk: number = filteredMkt.asks[fai].price - 1e-2;
+              if (bestAsk > fv.price) {
+                unrounded.askPx = bestAsk;
+                break;
+              }
             }
-          }
         if (unrounded.bidPx !== null)
-          for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++) {
+          for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
             if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-              unrounded.bidPx = filteredMkt.bids[fbi].price + .01;
-              break;
+              let bestBid: number = filteredMkt.bids[fbi].price + 1e-2;
+              if (bestBid < fv.price) {
+                unrounded.bidPx = bestBid;
+                break;
+              }
             }
-          }
 
         if (safety.sell > params.tradesPerMinute || (
             (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)

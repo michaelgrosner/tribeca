@@ -93,7 +93,7 @@ export class SafetyCalculator {
         var fv = this._fvEngine.latestFairValue;
         var fvp = 0;
         if (fv != null) {fvp = fv.price;}
-        if (settings.pongAt == Models.PongAt.LowMarginPing) {
+        if (settings.pongAt == Models.PongAt.ShortPingFairValue || settings.pongAt == Models.PongAt.ShortPingAggresive) {
           trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
           for (var ti = 0;ti<trades.length;ti++) {
             if ((!fvp || (fvp>trades[ti].price && fvp-settings.width<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
@@ -104,7 +104,7 @@ export class SafetyCalculator {
             if (buyPq>=settings.sellSize) break;
           }
           trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
-        } else if (settings.pongAt == Models.PongAt.HighMarginPing)
+        } else if (settings.pongAt == Models.PongAt.LongPingFairValue || settings.pongAt == Models.PongAt.LongPingAggresive)
           trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
         if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || fvp>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
@@ -114,7 +114,7 @@ export class SafetyCalculator {
           }
           if (buyPq>=settings.sellSize) break;
         }
-        if (settings.pongAt == Models.PongAt.LowMarginPing) {
+        if (settings.pongAt == Models.PongAt.ShortPingFairValue || settings.pongAt == Models.PongAt.ShortPingAggresive) {
           trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
           for (var ti = 0;ti<trades.length;ti++) {
             if ((!fvp || (fvp<trades[ti].price && fvp+settings.width>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
@@ -125,7 +125,7 @@ export class SafetyCalculator {
             if (sellPq>=settings.buySize) break;
           }
           trades.sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0);});
-        } else if (settings.pongAt == Models.PongAt.HighMarginPing)
+        } else if (settings.pongAt == Models.PongAt.LongPingFairValue || settings.pongAt == Models.PongAt.LongPingAggresive)
           trades.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
         if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
           if ((!fvp || fvp<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {

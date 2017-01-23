@@ -335,7 +335,7 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boo
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
-export enum PongAt { LowMarginPing, HighMarginPing }
+export enum PongAt { ShortPingFairValue, LongPingFairValue, ShortPingAggresive, LongPingAggresive }
 
 export class QuotingParameters {
     constructor(public width: number,
