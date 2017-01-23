@@ -9,30 +9,21 @@ module Prefixes {
 }
 
 export interface IPublish<T> {
-    publish : (msg : T) => void;
-    registerSnapshot : (generator : () => T[]) => IPublish<T>;
+    publish: (msg: T) => void;
+    registerSnapshot: (generator: () => T[]) => IPublish<T>;
 }
 
 export class Publisher<T> implements IPublish<T> {
-    private _snapshot : () => T[] = null;
-    constructor(private topic : string,
-                private _io : SocketIO.Server,
-                snapshot : () => T[]) {
+    private _snapshot: () => T[] = null;
+    constructor(private topic: string,
+                private _io: SocketIO.Server,
+                private snapshot: () => T[]) {
         this.registerSnapshot(snapshot || null);
 
         var onConnection = s => {
-            // this._log("socket", s.id, "connected for Publisher", topic);
-
-            // s.on("disconnect", () => {
-                // this._log("socket", s.id, "disconnected for Publisher", topic);
-            // });
-
             s.on(Prefixes.SUBSCRIBE + "-" + topic, () => {
-                if (this._snapshot !== null) {
-                    var snapshot = this._snapshot();
-                    // this._log("socket", s.id, "asking for snapshot on topic", topic);
-                    s.compress(true).emit(Prefixes.SNAPSHOT + "-" + topic, snapshot);
-                }
+                if (this._snapshot !== null)
+                    s.emit(Prefixes.SNAPSHOT + "-" + topic, this._snapshot());
             });
         };
 
@@ -43,16 +34,13 @@ export class Publisher<T> implements IPublish<T> {
         });
     }
 
-    public publish = (msg : T) => this._io.compress(true).emit(Prefixes.MESSAGE + "-" + this.topic, msg);
+    public publish = (msg: T) => {
+      this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg)
+    };
 
-    public registerSnapshot = (generator : () => T[]) => {
-        if (this._snapshot === null) {
-            this._snapshot = generator;
-        }
-        else {
-            throw new Error("already registered snapshot generator for topic " + this.topic);
-        }
-
+    public registerSnapshot = (generator: () => T[]) => {
+        if (this._snapshot === null) this._snapshot = generator;
+        else throw new Error("already registered snapshot generator for topic " + this.topic);
         return this;
     }
 }
@@ -63,22 +51,22 @@ export class NullPublisher<T> implements IPublish<T> {
 }
 
 export interface ISubscribe<T> {
-    registerSubscriber : (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => ISubscribe<T>;
-    registerDisconnectedHandler : (handler : () => void) => ISubscribe<T>;
-    registerConnectHandler : (handler : () => void) => ISubscribe<T>;
+    registerSubscriber: (incrementalHandler: (msg: T) => void, snapshotHandler: (msgs: T[]) => void) => ISubscribe<T>;
+    registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
+    registerConnectHandler: (handler: () => void) => ISubscribe<T>;
     connected: boolean;
-    disconnect : () => void;
+    disconnect: () => void;
 }
 
 export class Subscriber<T> implements ISubscribe<T> {
-    private _incrementalHandler : (msg : T) => void = null;
-    private _snapshotHandler : (msgs : T[]) => void = null;
-    private _disconnectHandler : () => void = null;
-    private _connectHandler : () => void = null;
-    private _socket : SocketIOClient.Socket;
+    private _incrementalHandler: (msg: T) => void = null;
+    private _snapshotHandler: (msgs: T[]) => void = null;
+    private _disconnectHandler: () => void = null;
+    private _connectHandler: () => void = null;
+    private _socket: SocketIOClient.Socket;
 
-    constructor(private topic : string,
-                io : SocketIOClient.Socket) {
+    constructor(private topic: string,
+                io: SocketIOClient.Socket) {
         this._socket = io;
 
         // this._log("creating subscriber to", this.topic, "; connected?", this.connected);
@@ -102,7 +90,7 @@ export class Subscriber<T> implements ISubscribe<T> {
             this._connectHandler();
         }
 
-        this._socket.compress(true).emit(Prefixes.SUBSCRIBE + "-" + this.topic);
+        this._socket.emit(Prefixes.SUBSCRIBE + "-" + this.topic);
     };
 
     private onDisconnect = () => {
@@ -172,7 +160,7 @@ export class Subscriber<T> implements ISubscribe<T> {
 }
 
 export interface IFire<T> {
-    fire(msg : T) : void;
+    fire(msg: T): void;
 }
 
 export class Fire<T> implements IFire<T> {
@@ -185,22 +173,22 @@ export class Fire<T> implements IFire<T> {
     }
 
     public fire = (msg : T) : void => {
-        this._socket.compress(true).emit(Prefixes.MESSAGE + "-" + this.topic, msg);
+        this._socket.emit(Prefixes.MESSAGE + "-" + this.topic, msg);
     };
 }
 
 export interface IReceive<T> {
-    registerReceiver(handler : (msg : T) => void) : void;
+    registerReceiver(handler: (msg: T) => void) : void;
 }
 
 export class NullReceiver<T> implements IReceive<T> {
-    registerReceiver = (handler : (msg : T) => void) => {};
+    registerReceiver = (handler: (msg: T) => void) => {};
 }
 
 export class Receiver<T> implements IReceive<T> {
-    private _handler : (msg : T) => void = null;
-    constructor(private topic : string, io : SocketIO.Server) {
-        var onConnection = (s : SocketIO.Socket) => {
+    private _handler: (msg: T) => void = null;
+    constructor(private topic: string, io: SocketIO.Server) {
+        var onConnection = (s: SocketIO.Socket) => {
             // this._log("socket", s.id, "connected for Receiver", topic);
             s.on(Prefixes.MESSAGE + "-" + this.topic, msg => {
                 if (this._handler !== null)
@@ -241,7 +229,6 @@ export class Topics {
     static ApplicationState = "as";
     static Notepad = "np";
     static ToggleConfigs = "tg";
-    static ChangeNotepad = "cn";
     static Position = "pos";
     static ExchangeConnectivity = "ec";
     static SubmitNewOrder = "sno";
