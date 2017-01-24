@@ -91,8 +91,20 @@ export class Publisher<T> implements IPublish<T> {
 
     private compressMarketDataInc = (data: any): T => {
       let ret: any = new Models.Timestamped([[],[]], data.time);
-      data.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
-      data.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
+      let diffPrice: number = 0;
+      let prevPrice: number = 0;
+      data.bids.map(bid => {
+        diffPrice = Math.abs(prevPrice - bid.price);
+        prevPrice = bid.price;
+        ret.data[0].push([Math.round(diffPrice * 100) / 100,Math.round(bid.size * 1000) / 1000])
+      });
+      diffPrice = 0;
+      prevPrice = 0;
+      data.asks.map(ask => {
+        diffPrice = Math.abs(prevPrice - ask.price);
+        prevPrice = ask.price;
+        ret.data[1].push([Math.round(diffPrice * 100) / 100,Math.round(ask.size * 1000) / 1000])
+      });
       return ret;
     };
 
