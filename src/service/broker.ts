@@ -382,7 +382,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
               )).sort((a: Models.Trade, b: Models.Trade) => (
-                (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggresive)
+                (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggressive)
                   ? (
                   trade.side==Models.Side.Bid
                     ? (a.price<b.price?1:(a.price>b.price?-1:0))
