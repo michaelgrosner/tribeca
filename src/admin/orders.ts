@@ -19,7 +19,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private gridOptions: GridOptions = <GridOptions>{};
 
   private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
-  private subscriberOSR: Messaging.ISubscribe<Models.OrderStatusReport>;
+  private subscriberOSR: Messaging.ISubscribe<Models.Timestamped<any[]>>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -88,41 +88,41 @@ export class OrdersComponent implements OnInit, OnDestroy {
       });
   }
 
-  private addRowData = (o: Models.OrderStatusReport) => {
+  private addRowData = (o: Models.Timestamped<any[]>) => {
     let exists: boolean = false;
-    let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Cancelled
-      || o.orderStatus == Models.OrderStatus.Complete
-      || o.orderStatus == Models.OrderStatus.Rejected);
+    let isClosed: boolean = (o.data[11] == Models.OrderStatus.Cancelled
+      || o.data[11] == Models.OrderStatus.Complete
+      || o.data[11] == Models.OrderStatus.Rejected);
     this.gridOptions.api.forEachNode((node: RowNode) => {
-      if (!exists && node.data.orderId==o.orderId) {
+      if (!exists && node.data.orderId==o.data[0]) {
         exists = true;
         if (isClosed) this.gridOptions.api.removeItems([node]);
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-            price: o.price,
-            value: Math.round(o.price * o.quantity * 100) / 100,
-            tif: Models.TimeInForce[o.timeInForce],
-            lat: o.latency+'ms',
-            lvQty: o.leavesQuantity
+            time: (moment.isMoment(o.data[2]) ? o.data[2] : moment(o.data[2])),
+            price: o.data[3],
+            value: Math.round(o.data[3] * o.data[4] * 100) / 100,
+            tif: Models.TimeInForce[o.data[7]],
+            lat: o.data[8]+'ms',
+            lvQty: o.data[9]
           }));
           this.gridOptions.api.refreshView();
         }
       }
     });
-    if (!exists && !isClosed && o.orderStatus != Models.OrderStatus.New)
+    if (!exists && !isClosed && o.data[11] != Models.OrderStatus.New)
       this.gridOptions.api.addItems([{
-        orderId: o.orderId,
-        exchange: o.exchange,
-        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-        price: o.price,
-        value: Math.round(o.price * o.quantity * 100) / 100,
-        side: Models.Side[o.side],
-        type: Models.OrderType[o.type],
-        tif: Models.TimeInForce[o.timeInForce],
-        lat: o.latency+'ms',
-        lvQty: o.leavesQuantity,
-        quoteSymbol: Models.Currency[o.pair.quote]
+        orderId: o.data[0],
+        exchange: o.data[1],
+        time: (moment.isMoment(o.data[2]) ? o.data[2] : moment(o.data[2])),
+        price: o.data[3],
+        value: Math.round(o.data[3] * o.data[4] * 100) / 100,
+        side: Models.Side[o.data[5]],
+        type: Models.OrderType[o.data[6]],
+        tif: Models.TimeInForce[o.data[7]],
+        lat: o.data[8]+'ms',
+        lvQty: o.data[9],
+        quoteSymbol: Models.Currency[o.data[10]]
       }]);
   }
 }
