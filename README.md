@@ -105,7 +105,7 @@ Later you can scroll the color-formatted output in the log file with `npm run lo
 
 Added nodejs6, typescript2 and angular2.
 
-Added cleanup of global dependencies, source code and installation steps.
+Added cleanup of bandwidth, source code, dependencies and installation steps.
 
 Added david-dm, travis-ci, coveralls and codacy.
 
