@@ -69,7 +69,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     };
 
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
-    makeSubscriber<Models.OrderStatusReport>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
+    makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
     makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, this.updateFairValue, this.clearFairValue);
   }
@@ -137,17 +137,17 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     this.updateQuoteClass();
   }
 
-  private updateQuote = (o: Models.OrderStatusReport) => {
-    if (o.orderStatus == Models.OrderStatus.Cancelled
-      || o.orderStatus == Models.OrderStatus.Complete
-      || o.orderStatus == Models.OrderStatus.Rejected
-    ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.orderId);
-    else if (!this.order_classes.filter(x => x.orderId === o.orderId).length)
+  private updateQuote = (o: Models.Timestamped<any[]>) => {
+    if (o.data[11] == Models.OrderStatus.Cancelled
+      || o.data[11] == Models.OrderStatus.Complete
+      || o.data[11] == Models.OrderStatus.Rejected
+    ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.data[0]);
+    else if (!this.order_classes.filter(x => x.orderId === o.data[0]).length)
       this.order_classes.push({
-        orderId: o.orderId,
-        side: o.side,
-        quantity: o.quantity,
-        price: o.price
+        orderId: o.data[0],
+        side: o.data[5],
+        quantity: o.data[4],
+        price: o.data[3]
       });
 
     this.updateQuoteClass();
@@ -166,7 +166,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
 
   private updateQuoteClass = () => {
     if (this.levels && this.levels.length > 0) {
-      var tol = .005;
+      var tol = 5e-3;
       for (var i = 0; i < this.levels.length; i++) {
         var level = this.levels[i];
         level.bidClass = 'active ';

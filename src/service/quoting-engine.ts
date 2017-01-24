@@ -164,17 +164,17 @@ export class QuotingEngine {
 
         if (unrounded.askPx !== null) {
             unrounded.askPx = Utils.roundFloat(unrounded.askPx);
-            unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
+            unrounded.askPx = Math.max(unrounded.bidPx + 1e-2, unrounded.askPx);
         }
 
         if (unrounded.askSz !== null) {
             unrounded.askSz = Utils.roundFloat(unrounded.askSz);
-            unrounded.askSz = Math.max(0.01, unrounded.askSz);
+            unrounded.askSz = Math.max(1e-2, unrounded.askSz);
         }
 
         if (unrounded.bidSz !== null) {
             unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
-            unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
+            unrounded.bidSz = Math.max(1e-2, unrounded.bidSz);
         }
 
         return unrounded;

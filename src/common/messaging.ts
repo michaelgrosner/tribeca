@@ -54,7 +54,9 @@ export class Publisher<T> implements IPublish<T> {
                 if (this._snapshot !== null) {
                   let snap: T[] = this._snapshot();
                   if (this.topic === Topics.MarketData)
-                    snap = this.compressMarketDataSnap(this._snapshot());
+                    snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
+                  else if (this.topic === Topics.OrderStatusReports)
+                    snap = this.compressSnapshot(this._snapshot(), this.compressOSRInc);
                   s.emit(Prefixes.SNAPSHOT + "-" + topic, snap);
                 }
             });
@@ -70,6 +72,8 @@ export class Publisher<T> implements IPublish<T> {
     public publish = (msg: T) => {
       if (this.topic === Topics.MarketData)
         msg = this.compressMarketDataInc(msg);
+      else if (this.topic === Topics.OrderStatusReports)
+        msg = this.compressOSRInc(msg);
       this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg)
     };
 
@@ -79,9 +83,9 @@ export class Publisher<T> implements IPublish<T> {
         return this;
     }
 
-    private compressMarketDataSnap = (data: T[]): T[] => {
+    private compressSnapshot = (data: T[], compressIncremental:(data: any) => T): T[] => {
       let ret: T[] = [];
-      data.forEach(x => ret.push(this.compressMarketDataInc(x)));
+      data.forEach(x => ret.push(compressIncremental(x)));
       return ret;
     };
 
@@ -90,6 +94,23 @@ export class Publisher<T> implements IPublish<T> {
       data.bids.map(bid => ret.data[0].push([bid.price,Math.round(bid.size * 1000) / 1000]));
       data.asks.map(ask => ret.data[1].push([ask.price,Math.round(ask.size * 1000) / 1000]));
       return ret;
+    };
+
+    private compressOSRInc = (data: any): T => {
+      return <any>new Models.Timestamped([
+        data.orderId,
+        data.exchange,
+        data.time,
+        data.price,
+        data.quantity,
+        data.side,
+        data.type,
+        data.timeInForce,
+        data.latency,
+        data.leavesQuantity,
+        data.pair.quote,
+        data.orderStatus
+      ], data.time);
     };
 }
 
