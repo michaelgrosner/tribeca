@@ -101,10 +101,12 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
       return;
     }
 
+    let price: number = 0;
     for (var i = 0; i < update.data[1].length; i++) {
       if (i >= this.levels.length)
         this.levels[i] = <any>{};
-      this.levels[i].askPrice = update.data[1][i][0];
+      this.levels[i].askPrice = price + update.data[1][i][0];
+      price = this.levels[i].askPrice;
       this.levels[i].askSize = update.data[1][i][1];
     }
 
@@ -122,10 +124,13 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
         this.qAskSz = ask.quantity;
       }
     }
+
+    price = 0;
     for (var i = 0; i < update.data[0].length; i++) {
       if (i >= this.levels.length)
         this.levels[i] = <any>{};
-      this.levels[i].bidPrice = update.data[0][i][0];
+      this.levels[i].bidPrice = Math.abs(price - update.data[0][i][0]);
+      price = this.levels[i].bidPrice;
       this.levels[i].bidSize = update.data[0][i][1];
       this.levels[i].diffWidth = i==0
         ? this.levels[i].askPrice - this.levels[i].bidPrice : (
