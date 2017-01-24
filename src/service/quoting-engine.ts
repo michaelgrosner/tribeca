@@ -115,9 +115,9 @@ export class QuotingEngine {
         }
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
-          if (unrounded.askSz && safety.buyPing && (params.pongAt == Models.PongAt.ShortPingAggresive || params.pongAt == Models.PongAt.LongPingAggresive || unrounded.askPx < safety.buyPing + params.width))
+          if (unrounded.askSz && safety.buyPing && (params.pongAt == Models.PongAt.ShortPingAggressive || params.pongAt == Models.PongAt.LongPingAggressive || unrounded.askPx < safety.buyPing + params.width))
             unrounded.askPx = safety.buyPing + params.width;
-          if (unrounded.bidSz && safety.sellPong && (params.pongAt == Models.PongAt.ShortPingAggresive || params.pongAt == Models.PongAt.LongPingAggresive || unrounded.bidPx > safety.sellPong - params.width))
+          if (unrounded.bidSz && safety.sellPong && (params.pongAt == Models.PongAt.ShortPingAggressive || params.pongAt == Models.PongAt.LongPingAggressive || unrounded.bidPx > safety.sellPong - params.width))
             unrounded.bidPx = safety.sellPong - params.width;
         }
 
