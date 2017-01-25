@@ -97,7 +97,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `AskSide` - Place new Pings only in Ask side, and therefore in Bid side only Pongs will be placed.
 
-  * `Depleted` - Place new Pings only in the opposite side with not enough funds to continue trading.
+  * `DepletedSide` - Place new Pings only in the opposite side with not enough funds to continue trading.
 
   * `DepletedBidSide` - Place new Pings only in the Ask side if there are not enough funds to continue trading in the Bid side.
 
