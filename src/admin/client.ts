@@ -258,19 +258,18 @@ class DisplayOrder {
                                     {{ exch_name }}<br/>{{ pair_name }}
                                 </button>
                                 <wallet-position></wallet-position>
-                                <div><b><a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></b></div>
                             </div>
                         </div>
 
                         <div class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
-                            <trade-safety></trade-safety>
+                            <trade-safety (toggleSettings)="toggleConfigs(showConfigs = !showConfigs)"></trade-safety>
                           </div>
                           <div class="row" style="padding-top:0px;">
-                            <div class="col-md-4 col-xs-12" style="padding-left:4px;padding-top:4px;padding-right:0px;">
+                            <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
                                 <market-quoting></market-quoting>
                             </div>
-                            <div class="col-md-8 col-xs-12" style="padding-left:4px;padding-right:0px;padding-top:0px;">
+                            <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
                                 <div class="exchangeActions col-md-2 col-xs-12 text-center img-rounded">
                                   <div>

@@ -10,20 +10,22 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-quoting',
-  template: `<table class="marketQuoting table table-hover table-bordered table-condensed table-responsive text-center">
+  template: `<div class="tradeSafety2 img-rounded" style="padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
+      Market Width: <span class="{{ diffMD ? \'text-danger\' : \'text-muted\' }}">{{ diffMD | number:'1.2-2' }}</span>,
+      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.2-2' }}</span>,
+      Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>
+      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-bordered table-responsive text-center">
       <tr class="active">
         <th></th>
         <th>bidSz&nbsp;</th>
         <th>bidPx</th>
-        <th></th>
         <th>askPx</th>
         <th>askSz&nbsp;</th>
       </tr>
       <tr class="info">
-        <td class="text-left">q</td>
+        <td class="text-left">quote</td>
         <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.3-3' }}</td>
         <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.2-2' }}</td>
-        <td></td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.2-2' }}</td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.3-3' }}</td>
       </tr>
@@ -31,11 +33,10 @@ import {SubscriberFactory} from './shared_directives';
         <td class="text-left">mkt{{ i }}</td>
         <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.bidSize | number:'1.3-3' }}</div></td>
         <td [ngClass]="level.bidClass">{{ level.bidPrice | number:'1.2-2' }}</td>
-        <td><span *ngIf="level.diffWidth > 0">{{ level.diffWidth | number:'1.2-2' }}</span></td>
         <td [ngClass]="level.askClass">{{ level.askPrice | number:'1.2-2' }}</td>
         <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;">{{ level.askSize | number:'1.3-3' }}</div></td>
       </tr>
-    </table>`
+    </table></div>`
 })
 export class MarketQuotingComponent implements OnInit, OnDestroy {
 
@@ -47,6 +48,9 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   public order_classes: any[];
   public bidIsLive: boolean;
   public askIsLive: boolean;
+  public diffMD: number;
+  public diffPx: number;
+  private targetBasePosition: number;
 
   private subscribers: Messaging.ISubscribe<any>[] = [];
 
@@ -70,6 +74,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
+    makeSubscriber<Models.TargetBasePositionValue>(Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition);
   }
 
   ngOnDestroy() {
@@ -80,6 +85,10 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     this.levels = [];
   }
 
+  private clearTargetBasePosition = () => {
+    this.targetBasePosition = null;
+  }
+
   private clearQuote = () => {
     this.order_classes = [];
   }
@@ -87,6 +96,11 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   private clearQuoteStatus = () => {
     this.bidIsLive = false;
     this.askIsLive = false;
+  }
+
+  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
+    if (value == null) return;
+    this.targetBasePosition = value.data;
   }
 
   private updateMarket = (update: Models.Timestamped<any[]>) => {
@@ -126,11 +140,8 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
       this.levels[i].bidPrice = Math.abs(price - update.data[0][i][0]);
       price = this.levels[i].bidPrice;
       this.levels[i].bidSize = update.data[0][i][1];
-      this.levels[i].diffWidth = i==0
-        ? this.levels[i].askPrice - this.levels[i].bidPrice : (
-          (i==1 && this.qAskPx && this.qBidPx)
-            ? this.qAskPx - this.qBidPx : 0
-        );
+      if (i==0) this.diffMD = this.levels[i].askPrice - this.levels[i].bidPrice;
+      else if (i==1) this.diffPx = (this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0;
     }
 
     this.updateQuoteClass();
