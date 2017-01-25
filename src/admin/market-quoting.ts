@@ -15,7 +15,7 @@ import {SubscriberFactory} from './shared_directives';
         <th></th>
         <th>bidSz&nbsp;</th>
         <th>bidPx</th>
-        <th>FV</th>
+        <th></th>
         <th>askPx</th>
         <th>askSz&nbsp;</th>
       </tr>
@@ -23,7 +23,7 @@ import {SubscriberFactory} from './shared_directives';
         <td class="text-left">q</td>
         <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.3-3' }}</td>
         <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.2-2' }}</td>
-        <td class="fairvalue">{{ fairValue | number:'1.2-2' }}</td>
+        <td></td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.2-2' }}</td>
         <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.3-3' }}</td>
       </tr>
@@ -40,7 +40,6 @@ import {SubscriberFactory} from './shared_directives';
 export class MarketQuotingComponent implements OnInit, OnDestroy {
 
   public levels: any[];
-  public fairValue: number;
   public qBidSz: number;
   public qBidPx: number;
   public qAskPx: number;
@@ -71,7 +70,6 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
-    makeSubscriber<Models.FairValue>(Messaging.Topics.FairValue, this.updateFairValue, this.clearFairValue);
   }
 
   ngOnDestroy() {
@@ -84,10 +82,6 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
 
   private clearQuote = () => {
     this.order_classes = [];
-  }
-
-  private clearFairValue = () => {
-    this.fairValue = null;
   }
 
   private clearQuoteStatus = () => {
@@ -188,14 +182,5 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
         level.askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.askSize)/Math.log(2))*4,19),1)));
       }
     }
-  }
-
-  private updateFairValue = (fv: Models.FairValue) => {
-    if (fv == null) {
-      this.clearFairValue();
-      return;
-    }
-
-    this.fairValue = fv.price;
   }
 }
