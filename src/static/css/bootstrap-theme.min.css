@@ -503,8 +503,8 @@
   background-color: #bde2e5;
 }
 .fs11px {font-size:11px;}
-.tradeSafety {font-size:14px;background:white;padding:3px 5px;border-top-left-radius:0px;border-bottom-left-radius:0px;}
-.tradeSafety div {padding:2px;}
+.tradeSafety,.tradeSafety2 {font-size:14px;background:white;padding:3px 5px;border-top-left-radius:0px;border-bottom-left-radius:0px;}.tradeSafety2 {border-top-right-radius:0px;border-bottom-right-radius:0px;}
+.tradeSafety div,.tradeSafety2 div {padding:2px;}
 .exchange{background:white;padding-bottom:7px;border-top-left-radius:0px;border-top-right-radius:0px;}
 .exchangeActions{background:white;padding-top:8px;padding-bottom:8px;border-top-left-radius:0px;border-top-right-radius:0px;}
 .marketTrades{height:401px!important;}.marketQuoting{font-size:14px;}
