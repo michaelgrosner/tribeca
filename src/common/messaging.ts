@@ -57,6 +57,8 @@ export class Publisher<T> implements IPublish<T> {
                     snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
                   else if (this.topic === Topics.OrderStatusReports)
                     snap = this.compressSnapshot(this._snapshot(), this.compressOSRInc);
+                  else if (this.topic === Topics.Position)
+                    snap = this.compressSnapshot(this._snapshot(), this.compressPositionInc);
                   s.emit(Prefixes.SNAPSHOT + "-" + topic, snap);
                 }
             });
@@ -74,6 +76,8 @@ export class Publisher<T> implements IPublish<T> {
         msg = this.compressMarketDataInc(msg);
       else if (this.topic === Topics.OrderStatusReports)
         msg = this.compressOSRInc(msg);
+      else if (this.topic === Topics.Position)
+        msg = this.compressPositionInc(msg);
       this._io.emit(Prefixes.MESSAGE + "-" + this.topic, msg)
     };
 
@@ -96,14 +100,14 @@ export class Publisher<T> implements IPublish<T> {
       data.bids.map(bid => {
         diffPrice = Math.abs(prevPrice - bid.price);
         prevPrice = bid.price;
-        ret.data[0].push([Math.round(diffPrice * 100) / 100,Math.round(bid.size * 1000) / 1000])
+        ret.data[0].push([Math.round(diffPrice * 1e2) / 1e2,Math.round(bid.size * 1e3) / 1e3])
       });
       diffPrice = 0;
       prevPrice = 0;
       data.asks.map(ask => {
         diffPrice = Math.abs(prevPrice - ask.price);
         prevPrice = ask.price;
-        ret.data[1].push([Math.round(diffPrice * 100) / 100,Math.round(ask.size * 1000) / 1000])
+        ret.data[1].push([Math.round(diffPrice * 1e2) / 1e2,Math.round(ask.size * 1e3) / 1e3])
       });
       return ret;
     };
@@ -122,6 +126,19 @@ export class Publisher<T> implements IPublish<T> {
         data.leavesQuantity,
         data.pair.quote,
         data.orderStatus
+      ], data.time);
+    };
+
+    private compressPositionInc = (data: any): T => {
+      return <any>new Models.Timestamped([
+        Math.round(data.baseAmount * 1e3) / 1e3,
+        Math.round(data.quoteAmount * 1e2) / 1e2,
+        Math.round(data.baseHeldAmount * 1e3) / 1e3,
+        Math.round(data.quoteHeldAmount * 1e2) / 1e2,
+        Math.round(data.value * 1e5) / 1e5,
+        Math.round(data.quoteValue * 1e2) / 1e2,
+        data.pair.base,
+        data.pair.quote
       ], data.time);
     };
 }

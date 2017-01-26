@@ -80,16 +80,16 @@ export class WalletPositionComponent implements OnInit, OnDestroy {
     this.sellSize = null;
   }
 
-  private updatePosition = (position : Models.PositionReport) => {
-    this.baseCurrency = Models.Currency[position.pair.base];
-    this.quoteCurrency = Models.Currency[position.pair.quote];
-    this.basePosition = position.baseAmount;
-    this.quotePosition = position.quoteAmount;
-    this.baseHeldPosition = position.baseHeldAmount;
-    this.quoteHeldPosition = position.quoteHeldAmount;
-    this.value = position.value;
-    this.quoteValue = position.quoteValue;
-    this.fv = position.quoteValue / position.value;
+  private updatePosition = (o: Models.Timestamped<any[]>) => {
+    this.basePosition = o.data[0];
+    this.quotePosition = o.data[1];
+    this.baseHeldPosition = o.data[2];
+    this.quoteHeldPosition = o.data[3];
+    this.value = o.data[4];
+    this.quoteValue = o.data[5];
+    this.fv = o.data[5] / o.data[4];
+    this.baseCurrency = Models.Currency[o.data[6]];
+    this.quoteCurrency = Models.Currency[o.data[7]];
   }
 
   private updateQP = (qp: Models.QuotingParameters) => {
