@@ -1,6 +1,3 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-
 import {NgModule, Component, Injectable, Inject} from '@angular/core';
 import {AgRendererComponent} from 'ag-grid-ng2/main';
 

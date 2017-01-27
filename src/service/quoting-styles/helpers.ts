@@ -1,5 +1,3 @@
-/// <reference path="../../common/models.ts" />
-
 import Models = require("../../common/models");
 
 export class GeneratedQuote {

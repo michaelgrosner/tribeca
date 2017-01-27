@@ -1,10 +1,3 @@
-/// <reference path="../utils.ts" />
-/// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
-///<reference path="../config.ts"/>
-///<reference path="../utils.ts"/>
-///<reference path="../interfaces.ts"/>
-
 import ws = require('ws');
 import Q = require("q");
 import crypto = require("crypto");

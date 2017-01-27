@@ -1,5 +1,3 @@
-/// <reference path="../common/models.ts" />
-
 import Utils = require("./utils");
 import _ = require("lodash");
 import fs = require("fs");

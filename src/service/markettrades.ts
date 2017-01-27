@@ -1,12 +1,3 @@
-/// <reference path="utils.ts" />
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="interfaces.ts"/>
-/// <reference path="persister.ts"/>
-/// <reference path="broker.ts"/>
-/// <reference path="web.ts"/>
-/// <reference path="quoting-engine.ts"/>
-
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
 import Utils = require("./utils");

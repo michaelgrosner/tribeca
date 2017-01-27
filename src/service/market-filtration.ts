@@ -1,10 +1,3 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="config.ts" />
-/// <reference path="utils.ts" />
-/// <reference path="quoter.ts"/>
-/// <reference path="interfaces.ts"/>
-
 import Config = require("./config");
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
