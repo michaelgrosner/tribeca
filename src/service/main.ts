@@ -105,14 +105,12 @@ process.on("SIGINT", () => {
 
 var mainLog = Utils.log("tribeca:main");
 
-function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
-    var split = raw.split("/");
-    if (split.length !== 2)
-        throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/USD");
-
-    return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-}
-var pair = ParseCurrencyPair(config.GetString("TradedPair"));
+var pair = ((raw: string): Models.CurrencyPair => {
+  var split = raw.split("/");
+  if (split.length !== 2)
+      throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/USD");
+  return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+})(config.GetString("TradedPair"));
 
 var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(config.GetString("TRIBECA_MODE").indexOf('auto')>-1, moment.utc());
 var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(2, 0.02, 0.01, Models.PingAt.BothSides, Models.PongAt.ShortPingFair, Models.QuotingMode.AK47, Models.FairValueModel.BBO, 1, 0.9, true, Models.AutoPositionMode.EwmaBasic, false, 0.9, 569, false, 2, 0.5, .095, 2*.095, .095, 3, .1);
