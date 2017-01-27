@@ -113,9 +113,9 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
       if (j >= this.levels.length)
         this.levels[j] = <any>{};
-      this.levels[j].askPrice = price + update.data[1][i];
+      this.levels[j].askPrice = price + update.data[1][i] / 1e1;
       price = this.levels[j].askPrice;
-      this.levels[j].askSize = update.data[1][++i];
+      this.levels[j].askSize = update.data[1][++i] / 1e1;
     }
 
     if (this.order_classes.length) {
@@ -137,9 +137,9 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
       if (j >= this.levels.length)
         this.levels[j] = <any>{};
-      this.levels[j].bidPrice = Math.abs(price - update.data[0][i]);
+      this.levels[j].bidPrice = Math.abs(price - update.data[0][i] / 1e1);
       price = this.levels[j].bidPrice;
-      this.levels[j].bidSize = update.data[0][++i];
+      this.levels[j].bidSize = update.data[0][++i] / 1e1;
       if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
       else if (j==1) this.diffPx = (this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0;
     }
