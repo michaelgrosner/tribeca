@@ -11,6 +11,9 @@
 /// <reference path="quoting-parameters.ts"/>
 /// <reference path="position-management.ts"/>
 /// <reference path="./quoting-styles/style-registry.ts"/>
+/// <reference path="./quoting-styles/mid-market.ts"/>
+/// <reference path="./quoting-styles/top-join.ts"/>
+/// <reference path="./quoting-styles/ping-pong.ts"/>
 
 import Config = require("./config");
 import Models = require("../common/models");
@@ -28,6 +31,9 @@ import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
+import MidMarket = require("./quoting-styles/mid-market");
+import TopJoin = require("./quoting-styles/top-join");
+import PingPong = require("./quoting-styles/ping-pong");
 
 export class QuotingEngine {
     private _log = Utils.log("quotingengine");
@@ -43,8 +49,9 @@ export class QuotingEngine {
         this.QuoteChanged.trigger();
     }
 
+    private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
+
     constructor(
-        private _registry: QuotingStyleRegistry.QuotingStyleRegistry,
         private _timeProvider: Utils.ITimeProvider,
         private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
@@ -54,6 +61,17 @@ export class QuotingEngine {
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
+        this._registry = new QuotingStyleRegistry.QuotingStyleRegistry([
+          new MidMarket.MidMarketQuoteStyle(),
+          new TopJoin.InverseJoinQuoteStyle(),
+          new TopJoin.InverseTopOfTheMarketQuoteStyle(),
+          new TopJoin.JoinQuoteStyle(),
+          new TopJoin.TopOfTheMarketQuoteStyle(),
+          new PingPong.PingPongQuoteStyle(),
+          new PingPong.BoomerangQuoteStyle(),
+          new PingPong.AK47QuoteStyle(),
+        ]);
+
         var recalcWithoutInputTime = () => this.recalcQuote(_timeProvider.utcNow());
 
         _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, _timeProvider)));

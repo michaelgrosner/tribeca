@@ -60,11 +60,6 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 
-import QuotingStyleRegistry = require("./quoting-styles/style-registry");
-import MidMarket = require("./quoting-styles/mid-market");
-import TopJoin = require("./quoting-styles/top-join");
-import PingPong = require("./quoting-styles/ping-pong");
-
 var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
 var config = new Config.ConfigProvider();
@@ -360,20 +355,9 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
 
-        var registry = new QuotingStyleRegistry.QuotingStyleRegistry([
-            new MidMarket.MidMarketQuoteStyle(),
-            new TopJoin.InverseJoinQuoteStyle(),
-            new TopJoin.InverseTopOfTheMarketQuoteStyle(),
-            new TopJoin.JoinQuoteStyle(),
-            new TopJoin.TopOfTheMarketQuoteStyle(),
-            new PingPong.PingPongQuoteStyle(),
-            new PingPong.BoomerangQuoteStyle(),
-            new PingPong.AK47QuoteStyle(),
-        ]);
-
         var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
         var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo,
+        var quotingEngine = new QuotingEngine.QuotingEngine(timeProvider, filtration, fvEngine, paramsRepo,
             orderBroker, positionBroker, ewma, tbp, safetyCalculator);
         var quoteSender = new QuoteSender.QuoteSender(timeProvider, paramsRepo, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
