@@ -104,7 +104,6 @@ process.on("SIGINT", () => {
 });
 
 var mainLog = Utils.log("tribeca:main");
-var messagingLog = Utils.log("tribeca:messaging");
 
 function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
     var split = raw.split("/");
