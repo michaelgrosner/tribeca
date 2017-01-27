@@ -502,9 +502,8 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
             return completedSuccessfully.promise;
         };
 
-        // event looped blocked timer
         var start = process.hrtime();
-        var interval = 100;
+        var interval = 500;
         setInterval(() => {
             var delta = process.hrtime(start);
             var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
@@ -519,7 +518,7 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
     return completedSuccessfully.promise;
 };
 
-var harness = () : Q.Promise<any> => {
+((): Q.Promise<any> => {
   if (config.inBacktestMode) {
     console.log("enter backtest mode");
 
@@ -578,6 +577,4 @@ var harness = () : Q.Promise<any> => {
     return inputDataPromise.then(runLoop);
   }
   else return runTradingSystem(liveTradingSetup());
-};
-
-harness().done();
+})().done();
