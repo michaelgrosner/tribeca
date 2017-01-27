@@ -110,12 +110,12 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     }
 
     let price: number = 0;
-    for (var i = 0; i < update.data[1].length; i++) {
-      if (i >= this.levels.length)
-        this.levels[i] = <any>{};
-      this.levels[i].askPrice = price + update.data[1][i][0];
-      price = this.levels[i].askPrice;
-      this.levels[i].askSize = update.data[1][i][1];
+    for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
+      if (j >= this.levels.length)
+        this.levels[j] = <any>{};
+      this.levels[j].askPrice = price + update.data[1][i];
+      price = this.levels[j].askPrice;
+      this.levels[j].askSize = update.data[1][++i];
     }
 
     if (this.order_classes.length) {
@@ -134,14 +134,14 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     }
 
     price = 0;
-    for (var i = 0; i < update.data[0].length; i++) {
-      if (i >= this.levels.length)
-        this.levels[i] = <any>{};
-      this.levels[i].bidPrice = Math.abs(price - update.data[0][i][0]);
-      price = this.levels[i].bidPrice;
-      this.levels[i].bidSize = update.data[0][i][1];
-      if (i==0) this.diffMD = this.levels[i].askPrice - this.levels[i].bidPrice;
-      else if (i==1) this.diffPx = (this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0;
+    for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
+      if (j >= this.levels.length)
+        this.levels[j] = <any>{};
+      this.levels[j].bidPrice = Math.abs(price - update.data[0][i]);
+      price = this.levels[j].bidPrice;
+      this.levels[j].bidSize = update.data[0][++i];
+      if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
+      else if (j==1) this.diffPx = (this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0;
     }
 
     this.updateQuoteClass();
