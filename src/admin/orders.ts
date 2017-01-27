@@ -90,16 +90,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
     let exists: boolean = false;
-    let isClosed: boolean = (o.data[11] == Models.OrderStatus.Cancelled
-      || o.data[11] == Models.OrderStatus.Complete
-      || o.data[11] == Models.OrderStatus.Rejected);
+    let isClosed: boolean = (o.data[1] == Models.OrderStatus.Cancelled
+      || o.data[1] == Models.OrderStatus.Complete
+      || o.data[1] == Models.OrderStatus.Rejected);
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.data[0]) {
         exists = true;
         if (isClosed) this.gridOptions.api.removeItems([node]);
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o.data[2]) ? o.data[2] : moment(o.data[2])),
+            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
             price: o.data[3],
             value: Math.round(o.data[3] * o.data[4] * 100) / 100,
             tif: Models.TimeInForce[o.data[7]],
@@ -110,11 +110,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
         }
       }
     });
-    if (!exists && !isClosed && o.data[11] != Models.OrderStatus.New)
+    if (!exists && !isClosed && o.data[1] != Models.OrderStatus.New)
       this.gridOptions.api.addItems([{
         orderId: o.data[0],
-        exchange: o.data[1],
-        time: (moment.isMoment(o.data[2]) ? o.data[2] : moment(o.data[2])),
+        exchange: o.data[2],
+        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
         price: o.data[3],
         value: Math.round(o.data[3] * o.data[4] * 100) / 100,
         side: Models.Side[o.data[5]],
