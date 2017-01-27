@@ -1,14 +1,3 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts"/>
-/// <reference path="shared_directives.ts"/>
-/// <reference path="wallet-position.ts"/>
-/// <reference path="market-quoting.ts"/>
-/// <reference path="market-trades.ts"/>
-/// <reference path="trade-safety.ts"/>
-/// <reference path="orders.ts"/>
-/// <reference path="trades.ts"/>
-/// <reference path="pair.ts"/>
-
 import 'zone.js';
 import 'reflect-metadata';
 

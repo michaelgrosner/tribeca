@@ -1,7 +1,3 @@
-/// <reference path='../common/models.ts' />
-/// <reference path='../common/messaging.ts' />
-/// <reference path='shared_directives.ts'/>
-
 import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');

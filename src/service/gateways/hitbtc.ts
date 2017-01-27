@@ -1,8 +1,3 @@
-/// <reference path="../utils.ts" />
-/// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
-///<reference path="../interfaces.ts"/>
-
 import Config = require("../config");
 import crypto = require('crypto');
 import WebSocket = require('ws');

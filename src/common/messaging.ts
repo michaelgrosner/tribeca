@@ -1,5 +1,3 @@
-/// <reference path="models.ts" />
-
 import Models = require("./models");
 
 module Prefixes {
