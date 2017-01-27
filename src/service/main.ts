@@ -224,10 +224,9 @@ var liveTradingSetup = () => {
     var db = Persister.loadDb(config);
 
     var loaderSaver = new Persister.LoaderSaver(exchange, pair);
-    var mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
 
     var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
-        var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
+        var ls = collectionName === "mt" ? new MarketTrades.MarketTradesLoaderSaver(loaderSaver) : loaderSaver;
         var setDBFlag = (collectionName === "trades");
         return new Persister.Persister<T>(db, collectionName, exchange, pair, setDBFlag, ls.loader, ls.saver);
     };
