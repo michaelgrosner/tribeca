@@ -1,22 +1,3 @@
-/// <reference path="../common/models.ts" />
-/// <reference path="../common/messaging.ts" />
-/// <reference path="broker.ts"/>
-/// <reference path="active-state.ts"/>
-/// <reference path="backtest.ts"/>
-/// <reference path="config.ts"/>
-/// <reference path="fair-value.ts"/>
-/// <reference path="interfaces.ts"/>
-/// <reference path="market-filtration.ts"/>
-/// <reference path="markettrades.ts"/>
-/// <reference path="quote-sender.ts"/>
-/// <reference path="quoter.ts"/>
-/// <reference path="quoting-engine.ts"/>
-/// <reference path="quoting-parameters.ts"/>
-/// <reference path="safety.ts"/>
-/// <reference path="statistics.ts"/>
-/// <reference path="utils.ts"/>
-/// <reference path="web.ts"/>
-
 import _ = require("lodash");
 import Q = require("q");
 import path = require("path");
@@ -528,8 +509,8 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
             var delta = process.hrtime(start);
             var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
             var n = ms - interval;
-            if (n > 69)
-                Utils.log("main").info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
+            if (n > 121)
+                Utils.log("main").info("Event loop delay " + Utils.roundFloat(n) + "ms");
             start = process.hrtime();
         }, interval).unref();
 
