@@ -100,14 +100,14 @@ export class Publisher<T> implements IPublish<T> {
       data.bids.map(bid => {
         diffPrice = Math.abs(prevPrice - bid.price);
         prevPrice = bid.price;
-        ret.data[0].push(Math.round(diffPrice * 1e2) / 1e2,Math.round(bid.size * 1e3) / 1e3)
+        ret.data[0].push(Math.round(diffPrice * 1e2) / 1e1, Math.round(bid.size * 1e3) / 1e2)
       });
       diffPrice = 0;
       prevPrice = 0;
       data.asks.map(ask => {
         diffPrice = Math.abs(prevPrice - ask.price);
         prevPrice = ask.price;
-        ret.data[1].push(Math.round(diffPrice * 1e2) / 1e2,Math.round(ask.size * 1e3) / 1e3)
+        ret.data[1].push(Math.round(diffPrice * 1e2) / 1e1, Math.round(ask.size * 1e3) / 1e2)
       });
       return ret;
     };
