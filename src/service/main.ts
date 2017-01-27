@@ -120,7 +120,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     var exchange = Models.Exchange.Null;
     var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
 
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
+    var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
 
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
         return new Messaging.NullPublisher<T>();
@@ -140,7 +140,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
         startingActive: startingActive,
         startingParameters: startingParameters,
         timeProvider: timeProvider,
-        getExch: getExch,
+        getExchange: getExchange,
         getReceiver: getReceiver,
         getPersister: getPersister,
         getRepository: getRepository,
@@ -187,21 +187,19 @@ var liveTradingSetup = () => {
       }
     });
 
-    var getExchange = (): Models.Exchange => {
-        var ex = config.GetString("EXCHANGE").toLowerCase();
-        switch (ex) {
-            case "hitbtc": return Models.Exchange.HitBtc;
-            case "coinbase": return Models.Exchange.Coinbase;
-            case "okcoin": return Models.Exchange.OkCoin;
-            case "null": return Models.Exchange.Null;
-            case "bitfinex": return Models.Exchange.Bitfinex;
-            default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
-        }
-    };
+    var exchange = ((): Models.Exchange => {
+      let ex: string = config.GetString("EXCHANGE").toLowerCase();
+      switch (ex) {
+        case "hitbtc": return Models.Exchange.HitBtc;
+        case "coinbase": return Models.Exchange.Coinbase;
+        case "okcoin": return Models.Exchange.OkCoin;
+        case "null": return Models.Exchange.Null;
+        case "bitfinex": return Models.Exchange.Bitfinex;
+        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+      }
+    })();
 
-    var exchange = getExchange();
-
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
+    var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
         switch (exchange) {
             case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
             case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
@@ -242,7 +240,7 @@ var liveTradingSetup = () => {
         startingActive: defaultActive,
         startingParameters: defaultQuotingParameters,
         timeProvider: timeProvider,
-        getExch: getExch,
+        getExchange: getExchange,
         getReceiver: getReceiver,
         getPersister: getPersister,
         getRepository: getRepository,
@@ -255,7 +253,7 @@ interface SimulationClasses {
     startingActive : Models.SerializedQuotesActive;
     startingParameters : Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
-    getExch(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
+    getExchange(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
     getReceiver<T>(topic: string) : Messaging.IReceive<T>;
     getPersister<T>(collectionName: string) : Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
@@ -333,7 +331,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
           getReceiver(Messaging.Topics.ToggleConfigs)
         );
 
-        var gateway = classes.getExch(orderCache);
+        var gateway = classes.getExchange(orderCache);
 
         if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
             throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + gateway.base.name() + " really supports the specified currencies defined in TradedPair configuration option.");
