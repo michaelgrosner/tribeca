@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Output, EventEmitter, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, Input, Output, EventEmitter, OnInit, OnDestroy} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -13,7 +13,7 @@ import {SubscriberFactory} from './shared_directives';
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>
-      <b style="float:right"><a href="#" (click)="toggleSettings.next()">Settings</a></b>
+      <b style="float:right"><a href="#" (click)="toggleConfigs.next()"><span [hidden]="showConfigs">+</span><span [hidden]="!showConfigs">-</span> Settings</a></b>
     </div>
   </div>`
 })
@@ -29,7 +29,8 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   private subscriberTradeSafetyValue: Messaging.ISubscribe<Models.TradeSafety>;
   private subscriberFairValue: Messaging.ISubscribe<Models.FairValue>;
 
-  @Output() toggleSettings = new EventEmitter();
+  @Input() showConfigs: boolean;
+  @Output() toggleConfigs = new EventEmitter();
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
