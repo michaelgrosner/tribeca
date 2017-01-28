@@ -543,7 +543,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
   return inputDataPromise.then(
     (inputMarketData: Array<Models.Market | Models.MarketTrade>): Q.Promise<any> => {
-      return promiseWhile(<any>() => {
+      return promiseWhile(() => {
         return nextParameters().then((p: Backtest.BacktestParameters) => {
           return p !== null
             ? runTradingSystem(backTestSimulationSetup(inputMarketData, p))
