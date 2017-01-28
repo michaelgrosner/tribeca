@@ -295,7 +295,7 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
 
         var orderCache = new Broker.OrderStateCache();
 
-        var advert = new Models.ProductAdvertisement(
+        let advert = new Models.ProductAdvertisement(
           classes.exchange,
           pair,
           config.GetString("TRIBECA_MODE").replace('auto','')
@@ -384,45 +384,11 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
           fairValuePersister
         );
 
-        var safetyCalculator = new Safety.SafetyCalculator(
-          classes.timeProvider,
-          fvEngine,
-          paramsRepo,
-          orderBroker,
-          paramsRepo,
-          classes.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
-          tsvPersister
-        );
-
-        var ewma = new Statistics.ObservableEWMACalculator(
-          classes.timeProvider,
-          fvEngine,
-          initParams.quotingEwma
-        );
-
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
         var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
         shortEwma.initialize(rfvValues);
         var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
-
-        var positionMgr = new PositionManagement.PositionManager(
-          classes.timeProvider,
-          rfvPersister,
-          fvEngine,
-          initRfv,
-          shortEwma,
-          longEwma
-        );
-
-        var tbp = new PositionManagement.TargetBasePositionManager(
-          classes.timeProvider,
-          positionMgr,
-          paramsRepo,
-          positionBroker,
-          classes.getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister),
-          tbpPersister
-        );
 
         var quotingEngine = new QuotingEngine.QuotingEngine(
           classes.timeProvider,
@@ -431,9 +397,35 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
           paramsRepo,
           orderBroker,
           positionBroker,
-          ewma,
-          tbp,
-          safetyCalculator
+          new Statistics.ObservableEWMACalculator(
+            classes.timeProvider,
+            fvEngine,
+            initParams.quotingEwma
+          ),
+          new PositionManagement.TargetBasePositionManager(
+            classes.timeProvider,
+            new PositionManagement.PositionManager(
+              classes.timeProvider,
+              rfvPersister,
+              fvEngine,
+              initRfv,
+              shortEwma,
+              longEwma
+            ),
+            paramsRepo,
+            positionBroker,
+            classes.getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister),
+            tbpPersister
+          ),
+          new Safety.SafetyCalculator(
+            classes.timeProvider,
+            fvEngine,
+            paramsRepo,
+            orderBroker,
+            paramsRepo,
+            classes.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
+            tsvPersister
+          )
         );
 
         new QuoteSender.QuoteSender(
