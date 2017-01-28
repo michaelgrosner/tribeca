@@ -103,17 +103,6 @@ process.on("SIGINT", () => {
   performExit();
 });
 
-let defaultActive: Models.SerializedQuotesActive = new Models.SerializedQuotesActive(
-  config.GetString("TRIBECA_MODE").indexOf('auto')>-1,
-  moment.utc()
-);
-
-let pair = ((raw: string): Models.CurrencyPair => {
-  let split = raw.split("/");
-  if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
-  return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-})(config.GetString("TradedPair"));
-
 var backTestSimulationSetup = (
   inputData: Array<Models.Market | Models.MarketTrade>,
   parameters: Backtest.BacktestParameters
@@ -134,12 +123,12 @@ var backTestSimulationSetup = (
 
     var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
 
-    var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
     var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
 
     return {
         exchange: exchange,
-        startingActive: startingActive,
+        pair: null,
+        startingActive: true,
         startingParameters: startingParameters,
         timeProvider: timeProvider,
         getExchange: getExchange,
@@ -189,6 +178,12 @@ var liveTradingSetup = () => {
       }
     });
 
+    let pair = ((raw: string): Models.CurrencyPair => {
+      let split = raw.split("/");
+      if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
+      return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+    })(config.GetString("TradedPair"));
+
     var exchange = ((): Models.Exchange => {
       let ex: string = config.GetString("EXCHANGE").toLowerCase();
       switch (ex) {
@@ -202,26 +197,23 @@ var liveTradingSetup = () => {
     })();
 
     var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
-        switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
-            case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
-            case Models.Exchange.Bitfinex: return <Interfaces.CombinedGateway>(new Bitfinex.Bitfinex(timeProvider, config, pair));
-            default: throw new Error("no gateway provided for exchange " + exchange);
-        }
+      switch (exchange) {
+        case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
+        case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
+        case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
+        case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
+        case Models.Exchange.Bitfinex: return <Interfaces.CombinedGateway>(new Bitfinex.Bitfinex(timeProvider, config, pair));
+        default: throw new Error("no gateway provided for exchange " + exchange);
+      }
     };
 
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null);
-        if (persister)
-            return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
-        else
-            return socketIoPublisher;
+      var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null);
+      if (persister) return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
+      else return socketIoPublisher;
     };
 
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> =>
-        new Messaging.Receiver<T>(topic, io);
+    var getReceiver = <T>(topic: string): Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io);
 
     var db = Persister.loadDb(config);
 
@@ -238,7 +230,8 @@ var liveTradingSetup = () => {
 
     return {
         exchange: exchange,
-        startingActive: defaultActive,
+        pair: pair,
+        startingActive: config.GetString("TRIBECA_MODE").indexOf('auto')>-1,
         startingParameters: defaultQuotingParameters,
         timeProvider: timeProvider,
         getExchange: getExchange,
@@ -249,42 +242,41 @@ var liveTradingSetup = () => {
     };
 };
 
-interface SystemClasses {
+interface TradingSystem {
     exchange: Models.Exchange;
-    startingActive : Models.SerializedQuotesActive;
-    startingParameters : Models.QuotingParameters;
+    pair: Models.CurrencyPair;
+    startingActive: boolean;
+    startingParameters: Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
     getExchange(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
-    getReceiver<T>(topic: string) : Messaging.IReceive<T>;
-    getPersister<T>(collectionName: string) : Persister.ILoadAll<T>;
-    getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
+    getReceiver<T>(topic: string): Messaging.IReceive<T>;
+    getPersister<T>(collectionName: string): Persister.ILoadAll<T>;
+    getRepository<T>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
 
-var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
-    var orderPersister = classes.getPersister("osr");
-    var tradesPersister = classes.getPersister("trades");
-    var fairValuePersister = classes.getPersister("fv");
-    var mktTradePersister = classes.getPersister("mt");
-    var positionPersister = classes.getPersister("pos");
-    var rfvPersister = classes.getPersister("rfv");
-    var tbpPersister = classes.getPersister("tbp");
-    var tsvPersister = classes.getPersister("tsv");
-    var marketDataPersister = classes.getPersister(Messaging.Topics.MarketData);
+var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
+    var orderPersister = system.getPersister("osr");
+    var tradesPersister = system.getPersister("trades");
+    var fairValuePersister = system.getPersister("fv");
+    var mktTradePersister = system.getPersister("mt");
+    var positionPersister = system.getPersister("pos");
+    var rfvPersister = system.getPersister("rfv");
+    var tbpPersister = system.getPersister("tbp");
+    var tsvPersister = system.getPersister("tsv");
+    var marketDataPersister = system.getPersister(Messaging.Topics.MarketData);
 
-    var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
+    var paramsPersister = system.getRepository(system.startingParameters, Messaging.Topics.QuotingParametersChange);
 
     var completedSuccessfully = Q.defer<boolean>();
 
     Q.all<any>([
-      defaultActive,
       paramsPersister.loadLatest(),
       orderPersister.loadAll(1000),
       tradesPersister.loadAll(10000),
       mktTradePersister.loadAll(1),
       rfvPersister.loadAll(1)
     ]).spread((
-      initActive: Models.SerializedQuotesActive,
       initParams: Models.QuotingParameters,
       initOrders: Models.OrderStatusReport[],
       initTrades: Models.Trade[],
@@ -293,59 +285,58 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
     ) => {
         _.defaults(initParams, defaultQuotingParameters);
 
-        var orderCache = new Broker.OrderStateCache();
-
         let advert = new Models.ProductAdvertisement(
-          classes.exchange,
-          pair,
+          system.exchange,
+          system.pair,
           config.GetString("TRIBECA_MODE").replace('auto','')
         );
-        classes.getPublisher(Messaging.Topics.ProductAdvertisement)
+        system.getPublisher(Messaging.Topics.ProductAdvertisement)
           .registerSnapshot(() => [advert]).publish(advert);
 
         new Monitor.ApplicationState(
-          classes.timeProvider,
-          classes.getPublisher(Messaging.Topics.ApplicationState),
-          classes.getPublisher(Messaging.Topics.Notepad),
-          classes.getReceiver(Messaging.Topics.Notepad),
-          classes.getPublisher(Messaging.Topics.ToggleConfigs),
-          classes.getReceiver(Messaging.Topics.ToggleConfigs)
+          system.timeProvider,
+          system.getPublisher(Messaging.Topics.ApplicationState),
+          system.getPublisher(Messaging.Topics.Notepad),
+          system.getReceiver(Messaging.Topics.Notepad),
+          system.getPublisher(Messaging.Topics.ToggleConfigs),
+          system.getReceiver(Messaging.Topics.ToggleConfigs)
         );
 
-        var gateway = classes.getExchange(orderCache);
+        var orderCache = new Broker.OrderStateCache();
+        var gateway = system.getExchange(orderCache);
 
-        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
+        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === system.pair.base && p.quote === system.pair.quote))
             throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + gateway.base.name() + " really supports the specified currencies defined in TradedPair configuration option.");
 
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(
-          classes.getPublisher(Messaging.Topics.QuotingParametersChange),
-          classes.getReceiver(Messaging.Topics.QuotingParametersChange),
+          system.getPublisher(Messaging.Topics.QuotingParametersChange),
+          system.getReceiver(Messaging.Topics.QuotingParametersChange),
           initParams,
           paramsPersister
         );
 
         var broker = new Broker.ExchangeBroker(
-          pair,
+          system.pair,
           gateway.md,
           gateway.base,
           gateway.oe,
-          classes.getPublisher(Messaging.Topics.ExchangeConnectivity)
+          system.getPublisher(Messaging.Topics.ExchangeConnectivity)
         );
 
         var orderBroker = new Broker.OrderBroker(
-          classes.timeProvider,
+          system.timeProvider,
           paramsRepo,
           broker,
           gateway.oe,
           orderPersister,
           tradesPersister,
-          classes.getPublisher(Messaging.Topics.OrderStatusReports, orderPersister),
-          classes.getPublisher(Messaging.Topics.Trades, tradesPersister),
-          classes.getReceiver(Messaging.Topics.SubmitNewOrder),
-          classes.getReceiver(Messaging.Topics.CancelOrder),
-          classes.getReceiver(Messaging.Topics.CancelAllOrders),
-          classes.getReceiver(Messaging.Topics.CleanAllClosedOrders),
-          classes.getReceiver(Messaging.Topics.CleanAllOrders),
+          system.getPublisher(Messaging.Topics.OrderStatusReports, orderPersister),
+          system.getPublisher(Messaging.Topics.Trades, tradesPersister),
+          system.getReceiver(Messaging.Topics.SubmitNewOrder),
+          system.getReceiver(Messaging.Topics.CancelOrder),
+          system.getReceiver(Messaging.Topics.CancelAllOrders),
+          system.getReceiver(Messaging.Topics.CleanAllClosedOrders),
+          system.getReceiver(Messaging.Topics.CleanAllOrders),
           orderCache,
           initOrders,
           initTrades
@@ -353,34 +344,27 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
 
         var marketDataBroker = new Broker.MarketDataBroker(
           gateway.md,
-          classes.getPublisher(Messaging.Topics.MarketData, marketDataPersister),
+          system.getPublisher(Messaging.Topics.MarketData, marketDataPersister),
           marketDataPersister
         );
 
         var positionBroker = new Broker.PositionBroker(
-          classes.timeProvider,
+          system.timeProvider,
           broker,
           orderBroker,
           gateway.pg,
-          classes.getPublisher(Messaging.Topics.Position, positionPersister),
+          system.getPublisher(Messaging.Topics.Position, positionPersister),
           positionPersister,
           marketDataBroker
-        );
-
-        var active = new Active.ActiveRepository(
-          initActive.active,
-          broker,
-          classes.getPublisher(Messaging.Topics.ActiveChange),
-          classes.getReceiver(Messaging.Topics.ActiveChange)
         );
 
         var quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(
-          classes.timeProvider,
+          system.timeProvider,
           filtration,
           paramsRepo,
-          classes.getPublisher(Messaging.Topics.FairValue, fairValuePersister),
+          system.getPublisher(Messaging.Topics.FairValue, fairValuePersister),
           fairValuePersister
         );
 
@@ -391,21 +375,21 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
         longEwma.initialize(rfvValues);
 
         var quotingEngine = new QuotingEngine.QuotingEngine(
-          classes.timeProvider,
+          system.timeProvider,
           filtration,
           fvEngine,
           paramsRepo,
           orderBroker,
           positionBroker,
           new Statistics.ObservableEWMACalculator(
-            classes.timeProvider,
+            system.timeProvider,
             fvEngine,
             initParams.quotingEwma
           ),
           new PositionManagement.TargetBasePositionManager(
-            classes.timeProvider,
+            system.timeProvider,
             new PositionManagement.PositionManager(
-              classes.timeProvider,
+              system.timeProvider,
               rfvPersister,
               fvEngine,
               initRfv,
@@ -414,35 +398,40 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
             ),
             paramsRepo,
             positionBroker,
-            classes.getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister),
+            system.getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister),
             tbpPersister
           ),
           new Safety.SafetyCalculator(
-            classes.timeProvider,
+            system.timeProvider,
             fvEngine,
             paramsRepo,
             orderBroker,
-            classes.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
+            system.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
             tsvPersister
           )
         );
 
         new QuoteSender.QuoteSender(
-          classes.timeProvider,
+          system.timeProvider,
           paramsRepo,
           quotingEngine,
-          classes.getPublisher(Messaging.Topics.QuoteStatus),
+          system.getPublisher(Messaging.Topics.QuoteStatus),
           quoter,
-          active,
           positionBroker,
           fvEngine,
           marketDataBroker,
-          broker
+          broker,
+          new Active.ActiveRepository(
+            system.startingActive,
+            broker,
+            system.getPublisher(Messaging.Topics.ActiveChange),
+            system.getReceiver(Messaging.Topics.ActiveChange)
+          )
         );
 
         new MarketTrades.MarketTradeBroker(
           gateway.md,
-          classes.getPublisher(Messaging.Topics.MarketTrade, mktTradePersister),
+          system.getPublisher(Messaging.Topics.MarketTrade, mktTradePersister),
           marketDataBroker,
           quotingEngine,
           broker,
@@ -482,7 +471,7 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
                 completedSuccessfully.resolve(true);
             }).done();
 
-            classes.timeProvider.setTimeout(() => {
+            system.timeProvider.setTimeout(() => {
                 if (completedSuccessfully.promise.isFulfilled) return;
                 Utils.log("main").error("Could not cancel all open orders!");
                 completedSuccessfully.resolve(false);
