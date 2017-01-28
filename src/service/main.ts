@@ -422,7 +422,6 @@ var runTradingSystem = (classes: SystemClasses) : Q.Promise<boolean> => {
             fvEngine,
             paramsRepo,
             orderBroker,
-            paramsRepo,
             classes.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
             tsvPersister
           )
