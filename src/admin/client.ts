@@ -349,7 +349,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="#" (click)="changeTheme()">changeTheme()</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme()</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <a href="https://github.com/ctubio/tribeca/issues/new" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
       </small>
     </address>
   </div>`
