@@ -507,5 +507,5 @@
 .tradeSafety div,.tradeSafety2 div {padding:2px;}
 .exchange{background:white;padding-bottom:7px;border-top-left-radius:0px;border-top-right-radius:0px;}
 .exchangeActions{background:white;padding-top:8px;padding-bottom:8px;border-top-left-radius:0px;border-top-right-radius:0px;}
-.marketTrades{height:401px!important;}.marketQuoting{font-size:14px;}
-.table-condensed>thead>tr>th, .table-condensed>tbody>tr>th, .table-condensed>tfoot>tr>th, .table-condensed>thead>tr>td, .table-condensed>tbody>tr>td, .table-condensed>tfoot>tr>td{padding:4px 3px;}
+.marketQuoting{font-size:14px;}
+.table-condensed>thead>tr>th, .table-condensed>tbody>tr>th, .table-condensed>tfoot>tr>th, .table-condensed>thead>tr>td, .table-condensed>tbody>tr>td, .table-condensed>tfoot>tr>td{padding: 2px 3px;line-height: 1.3;}
