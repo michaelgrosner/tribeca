@@ -8,7 +8,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 220px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 215px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class TradesComponent implements OnInit, OnDestroy {
 
