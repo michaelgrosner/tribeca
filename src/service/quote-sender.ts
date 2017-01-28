@@ -34,11 +34,11 @@ export class QuoteSender {
             private _quotingEngine: QuotingEngine.QuotingEngine,
             private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
-            private _activeRepo: Active.ActiveRepository,
             private _positionBroker: Interfaces.IPositionBroker,
             private _fv: FairValue.FairValueEngine,
             private _broker: Interfaces.IMarketDataBroker,
-            private _details: Interfaces.IBroker) {
+            private _details: Interfaces.IBroker,
+            private _activeRepo: Active.ActiveRepository) {
         _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()));
         _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote, _timeProvider)));
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
