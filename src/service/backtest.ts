@@ -373,7 +373,7 @@ var backtestServer = () => {
     var backtestResultFile = process.env["RESULT_FILE"] || 'backtestResults.txt';
 
     var rawParams = fs.readFileSync(paramFile, 'utf8');
-    var parameters : BacktestParameters[] = JSON.parse(rawParams);
+    var parameters: BacktestParameters[] = JSON.parse(rawParams);
     if (fs.existsSync(savedProgressFile)) {
         var l = parseInt(fs.readFileSync(savedProgressFile, 'utf8'));
         parameters = _.takeRight(parameters, l);
