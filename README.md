@@ -127,7 +127,7 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Donations
 
-nope. but you can donate to your favorite developer today! (or tomorrow!)
+nope, this project doesn't have maintenance costs. but you can donate to your favorite developer today! (or tomorrow!)
 
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
