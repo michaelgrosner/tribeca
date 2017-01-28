@@ -65,13 +65,7 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   .1                                  /* stepOverSize */
 );
 
-let serverUrl = 'BACKTEST_SERVER_URL' in process.env
-  ? process.env['BACKTEST_SERVER_URL']
-  : "http://localhost:5001";
-
-let config = new Config.ConfigProvider();
-
-let exitingEvent : () => Q.Promise<boolean>;
+let exitingEvent: () => Q.Promise<boolean>;
 
 const performExit = () => {
   Q.timeout(exitingEvent(), 2000).then(completed => {
@@ -107,29 +101,33 @@ var backTestSimulationSetup = (
   inputData: Array<Models.Market | Models.MarketTrade>,
   parameters: Backtest.BacktestParameters
 ) => {
-    var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
-    var exchange = Models.Exchange.Null;
-    var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
+    var timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
 
-    var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
+    var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(
+      new Backtest.BacktestGateway(
+        inputData,
+        parameters.startingBasePosition,
+        parameters.startingQuotePosition,
+        <Backtest.BacktestTimeProvider>timeProvider
+      )
+    );
 
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
         return new Messaging.NullPublisher<T>();
     };
 
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
+    var getReceiver = <T>(topic: string): Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
 
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
+    var getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
 
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
-
-    var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
+    var getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
 
     return {
-        exchange: exchange,
+        config: null,
         pair: null,
+        exchange: Models.Exchange.Null,
         startingActive: true,
-        startingParameters: startingParameters,
+        startingParameters: parameters.quotingParameters,
         timeProvider: timeProvider,
         getExchange: getExchange,
         getReceiver: getReceiver,
@@ -139,8 +137,8 @@ var backTestSimulationSetup = (
     };
 };
 
-var liveTradingSetup = () => {
-    var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
+var liveTradingSetup = (config: Config.ConfigProvider) => {
+    var timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
     var app = express();
 
@@ -229,8 +227,9 @@ var liveTradingSetup = () => {
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
 
     return {
-        exchange: exchange,
+        config: config,
         pair: pair,
+        exchange: exchange,
         startingActive: config.GetString("TRIBECA_MODE").indexOf('auto')>-1,
         startingParameters: defaultQuotingParameters,
         timeProvider: timeProvider,
@@ -243,8 +242,9 @@ var liveTradingSetup = () => {
 };
 
 interface TradingSystem {
-    exchange: Models.Exchange;
+    config: Config.ConfigProvider;
     pair: Models.CurrencyPair;
+    exchange: Models.Exchange;
     startingActive: boolean;
     startingParameters: Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
@@ -288,7 +288,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
         let advert = new Models.ProductAdvertisement(
           system.exchange,
           system.pair,
-          config.GetString("TRIBECA_MODE").replace('auto','')
+          system.config.GetString("TRIBECA_MODE").replace('auto','')
         );
         system.getPublisher(Messaging.Topics.ProductAdvertisement)
           .registerSnapshot(() => [advert]).publish(advert);
@@ -439,7 +439,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           initMktTrades
         );
 
-        if (config.inBacktestMode) {
+        if (system.config.inBacktestMode) {
             var t = Utils.date();
             console.log("starting backtest");
             try {
@@ -457,7 +457,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             }];
             console.log("sending back results, took: ", Utils.date().diff(t, "seconds"));
 
-            request({url: serverUrl+"/result",
+            request({url: ('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/result",
                      method: 'POST',
                      json: results}, (err, resp, body) => { });
 
@@ -496,13 +496,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 };
 
 ((): Q.Promise<any> => {
-  if (!config.inBacktestMode) return runTradingSystem(liveTradingSetup());
+  let config = new Config.ConfigProvider();
+  if (!config.inBacktestMode) return runTradingSystem(liveTradingSetup(config));
 
   console.log("enter backtest mode");
 
   var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
       var d = Q.defer<any>();
-      request.get(serverUrl+"/"+ep, (err, resp, body) => {
+      request.get(('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/"+ep, (err, resp, body) => {
         if (err) d.reject(err);
         else d.resolve(body);
       });
