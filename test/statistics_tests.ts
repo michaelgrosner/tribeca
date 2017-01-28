@@ -1,5 +1,3 @@
-/// <reference path="../src/service/safety.ts" />
-
 import assert = require("assert");
 import Stats = require("../src/service/statistics");
 import Moment = require("moment");

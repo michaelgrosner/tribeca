@@ -1,5 +1,3 @@
-/// <reference path="../src/service/safety.ts" />
-
 import assert = require("assert");
 import Backtest = require("../src/service/backtest");
 import Interfaces = require("../src/service/interfaces");
