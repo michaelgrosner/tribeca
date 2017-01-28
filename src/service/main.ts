@@ -41,27 +41,27 @@ import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 
 let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParameters(
-  2,                                  /* width */
-  0.02,                               /* buySize */
-  0.01,                               /* sellSize */
-  Models.PingAt.BothSides,            /* pingAt */
-  Models.PongAt.ShortPingFair,        /* pongAt */
-  Models.QuotingMode.AK47,            /* mode */
-  Models.FairValueModel.BBO,          /* fvModel */
-  1,                                  /* targetBasePosition */
-  0.9,                                /* positionDivergence */
-  true,                               /* ewmaProtection */
-  Models.AutoPositionMode.EwmaBasic,  /* autoPositionMode */
-  false,                              /* aggressivePositionRebalancing */
-  0.9,                                /* tradesPerMinute */
-  569,                                /* tradeRateSeconds */
-  false,                              /* audio */
-  2,                                  /* bullets */
-  0.5,                                /* range */
-  .095,                               /* longEwma */
-  2*.095,                             /* shortEwma */
-  .095,                               /* quotingEwma */
-  3,                                  /* aprMultiplier */
+  2                                  ,/* width */
+  0.02                               ,/* buySize */
+  0.01                               ,/* sellSize */
+  Models.PingAt.BothSides            ,/* pingAt */
+  Models.PongAt.ShortPingFair        ,/* pongAt */
+  Models.QuotingMode.AK47            ,/* mode */
+  Models.FairValueModel.BBO          ,/* fvModel */
+  1                                  ,/* targetBasePosition */
+  0.9                                ,/* positionDivergence */
+  true                               ,/* ewmaProtection */
+  Models.AutoPositionMode.EwmaBasic  ,/* autoPositionMode */
+  false                              ,/* aggressivePositionRebalancing */
+  0.9                                ,/* tradesPerMinute */
+  569                                ,/* tradeRateSeconds */
+  false                              ,/* audio */
+  2                                  ,/* bullets */
+  0.5                                ,/* range */
+  .095                               ,/* longEwma */
+  2*.095                             ,/* shortEwma */
+  .095                               ,/* quotingEwma */
+  3                                  ,/* aprMultiplier */
   .1                                  /* stepOverSize */
 );
 
@@ -542,16 +542,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
   };
 
   return inputDataPromise.then(
-    (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
-      var singleRun = () => {
-        var runWithParameters = (p : Backtest.BacktestParameters) => {
-          return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : false;
-        };
-
-        return nextParameters().then(runWithParameters);
-      };
-
-      return promiseWhile(<any>singleRun);
+    (inputMarketData: Array<Models.Market | Models.MarketTrade>): Q.Promise<any> => {
+      return promiseWhile(<any>() => {
+        return nextParameters().then((p: Backtest.BacktestParameters) => {
+          return p !== null
+            ? runTradingSystem(backTestSimulationSetup(inputMarketData, p))
+            : false;
+        });
+      });
     }
   );
 })().done();
