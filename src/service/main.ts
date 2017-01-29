@@ -258,7 +258,6 @@ interface TradingSystem {
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
     var rfvPersister = system.getPersister("rfv");
-    var tbpPersister = system.getPersister("tbp");
 
     var paramsPersister = system.getRepository(system.startingParameters, Messaging.Topics.QuotingParametersChange);
 
@@ -383,8 +382,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             ),
             paramsRepo,
             positionBroker,
-            system.getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister),
-            tbpPersister
+            system.getPublisher(Messaging.Topics.TargetBasePosition)
           ),
           new Safety.SafetyCalculator(
             system.timeProvider,
