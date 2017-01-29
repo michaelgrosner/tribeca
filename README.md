@@ -103,7 +103,7 @@ Later you can scroll the color-formatted output in the log file with `npm run lo
 
 ### Unreleased Changelog:
 
-Added nodejs6, typescript2 and angular2.
+Added nodejs6, typescript2, angular2 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
