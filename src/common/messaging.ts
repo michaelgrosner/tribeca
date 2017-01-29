@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs/Observable';
+
 import Models = require("./models");
 
 module Prefixes {
@@ -148,107 +150,88 @@ export class Publisher<T> implements IPublish<T> {
 }
 
 export class NullPublisher<T> implements IPublish<T> {
-    public publish = (msg : T) => {};
-    public registerSnapshot = (generator : () => T[]) => this;
+  public publish = (msg: T) => {};
+  public registerSnapshot = (generator: () => T[]) => this;
 }
 
 export interface ISubscribe<T> {
-    registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
-    registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
-    registerConnectHandler: (handler: () => void) => ISubscribe<T>;
-    connected: boolean;
-    disconnect: () => void;
+  registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
+  registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
+  registerConnectHandler: (handler: () => void) => ISubscribe<T>;
+  connected: boolean;
+  disconnect: () => void;
 }
 
-export class Subscriber<T> implements ISubscribe<T> {
-    private _incrementalHandler: (msg: T) => void = null;
-    private _disconnectHandler: () => void = null;
-    private _connectHandler: () => void = null;
-    private _socket: SocketIOClient.Socket;
+export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
+  private _disconnectHandler: () => void = null;
+  private _connectHandler: () => void = null;
+  private _socket: SocketIOClient.Socket;
+  private _observer = null;
 
-    constructor(private topic: string,
-                io: SocketIOClient.Socket) {
-        this._socket = io;
+  constructor(
+    private topic: string,
+    io: SocketIOClient.Socket
+  ) {
+    super(observer => {
+      this._observer = observer;
+      this._socket = io;
 
-        // this._log("creating subscriber to", this.topic, "; connected?", this.connected);
+      if (this.connected) this.onConnect();
 
-        if (this.connected)
-            this.onConnect();
+      this._socket
+        .on("connect", this.onConnect)
+        .on("disconnect", this.onDisconnect)
+        .on(Prefixes.MESSAGE + topic, (data) => this._observer.next(data))
+        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => this._observer.next(item)));
+    });
+  }
 
-        this._socket.on("connect", this.onConnect)
-                .on("disconnect", this.onDisconnect)
-                .on(Prefixes.MESSAGE + topic, this.onIncremental)
-                .on(Prefixes.SNAPSHOT + topic, m => m.forEach(this.onIncremental));
-    }
+  public get connected() : boolean {
+    return this._socket.connected;
+  }
 
-    public get connected() : boolean {
-        return this._socket.connected;
-    }
+  private onConnect = () => {
+    if (this._connectHandler !== null)
+      this._connectHandler();
 
-    private onConnect = () => {
-        // this._log("connect to", this.topic);
-        if (this._connectHandler !== null) {
-            this._connectHandler();
-        }
+    this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
+  };
 
-        this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
-    };
+  private onDisconnect = () => {
+    if (this._disconnectHandler !== null)
+      this._disconnectHandler();
+  };
 
-    private onDisconnect = () => {
-        // this._log("disconnected from", this.topic);
-        if (this._disconnectHandler !== null)
-            this._disconnectHandler();
-    };
+  public disconnect = () => {
+    this._socket
+      .off("connect", this.onConnect)
+      .off("disconnect", this.onDisconnect)
+      .off(Prefixes.MESSAGE + this.topic, (data) => this._observer.next(data))
+      .off(Prefixes.SNAPSHOT + this.topic, (data) => data.forEach(item => this._observer.next(item)));
+    this._observer.unsubscribe();
+  };
 
-    private onIncremental = (m : T) => {
-      if (this._incrementalHandler !== null)
-        this._incrementalHandler(m);
-    };
+  public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
+    if (this._observer === null) this.subscribe(incrementalHandler);
+    else throw new Error("already registered incremental handler for topic " + this.topic);
+    return this;
+  };
 
-    public disconnect = () => {
-        // this._log("forcing disconnection from ", this.topic);
-        this._socket.off("connect", this.onConnect);
-        this._socket.off("disconnect", this.onDisconnect);
-        this._socket.off(Prefixes.MESSAGE + this.topic, this.onIncremental);
-        this._socket.off(Prefixes.SNAPSHOT + this.topic, m => m.forEach(this.onIncremental));
-    };
+  public registerDisconnectedHandler = (handler : () => void) => {
+    if (this._disconnectHandler === null) this._disconnectHandler = handler;
+    else throw new Error("already registered disconnect handler for topic " + this.topic);
+    return this;
+  };
 
-    public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
-        if (this._incrementalHandler === null) {
-            this._incrementalHandler = incrementalHandler;
-        }
-        else {
-            throw new Error("already registered incremental handler for topic " + this.topic);
-        }
-
-        return this;
-    };
-
-    public registerDisconnectedHandler = (handler : () => void) => {
-        if (this._disconnectHandler === null) {
-            this._disconnectHandler = handler;
-        }
-        else {
-            throw new Error("already registered disconnect handler for topic " + this.topic);
-        }
-
-        return this;
-    };
-
-    public registerConnectHandler = (handler : () => void) => {
-        if (this._connectHandler === null) {
-            this._connectHandler = handler;
-        }
-        else {
-            throw new Error("already registered connect handler for topic " + this.topic);
-        }
-
-        return this;
-    };
+  public registerConnectHandler = (handler : () => void) => {
+    if (this._connectHandler === null) this._connectHandler = handler;
+    else throw new Error("already registered connect handler for topic " + this.topic);
+    return this;
+  };
 }
 
 export interface IFire<T> {
-    fire(msg: T): void;
+  fire(msg: T): void;
 }
 
 export class Fire<T> implements IFire<T> {
