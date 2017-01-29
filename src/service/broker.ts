@@ -23,7 +23,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     };
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,) {
+                private _marketPublisher : Messaging.IPublish<Models.Market>) {
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
@@ -559,7 +559,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             });
         } catch (e) {}
         this.skipInternalMetrics = false;
-        this._positionPersister.persist(positionReport);
     };
 
     private osr: Models.OrderStatusReport[] = [];
@@ -597,7 +596,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
-                private _positionPersister : Persister.IPersist<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
