@@ -257,9 +257,7 @@ interface TradingSystem {
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
-    var fairValuePersister = system.getPersister("fv");
     var mktTradePersister = system.getPersister("mt");
-    var positionPersister = system.getPersister("pos");
     var rfvPersister = system.getPersister("rfv");
     var tbpPersister = system.getPersister("tbp");
     var tsvPersister = system.getPersister("tsv");
@@ -356,8 +354,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.timeProvider,
           filtration,
           paramsRepo,
-          system.getPublisher(Messaging.Topics.FairValue, fairValuePersister),
-          fairValuePersister
+          system.getPublisher(Messaging.Topics.FairValue)
         );
 
         var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
