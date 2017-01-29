@@ -351,8 +351,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           broker,
           orderBroker,
           gateway.pg,
-          system.getPublisher(Messaging.Topics.Position, positionPersister),
-          positionPersister,
+          system.getPublisher(Messaging.Topics.Position),
           marketDataBroker
         );
 
