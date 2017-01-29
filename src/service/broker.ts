@@ -350,7 +350,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this.OrderUpdate.trigger(o);
 
-        this._orderPersister.persist(o);
         if (o.orderStatus!==Models.OrderStatus.New)
           this._orderStatusPublisher.publish(o);
 
@@ -415,7 +414,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _orderPersister : Persister.IPersist<Models.OrderStatusReport>,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
                 private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Messaging.IPublish<Models.Trade>,
@@ -425,7 +423,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cleanAllClosedOrdersReciever : Messaging.IReceive<Models.CleanAllClosedOrdersRequest>,
                 private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
                 private _orderCache : OrderStateCache,
-                initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
@@ -442,7 +439,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
-            // this._log.info("got new order req", o);
             try {
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
@@ -454,7 +450,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cancelOrderReciever.registerReceiver(o => {
-            // this._log.info("got new cancel req", o);
             try {
                 this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
             } catch (e) {
@@ -463,7 +458,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cancelAllOrdersReciever.registerReceiver(o => {
-            // this._log.info("handling cancel all orders request");
             this.cancelOpenOrders()
                 // .then(x => this._log.info("cancelled all ", x, " open orders"),
                       // e => this._log.error(e, "error when cancelling all orders!"))
@@ -471,7 +465,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cleanAllClosedOrdersReciever.registerReceiver(o => {
-            // this._log.info("handling clean all closed orders request");
             this.cleanClosedOrders()
                 // .then(x => this._log.info("cleaned all closed ", x, " closed orders"),
                       // e => this._log.error(e, "error when cleaning all closed orders!"))
@@ -479,7 +472,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         _cleanAllOrdersReciever.registerReceiver(o => {
-            // this._log.info("handling clean all orders request");
             this.cleanOrders()
                 // .then(x => this._log.info("cleaned all ", x, " closed orders"),
                       // e => this._log.error(e, "error when cleaning all orders!"))
@@ -488,11 +480,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
-        // _.each(initOrders, this.addOrderStatusToMemory);
-        // this._log.info("loaded %d osrs", Object.keys(this._orderCache.allOrders).length);
-
         _.each(initTrades, t => this._trades.push(t));
-        // this._log.info("loaded %d trades", this._trades.length);
 
         // this._oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);

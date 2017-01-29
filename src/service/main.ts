@@ -256,7 +256,6 @@ interface TradingSystem {
 }
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
-    var orderPersister = system.getPersister("osr");
     var tradesPersister = system.getPersister("trades");
     var fairValuePersister = system.getPersister("fv");
     var mktTradePersister = system.getPersister("mt");
@@ -271,13 +270,11 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
     Q.all<any>([
       paramsPersister.loadLatest(),
-      orderPersister.loadAll(1000),
       tradesPersister.loadAll(10000),
       mktTradePersister.loadAll(1),
       rfvPersister.loadAll(1)
     ]).spread((
       initParams: Models.QuotingParameters,
-      initOrders: Models.OrderStatusReport[],
       initTrades: Models.Trade[],
       initMktTrades: Models.MarketTrade[],
       initRfv: Models.RegularFairValue[]
@@ -327,9 +324,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           paramsRepo,
           broker,
           gateway.oe,
-          orderPersister,
           tradesPersister,
-          system.getPublisher(Messaging.Topics.OrderStatusReports, orderPersister),
+          system.getPublisher(Messaging.Topics.OrderStatusReports),
           system.getPublisher(Messaging.Topics.Trades, tradesPersister),
           system.getReceiver(Messaging.Topics.SubmitNewOrder),
           system.getReceiver(Messaging.Topics.CancelOrder),
@@ -337,7 +333,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getReceiver(Messaging.Topics.CleanAllClosedOrders),
           system.getReceiver(Messaging.Topics.CleanAllOrders),
           orderCache,
-          initOrders,
           initTrades
         );
 
