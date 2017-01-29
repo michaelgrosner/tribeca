@@ -25,17 +25,13 @@ export class FairValueEngine {
         this._latest = val;
         this.FairValueChanged.trigger();
         this._fvPublisher.publish(this._latest);
-
-        if (this._latest !== null)
-            this._fvPersister.persist(this._latest);
     }
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _filtration: MarketFiltration.MarketFiltration,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
-        private _fvPublisher: Messaging.IPublish<Models.FairValue>,
-        private _fvPersister: Persister.IPersist<Models.FairValue>) {
+        private _fvPublisher: Messaging.IPublish<Models.FairValue>) {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
