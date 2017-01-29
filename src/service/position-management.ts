@@ -76,8 +76,7 @@ export class TargetBasePositionManager {
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
-        private _wrapped: Messaging.IPublish<Models.TargetBasePositionValue>,
-        private _persister: Persister.IPersist<Models.TargetBasePositionValue>) {
+        private _wrapped: Messaging.IPublish<Models.TargetBasePositionValue>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => this.recomputeTargetPosition());
@@ -99,10 +98,7 @@ export class TargetBasePositionManager {
         if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01) {
             this._latest = new Models.TargetBasePositionValue(targetBasePosition, this._timeProvider.utcNow());
             this.NewTargetPosition.trigger();
-
             this._wrapped.publish(this.latestTargetPosition);
-            this._persister.persist(this.latestTargetPosition);
-
             this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
         }
     };
