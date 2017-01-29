@@ -264,7 +264,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var rfvPersister = system.getPersister("rfv");
     var tbpPersister = system.getPersister("tbp");
     var tsvPersister = system.getPersister("tsv");
-    var marketDataPersister = system.getPersister(Messaging.Topics.MarketData);
 
     var paramsPersister = system.getRepository(system.startingParameters, Messaging.Topics.QuotingParametersChange);
 
@@ -344,8 +343,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
         var marketDataBroker = new Broker.MarketDataBroker(
           gateway.md,
-          system.getPublisher(Messaging.Topics.MarketData, marketDataPersister),
-          marketDataPersister
+          system.getPublisher(Messaging.Topics.MarketData)
         );
 
         var positionBroker = new Broker.PositionBroker(
