@@ -259,7 +259,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
     var rfvPersister = system.getPersister("rfv");
     var tbpPersister = system.getPersister("tbp");
-    var tsvPersister = system.getPersister("tsv");
 
     var paramsPersister = system.getRepository(system.startingParameters, Messaging.Topics.QuotingParametersChange);
 
@@ -392,8 +391,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             fvEngine,
             paramsRepo,
             orderBroker,
-            system.getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister),
-            tsvPersister
+            system.getPublisher(Messaging.Topics.TradeSafetyValue)
           )
         );
 
