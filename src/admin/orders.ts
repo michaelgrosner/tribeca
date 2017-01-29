@@ -86,7 +86,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
     let exists: boolean = false;
-    let isClosed: boolean = (o.data[1] == Models.OrderStatus.Cancelled
+    let isClosed: boolean = (o.data[1] == Models.OrderStatus.New
+      || o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
       || o.data[1] == Models.OrderStatus.Rejected);
     this.gridOptions.api.forEachNode((node: RowNode) => {
@@ -106,7 +107,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         }
       }
     });
-    if (!exists && !isClosed && o.data[1] != Models.OrderStatus.New)
+    if (!exists && !isClosed)
       this.gridOptions.api.addItems([{
         orderId: o.data[0],
         exchange: o.data[2],

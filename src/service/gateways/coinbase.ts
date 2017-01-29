@@ -667,7 +667,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: orderId,
             orderStatus: ordStatus,
             time: tsMsg.time,
-            leavesQuantity: 0,
+            leavesQuantity: 0
         };
 
         this.OrderUpdate.trigger(status);

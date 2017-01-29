@@ -2736,7 +2736,7 @@
     },
     "shortid": {
       "version": "2.2.6",
-      "from": "shortid@>=2.2.6 <3.0.0",
+      "from": "shortid@latest",
       "resolved": "https://registry.npmjs.org/shortid/-/shortid-2.2.6.tgz"
     },
     "shush": {

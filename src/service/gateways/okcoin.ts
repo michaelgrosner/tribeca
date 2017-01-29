@@ -97,7 +97,7 @@ class OkCoinWebsocket {
                     this._log.warn("Unsuccessful message", msg);
                 else
                     this._log.info("Successfully connected to %s", msg.channel);
-                return;
+                if (msg.channel.indexOf('ok_spot')!==0) return;
             }
 
             var handler = this._handlers[msg.channel];
@@ -220,6 +220,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
         var order = this._ordersWaitingForAckQueue.shift();
+
         var orderId = order[0];
         if (typeof orderId === "undefined") {
             this._log.error("got an order ack when there was no order queued!", util.format(ts.data));
@@ -228,15 +229,14 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         var osr : Models.OrderStatusReport = { orderId: orderId, time: ts.time };
 
-        if (ts.data.result === "true") {
+        if (typeof ts.data !== "undefined" && ts.data.result === "true") {
             osr.exchangeId = ts.data.order_id.toString();
             osr.orderStatus = Models.OrderStatus.Working;
             osr.leavesQuantity = order[1];
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected = true;
-            osr.leavesQuantity = 0;
+            osr.done = true;
         }
 
         this.OrderUpdate.trigger(osr);
@@ -425,7 +425,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
     private _log = Utils.log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
-        setInterval(this.trigger, 15000);
+        setInterval(this.trigger, 7500);
         setTimeout(this.trigger, 10);
     }
 }
