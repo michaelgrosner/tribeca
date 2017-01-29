@@ -20,12 +20,10 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
         this._currentBook = book;
         this.MarketData.trigger(this.currentBook);
         this._marketPublisher.publish(this.currentBook);
-        this._persister.persist(this.currentBook);
     };
 
     constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,
-                private _persister: Persister.IPersist<Models.Market>) {
+                private _marketPublisher : Messaging.IPublish<Models.Market>,) {
         _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
 
         this._mdGateway.MarketData.on(this.handleMarketData);
