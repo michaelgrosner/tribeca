@@ -353,7 +353,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.OrderUpdate.trigger(o);
 
         this._orderPersister.persist(o);
-        this._orderStatusPublisher.publish(o);
+        if (o.orderStatus!==Models.OrderStatus.New)
+          this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
