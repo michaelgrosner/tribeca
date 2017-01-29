@@ -257,7 +257,6 @@ interface TradingSystem {
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
-    var mktTradePersister = system.getPersister("mt");
     var rfvPersister = system.getPersister("rfv");
     var tbpPersister = system.getPersister("tbp");
     var tsvPersister = system.getPersister("tsv");
@@ -269,12 +268,10 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     Q.all<any>([
       paramsPersister.loadLatest(),
       tradesPersister.loadAll(10000),
-      mktTradePersister.loadAll(1),
       rfvPersister.loadAll(1)
     ]).spread((
       initParams: Models.QuotingParameters,
       initTrades: Models.Trade[],
-      initMktTrades: Models.MarketTrade[],
       initRfv: Models.RegularFairValue[]
     ) => {
         _.defaults(initParams, defaultQuotingParameters);
@@ -420,12 +417,10 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
         new MarketTrades.MarketTradeBroker(
           gateway.md,
-          system.getPublisher(Messaging.Topics.MarketTrade, mktTradePersister),
+          system.getPublisher(Messaging.Topics.MarketTrade),
           marketDataBroker,
           quotingEngine,
-          broker,
-          mktTradePersister,
-          initMktTrades
+          broker
         );
 
         if (system.config.inBacktestMode) {

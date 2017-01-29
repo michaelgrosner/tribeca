@@ -60,21 +60,16 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         this.marketTrades.push(t);
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
-        this._persister.persist(t);
     };
 
-    constructor(private _mdGateway: Interfaces.IMarketDataGateway,
-        private _marketTradePublisher: Messaging.IPublish<Models.MarketTrade>,
-        private _mdBroker: Interfaces.IMarketDataBroker,
-        private _quoteEngine: QuotingEngine.QuotingEngine,
-        private _base: Broker.ExchangeBroker,
-        private _persister: P.IPersist<Models.MarketTrade>,
-        initMkTrades: Array<Models.MarketTrade>) {
-
-        initMkTrades.forEach(t => this.marketTrades.push(t));
-        // this._log.info("loaded %d market trades", this.marketTrades.length);
-
-        _marketTradePublisher.registerSnapshot(() => _.takeRight(this.marketTrades, 50));
-        this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
+    constructor(
+      private _mdGateway: Interfaces.IMarketDataGateway,
+      private _marketTradePublisher: Messaging.IPublish<Models.MarketTrade>,
+      private _mdBroker: Interfaces.IMarketDataBroker,
+      private _quoteEngine: QuotingEngine.QuotingEngine,
+      private _base: Broker.ExchangeBroker
+    ) {
+      _marketTradePublisher.registerSnapshot(() => _.takeRight(this.marketTrades, 69));
+      this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
     }
 }
