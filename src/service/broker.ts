@@ -147,7 +147,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
-    private _cancelsWaitingForExchangeOrderId : {[clId : string] : Models.OrderCancel} = {};
+    private _cancelsWaitingForExchangeOrderId: {[clId : string]: Models.OrderCancel} = {};
 
     Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
@@ -199,7 +199,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return new Models.SentOrder(rpt.orderId);
     };
 
-    cancelOrder = (cancel : Models.OrderCancel) => {
+    cancelOrder = (cancel: Models.OrderCancel) => {
         var rpt = this._orderCache.allOrders[cancel.origOrderId];
 
         if (!this._oeGateway.cancelsByClientOrderId) {
@@ -567,7 +567,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     private skipInternalMetrics: boolean = false;
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
-        if (o.orderStatus == Models.OrderStatus.Cancelled
+        if (o.orderStatus == Models.OrderStatus.New
+          || o.orderStatus == Models.OrderStatus.Cancelled
           || o.orderStatus == Models.OrderStatus.Complete
           || o.orderStatus == Models.OrderStatus.Rejected
         ) this.osr = this.osr.filter(x => x.orderId !== o.orderId);

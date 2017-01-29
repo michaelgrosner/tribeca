@@ -144,7 +144,8 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   }
 
   private updateQuote = (o: Models.Timestamped<any[]>) => {
-    if (o.data[1] == Models.OrderStatus.Cancelled
+    if (o.data[1] == Models.OrderStatus.New
+      || o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
       || o.data[1] == Models.OrderStatus.Rejected
     ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.data[0]);
