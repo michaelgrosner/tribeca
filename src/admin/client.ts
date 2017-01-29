@@ -414,20 +414,20 @@ class ClientComponent implements OnInit, OnDestroy {
 
     this.subscriberProductAdvertisement = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert, a => a.forEach(this.onAdvert))
+      .registerSubscriber(this.onAdvert)
       .registerDisconnectedHandler(() => this.reset());
 
     this.subscriberApplicationState = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ApplicationState)
-      .registerSubscriber(this.onAppState, a => a.forEach(this.onAppState));
+      .registerSubscriber(this.onAppState);
 
     this.subscriberNotepad = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.Notepad)
-      .registerSubscriber(this.onNotepad, a => a.forEach(this.onNotepad));
+      .registerSubscriber(this.onNotepad);
 
     this.subscriberToggleConfigs = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ToggleConfigs)
-      .registerSubscriber(this.onToggleConfigs, a => a.forEach(this.onToggleConfigs));
+      .registerSubscriber(this.onToggleConfigs);
   }
 
   ngOnDestroy() {

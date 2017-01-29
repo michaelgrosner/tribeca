@@ -153,7 +153,7 @@ export class NullPublisher<T> implements IPublish<T> {
 }
 
 export interface ISubscribe<T> {
-    registerSubscriber: (incrementalHandler: (msg: T) => void, snapshotHandler: (msgs: T[]) => void) => ISubscribe<T>;
+    registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
     registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
     registerConnectHandler: (handler: () => void) => ISubscribe<T>;
     connected: boolean;
@@ -162,7 +162,6 @@ export interface ISubscribe<T> {
 
 export class Subscriber<T> implements ISubscribe<T> {
     private _incrementalHandler: (msg: T) => void = null;
-    private _snapshotHandler: (msgs: T[]) => void = null;
     private _disconnectHandler: () => void = null;
     private _connectHandler: () => void = null;
     private _socket: SocketIOClient.Socket;
@@ -179,7 +178,7 @@ export class Subscriber<T> implements ISubscribe<T> {
         this._socket.on("connect", this.onConnect)
                 .on("disconnect", this.onDisconnect)
                 .on(Prefixes.MESSAGE + topic, this.onIncremental)
-                .on(Prefixes.SNAPSHOT + topic, this.onSnapshot);
+                .on(Prefixes.SNAPSHOT + topic, m => m.forEach(this.onIncremental));
     }
 
     public get connected() : boolean {
@@ -202,14 +201,8 @@ export class Subscriber<T> implements ISubscribe<T> {
     };
 
     private onIncremental = (m : T) => {
-        if (this._incrementalHandler !== null)
-            this._incrementalHandler(m);
-    };
-
-    private onSnapshot = (msgs : T[]) => {
-        // this._log("handling snapshot for", this.topic, "nMsgs:", msgs.length);
-        if (this._snapshotHandler !== null)
-            this._snapshotHandler(msgs);
+      if (this._incrementalHandler !== null)
+        this._incrementalHandler(m);
     };
 
     public disconnect = () => {
@@ -217,22 +210,15 @@ export class Subscriber<T> implements ISubscribe<T> {
         this._socket.off("connect", this.onConnect);
         this._socket.off("disconnect", this.onDisconnect);
         this._socket.off(Prefixes.MESSAGE + this.topic, this.onIncremental);
-        this._socket.off(Prefixes.SNAPSHOT + this.topic, this.onSnapshot);
+        this._socket.off(Prefixes.SNAPSHOT + this.topic, m => m.forEach(this.onIncremental));
     };
 
-    public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
+    public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
         if (this._incrementalHandler === null) {
             this._incrementalHandler = incrementalHandler;
         }
         else {
             throw new Error("already registered incremental handler for topic " + this.topic);
-        }
-
-        if (this._snapshotHandler === null) {
-            this._snapshotHandler = snapshotHandler;
-        }
-        else {
-            throw new Error("already registered snapshot handler for topic " + this.topic);
         }
 
         return this;

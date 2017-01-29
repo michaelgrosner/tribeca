@@ -36,7 +36,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.subscriberOSR = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData, os => os.forEach(this.addRowData));
+      .registerSubscriber(this.addRowData);
   }
 
   ngOnDestroy() {

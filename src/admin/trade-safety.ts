@@ -41,12 +41,12 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
     this.subscriberFairValue = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.FairValue)
       .registerDisconnectedHandler(this.clearFairValue)
-      .registerSubscriber(this.updateFairValue, us => us.forEach(this.updateFairValue));
+      .registerSubscriber(this.updateFairValue);
 
     this.subscriberTradeSafetyValue = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
       .registerDisconnectedHandler(this.clear)
-      .registerSubscriber(this.updateValues, us => us.forEach(this.updateValues));
+      .registerSubscriber(this.updateValues);
   }
 
   ngOnDestroy() {

@@ -20,30 +20,28 @@ export class FireFactory {
 export class SubscriberFactory {
     constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
 
-    public getSubscriber = <T>(scope : any, topic : string) : Messaging.ISubscribe<T> => {
-        return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
+    public getSubscriber = <T>(scope: any, topic: string): Messaging.ISubscribe<T> => {
+      return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
     }
 }
 
 class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
-    private _wrapped : Messaging.ISubscribe<T>;
+    private _wrapped: Messaging.ISubscribe<T>;
 
-    constructor(private _scope : any, topic : string, io : any) {
-        this._wrapped = new Messaging.Subscriber<T>(topic, io);
+    constructor(private _scope: any, topic: string, io: any) {
+      this._wrapped = new Messaging.Subscriber<T>(topic, io);
     }
 
-    public registerSubscriber = (incrementalHandler : (msg : T) => void, snapshotHandler : (msgs : T[]) => void) => {
-        return this._wrapped.registerSubscriber(
-            x => this._scope.run(() => incrementalHandler(x)),
-            xs => this._scope.run(() => snapshotHandler(xs)))
+    public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
+      return this._wrapped.registerSubscriber(x => this._scope.run(() => incrementalHandler(x)))
     };
 
-    public registerDisconnectedHandler = (handler : () => void) => {
-        return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
+    public registerDisconnectedHandler = (handler: () => void) => {
+      return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
     };
 
-    public registerConnectHandler = (handler : () => void) => {
-        return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
+    public registerConnectHandler = (handler: () => void) => {
+      return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
     };
 
     public disconnect = () => this._wrapped.disconnect();

@@ -62,7 +62,7 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
     var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
       this.subscribers.push(
         this.subscriberFactory.getSubscriber<T>(this.zone, topic)
-          .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
+          .registerSubscriber(updateFn)
           .registerDisconnectedHandler(clearFn)
       );
     };
