@@ -24,7 +24,6 @@ export class SafetyCalculator {
             this._latest = val;
             this.NewValue.trigger(this.latest);
 
-            this._persister.persist(this.latest);
             this._publisher.publish(this.latest);
         }
     }
@@ -37,8 +36,7 @@ export class SafetyCalculator {
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
         private _broker: Broker.OrderBroker,
-        private _publisher: Messaging.IPublish<Models.TradeSafety>,
-        private _persister: Persister.IPersist<Models.TradeSafety>) {
+        private _publisher: Messaging.IPublish<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.cancelOpenOrders());
