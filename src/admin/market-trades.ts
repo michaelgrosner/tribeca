@@ -30,7 +30,7 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     this.subscriberMarketTrade = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.MarketTrade)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData, x => x.forEach(this.addRowData));
+      .registerSubscriber(this.addRowData);
   }
 
   ngOnDestroy() {

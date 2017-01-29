@@ -34,12 +34,12 @@ export class TradesComponent implements OnInit, OnDestroy {
 
     this.subscriberQPChange = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
-      .registerSubscriber(this.updateQP, qp => qp.forEach(this.updateQP));
+      .registerSubscriber(this.updateQP);
 
     this.subscriberTrades = this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.Trades)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData, trades => trades.forEach(this.addRowData));
+      .registerSubscriber(this.addRowData);
   }
 
   ngOnDestroy() {
