@@ -8,6 +8,8 @@ RUN git clone https://github.com/ctubio/tribeca.git
 #RUN git clone -b CUSTOM_BRANCH_NAME https://github.com/ctubio/tribeca.git
 
 WORKDIR tribeca
+# Remove the ssl certification (not recommanded):
+# RUN rm -r etc/sslcert
 
 RUN npm install --unsafe-perm
 
