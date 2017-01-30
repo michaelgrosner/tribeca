@@ -53,6 +53,12 @@ Optional:
 
 See [etc](https://github.com/ctubio/tribeca/tree/master/etc) folder.
 
+### Upgrade to the latest commit
+
+Feel free anytime to check if there are new modifications with `npm run diff`.
+
+Once you decide that is time to upgrade, execute `npm run latest` to download and install the latest modifications in your remote branch (or directly `npm run upgrade` to skip the display of the commit messages).
+
 ### Application Usage
 
 1. Open your web browser to connect to HTTPS port `3000` of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.

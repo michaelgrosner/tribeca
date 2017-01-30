@@ -2860,7 +2860,7 @@
     },
     "uglify-js": {
       "version": "2.7.5",
-      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.5.tgz",
+      "from": "uglify-js@>=2.7.5 <3.0.0",
       "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.5.tgz"
     },
     "uglify-to-browserify": {
