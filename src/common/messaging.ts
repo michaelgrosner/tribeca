@@ -182,7 +182,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
         .on("connect", this.onConnect)
         .on("disconnect", this.onDisconnect)
         .on(Prefixes.MESSAGE + topic, (data) => this._observer.next(data))
-        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => this._observer.next(item)));
+        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => this._observer.next(item), 0)));
     });
   }
 
@@ -207,7 +207,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       .off("connect", this.onConnect)
       .off("disconnect", this.onDisconnect)
       .off(Prefixes.MESSAGE + this.topic, (data) => this._observer.next(data))
-      .off(Prefixes.SNAPSHOT + this.topic, (data) => data.forEach(item => this._observer.next(item)));
+      .off(Prefixes.SNAPSHOT + this.topic, (data) => data.forEach(item => setTimeout(() => this._observer.next(item), 0)))
     this._observer.unsubscribe();
   };
 
