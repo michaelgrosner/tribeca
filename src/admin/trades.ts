@@ -18,6 +18,8 @@ export class TradesComponent implements OnInit, OnDestroy {
   public pair: Models.CurrencyPair;
   public audio: boolean;
 
+  private sortTimeout: number;
+
   private subscriberTrades: Messaging.ISubscribe<Models.Trade>;
   private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
 
@@ -112,8 +114,11 @@ export class TradesComponent implements OnInit, OnDestroy {
             side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy")
           }));
           if (t.loadedFromDB === false) {
-            this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
-            this.gridOptions.api.refreshView();
+            if (this.sortTimeout) window.clearTimeout(this.sortTimeout);
+            this.sortTimeout = window.setTimeout(() => {
+              this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
+              this.gridOptions.api.refreshView();
+            }, 269);
             if (this.audio) {
               var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
               audio.volume = 0.5;
