@@ -63,7 +63,7 @@
     "typescript": "^2.1.5",
     "uglify-js": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.5.tgz",
     "uuid": "^3.0.1",
-    "ws": "^1.1.1",
+    "ws": "^2.0.0",
     "zone.js": "^0.7.6"
   },
   "devDependencies": {

@@ -1246,6 +1246,11 @@
           "version": "2.3.3",
           "from": "debug@2.3.3",
           "resolved": "https://registry.npmjs.org/debug/-/debug-2.3.3.tgz"
+        },
+        "ws": {
+          "version": "1.1.1",
+          "from": "ws@1.1.1",
+          "resolved": "https://registry.npmjs.org/ws/-/ws-1.1.1.tgz"
         }
       }
     },
@@ -1263,6 +1268,11 @@
           "version": "2.3.3",
           "from": "debug@2.3.3",
           "resolved": "https://registry.npmjs.org/debug/-/debug-2.3.3.tgz"
+        },
+        "ws": {
+          "version": "1.1.1",
+          "from": "ws@1.1.1",
+          "resolved": "https://registry.npmjs.org/ws/-/ws-1.1.1.tgz"
         }
       }
     },
@@ -2965,9 +2975,16 @@
       "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
     },
     "ws": {
-      "version": "1.1.1",
-      "from": "ws@>=1.1.1 <2.0.0",
-      "resolved": "https://registry.npmjs.org/ws/-/ws-1.1.1.tgz"
+      "version": "2.0.0",
+      "from": "ws@>=2.0.0 <3.0.0",
+      "resolved": "https://registry.npmjs.org/ws/-/ws-2.0.0.tgz",
+      "dependencies": {
+        "ultron": {
+          "version": "1.1.0",
+          "from": "ultron@>=1.1.0 <1.2.0",
+          "resolved": "https://registry.npmjs.org/ultron/-/ultron-1.1.0.tgz"
+        }
+      }
     },
     "wtf-8": {
       "version": "1.0.0",
