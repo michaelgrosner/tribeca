@@ -77,7 +77,7 @@
   "main": "./tribeca.js",
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
-    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run upgrade || echo Already running latest $(git rev-parse @{u}) version!",
+    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run upgrade || echo Already running latest `_ @{u}` version!",
     "upgrade": "git fetch && git merge FETCH_HEAD && npm install && npm restart",
     "postupgrade": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "log-git": "git --no-pager log --graph --oneline @..@{u}",
