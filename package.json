@@ -76,10 +76,11 @@
   },
   "main": "./tribeca.js",
   "scripts": {
-    "diff": "git remote update && git --no-pager log --graph --oneline @..@{u}",
-    "latest": "npm run diff && test \"$(git rev-parse @)\" != \"$(git rev-parse @{u})\" && npm run upgrade || echo Already running latest version $(git rev-parse @{u})!",
+    "diff": "_() { echo $2 $3 version: $(git rev-parse $1); } && git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
+    "latest": "npm run diff && test \"$(git rev-parse @)\" != \"$(git rev-parse @{u})\" && npm run upgrade || echo Already running latest $(git rev-parse @{u}) version!",
     "upgrade": "git fetch && git merge FETCH_HEAD && npm install && npm restart",
     "postupgrade": "# ..done! Please refresh the GUI if is currently opened in your browser.",
+    "log-git": "git --no-pager log --graph --oneline @..@{u}",
     "log": "bunyan log/tribeca.log 2>/dev/null",
     "test": "mocha --compilers ts:ts-node/register test/*.ts",
     "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --compilers ts:ts-node/register test/*.ts",
