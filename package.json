@@ -1,7 +1,7 @@
 {
   "name": "tribeca",
   "version": "2.0.0",
-  "description": "A high frequency, market making cryptocurrency trading platform",
+  "description": "Self-hosted high frequency automated market making cryptocurrency trading platform",
   "dependencies": {
     "@angular/common": "^2.4.5",
     "@angular/compiler": "^2.4.5",
@@ -55,7 +55,7 @@
     "q": "1.4.1",
     "reflect-metadata": "^0.1.9",
     "request": "^2.79.0",
-    "rxjs": "^5.0.3",
+    "rxjs": "^5.1.0",
     "shortid": "^2.2.6",
     "socket.io": "^1.7.2",
     "socket.io-client": "^1.7.2",
@@ -63,7 +63,7 @@
     "typescript": "^2.1.5",
     "uglify-js": "^2.7.5",
     "uuid": "^3.0.1",
-    "ws": "^2.0.0",
+    "ws": "^2.0.1",
     "zone.js": "^0.7.6"
   },
   "devDependencies": {
