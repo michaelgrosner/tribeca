@@ -217,13 +217,12 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
 
     var loaderSaver = new Persister.LoaderSaver(exchange, pair);
 
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
-        var ls = collectionName === "mt" ? new MarketTrades.MarketTradesLoaderSaver(loaderSaver) : loaderSaver;
-        var setDBFlag = (collectionName === "trades");
-        return new Persister.Persister<T>(db, collectionName, exchange, pair, setDBFlag, ls.loader, ls.saver);
+    var getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => {
+        let ls = collectionName === "mt" ? new MarketTrades.MarketTradesLoaderSaver(loaderSaver) : loaderSaver;
+        return new Persister.Persister<T>(db, collectionName, exchange, pair, (collectionName === "trades"), ls.loader, ls.saver);
     };
 
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> =>
+    var getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
 
     return {
@@ -352,12 +351,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Messaging.Topics.FairValue)
         );
 
-        var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
-        var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
-        shortEwma.initialize(rfvValues);
-        var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
-        longEwma.initialize(rfvValues);
-
         var quotingEngine = new QuotingEngine.QuotingEngine(
           system.timeProvider,
           filtration,
@@ -377,8 +370,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
               rfvPersister,
               fvEngine,
               initRfv,
-              shortEwma,
-              longEwma
+              new Statistics.EwmaStatisticCalculator(initParams.shortEwma, initRfv),
+              new Statistics.EwmaStatisticCalculator(initParams.longEwma, initRfv)
             ),
             paramsRepo,
             positionBroker,

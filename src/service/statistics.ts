@@ -1,7 +1,9 @@
+import _ = require("lodash");
+import moment = require("moment");
+import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import FairValue = require("./fair-value");
-import moment = require("moment");
 
 export interface IComputeStatistics {
     latest: number;
@@ -10,7 +12,9 @@ export interface IComputeStatistics {
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
-    constructor(private _alpha: number) { }
+    constructor(private _alpha: number, initRfv: Models.RegularFairValue[]) {
+      this.initialize(_.map(initRfv, (r: Models.RegularFairValue) => r.value));
+    }
 
     public latest: number = null;
 
