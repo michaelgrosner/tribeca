@@ -130,7 +130,7 @@ export class MarketQuotingComponent implements OnInit {
       price = this.levels[j].bidPrice;
       this.levels[j].bidSize = update.data[0][++i] / 1e1;
       if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
-      else if (j==1) this.diffPx = (this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0;
+      else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
     }
 
     this.updateQuoteClass();
