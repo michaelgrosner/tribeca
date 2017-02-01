@@ -21,9 +21,7 @@ class FormViewModel<T> {
     if (this._submitConverter === null)
       this._submitConverter = d => d;
 
-    _sub.registerConnectHandler(() => this.connected = true)
-      .registerDisconnectedHandler(() => this.connected = false)
-      .registerSubscriber(this.update);
+    _sub.registerSubscriber(this.update);
 
     this.connected = _sub.connected;
     this.master = _.cloneDeep(defaultParameter);

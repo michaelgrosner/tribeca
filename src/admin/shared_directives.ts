@@ -40,10 +40,6 @@ class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
       return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
     };
 
-    public registerConnectHandler = (handler: () => void) => {
-      return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
-    };
-
     public get connected() { return this._wrapped.connected; }
 }
 
