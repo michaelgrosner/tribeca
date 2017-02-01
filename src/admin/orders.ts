@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -10,12 +10,11 @@ import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrency
   selector: 'order-list',
   template: `<ag-grid-ng2 #orderList class="ag-fresh ag-dark" style="height: 150px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-ng2>`
 })
-export class OrdersComponent implements OnInit, OnDestroy {
+export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
   private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
-  private subscriberOSR: Messaging.ISubscribe<Models.Timestamped<any[]>>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -33,14 +32,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.fireCxl = this.fireFactory
       .getFire(Messaging.Topics.CancelOrder);
 
-    this.subscriberOSR = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
-  }
-
-  ngOnDestroy() {
-    this.subscriberOSR.disconnect();
   }
 
   private createColumnDefs = (): ColDef[] => {

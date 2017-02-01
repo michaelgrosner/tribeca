@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -10,7 +10,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
   selector: 'trade-list',
   template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 215px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
-export class TradesComponent implements OnInit, OnDestroy {
+export class TradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
@@ -19,9 +19,6 @@ export class TradesComponent implements OnInit, OnDestroy {
   public audio: boolean;
 
   private sortTimeout: number;
-
-  private subscriberTrades: Messaging.ISubscribe<Models.Trade>;
-  private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -34,19 +31,14 @@ export class TradesComponent implements OnInit, OnDestroy {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
 
-    this.subscriberQPChange = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
       .registerSubscriber(this.updateQP);
 
-    this.subscriberTrades = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.Trades)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
-  }
-
-  ngOnDestroy() {
-    this.subscriberQPChange.disconnect();
-    this.subscriberTrades.disconnect();
   }
 
   private createColumnDefs = (): ColDef[] => {
