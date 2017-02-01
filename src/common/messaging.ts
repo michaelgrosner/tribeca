@@ -157,7 +157,6 @@ export class NullPublisher<T> implements IPublish<T> {
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
   registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
-  registerConnectHandler: (handler: () => void) => ISubscribe<T>;
   connected: boolean;
 }
 
@@ -185,14 +184,11 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     });
   }
 
-  public get connected() : boolean {
+  public get connected(): boolean {
     return this._socket.connected;
   }
 
   private onConnect = () => {
-    if (this._connectHandler !== null)
-      this._connectHandler();
-
     this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
   };
 
@@ -210,12 +206,6 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   public registerDisconnectedHandler = (handler : () => void) => {
     if (this._disconnectHandler === null) this._disconnectHandler = handler;
     else throw new Error("already registered disconnect handler for topic " + this.topic);
-    return this;
-  };
-
-  public registerConnectHandler = (handler : () => void) => {
-    if (this._connectHandler === null) this._connectHandler = handler;
-    else throw new Error("already registered connect handler for topic " + this.topic);
     return this;
   };
 }
