@@ -165,14 +165,12 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private _disconnectHandler: () => void = null;
   private _connectHandler: () => void = null;
   private _socket: SocketIOClient.Socket;
-  private _observer = null;
 
   constructor(
     private topic: string,
     io: SocketIOClient.Socket
   ) {
     super(observer => {
-      this._observer = observer;
       this._socket = io;
 
       if (this.connected) this.onConnect();
@@ -180,8 +178,8 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       this._socket
         .on("connect", this.onConnect)
         .on("disconnect", this.onDisconnect)
-        .on(Prefixes.MESSAGE + topic, (data) => this._observer.next(data))
-        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => this._observer.next(item), 0)));
+        .on(Prefixes.MESSAGE + topic, (data) => observer.next(data))
+        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
 
       return () => {};
     });
@@ -204,7 +202,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   };
 
   public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
-    if (this._observer === null) this.subscribe(incrementalHandler);
+    if (!this._socket) this.subscribe(incrementalHandler);
     else throw new Error("already registered incremental handler for topic " + this.topic);
     return this;
   };

@@ -110,13 +110,17 @@ export class DisplayPair {
       .registerSubscriber(this.setConnectStatus);
 
     this.active = new QuotingButtonViewModel(
-      subscriberFactory.getSubscriber(zone, Messaging.Topics.ActiveChange),
-      fireFactory.getFire(Messaging.Topics.ActiveChange)
+      subscriberFactory
+        .getSubscriber(zone, Messaging.Topics.ActiveChange),
+      fireFactory
+        .getFire(Messaging.Topics.ActiveChange)
     );
 
     this.quotingParameters = new DisplayQuotingParameters(
-      subscriberFactory.getSubscriber(zone, Messaging.Topics.QuotingParametersChange),
-      fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
+      subscriberFactory
+        .getSubscriber(zone, Messaging.Topics.QuotingParametersChange),
+      fireFactory
+        .getFire(Messaging.Topics.QuotingParametersChange)
     );
   }
 
