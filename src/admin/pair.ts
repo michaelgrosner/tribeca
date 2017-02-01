@@ -100,34 +100,28 @@ export class DisplayPair {
   active: QuotingButtonViewModel;
   quotingParameters: DisplayQuotingParameters;
 
-  private _subscribers: Messaging.ISubscribe<any>[] = [];
-
   constructor(
     public zone: NgZone,
     subscriberFactory: SubscriberFactory,
     fireFactory: FireFactory
   ) {
-
-    var setConnectStatus = (cs: Models.ConnectivityStatus) => {
-      this.connected = cs == Models.ConnectivityStatus.Connected;
-    };
-
-    var connectivitySubscriber = subscriberFactory
+    subscriberFactory
       .getSubscriber(zone, Messaging.Topics.ExchangeConnectivity)
-      .registerSubscriber(setConnectStatus);
-    this._subscribers.push(connectivitySubscriber);
+      .registerSubscriber(this.setConnectStatus);
 
-    var activeSub = subscriberFactory.getSubscriber(zone, Messaging.Topics.ActiveChange);
-    this.active = new QuotingButtonViewModel(activeSub, fireFactory.getFire(Messaging.Topics.ActiveChange));
-    this._subscribers.push(activeSub);
+    this.active = new QuotingButtonViewModel(
+      subscriberFactory.getSubscriber(zone, Messaging.Topics.ActiveChange),
+      fireFactory.getFire(Messaging.Topics.ActiveChange)
+    );
 
-    var qpSub = subscriberFactory.getSubscriber(zone, Messaging.Topics.QuotingParametersChange);
-    this.quotingParameters = new DisplayQuotingParameters(qpSub, fireFactory.getFire(Messaging.Topics.QuotingParametersChange));
-    this._subscribers.push(qpSub);
+    this.quotingParameters = new DisplayQuotingParameters(
+      subscriberFactory.getSubscriber(zone, Messaging.Topics.QuotingParametersChange),
+      fireFactory.getFire(Messaging.Topics.QuotingParametersChange)
+    );
   }
 
-  public dispose = () => {
-    this._subscribers.forEach(s => s.disconnect());
+  public setConnectStatus = (cs: Models.ConnectivityStatus) => {
+      this.connected = cs == Models.ConnectivityStatus.Connected;
   };
 
   public updateParameters = (p: Models.QuotingParameters) => {

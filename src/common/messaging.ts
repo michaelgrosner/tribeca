@@ -159,7 +159,6 @@ export interface ISubscribe<T> {
   registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
   registerConnectHandler: (handler: () => void) => ISubscribe<T>;
   connected: boolean;
-  disconnect: () => void;
 }
 
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
@@ -183,6 +182,8 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
         .on("disconnect", this.onDisconnect)
         .on(Prefixes.MESSAGE + topic, (data) => this._observer.next(data))
         .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => this._observer.next(item), 0)));
+
+      return () => {};
     });
   }
 
@@ -200,15 +201,6 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private onDisconnect = () => {
     if (this._disconnectHandler !== null)
       this._disconnectHandler();
-  };
-
-  public disconnect = () => {
-    this._socket
-      .off("connect", this.onConnect)
-      .off("disconnect", this.onDisconnect)
-      .off(Prefixes.MESSAGE + this.topic, (data) => this._observer.next(data))
-      .off(Prefixes.SNAPSHOT + this.topic, (data) => data.forEach(item => setTimeout(() => this._observer.next(item), 0)))
-    this._observer.unsubscribe();
   };
 
   public registerSubscriber = (incrementalHandler: (msg: T) => void) => {

@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -10,11 +10,9 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
   selector: 'market-trades',
   template: `<ag-grid-ng2 #marketList class="ag-fresh ag-dark marketTrades" style="height: 396px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
-export class MarketTradesComponent implements OnInit, OnDestroy {
+export class MarketTradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
-
-  private subscriberMarketTrade: Messaging.ISubscribe<Models.MarketTrade>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -27,14 +25,10 @@ export class MarketTradesComponent implements OnInit, OnDestroy {
     this.gridOptions.enableSorting = true;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
 
-    this.subscriberMarketTrade = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.MarketTrade)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
-  }
-
-  ngOnDestroy() {
-    this.subscriberMarketTrade.disconnect();
   }
 
   private createColumnDefs = (): ColDef[] => {

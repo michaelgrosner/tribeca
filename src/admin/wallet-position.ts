@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -20,7 +20,7 @@ import {SubscriberFactory} from './shared_directives';
       </h4>
     </div>`
 })
-export class WalletPositionComponent implements OnInit, OnDestroy {
+export class WalletPositionComponent implements OnInit {
 
   public baseCurrency: string;
   public basePosition: number;
@@ -34,29 +34,21 @@ export class WalletPositionComponent implements OnInit, OnDestroy {
   public sellSize: number;
   public fv: number;
 
-  private subscriberQPChange: Messaging.ISubscribe<Models.QuotingParameters>;
-  private subscriberPosition: Messaging.ISubscribe<Models.PositionReport>;
-
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
   ) {}
 
   ngOnInit() {
-    this.subscriberQPChange = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
       .registerDisconnectedHandler(this.clearQP)
       .registerSubscriber(this.updateQP);
 
-    this.subscriberPosition = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.Position)
       .registerDisconnectedHandler(this.clearPosition)
       .registerSubscriber(this.updatePosition);
-  }
-
-  ngOnDestroy() {
-    this.subscriberQPChange.disconnect();
-    this.subscriberPosition.disconnect();
   }
 
   private clearPosition = () => {

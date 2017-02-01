@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -34,7 +34,7 @@ import {SubscriberFactory} from './shared_directives';
       </tr>
     </table></div>`
 })
-export class MarketQuotingComponent implements OnInit, OnDestroy {
+export class MarketQuotingComponent implements OnInit {
 
   public levels: any[];
   public qBidSz: number;
@@ -48,8 +48,6 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   public diffPx: number;
   private targetBasePosition: number;
 
-  private subscribers: Messaging.ISubscribe<any>[] = [];
-
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
@@ -59,22 +57,17 @@ export class MarketQuotingComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
-      this.subscribers.push(
-        this.subscriberFactory.getSubscriber<T>(this.zone, topic)
-          .registerSubscriber(updateFn)
-          .registerDisconnectedHandler(clearFn)
-      );
+    let makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
+      this.subscriberFactory
+        .getSubscriber<T>(this.zone, topic)
+        .registerSubscriber(updateFn)
+        .registerDisconnectedHandler(clearFn);
     };
 
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
     makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
     makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
     makeSubscriber<Models.TargetBasePositionValue>(Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition);
-  }
-
-  ngOnDestroy() {
-    this.subscribers.forEach(d => d.disconnect());
   }
 
   private clearMarket = () => {

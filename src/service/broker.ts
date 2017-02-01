@@ -22,14 +22,16 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
         this._marketPublisher.publish(this.currentBook);
     };
 
-    constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>) {
-        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+    constructor(
+      private _mdGateway: Interfaces.IMarketDataGateway,
+      private _marketPublisher: Messaging.IPublish<Models.Market>
+    ) {
+      _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
 
-        this._mdGateway.MarketData.on(this.handleMarketData);
-        this._mdGateway.ConnectChanged.on(s => {
-            if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
-        });
+      this._mdGateway.MarketData.on(this.handleMarketData);
+      this._mdGateway.ConnectChanged.on(s => {
+        if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
+      });
     }
 }
 

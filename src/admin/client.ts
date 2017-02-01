@@ -3,7 +3,7 @@ import 'reflect-metadata';
 
 (<any>global).jQuery = require("jquery");
 
-import {NgModule, NgZone, Component, Inject, OnInit, OnDestroy, enableProdMode} from '@angular/core';
+import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angular/core';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
@@ -354,7 +354,7 @@ class DisplayOrder {
     </address>
   </div>`
 })
-class ClientComponent implements OnInit, OnDestroy {
+class ClientComponent implements OnInit {
 
   public server_memory: string;
   public client_memory: string;
@@ -370,11 +370,6 @@ class ClientComponent implements OnInit, OnDestroy {
   public cleanAllOrders = () => {};
   public toggleConfigs = (showConfigs:boolean) => {};
   public changeNotepad = (content: string) => {};
-
-  private subscriberProductAdvertisement: any;
-  private subscriberApplicationState: any;
-  private subscriberNotepad: any;
-  private subscriberToggleConfigs: any;
 
   private user_theme: string = null;
   private system_theme: string = null;
@@ -412,29 +407,22 @@ class ClientComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.order = new DisplayOrder(this.fireFactory);
 
-    this.subscriberProductAdvertisement = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
       .registerDisconnectedHandler(() => this.reset());
 
-    this.subscriberApplicationState = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
 
-    this.subscriberNotepad = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.Notepad)
       .registerSubscriber(this.onNotepad);
 
-    this.subscriberToggleConfigs = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.ToggleConfigs)
       .registerSubscriber(this.onToggleConfigs);
-  }
-
-  ngOnDestroy() {
-    this.subscriberProductAdvertisement.disconnect();
-    this.subscriberApplicationState.disconnect();
-    this.subscriberToggleConfigs.disconnect();
-    this.subscriberNotepad.disconnect();
   }
 
   private onNotepad = (notepad : string) => {
@@ -449,9 +437,6 @@ class ClientComponent implements OnInit, OnDestroy {
     this.connected = false;
     this.pair_name = null;
     this.exch_name = null;
-
-    if (this.pair !== null)
-      this.pair.dispose();
     this.pair = null;
   }
 

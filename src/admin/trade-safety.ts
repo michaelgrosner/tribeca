@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Input, Output, EventEmitter, OnInit, OnDestroy} from '@angular/core';
+import {NgZone, Component, Inject, Input, Output, EventEmitter, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
 import Messaging = require('../common/messaging');
@@ -17,7 +17,7 @@ import {SubscriberFactory} from './shared_directives';
     </div>
   </div>`
 })
-export class TradeSafetyComponent implements OnInit, OnDestroy {
+export class TradeSafetyComponent implements OnInit {
 
   public fairValue: number;
   private buySafety: number;
@@ -25,10 +25,6 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
-
-  private subscriberTradeSafetyValue: Messaging.ISubscribe<Models.TradeSafety>;
-  private subscriberFairValue: Messaging.ISubscribe<Models.FairValue>;
-
   @Input() showConfigs: boolean;
   @Output() toggleConfigs = new EventEmitter();
 
@@ -38,20 +34,15 @@ export class TradeSafetyComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.subscriberFairValue = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.FairValue)
       .registerDisconnectedHandler(this.clearFairValue)
       .registerSubscriber(this.updateFairValue);
 
-    this.subscriberTradeSafetyValue = this.subscriberFactory
+    this.subscriberFactory
       .getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
       .registerDisconnectedHandler(this.clear)
       .registerSubscriber(this.updateValues);
-  }
-
-  ngOnDestroy() {
-    this.subscriberTradeSafetyValue.disconnect();
-    this.subscriberFairValue.disconnect();
   }
 
   private updateValues = (value : Models.TradeSafety) => {
