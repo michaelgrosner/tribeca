@@ -23,7 +23,7 @@ import Broker = require("./broker");
 import Monitor = require("./monitor");
 import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Models = require("../common/models");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
@@ -112,11 +112,11 @@ var backTestSimulationSetup = (
       )
     );
 
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        return new Messaging.NullPublisher<T>();
+    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+        return new Publish.NullPublisher<T>();
     };
 
-    var getReceiver = <T>(topic: string): Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
+    var getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.NullReceiver<T>();
 
     var getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
 
@@ -205,13 +205,13 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
       }
     };
 
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-      var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null);
+    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+      var socketIoPublisher = new Publish.Publisher<T>(topic, io, null);
       if (persister) return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
       else return socketIoPublisher;
     };
 
-    var getReceiver = <T>(topic: string): Messaging.IReceive<T> => new Messaging.Receiver<T>(topic, io);
+    var getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
 
     var db = Persister.loadDb(config);
 
@@ -248,17 +248,17 @@ interface TradingSystem {
     startingParameters: Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
     getExchange(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
-    getReceiver<T>(topic: string): Messaging.IReceive<T>;
+    getReceiver<T>(topic: string): Publish.IReceive<T>;
     getPersister<T>(collectionName: string): Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
-    getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
+    getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T>;
 }
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
     var rfvPersister = system.getPersister("rfv");
 
-    var paramsPersister = system.getRepository(system.startingParameters, Messaging.Topics.QuotingParametersChange);
+    var paramsPersister = system.getRepository(system.startingParameters, Models.Topics.QuotingParametersChange);
 
     var completedSuccessfully = Q.defer<boolean>();
 
@@ -273,7 +273,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     ) => {
         _.defaults(initParams, defaultQuotingParameters);
 
-        system.getPublisher(Messaging.Topics.ProductAdvertisement)
+        system.getPublisher(Models.Topics.ProductAdvertisement)
           .registerSnapshot(() => [new Models.ProductAdvertisement(
             system.exchange,
             system.pair,
@@ -282,16 +282,16 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
         new Monitor.ApplicationState(
           system.timeProvider,
-          system.getPublisher(Messaging.Topics.ApplicationState),
-          system.getPublisher(Messaging.Topics.Notepad),
-          system.getReceiver(Messaging.Topics.Notepad),
-          system.getPublisher(Messaging.Topics.ToggleConfigs),
-          system.getReceiver(Messaging.Topics.ToggleConfigs)
+          system.getPublisher(Models.Topics.ApplicationState),
+          system.getPublisher(Models.Topics.Notepad),
+          system.getReceiver(Models.Topics.Notepad),
+          system.getPublisher(Models.Topics.ToggleConfigs),
+          system.getReceiver(Models.Topics.ToggleConfigs)
         );
 
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(
-          system.getPublisher(Messaging.Topics.QuotingParametersChange),
-          system.getReceiver(Messaging.Topics.QuotingParametersChange),
+          system.getPublisher(Models.Topics.QuotingParametersChange),
+          system.getReceiver(Models.Topics.QuotingParametersChange),
           initParams,
           paramsPersister
         );
@@ -304,7 +304,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           gateway.md,
           gateway.base,
           gateway.oe,
-          system.getPublisher(Messaging.Topics.ExchangeConnectivity)
+          system.getPublisher(Models.Topics.ExchangeConnectivity)
         );
 
         var orderBroker = new Broker.OrderBroker(
@@ -313,20 +313,20 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           broker,
           gateway.oe,
           tradesPersister,
-          system.getPublisher(Messaging.Topics.OrderStatusReports),
-          system.getPublisher(Messaging.Topics.Trades, tradesPersister),
-          system.getReceiver(Messaging.Topics.SubmitNewOrder),
-          system.getReceiver(Messaging.Topics.CancelOrder),
-          system.getReceiver(Messaging.Topics.CancelAllOrders),
-          system.getReceiver(Messaging.Topics.CleanAllClosedOrders),
-          system.getReceiver(Messaging.Topics.CleanAllOrders),
+          system.getPublisher(Models.Topics.OrderStatusReports),
+          system.getPublisher(Models.Topics.Trades, tradesPersister),
+          system.getReceiver(Models.Topics.SubmitNewOrder),
+          system.getReceiver(Models.Topics.CancelOrder),
+          system.getReceiver(Models.Topics.CancelAllOrders),
+          system.getReceiver(Models.Topics.CleanAllClosedOrders),
+          system.getReceiver(Models.Topics.CleanAllOrders),
           orderCache,
           initTrades
         );
 
         var marketDataBroker = new Broker.MarketDataBroker(
           gateway.md,
-          system.getPublisher(Messaging.Topics.MarketData)
+          system.getPublisher(Models.Topics.MarketData)
         );
 
         var positionBroker = new Broker.PositionBroker(
@@ -334,7 +334,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           broker,
           orderBroker,
           gateway.pg,
-          system.getPublisher(Messaging.Topics.Position),
+          system.getPublisher(Models.Topics.Position),
           marketDataBroker
         );
 
@@ -344,7 +344,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.timeProvider,
           filtration,
           paramsRepo,
-          system.getPublisher(Messaging.Topics.FairValue)
+          system.getPublisher(Models.Topics.FairValue)
         );
 
         var quotingEngine = new QuotingEngine.QuotingEngine(
@@ -371,14 +371,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             ),
             paramsRepo,
             positionBroker,
-            system.getPublisher(Messaging.Topics.TargetBasePosition)
+            system.getPublisher(Models.Topics.TargetBasePosition)
           ),
           new Safety.SafetyCalculator(
             system.timeProvider,
             fvEngine,
             paramsRepo,
             orderBroker,
-            system.getPublisher(Messaging.Topics.TradeSafetyValue)
+            system.getPublisher(Models.Topics.TradeSafetyValue)
           )
         );
 
@@ -386,7 +386,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.timeProvider,
           paramsRepo,
           quotingEngine,
-          system.getPublisher(Messaging.Topics.QuoteStatus),
+          system.getPublisher(Models.Topics.QuoteStatus),
           quoter,
           positionBroker,
           fvEngine,
@@ -395,14 +395,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           new Active.ActiveRepository(
             system.startingActive,
             broker,
-            system.getPublisher(Messaging.Topics.ActiveChange),
-            system.getReceiver(Messaging.Topics.ActiveChange)
+            system.getPublisher(Models.Topics.ActiveChange),
+            system.getReceiver(Models.Topics.ActiveChange)
           )
         );
 
         new MarketTrades.MarketTradeBroker(
           gateway.md,
-          system.getPublisher(Messaging.Topics.MarketTrade),
+          system.getPublisher(Models.Topics.MarketTrade),
           marketDataBroker,
           quotingEngine,
           broker

@@ -1,6 +1,6 @@
 import Config = require("./config");
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
@@ -22,8 +22,8 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
     constructor(startQuoting: boolean,
         private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
-        private _pub: Messaging.IPublish<boolean>,
-        private _rec: Messaging.IReceive<boolean>) {
+        private _pub: Publish.IPublish<boolean>,
+        private _rec: Publish.IReceive<boolean>) {
         this._log.info("Starting saved quoting state: ", startQuoting);
         this._savedQuotingMode = startQuoting;
 

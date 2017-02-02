@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
 import util = require("util");
@@ -10,7 +10,7 @@ import moment = require("moment");
 
 export class StandaloneHttpPublisher<T> {
     constructor(
-        private _wrapped: Messaging.IPublish<T>,
+        private _wrapped: Publish.IPublish<T>,
         private route: string,
         private _httpApp: express.Application,
         private _persister: Persister.ILoadAll<T>) {

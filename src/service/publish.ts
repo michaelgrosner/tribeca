@@ -1,41 +1,4 @@
-import { Observable } from 'rxjs/Observable';
-
-import Models = require("./models");
-
-module Prefixes {
-    export var SUBSCRIBE = "_";
-    export var SNAPSHOT = "=";
-    export var MESSAGE = "-";
-}
-
-export class Topics {
-    static FairValue = "a";
-    static Quote = "b";
-    static ActiveSubscription = "c";
-    static ActiveChange = "d";
-    static MarketData = "e";
-    static QuotingParametersChange = "f";
-    static SafetySettings = "g";
-    static Product = "h";
-    static OrderStatusReports = "i";
-    static ProductAdvertisement = "j";
-    static ApplicationState = "k";
-    static Notepad = "l";
-    static ToggleConfigs = "m";
-    static Position = "n";
-    static ExchangeConnectivity = "o";
-    static SubmitNewOrder = "p";
-    static CancelOrder = "q";
-    static MarketTrade = "r";
-    static Trades = "s";
-    static ExternalValuation = "t";
-    static QuoteStatus = "u";
-    static TargetBasePosition = "v";
-    static TradeSafetyValue = "w";
-    static CancelAllOrders = "x";
-    static CleanAllClosedOrders = "y";
-    static CleanAllOrders = "z";
-}
+import Models = require("../common/models");
 
 export interface IPublish<T> {
     publish: (msg: T) => void;
@@ -50,16 +13,16 @@ export class Publisher<T> implements IPublish<T> {
         this.registerSnapshot(snapshot || null);
 
         var onConnection = s => {
-            s.on(Prefixes.SUBSCRIBE + topic, () => {
+            s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
                 if (this._snapshot !== null) {
                   let snap: T[] = this._snapshot();
-                  if (this.topic === Topics.MarketData)
+                  if (this.topic === Models.Topics.MarketData)
                     snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
-                  else if (this.topic === Topics.OrderStatusReports)
+                  else if (this.topic === Models.Topics.OrderStatusReports)
                     snap = this.compressSnapshot(this._snapshot(), this.compressOSRInc);
-                  else if (this.topic === Topics.Position)
+                  else if (this.topic === Models.Topics.Position)
                     snap = this.compressSnapshot(this._snapshot(), this.compressPositionInc);
-                  s.emit(Prefixes.SNAPSHOT + topic, snap);
+                  s.emit(Models.Prefixes.SNAPSHOT + topic, snap);
                 }
             });
         };
@@ -72,13 +35,13 @@ export class Publisher<T> implements IPublish<T> {
     }
 
     public publish = (msg: T) => {
-      if (this.topic === Topics.MarketData)
+      if (this.topic === Models.Topics.MarketData)
         msg = this.compressMarketDataInc(msg);
-      else if (this.topic === Topics.OrderStatusReports)
+      else if (this.topic === Models.Topics.OrderStatusReports)
         msg = this.compressOSRInc(msg);
-      else if (this.topic === Topics.Position)
+      else if (this.topic === Models.Topics.Position)
         msg = this.compressPositionInc(msg);
-      this._io.emit(Prefixes.MESSAGE + this.topic, msg)
+      this._io.emit(Models.Prefixes.MESSAGE + this.topic, msg)
     };
 
     public registerSnapshot = (generator: () => T[]) => {
@@ -154,75 +117,6 @@ export class NullPublisher<T> implements IPublish<T> {
   public registerSnapshot = (generator: () => T[]) => this;
 }
 
-export interface ISubscribe<T> {
-  registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
-  registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
-  connected: boolean;
-}
-
-export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
-  private _disconnectHandler: () => void = null;
-  private _socket: SocketIOClient.Socket;
-
-  constructor(
-    private topic: string,
-    io: SocketIOClient.Socket
-  ) {
-    super(observer => {
-      this._socket = io;
-
-      let onConnect = () => this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
-      if (this.connected) onConnect();
-
-      this._socket
-        .on("connect", onConnect)
-        .on("disconnect", this.onDisconnect)
-        .on(Prefixes.MESSAGE + topic, (data) => observer.next(data))
-        .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
-
-      return () => {};
-    });
-  }
-
-  public get connected(): boolean {
-    return this._socket.connected;
-  }
-
-  private onDisconnect = () => {
-    if (this._disconnectHandler !== null)
-      this._disconnectHandler();
-  };
-
-  public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
-    if (!this._socket) this.subscribe(incrementalHandler);
-    else throw new Error("already registered incremental handler for topic " + this.topic);
-    return this;
-  };
-
-  public registerDisconnectedHandler = (handler : () => void) => {
-    if (this._disconnectHandler === null) this._disconnectHandler = handler;
-    else throw new Error("already registered disconnect handler for topic " + this.topic);
-    return this;
-  };
-}
-
-export interface IFire<T> {
-  fire(msg: T): void;
-}
-
-export class Fire<T> implements IFire<T> {
-    private _socket : SocketIOClient.Socket;
-
-    constructor(private topic : string, io : SocketIOClient.Socket) {
-        this._socket = io;
-        // this._socket.on("connect", () => _log("Fire connected to", this.topic))
-                    // .on("disconnect", () => _log("Fire disconnected to", this.topic));
-    }
-
-    public fire = (msg : T) : void => {
-        this._socket.emit(Prefixes.MESSAGE + this.topic, msg);
-    };
-}
 
 export interface IReceive<T> {
     registerReceiver(handler: (msg: T) => void) : void;
@@ -237,7 +131,7 @@ export class Receiver<T> implements IReceive<T> {
     constructor(private topic: string, io: SocketIO.Server) {
         var onConnection = (s: SocketIO.Socket) => {
             // this._log("socket", s.id, "connected for Receiver", topic);
-            s.on(Prefixes.MESSAGE + this.topic, msg => {
+            s.on(Models.Prefixes.MESSAGE + this.topic, msg => {
                 if (this._handler !== null)
                     this._handler(msg);
             });

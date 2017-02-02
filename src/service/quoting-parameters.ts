@@ -1,7 +1,7 @@
 import Models = require("../common/models");
 import Interfaces = require("./interfaces");
-import Messaging = require("../common/messaging");
 import Persister = require("./persister");
+import Publish = require("./publish");
 import _ = require("lodash");
 import Utils = require("./utils");
 
@@ -14,8 +14,8 @@ class Repository<T> implements Interfaces.IRepository<T> {
     private _validator: (a: T) => boolean,
     private _paramsEqual: (a: T, b: T) => boolean,
     defaultParameter: T,
-    private _rec: Messaging.IReceive<T>,
-    private _pub: Messaging.IPublish<T>
+    private _rec: Publish.IReceive<T>,
+    private _pub: Publish.IPublish<T>
   ) {
     _pub.registerSnapshot(() => [this.latest]);
     _rec.registerReceiver(this.updateParameters);
@@ -39,8 +39,8 @@ class Repository<T> implements Interfaces.IRepository<T> {
 
 export class QuotingParametersRepository extends Repository<Models.QuotingParameters> {
   constructor(
-    pub: Messaging.IPublish<Models.QuotingParameters>,
-    rec: Messaging.IReceive<Models.QuotingParameters>,
+    pub: Publish.IPublish<Models.QuotingParameters>,
+    rec: Publish.IReceive<Models.QuotingParameters>,
     initParam: Models.QuotingParameters,
     paramsPersister: Persister.IPersist<Models.QuotingParameters>
   ) {

@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
 import util = require("util");
@@ -76,7 +76,7 @@ export class TargetBasePositionManager {
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
-        private _wrapped: Messaging.IPublish<Models.TargetBasePositionValue>) {
+        private _wrapped: Publish.IPublish<Models.TargetBasePositionValue>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => this.recomputeTargetPosition());

@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import _ = require("lodash");
@@ -64,7 +64,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
 
     constructor(
       private _mdGateway: Interfaces.IMarketDataGateway,
-      private _marketTradePublisher: Messaging.IPublish<Models.MarketTrade>,
+      private _marketTradePublisher: Publish.IPublish<Models.MarketTrade>,
       private _mdBroker: Interfaces.IMarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker

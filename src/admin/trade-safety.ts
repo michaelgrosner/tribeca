@@ -1,7 +1,6 @@
 import {NgZone, Component, Inject, Input, Output, EventEmitter, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({
@@ -35,12 +34,12 @@ export class TradeSafetyComponent implements OnInit {
 
   ngOnInit() {
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.FairValue)
+      .getSubscriber(this.zone, Models.Topics.FairValue)
       .registerDisconnectedHandler(this.clearFairValue)
       .registerSubscriber(this.updateFairValue);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.TradeSafetyValue)
+      .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
       .registerDisconnectedHandler(this.clear)
       .registerSubscriber(this.updateValues);
   }

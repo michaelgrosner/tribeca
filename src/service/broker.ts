@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
@@ -24,7 +24,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
 
     constructor(
       private _mdGateway: Interfaces.IMarketDataGateway,
-      private _marketPublisher: Messaging.IPublish<Models.Market>
+      private _marketPublisher: Publish.IPublish<Models.Market>
     ) {
       _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
 
@@ -417,13 +417,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
-                private _orderStatusPublisher : Messaging.IPublish<Models.OrderStatusReport>,
-                private _tradePublisher : Messaging.IPublish<Models.Trade>,
-                private _submittedOrderReciever : Messaging.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Messaging.IReceive<Models.OrderStatusReport>,
-                private _cancelAllOrdersReciever : Messaging.IReceive<Models.CancelAllOrdersRequest>,
-                private _cleanAllClosedOrdersReciever : Messaging.IReceive<Models.CleanAllClosedOrdersRequest>,
-                private _cleanAllOrdersReciever : Messaging.IReceive<Models.CleanAllOrdersRequest>,
+                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
+                private _tradePublisher : Publish.IPublish<Models.Trade>,
+                private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
+                private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
+                private _cancelAllOrdersReciever : Publish.IReceive<Models.CancelAllOrdersRequest>,
+                private _cleanAllClosedOrdersReciever : Publish.IReceive<Models.CleanAllClosedOrdersRequest>,
+                private _cleanAllOrdersReciever : Publish.IReceive<Models.CleanAllOrdersRequest>,
                 private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
@@ -585,7 +585,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _base : Interfaces.IBroker,
                 private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
+                private _positionPublisher : Publish.IPublish<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
@@ -657,7 +657,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
       private _mdGateway: Interfaces.IMarketDataGateway,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
-      private _connectivityPublisher: Messaging.IPublish<Models.ConnectivityStatus>
+      private _connectivityPublisher: Publish.IPublish<Models.ConnectivityStatus>
     ) {
       if (!_.some(_baseGateway.supportedCurrencyPairs, p => p.base === _pair.base && p.quote === _pair.quote))
         throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + _baseGateway.name() + " really supports the specified currencies defined in TradedPair configuration option.");
