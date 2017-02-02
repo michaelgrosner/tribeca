@@ -4,15 +4,15 @@ import {AgRendererComponent} from 'ag-grid-ng2/main';
 import moment = require('moment');
 import * as io from 'socket.io-client';
 
-import Messaging = require("../common/messaging");
+import Subscribe = require("./subscribe");
 import Models = require("../common/models");
 
 @Injectable()
 export class FireFactory {
     constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
 
-    public getFire = <T>(topic : string) : Messaging.IFire<T> => {
-        return new Messaging.Fire<T>(topic, this.socket);
+    public getFire = <T>(topic : string) : Subscribe.IFire<T> => {
+        return new Subscribe.Fire<T>(topic, this.socket);
     }
 }
 
@@ -20,16 +20,16 @@ export class FireFactory {
 export class SubscriberFactory {
     constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
 
-    public getSubscriber = <T>(scope: any, topic: string): Messaging.ISubscribe<T> => {
+    public getSubscriber = <T>(scope: any, topic: string): Subscribe.ISubscribe<T> => {
       return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
     }
 }
 
-class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
-    private _wrapped: Messaging.ISubscribe<T>;
+class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
+    private _wrapped: Subscribe.ISubscribe<T>;
 
     constructor(private _scope: any, topic: string, io: any) {
-      this._wrapped = new Messaging.Subscriber<T>(topic, io);
+      this._wrapped = new Subscribe.Subscriber<T>(topic, io);
     }
 
     public registerSubscriber = (incrementalHandler: (msg: T) => void) => {

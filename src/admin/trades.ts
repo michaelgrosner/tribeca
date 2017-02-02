@@ -3,7 +3,6 @@ import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
 import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
@@ -32,11 +31,11 @@ export class TradesComponent implements OnInit {
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
+      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
       .registerSubscriber(this.updateQP);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.Trades)
+      .getSubscriber(this.zone, Models.Topics.Trades)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
   }

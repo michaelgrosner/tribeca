@@ -4,7 +4,7 @@ import Models = require("../common/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import moment = require('moment');
 import _ = require("lodash");
 import FairValue = require("./fair-value");
@@ -36,7 +36,7 @@ export class SafetyCalculator {
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
         private _broker: Broker.OrderBroker,
-        private _publisher: Messaging.IPublish<Models.TradeSafety>) {
+        private _publisher: Publish.IPublish<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.cancelOpenOrders());

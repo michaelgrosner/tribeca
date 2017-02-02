@@ -1,6 +1,5 @@
 import Config = require("./config");
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");

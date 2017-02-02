@@ -1,6 +1,6 @@
 import Config = require("./config");
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
@@ -32,7 +32,7 @@ export class QuoteSender {
             private _timeProvider: Utils.ITimeProvider,
             private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
             private _quotingEngine: QuotingEngine.QuotingEngine,
-            private _statusPublisher: Messaging.IPublish<Models.TwoSidedQuoteStatus>,
+            private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
             private _positionBroker: Interfaces.IPositionBroker,
             private _fv: FairValue.FairValueEngine,

@@ -3,7 +3,7 @@ import {NgZone} from '@angular/core';
 import _ = require('lodash');
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
+import Subscribe = require('./subscribe');
 import {FireFactory, SubscriberFactory} from './shared_directives';
 
 class FormViewModel<T> {
@@ -14,8 +14,8 @@ class FormViewModel<T> {
 
   constructor(
     defaultParameter: T,
-    private _sub: Messaging.ISubscribe<T>,
-    private _fire: Messaging.IFire<T>,
+    private _sub: Subscribe.ISubscribe<T>,
+    private _fire: Subscribe.IFire<T>,
     private _submitConverter: (disp: T) => T = null
   ) {
     if (this._submitConverter === null)
@@ -46,8 +46,8 @@ class FormViewModel<T> {
 }
 
 class QuotingButtonViewModel extends FormViewModel<boolean> {
-  constructor(sub: Messaging.ISubscribe<boolean>,
-    fire: Messaging.IFire<boolean>) {
+  constructor(sub: Subscribe.ISubscribe<boolean>,
+    fire: Subscribe.IFire<boolean>) {
     super(false, sub, fire, d => !d);
   }
 
@@ -65,8 +65,8 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   availablePingAt = [];
   availablePongAt = [];
 
-  constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
-    fire: Messaging.IFire<Models.QuotingParameters>) {
+  constructor(sub: Subscribe.ISubscribe<Models.QuotingParameters>,
+    fire: Subscribe.IFire<Models.QuotingParameters>) {
     super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
     this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
@@ -104,21 +104,21 @@ export class DisplayPair {
     fireFactory: FireFactory
   ) {
     subscriberFactory
-      .getSubscriber(zone, Messaging.Topics.ExchangeConnectivity)
+      .getSubscriber(zone, Models.Topics.ExchangeConnectivity)
       .registerSubscriber(this.setConnectStatus);
 
     this.active = new QuotingButtonViewModel(
       subscriberFactory
-        .getSubscriber(zone, Messaging.Topics.ActiveChange),
+        .getSubscriber(zone, Models.Topics.ActiveChange),
       fireFactory
-        .getFire(Messaging.Topics.ActiveChange)
+        .getFire(Models.Topics.ActiveChange)
     );
 
     this.quotingParameters = new DisplayQuotingParameters(
       subscriberFactory
-        .getSubscriber(zone, Messaging.Topics.QuotingParametersChange),
+        .getSubscriber(zone, Models.Topics.QuotingParametersChange),
       fireFactory
-        .getFire(Messaging.Topics.QuotingParametersChange)
+        .getFire(Models.Topics.QuotingParametersChange)
     );
   }
 

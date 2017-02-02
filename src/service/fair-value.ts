@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
@@ -31,7 +31,7 @@ export class FairValueEngine {
         private _timeProvider: Utils.ITimeProvider,
         private _filtration: MarketFiltration.MarketFiltration,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
-        private _fvPublisher: Messaging.IPublish<Models.FairValue>) {
+        private _fvPublisher: Publish.IPublish<Models.FairValue>) {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);

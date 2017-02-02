@@ -12,6 +12,41 @@ export class Timestamped<T> implements ITimestamped {
     }
 }
 
+export class Prefixes {
+    static SUBSCRIBE = "_";
+    static SNAPSHOT = "=";
+    static MESSAGE = "-";
+}
+
+export class Topics {
+    static FairValue = "a";
+    static Quote = "b";
+    static ActiveSubscription = "c";
+    static ActiveChange = "d";
+    static MarketData = "e";
+    static QuotingParametersChange = "f";
+    static SafetySettings = "g";
+    static Product = "h";
+    static OrderStatusReports = "i";
+    static ProductAdvertisement = "j";
+    static ApplicationState = "k";
+    static Notepad = "l";
+    static ToggleConfigs = "m";
+    static Position = "n";
+    static ExchangeConnectivity = "o";
+    static SubmitNewOrder = "p";
+    static CancelOrder = "q";
+    static MarketTrade = "r";
+    static Trades = "s";
+    static ExternalValuation = "t";
+    static QuoteStatus = "u";
+    static TargetBasePosition = "v";
+    static TradeSafetyValue = "w";
+    static CancelAllOrders = "x";
+    static CleanAllClosedOrders = "y";
+    static CleanAllOrders = "z";
+}
+
 export class MarketSide {
     constructor(public price: number,
                 public size: number) { }

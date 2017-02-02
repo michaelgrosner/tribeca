@@ -13,7 +13,7 @@ import {PopoverModule} from "ngx-popover";
 import moment = require("moment");
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
+import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 import Pair = require('./pair');
 import {WalletPositionComponent} from './wallet-position';
@@ -45,7 +45,7 @@ class DisplayOrder {
     return names;
   }
 
-  private _fire: Messaging.IFire<Models.OrderRequestFromUI>;
+  private _fire: Subscribe.IFire<Models.OrderRequestFromUI>;
 
   constructor(
     fireFactory: FireFactory
@@ -53,7 +53,7 @@ class DisplayOrder {
     this.availableSides = DisplayOrder.getNames(Models.Side);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
+    this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
   }
 
   public submit = () => {
@@ -380,23 +380,23 @@ class ClientComponent implements OnInit {
     @Inject(FireFactory) private fireFactory: FireFactory
   ) {
     this.cancelAllOrders = () => fireFactory
-      .getFire(Messaging.Topics.CancelAllOrders)
+      .getFire(Models.Topics.CancelAllOrders)
       .fire(new Models.CancelAllOrdersRequest());
 
     this.cleanAllClosedOrders = () => fireFactory
-      .getFire(Messaging.Topics.CleanAllClosedOrders)
+      .getFire(Models.Topics.CleanAllClosedOrders)
       .fire(new Models.CleanAllClosedOrdersRequest());
 
     this.cleanAllOrders = () => fireFactory
-      .getFire(Messaging.Topics.CleanAllOrders)
+      .getFire(Models.Topics.CleanAllOrders)
       .fire(new Models.CleanAllOrdersRequest());
 
     this.changeNotepad = (content:string) => fireFactory
-      .getFire(Messaging.Topics.Notepad)
+      .getFire(Models.Topics.Notepad)
       .fire(content);
 
     this.toggleConfigs = (showConfigs:boolean) => fireFactory
-      .getFire(Messaging.Topics.ToggleConfigs)
+      .getFire(Models.Topics.ToggleConfigs)
       .fire(showConfigs);
 
     this.notepad = null;
@@ -408,20 +408,20 @@ class ClientComponent implements OnInit {
     this.order = new DisplayOrder(this.fireFactory);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.ProductAdvertisement)
+      .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
       .registerDisconnectedHandler(() => this.reset());
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.ApplicationState)
+      .getSubscriber(this.zone, Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.Notepad)
+      .getSubscriber(this.zone, Models.Topics.Notepad)
       .registerSubscriber(this.onNotepad);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.ToggleConfigs)
+      .getSubscriber(this.zone, Models.Topics.ToggleConfigs)
       .registerSubscriber(this.onToggleConfigs);
   }
 

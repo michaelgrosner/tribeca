@@ -3,7 +3,7 @@ import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
+import Subscribe = require('./subscribe');
 import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
@@ -14,7 +14,7 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Messaging.IFire<Models.OrderStatusReport>;
+  private fireCxl: Subscribe.IFire<Models.OrderStatusReport>;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -30,10 +30,10 @@ export class OrdersComponent implements OnInit {
     // this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">not trading</span>`;
 
     this.fireCxl = this.fireFactory
-      .getFire(Messaging.Topics.CancelOrder);
+      .getFire(Models.Topics.CancelOrder);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.OrderStatusReports)
+      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
   }

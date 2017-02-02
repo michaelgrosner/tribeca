@@ -1,7 +1,6 @@
 import {NgZone, Component, Inject, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({
@@ -58,10 +57,10 @@ export class MarketQuotingComponent implements OnInit {
 
   ngOnInit() {
     [
-      [Messaging.Topics.MarketData, this.updateMarket, this.clearMarket],
-      [Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
-      [Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-      [Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
+      [Models.Topics.MarketData, this.updateMarket, this.clearMarket],
+      [Models.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
+      [Models.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
+      [Models.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
     ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)

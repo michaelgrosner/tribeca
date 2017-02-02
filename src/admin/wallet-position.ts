@@ -1,7 +1,6 @@
 import {NgZone, Component, Inject, OnInit} from '@angular/core';
 
 import Models = require('../common/models');
-import Messaging = require('../common/messaging');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({
@@ -41,12 +40,12 @@ export class WalletPositionComponent implements OnInit {
 
   ngOnInit() {
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.QuotingParametersChange)
+      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
       .registerDisconnectedHandler(this.clearQP)
       .registerSubscriber(this.updateQP);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Messaging.Topics.Position)
+      .getSubscriber(this.zone, Models.Topics.Position)
       .registerDisconnectedHandler(this.clearPosition)
       .registerSubscriber(this.updatePosition);
   }

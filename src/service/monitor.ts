@@ -1,5 +1,5 @@
 import Models = require("../common/models");
-import Messaging = require("../common/messaging");
+import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
 import Q = require("q");
@@ -22,11 +22,11 @@ export class ApplicationState {
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
-                private _appStatePublisher : Messaging.IPublish<Models.ApplicationState>,
-                private _notepadPublisher : Messaging.IPublish<string>,
-                private _changeNotepadReciever : Messaging.IReceive<string>,
-                private _toggleConfigsPublisher : Messaging.IPublish<boolean>,
-                private _toggleConfigsReciever : Messaging.IReceive<boolean>) {
+                private _appStatePublisher : Publish.IPublish<Models.ApplicationState>,
+                private _notepadPublisher : Publish.IPublish<string>,
+                private _changeNotepadReciever : Publish.IReceive<string>,
+                private _toggleConfigsPublisher : Publish.IPublish<boolean>,
+                private _toggleConfigsReciever : Publish.IReceive<boolean>) {
         _timeProvider.setInterval(this.onTick, moment.duration(69, "seconds"));
         this.onTick();
 
