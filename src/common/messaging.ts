@@ -162,7 +162,6 @@ export interface ISubscribe<T> {
 
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private _disconnectHandler: () => void = null;
-  private _connectHandler: () => void = null;
   private _socket: SocketIOClient.Socket;
 
   constructor(
@@ -175,7 +174,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       if (this.connected) this.onConnect();
 
       this._socket
-        .on("connect", this.onConnect)
+        .on("connect", () => this._socket.emit(Prefixes.SUBSCRIBE + this.topic))
         .on("disconnect", this.onDisconnect)
         .on(Prefixes.MESSAGE + topic, (data) => observer.next(data))
         .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
@@ -187,10 +186,6 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   public get connected(): boolean {
     return this._socket.connected;
   }
-
-  private onConnect = () => {
-    this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
-  };
 
   private onDisconnect = () => {
     if (this._disconnectHandler !== null)
