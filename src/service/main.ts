@@ -256,7 +256,6 @@ interface TradingSystem {
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     var tradesPersister = system.getPersister("trades");
-    var rfvPersister = system.getPersister("rfv");
 
     var paramsPersister = system.getRepository(system.startingParameters, Models.Topics.QuotingParametersChange);
 
@@ -264,12 +263,10 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
     Q.all<any>([
       paramsPersister.loadLatest(),
-      tradesPersister.loadAll(10000),
-      rfvPersister.loadAll(1)
+      tradesPersister.loadAll(10000)
     ]).spread((
       initParams: Models.QuotingParameters,
-      initTrades: Models.Trade[],
-      initRfv: Models.RegularFairValue[]
+      initTrades: Models.Trade[]
     ) => {
         _.defaults(initParams, defaultQuotingParameters);
 
@@ -363,11 +360,10 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             system.timeProvider,
             new PositionManagement.PositionManager(
               system.timeProvider,
-              rfvPersister,
               fvEngine,
-              initRfv,
-              new Statistics.EwmaStatisticCalculator(initParams.shortEwma, initRfv),
-              new Statistics.EwmaStatisticCalculator(initParams.longEwma, initRfv)
+              null,
+              new Statistics.EwmaStatisticCalculator(initParams.shortEwma, null),
+              new Statistics.EwmaStatisticCalculator(initParams.longEwma, null)
             ),
             paramsRepo,
             positionBroker,
