@@ -58,10 +58,10 @@ export class MarketQuotingComponent implements OnInit {
 
   ngOnInit() {
     [
-     [Messaging.Topics.MarketData, this.updateMarket, this.clearMarket],
-     [Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
-     [Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-     [Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
+      [Messaging.Topics.MarketData, this.updateMarket, this.clearMarket],
+      [Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
+      [Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
+      [Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
     ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)
