@@ -24,7 +24,6 @@ export class PositionManager {
     private _timer: RegularTimer;
     constructor(
         private _timeProvider: Utils.ITimeProvider,
-        private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _data: Models.RegularFairValue[],
         private _shortEwma: Statistics.IComputeStatistics,
@@ -57,7 +56,7 @@ export class PositionManager {
             Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
-        this._persister.persist(rfv);
+        this._data = _.takeRight(this._data, 7);
     };
 }
 

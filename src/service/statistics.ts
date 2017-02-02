@@ -13,7 +13,8 @@ export interface IComputeStatistics {
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
     constructor(private _alpha: number, initRfv: Models.RegularFairValue[]) {
-      this.initialize(_.map(initRfv, (r: Models.RegularFairValue) => r.value));
+      if (initRfv !== null)
+        this.initialize(_.map(initRfv, (r: Models.RegularFairValue) => r.value));
     }
 
     public latest: number = null;
