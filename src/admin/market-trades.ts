@@ -62,6 +62,7 @@ export class MarketTradesComponent implements OnInit {
   }
 
   private addRowData = (trade: Models.MarketTrade) => {
+    if (!this.gridOptions.api) return;
     if (trade != null)
       this.gridOptions.api.addItems([{
         price: trade.price,

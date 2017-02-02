@@ -82,6 +82,7 @@ export class TradesComponent implements OnInit {
   }
 
   private addRowData = (t: Models.Trade) => {
+    if (!this.gridOptions.api) return;
     if (t.Kqty<0) {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (node.data.tradeId==t.tradeId)
@@ -147,6 +148,7 @@ export class TradesComponent implements OnInit {
 
   private updateQP = (qp: Models.QuotingParameters) => {
     this.audio = qp.audio;
+    if (!this.gridOptions.api) return;
     var isK = (qp.mode === Models.QuotingMode.Boomerang || qp.mode === Models.QuotingMode.AK47);
     this.gridOptions.columnDefs.map((r: ColDef) => {
       ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
