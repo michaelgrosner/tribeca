@@ -171,10 +171,11 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     super(observer => {
       this._socket = io;
 
-      if (this.connected) this.onConnect();
+      let onConnect = () => this._socket.emit(Prefixes.SUBSCRIBE + this.topic);
+      if (this.connected) onConnect();
 
       this._socket
-        .on("connect", () => this._socket.emit(Prefixes.SUBSCRIBE + this.topic))
+        .on("connect", onConnect)
         .on("disconnect", this.onDisconnect)
         .on(Prefixes.MESSAGE + topic, (data) => observer.next(data))
         .on(Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));

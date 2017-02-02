@@ -273,13 +273,12 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
     ) => {
         _.defaults(initParams, defaultQuotingParameters);
 
-        let advert = new Models.ProductAdvertisement(
-          system.exchange,
-          system.pair,
-          system.config.GetString("TRIBECA_MODE").replace('auto','')
-        );
         system.getPublisher(Messaging.Topics.ProductAdvertisement)
-          .registerSnapshot(() => [advert]).publish(advert);
+          .registerSnapshot(() => [new Models.ProductAdvertisement(
+            system.exchange,
+            system.pair,
+            system.config.GetString("TRIBECA_MODE").replace('auto','')
+          )]);
 
         new Monitor.ApplicationState(
           system.timeProvider,
