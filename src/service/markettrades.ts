@@ -3,7 +3,7 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import _ = require("lodash");
-import P = require("./persister");
+import Persister = require("./persister");
 import Broker = require("./broker");
 import mongodb = require('mongodb');
 import Web = require("./web");
@@ -24,7 +24,7 @@ export class MarketTradesLoaderSaver {
             this._wrapped.saver(x.quote);
     };
 
-    constructor(private _wrapped: P.LoaderSaver) {}
+    constructor(private _wrapped: Persister.LoaderSaver) {}
 }
 
 export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
