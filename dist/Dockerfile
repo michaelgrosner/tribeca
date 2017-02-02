@@ -3,13 +3,13 @@ RUN apt-get update
 
 RUN apt-get install -y git
 
-RUN git clone https://github.com/ctubio/tribeca.git
-# Otherwise, choose the branch you want to build:
-#RUN git clone -b CUSTOM_BRANCH_NAME https://github.com/ctubio/tribeca.git
+# Feel free to choose the branch you want to build:
+RUN git clone -b master https://github.com/ctubio/tribeca.git
 
 WORKDIR tribeca
-# Remove the ssl certification (not recommanded):
-# RUN rm -r etc/sslcert
+
+# Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
+#RUN rm -rf etc/sslcert
 
 RUN npm install --unsafe-perm
 
