@@ -648,23 +648,28 @@ export class ExchangeBroker implements Interfaces.IBroker {
         this._connectivityPublisher.publish(this.connectStatus);
     };
 
-    public get connectStatus() : Models.ConnectivityStatus {
-        return this._connectStatus;
+    public get connectStatus(): Models.ConnectivityStatus {
+      return this._connectStatus;
     }
 
-    constructor(private _pair : Models.CurrencyPair,
-                private _mdGateway : Interfaces.IMarketDataGateway,
-                private _baseGateway : Interfaces.IExchangeDetailsGateway,
-                private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
-        this._mdGateway.ConnectChanged.on(s => {
-            this.onConnect(Models.GatewayType.MarketData, s);
-        });
+    constructor(
+      private _pair: Models.CurrencyPair,
+      private _mdGateway: Interfaces.IMarketDataGateway,
+      private _baseGateway: Interfaces.IExchangeDetailsGateway,
+      private _oeGateway: Interfaces.IOrderEntryGateway,
+      private _connectivityPublisher: Messaging.IPublish<Models.ConnectivityStatus>
+    ) {
+      if (!_.some(_baseGateway.supportedCurrencyPairs, p => p.base === _pair.base && p.quote === _pair.quote))
+        throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + _baseGateway.name() + " really supports the specified currencies defined in TradedPair configuration option.");
 
-        this._oeGateway.ConnectChanged.on(s => {
-            this.onConnect(Models.GatewayType.OrderEntry, s)
-        });
+      this._mdGateway.ConnectChanged.on(s => {
+        this.onConnect(Models.GatewayType.MarketData, s);
+      });
 
-        this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
+      this._oeGateway.ConnectChanged.on(s => {
+        this.onConnect(Models.GatewayType.OrderEntry, s)
+      });
+
+      this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
 }
