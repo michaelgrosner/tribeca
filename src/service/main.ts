@@ -289,18 +289,15 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getReceiver(Messaging.Topics.ToggleConfigs)
         );
 
-        var orderCache = new Broker.OrderStateCache();
-        var gateway = system.getExchange(orderCache);
-
-        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === system.pair.base && p.quote === system.pair.quote))
-            throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + gateway.base.name() + " really supports the specified currencies defined in TradedPair configuration option.");
-
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(
           system.getPublisher(Messaging.Topics.QuotingParametersChange),
           system.getReceiver(Messaging.Topics.QuotingParametersChange),
           initParams,
           paramsPersister
         );
+
+        var orderCache = new Broker.OrderStateCache();
+        var gateway = system.getExchange(orderCache);
 
         var broker = new Broker.ExchangeBroker(
           system.pair,
