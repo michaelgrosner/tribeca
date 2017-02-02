@@ -80,6 +80,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
+    if (!this.gridOptions.api) return;
     let exists: boolean = false;
     let isClosed: boolean = (o.data[1] == Models.OrderStatus.New
       || o.data[1] == Models.OrderStatus.Cancelled

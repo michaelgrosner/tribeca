@@ -57,17 +57,17 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   ngOnInit() {
-    let makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
+    [
+     [Messaging.Topics.MarketData, this.updateMarket, this.clearMarket],
+     [Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
+     [Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
+     [Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
+    ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)
-        .registerSubscriber(updateFn)
-        .registerDisconnectedHandler(clearFn);
-    };
-
-    makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.MarketData, this.updateMarket, this.clearMarket);
-    makeSubscriber<Models.Timestamped<any[]>>(Messaging.Topics.OrderStatusReports, this.updateQuote, this.clearQuote);
-    makeSubscriber<Models.TwoSidedQuoteStatus>(Messaging.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus);
-    makeSubscriber<Models.TargetBasePositionValue>(Messaging.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition);
+        .registerDisconnectedHandler(clearFn)
+        .registerSubscriber(updateFn);
+    }).call(this, x[0], x[1], x[2]));
   }
 
   private clearMarket = () => {
