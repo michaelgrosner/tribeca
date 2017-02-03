@@ -25,7 +25,7 @@ export class PositionManager {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _fvAgent: FairValue.FairValueEngine,
-        private _data: Models.RegularFairValue[],
+        private _data: Models.RegularFairValue[] = [],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
         var lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
