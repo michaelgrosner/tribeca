@@ -156,6 +156,8 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `audio` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
+* `delayUI` - Relax the display of UI data by `delayUI` seconds. To enjoy a realtime UI set a value of 0 (zero). If you decide to use a realtime UI, please validate that it doesn't slows down your usual `openOrders/minute` frequency.
+
 
 # How can I make up my own trading strategies?
 
