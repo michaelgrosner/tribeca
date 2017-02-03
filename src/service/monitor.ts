@@ -30,8 +30,9 @@ export class ApplicationState {
     this._appStatePublisher.publish(this._app_state);
   };
 
-  private onSnap = () => {
-    if (++this._tick>=69) {
+  private onDelay = () => {
+    this._tick += this._ioDelay;
+    if (this._tick>=6e1) {
       this._tick = 0;
       this.onTick();
     }
@@ -49,6 +50,18 @@ export class ApplicationState {
     this._delayed.push([prefix+topic, msg]);
   };
 
+  private setDelay = () => {
+    this._ioDelay = this._qlParamRepo.latest.delayUI;
+  };
+
+  private setTick = () => {
+    if (this._interval) clearInterval(this._interval);
+    if (this._ioDelay<1) this._ioDelay = 0;
+    else this._interval = this._timeProvider.setInterval(
+      this.onDelay, moment.duration(this._ioDelay, "seconds")
+    );
+  };
+
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
@@ -58,13 +71,13 @@ export class ApplicationState {
     private _toggleConfigsPublisher : Publish.IPublish<boolean>,
     private _toggleConfigsReciever : Publish.IReceive<boolean>
   ) {
-    let setTick = () => {
-      if (this._interval) clearInterval(this._interval);
-      if (this._ioDelay<1) this._ioDelay = 0;
-      else this._interval = _timeProvider.setInterval(this.onSnap, moment.duration(this._ioDelay, "seconds"));
-    }
-    setTick();
+    this.setDelay();
+    this.setTick();
     this.onTick();
+    _qlParamRepo.NewParameters.on(() => {
+      this.setDelay();
+      this.setTick();
+    });
 
     _appStatePublisher.registerSnapshot(() => [this._app_state]);
 
@@ -78,11 +91,6 @@ export class ApplicationState {
 
     _toggleConfigsReciever.registerReceiver((toggleConfigs: boolean) => {
       this._toggleConfigs = toggleConfigs;
-    });
-
-    _qlParamRepo.NewParameters.on(() => {
-      this._ioDelay = this._qlParamRepo.latest.delayUI;
-      setTick();
     });
   }
 }
