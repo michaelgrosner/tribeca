@@ -9,6 +9,8 @@ import moment = require("moment");
 
 export class ApplicationState {
 
+    public io: SocketIO.Server;
+    private _delayed: any[] = [];
     private _app_state: Models.ApplicationState = null;
     private _notepad: string = null;
     private _toggleConfigs: boolean = true;
@@ -21,6 +23,22 @@ export class ApplicationState {
       this._appStatePublisher.publish(this._app_state);
     };
 
+    private onSnap = () => {
+      if (this.io === null) return;
+      this._delayed.forEach(x => this.io.emit(x[0], x[1]));
+      this._delayed = [];
+    };
+
+    private _tradesSecond: moment.Moment[] = [];
+
+    public delay = (prefix: string, topic: string, msg: any) => {
+      if (topic === Models.Topics.OrderStatusReports) {
+        // if (msg.data[1] === Models.OrderStatus.New) this._tradesSecond.push(msg.time);
+        this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || x[1].data[0] !== msg.data[0]);
+      } else this._delayed = this._delayed.filter(x => x[0] !== prefix+topic);
+      this._delayed.push([prefix+topic, msg]);
+    };
+
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _appStatePublisher : Publish.IPublish<Models.ApplicationState>,
                 private _notepadPublisher : Publish.IPublish<string>,
@@ -28,6 +46,7 @@ export class ApplicationState {
                 private _toggleConfigsPublisher : Publish.IPublish<boolean>,
                 private _toggleConfigsReciever : Publish.IReceive<boolean>) {
         _timeProvider.setInterval(this.onTick, moment.duration(69, "seconds"));
+        _timeProvider.setInterval(this.onSnap, moment.duration(1, "seconds"));
         this.onTick();
 
         _appStatePublisher.registerSnapshot(() => [this._app_state]);
