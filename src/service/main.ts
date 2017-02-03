@@ -62,7 +62,8 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   2*.095                             ,/* shortEwma */
   .095                               ,/* quotingEwma */
   3                                  ,/* aprMultiplier */
-  .1                                  /* stepOverSize */
+  .1                                 ,/* stepOverSize */
+  0                                   /* delayUI */
 );
 
 let exitingEvent: () => Q.Promise<boolean>;
@@ -278,20 +279,21 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             system.config.GetString("TRIBECA_MODE").replace('auto','')
           )]);
 
+        let paramsRepo = new QuotingParameters.QuotingParametersRepository(
+          system.getPublisher(Models.Topics.QuotingParametersChange),
+          system.getReceiver(Models.Topics.QuotingParametersChange),
+          initParams,
+          paramsPersister
+        );
+
         let monitor = new Monitor.ApplicationState(
           system.timeProvider,
+          paramsRepo,
           system.getPublisher(Models.Topics.ApplicationState),
           system.getPublisher(Models.Topics.Notepad),
           system.getReceiver(Models.Topics.Notepad),
           system.getPublisher(Models.Topics.ToggleConfigs),
           system.getReceiver(Models.Topics.ToggleConfigs)
-        );
-
-        var paramsRepo = new QuotingParameters.QuotingParametersRepository(
-          system.getPublisher(Models.Topics.QuotingParametersChange),
-          system.getReceiver(Models.Topics.QuotingParametersChange),
-          initParams,
-          paramsPersister
         );
 
         var orderCache = new Broker.OrderStateCache();
