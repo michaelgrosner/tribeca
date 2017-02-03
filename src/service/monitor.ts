@@ -18,22 +18,29 @@ export class ApplicationState {
     private onTick = () => {
       this._app_state = new Models.ApplicationState(
         process.memoryUsage().rss,
-        moment.utc().hours()
+        moment.utc().hours(),
+        this._tradesMinute
       );
+      this._tradesMinute = 0;
       this._appStatePublisher.publish(this._app_state);
     };
 
+    private _tick: number = 0;
     private onSnap = () => {
+      if (++this._tick>=69) {
+        this._tick = 0;
+        this.onTick();
+      }
       if (this.io === null) return;
       this._delayed.forEach(x => this.io.emit(x[0], x[1]));
       this._delayed = [];
     };
 
-    private _tradesSecond: moment.Moment[] = [];
+    private _tradesMinute: number = 0;
 
     public delay = (prefix: string, topic: string, msg: any) => {
       if (topic === Models.Topics.OrderStatusReports) {
-        // if (msg.data[1] === Models.OrderStatus.New) this._tradesSecond.push(msg.time);
+        if (msg.data[1] === Models.OrderStatus.New) return ++this._tradesMinute;
         this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || x[1].data[0] !== msg.data[0]);
       } else this._delayed = this._delayed.filter(x => x[0] !== prefix+topic);
       this._delayed.push([prefix+topic, msg]);
@@ -45,7 +52,6 @@ export class ApplicationState {
                 private _changeNotepadReciever : Publish.IReceive<string>,
                 private _toggleConfigsPublisher : Publish.IPublish<boolean>,
                 private _toggleConfigsReciever : Publish.IReceive<boolean>) {
-        _timeProvider.setInterval(this.onTick, moment.duration(69, "seconds"));
         _timeProvider.setInterval(this.onSnap, moment.duration(1, "seconds"));
         this.onTick();
 

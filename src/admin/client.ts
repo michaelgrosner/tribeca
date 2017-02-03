@@ -252,7 +252,7 @@ class DisplayOrder {
 
                         <div class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
-                            <trade-safety [showConfigs]="showConfigs" (toggleConfigs)="toggleConfigs(showConfigs = !showConfigs)"></trade-safety>
+                            <trade-safety [tradeFreq]="tradeFreq" [showConfigs]="showConfigs" (toggleConfigs)="toggleConfigs(showConfigs = !showConfigs)"></trade-safety>
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
@@ -373,6 +373,7 @@ class ClientComponent implements OnInit {
 
   private user_theme: string = null;
   private system_theme: string = null;
+  public tradeFreq: number = 0;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -452,6 +453,7 @@ class ClientComponent implements OnInit {
     this.server_memory = this.bytesToSize(as.memory, 0);
     this.client_memory = this.bytesToSize((<any>window.performance).memory.usedJSHeapSize, 0);
     this.system_theme = this.getTheme(as.hour);
+    this.tradeFreq = (as.freq);
     this.setTheme();
   }
 
