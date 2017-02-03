@@ -13,38 +13,39 @@ export class Timestamped<T> implements ITimestamped {
 }
 
 export var Prefixes = {
-  SUBSCRIBE: "_",
-  SNAPSHOT: "=",
-  MESSAGE: "-"
+  SUBSCRIBE: '_',
+  SNAPSHOT: '=',
+  MESSAGE: '-',
+  DELAYED: '.'
 }
 
 export var Topics = {
-  FairValue: "a",
-  Quote: "b",
-  ActiveSubscription: "c",
-  ActiveChange: "d",
-  MarketData: "e",
-  QuotingParametersChange: "f",
-  SafetySettings: "g",
-  Product: "h",
-  OrderStatusReports: "i",
-  ProductAdvertisement: "j",
-  ApplicationState: "k",
-  Notepad: "l",
-  ToggleConfigs: "m",
-  Position: "n",
-  ExchangeConnectivity: "o",
-  SubmitNewOrder: "p",
-  CancelOrder: "q",
-  MarketTrade: "r",
-  Trades: "s",
-  ExternalValuation: "t",
-  QuoteStatus: "u",
-  TargetBasePosition: "v",
-  TradeSafetyValue: "w",
-  CancelAllOrders: "x",
-  CleanAllClosedOrders: "y",
-  CleanAllOrders: "z"
+  FairValue: 'a',
+  Quote: 'b',
+  ActiveSubscription: 'c',
+  ActiveChange: 'd',
+  MarketData: 'e',
+  QuotingParametersChange: 'f',
+  SafetySettings: 'g',
+  Product: 'h',
+  OrderStatusReports: 'i',
+  ProductAdvertisement: 'j',
+  ApplicationState: 'k',
+  Notepad: 'l',
+  ToggleConfigs: 'm',
+  Position: 'n',
+  ExchangeConnectivity: 'o',
+  SubmitNewOrder: 'p',
+  CancelOrder: 'q',
+  MarketTrade: 'r',
+  Trades: 's',
+  ExternalValuation: 't',
+  QuoteStatus: 'u',
+  TargetBasePosition: 'v',
+  TradeSafetyValue: 'w',
+  CancelAllOrders: 'x',
+  CleanAllClosedOrders: 'y',
+  CleanAllOrders: 'z'
 }
 
 export class MarketSide {
