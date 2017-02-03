@@ -410,7 +410,7 @@ export class ProductAdvertisement {
 }
 
 export class ApplicationState {
-    constructor(public memory: number, public hour: number) { }
+    constructor(public memory: number, public hour: number, public freq: number) { }
 }
 
 export class RegularFairValue {

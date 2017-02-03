@@ -11,7 +11,8 @@ import {SubscriberFactory} from './shared_directives';
       SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span>,
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
-      TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>
+      TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
+      T/min: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
       <b style="float:right"><a href="#" (click)="toggleConfigs.next()"><span [hidden]="showConfigs">+</span><span [hidden]="!showConfigs">-</span> Settings</a></b>
     </div>
   </div>`
@@ -24,6 +25,7 @@ export class TradeSafetyComponent implements OnInit {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
+  @Input() tradeFreq: number;
   @Input() showConfigs: boolean;
   @Output() toggleConfigs = new EventEmitter();
 
