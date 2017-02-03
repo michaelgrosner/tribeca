@@ -361,7 +361,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             new PositionManagement.PositionManager(
               system.timeProvider,
               fvEngine,
-              null,
               new Statistics.EwmaStatisticCalculator(initParams.shortEwma, null),
               new Statistics.EwmaStatisticCalculator(initParams.longEwma, null)
             ),
