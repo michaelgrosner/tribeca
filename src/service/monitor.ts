@@ -4,6 +4,7 @@ import Utils = require("./utils");
 import _ = require("lodash");
 import Q = require("q");
 import Interfaces = require("./interfaces");
+import QuotingParameters = require("./quoting-parameters");
 import util = require("util");
 import moment = require("moment");
 
@@ -16,7 +17,8 @@ export class ApplicationState {
   private _toggleConfigs: boolean = true;
   private _tradesMinute: number = 0;
   private _tick: number = 0;
-  private _ioDelay: number = 1;
+  private _ioDelay: number = 0;
+  private _interval = null;
 
   private onTick = () => {
     this._app_state = new Models.ApplicationState(
@@ -39,6 +41,7 @@ export class ApplicationState {
   };
 
   public delay = (prefix: string, topic: string, msg: any) => {
+    if (!this._ioDelay) return (this.io === null) ? null : this.io.emit(prefix + topic, msg);
     if (topic === Models.Topics.OrderStatusReports) {
       if (msg.data[1] === Models.OrderStatus.New) return ++this._tradesMinute;
       this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || x[1].data[0] !== msg.data[0]);
@@ -48,13 +51,19 @@ export class ApplicationState {
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
+    private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _appStatePublisher : Publish.IPublish<Models.ApplicationState>,
     private _notepadPublisher : Publish.IPublish<string>,
     private _changeNotepadReciever : Publish.IReceive<string>,
     private _toggleConfigsPublisher : Publish.IPublish<boolean>,
     private _toggleConfigsReciever : Publish.IReceive<boolean>
   ) {
-    _timeProvider.setInterval(this.onSnap, moment.duration(this._ioDelay, "seconds"));
+    let setTick = () => {
+      if (this._interval) clearInterval(this._interval);
+      if (this._ioDelay<1) this._ioDelay = 0;
+      else this._interval = _timeProvider.setInterval(this.onSnap, moment.duration(this._ioDelay, "seconds"));
+    }
+    setTick();
     this.onTick();
 
     _appStatePublisher.registerSnapshot(() => [this._app_state]);
@@ -69,6 +78,11 @@ export class ApplicationState {
 
     _toggleConfigsReciever.registerReceiver((toggleConfigs: boolean) => {
       this._toggleConfigs = toggleConfigs;
+    });
+
+    _qlParamRepo.NewParameters.on(() => {
+      this._ioDelay = this._qlParamRepo.latest.delayUI;
+      setTick();
     });
   }
 }

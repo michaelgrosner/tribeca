@@ -160,6 +160,7 @@ class DisplayOrder {
                                             <th>trds</th>
                                             <th>/sec</th>
                                             <th>audio?</th>
+                                            <th>delayUI</th>
                                             <th colspan="2">
                                                 <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
                                                     Applied
@@ -216,6 +217,12 @@ class DisplayOrder {
                                             <td>
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.audio">
+                                            </td>
+                                            <td>
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.delayUI">
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"

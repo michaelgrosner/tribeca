@@ -391,7 +391,8 @@ export class QuotingParameters {
                 public shortEwma: number,
                 public quotingEwma: number,
                 public aprMultiplier: number,
-                public stepOverSize: number) {}
+                public stepOverSize: number,
+                public delayUI: number) {}
 }
 
 export function toUtcFormattedTime(t: moment.Moment) {
