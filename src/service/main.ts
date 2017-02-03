@@ -62,7 +62,8 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   2*.095                             ,/* shortEwma */
   .095                               ,/* quotingEwma */
   3                                  ,/* aprMultiplier */
-  .1                                  /* stepOverSize */
+  .1                                 ,/* stepOverSize */
+  0                                   /* delayUI */
 );
 
 let exitingEvent: () => Q.Promise<boolean>;
@@ -112,7 +113,7 @@ var backTestSimulationSetup = (
       )
     );
 
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+    var getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
         return new Publish.NullPublisher<T>();
     };
 
@@ -205,8 +206,9 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
       }
     };
 
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
-      var socketIoPublisher = new Publish.Publisher<T>(topic, io, null);
+    var getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+      if (monitor && !monitor.io) monitor.io = io;
+      var socketIoPublisher = new Publish.Publisher<T>(topic, io, monitor, null);
       if (persister) return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
       else return socketIoPublisher;
     };
@@ -251,7 +253,7 @@ interface TradingSystem {
     getReceiver<T>(topic: string): Publish.IReceive<T>;
     getPersister<T>(collectionName: string): Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
-    getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Publish.IPublish<T>;
+    getPublisher<T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T>;
 }
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
@@ -277,20 +279,21 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             system.config.GetString("TRIBECA_MODE").replace('auto','')
           )]);
 
-        new Monitor.ApplicationState(
+        let paramsRepo = new QuotingParameters.QuotingParametersRepository(
+          system.getPublisher(Models.Topics.QuotingParametersChange),
+          system.getReceiver(Models.Topics.QuotingParametersChange),
+          initParams,
+          paramsPersister
+        );
+
+        let monitor = new Monitor.ApplicationState(
           system.timeProvider,
+          paramsRepo,
           system.getPublisher(Models.Topics.ApplicationState),
           system.getPublisher(Models.Topics.Notepad),
           system.getReceiver(Models.Topics.Notepad),
           system.getPublisher(Models.Topics.ToggleConfigs),
           system.getReceiver(Models.Topics.ToggleConfigs)
-        );
-
-        var paramsRepo = new QuotingParameters.QuotingParametersRepository(
-          system.getPublisher(Models.Topics.QuotingParametersChange),
-          system.getReceiver(Models.Topics.QuotingParametersChange),
-          initParams,
-          paramsPersister
         );
 
         var orderCache = new Broker.OrderStateCache();
@@ -310,8 +313,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           broker,
           gateway.oe,
           tradesPersister,
-          system.getPublisher(Models.Topics.OrderStatusReports),
-          system.getPublisher(Models.Topics.Trades, tradesPersister),
+          system.getPublisher(Models.Topics.OrderStatusReports, monitor),
+          system.getPublisher(Models.Topics.Trades, null, tradesPersister),
           system.getReceiver(Models.Topics.SubmitNewOrder),
           system.getReceiver(Models.Topics.CancelOrder),
           system.getReceiver(Models.Topics.CancelAllOrders),
@@ -323,7 +326,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 
         var marketDataBroker = new Broker.MarketDataBroker(
           gateway.md,
-          system.getPublisher(Models.Topics.MarketData)
+          system.getPublisher(Models.Topics.MarketData, monitor)
         );
 
         var positionBroker = new Broker.PositionBroker(
@@ -331,7 +334,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           broker,
           orderBroker,
           gateway.pg,
-          system.getPublisher(Models.Topics.Position),
+          system.getPublisher(Models.Topics.Position, monitor),
           marketDataBroker
         );
 
@@ -341,7 +344,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.timeProvider,
           filtration,
           paramsRepo,
-          system.getPublisher(Models.Topics.FairValue)
+          system.getPublisher(Models.Topics.FairValue, monitor)
         );
 
         var quotingEngine = new QuotingEngine.QuotingEngine(
@@ -366,14 +369,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             ),
             paramsRepo,
             positionBroker,
-            system.getPublisher(Models.Topics.TargetBasePosition)
+            system.getPublisher(Models.Topics.TargetBasePosition, monitor)
           ),
           new Safety.SafetyCalculator(
             system.timeProvider,
             fvEngine,
             paramsRepo,
             orderBroker,
-            system.getPublisher(Models.Topics.TradeSafetyValue)
+            system.getPublisher(Models.Topics.TradeSafetyValue, monitor)
           )
         );
 
@@ -381,7 +384,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.timeProvider,
           paramsRepo,
           quotingEngine,
-          system.getPublisher(Models.Topics.QuoteStatus),
+          system.getPublisher(Models.Topics.QuoteStatus, monitor),
           quoter,
           positionBroker,
           fvEngine,

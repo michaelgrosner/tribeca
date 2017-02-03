@@ -1,4 +1,5 @@
 import Models = require("../common/models");
+import Monitor = require("./monitor");
 
 export interface IPublish<T> {
     publish: (msg: T) => void;
@@ -9,6 +10,7 @@ export class Publisher<T> implements IPublish<T> {
     private _snapshot: () => T[] = null;
     constructor(private topic: string,
                 private _io: SocketIO.Server,
+                private _monitor: Monitor.ApplicationState,
                 private snapshot: () => T[]) {
         this.registerSnapshot(snapshot || null);
 
@@ -41,7 +43,9 @@ export class Publisher<T> implements IPublish<T> {
         msg = this.compressOSRInc(msg);
       else if (this.topic === Models.Topics.Position)
         msg = this.compressPositionInc(msg);
-      this._io.emit(Models.Prefixes.MESSAGE + this.topic, msg)
+      if (this._monitor && this._monitor.io)
+        this._monitor.delay(Models.Prefixes.MESSAGE, this.topic, msg)
+      else this._io.emit(Models.Prefixes.MESSAGE + this.topic, msg);
     };
 
     public registerSnapshot = (generator: () => T[]) => {

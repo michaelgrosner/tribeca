@@ -13,38 +13,39 @@ export class Timestamped<T> implements ITimestamped {
 }
 
 export var Prefixes = {
-  SUBSCRIBE: "_",
-  SNAPSHOT: "=",
-  MESSAGE: "-"
+  SUBSCRIBE: '_',
+  SNAPSHOT: '=',
+  MESSAGE: '-',
+  DELAYED: '.'
 }
 
 export var Topics = {
-  FairValue: "a",
-  Quote: "b",
-  ActiveSubscription: "c",
-  ActiveChange: "d",
-  MarketData: "e",
-  QuotingParametersChange: "f",
-  SafetySettings: "g",
-  Product: "h",
-  OrderStatusReports: "i",
-  ProductAdvertisement: "j",
-  ApplicationState: "k",
-  Notepad: "l",
-  ToggleConfigs: "m",
-  Position: "n",
-  ExchangeConnectivity: "o",
-  SubmitNewOrder: "p",
-  CancelOrder: "q",
-  MarketTrade: "r",
-  Trades: "s",
-  ExternalValuation: "t",
-  QuoteStatus: "u",
-  TargetBasePosition: "v",
-  TradeSafetyValue: "w",
-  CancelAllOrders: "x",
-  CleanAllClosedOrders: "y",
-  CleanAllOrders: "z"
+  FairValue: 'a',
+  Quote: 'b',
+  ActiveSubscription: 'c',
+  ActiveChange: 'd',
+  MarketData: 'e',
+  QuotingParametersChange: 'f',
+  SafetySettings: 'g',
+  Product: 'h',
+  OrderStatusReports: 'i',
+  ProductAdvertisement: 'j',
+  ApplicationState: 'k',
+  Notepad: 'l',
+  ToggleConfigs: 'm',
+  Position: 'n',
+  ExchangeConnectivity: 'o',
+  SubmitNewOrder: 'p',
+  CancelOrder: 'q',
+  MarketTrade: 'r',
+  Trades: 's',
+  ExternalValuation: 't',
+  QuoteStatus: 'u',
+  TargetBasePosition: 'v',
+  TradeSafetyValue: 'w',
+  CancelAllOrders: 'x',
+  CleanAllClosedOrders: 'y',
+  CleanAllOrders: 'z'
 }
 
 export class MarketSide {
@@ -390,7 +391,8 @@ export class QuotingParameters {
                 public shortEwma: number,
                 public quotingEwma: number,
                 public aprMultiplier: number,
-                public stepOverSize: number) {}
+                public stepOverSize: number,
+                public delayUI: number) {}
 }
 
 export function toUtcFormattedTime(t: moment.Moment) {
@@ -410,7 +412,7 @@ export class ProductAdvertisement {
 }
 
 export class ApplicationState {
-    constructor(public memory: number, public hour: number) { }
+    constructor(public memory: number, public hour: number, public freq: number) { }
 }
 
 export class RegularFairValue {
