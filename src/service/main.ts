@@ -63,7 +63,7 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   .095                               ,/* quotingEwma */
   3                                  ,/* aprMultiplier */
   .1                                 ,/* stepOverSize */
-  0                                   /* delayUI */
+  1                                   /* delayUI */
 );
 
 let exitingEvent: () => Q.Promise<boolean>;
