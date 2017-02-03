@@ -21,14 +21,15 @@ export class PositionManager {
         return this._latest;
     }
 
+    private _data: Models.RegularFairValue[] = [];
+
     private _timer: RegularTimer;
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _fvAgent: FairValue.FairValueEngine,
-        private _data: Models.RegularFairValue[] = [],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
-        var lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
+        var lastTime = (this._data !== null && _.some(this._data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(20, 'minutes'), lastTime);
     }
 
