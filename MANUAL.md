@@ -173,7 +173,7 @@ Lets say that you have a great idea about how to profitably make markets and are
 
 2. Install the new class alongside the provided list of modes in the `QuotingStyleRegistry` in `main.js`.
 
-3. Rebuild with `npm install` and restart tribeca.
+3. Rebuild with `npm install` and restart with `npm restart`.
 
 # How can I test new trading strategies?
 
