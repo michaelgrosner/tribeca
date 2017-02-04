@@ -21,6 +21,7 @@ export class ApplicationState {
   private _interval = null;
 
   private onTick = () => {
+    this._tick = 0;
     this._app_state = new Models.ApplicationState(
       process.memoryUsage().rss,
       moment.utc().hours(),
@@ -32,10 +33,7 @@ export class ApplicationState {
 
   private onDelay = () => {
     this._tick += this._ioDelay;
-    if (this._tick>=6e1) {
-      this._tick = 0;
-      this.onTick();
-    }
+    if (this._tick>=6e1) this.onTick();
     if (this.io === null) return;
     this._delayed.forEach(x => this.io.emit(x[0], x[1]));
     this._delayed = [];
@@ -56,9 +54,11 @@ export class ApplicationState {
   private setTick = () => {
     if (this._interval) clearInterval(this._interval);
     if (this._ioDelay<1) this._ioDelay = 0;
-    else this._interval = this._timeProvider.setInterval(
-      this.onDelay, moment.duration(this._ioDelay, "seconds")
+    this._interval = this._timeProvider.setInterval(
+      this._ioDelay ? this.onDelay : this.onTick,
+      moment.duration(this._ioDelay || 6e1, "seconds")
     );
+    this.onTick();
   };
 
   constructor(
@@ -72,7 +72,6 @@ export class ApplicationState {
   ) {
     this.setDelay();
     this.setTick();
-    this.onTick();
     _qlParamRepo.NewParameters.on(() => {
       this.setDelay();
       this.setTick();
