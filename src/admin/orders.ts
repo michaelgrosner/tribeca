@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -15,6 +15,17 @@ export class OrdersComponent implements OnInit {
   private gridOptions: GridOptions = <GridOptions>{};
 
   private fireCxl: Subscribe.IFire<Models.OrderStatusReport>;
+
+  private lastData: number = 0;
+
+  @Input() delayUI: number;
+  @Input() set connected(connected: boolean) {
+    if (connected) return;
+    if (!this.gridOptions.api) return;
+    this.gridOptions.api.setRowData([]);
+    this.gridOptions.api.refreshView();
+  }
+
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -82,9 +93,12 @@ export class OrdersComponent implements OnInit {
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
     if (!this.gridOptions.api) return;
+    if (this.delayUI && Math.abs(moment.utc().valueOf() - this.lastData) > this.delayUI * 5e2) {
+      this.gridOptions.api.setRowData([]);
+      this.lastData = moment.utc().valueOf();
+    }
     let exists: boolean = false;
-    let isClosed: boolean = (o.data[1] == Models.OrderStatus.New
-      || o.data[1] == Models.OrderStatus.Cancelled
+    let isClosed: boolean = (o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
       || o.data[1] == Models.OrderStatus.Rejected);
     this.gridOptions.api.forEachNode((node: RowNode) => {
@@ -100,10 +114,10 @@ export class OrdersComponent implements OnInit {
             lat: o.data[8]+'ms',
             lvQty: o.data[9]
           }));
-          this.gridOptions.api.refreshView();
         }
       }
     });
+    this.gridOptions.api.refreshView();
     if (!exists && !isClosed)
       this.gridOptions.api.addItems([{
         orderId: o.data[0],
