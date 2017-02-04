@@ -53,9 +53,9 @@
       "resolved": "https://registry.npmjs.org/@angular/tsc-wrapped/-/tsc-wrapped-0.5.2.tgz"
     },
     "@types/angular": {
-      "version": "1.6.3",
-      "from": "@types/angular@>=1.6.3 <2.0.0",
-      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.3.tgz"
+      "version": "1.6.4",
+      "from": "@types/angular@>=1.6.4 <2.0.0",
+      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.4.tgz"
     },
     "@types/bunyan": {
       "version": "0.0.35",
@@ -98,9 +98,9 @@
       "resolved": "https://registry.npmjs.org/@types/mime/-/mime-0.0.29.tgz"
     },
     "@types/node": {
-      "version": "7.0.4",
-      "from": "@types/node@>=7.0.4 <8.0.0",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.4.tgz"
+      "version": "7.0.5",
+      "from": "@types/node@>=7.0.5 <8.0.0",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.5.tgz"
     },
     "@types/q": {
       "version": "0.0.32",
