@@ -72,11 +72,12 @@ export class OrdersComponent implements OnInit {
   }
 
   public onCellClicked = ($event) => {
-    if ($event.event.target.getAttribute("data-action-type")=='remove')
-      this.fireCxl.fire({
-        orderId:$event.data.orderId,
-        exchange:$event.data.exchange
-      });
+    if ($event.event.target.getAttribute("data-action-type")!='remove') return;
+    this.fireCxl.fire({
+      orderId:$event.data.orderId,
+      exchange:$event.data.exchange
+    });
+    this.gridOptions.api.removeItems([$event.node]);
   }
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
