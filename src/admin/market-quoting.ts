@@ -1,4 +1,5 @@
-import {NgZone, Component, Inject, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import moment = require('moment');
 
 import Models = require('../common/models');
 import {SubscriberFactory} from './shared_directives';
@@ -46,6 +47,15 @@ export class MarketQuotingComponent implements OnInit {
   public diffMD: number;
   public diffPx: number;
   private targetBasePosition: number;
+
+  private lastData: number = 0;
+
+  @Input() delayUI: number;
+  @Input() set connected(connected: boolean) {
+    if (connected) return;
+    this.order_classes = [];
+    this.updateQuoteClass();
+  }
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -136,8 +146,11 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o: Models.Timestamped<any[]>) => {
-    if (o.data[1] == Models.OrderStatus.New
-      || o.data[1] == Models.OrderStatus.Cancelled
+    if (this.delayUI && Math.abs(moment.utc().valueOf() - this.lastData) > this.delayUI * 5e2) {
+      this.order_classes = [];
+      this.lastData = moment.utc().valueOf();
+    }
+    if (o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
       || o.data[1] == Models.OrderStatus.Rejected
     ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.data[0]);

@@ -44,7 +44,7 @@ export class ApplicationState {
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._tradesMinute;
     if (!this._ioDelay) return this.io ? this.io.emit(prefix + topic, msg) : null;
     this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
-    this._delayed.push([prefix+topic, msg]);
+    if (!isOSR || msg.data[1] === Models.OrderStatus.Working) this._delayed.push([prefix+topic, msg]);
   };
 
   private setDelay = () => {
