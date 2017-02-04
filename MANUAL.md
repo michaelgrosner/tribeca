@@ -156,7 +156,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `audio` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
-* `delayUI` - Relax the display of UI data by `delayUI` seconds. To enjoy a realtime UI set a value of 0 (zero). If you decide to use a realtime UI, please validate that it doesn't slows down your usual `openOrders/minute` frequency.
+* `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of tribeca with the exchange tends to be higher than the latency of tribeca with your browser).
 
 
 # How can I make up my own trading strategies?
