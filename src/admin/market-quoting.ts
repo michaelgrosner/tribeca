@@ -53,7 +53,7 @@ export class MarketQuotingComponent implements OnInit {
   @Input() delayUI: number;
   @Input() set connected(connected: boolean) {
     if (connected) return;
-    this.order_classes = [];
+    this.clearQuote();
     this.updateQuoteClass();
   }
 
@@ -147,7 +147,7 @@ export class MarketQuotingComponent implements OnInit {
 
   private updateQuote = (o: Models.Timestamped<any[]>) => {
     if (this.delayUI && Math.abs(moment.utc().valueOf() - this.lastData) > this.delayUI * 5e2) {
-      this.order_classes = [];
+      this.clearQuote();
       this.lastData = moment.utc().valueOf();
     }
     if (o.data[1] == Models.OrderStatus.Cancelled
