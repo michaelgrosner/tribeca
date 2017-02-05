@@ -19,6 +19,7 @@ interface OkCoinMessageIncomingMessage {
     success : string;
     data : any;
     event? : string;
+    errorcode : string;
 }
 
 interface OkCoinDepthMessage {
@@ -93,11 +94,12 @@ class OkCoinWebsocket {
             }
 
             if (typeof msg.success !== "undefined") {
-                if (msg.success !== "true")
-                    this._log.warn("Unsuccessful message", msg);
-                else
-                    this._log.info("Successfully connected to %s", msg.channel);
-                if (msg.channel.indexOf('ok_spot')!==0) return;
+                if (msg.success !== "true") this._log.warn("Unsuccessful message", msg);
+                else this._log.info("Successfully connected to %s", msg.channel);
+                if (msg.channel.indexOf('ok_spot')!==0
+                  || (typeof msg.errorcode !== "undefined" && msg.errorcode == '10001')
+                ) /* 10001=Request frequency too high */
+                  return;
             }
 
             var handler = this._handlers[msg.channel];
