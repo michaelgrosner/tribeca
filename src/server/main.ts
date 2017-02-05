@@ -163,7 +163,7 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
     }
 
     app.use(compression());
-    app.use(express.static(path.join(__dirname, "pub")));
+    app.use(express.static(path.join(__dirname, "..", "pub")));
 
     var webport = config.GetNumber("WebClientListenPort");
     web_server.listen(webport, () => Utils.log("main").info('Listening to admins on *:', webport));
