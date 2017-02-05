@@ -2268,9 +2268,9 @@
       }
     },
     "private": {
-      "version": "0.1.6",
+      "version": "0.1.7",
       "from": "private@>=0.1.6 <0.2.0",
-      "resolved": "https://registry.npmjs.org/private/-/private-0.1.6.tgz"
+      "resolved": "https://registry.npmjs.org/private/-/private-0.1.7.tgz"
     },
     "process": {
       "version": "0.11.9",
