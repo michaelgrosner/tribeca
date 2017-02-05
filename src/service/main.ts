@@ -10,7 +10,6 @@ import http = require("http");
 import https = require('https');
 import socket_io = require('socket.io');
 import marked = require('marked');
-// var heapdump = require('heapdump'); // kill -USR2
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
