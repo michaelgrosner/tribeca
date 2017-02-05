@@ -163,7 +163,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 Lets say that you have a great idea about how to profitably make markets and are comfortable getting your hands dirty in some TypeScript.  The steps are quite easy
 
-1. Create a class implementing `QuoteStyle` found in `src/service/quoting-styles/helpers.ts`. As part of implementing the interface, you'll need to create a new enum member for `QuotingMode` in models.ts. Inside that class you can create any sort of logic to create a two-sided market, or return null to signify that there should be no quote in the market. The interface gives you:
+1. Create a class implementing `QuoteStyle` found in `src/server/quoting-styles/helpers.ts`. As part of implementing the interface, you'll need to create a new enum member for `QuotingMode` in models.ts. Inside that class you can create any sort of logic to create a two-sided market, or return null to signify that there should be no quote in the market. The interface gives you:
 
   a. The latest order book depth of the market. On most exchanges, this is the best 3 price levels. Individual orders are not supported since not all exchanges support that functionality. Last trades in the market are also not yet provided (though reasonably should in the future).
 

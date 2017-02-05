@@ -1,2 +1,2 @@
 'use strict';
-require('./app/service/main.js');
+require('./app/server/main.js');
