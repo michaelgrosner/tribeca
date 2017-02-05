@@ -1,7 +1,7 @@
 import assert = require("assert");
 import moment = require("moment");
 import Models = require("../src/share/models");
-import Stats = require("../src/service/statistics");
+import Stats = require("../src/server/statistics");
 
 describe("EwmaStatisticCalculator", () => {
     it("Should work", () => {
