@@ -2,7 +2,7 @@ import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
-import Models = require('../common/models');
+import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 

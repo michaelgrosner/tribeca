@@ -1,5 +1,5 @@
 import Utils = require("./utils");
-import Models = require("../common/models");
+import Models = require("../share/models");
 import q = require("q");
 
 export interface IExchangeDetailsGateway {

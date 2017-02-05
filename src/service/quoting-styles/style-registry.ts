@@ -1,5 +1,5 @@
 import StyleHelpers = require("./helpers");
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 import _ = require("lodash");
 
 class NullQuoteGenerator implements StyleHelpers.QuoteStyle {

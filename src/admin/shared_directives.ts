@@ -5,7 +5,7 @@ import moment = require('moment');
 import * as io from 'socket.io-client';
 
 import Subscribe = require("./subscribe");
-import Models = require("../common/models");
+import Models = require("../share/models");
 
 @Injectable()
 export class FireFactory {

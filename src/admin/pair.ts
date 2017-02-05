@@ -2,7 +2,7 @@ import {NgZone} from '@angular/core';
 
 import _ = require('lodash');
 
-import Models = require('../common/models');
+import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {FireFactory, SubscriberFactory} from './shared_directives';
 

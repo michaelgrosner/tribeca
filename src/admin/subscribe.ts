@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import Models = require("../common/models");
+import Models = require("../share/models");
 
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;

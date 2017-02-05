@@ -1,6 +1,6 @@
 import {NgZone, Component, Inject, OnInit} from '@angular/core';
 
-import Models = require('../common/models');
+import Models = require('../share/models');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({

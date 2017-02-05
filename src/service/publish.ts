@@ -1,4 +1,4 @@
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Monitor = require("./monitor");
 
 export interface IPublish<T> {

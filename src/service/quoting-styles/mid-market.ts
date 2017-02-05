@@ -1,5 +1,5 @@
 import StyleHelpers = require("./helpers");
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 
 export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;

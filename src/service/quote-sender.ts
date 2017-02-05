@@ -1,5 +1,5 @@
 import Config = require("./config");
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");

@@ -1,4 +1,4 @@
-import Models = require("../common/models");
+import Models = require("../share/models");
 import moment = require('moment');
 import events = require("events");
 import util = require("util");

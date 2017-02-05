@@ -12,7 +12,7 @@ import {PopoverModule} from "ngx-popover";
 
 import moment = require("moment");
 
-import Models = require('../common/models');
+import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 import Pair = require('./pair');

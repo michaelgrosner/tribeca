@@ -1,4 +1,4 @@
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 
 export class GeneratedQuote {
     constructor(public bidPx: number, public bidSz: number, public askPx: number, public askSz: number) { }
