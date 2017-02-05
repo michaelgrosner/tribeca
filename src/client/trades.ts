@@ -56,7 +56,7 @@ export class TradesComponent implements OnInit {
         else if (params.value === 'K') return "kira";
         else return "unknown";
       }},
-      {width: 65, field:'price', headerName:'px', cellClass: (params) => {
+      {width: 74, field:'price', headerName:'px', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'quantity', headerName:'qty', cellClass: (params) => {
@@ -71,7 +71,7 @@ export class TradesComponent implements OnInit {
       {width: 65, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      {width: 65, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
+      {width: 74, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
