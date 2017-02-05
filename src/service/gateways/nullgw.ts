@@ -1,4 +1,4 @@
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 var uuid = require('uuid');

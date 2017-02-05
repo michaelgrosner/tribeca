@@ -1,6 +1,6 @@
 import util = require("util");
 import Config = require("./config");
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");

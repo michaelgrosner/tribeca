@@ -1,5 +1,5 @@
 import StyleHelpers = require("./helpers");
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 
 export class TopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Top;

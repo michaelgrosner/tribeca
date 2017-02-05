@@ -3,7 +3,7 @@ import Backtest = require("../src/service/backtest");
 import Interfaces = require("../src/service/interfaces");
 import Utils = require("../src/service/utils");
 import Persister = require("../src/service/persister");
-import Models = require("../src/common/models");
+import Models = require("../src/share/models");
 import Moment = require("moment");
 import util = require("util");
 

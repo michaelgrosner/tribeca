@@ -1,4 +1,4 @@
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');

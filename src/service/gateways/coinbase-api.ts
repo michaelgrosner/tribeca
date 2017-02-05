@@ -4,7 +4,7 @@ var crypto = require('crypto');
 import Utils = require("../utils");
 import _ = require('lodash');
 import request = require('request');
-import Models = require("../../common/models");
+import Models = require("../../share/models");
 import moment = require("moment");
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;

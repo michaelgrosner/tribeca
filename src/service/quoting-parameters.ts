@@ -1,4 +1,4 @@
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import Publish = require("./publish");

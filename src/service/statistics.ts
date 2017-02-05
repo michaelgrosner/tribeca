@@ -1,6 +1,6 @@
 import _ = require("lodash");
 import moment = require("moment");
-import Models = require("../common/models");
+import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import FairValue = require("./fair-value");
