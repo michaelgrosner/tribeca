@@ -64,7 +64,7 @@ export class OrdersComponent implements OnInit {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }},
-      { width: 65, field: 'price', headerName: 'px',
+      { width: 74, field: 'price', headerName: 'px',
       sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
