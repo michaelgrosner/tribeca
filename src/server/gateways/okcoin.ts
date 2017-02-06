@@ -100,6 +100,7 @@ class OkCoinWebsocket {
                   || (typeof msg.errorcode !== "undefined" && (
                     msg.errorcode == '10001'    /* 10001=Request frequency too high */
                     || msg.errorcode == '10010' /* 10010=Insufficient funds */
+                    || msg.errorcode == '10016' /* 10016=Insufficient coins balance */
                   ))
                 ) return;
             }
