@@ -201,6 +201,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     cancelOrder = (cancel: Models.OrderCancel) => {
         var rpt = this._orderCache.allOrders[cancel.origOrderId];
+        if (!rpt) {
+          return;
+          // this._log.info("Unable to cancel unexistent order", cancel);
+        }
 
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
