@@ -20,6 +20,7 @@ interface OkCoinMessageIncomingMessage {
     data : any;
     event? : string;
     errorcode : string;
+    order_id : string;
 }
 
 interface OkCoinDepthMessage {
@@ -117,7 +118,7 @@ class OkCoinWebsocket {
             handler(new Models.Timestamped(msg.data, t));
         }
         catch (e) {
-            this._log.error(e, "Error parsing msg %o", raw);
+            this._log.error(e, "Error parsing msg", raw);
             throw e;
         }
     };
