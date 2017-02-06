@@ -96,7 +96,7 @@ class OkCoinWebsocket {
             if (typeof msg.success !== "undefined") {
                 if (msg.success !== "true") this._log.warn("Unsuccessful message", msg);
                 else this._log.info("Successfully connected to %s", msg.channel);
-                if (msg.channel.indexOf('realtrades')>0) return;
+                if (msg.channel.indexOf('realtrades')>0 || msg.channel.indexOf('depth')>0) return;
                 // if (msg.channel.indexOf('ok_spot')!==0
                   // || (typeof msg.errorcode !== "undefined" && (
                     // msg.errorcode == '10001'    /* 10001=Request frequency too high */
