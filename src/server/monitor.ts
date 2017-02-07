@@ -35,6 +35,8 @@ export class ApplicationState {
     this._tick += this._ioDelay;
     if (this._tick>=6e1) this.onTick();
     if (this.io === null) return;
+    let orders: any[] = _.map(this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports), x => x[1]);
+    if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, new Models.Timestamped(orders, null)]);
     this._delayed.forEach(x => this.io.emit(x[0], x[1]));
     this._delayed = [];
   };

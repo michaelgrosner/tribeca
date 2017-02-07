@@ -48,9 +48,6 @@ export class MarketQuotingComponent implements OnInit {
   public diffPx: number;
   private targetBasePosition: number;
 
-  private lastData: number = 0;
-
-  @Input() delayUI: number;
   @Input() set connected(connected: boolean) {
     if (connected) return;
     this.clearQuote();
@@ -146,9 +143,9 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o: Models.Timestamped<any[]>) => {
-    if (this.delayUI && Math.abs(moment.utc().valueOf() - this.lastData) > this.delayUI * 5e2) {
+    if (typeof o.data[0] === 'object') {
       this.clearQuote();
-      this.lastData = moment.utc().valueOf();
+      return o.data.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
     if (o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
