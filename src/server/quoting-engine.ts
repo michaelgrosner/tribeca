@@ -93,19 +93,24 @@ export class QuotingEngine {
         var latestPosition = this._positionBroker.latestReport;
         var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         var totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+        let sideAPR: string[] = [];
 
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
-            if (params.aggressivePositionRebalancing)
-                unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
+            if (params.aggressivePositionRebalancing) {
+              sideAPR.push('Bid');
+              unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
+            }
         }
 
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
-            if (params.aggressivePositionRebalancing)
-                unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
+            if (params.aggressivePositionRebalancing) {
+              sideAPR.push('Sell');
+              unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
+            }
         }
 
         var safety = this._safeties.latest;
@@ -115,10 +120,18 @@ export class QuotingEngine {
         }
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
-          if (unrounded.askSz && safety.buyPing && (params.pongAt == Models.PongAt.ShortPingAggressive || params.pongAt == Models.PongAt.LongPingAggressive || unrounded.askPx < safety.buyPing + params.width))
-            unrounded.askPx = safety.buyPing + params.width;
-          if (unrounded.bidSz && safety.sellPong && (params.pongAt == Models.PongAt.ShortPingAggressive || params.pongAt == Models.PongAt.LongPingAggressive || unrounded.bidPx > safety.sellPong - params.width))
-            unrounded.bidPx = safety.sellPong - params.width;
+          if (unrounded.askSz && safety.buyPing && (
+            sideAPR.indexOf('Sell')>-1
+            || params.pongAt == Models.PongAt.ShortPingAggressive
+            || params.pongAt == Models.PongAt.LongPingAggressive
+            || unrounded.askPx < safety.buyPing + params.width
+          )) unrounded.askPx = safety.buyPing + params.width;
+          if (unrounded.bidSz && safety.sellPong && (
+            sideAPR.indexOf('Buy')>-1
+            || params.pongAt == Models.PongAt.ShortPingAggressive
+            || params.pongAt == Models.PongAt.LongPingAggressive
+            || unrounded.bidPx > safety.sellPong - params.width
+          )) unrounded.bidPx = safety.sellPong - params.width;
         }
 
         if (unrounded.askPx !== null)
