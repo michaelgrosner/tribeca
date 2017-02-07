@@ -16,9 +16,6 @@ export class OrdersComponent implements OnInit {
 
   private fireCxl: Subscribe.IFire<Models.OrderStatusReport>;
 
-  private lastData: number = 0;
-
-  @Input() delayUI: number;
   @Input() set connected(connected: boolean) {
     if (connected) return;
     if (!this.gridOptions.api) return;
@@ -93,9 +90,9 @@ export class OrdersComponent implements OnInit {
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
     if (!this.gridOptions.api) return;
-    if (this.delayUI && Math.abs(moment.utc().valueOf() - this.lastData) > this.delayUI * 5e2) {
+    if (typeof o.data[0] === 'object') {
       this.gridOptions.api.setRowData([]);
-      this.lastData = moment.utc().valueOf();
+      return o.data.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;
     let isClosed: boolean = (o.data[1] == Models.OrderStatus.Cancelled
