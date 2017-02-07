@@ -22,6 +22,7 @@ export class SafetyCalculator {
     public set latest(val: Models.TradeSafety) {
         if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3
           || Math.abs(val.buyPing - this._latest.buyPing) >= 1e-2
+          || val.sideAPR != this._latest.sideAPR
           || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
