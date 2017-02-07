@@ -36,7 +36,7 @@ export class ApplicationState {
     if (this._tick>=6e1) this.onTick();
     if (this.io === null) return;
     let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
-  if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data:_.map(orders, x => x[1])}]);
+    if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data:_.map(orders, x => x[1])}]);
     this._delayed.forEach(x => this.io.emit(x[0], x[1]));
     this._delayed = orders;
   };
