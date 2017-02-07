@@ -15,6 +15,8 @@ export class SafetyCalculator {
 
     private _log = Utils.log("safety");
 
+    public sideAPR: string[] = [];
+
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
@@ -23,7 +25,6 @@ export class SafetyCalculator {
           || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
-
             this._publisher.publish(this.latest);
         }
     }
@@ -168,6 +169,7 @@ export class SafetyCalculator {
           computeSafety(this._buys.concat(this._sells)),
           buyPing,
           sellPong,
+          this.sideAPR,
           this._timeProvider.utcNow()
         );
     };
