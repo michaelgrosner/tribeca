@@ -12,7 +12,8 @@ import {SubscriberFactory} from './shared_directives';
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
-      openOrders/min: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
+      openOrders/min: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>,
+      APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span>
       <b style="float:right"><a href="#" (click)="toggleConfigs.next()"><span [hidden]="showConfigs">+</span><span [hidden]="!showConfigs">-</span> Settings</a></b>
     </div>
   </div>`
@@ -24,6 +25,7 @@ export class TradeSafetyComponent implements OnInit {
   private sellSafety: number;
   private buySizeSafety: number;
   private sellSizeSafety: number;
+  private sideAPRSafety: string;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
   @Input() showConfigs: boolean;
@@ -53,6 +55,7 @@ export class TradeSafetyComponent implements OnInit {
     this.sellSafety = value.sell;
     this.buySizeSafety = value.buyPing;
     this.sellSizeSafety = value.sellPong;
+    this.sideAPRSafety = value.sideAPR.length ? value.sideAPR.join(', ') : 'Off';
   }
 
   private updateFairValue = (fv: Models.FairValue) => {
@@ -74,5 +77,6 @@ export class TradeSafetyComponent implements OnInit {
     this.sellSafety = null;
     this.buySizeSafety = null;
     this.sellSizeSafety = null;
+    this.sideAPRSafety = null;
   }
 }

@@ -425,6 +425,7 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
+                public sideAPR: string[],
                 public time: moment.Moment) {}
 }
 

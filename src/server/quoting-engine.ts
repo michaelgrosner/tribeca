@@ -113,6 +113,8 @@ export class QuotingEngine {
             }
         }
 
+        this._safeties.sideAPR = sideAPR;
+
         var safety = this._safeties.latest;
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
