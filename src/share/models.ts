@@ -368,6 +368,7 @@ export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
+export enum APR { Off, Size, SizeWidth }
 
 export class QuotingParameters {
     constructor(public width: number,
@@ -381,7 +382,7 @@ export class QuotingParameters {
                 public positionDivergence: number,
                 public ewmaProtection: boolean,
                 public autoPositionMode: AutoPositionMode,
-                public aggressivePositionRebalancing: boolean,
+                public aggressivePositionRebalancing: APR,
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
                 public audio: boolean,

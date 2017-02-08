@@ -156,7 +156,7 @@ class DisplayOrder {
                                             <th>tbp</th>
                                             <th>pDiv</th>
                                             <th>ewma?</th>
-                                            <th>apr?</th>
+                                            <th>apr</th>
                                             <th>trds</th>
                                             <th>/sec</th>
                                             <th>audio?</th>
@@ -198,9 +198,11 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
                                             </td>
-                                            <td>
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableAggressivePositionRebalancings" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
