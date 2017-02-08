@@ -97,7 +97,7 @@ export class TargetBasePositionManager {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01 || this.sideAPR != this._latest.sideAPR) {
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
             this._latest = new Models.TargetBasePositionValue(
               targetBasePosition,
               this.sideAPR,
