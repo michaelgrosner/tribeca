@@ -251,9 +251,10 @@ class DisplayOrder {
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                             <div class="row img-rounded exchange">
                                 <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                    {{ exch_name }}<br/>{{ pair_name }}
+                                    {{ exchange_name }}<br/>{{ pair_name }}
                                 </button>
                                 <wallet-position></wallet-position>
+                                <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>
                             </div>
                         </div>
 
@@ -370,7 +371,8 @@ class ClientComponent implements OnInit {
   public showConfigs: boolean = false;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
-  public exch_name: string;
+  public exchange_name: string;
+  public exchange_market: string;
   public pair_name: string;
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
@@ -444,7 +446,8 @@ class ClientComponent implements OnInit {
   private reset = () => {
     this.connected = false;
     this.pair_name = null;
-    this.exch_name = null;
+    this.exchange_name = null;
+    this.exchange_market = null;
     this.pair = null;
   }
 
@@ -484,7 +487,14 @@ class ClientComponent implements OnInit {
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
     this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
-    this.exch_name = Models.Exchange[pa.exchange];
+    this.exchange_name = Models.Exchange[pa.exchange];
+    this.exchange_market = this.exchange_name=='OkCoin'
+      ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
+      : (this.exchange_name=='Coinbase'
+        ? 'https://gdax.com/trade'
+        : null
+      );
+
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
   }
 }
