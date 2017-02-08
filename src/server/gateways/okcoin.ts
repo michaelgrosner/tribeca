@@ -98,6 +98,7 @@ class OkCoinWebsocket {
                 if (msg.success !== "true" && (typeof msg.errorcode === "undefined" || (
                   msg.errorcode != '10001' /* 10001=Request frequency too high */
                   && msg.errorcode != '10050' /* 10050=Can't cancel more than once */
+                  && msg.errorcode != '10009' /* 10009=Order does not exist */
                   && msg.errorcode != '10010' /* 10010=Insufficient funds */
                   && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
                   // && msg.errorcode == '10001'    /* 10001=Request frequency too high */
@@ -108,6 +109,7 @@ class OkCoinWebsocket {
                 if (typeof msg.errorcode !== "undefined" && (
                   msg.errorcode == '10001'
                   || msg.errorcode == '10050'
+                  || msg.errorcode == '10009'
                 ))  return;
             }
 
