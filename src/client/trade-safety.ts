@@ -13,7 +13,7 @@ import {SubscriberFactory} from './shared_directives';
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
       openOrders/min: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
-      <b style="float:right"><a href="#" (click)="toggleConfigs.next()"><span [hidden]="showConfigs">+</span><span [hidden]="!showConfigs">-</span> Settings</a></b>
+      <b style="float:right"><a href="#" (click)="toggleConfigs.next()">Settings</a></b>
     </div>
   </div>`
 })
