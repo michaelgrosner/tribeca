@@ -96,7 +96,8 @@ class OkCoinWebsocket {
 
             if (typeof msg.success !== "undefined") {
                 if (msg.success !== "true" && (typeof msg.errorcode === "undefined" || (
-                  msg.errorcode != '10001' /* 10010=Illegal parameters */
+                  msg.errorcode != '10001' /* 10001=Request frequency too high */
+                  && msg.errorcode != '10050' /* 10050=Can't cancel more than once */
                   && msg.errorcode != '10010' /* 10010=Insufficient funds */
                   && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
                   // && msg.errorcode == '10001'    /* 10001=Request frequency too high */
@@ -106,6 +107,7 @@ class OkCoinWebsocket {
                   return this._log.info("Successfully connected to %s", msg.channel);
                 if (typeof msg.errorcode !== "undefined" && (
                   msg.errorcode == '10001'
+                  || msg.errorcode == '10050'
                 ))  return;
             }
 
