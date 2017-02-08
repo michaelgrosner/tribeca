@@ -141,6 +141,12 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `apr?` - If you're in a state where Tribeca has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
 
+  * `Off` - Tribeca will not try to aggressively try to stabilize the target based position.
+
+  * `Size` - Tribeca will aggressively make use of bigger `size` values (x3 `size` or half of the diverged target base position, whatever is smaller).
+
+  * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option).
+
 * `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
 
 Time     | Side | Price | Size | BuyTS | SellTS | Notes

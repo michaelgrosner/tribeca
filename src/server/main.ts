@@ -51,7 +51,7 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   0.9                                ,/* positionDivergence */
   true                               ,/* ewmaProtection */
   Models.AutoPositionMode.EwmaBasic  ,/* autoPositionMode */
-  false                              ,/* aggressivePositionRebalancing */
+  Models.APR.Off                     ,/* aggressivePositionRebalancing */
   0.9                                ,/* tradesPerMinute */
   569                                ,/* tradeRateSeconds */
   false                              ,/* audio */

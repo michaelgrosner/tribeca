@@ -98,7 +98,7 @@ export class QuotingEngine {
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
-            if (params.aggressivePositionRebalancing) {
+            if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Bid');
               unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
             }
@@ -107,7 +107,7 @@ export class QuotingEngine {
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
-            if (params.aggressivePositionRebalancing) {
+            if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Sell');
               unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
             }
@@ -123,13 +123,13 @@ export class QuotingEngine {
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && (
-            sideAPR.indexOf('Sell')>-1
+            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Sell')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
             || unrounded.askPx < safety.buyPing + params.width
           )) unrounded.askPx = safety.buyPing + params.width;
           if (unrounded.bidSz && safety.sellPong && (
-            sideAPR.indexOf('Buy')>-1
+            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Buy')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
             || unrounded.bidPx > safety.sellPong - params.width
