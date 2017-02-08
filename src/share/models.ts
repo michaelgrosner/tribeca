@@ -425,12 +425,15 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
-                public sideAPR: string[],
                 public time: moment.Moment) {}
 }
 
 export class TargetBasePositionValue {
-    constructor(public data: number, public time: moment.Moment) {}
+    constructor(
+      public data: number,
+      public sideAPR: string[],
+      public time: moment.Moment
+    ) {}
 }
 
 export class CancelAllOrdersRequest {

@@ -113,7 +113,7 @@ export class QuotingEngine {
             }
         }
 
-        this._safeties.sideAPR = sideAPR;
+        this._targetPosition.sideAPR = sideAPR;
 
         var safety = this._safeties.latest;
         if (safety === null) {
