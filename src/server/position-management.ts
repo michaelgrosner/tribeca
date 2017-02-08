@@ -66,6 +66,8 @@ export class TargetBasePositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
+    public sideAPR: string[] = [];
+
     private _latest: Models.TargetBasePositionValue = null;
     public get latestTargetPosition(): Models.TargetBasePositionValue {
         return this._latest;
@@ -95,8 +97,12 @@ export class TargetBasePositionManager {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01) {
-            this._latest = new Models.TargetBasePositionValue(targetBasePosition, this._timeProvider.utcNow());
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01 || this.sideAPR != this._latest.sideAPR) {
+            this._latest = new Models.TargetBasePositionValue(
+              targetBasePosition,
+              this.sideAPR,
+              this._timeProvider.utcNow()
+            );
             this.NewTargetPosition.trigger();
             this._wrapped.publish(this.latestTargetPosition);
             this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));

@@ -12,7 +12,7 @@ import {SubscriberFactory} from './shared_directives';
       Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-bordered table-responsive text-center">
       <tr class="active">
-        <th></th>
+        <th style="width:62px;">apr<span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></th>
         <th>bidSz&nbsp;</th>
         <th>bidPx</th>
         <th>askPx</th>
@@ -47,6 +47,7 @@ export class MarketQuotingComponent implements OnInit {
   public diffMD: number;
   public diffPx: number;
   private targetBasePosition: number;
+  private sideAPRSafety: string;
 
   @Input() set connected(connected: boolean) {
     if (connected) return;
@@ -82,6 +83,7 @@ export class MarketQuotingComponent implements OnInit {
 
   private clearTargetBasePosition = () => {
     this.targetBasePosition = null;
+    this.sideAPRSafety = null;
   }
 
   private clearQuote = () => {
@@ -96,6 +98,7 @@ export class MarketQuotingComponent implements OnInit {
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
     this.targetBasePosition = value.data;
+    this.sideAPRSafety = value.sideAPR.length ? value.sideAPR.join(', ') : 'Off';
   }
 
   private updateMarket = (update: Models.Timestamped<any[]>) => {
