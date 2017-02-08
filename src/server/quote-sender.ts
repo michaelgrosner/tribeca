@@ -51,13 +51,11 @@ export class QuoteSender {
             ? (a, b) => a.price >= b
             : (a, b) => a.price <= b;
 
-        var qs = this._quoter.quotesSent(oppSide);
-        for (var qi = 0; qi < qs.length; qi++) {
-            if (doesQuoteCross(qs[qi].quote, px)) {
-                this._log.warn("crossing quote detected! gen quote at %d would crossed with %s quote at",
-                    px, Models.Side[oppSide], qs[qi]);
-                return true;
-            }
+        let qs = this._quotingEngine.latestQuote[oppSide === Models.Side.Bid ? 'bid' : 'ask'];
+        if (qs && doesQuoteCross(qs.price, px)) {
+            this._log.warn("crossing quote detected! gen quote at %d would crossed with %s quote at",
+                px, Models.Side[oppSide], qs);
+            return true;
         }
         return false;
     };

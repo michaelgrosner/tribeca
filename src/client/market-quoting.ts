@@ -123,12 +123,23 @@ export class MarketQuotingComponent implements OnInit {
         var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
         this.qBidPx = bid.price;
         this.qBidSz = bid.quantity;
+      } else {
+        this.qBidPx = null;
+        this.qBidSz = null;
       }
       if (asks.length) {
         var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
         this.qAskPx = ask.price;
         this.qAskSz = ask.quantity;
+      } else {
+        this.qAskPx = null;
+        this.qAskSz = null;
       }
+    } else {
+      this.qBidPx = null;
+      this.qBidSz = null;
+      this.qAskPx = null;
+      this.qAskSz = null;
     }
 
     price = 0;
