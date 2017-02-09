@@ -26,7 +26,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
         .on("connect", onConnect)
         .on("disconnect", this.onDisconnect)
         .on(Models.Prefixes.MESSAGE + topic, (data) => observer.next(data))
-        .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 2)));
+        .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
 
       return () => {};
     });
