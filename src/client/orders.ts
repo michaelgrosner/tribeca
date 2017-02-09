@@ -23,7 +23,6 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.api.refreshView();
   }
 
-
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
@@ -36,7 +35,10 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
     // this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">not trading</span>`;
+    setTimeout(this.loadSubscriber, 1000);
+  }
 
+  public loadSubscriber = () => {
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CancelOrder);
 
