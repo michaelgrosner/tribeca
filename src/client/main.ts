@@ -256,7 +256,8 @@ class DisplayOrder {
                                     {{ exchange_name }}<br/>{{ pair_name }}
                                 </button>
                                 <wallet-position></wallet-position>
-                                <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>
+                                <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
+                                <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                             </div>
                         </div>
 
@@ -375,6 +376,7 @@ class ClientComponent implements OnInit {
   public pair: Pair.DisplayPair;
   public exchange_name: string;
   public exchange_market: string;
+  public exchange_orders: string;
   public pair_name: string;
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
@@ -450,6 +452,7 @@ class ClientComponent implements OnInit {
     this.pair_name = null;
     this.exchange_name = null;
     this.exchange_market = null;
+    this.exchange_orders = null;
     this.pair = null;
   }
 
@@ -494,6 +497,12 @@ class ClientComponent implements OnInit {
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='Coinbase'
         ? 'https://gdax.com/trade'
+        : null
+      );
+    this.exchange_orders = this.exchange_name=='OkCoin'
+      ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/trade/entrust.do'
+      : (this.exchange_name=='Coinbase'
+        ? 'https://www.gdax.com/orders/'+this.pair_name.replace('/','-')
         : null
       );
 
