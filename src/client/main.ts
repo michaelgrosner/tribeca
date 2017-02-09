@@ -392,33 +392,33 @@ class ClientComponent implements OnInit {
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
     @Inject(FireFactory) private fireFactory: FireFactory
-  ) {
-    this.cancelAllOrders = () => fireFactory
+  ) {}
+
+  ngOnInit() {
+    this.cancelAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CancelAllOrders)
       .fire(new Models.CancelAllOrdersRequest());
 
-    this.cleanAllClosedOrders = () => fireFactory
+    this.cleanAllClosedOrders = () => this.fireFactory
       .getFire(Models.Topics.CleanAllClosedOrders)
       .fire(new Models.CleanAllClosedOrdersRequest());
 
-    this.cleanAllOrders = () => fireFactory
+    this.cleanAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CleanAllOrders)
       .fire(new Models.CleanAllOrdersRequest());
 
-    this.changeNotepad = (content:string) => fireFactory
+    this.changeNotepad = (content:string) => this.fireFactory
       .getFire(Models.Topics.Notepad)
       .fire(content);
 
-    this.toggleConfigs = (showConfigs:boolean) => fireFactory
+    this.toggleConfigs = (showConfigs:boolean) => this.fireFactory
       .getFire(Models.Topics.ToggleConfigs)
       .fire(showConfigs);
 
     this.notepad = null;
     this.pair = null;
     this.reset();
-  }
 
-  ngOnInit() {
     this.order = new DisplayOrder(this.fireFactory);
 
     this.subscriberFactory

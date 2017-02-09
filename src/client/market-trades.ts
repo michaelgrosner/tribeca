@@ -23,7 +23,10 @@ export class MarketTradesComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.enableSorting = true;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
+    setTimeout(this.loadSubscriber, 7000);
+  }
 
+  public loadSubscriber = () => {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.MarketTrade)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)

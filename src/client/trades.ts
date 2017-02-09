@@ -29,7 +29,10 @@ export class TradesComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
+    setTimeout(this.loadSubscriber, 4000);
+  }
 
+  public loadSubscriber = () => {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
       .registerSubscriber(this.updateQP);
