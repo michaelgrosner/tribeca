@@ -200,30 +200,35 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     cancelOrder = (cancel: Models.OrderCancel) => {
-        var rpt = this._orderCache.allOrders[cancel.origOrderId];
+        var rpt: Models.OrderStatusReport = this._orderCache.allOrders[cancel.origOrderId];
         if (!rpt) {
-          return;
-          // this._log.info("Unable to cancel unexistent order", cancel);
+          rpt = {
+              orderId: cancel.origOrderId,
+              orderStatus: Models.OrderStatus.Cancelled,
+              leavesQuantity: 0,
+              done: true,
+              time: cancel.generatedTime};
+        } else {
+
+          if (!this._oeGateway.cancelsByClientOrderId) {
+              // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
+              if (typeof rpt.exchangeId === "undefined") {
+                  this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
+                  // this._log.info("Registered %s for late deletion", rpt.orderId);
+                  return;
+              }
+          }
+
+          var cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
+          var sent = this._oeGateway.cancelOrder(cxl);
+
+          rpt = {
+              orderId: cancel.origOrderId,
+              orderStatus: Models.OrderStatus.Working,
+              pendingCancel: true,
+              time: sent.sentTime,
+              latency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         }
-
-        if (!this._oeGateway.cancelsByClientOrderId) {
-            // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
-            if (typeof rpt.exchangeId === "undefined") {
-                this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                // this._log.info("Registered %s for late deletion", rpt.orderId);
-                return;
-            }
-        }
-
-        var cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
-        var sent = this._oeGateway.cancelOrder(cxl);
-
-        var rpt : Models.OrderStatusReport = {
-            orderId: cancel.origOrderId,
-            orderStatus: Models.OrderStatus.Working,
-            pendingCancel: true,
-            time: sent.sentTime,
-            latency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
         this.onOrderUpdate(rpt);
     };
 
