@@ -38,7 +38,11 @@ export class OrdersComponent implements OnInit {
     setTimeout(this.loadSubscriber, 1000);
   }
 
+  private subscribed: boolean = false;
   public loadSubscriber = () => {
+    if (this.subscribed) return;
+    this.subscribed = true;
+
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CancelOrder);
 
