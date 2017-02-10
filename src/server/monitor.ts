@@ -56,6 +56,7 @@ export class ApplicationState {
   private setTick = () => {
     if (this._interval) clearInterval(this._interval);
     if (this._ioDelay<1) this._ioDelay = 0;
+    this._delayed = [];
     this._interval = this._timeProvider.setInterval(
       this._ioDelay ? this.onDelay : this.onTick,
       moment.duration(this._ioDelay || 6e1, "seconds")
