@@ -28,7 +28,6 @@ export class TradesComponent implements OnInit {
     this.gridOptions.rowData = [];
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
-    this.gridOptions.overlayLoadingTemplate = `<span class="ag-overlay-no-rows-center">click to view data</span>`;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
     setTimeout(this.loadSubscriber, 3321);
   }
