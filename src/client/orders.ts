@@ -34,7 +34,6 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
-    // this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">not trading</span>`;
     setTimeout(this.loadSubscriber, 1000);
   }
 
