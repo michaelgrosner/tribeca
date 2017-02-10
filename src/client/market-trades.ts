@@ -7,7 +7,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-ng2 #marketList class="ag-fresh ag-dark marketTrades" style="height: 396px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #marketList (click)="this.loadSubscriber()" class="ag-fresh ag-dark marketTrades" style="height: 396px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class MarketTradesComponent implements OnInit {
 
@@ -19,14 +19,18 @@ export class MarketTradesComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.gridOptions.rowData = [];
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.enableSorting = true;
-    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty</span>`;
-    setTimeout(this.loadSubscriber, 7000);
+    this.gridOptions.overlayLoadingTemplate = `<span class="ag-overlay-no-rows-center">click to view data</span>`;
+    this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history</span>`;
   }
 
+  private subscribed: boolean = false;
   public loadSubscriber = () => {
+    if (this.subscribed) return;
+    this.subscribed = true;
+    this.gridOptions.rowData = [];
+
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.MarketTrade)
       .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)

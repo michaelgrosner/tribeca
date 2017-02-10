@@ -7,7 +7,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-ng2 #tradeList class="ag-fresh ag-dark" style="height: 215px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
+  template: `<ag-grid-ng2 #tradeList (click)="this.loadSubscriber()" class="ag-fresh ag-dark" style="height: 215px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-ng2>`
 })
 export class TradesComponent implements OnInit {
 
@@ -25,14 +25,18 @@ export class TradesComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.gridOptions.rowData = [];
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
+    this.gridOptions.overlayLoadingTemplate = `<span class="ag-overlay-no-rows-center">click to view data</span>`;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
-    setTimeout(this.loadSubscriber, 4000);
   }
 
+  private subscribed: boolean = false;
   public loadSubscriber = () => {
+    if (this.subscribed) return;
+    this.subscribed = true;
+    this.gridOptions.rowData = [];
+
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
       .registerSubscriber(this.updateQP);
