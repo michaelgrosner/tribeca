@@ -101,8 +101,6 @@ class OkCoinWebsocket {
                   && msg.errorcode != '10009' /* 10009=Order does not exist */
                   && msg.errorcode != '10010' /* 10010=Insufficient funds */
                   && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
-                  // && msg.errorcode == '10001'    /* 10001=Request frequency too high */
-                  // && msg.errorcode == '10050' /* 10050=Can't cancel more than once */
                 ))) this._log.warn("Unsuccessful message %s received.", raw);
                 else if (msg.success === "true")
                   return this._log.info("Successfully connected to %s", msg.channel);
