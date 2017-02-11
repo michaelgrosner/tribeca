@@ -81,6 +81,7 @@
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "log-git": "git --no-pager log --graph --oneline @..@{u}",
     "log": "bunyan log/tribeca.log 2>/dev/null",
+    "log-err": "tail -2000f log/tribeca.log | egrep error --line-buffered --ignore-case --color",
     "postinstall": "npm run compile-server && npm run compile-client && npm run compile-public && npm run compile-bundle",
     "compile-server": "tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts",
     "compile-client": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts",
