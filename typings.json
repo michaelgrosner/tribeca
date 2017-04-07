@@ -14,7 +14,7 @@
     "express-serve-static-core": "registry:dt/express-serve-static-core#0.0.0+20160322035842",
     "form-data": "registry:dt/form-data#0.0.0+20160316155526",
     "jquery": "registry:dt/jquery#1.10.0+20160316155526",
-    "lodash": "registry:dt/lodash#3.10.0+20160330154726",
+    "lodash": "registry:dt/lodash",
     "mime": "registry:dt/mime#0.0.0+20160316155526",
     "moment": "registry:dt/moment#2.8.0+20160316155526",
     "moment-node": "registry:dt/moment-node#2.11.1+20160329220348",

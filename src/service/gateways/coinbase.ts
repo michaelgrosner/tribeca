@@ -597,8 +597,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 case Models.TimeInForce.IOC:
                     o.time_in_force = "IOC";
                     break;
-                default:
-                    throw new Error("Cannot map " + Models.TimeInForce[order.timeInForce] + " to a coinbase TIF");
             }
         }
         else if (order.type === Models.OrderType.Market) {
