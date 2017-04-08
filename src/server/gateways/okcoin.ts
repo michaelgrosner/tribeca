@@ -76,7 +76,6 @@ class OkCoinWebsocket {
 
         if (parameters !== null)
             subsReq.parameters = parameters;
-
         this._ws.send(JSON.stringify(subsReq));
     }
 
@@ -172,8 +171,8 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private _log = Utils.log("tribeca:gateway:OkCoinMD");
     constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
-        var depthChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_depth";
-        var tradesChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_trades_v1";
+        var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
+        var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
 
         socket.setHandler(depthChannel, this.onDepth);
         socket.setHandler(tradesChannel, this.onTrade);
@@ -182,8 +181,8 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.ConnectChanged.trigger(cs);
 
             if (cs == Models.ConnectivityStatus.Connected) {
-                socket.send(depthChannel, {});
-                socket.send(tradesChannel, {});
+                socket.send(depthChannel, null);
+                socket.send(tradesChannel, null);
             }
         });
     }
@@ -320,7 +319,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             private _socket : OkCoinWebsocket,
             private _signer: OkCoinMessageSigner,
             private _symbolProvider: OkCoinSymbolProvider) {
-        _socket.setHandler("ok_" + _symbolProvider.symbolQuote + "_realtrades", this.onTrade);
+        _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
         _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
 
@@ -328,7 +327,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             this.ConnectChanged.trigger(cs);
 
             if (cs === Models.ConnectivityStatus.Connected) {
-                _socket.send("ok_" + _symbolProvider.symbolQuote + "_realtrades", _signer.signMessage({}));
+                _socket.send("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", _signer.signMessage({}));
             }
         });
     }
@@ -492,12 +491,16 @@ function GetCurrencySymbol(c: Models.Currency) : string {
 }
 
 class OkCoinSymbolProvider {
-    public symbol : string;
+    public symbol: string;
+    public symbolReversed: string;
+    public symbolBase: string;
     public symbolQuote: string;
     public symbolWithoutUnderscore: string;
 
     constructor(pair: Models.CurrencyPair) {
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
+        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
+        this.symbolBase = GetCurrencySymbol(pair.base);
         this.symbolQuote = GetCurrencySymbol(pair.quote);
         this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
     }
