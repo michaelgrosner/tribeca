@@ -34,7 +34,7 @@ class DisplayOrder {
   availableTifs : string[];
   availableOrderTypes : string[];
 
-  private static getNames<T>(enumObject : T) {
+  private static getNames(enumObject: any) {
     var names: string[] = [];
     for (var mem in enumObject) {
       if (!enumObject.hasOwnProperty(mem)) continue;

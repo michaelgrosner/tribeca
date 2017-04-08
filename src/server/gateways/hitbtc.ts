@@ -330,8 +330,6 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 return "GTC";
             case Models.TimeInForce.IOC:
                 return "IOC";
-            default:
-                throw new Error("TIF " + Models.TimeInForce[parseInt(tif, 10)] + " not supported in HitBtc");
         }
     }
 
@@ -352,8 +350,6 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 return "limit";
             case Models.OrderType.Market:
                 return "market";
-            default:
-                throw new Error("OrderType " + Models.OrderType[parseInt(t, 10)] + " not supported in HitBtc");
         }
     }
 

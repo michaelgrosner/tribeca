@@ -43,8 +43,6 @@ export class FairValueEngine {
                 return (ask.price + bid.price) / 2.0;
             case Models.FairValueModel.wBBO:
                 return (ask.price * ask.size + bid.price * bid.size) / (ask.size + bid.size);
-            default:
-                throw new Error(Models.FairValueModel[parseInt(model, 10)]);
         }
     }
 
