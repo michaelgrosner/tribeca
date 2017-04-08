@@ -2993,9 +2993,9 @@
       "resolved": "https://registry.npmjs.org/punycode/-/punycode-1.4.1.tgz"
     },
     "q": {
-      "version": "1.4.1",
-      "from": "q@1.4.1",
-      "resolved": "https://registry.npmjs.org/q/-/q-1.4.1.tgz"
+      "version": "1.5.0",
+      "from": "q@1.5.0",
+      "resolved": "https://registry.npmjs.org/q/-/q-1.5.0.tgz"
     },
     "qs": {
       "version": "6.4.0",
