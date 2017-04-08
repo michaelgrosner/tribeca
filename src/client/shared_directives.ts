@@ -1,5 +1,5 @@
 import {NgModule, Component, Injectable, Inject} from '@angular/core';
-import {AgRendererComponent} from 'ag-grid-ng2/main';
+import {AgRendererComponent} from 'ag-grid-angular/main';
 
 import moment = require('moment');
 import * as io from 'socket.io-client';
