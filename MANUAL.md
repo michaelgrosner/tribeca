@@ -79,9 +79,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Inverse Top` - Same as `Inverse Join` but make our orders jump to the very top of the order book.
 
-  * `PingPong` - Same as `Top` but always respect the calculated `width` from the last sold or bought `size`.
+  * `PingPong` - Same as `Top` but always respect the calculated `widthPong` from the last sold or bought `size`, if any.
 
-  * `Boomerang` - Same as `PingPong` but the calculated `width` for new Pongs is based on any best matching previous sold or bought `size`.
+  * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching previous sold or bought `size`, if any.
 
   * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
 
@@ -107,13 +107,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `pongAt` (only affects `PingPong`, `Boomerang` and `AK-47`)
 
-  * `ShortPingFair` - Place new Pongs based on the lowest margin Ping in history respecting the `width` from the `fair value`.
+  * `ShortPingFair` - Place new Pongs based on the lowest margin Ping in history respecting the `widthPong` from the `fair value`.
 
-  * `LongPingFair` - Place new Pongs based on the highest margin Ping in history respecting the `width` from the `fair value`.
+  * `LongPingFair` - Place new Pongs based on the highest margin Ping in history respecting the `widthPong` from the `fair value`.
 
-  * `ShortPingAggresive` - Place new Pongs based on the lowest margin Ping in history without respecting the `width` from the `fair value`.
+  * `ShortPingAggresive` - Place new Pongs based on the lowest margin Ping in history without respecting the `widthPong` from the `fair value`.
 
-  * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `width` from the `fair value`.
+  * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `widthPong` from the `fair value`.
 
 * `fv` - Sets the fair value calculation mode
 
@@ -121,7 +121,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
-* `width` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` shall never be violated.
+* `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` shall never be violated.
+
+* `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
 * `bidSz` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
 
