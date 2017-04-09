@@ -8,8 +8,6 @@ import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
 import QuotingParameters = require("./quoting-parameters");
-var Lynx = require('lynx');
-var metrics = new Lynx('localhost', 8125);
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -399,7 +397,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._tradePersister.persist(trade);
               this._trades.push(trade);
             }
-            metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
+            if (this._metrics)
+              this._metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
 
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this.cancelOpenOrders();
@@ -432,7 +431,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cleanAllClosedOrdersReciever : Publish.IReceive<Models.CleanAllClosedOrdersRequest>,
                 private _cleanAllOrdersReciever : Publish.IReceive<Models.CleanAllOrdersRequest>,
                 private _orderCache : OrderStateCache,
-                initTrades : Models.Trade[]) {
+                initTrades : Models.Trade[],
+                private _metrics: any) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
 
@@ -533,19 +533,9 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        if (this._report !== null &&
-                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
-                Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
-                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
-                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
-            return;
-
-        this._report = positionReport;
-        this.NewReport.trigger(positionReport);
-        this._positionPublisher.publish(positionReport);
         try {
-          if (!this.skipInternalMetrics)
-            metrics.send({
+          if (!this.skipInternalMetrics && this._metrics)
+            this._metrics.send({
               "tribeca.position_btc" : positionReport.value+"|g",
               "tribeca.position_eur" : positionReport.quoteValue+"|g",
               "tribeca.fair_value" : mid+"|g",
@@ -556,6 +546,17 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             });
         } catch (e) {}
         this.skipInternalMetrics = false;
+
+        if (this._report !== null &&
+                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
+                Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
+                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
+                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
+            return;
+
+        this._report = positionReport;
+        this.NewReport.trigger(positionReport);
+        this._positionPublisher.publish(positionReport);
     };
 
     private osr: Models.OrderStatusReport[] = [];
@@ -593,7 +594,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Publish.IPublish<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker) {
+                private _mdBroker : Interfaces.IMarketDataBroker,
+                private _metrics: any) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
 

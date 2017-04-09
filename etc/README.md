@@ -35,6 +35,8 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
+  * StatsDHostPort - If you are running CollectD with StatD plugin, you can set the host and the port to send the metrics; you should not have to modify anything for default StatsD port on localhost.
+
   * TradedPair - The following currency pairs are supported on these exchanges:
 
     1. `BTC/USD` - Coinbase, HitBtc, OkCoin, Null
