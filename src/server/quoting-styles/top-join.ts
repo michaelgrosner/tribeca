@@ -40,14 +40,14 @@ function computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, p
         genQt.bidPx += .01;
     }
 
-    var minBid = fv.price - params.width / 2.0;
+    var minBid = fv.price - params.widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
-    var minAsk = fv.price + params.width / 2.0;
+    var minAsk = fv.price + params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = params.buySize;
@@ -60,9 +60,9 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(filteredMkt, params);
 
     var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
-    if (mktWidth > params.width) {
-        genQt.askPx += params.width;
-        genQt.bidPx -= params.width;
+    if (mktWidth > params.widthPing) {
+        genQt.askPx += params.widthPing;
+        genQt.bidPx -= params.widthPing;
     }
 
     if (params.mode === Models.QuotingMode.InverseTop) {
@@ -70,9 +70,9 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
         if (genQt.askSz > .2) genQt.askPx -= .01;
     }
 
-    if (mktWidth < (2.0 * params.width / 3.0)) {
-        genQt.askPx += params.width / 4.0;
-        genQt.bidPx -= params.width / 4.0;
+    if (mktWidth < (2.0 * params.widthPing / 3.0)) {
+        genQt.askPx += params.widthPing / 4.0;
+        genQt.bidPx -= params.widthPing / 4.0;
     }
 
     genQt.bidSz = params.buySize;

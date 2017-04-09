@@ -379,7 +379,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this.Trade.trigger(trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this._reTrade(this._trades.filter((x: Models.Trade) => (
-                (trade.side==Models.Side.Bid?(x.price > (trade.price + this._qlParamRepo.latest.width)):(x.price < (trade.price - this._qlParamRepo.latest.width)))
+                (trade.side==Models.Side.Bid?(x.price > (trade.price + this._qlParamRepo.latest.widthPong)):(x.price < (trade.price - this._qlParamRepo.latest.widthPong)))
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
               )).sort((a: Models.Trade, b: Models.Trade) => (

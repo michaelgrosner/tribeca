@@ -84,7 +84,9 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
-                                            <th>width</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
                                             <th>bidSz</th>
                                             <th>askSz</th>
                                             <th>fv</th>
@@ -126,7 +128,13 @@ class DisplayOrder {
                                                 <input class="width-option form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.width">
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPing">
+                                            </td>
+                                            <td *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <input class="width-option form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"

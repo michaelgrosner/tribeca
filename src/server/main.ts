@@ -40,7 +40,8 @@ import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 
 let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParameters(
-  2                                  ,/* width */
+  2                                  ,/* width and widthPing */
+  2                                  ,/* widthPong */
   0.02                               ,/* buySize */
   0.01                               ,/* sellSize */
   Models.PingAt.BothSides            ,/* pingAt */

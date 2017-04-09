@@ -5,12 +5,12 @@ export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
 
     GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        var width = params.width;
+        var widthPing = params.widthPing;
         var buySize = params.buySize;
         var sellSize = params.sellSize;
 
-        var bidPx = Math.max(fv.price - width, 0);
-        var askPx = fv.price + width;
+        var bidPx = Math.max(fv.price - widthPing, 0);
+        var askPx = fv.price + widthPing;
 
         return new StyleHelpers.GeneratedQuote(bidPx, buySize, askPx, sellSize);
     };

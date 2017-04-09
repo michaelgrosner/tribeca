@@ -371,7 +371,8 @@ export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingA
 export enum APR { Off, Size, SizeWidth }
 
 export class QuotingParameters {
-    constructor(public width: number,
+    constructor(public widthPing: number,
+                public widthPong: number,
                 public buySize: number,
                 public sellSize: number,
                 public pingAt: PingAt,
