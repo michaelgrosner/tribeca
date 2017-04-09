@@ -126,14 +126,14 @@ export class QuotingEngine {
             (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Sell')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
-            || unrounded.askPx < safety.buyPing + params.width
-          )) unrounded.askPx = safety.buyPing + params.width;
+            || unrounded.askPx < safety.buyPing + params.widthPong
+          )) unrounded.askPx = safety.buyPing + params.widthPong;
           if (unrounded.bidSz && safety.sellPong && (
             (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Buy')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
-            || unrounded.bidPx > safety.sellPong - params.width
-          )) unrounded.bidPx = safety.sellPong - params.width;
+            || unrounded.bidPx > safety.sellPong - params.widthPong
+          )) unrounded.bidPx = safety.sellPong - params.widthPong;
         }
 
         if (unrounded.askPx !== null)

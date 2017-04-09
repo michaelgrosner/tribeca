@@ -32,14 +32,14 @@ function computePingPongQuote(filteredMkt: Models.Market, fv: Models.FairValue, 
         genQt.bidPx += .01;
     }
 
-    var minBid = fv.price - params.width / 2.0;
+    var minBid = fv.price - params.widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
-    var minAsk = fv.price + params.width / 2.0;
+    var minAsk = fv.price + params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = params.buySize;
@@ -55,14 +55,14 @@ function computeBoomerangQuote(filteredMkt: Models.Market, fv: Models.FairValue,
         genQt.bidPx += .01;
     }
 
-    var minBid = fv.price - params.width / 2.0;
+    var minBid = fv.price - params.widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.Boomerang && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
-    var minAsk = fv.price + params.width / 2.0;
+    var minAsk = fv.price + params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = params.buySize;
@@ -78,14 +78,14 @@ function computeAK47Quote(filteredMkt: Models.Market, fv: Models.FairValue, para
         genQt.bidPx += .01;
     }
 
-    var minBid = fv.price - params.width / 2.0;
+    var minBid = fv.price - params.widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (params.mode === Models.QuotingMode.AK47 && genQt.askSz > .2) {
         genQt.askPx -= .01;
     }
 
-    var minAsk = fv.price + params.width / 2.0;
+    var minAsk = fv.price + params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = params.buySize;
