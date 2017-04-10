@@ -165,6 +165,7 @@ class DisplayOrder {
                                             <th>pDiv</th>
                                             <th>ewma?</th>
                                             <th>apr</th>
+                                            <th>sop</th>
                                             <th>trds</th>
                                             <th>/sec</th>
                                             <th>audio?</th>
@@ -211,6 +212,10 @@ class DisplayOrder {
                                                     [(ngModel)]="pair.quotingParameters.display.aggressivePositionRebalancing">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAggressivePositionRebalancings" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.superTrades">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
