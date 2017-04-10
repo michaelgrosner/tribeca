@@ -161,7 +161,7 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
-                                            <th>tbp</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp</th>
                                             <th>pDiv</th>
                                             <th>ewma?</th>
                                             <th>apr</th>
@@ -191,7 +191,7 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td>
+                                            <td *ngIf="pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
