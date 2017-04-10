@@ -165,7 +165,7 @@ class DisplayOrder {
                                             <th>pDiv</th>
                                             <th>ewma?</th>
                                             <th>apr</th>
-                                            <th>sop</th>
+                                            <th>sop?</th>
                                             <th>trds</th>
                                             <th>/sec</th>
                                             <th>audio?</th>
