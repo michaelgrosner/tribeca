@@ -271,10 +271,11 @@ class DisplayOrder {
                                 <wallet-position></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
+                                <br/><div><a href="#" (click)="showStats = !showStats">Stats</a><span [hidden]="!showStats">, <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></span></div>
                             </div>
                         </div>
 
-                        <div class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
+                        <div [hidden]="showStats" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
                             <trade-safety [tradeFreq]="tradeFreq" (toggleConfigs)="toggleConfigs(showConfigs = !showConfigs)"></trade-safety>
                           </div>
@@ -363,8 +364,11 @@ class DisplayOrder {
                             </div>
                           </div>
                         </div>
-                        <div class="col-md-2 col-xs-12" style="padding-left:0px;">
+                        <div [hidden]="showStats" class="col-md-2 col-xs-12" style="padding-left:0px;">
                             <market-trades></market-trades>
+                        </div>
+                        <div [hidden]="!showStats" class="col-md-11 col-xs-12">
+                            no stats yet..
                         </div>
                     </div>
                 </div>
@@ -385,6 +389,7 @@ class ClientComponent implements OnInit {
   public notepad: string;
   public connected: boolean;
   public showConfigs: boolean = false;
+  public showStats: boolean = false;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
   public exchange_name: string;
