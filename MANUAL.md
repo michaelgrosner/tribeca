@@ -147,7 +147,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Size` - Tribeca will aggressively make use of bigger `size` values (x3 `size` or half of the diverged target base position, whatever is smaller).
 
-  * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option).
+  * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option and `widthPong`).
 
 * `sop?` - Super opportunities, if enabled it doubles (x2) the `trds` only while the market width is x3 times bigger than the `width` set.
 
