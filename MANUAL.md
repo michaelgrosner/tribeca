@@ -149,6 +149,8 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option).
 
+* `sop` - Super opportunities, if enabled it doubles (x2) the `trds` only while the market width is x3 times bigger than the `width` set.
+
 * `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
 
 Time     | Side | Price | Size | BuyTS | SellTS | Notes

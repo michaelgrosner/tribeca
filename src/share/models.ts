@@ -384,6 +384,7 @@ export class QuotingParameters {
                 public ewmaProtection: boolean,
                 public autoPositionMode: AutoPositionMode,
                 public aggressivePositionRebalancing: APR,
+                public superTrades: boolean,
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
                 public audio: boolean,
