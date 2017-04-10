@@ -149,7 +149,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option).
 
-* `sop` - Super opportunities, if enabled it doubles (x2) the `trds` only while the market width is x3 times bigger than the `width` set.
+* `sop?` - Super opportunities, if enabled it doubles (x2) the `trds` only while the market width is x3 times bigger than the `width` set.
 
 * `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
 
@@ -164,7 +164,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trds`
 
-* `audio` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
+* `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
 * `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of tribeca with the exchange tends to be higher than the latency of tribeca with your browser).
 
