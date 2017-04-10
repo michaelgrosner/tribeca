@@ -26,7 +26,6 @@ export class TradeSafetyComponent implements OnInit {
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
-  @Input() showConfigs: boolean;
   @Output() toggleConfigs = new EventEmitter();
 
   constructor(
