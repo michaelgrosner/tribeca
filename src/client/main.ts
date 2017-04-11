@@ -271,7 +271,8 @@ class DisplayOrder {
                                 <wallet-position></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><a href="#" (click)="showStats = !showStats">Stats</a><span [hidden]="!showStats">, <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></span></div>
+                                <br/><div><a href="#" (click)="showStats = !showStats">Stats</a></div>
+                                <div [hidden]="!showStats"><a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></div>
                             </div>
                         </div>
 
