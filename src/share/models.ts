@@ -369,6 +369,7 @@ export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
+export enum SOP { Off, x2trds, x3trds, x2Sz, x3Sz, x2trdsSz, x3trdsSz }
 
 export class QuotingParameters {
     constructor(public widthPing: number,
@@ -384,7 +385,7 @@ export class QuotingParameters {
                 public ewmaProtection: boolean,
                 public autoPositionMode: AutoPositionMode,
                 public aggressivePositionRebalancing: APR,
-                public superTrades: boolean,
+                public superTrades: SOP,
                 public tradesPerMinute: number,
                 public tradeRateSeconds: number,
                 public audio: boolean,
@@ -394,6 +395,7 @@ export class QuotingParameters {
                 public shortEwma: number,
                 public quotingEwma: number,
                 public aprMultiplier: number,
+                public sopWidthMultiplier: number,
                 public stepOverSize: number,
                 public delayUI: number) {}
 }

@@ -95,6 +95,22 @@ export class QuotingEngine {
         var totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
         let sideAPR: string[] = [];
 
+        let superTradesMultipliers = (params.superTrades &&
+          (params.widthPing * params.sopWidthMultiplier) < ((filteredMkt.bids[0].price + filteredMkt.asks[0].price) / 2.0)
+        ) ? [
+          (params.superTrades == Models.SOP.x2trds || params.superTrades == Models.SOP.x2trdsSz
+            ? 2 : (params.superTrades == Models.SOP.x3trds || params.superTrades == Models.SOP.x3trdsSz
+              ? 3 : 1)),
+          (params.superTrades == Models.SOP.x2Sz || params.superTrades == Models.SOP.x2trdsSz
+            ? 2 : (params.superTrades == Models.SOP.x3Sz || params.superTrades == Models.SOP.x3trdsSz
+              ? 3 : 1))
+        ] : [1, 1];
+
+        if (superTradesMultipliers[1] > 1) {
+          unrounded.bidSz = Math.min(superTradesMultipliers[1]*params.buySize, (latestPosition.quoteAmount / fv.price) / 2);
+          unrounded.askSz = Math.min(superTradesMultipliers[1]*params.sellSize, latestPosition.baseAmount / 2);
+        }
+
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
             unrounded.askSz = null;
@@ -155,12 +171,7 @@ export class QuotingEngine {
               }
             }
 
-        let superTradesWidthMultiplier = 3;
-        let superTradesPerMinuteMultiplier = 2;
-        let superTrades = (params.superTrades &&
-          (params.widthPing * superTradesWidthMultiplier) < ((filteredMkt.bids[0].price + filteredMkt.asks[0].price) / 2.0)
-        ) ? superTradesPerMinuteMultiplier : 1;
-        if (safety.sell > (params.tradesPerMinute * superTrades) || (
+        if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0]) || (
             (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
               || (totalQuotePosition>params.buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
@@ -168,7 +179,7 @@ export class QuotingEngine {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
-        if (safety.buy > (params.tradesPerMinute * superTrades) || (
+        if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0]) || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide || params.pingAt === Models.PingAt.DepletedBidSide
               || (totalBasePosition>params.sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))

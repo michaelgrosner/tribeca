@@ -121,13 +121,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
-* `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` shall never be violated.
+* `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
-* `bidSz` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
+* `bidSz` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` will always be respected.
 
-* `askSz` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` shall never be violated.
+* `askSz` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` will always be respected.
 
 * `apMode`
 
@@ -147,9 +147,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Size` - Tribeca will aggressively make use of bigger `size` values (x3 `size` or half of the diverged target base position, whatever is smaller).
 
-  * `SizeWidth` - Tribeca will aggressively make use of smaller `width` values (using aggressive `pongAt` option and `widthPong`).
+  * `SizeWidth` - Same as `Size` but also will aggressively make use of smaller `width` values (respecting always aggressive `pongAt` option and `widthPong`).
 
-* `sop?` - Super opportunities, if enabled it doubles (x2) the `trds` only while the market width is x3 times bigger than the `width` set.
+* `sop?` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trds` and/or the `size`, in both sides at the same time.
 
 * `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
 
