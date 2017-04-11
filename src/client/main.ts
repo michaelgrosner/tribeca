@@ -213,9 +213,11 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableAggressivePositionRebalancings" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td>
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.superTrades">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.superTrades">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
