@@ -20,6 +20,7 @@ export var Prefixes = {
 }
 
 export var Topics = {
+  DbSize: 'A',
   FairValue: 'a',
   Quote: 'b',
   ActiveSubscription: 'c',
@@ -417,7 +418,7 @@ export class ProductAdvertisement {
 }
 
 export class ApplicationState {
-    constructor(public memory: number, public hour: number, public freq: number) { }
+    constructor(public memory: number, public hour: number, public freq: number, public dbsize: number) { }
 }
 
 export class RegularFairValue {
