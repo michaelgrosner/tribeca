@@ -296,7 +296,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.Notepad),
           system.getReceiver(Models.Topics.Notepad),
           system.getPublisher(Models.Topics.ToggleConfigs),
-          system.getReceiver(Models.Topics.ToggleConfigs)
+          system.getReceiver(Models.Topics.ToggleConfigs),
+          system.getRepository(0, 'dataSize')
         );
 
         var orderCache = new Broker.OrderStateCache();

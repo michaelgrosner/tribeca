@@ -1,4 +1,5 @@
 import Models = require("../share/models");
+import Persister = require("./persister");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
@@ -22,13 +23,16 @@ export class ApplicationState {
 
   private onTick = () => {
     this._tick = 0;
-    this._app_state = new Models.ApplicationState(
-      process.memoryUsage().rss,
-      moment.utc().hours(),
-      this._tradesMinute
-    );
-    this._tradesMinute = 0;
-    this._appStatePublisher.publish(this._app_state);
+    this._dbSizePersister.loadDBSize().then(dbSize => {
+      this._app_state = new Models.ApplicationState(
+        process.memoryUsage().rss,
+        moment.utc().hours(),
+        this._tradesMinute,
+        dbSize
+      );
+      this._tradesMinute = 0;
+      this._appStatePublisher.publish(this._app_state);
+    }).done()
   };
 
   private onDelay = () => {
@@ -71,7 +75,8 @@ export class ApplicationState {
     private _notepadPublisher : Publish.IPublish<string>,
     private _changeNotepadReciever : Publish.IReceive<string>,
     private _toggleConfigsPublisher : Publish.IPublish<boolean>,
-    private _toggleConfigsReciever : Publish.IReceive<boolean>
+    private _toggleConfigsReciever : Publish.IReceive<boolean>,
+    private _dbSizePersister : Persister.ILoadLatest<number>
   ) {
     this.setDelay();
     this.setTick();

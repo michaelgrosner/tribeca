@@ -56,6 +56,7 @@ export interface IPersist<T> {
 
 export interface ILoadLatest<T> extends IPersist<T> {
     loadLatest(): Q.Promise<T>;
+    loadDBSize(): Q.Promise<T>;
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
@@ -64,6 +65,27 @@ export interface ILoadAll<T> extends IPersist<T> {
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
     private _log = Utils.log("tribeca:exchangebroker:repopersister");
+
+    public loadDBSize = (): Q.Promise<T> => {
+        var deferred = Q.defer<T>();
+
+        this.db.then(db => {
+          db.stats((err, arr) => {
+            if (err) {
+              deferred.reject(err);
+            }
+            else if (arr == null) {
+              deferred.resolve(this._defaultParameter);
+            }
+            else {
+              var v = <T>_.defaults(arr.dataSize, this._defaultParameter);
+              deferred.resolve(v);
+            }
+          });
+        }).done();
+
+        return deferred.promise;
+    };
 
     public loadLatest = (): Q.Promise<T> => {
         var deferred = Q.defer<T>();
@@ -112,14 +134,15 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
     collection: Q.Promise<mongodb.Collection>;
     constructor(
-        db: Q.Promise<mongodb.Db>,
+        private db: Q.Promise<mongodb.Db>,
         private _defaultParameter: T,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair,
         private _loader: (p: Persistable) => void,
         private _saver: (p: Persistable) => void) {
-        this.collection = db.then(db => db.collection(this._dbName));
+        if (this._dbName != 'dataSize')
+          this.collection = db.then(db => db.collection(this._dbName));
     }
 }
 
