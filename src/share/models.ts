@@ -20,7 +20,6 @@ export var Prefixes = {
 }
 
 export var Topics = {
-  DbSize: 'A',
   FairValue: 'a',
   Quote: 'b',
   ActiveSubscription: 'c',
