@@ -170,9 +170,9 @@
       "resolved": "https://registry.npmjs.org/after/-/after-0.8.2.tgz"
     },
     "ag-grid": {
-      "version": "9.0.0",
-      "from": "ag-grid@>=9.0.0 <10.0.0",
-      "resolved": "https://registry.npmjs.org/ag-grid/-/ag-grid-9.0.0.tgz"
+      "version": "9.0.2",
+      "from": "ag-grid@9.0.2",
+      "resolved": "https://registry.npmjs.org/ag-grid/-/ag-grid-9.0.2.tgz"
     },
     "ag-grid-angular": {
       "version": "9.0.0",
