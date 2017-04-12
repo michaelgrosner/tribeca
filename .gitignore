@@ -1,4 +1,5 @@
 bower*
+Analysis
 .DS_Store
 node_modules
 typings

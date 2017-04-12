@@ -3,6 +3,7 @@
 /// <reference path="utils.ts" />
 ///<reference path="interfaces.ts"/>
 
+import * as moment from "moment";
 import Config = require("./config");
 import Models = require("../common/models");
 import Utils = require("./utils");
