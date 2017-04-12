@@ -5,7 +5,6 @@
 ///<reference path="../utils.ts"/>
 ///<reference path="../interfaces.ts"/>
 
-import ws = require('ws');
 import Q = require("q");
 import crypto = require("crypto");
 import request = require("request");
