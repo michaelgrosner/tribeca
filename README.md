@@ -6,7 +6,7 @@
 
 ![Web UI Preview](https://raw.githubusercontent.com/michaelgrosner/tribeca/master/docs/web_ui_preview.png)
 
-Runs on the latest node.js (v5 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
+Runs on the latest node.js (v7.8 or greater). Persistence is acheived using mongodb. Installation is recommended via Docker, but manual installation is also supported.
 
 ### Docker Installation
 
@@ -22,11 +22,11 @@ Runs on the latest node.js (v5 or greater). Persistence is acheived using mongod
 
 ### Manual Installation
 
-1. Ensure your target machine has node v5 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 1.7.5, grunt, typings, and, optionally, forever are installed (`npm install -g grunt-cli typescript typings@0.8.1 forever`).
+1. Ensure your target machine has node v7.8 (or greater) and mongoDB v3 or greater. Also, ensure Typescript 2.2, grunt, and, optionally, forever are installed (`npm install -g grunt-cli typescript forever`).
 
 2. Clone the repository.
 
-3. In the cloned repository directory, `npm install` and then `typings install` to pull in all dependencies.
+3. In the cloned repository directory, run `npm install` to pull in all dependencies.
 
 4. Compile typescript to javascript via `grunt compile`.
 
