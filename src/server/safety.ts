@@ -72,10 +72,10 @@ export class SafetyCalculator {
     private computeQtyLimit = () => {
         var settings = this._qlParams.latest;
         var latestPosition = this._positionBroker.latestReport;
-        let buySize: number = (settings.percentageValues)
+        let buySize: number = (settings.percentageValues && latestPosition != null)
           ? settings.buySizePercentage * latestPosition.value / 100
           : settings.buySize;
-        let sellSize: number = (settings.percentageValues)
+        let sellSize: number = (settings.percentageValues && latestPosition != null)
           ? settings.sellSizePercentage * latestPosition.value / 100
           : settings.sellSize;
         var buyPing = 0;

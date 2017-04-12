@@ -52,10 +52,10 @@ function computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, p
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     let latestPosition = position.latestReport;
-    genQt.bidSz = (params.percentageValues)
+    genQt.bidSz = (params.percentageValues && latestPosition != null)
       ? params.buySizePercentage * latestPosition.value / 100
       : params.buySize;
-    genQt.askSz = (params.percentageValues)
+    genQt.askSz = (params.percentageValues && latestPosition != null)
       ? params.sellSizePercentage * latestPosition.value / 100
       : params.sellSize;
 
@@ -82,10 +82,10 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
     }
 
     let latestPosition = position.latestReport;
-    genQt.bidSz = (params.percentageValues)
+    genQt.bidSz = (params.percentageValues && latestPosition != null)
       ? params.buySizePercentage * latestPosition.value / 100
       : params.buySize;
-    genQt.askSz = (params.percentageValues)
+    genQt.askSz = (params.percentageValues && latestPosition != null)
       ? params.sellSizePercentage * latestPosition.value / 100
       : params.sellSize;
 
