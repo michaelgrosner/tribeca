@@ -9,10 +9,10 @@ export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
         var widthPing = params.widthPing;
 
         let latestPosition = position.latestReport;
-        let buySize: number = (params.percentageValues)
+        let buySize: number = (params.percentageValues && latestPosition != null)
           ? params.buySizePercentage * latestPosition.value / 100
           : params.buySize;
-        let sellSize: number = (params.percentageValues)
+        let sellSize: number = (params.percentageValues && latestPosition != null)
           ? params.sellSizePercentage * latestPosition.value / 100
           : params.sellSize;
 
