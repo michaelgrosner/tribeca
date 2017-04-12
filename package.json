@@ -36,7 +36,7 @@
     "basic-auth": "1.1.0",
     "basic-auth-connect": "1.0.0",
     "body-parser": "1.17.1",
-    "bufferutil": "3.0.0",
+    "bufferutil": "^1.2.1",
     "bunyan": "1.8.10",
     "collections": "5.0.6",
     "compression": "1.6.2",
@@ -55,12 +55,12 @@
     "q": "1.5.0",
     "request": "2.81.0",
     "shortid": "2.2.8",
-    "socket.io": "1.7.3",
+    "socket.io": "^1.4.5",
     "socket.io-client": "1.7.3",
     "typescript": "2.2.2",
     "typings": "2.1.0",
-    "utf-8-validate": "3.0.1",
-    "ws": "2.2.3"
+    "utf-8-validate": "^1.2.1",
+    "ws": "^1.0.1"
   },
   "devDependencies": {
     "mocha": "3.2.0"
