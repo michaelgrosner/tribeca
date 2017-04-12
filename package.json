@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.62",
     "agentkeepalive": "3.1.0",
     "angular": "1.6.4",
     "angular-ui-bootstrap": "2.5.0",
