@@ -19,7 +19,11 @@ export class WebSocket {
         this._onDisconnected = this._onDisconnected || (() => {});
     }
 
+    public get isConnected() : boolean { return this._ws.readyState === ws.OPEN; }    
+
     public connect = () => {
+        if (this._ws !== null) return;
+
         try {
             this.createSocket();
         } catch (error) {
@@ -28,10 +32,14 @@ export class WebSocket {
         }
     };
 
+    private _failureCount = 0;
     private createSocket = () => {
-        this._ws = new ws(this._url)
+        this._ws = new ws(this._url);
+
+        this._ws = this._ws
             .on("open", () => {
                 try {
+                    this._failureCount = 0;
                     this._log.info("connected");
                     this._onConnected();
                 } catch (e) {
@@ -64,13 +72,17 @@ export class WebSocket {
 
     private closeAndReconnect = () => {
         if (this._ws === null) return;
+        
+        this._failureCount += 1;
         this._ws.close();
         this._ws = null;
-        this._log.info(`will try a reconnect in ${this._reconnectInterval}ms`);
+
+        const interval = this._failureCount == 1 ? 10 : this._reconnectInterval;
+        this._log.info(`will try a reconnect in ${interval}ms, failed ${this._failureCount} times`);
 
         setTimeout(() => {
             this._log.info("reconnection begun");
             this.connect();
-        }, this._reconnectInterval);
+        }, interval);
     };
 }
