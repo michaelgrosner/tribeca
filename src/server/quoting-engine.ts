@@ -68,7 +68,7 @@ export class QuotingEngine {
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         var params = this._qlParamRepo.latest;
-        var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params);
+        var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params, this._positionBroker);
 
         if (unrounded === null)
             return null;
@@ -106,26 +106,34 @@ export class QuotingEngine {
               ? 3 : 1))
         ] : [1, 1];
 
+        let buySize: number = (params.percentageValues)
+          ? params.buySizePercentage * latestPosition.value / 100
+          : params.buySize;
+        let sellSize: number = (params.percentageValues)
+          ? params.sellSizePercentage * latestPosition.value / 100
+          : params.sellSize;
         if (superTradesMultipliers[1] > 1) {
-          unrounded.bidSz = Math.min(superTradesMultipliers[1]*params.buySize, (latestPosition.quoteAmount / fv.price) / 2);
-          unrounded.askSz = Math.min(superTradesMultipliers[1]*params.sellSize, latestPosition.baseAmount / 2);
+          unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv.price) / 2);
+          unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
         }
 
-        if (totalBasePosition < targetBasePosition - params.positionDivergence) {
+        let pDiv: number  = (params.percentageValues)
+          ? params.positionDivergence * latestPosition.value / 100
+          : params.positionDivergence;
+        if (totalBasePosition < targetBasePosition - pDiv) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Bid');
-              unrounded.bidSz = Math.min(params.aprMultiplier*params.buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
+              unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
             }
         }
-
-        if (totalBasePosition > targetBasePosition + params.positionDivergence) {
+        if (totalBasePosition > targetBasePosition + pDiv) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Sell');
-              unrounded.askSz = Math.min(params.aprMultiplier*params.sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
+              unrounded.askSz = Math.min(params.aprMultiplier*sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
             }
         }
 
@@ -174,7 +182,7 @@ export class QuotingEngine {
         if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0]) || (
             (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
-              || (totalQuotePosition>params.buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
+              || (totalQuotePosition>buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
         ))) {
             unrounded.askPx = null;
             unrounded.askSz = null;
@@ -182,7 +190,7 @@ export class QuotingEngine {
         if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0]) || (
           (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide || params.pingAt === Models.PingAt.DepletedBidSide
-              || (totalBasePosition>params.sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))
+              || (totalBasePosition>sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))
         ))) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;

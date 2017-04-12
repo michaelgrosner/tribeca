@@ -7,11 +7,11 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'wallet-position',
   template: `<div class="positions" *ngIf="value || quoteValue">
       <h4 class="col-md-12 col-xs-2"><small>
-        {{ quoteCurrency }}:&nbsp;<span [ngClass]="quotePosition + quoteHeldPosition > buySize * fv ? 'text-danger' : 'text-muted'">{{ quotePosition | currency:quoteCurrency:true:'1.2-2' }}</span>
+        {{ quoteCurrency }}:&nbsp;<span class="text-danger">{{ quotePosition | currency:quoteCurrency:true:'1.2-2' }}</span>
         <br/>(<span [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | currency:quoteCurrency:true:'1.2-2' }}</span>)
       </small></h4>
       <h4 class="col-md-12 col-xs-2"><small>
-        {{ baseCurrency }}:&nbsp;<span [ngClass]="basePosition + baseHeldPosition > sellSize ? 'text-danger' : 'text-muted'">฿{{ basePosition | number:'1.3-3' }}</span>
+        {{ baseCurrency }}:&nbsp;<span class="text-danger">฿{{ basePosition | number:'1.3-3' }}</span>
         <br/>(<span [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">฿{{ baseHeldPosition | number:'1.3-3' }}</span>)
       </small></h4>
       <h4 class="col-md-12 col-xs-2" style="margin-top: 1px;margin-bottom: 10px!important;">
@@ -29,8 +29,6 @@ export class WalletPositionComponent implements OnInit {
   public quoteHeldPosition: number;
   public value: number;
   public quoteValue: number;
-  public buySize: number;
-  public sellSize: number;
   public fv: number;
 
   constructor(
@@ -39,11 +37,6 @@ export class WalletPositionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
-      .registerDisconnectedHandler(this.clearQP)
-      .registerSubscriber(this.updateQP);
-
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.Position)
       .registerDisconnectedHandler(this.clearPosition)
@@ -62,11 +55,6 @@ export class WalletPositionComponent implements OnInit {
     this.fv = null;
   }
 
-  private clearQP = () => {
-    this.buySize = null;
-    this.sellSize = null;
-  }
-
   private updatePosition = (o: Models.Timestamped<any[]>) => {
     this.basePosition = o.data[0];
     this.quotePosition = o.data[1];
@@ -77,10 +65,5 @@ export class WalletPositionComponent implements OnInit {
     this.fv = o.data[5] / o.data[4];
     this.baseCurrency = Models.Currency[o.data[6]];
     this.quoteCurrency = Models.Currency[o.data[7]];
-  }
-
-  private updateQP = (qp: Models.QuotingParameters) => {
-    this.buySize = qp.buySize;
-    this.sellSize = qp.sellSize;
   }
 }

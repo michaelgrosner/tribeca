@@ -34,6 +34,7 @@ export class SafetyCalculator {
         private _timeProvider: Utils.ITimeProvider,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
+        private _positionBroker: Interfaces.IPositionBroker,
         private _broker: Broker.OrderBroker,
         private _publisher: Publish.IPublish<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
@@ -70,7 +71,13 @@ export class SafetyCalculator {
 
     private computeQtyLimit = () => {
         var settings = this._qlParams.latest;
-
+        var latestPosition = this._positionBroker.latestReport;
+        let buySize: number = (settings.percentageValues)
+          ? settings.buySizePercentage * latestPosition.value / 100
+          : settings.buySize;
+        let sellSize: number = (settings.percentageValues)
+          ? settings.sellSizePercentage * latestPosition.value / 100
+          : settings.sellSize;
         var buyPing = 0;
         var sellPong = 0;
         var buyPq = 0;
@@ -84,44 +91,44 @@ export class SafetyCalculator {
         if (settings.pongAt == Models.PongAt.ShortPingFair || settings.pongAt == Models.PongAt.ShortPingAggressive) {
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price>b.price?1:(a.price<b.price?-1:0));
           for (var ti = 0;ti<trades.length;ti++) {
-            if ((!fvp || (fvp>trades[ti].price && fvp-settings.widthPong<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
-              _buyPq = Math.min(settings.sellSize - buyPq, trades[ti].quantity);
+            if ((!fvp || (fvp>trades[ti].price && fvp-settings.widthPong<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
+              _buyPq = Math.min(sellSize - buyPq, trades[ti].quantity);
               buyPing += trades[ti].price * _buyPq;
               buyPq += _buyPq;
             }
-            if (buyPq>=settings.sellSize) break;
+            if (buyPq>=sellSize) break;
           }
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price<b.price?1:(a.price>b.price?-1:0));
         } else if (settings.pongAt == Models.PongAt.LongPingFair || settings.pongAt == Models.PongAt.LongPingAggressive)
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price>b.price?1:(a.price<b.price?-1:0));
         if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<settings.sellSize) {
-            _buyPq = Math.min(settings.sellSize - buyPq, trades[ti].quantity);
+          if ((!fvp || fvp>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
+            _buyPq = Math.min(sellSize - buyPq, trades[ti].quantity);
             buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
           }
-          if (buyPq>=settings.sellSize) break;
+          if (buyPq>=sellSize) break;
         }
         if (settings.pongAt == Models.PongAt.ShortPingFair || settings.pongAt == Models.PongAt.ShortPingAggressive) {
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price<b.price?1:(a.price>b.price?-1:0));
           for (var ti = 0;ti<trades.length;ti++) {
-            if ((!fvp || (fvp<trades[ti].price && fvp+settings.widthPong>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
-              _sellPq = Math.min(settings.buySize - sellPq, trades[ti].quantity);
+            if ((!fvp || (fvp<trades[ti].price && fvp+settings.widthPong>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
+              _sellPq = Math.min(buySize - sellPq, trades[ti].quantity);
               sellPong += trades[ti].price * _sellPq;
               sellPq += _sellPq;
             }
-            if (sellPq>=settings.buySize) break;
+            if (sellPq>=buySize) break;
           }
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price>b.price?1:(a.price<b.price?-1:0));
         } else if (settings.pongAt == Models.PongAt.LongPingFair || settings.pongAt == Models.PongAt.LongPingAggressive)
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price<b.price?1:(a.price>b.price?-1:0));
         if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<settings.buySize) {
-            _sellPq = Math.min(settings.buySize - sellPq, trades[ti].quantity);
+          if ((!fvp || fvp<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
+            _sellPq = Math.min(buySize - sellPq, trades[ti].quantity);
             sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;
           }
-          if (sellPq>=settings.buySize) break;
+          if (sellPq>=buySize) break;
         }
 
         if (buyPq) buyPing /= buyPq;
@@ -157,9 +164,9 @@ export class SafetyCalculator {
             }
         }
 
-        var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (settings.buySize + settings.sellSize / 2);
-        var computeSafetyBuy = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / settings.buySize;
-        var computeSafetySell = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / settings.sellSize;
+        var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (buySize + sellSize / 2);
+        var computeSafetyBuy = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / buySize;
+        var computeSafetySell = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / sellSize;
 
         this.latest = new Models.TradeSafety(
           computeSafetyBuy(this._buys),

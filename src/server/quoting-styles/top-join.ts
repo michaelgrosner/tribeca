@@ -1,39 +1,40 @@
 import StyleHelpers = require("./helpers");
+import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 
 export class TopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Top;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        return computeTopJoinQuote(market, fv, params);
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
+        return computeTopJoinQuote(market, fv, params, position);
     };
 }
 
 export class InverseTopOfTheMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.InverseTop;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        return computeInverseJoinQuote(market, fv, params);
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
+        return computeInverseJoinQuote(market, fv, params, position);
     };
 }
 
 export class InverseJoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.InverseJoin;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        return computeInverseJoinQuote(market, fv, params);
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
+        return computeInverseJoinQuote(market, fv, params, position);
     };
 }
 
 export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Join;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        return computeTopJoinQuote(market, fv, params);
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
+        return computeTopJoinQuote(market, fv, params, position);
     };
 }
 
-function computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
+function computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(filteredMkt, params);
 
     if (params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
@@ -50,13 +51,18 @@ function computeTopJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, p
     var minAsk = fv.price + params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
-    genQt.bidSz = params.buySize;
-    genQt.askSz = params.sellSize;
+    let latestPosition = position.latestReport;
+    genQt.bidSz = (params.percentageValues)
+      ? params.buySizePercentage * latestPosition.value / 100
+      : params.buySize;
+    genQt.askSz = (params.percentageValues)
+      ? params.sellSizePercentage * latestPosition.value / 100
+      : params.sellSize;
 
     return genQt;
 }
 
-function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) {
+function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(filteredMkt, params);
 
     var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
@@ -75,8 +81,13 @@ function computeInverseJoinQuote(filteredMkt: Models.Market, fv: Models.FairValu
         genQt.bidPx -= params.widthPing / 4.0;
     }
 
-    genQt.bidSz = params.buySize;
-    genQt.askSz = params.sellSize;
+    let latestPosition = position.latestReport;
+    genQt.bidSz = (params.percentageValues)
+      ? params.buySizePercentage * latestPosition.value / 100
+      : params.buySize;
+    genQt.askSz = (params.percentageValues)
+      ? params.sellSizePercentage * latestPosition.value / 100
+      : params.sellSize;
 
     return genQt;
 }

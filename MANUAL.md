@@ -67,6 +67,8 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 In the web UI, there are two rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
 
+* `%` - If enabled, the values of `bidSz`, `askSz` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
+
 * `mode` - Sets the quoting mode
 
   * `Join` - Sets our quote to be at the best bid and the best offered price, If the BBO is narrower than `width`, set our bid quote at `FV - width / 2` and ask quote at `FV + width / 2`.
@@ -139,8 +141,6 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `pDiv` - If your "Target Base Position" diverges more from this value, Tribeca will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
-* `ewma?` - Use a 100 minute EWMA smoothed line of the price to not send
-
 * `apr?` - If you're in a state where Tribeca has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
 
   * `Off` - Tribeca will not try to aggressively try to stabilize the target based position.
@@ -149,7 +149,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `SizeWidth` - Same as `Size` but also will aggressively make use of smaller `width` values (respecting always aggressive `pongAt` option and `widthPong`).
 
-* `sop?` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trds` and/or the `size`, in both sides at the same time.
+* `sop` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trds` and/or the `size`, in both sides at the same time.
 
 * `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
 
@@ -162,7 +162,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 12:00:06 | Buy  | 10    | 0.5  | 1.75  | 0      |
 12:00:07 | Buy  | 10    | 0.5  | 2.75  | 0      | Stop sending buy orders until 12:30:07!
 
-* `/sec` - see `trds`
+* `/sec` - see `trds`.
+
+* `ewma?` - Use also a protection of 100 minute EWMA smoothed line of the price to stop sending orders.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 

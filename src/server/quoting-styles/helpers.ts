@@ -1,3 +1,4 @@
+import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 
 export class GeneratedQuote {
@@ -6,7 +7,7 @@ export class GeneratedQuote {
 
 export interface QuoteStyle {
     Mode : Models.QuotingMode;
-    GenerateQuote(market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : GeneratedQuote;
+    GenerateQuote(market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : GeneratedQuote;
 }
 
 export function getQuoteAtTopOfMarket(filteredMkt: Models.Market, params: Models.QuotingParameters): GeneratedQuote {
