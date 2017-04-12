@@ -1,11 +1,12 @@
 import StyleHelpers = require("./helpers");
+import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 import _ = require("lodash");
 
 class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
 	Mode = null;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
 		return null;
 	};
 }

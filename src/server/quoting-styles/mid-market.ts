@@ -1,13 +1,20 @@
 import StyleHelpers = require("./helpers");
+import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 
 export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
+    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
         var widthPing = params.widthPing;
-        var buySize = params.buySize;
-        var sellSize = params.sellSize;
+
+        let latestPosition = position.latestReport;
+        let buySize: number = (params.percentageValues)
+          ? params.buySizePercentage * latestPosition.value / 100
+          : params.buySize;
+        let sellSize: number = (params.percentageValues)
+          ? params.sellSizePercentage * latestPosition.value / 100
+          : params.sellSize;
 
         var bidPx = Math.max(fv.price - widthPing, 0);
         var askPx = fv.price + widthPing;

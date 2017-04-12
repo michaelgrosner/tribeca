@@ -79,6 +79,7 @@ class DisplayOrder {
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
+                                            <th>%</th>
                                             <th>mode</th>
                                             <th *ngIf="pair.quotingParameters.display.mode==7">bullets</th>
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
@@ -87,13 +88,17 @@ class DisplayOrder {
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
-                                            <th>bidSz</th>
-                                            <th>askSz</th>
+                                            <th>bidSz<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th>askSz<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>fv</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr class="active">
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.percentageValues">
+                                            </td>
                                             <td style="width:121px;">
                                                 <select class="form-control input-sm"
                                                   [(ngModel)]="pair.quotingParameters.display.mode">
@@ -136,17 +141,29 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
-                                            <td>
+                                            <td *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
-                                            <td>
+                                            <td *ngIf="pair.quotingParameters.display.percentageValues">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
+                                            </td>
+                                            <td *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
+                                            </td>
+                                            <td *ngIf="pair.quotingParameters.display.percentageValues">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
                                             </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"
@@ -162,14 +179,14 @@ class DisplayOrder {
                                         <tr class="active">
                                             <th>apMode</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp</th>
-                                            <th>pDiv</th>
-                                            <th>ewma?</th>
+                                            <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
-                                            <th>sop?</th>
+                                            <th>sop</th>
                                             <th>trds</th>
                                             <th>/sec</th>
-                                            <th>audio?</th>
+                                            <th>ewma?</th>
                                             <th>delayUI</th>
+                                            <th>audio?</th>
                                             <th colspan="2">
                                                 <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
                                                     Applied
@@ -197,15 +214,17 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
                                             </td>
-                                            <td>
+                                            <td *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                             </td>
-                                            <td>
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
+                                            <td *ngIf="pair.quotingParameters.display.percentageValues">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
                                             </td>
                                             <td style="width:121px;">
                                                 <select class="form-control input-sm"
@@ -233,13 +252,17 @@ class DisplayOrder {
                                             </td>
                                             <td>
                                                 <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.audio">
+                                                   [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
                                             </td>
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.delayUI">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.audio">
                                             </td>
                                             <td>
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"

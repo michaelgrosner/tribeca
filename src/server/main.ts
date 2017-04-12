@@ -44,19 +44,23 @@ let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParam
   2                                  ,/* width and widthPing */
   2                                  ,/* widthPong */
   0.02                               ,/* buySize */
+  7                                  ,/* buySizePercentage */
   0.01                               ,/* sellSize */
+  7                                  ,/* sellSizePercentage */
   Models.PingAt.BothSides            ,/* pingAt */
   Models.PongAt.ShortPingFair        ,/* pongAt */
   Models.QuotingMode.AK47            ,/* mode */
   Models.FairValueModel.BBO          ,/* fvModel */
   1                                  ,/* targetBasePosition */
   0.9                                ,/* positionDivergence */
-  true                               ,/* ewmaProtection */
+  21                                 ,/* positionDivergencePercentage */
+  false                              ,/* percentageValues */
   Models.AutoPositionMode.EwmaBasic  ,/* autoPositionMode */
   Models.APR.Off                     ,/* aggressivePositionRebalancing */
   Models.SOP.Off                     ,/* superTrades */
   0.9                                ,/* tradesPerMinute */
   569                                ,/* tradeRateSeconds */
+  true                               ,/* ewmaProtection */
   false                              ,/* audio */
   2                                  ,/* bullets */
   0.5                                ,/* range */
@@ -389,6 +393,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             system.timeProvider,
             fvEngine,
             paramsRepo,
+            positionBroker,
             orderBroker,
             system.getPublisher(Models.Topics.TradeSafetyValue, monitor)
           )
