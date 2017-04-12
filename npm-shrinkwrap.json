@@ -2,10 +2,120 @@
   "name": "tribeca",
   "version": "2.0.0",
   "dependencies": {
+    "@types/angular": {
+      "version": "1.6.14",
+      "from": "@types/angular@latest",
+      "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.14.tgz"
+    },
+    "@types/angular-ui-bootstrap": {
+      "version": "0.13.41",
+      "from": "@types/angular-ui-bootstrap@latest",
+      "resolved": "https://registry.npmjs.org/@types/angular-ui-bootstrap/-/angular-ui-bootstrap-0.13.41.tgz"
+    },
+    "@types/basic-auth": {
+      "version": "0.0.31",
+      "from": "@types/basic-auth@latest",
+      "resolved": "https://registry.npmjs.org/@types/basic-auth/-/basic-auth-0.0.31.tgz"
+    },
+    "@types/body-parser": {
+      "version": "1.16.3",
+      "from": "@types/body-parser@latest",
+      "resolved": "https://registry.npmjs.org/@types/body-parser/-/body-parser-1.16.3.tgz"
+    },
+    "@types/bson": {
+      "version": "1.0.3",
+      "from": "@types/bson@*",
+      "resolved": "https://registry.npmjs.org/@types/bson/-/bson-1.0.3.tgz"
+    },
+    "@types/bunyan": {
+      "version": "0.0.36",
+      "from": "@types/bunyan@latest",
+      "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.36.tgz"
+    },
+    "@types/compression": {
+      "version": "0.0.33",
+      "from": "@types/compression@latest",
+      "resolved": "https://registry.npmjs.org/@types/compression/-/compression-0.0.33.tgz"
+    },
+    "@types/connect": {
+      "version": "3.4.30",
+      "from": "@types/connect@latest",
+      "resolved": "https://registry.npmjs.org/@types/connect/-/connect-3.4.30.tgz"
+    },
+    "@types/es6-promise": {
+      "version": "0.0.32",
+      "from": "@types/es6-promise@latest",
+      "resolved": "https://registry.npmjs.org/@types/es6-promise/-/es6-promise-0.0.32.tgz"
+    },
+    "@types/express": {
+      "version": "4.0.35",
+      "from": "@types/express@latest",
+      "resolved": "https://registry.npmjs.org/@types/express/-/express-4.0.35.tgz"
+    },
+    "@types/express-serve-static-core": {
+      "version": "4.0.44",
+      "from": "@types/express-serve-static-core@latest",
+      "resolved": "https://registry.npmjs.org/@types/express-serve-static-core/-/express-serve-static-core-4.0.44.tgz"
+    },
+    "@types/form-data": {
+      "version": "0.0.33",
+      "from": "@types/form-data@latest",
+      "resolved": "https://registry.npmjs.org/@types/form-data/-/form-data-0.0.33.tgz"
+    },
+    "@types/jquery": {
+      "version": "2.0.41",
+      "from": "@types/jquery@latest",
+      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.41.tgz"
+    },
     "@types/lodash": {
       "version": "4.14.62",
-      "from": "@types/lodash@latest",
+      "from": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.62.tgz",
       "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.62.tgz"
+    },
+    "@types/mime": {
+      "version": "0.0.29",
+      "from": "@types/mime@latest",
+      "resolved": "https://registry.npmjs.org/@types/mime/-/mime-0.0.29.tgz"
+    },
+    "@types/mongodb": {
+      "version": "2.1.43",
+      "from": "@types/mongodb@latest",
+      "resolved": "https://registry.npmjs.org/@types/mongodb/-/mongodb-2.1.43.tgz"
+    },
+    "@types/node": {
+      "version": "7.0.12",
+      "from": "@types/node@latest",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.12.tgz"
+    },
+    "@types/q": {
+      "version": "1.0.0",
+      "from": "@types/q@latest",
+      "resolved": "https://registry.npmjs.org/@types/q/-/q-1.0.0.tgz"
+    },
+    "@types/request": {
+      "version": "0.0.42",
+      "from": "@types/request@latest",
+      "resolved": "https://registry.npmjs.org/@types/request/-/request-0.0.42.tgz"
+    },
+    "@types/serve-static": {
+      "version": "1.7.31",
+      "from": "@types/serve-static@latest",
+      "resolved": "https://registry.npmjs.org/@types/serve-static/-/serve-static-1.7.31.tgz"
+    },
+    "@types/socket.io": {
+      "version": "1.4.29",
+      "from": "@types/socket.io@latest",
+      "resolved": "https://registry.npmjs.org/@types/socket.io/-/socket.io-1.4.29.tgz"
+    },
+    "@types/socket.io-client": {
+      "version": "1.4.29",
+      "from": "@types/socket.io-client@latest",
+      "resolved": "https://registry.npmjs.org/@types/socket.io-client/-/socket.io-client-1.4.29.tgz"
+    },
+    "@types/ws": {
+      "version": "0.0.39",
+      "from": "@types/ws@latest",
+      "resolved": "https://registry.npmjs.org/@types/ws/-/ws-0.0.39.tgz"
     },
     "abbrev": {
       "version": "1.1.0",
