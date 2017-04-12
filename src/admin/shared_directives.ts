@@ -1,4 +1,3 @@
-/// <reference path="../../typings/main.d.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>

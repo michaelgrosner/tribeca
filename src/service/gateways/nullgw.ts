@@ -2,6 +2,7 @@
 /// <reference path="../../common/models.ts" />
 ///<reference path="../interfaces.ts"/>
 
+import * as Q from "q";
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
