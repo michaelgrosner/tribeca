@@ -96,7 +96,7 @@ export class QuotingEngine {
         let sideAPR: string[] = [];
 
         let superTradesMultipliers = (params.superTrades &&
-          (params.widthPing * params.sopWidthMultiplier) < ((filteredMkt.bids[0].price + filteredMkt.asks[0].price) / 2.0)
+          params.widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
           (params.superTrades == Models.SOP.x2trds || params.superTrades == Models.SOP.x2trdsSz
             ? 2 : (params.superTrades == Models.SOP.x3trds || params.superTrades == Models.SOP.x3trdsSz
