@@ -97,7 +97,7 @@ var OrderListController = ($scope: OrderListScope,
         headerRowHeight: 20,
         columnDefs: [
             { width: 120, field: 'time', displayName: 'time', cellFilter: "momentFullDate", 
-                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sortingAlgorithm: Shared.fastDiff,
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             { width: 90, field: 'orderId', displayName: 'id' },
             { width: 35, field: 'version', displayName: 'v' },
@@ -153,7 +153,7 @@ var OrderListController = ($scope: OrderListScope,
 };
 
 var orderList = (): ng.IDirective => {
-    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 400px"></div></div>';
+    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 150px"></div></div>';
 
     return {
         template: template,

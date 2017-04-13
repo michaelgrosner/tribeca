@@ -17,6 +17,9 @@
         .buy { color: blue }
         .sell { color: red }
         .unknown { color: black }
+
+        .black { color: black }
+        .red { color: red }
         
         .row {
             margin-left: 0;
@@ -98,8 +101,7 @@
             {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
         </small></h4>
         <h4 class="col-md-12 col-xs-2">
-          <small>Value: </small><b>{{ value|currency:"B":5 }}</b><br/>
-          <b>{{ quoteValue|currency:undefined:2 }}</b>
+          Value: {{ value|currency:"B":3 }} ({{ quoteValue|currency:undefined:3 }})
         </h4>
     </div>
 </script>
