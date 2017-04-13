@@ -6,7 +6,6 @@ import _ = require("lodash");
 import Q = require("q");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
-import util = require("util");
 import moment = require("moment");
 
 export class ApplicationState {

@@ -6,7 +6,6 @@ import mongodb = require('mongodb');
 import Q = require("q");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
-import util = require("util");
 import QuotingParameters = require("./quoting-parameters");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {

@@ -5,7 +5,6 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import Safety = require("./safety");
-import util = require("util");
 import _ = require("lodash");
 import Statistics = require("./statistics");
 import Active = require("./active-state");
