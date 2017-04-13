@@ -116,7 +116,7 @@ export class QuotingEngine {
         }
 
         let pDiv: number  = (params.percentageValues)
-          ? params.positionDivergence * latestPosition.value / 100
+          ? params.positionDivergencePercentage * latestPosition.value / 100
           : params.positionDivergence;
         if (totalBasePosition < targetBasePosition - pDiv) {
             unrounded.askPx = null;
