@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
-import util = require("util");
 import _ = require("lodash");
 import Persister = require("./persister");
 import mongodb = require('mongodb');

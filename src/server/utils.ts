@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import moment = require('moment');
 import events = require("events");
-import util = require("util");
 import bunyan = require("bunyan");
 import fs = require("fs");
 import _ = require("lodash");
