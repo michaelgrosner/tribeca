@@ -60,7 +60,7 @@ export interface ILoadLatest<T> extends IPersist<T> {
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
-    loadAll(limit?: number, start_time?: moment.Moment): Q.Promise<T[]>;
+    loadAll(limit?: number, query?: Object): Q.Promise<T[]>;
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
@@ -120,16 +120,13 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 export class Persister<T extends Persistable> implements ILoadAll<T> {
     private _log = Utils.log("persister");
 
-    public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
-        var selector = { exchange: this._exchange, pair: this._pair };
-        if (start_time) {
-            selector["time"] = { $gte: start_time.toDate() };
-        }
-
+    public loadAll = (limit?: number, query?: any): Q.Promise<T[]> => {
+        const selector: Object = { exchange: this._exchange, pair: this._pair };
+        _.assign(selector, query);
         return this.loadInternal(selector, limit);
     };
 
-    private loadInternal = (selector: any, limit?: number) => {
+    private loadInternal = (selector: Object, limit?: number) => {
         var deferred = Q.defer<T[]>();
 
         this.collection.then(coll => {

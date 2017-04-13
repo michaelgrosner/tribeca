@@ -35,7 +35,11 @@ export class StandaloneHttpPublisher<T> {
                 res.json(d);
             };
 
-            _persister.loadAll(max, startTime).then(handler);
+            const selector : Object = startTime == null
+                ? null
+                : {time: { $gte: startTime.toDate() }}
+
+            _persister.loadAll(max, selector).then(handler);
         });
     }
 

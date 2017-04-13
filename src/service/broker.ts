@@ -112,7 +112,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
         var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
-            order.price, order.timeInForce, exch, order.preferPostOnly);
+            order.price, order.timeInForce, exch, order.preferPostOnly, order.source);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
@@ -129,7 +129,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             preferPostOnly: order.preferPostOnly,
             exchange: exch,
             computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
-            rejectMessage: order.msg};
+            rejectMessage: order.msg,
+            source: order.source
+        };
         this.onOrderUpdate(rpt);
 
         return new Models.SentOrder(rpt.orderId);
@@ -138,7 +140,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
-            rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
+            rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly,
+            rpt.source);
 
         var sent = this._oeGateway.replaceOrder(br);
 
@@ -244,7 +247,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             osr.pendingCancel,
             osr.pendingReplace,
             osr.cancelRejected,
-            getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
+            getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
+            getOrFallback(osr.source, orig.source)
         );
 
         this.addOrderStatusToMemory(o);
@@ -262,7 +266,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.OrderUpdate.trigger(o);
 
         this._orderPersister.persist(o);
-        this._orderStatusPublisher.publish(o);
+        if (this.shouldPublish(o))
+            this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
@@ -296,6 +301,18 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._orderCache.allOrdersFlat.push(osr);
     };
 
+    private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
+        if (o.source == null) throw Error(JSON.stringify(o));
+
+        switch (o.source) {
+            case Models.OrderSource.Quote:
+            case Models.OrderSource.Unknown:
+                return false;
+            default:
+                return true;
+        }
+    };
+
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
@@ -310,14 +327,15 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        _orderStatusPublisher.registerSnapshot(() => _.takeRight(this._orderCache.allOrdersFlat, 1000));
+        _orderStatusPublisher.registerSnapshot(() => _.filter(this._orderCache.allOrdersFlat, this.shouldPublish));
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log.info("got new order req", o);
             try {
                 var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), 
+                    false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
             }
             catch (e) {
