@@ -62,7 +62,7 @@ export var messagesDirective = "messagesDirective";
 angular
     .module(messagesDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("messagesGrid", () => {
-        var template = '<div><div style="height: 100px" class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
+        var template = '<div><div style="height: 75px" class="table table-striped table-hover table-condensed" ui-grid="messageOptions"></div></div>';
 
         return {
             restrict: 'E',

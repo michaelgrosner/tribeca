@@ -154,11 +154,12 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     private static GetLevel = (n: [number, number]) : Models.MarketSide => 
         new Models.MarketSide(n[0], n[1]);
         
+    private readonly Depth: number = 25;
     private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = depth.data;
 
-        var bids = _(msg.bids).take(3).map(OkCoinMarketDataGateway.GetLevel).value();
-        var asks = _(msg.asks).reverse().take(3).map(OkCoinMarketDataGateway.GetLevel).value()
+        var bids = _(msg.bids).take(this.Depth).map(OkCoinMarketDataGateway.GetLevel).value();
+        var asks = _(msg.asks).reverse().take(this.Depth).map(OkCoinMarketDataGateway.GetLevel).value()
         var mkt = new Models.Market(bids, asks, depth.time);
 
         this.MarketData.trigger(mkt);

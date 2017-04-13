@@ -16,8 +16,11 @@ import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
+import * as moment from "moment";
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
+    private readonly _marketPublisher: BatchingPublisher<Models.Market>;
+
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook() : Models.Market { return this._currentBook; }
 
@@ -25,15 +28,23 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     private handleMarketData = (book : Models.Market) => {
         this._currentBook = book;
         this.MarketData.trigger(this.currentBook);
+
+        // publish once a second and only persist the top 3 levels of the book.
         this._marketPublisher.publish(this.currentBook);
-        this._persister.persist(this.currentBook);
+        this._persister.persist(new Models.Market(
+            _.take(this.currentBook.bids, 3), 
+            _.take(this.currentBook.bids, 3), 
+            this._currentBook.time));
     };
 
-    constructor(private _mdGateway : Interfaces.IMarketDataGateway,
-                private _marketPublisher : Messaging.IPublish<Models.Market>,
+    constructor(time: Utils.ITimeProvider,
+                private _mdGateway : Interfaces.IMarketDataGateway,
+                rawMarketPublisher : Messaging.IPublish<Models.Market>,
                 private _persister: Persister.IPersist<Models.Market>,
                 private _messages : Messages.MessagesPubisher) {
-        _marketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+        rawMarketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+        this._marketPublisher = new BatchingPublisher<Models.Market>(moment.duration(1, "second"), 
+            rawMarketPublisher, time)
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
@@ -477,4 +488,23 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
+}
+
+export class BatchingPublisher<T> {
+    private _latest: T = null;
+
+    constructor(
+            interval: moment.Duration,
+            private _decorated: Messaging.IPublish<T>, 
+            private _time: Utils.ITimeProvider) {
+        _time.setInterval(() => {
+            if (this._latest === null) return;
+            _decorated.publish(this._latest);
+            this._latest = null;
+        }, interval);
+    }
+
+    public publish = (msg : T) => {
+        this._latest = msg;
+    };
 }
