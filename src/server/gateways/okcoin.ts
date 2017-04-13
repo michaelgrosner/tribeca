@@ -30,7 +30,7 @@ interface OkCoinDepthMessage {
 }
 
 interface OrderAck {
-    result: string; // "true" or "false"
+    result: boolean;
     order_id: number;
 }
 
@@ -239,7 +239,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         var osr : Models.OrderStatusReport = { orderId: orderId, time: ts.time };
 
-        if (typeof ts.data !== "undefined" && ts.data.result === "true") {
+        if (typeof ts.data !== "undefined" && ts.data.result) {
             osr.exchangeId = ts.data.order_id.toString();
             osr.orderStatus = Models.OrderStatus.Working;
             osr.leavesQuantity = order[1];
@@ -261,7 +261,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onCancel = (ts: Models.Timestamped<OrderAck>) => {
         var osr : Models.OrderStatusReport = { exchangeId: ts.data.order_id.toString(), time: ts.time };
 
-        if (ts.data.result === "true") {
+        if (ts.data.result) {
             osr.orderStatus = Models.OrderStatus.Cancelled;
             osr.leavesQuantity = 0;
             osr.done = true;
