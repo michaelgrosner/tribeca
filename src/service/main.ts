@@ -265,7 +265,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var completedSuccessfully = Q.defer<boolean>();
     
     Q.all<any>([
-        orderPersister.loadAll(25000),
+        orderPersister.loadAll(1000),
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
         messagesPersister.loadAll(50),
@@ -335,7 +335,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
     
         var quoter = new Quoter.Quoter(orderBroker, broker);
-        var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
+        var filtration = new MarketFiltration.MarketFiltration(new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
         var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
