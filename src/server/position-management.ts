@@ -42,7 +42,7 @@ export class PositionManager {
         var newShort = this._shortEwma.addNewValue(fv.price);
         var newLong = this._longEwma.addNewValue(fv.price);
 
-        var newTargetPosition = (newShort - newLong) / 2.0;
+        var newTargetPosition = ((newShort * 100/ newLong) -100) * 5;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
