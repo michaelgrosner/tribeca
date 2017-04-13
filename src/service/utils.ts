@@ -83,3 +83,22 @@ export class RealTimeProvider implements ITimeProvider {
     
     setInterval = (action: () => void, time: moment.Duration) => setInterval(action, time.asMilliseconds());
 }
+
+export interface IActionScheduler {
+    schedule(action: () => void);
+}
+
+export class ImmediateActionScheduler implements IActionScheduler {
+    constructor(private _timeProvider: ITimeProvider) {}
+    
+    private _shouldSchedule = true;
+    public schedule = (action: () => void) => {
+        if (this._shouldSchedule) {
+            this._shouldSchedule = false;
+            this._timeProvider.setImmediate(() => {
+                action();
+                this._shouldSchedule = true;
+            });
+        }
+    };
+}
