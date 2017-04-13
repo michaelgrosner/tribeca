@@ -265,7 +265,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var completedSuccessfully = Q.defer<boolean>();
     
     Q.all<any>([
-        orderPersister.loadAll(25000),
+        orderPersister.loadAll(10000, {source: {$gte: Models.OrderSource.OrderTicket}}),
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
         messagesPersister.loadAll(50),
@@ -323,7 +323,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
-        var marketDataBroker = new Broker.MarketDataBroker(gateway.md, marketDataPublisher, marketDataPersister, messages);
+        var marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
         var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
     
         var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
@@ -335,7 +335,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
     
         var quoter = new Quoter.Quoter(orderBroker, broker);
-        var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
+        var filtration = new MarketFiltration.MarketFiltration(new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
         var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     

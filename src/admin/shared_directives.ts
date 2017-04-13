@@ -6,6 +6,7 @@ import angular = require("angular");
 import Messaging = require("../common/messaging");
 import Models = require("../common/models");
 import io = require("socket.io-client");
+import * as moment from "moment";
 
 var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
     var getTemplate = (contentType, template_url) => {
@@ -87,6 +88,10 @@ export class EvalAsyncSubscriber<T> implements Messaging.ISubscribe<T> {
     public get connected() { return this._wrapped.connected; }
 }
 
+export function fastDiff(a: moment.Moment, b: moment.Moment) {
+    return a.valueOf() - b.valueOf();
+}
+
 export var sharedDirectives = "sharedDirectives";
 
 angular.module(sharedDirectives, ['ui.bootstrap'])
@@ -95,5 +100,6 @@ angular.module(sharedDirectives, ['ui.bootstrap'])
        .factory("socket", () : SocketIOClient.Socket => io())
        .service("subscriberFactory", SubscriberFactory)
        .service("fireFactory", FireFactory)
+       .filter("veryShortDate", () => Models.veryShortDate)
        .filter("momentFullDate", () => Models.toUtcFormattedTime)
        .filter("momentShortDate", () => Models.toShortTimeString);
