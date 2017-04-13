@@ -178,7 +178,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             }
         }
 
-        return side.slice(0, 5);
+        return side.slice(0, 25);
     }
 
     private onMessage = (raw : string) => {

@@ -2,6 +2,7 @@
 /// <reference path="../../common/models.ts" />
 ///<reference path="../interfaces.ts"/>
 
+import * as _ from "lodash";
 import * as Q from "q";
 import Models = require("../../common/models");
 import Utils = require("../utils");
@@ -82,26 +83,24 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     constructor() {
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
-        setInterval(() => this.MarketData.trigger(this.generateMarketData()), 5000);
+        setInterval(() => this.MarketData.trigger(this.generateMarketData()), 5000*Math.random());
         setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
-    private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
+    private genMarketTrade = () => 
+        new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
 
-    private genSingleLevel = () => new Models.MarketSide(200 + 100 * Math.random(), Math.random());
+    private genSingleLevel = (sign: number) => 
+        new Models.MarketSide(1000 + sign * 100 * Math.random(), Math.random());
 
+    private readonly Depth: number = 25;
     private generateMarketData = () => {
-        var genSide = () => {
-            var s = [];
-            for (var x = 0; x < 5; x++) {
-                s.push(this.genSingleLevel());
-            }
-            return s;
+        const genSide = (sign: number) => {
+            const s = _.times(this.Depth, _ => this.genSingleLevel(sign));
+            return _.sortBy(s, i => sign*i.price);
         };
-        return new Models.Market(genSide(), genSide(), Utils.date());
+        return new Models.Market(genSide(-1), genSide(1), Utils.date());
     };
-
-
 }
 
 class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
