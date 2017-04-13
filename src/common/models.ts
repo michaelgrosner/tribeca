@@ -354,12 +354,16 @@ export class QuotingParameters {
                 public stepOverSize: number) {}
 }
 
-export function toUtcFormattedTime(t: moment.Moment) {
-    return t.format('M/D/YY HH:mm:ss,SSS');
+export function toUtcFormattedTime(t: moment.Moment | Date) {
+    return (moment.isMoment(t) ? <moment.Moment>t : moment(t)).format('M/D/YY HH:mm:ss,SSS');
 }
 
-export function toShortTimeString(t: moment.Moment) {
-    return t.format('HH:mm:ss,SSS');
+export function veryShortDate(t: moment.Moment | Date) {
+    return (moment.isMoment(t) ? <moment.Moment>t : moment(t)).format('M/D');
+}
+
+export function toShortTimeString(t: moment.Moment | Date) {
+    return (moment.isMoment(t) ? <moment.Moment>t : moment(t)).format('HH:mm:ss,SSS');
 }
 
 export class ExchangePairMessage<T> {

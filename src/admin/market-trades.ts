@@ -81,7 +81,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
         sortInfo: { fields: ['time'], directions: ['desc'] },
         columnDefs: [
             { width: 80, field: 'time', displayName: 't', cellFilter: "momentShortDate",
-                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sortingAlgorithm: Shared.fastDiff,
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             { width: 50, field: 'price', displayName: 'px' },
             { width: 40, field: 'size', displayName: 'sz' },
@@ -119,7 +119,7 @@ export var marketTradeDirective = "marketTradeDirective";
 angular
     .module(marketTradeDirective, ['ui.bootstrap', 'ui.grid', Shared.sharedDirectives])
     .directive("marketTradeGrid", () => {
-        var template = '<div><div style="height: 180px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div></div>';
+        var template = '<div><div style="height: 553px" class="table table-striped table-hover table-condensed" ui-grid="marketTradeOptions"></div></div>';
 
         return {
             restrict: 'E',

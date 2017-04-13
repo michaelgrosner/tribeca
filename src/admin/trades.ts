@@ -54,7 +54,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
         headerRowHeight: 20,
         columnDefs: [
             {width: 80, field:'time', displayName:'t', cellFilter: 'momentShortDate',
-                sortingAlgorithm: (a: moment.Moment, b: moment.Moment) => a.diff(b),
+                sortingAlgorithm: Shared.fastDiff,
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
             {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
             {width: 50, field:'quantity', displayName:'qty'},
@@ -90,7 +90,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 };
 
 var tradeList = () : ng.IDirective => {
-    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 180px" ></div></div>';
+    var template = '<div><div ui-grid="gridOptions" ui-grid-grouping class="table table-striped table-hover table-condensed" style="height: 553px" ></div></div>';
 
     return {
         template: template,
