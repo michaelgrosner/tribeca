@@ -85,6 +85,12 @@ export interface Order {
     exchange : Exchange;
 }
 
+export enum OrderSource {
+    Unknown = 0,
+    Quote = 1,
+    OrderTicket = 2
+}
+
 export class SubmitNewOrder implements Order {
     constructor(public side: Side,
                 public quantity: number,
@@ -94,6 +100,7 @@ export class SubmitNewOrder implements Order {
                 public exchange: Exchange,
                 public generatedTime: moment.Moment,
                 public preferPostOnly: boolean,
+                public source: OrderSource,
                 public msg?: string) {
                     this.msg = msg || null;
                 }
@@ -121,7 +128,8 @@ export class BrokeredOrder implements Order {
                 public price: number,
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
-                public preferPostOnly: boolean) {}
+                public preferPostOnly: boolean,
+                public source: OrderSource) {}
 }
 
 export class BrokeredReplace implements Order {
@@ -134,7 +142,8 @@ export class BrokeredReplace implements Order {
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
                 public exchangeId: string,
-                public preferPostOnly: boolean) {}
+                public preferPostOnly: boolean,
+                public source: OrderSource) {}
 }
 
 export class BrokeredCancel {
@@ -174,6 +183,7 @@ export interface OrderStatusReport {
     computationalLatency? : number;
     version? : number;
     preferPostOnly?: boolean;
+    source?: OrderSource,
 
     partiallyFilled? : boolean;
     pendingCancel? : boolean;
@@ -206,7 +216,8 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
                 public pendingCancel: boolean,
                 public pendingReplace: boolean,
                 public cancelRejected: boolean,
-                public preferPostOnly: boolean) {}
+                public preferPostOnly: boolean,
+                public source: OrderSource) {}
 
     public toString() {
         var components: string[] = [];

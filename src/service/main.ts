@@ -265,7 +265,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     var completedSuccessfully = Q.defer<boolean>();
     
     Q.all<any>([
-        orderPersister.loadAll(1000),
+        orderPersister.loadAll(10000, {source: {$gte: Models.OrderSource.OrderTicket}}),
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
         messagesPersister.loadAll(50),
