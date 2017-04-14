@@ -8,6 +8,7 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from 'ag-grid-angular/main';
+import { ChartModule } from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
 
 import moment = require("moment");
@@ -22,6 +23,7 @@ import {MarketTradesComponent} from './market-trades';
 import {TradeSafetyComponent} from './trade-safety';
 import {OrdersComponent} from './orders';
 import {TradesComponent} from './trades';
+import {StatsComponent} from './stats';
 
 class DisplayOrder {
   side : string;
@@ -394,7 +396,7 @@ class DisplayOrder {
                             <market-trades></market-trades>
                         </div>
                         <div [hidden]="!showStats" class="col-md-11 col-xs-12">
-                            no stats yet..
+                            <market-stats></market-stats>
                         </div>
                     </div>
                 </div>
@@ -565,7 +567,8 @@ class ClientComponent implements OnInit {
     AgGridModule.withComponents([
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent
-    ])
+    ]),
+    ChartModule.forRoot(require('highcharts/highstock'))
   ],
   declarations: [
     ClientComponent,
@@ -576,7 +579,8 @@ class ClientComponent implements OnInit {
     WalletPositionComponent,
     TradeSafetyComponent,
     BaseCurrencyCellComponent,
-    QuoteCurrencyCellComponent
+    QuoteCurrencyCellComponent,
+    StatsComponent
   ],
   bootstrap: [ClientComponent]
 })
