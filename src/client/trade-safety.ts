@@ -13,7 +13,6 @@ import {SubscriberFactory} from './shared_directives';
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
       openOrders/min: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
-      <b style="float:right"><a href="#" (click)="toggleConfigs.next()">Settings</a></b>
     </div>
   </div>`
 })
@@ -26,7 +25,6 @@ export class TradeSafetyComponent implements OnInit {
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
-  @Output() toggleConfigs = new EventEmitter();
 
   constructor(
     @Inject(NgZone) private zone: NgZone,

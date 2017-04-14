@@ -299,13 +299,13 @@ class DisplayOrder {
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><a href="#" (click)="toggleStats()">Stats</a></div>
-                                <div [hidden]="!showStats"><a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></div>
+                                <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a>
                             </div>
                         </div>
 
                         <div [hidden]="showStats" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
-                            <trade-safety [tradeFreq]="tradeFreq" (toggleConfigs)="toggleConfigs(showConfigs = !showConfigs)"></trade-safety>
+                            <trade-safety [tradeFreq]="tradeFreq"></trade-safety>
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">

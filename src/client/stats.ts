@@ -43,12 +43,18 @@ export class StatsComponent implements OnInit {
     series: [{
       name: 'Fair Value',
       type: 'spline',
+      tooltip: {
+        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       colorIndex: 2,
       data: [],
       id: 'fvseries'
     },{
       name: 'Sell',
       type: 'scatter',
+      tooltip: {
+        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       colorIndex: 5,
       data: [],
       id: 'sellseries'
@@ -62,6 +68,9 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Buy',
       type: 'scatter',
+      tooltip: {
+        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       colorIndex: 0,
       data: [],
       id: 'buyseries'
