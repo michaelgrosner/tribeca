@@ -112,6 +112,8 @@ Added cleanup of bandwidth, source code, dependencies and installation steps.
 
 Added david-dm, travis-ci, coveralls and codacy.
 
+Added charts to replace grafana.
+
 ### Release 2.0 Changelog:
 
 Added new quoting styles PingPong, Boomerang, AK-47.
