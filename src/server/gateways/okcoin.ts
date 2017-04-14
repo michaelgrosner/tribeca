@@ -314,6 +314,22 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+
+    private onPosition = (ts: Models.Timestamped<any>) => {
+        var free = (<any>ts.data).info.free;
+        var freezed = (<any>ts.data).info.freezed;
+
+        for (var currencyName in free) {
+            if (!free.hasOwnProperty(currencyName)) continue;
+            var amount = parseFloat(free[currencyName]);
+            var held = parseFloat(freezed[currencyName]);
+
+            var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
+            this.PositionUpdate.trigger(pos);
+        }
+    }
+
     private _log = Utils.log("tribeca:gateway:OkCoinOE");
     constructor(
             private _socket : OkCoinWebsocket,
@@ -322,6 +338,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
         _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
+        _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_userinfo", this.onPosition);
 
         _socket.ConnectChanged.on(cs => {
             this.ConnectChanged.trigger(cs);
@@ -404,7 +421,7 @@ class OkCoinHttp {
 class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    private static convertCurrency(name : string) : Models.Currency {
+    public static convertCurrency(name : string) : Models.Currency {
         switch (name.toLowerCase()) {
             case "usd": return Models.Currency.USD;
             case "ltc": return Models.Currency.LTC;
