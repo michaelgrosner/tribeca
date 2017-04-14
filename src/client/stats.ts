@@ -54,7 +54,7 @@ export class StatsComponent implements OnInit {
     if (o.data[1] == Models.OrderStatus.Complete)
       this.chart.series[1].addPoint({
           x: Date.now(),
-          title: Models.Side[o.data[2]].replace('Bid','buy').replace('Ask','sell'),
+          title: Models.Side[o.data[2]] == 'Bid' ? 'buy' : 'sell',
           useHTML:true,
           text: 'Price: ' + o.data[3] + '<br/>' + 'Qty: ' + ((o.data[4] * 100) / 100)
       });

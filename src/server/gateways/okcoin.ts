@@ -259,6 +259,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private onCancel = (ts: Models.Timestamped<OrderAck>) => {
+        if (typeof ts.data.order_id == "undefined") return;
+
         var osr : Models.OrderStatusReport = { exchangeId: ts.data.order_id.toString(), time: ts.time };
 
         if (ts.data.result) {
