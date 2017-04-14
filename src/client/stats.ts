@@ -37,9 +37,6 @@ export class StatsComponent implements OnInit {
         text: 'Fair Value and Trades'
       }
     },
-    tooltip: {
-        split: true
-    },
     legend: {
         enabled: false
     },
@@ -88,8 +85,9 @@ export class StatsComponent implements OnInit {
         pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
     },
     plotOptions: {
-        series: {
-            stacking: 'normal'
+        area: {
+            stacking: 'normal',
+            connectNulls: true
         }
     },
     xAxis: {
@@ -104,19 +102,20 @@ export class StatsComponent implements OnInit {
       title: {
         text: 'Available and Held'
       },
+      min: 0
     }],
     legend: {
         enabled: false
     },
     series: [{
       name: 'Available',
-      type: 'column',
+      type: 'area',
       colorIndex:1,
       yAxis: 1,
       data: []
     },{
       name: 'Held',
-      type: 'column',
+      type: 'area',
       colorIndex:0,
       yAxis: 1,
       data: []
@@ -130,7 +129,6 @@ export class StatsComponent implements OnInit {
   };
   public baseChartOptions = {
     title: 'base wallet',
-    type: 'column',
     chart: {
         zoomType: 'x',
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -140,8 +138,9 @@ export class StatsComponent implements OnInit {
         pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.8f} ฿</b><br/>'
     },
     plotOptions: {
-        series: {
-            stacking: 'normal'
+        area: {
+            stacking: 'normal',
+            connectNulls: true
         }
     },
     xAxis: {
@@ -155,20 +154,21 @@ export class StatsComponent implements OnInit {
     },{
       title: {
         text: 'Available and Held'
-      }
+      },
+      min: 0
     }],
     legend: {
         enabled: false
     },
     series: [{
       name: 'Available',
-      type: 'column',
+      type: 'area',
       yAxis: 1,
       colorIndex:1,
       data: []
     },{
       name: 'Held',
-      type: 'column',
+      type: 'area',
       yAxis: 1,
       colorIndex:5,
       data: []
