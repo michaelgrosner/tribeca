@@ -8,7 +8,7 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from 'ag-grid-angular/main';
-import { ChartModule } from 'angular2-highcharts';
+import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
 
 import moment = require("moment");
@@ -298,7 +298,7 @@ class DisplayOrder {
                                 <wallet-position></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><a href="#" (click)="showStats = !showStats">Stats</a></div>
+                                <br/><div><a href="#" (click)="toggleStats()">Stats</a></div>
                                 <div [hidden]="!showStats"><a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a></div>
                             </div>
                         </div>
@@ -430,6 +430,9 @@ class ClientComponent implements OnInit {
   public cleanAllOrders = () => {};
   public toggleConfigs = (showConfigs:boolean) => {};
   public changeNotepad = (content: string) => {};
+  public toggleStats = () => {
+    this.showStats = !this.showStats;
+  };
 
   private user_theme: string = null;
   private system_theme: string = null;
@@ -568,6 +571,7 @@ class ClientComponent implements OnInit {
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent
     ]),
+    ChartModule.forRoot(require('highcharts')),
     ChartModule.forRoot(require('highcharts/highstock'))
   ],
   declarations: [

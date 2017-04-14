@@ -79,15 +79,12 @@ In case you really want to use plain HTTP, remove the files `server.crt` and `se
 
 Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
 
-### Grafana + InfluxDB + CollectD
+### Charts
 
-Tribeca send metrics periodically to [StatsD plugin of CollectD](https://collectd.org/wiki/index.php/Plugin:StatsD) on default port localhost:8125
-
-You can setup a Grafana instance with a InfluxDB datasource to read the metrics from CollectD send by Tribeca like [this guy](https://sonnguyen.ws/monitor-server-with-collectd-influxdb-and-grafana/).
-
-The metrics send are:
+The metrics display over time:
 
  * Fair Value
+ * Completed Trades
  * Amount available in wallet for buy
  * Amount held in open trades for buy
  * Amount available in wallet for sell

@@ -396,8 +396,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._tradePersister.persist(trade);
               this._trades.push(trade);
             }
-            if (this._metrics)
-              this._metrics.gauge('tribeca.trade_'+(o.side === Models.Side.Bid ? 'bid' : 'ask'), o.lastPrice);
+
+            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, value, o.time));
 
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this.cancelOpenOrders();
@@ -424,14 +424,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _tradePersister : Persister.IPersist<Models.Trade>,
                 private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Publish.IPublish<Models.Trade>,
+                private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
                 private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
                 private _cancelAllOrdersReciever : Publish.IReceive<Models.CancelAllOrdersRequest>,
                 private _cleanAllClosedOrdersReciever : Publish.IReceive<Models.CleanAllClosedOrdersRequest>,
                 private _cleanAllOrdersReciever : Publish.IReceive<Models.CleanAllOrdersRequest>,
                 private _orderCache : OrderStateCache,
-                initTrades : Models.Trade[],
-                private _metrics: any) {
+                initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
 
@@ -532,18 +532,17 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        try {
-          if (!this.skipInternalMetrics && this._metrics)
-            this._metrics.send({
-              "tribeca.position_btc" : positionReport.value+"|g",
-              "tribeca.position_eur" : positionReport.quoteValue+"|g",
-              "tribeca.fair_value" : mid+"|g",
-              "tribeca.wallet_btc" : baseAmount+"|g",
-              "tribeca.wallet_eur" : quoteAmount+"|g",
-              "tribeca.wallet_held_btc" : basePosition.heldAmount+"|g",
-              "tribeca.wallet_held_eur" : quotePosition.heldAmount+"|g"
-            });
-        } catch (e) {}
+        if (!this.skipInternalMetrics)
+          this._walletPublisher.publish(new Models.WalletChart(
+            ((positionReport.value * 100000) / 100000),
+            ((positionReport.quoteValue * 100) / 100),
+            ((baseAmount * 100000) / 100000),
+            ((quoteAmount * 100) / 100),
+            ((basePosition.heldAmount * 100000) / 100000),
+            ((quotePosition.heldAmount * 100) / 100),
+            ((mid * 100) / 100),
+            this._timeProvider.utcNow()
+          ));
         this.skipInternalMetrics = false;
 
         if (this._report !== null &&
@@ -593,8 +592,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Publish.IPublish<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker,
-                private _metrics: any) {
+                private _walletPublisher : Publish.IPublish<Models.WalletChart>,
+                private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
 

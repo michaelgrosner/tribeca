@@ -10,7 +10,6 @@ import http = require("http");
 import https = require('https');
 import socket_io = require('socket.io');
 import marked = require('marked');
-import lynx = require('lynx');
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
@@ -315,14 +314,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.ExchangeConnectivity)
         );
 
-        var metrics;
-        try {
-           metrics = new lynx(
-            system.config.GetString("StatsDHostPort").split(':')[0],
-            system.config.GetString("StatsDHostPort").split(':')[1]
-          );
-        } catch(e) { metrics = null; }
-
         var orderBroker = new Broker.OrderBroker(
           system.timeProvider,
           paramsRepo,
@@ -331,14 +322,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           tradesPersister,
           system.getPublisher(Models.Topics.OrderStatusReports, monitor),
           system.getPublisher(Models.Topics.Trades, null, tradesPersister),
+          system.getPublisher(Models.Topics.TradesChart),
           system.getReceiver(Models.Topics.SubmitNewOrder),
           system.getReceiver(Models.Topics.CancelOrder),
           system.getReceiver(Models.Topics.CancelAllOrders),
           system.getReceiver(Models.Topics.CleanAllClosedOrders),
           system.getReceiver(Models.Topics.CleanAllOrders),
           orderCache,
-          initTrades,
-          metrics
+          initTrades
         );
 
         var marketDataBroker = new Broker.MarketDataBroker(
@@ -352,8 +343,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           orderBroker,
           gateway.pg,
           system.getPublisher(Models.Topics.Position, monitor),
-          marketDataBroker,
-          metrics
+          system.getPublisher(Models.Topics.WalletChart, monitor),
+          marketDataBroker
         );
 
         var quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
