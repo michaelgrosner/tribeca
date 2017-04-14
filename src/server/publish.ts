@@ -86,7 +86,10 @@ export class Publisher<T> implements IPublish<T> {
         || data.orderStatus == Models.OrderStatus.Rejected)
       ? [
         data.orderId,
-        data.orderStatus
+        data.orderStatus,
+        data.side,
+        data.price,
+        data.quantity
       ] : [
         data.orderId,
         data.orderStatus,
