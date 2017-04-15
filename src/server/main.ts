@@ -375,7 +375,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
               fvEngine,
               new Statistics.EwmaStatisticCalculator(initParams.shortEwma, null),
               new Statistics.EwmaStatisticCalculator(initParams.longEwma, null),
-          system.getPublisher(Models.Topics.EWMAChart, monitor)
+              system.getPublisher(Models.Topics.EWMAChart, monitor)
             ),
             paramsRepo,
             positionBroker,
