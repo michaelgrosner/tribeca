@@ -41,7 +41,6 @@ export class PositionManager {
 
     private _data: Models.RegularFairValue[] = [];
 
-    private _timer: RegularTimer;
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _fvAgent: FairValue.FairValueEngine,
@@ -55,8 +54,8 @@ export class PositionManager {
           this.fairValue?Utils.roundFloat(this.fairValue):null,
           this._timeProvider.utcNow()
         ):null]);
-        var lastTime = (this._data !== null && _.some(this._data)) ? _.last(this._data).time : null;
-        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(20, 'minutes'), lastTime);
+        this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(20, 'minutes'));
+        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(1, 'minutes'));
     }
 
     private updateEwmaValues = () => {
@@ -146,37 +145,5 @@ export class TargetBasePositionManager {
             this._wrapped.publish(this.latestTargetPosition);
             this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
         }
-    };
-}
-
-// performs an action every duration apart, even across new instances
-export class RegularTimer {
-    constructor(
-        private _timeProvider : Utils.ITimeProvider,
-        private _action: () => void,
-        private _diffTime: moment.Duration,
-        lastTime: moment.Moment) {
-        if (!moment.isMoment(lastTime)) {
-            this.startTicking();
-        }
-        else {
-            var timeout = lastTime.add(_diffTime).diff(_timeProvider.utcNow());
-
-            if (timeout > 0) {
-                _timeProvider.setTimeout(this.startTicking, moment.duration(timeout));
-            }
-            else {
-                this.startTicking();
-            }
-        }
-    }
-
-    private tick = () => {
-        this._action();
-    };
-
-    private startTicking = () => {
-        this.tick();
-        this._timeProvider.setInterval(this.tick, moment.duration(this._diffTime.asMilliseconds()));
     };
 }
