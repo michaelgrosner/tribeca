@@ -47,7 +47,8 @@ export var Topics = {
   CleanAllClosedOrders: 'y',
   CleanAllOrders: 'z',
   TradesChart: 'A',
-  WalletChart: 'B'
+  WalletChart: 'B',
+  EWMAChart: 'C'
 }
 
 export class MarketSide {
@@ -269,6 +270,13 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
 
         return components.join(";");
     }
+}
+
+export class EWMAChart implements ITimestamped {
+    constructor(public ewmaShort: number,
+                public ewmaLong: number,
+                public fairValue: number,
+                public time: moment.Moment) {}
 }
 
 export class TradeChart implements ITimestamped {
