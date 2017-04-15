@@ -258,6 +258,7 @@ export class StatsComponent implements OnInit {
   }
 
   private updateEWMA = (ewma: Models.EWMAChart) => {
+    if (ewma == null) return;
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
     this.fvChart.series[0].addPoint([
