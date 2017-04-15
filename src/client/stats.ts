@@ -40,6 +40,9 @@ export class StatsComponent implements OnInit {
     legend: {
         enabled: false
     },
+    tooltip: {
+        shared: true
+    },
     series: [{
       name: 'Fair Value',
       type: 'spline',
@@ -81,6 +84,22 @@ export class StatsComponent implements OnInit {
       onSeries: 'buyseries',
       shape: 'circlepin',
       width: 16
+    },{
+      name: 'Short EWMA',
+      type: 'spline',
+      tooltip: {
+        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
+      colorIndex: 6,
+      data: []
+    },{
+      name: 'Long EWMA',
+      type: 'spline',
+      tooltip: {
+        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
+      colorIndex: 3,
+      data: []
     }]
   };
   public quoteChartOptions = {
@@ -217,24 +236,63 @@ export class StatsComponent implements OnInit {
       .registerSubscriber(this.updateFairValue);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TradesChart)
-      .registerSubscriber(this.addTradesChartData);
+      .getSubscriber(this.zone, Models.Topics.EWMAChart)
+      .registerSubscriber(this.updateEWMA);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.WalletChart)
       .registerSubscriber(this.addWalletChartData);
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.TradesChart)
+      .registerSubscriber(this.addTradesChartData);
   }
 
   private updateFairValue = (fv: Models.FairValue) => {
     if (fv == null) return;
+    this.fairValue = ((fv.price * 100) / 100);
     this.fvChart.series[0].addPoint([
       moment(fv.time).valueOf(),
-      ((fv.price * 100) / 100)
+      this.fairValue
     ]);
+  }
+
+  private updateEWMA = (ewma: Models.EWMAChart) => {
+    let time = moment(ewma.time).valueOf();
+    this.fairValue = ((ewma.fairValue * 100) / 100);
+    this.fvChart.series[0].addPoint([
+      moment(time).valueOf(),
+      this.fairValue
+    ]);
+    this.fvChart.series[5].addPoint([
+      moment(time).valueOf(),
+      ewma.ewmaShort
+    ]);
+    this.fvChart.series[6].addPoint([
+      moment(time).valueOf(),
+      ewma.ewmaLong
+    ]);
+  }
+
+  private addWalletChartData = (w: Models.WalletChart) => {
+    let time = moment(w.time).valueOf();
+    this.fairValue = ((w.fairValue * 100) / 100);
+    this.fvChart.series[0].addPoint([time, this.fairValue]);
+    this.quoteChart.series[0].addPoint([time, w.availQuote]);
+    this.quoteChart.series[1].addPoint([time, w.heldQuote]);
+    this.quoteChart.series[2].addPoint([time, w.totalQuote]);
+    this.baseChart.series[0].addPoint([time, w.availBase]);
+    this.baseChart.series[1].addPoint([time, w.heldBase]);
+    this.baseChart.series[2].addPoint([time, w.totalBase]);
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = moment(t.time).valueOf();
+    if (this.fairValue)
+      this.fvChart.series[0].addPoint([
+        moment(time).valueOf(),
+        this.fairValue
+      ]);
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([
       time,
       ((t.price * 100) / 100)
@@ -248,16 +306,5 @@ export class StatsComponent implements OnInit {
         + '<br/>' + 'Qty: <b>' + t.quantity + ' ฿</b>'
         + '<br/>' + 'Value: <b>' + ((t.value * 100) / 100) + ' €</b>'
     });
-  }
-
-  private addWalletChartData = (w: Models.WalletChart) => {
-    let time = moment(w.time).valueOf();
-    this.fvChart.series[0].addPoint([time, w.fairValue]);
-    this.quoteChart.series[0].addPoint([time, w.availQuote]);
-    this.quoteChart.series[1].addPoint([time, w.heldQuote]);
-    this.quoteChart.series[2].addPoint([time, w.totalQuote]);
-    this.baseChart.series[0].addPoint([time, w.availBase]);
-    this.baseChart.series[1].addPoint([time, w.heldBase]);
-    this.baseChart.series[2].addPoint([time, w.totalBase]);
   }
 }

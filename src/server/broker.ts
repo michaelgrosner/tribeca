@@ -535,12 +535,12 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         if (!this.skipInternalMetrics)
           this._walletPublisher.publish(new Models.WalletChart(
             ((positionReport.value * 100000) / 100000),
-            ((positionReport.quoteValue * 100) / 100),
+            Utils.roundFloat(positionReport.quoteValue),
             ((baseAmount * 100000) / 100000),
-            ((quoteAmount * 100) / 100),
+            Utils.roundFloat(quoteAmount),
             ((basePosition.heldAmount * 100000) / 100000),
-            ((quotePosition.heldAmount * 100) / 100),
-            ((mid * 100) / 100),
+            Utils.roundFloat(quotePosition.heldAmount),
+            Utils.roundFloat(mid),
             this._timeProvider.utcNow()
           ));
         this.skipInternalMetrics = false;
