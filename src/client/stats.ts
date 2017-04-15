@@ -100,6 +100,14 @@ export class StatsComponent implements OnInit {
       shape: 'circlepin',
       width: 16
     },{
+      name: 'Quote EWMA',
+      type: 'spline',
+      color: '#ffff00',
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
+      data: []
+    },{
       name: 'Short EWMA',
       type: 'spline',
       colorIndex: 6,
@@ -111,14 +119,6 @@ export class StatsComponent implements OnInit {
       name: 'Long EWMA',
       type: 'spline',
       colorIndex: 3,
-      tooltip: {
-          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
-      data: []
-    },{
-      name: 'Quote EWMA',
-      type: 'spline',
-      color: '#ffff00',
       tooltip: {
           pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
       },
@@ -300,9 +300,9 @@ export class StatsComponent implements OnInit {
     this.fairValue = ((fv.price * 100) / 100);
     let time = moment(fv.time).valueOf();
     this.fvChart.series[0].addPoint([time, this.fairValue]);
-    if (this.ewmaShort) this.fvChart.series[5].addPoint([time, this.ewmaShort]);
-    if (this.ewmaLong) this.fvChart.series[6].addPoint([time, this.ewmaLong]);
-    if (this.ewmaQuote) this.fvChart.series[7].addPoint([time, this.ewmaQuote]);
+    if (this.ewmaQuote) this.fvChart.series[5].addPoint([time, this.ewmaQuote]);
+    if (this.ewmaShort) this.fvChart.series[6].addPoint([time, this.ewmaShort]);
+    if (this.ewmaLong) this.fvChart.series[7].addPoint([time, this.ewmaLong]);
   }
 
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
@@ -310,26 +310,26 @@ export class StatsComponent implements OnInit {
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
     this.fvChart.series[0].addPoint([time, this.fairValue]);
+    if (ewma.ewmaQuote || this.ewmaQuote) {
+      if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
+      this.fvChart.series[5].addPoint([time, this.ewmaQuote]);
+    }
     if (ewma.ewmaShort || this.ewmaShort) {
       if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
-      this.fvChart.series[5].addPoint([time, this.ewmaShort]);
+      this.fvChart.series[6].addPoint([time, this.ewmaShort]);
     }
     if (ewma.ewmaLong || this.ewmaLong) {
       if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;
-      this.fvChart.series[6].addPoint([time, this.ewmaLong]);
-    }
-    if (ewma.ewmaQuote || this.ewmaQuote) {
-      if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
-      this.fvChart.series[7].addPoint([time, this.ewmaQuote]);
+      this.fvChart.series[7].addPoint([time, this.ewmaLong]);
     }
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = moment(t.time).valueOf();
     if (this.fairValue) this.fvChart.series[0].addPoint([time, this.fairValue]);
-    if (this.ewmaShort) this.fvChart.series[5].addPoint([time, this.ewmaShort]);
-    if (this.ewmaLong) this.fvChart.series[6].addPoint([time, this.ewmaLong]);
-    if (this.ewmaQuote) this.fvChart.series[7].addPoint([time, this.ewmaQuote]);
+    if (this.ewmaQuote) this.fvChart.series[5].addPoint([time, this.ewmaQuote]);
+    if (this.ewmaShort) this.fvChart.series[6].addPoint([time, this.ewmaShort]);
+    if (this.ewmaLong) this.fvChart.series[7].addPoint([time, this.ewmaLong]);
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([time, ((t.price * 100) / 100)]);
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint({
       x: time,
@@ -344,8 +344,6 @@ export class StatsComponent implements OnInit {
 
   private addWalletChartData = (w: Models.WalletChart) => {
     let time = moment(w.time).valueOf();
-    // this.fairValue = ((w.fairValue * 100) / 100);
-    // this.fvChart.series[0].addPoint([time, this.fairValue]);
     this.quoteChart.series[0].addPoint([time, w.availQuote]);
     this.quoteChart.series[1].addPoint([time, w.heldQuote]);
     this.quoteChart.series[2].addPoint([time, w.totalQuote]);
