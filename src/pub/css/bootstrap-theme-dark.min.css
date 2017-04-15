@@ -524,8 +524,8 @@
 h4{margin-bottom:7px!important;}
 .highcharts-axis-labels text, .highcharts-yaxis-labels text,
 .highcharts-label text,.highcharts-range-selector-buttons text,
-.highcharts-axis-title {color:white!important;fill:white!important;}
 .highcharts-tooltip text {color:black!important;fill:black!important;}
 .highcharts-button text {fill:black!important;}
 .highcharts-point text {fill:black!important;}
 .highcharts-button {fill-opacity:0.5!important;}
+.highcharts-grid-line {fill-opacity:0.7!important;}

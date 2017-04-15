@@ -6,12 +6,14 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-stats',
-  template: `<div class="col-md-6 col-xs-6">
-    <chart style="height:400px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
-  </div>
-  <div class="col-md-6 col-xs-6">
-    <chart style="height:200px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
-    <chart style="height:200px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+  template: `<div style="position:absolute;">
+    <div class="col-md-6 col-xs-6">
+      <chart style="position:relative;top:5px;height:400px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    </div>
+    <div class="col-md-6 col-xs-6">
+      <chart style="position:relative;top:15px;height:200px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+      <chart style="position:relative;top:21px;height:200px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+    </div>
   </div>`
 })
 export class StatsComponent implements OnInit {
@@ -30,12 +32,20 @@ export class StatsComponent implements OnInit {
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
     xAxis: {
-      type: 'datetime'
+      type: 'datetime',
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     },
     yAxis: {
       title: {
         text: 'Fair Value and Trades'
-      }
+      },
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     },
     legend: {
         enabled: false
@@ -46,19 +56,20 @@ export class StatsComponent implements OnInit {
     series: [{
       name: 'Fair Value',
       type: 'spline',
-      tooltip: {
-        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
+      lineWidth:4,
       colorIndex: 2,
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       data: [],
       id: 'fvseries'
     },{
       name: 'Sell',
-      type: 'scatter',
-      tooltip: {
-        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
+      type: 'spline',
       colorIndex: 5,
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       data: [],
       id: 'sellseries'
     },{
@@ -70,14 +81,15 @@ export class StatsComponent implements OnInit {
       width: 16
     },{
       name: 'Buy',
-      type: 'scatter',
-      tooltip: {
-        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
+      type: 'spline',
       colorIndex: 0,
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       data: [],
       id: 'buyseries'
     },{
+      name: 'Buy',
       type: 'flags',
       colorIndex: 0,
       data: [],
@@ -87,18 +99,18 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Short EWMA',
       type: 'spline',
-      tooltip: {
-        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
       colorIndex: 6,
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       data: []
     },{
       name: 'Long EWMA',
       type: 'spline',
-      tooltip: {
-        pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
-      },
       colorIndex: 3,
+      tooltip: {
+          pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
+      },
       data: []
     }]
   };
@@ -119,18 +131,29 @@ export class StatsComponent implements OnInit {
         }
     },
     xAxis: {
-      type: 'datetime'
+      type: 'datetime',
+      labels: {
+          enabled: false
+      }
     },
     yAxis: [{
       title: {
         text: 'Total Position'
       },
-      opposite: true
+      opposite: true,
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     },{
       title: {
         text: 'Available and Held'
       },
-      min: 0
+      min: 0,
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     }],
     legend: {
         enabled: false
@@ -157,6 +180,7 @@ export class StatsComponent implements OnInit {
       name: 'Total Position',
       type: 'spline',
       colorIndex:2,
+      lineWidth:3,
       marker: {
           enabled: false
       },
@@ -180,18 +204,29 @@ export class StatsComponent implements OnInit {
         }
     },
     xAxis: {
-      type: 'datetime'
+      type: 'datetime',
+      labels: {
+          enabled: false
+      }
     },
     yAxis: [{
       title: {
         text: 'Total Position'
       },
-      opposite: true
+      opposite: true,
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     },{
       title: {
         text: 'Available and Held'
       },
-      min: 0
+      min: 0,
+      labels: {
+          enabled: false
+      },
+      gridLineWidth: 0
     }],
     legend: {
         enabled: false
@@ -218,6 +253,7 @@ export class StatsComponent implements OnInit {
       name: 'Total Position',
       type: 'spline',
       colorIndex:2,
+      lineWidth:3,
       marker: {
           enabled: false
       },
@@ -233,11 +269,11 @@ export class StatsComponent implements OnInit {
   ngOnInit() {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.FairValue)
-      .registerSubscriber(this.addupdateFairValueChartData);
+      .registerSubscriber(this.addFairValueChartData);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.EWMAChart)
-      .registerSubscriber(this.addupdateEWMAChartData);
+      .registerSubscriber(this.addEWMAChartData);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.WalletChart)
@@ -248,13 +284,13 @@ export class StatsComponent implements OnInit {
       .registerSubscriber(this.addTradesChartData);
   }
 
-  private addupdateFairValueChartData = (fv: Models.FairValue) => {
+  private addFairValueChartData = (fv: Models.FairValue) => {
     if (fv == null) return;
     this.fairValue = ((fv.price * 100) / 100);
     this.fvChart.series[0].addPoint([moment(fv.time).valueOf(), this.fairValue]);
   }
 
-  private addupdateEWMAChartData = (ewma: Models.EWMAChart) => {
+  private addEWMAChartData = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
@@ -283,9 +319,9 @@ export class StatsComponent implements OnInit {
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint({
       x: time,
       title: Models.Side[t.side] == 'Bid' ? 'B' : 'S',
-      lineColor: Models.Side[t.side] == 'Bid' ? '#FF0000' : '#0000FF',
       useHTML:true,
-      text: 'Price: <b>' + ((t.price * 100) / 100) + ' €</b>'
+      text: '<b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b>:'
+        + '<br/>' + 'Price: <b>' + ((t.price * 100) / 100) + ' €</b>'
         + '<br/>' + 'Qty: <b>' + t.quantity + ' ฿</b>'
         + '<br/>' + 'Value: <b>' + ((t.value * 100) / 100) + ' €</b>'
     });
