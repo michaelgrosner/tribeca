@@ -251,28 +251,16 @@ export class StatsComponent implements OnInit {
   private updateFairValue = (fv: Models.FairValue) => {
     if (fv == null) return;
     this.fairValue = ((fv.price * 100) / 100);
-    this.fvChart.series[0].addPoint([
-      moment(fv.time).valueOf(),
-      this.fairValue
-    ]);
+    this.fvChart.series[0].addPoint([moment(fv.time).valueOf(), this.fairValue]);
   }
 
   private updateEWMA = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
-    this.fvChart.series[0].addPoint([
-      time,
-      this.fairValue
-    ]);
-    this.fvChart.series[5].addPoint([
-      time,
-      ewma.ewmaShort
-    ]);
-    this.fvChart.series[6].addPoint([
-      time,
-      ewma.ewmaLong
-    ]);
+    this.fvChart.series[0].addPoint([time, this.fairValue]);
+    this.fvChart.series[5].addPoint([time, ewma.ewmaShort]);
+    this.fvChart.series[6].addPoint([time, ewma.ewmaLong]);
   }
 
   private addWalletChartData = (w: Models.WalletChart) => {
@@ -290,14 +278,8 @@ export class StatsComponent implements OnInit {
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = moment(t.time).valueOf();
     if (this.fairValue)
-      this.fvChart.series[0].addPoint([
-        time,
-        this.fairValue
-      ]);
-    this.fvChart.series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([
-      time,
-      ((t.price * 100) / 100)
-    ]);
+      this.fvChart.series[0].addPoint([time, this.fairValue]);
+    this.fvChart.series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([time, ((t.price * 100) / 100)]);
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint({
       x: time,
       title: Models.Side[t.side] == 'Bid' ? 'B' : 'S',
