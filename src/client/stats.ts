@@ -337,7 +337,7 @@ export class StatsComponent implements OnInit {
       useHTML:true,
       text: '<b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b>:'
         + '<br/>' + 'Price: <b>' + ((t.price * 100) / 100) + ' €</b>'
-        + '<br/>' + 'Qty: <b>' + t.quantity + ' ฿</b>'
+        + '<br/>' + 'Qty: <b>' + t.quantity.toFixed(8) + ' ฿</b>'
         + '<br/>' + 'Value: <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b>'
     });
   }
