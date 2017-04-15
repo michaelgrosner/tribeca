@@ -120,18 +120,27 @@ export class StatsComponent implements OnInit {
       name: 'Available',
       type: 'area',
       colorIndex:1,
+      marker: {
+          enabled: false
+      },
       yAxis: 1,
       data: []
     },{
       name: 'Held',
       type: 'area',
       colorIndex:0,
+      marker: {
+          enabled: false
+      },
       yAxis: 1,
       data: []
     },{
       name: 'Total Position',
       type: 'spline',
       colorIndex:2,
+      marker: {
+          enabled: false
+      },
       data: []
     }]
   };
@@ -173,17 +182,26 @@ export class StatsComponent implements OnInit {
       type: 'area',
       yAxis: 1,
       colorIndex:1,
+      marker: {
+          enabled: false
+      },
       data: []
     },{
       name: 'Held',
       type: 'area',
       yAxis: 1,
       colorIndex:5,
+      marker: {
+          enabled: false
+      },
       data: []
     },{
       name: 'Total Position',
       type: 'spline',
       colorIndex:2,
+      marker: {
+          enabled: false
+      },
       data: []
     }]
   };
