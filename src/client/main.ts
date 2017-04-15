@@ -12,7 +12,13 @@ import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
 
 import moment = require("moment");
-
+import Highcharts = require('highcharts');
+import Highstock = require('highcharts/highstock');
+Highcharts.setOptions({
+  global: {
+    timezoneOffset: new Date().getTimezoneOffset()
+  }
+});
 import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
@@ -571,8 +577,8 @@ class ClientComponent implements OnInit {
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent
     ]),
-    ChartModule.forRoot(require('highcharts')),
-    ChartModule.forRoot(require('highcharts/highstock'))
+    ChartModule.forRoot(Highcharts),
+    ChartModule.forRoot(Highstock)
   ],
   declarations: [
     ClientComponent,
