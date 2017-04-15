@@ -90,7 +90,7 @@ export class StatsComponent implements OnInit {
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
     tooltip: {
-        split: true,
+        shared: true,
         pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.2f} €</b><br/>'
     },
     plotOptions: {
@@ -132,7 +132,6 @@ export class StatsComponent implements OnInit {
       name: 'Total Position',
       type: 'spline',
       colorIndex:2,
-      yAxis: 0,
       data: []
     }]
   };
@@ -143,7 +142,7 @@ export class StatsComponent implements OnInit {
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
     tooltip: {
-        split: true,
+        shared: true,
         pointFormat:'<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:.8f} ฿</b><br/>'
     },
     plotOptions: {
@@ -184,7 +183,6 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Total Position',
       type: 'spline',
-      yAxis: 0,
       colorIndex:2,
       data: []
     }]
