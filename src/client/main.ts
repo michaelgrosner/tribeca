@@ -309,7 +309,10 @@ class DisplayOrder {
                             </div>
                         </div>
 
-                        <div [hidden]="showStats" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
+                        <div [hidden]="!showStats" class="col-md-11 col-xs-12" style="z-index:1;height:0px;min-height:0px;">
+                            <market-stats></market-stats>
+                        </div>
+                        <div class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
                             <trade-safety [tradeFreq]="tradeFreq"></trade-safety>
                           </div>
@@ -398,11 +401,8 @@ class DisplayOrder {
                             </div>
                           </div>
                         </div>
-                        <div [hidden]="showStats" class="col-md-2 col-xs-12" style="padding-left:0px;">
+                        <div class="col-md-2 col-xs-12" style="padding-left:0px;">
                             <market-trades></market-trades>
-                        </div>
-                        <div [hidden]="!showStats" class="col-md-11 col-xs-12">
-                            <market-stats></market-stats>
                         </div>
                     </div>
                 </div>
