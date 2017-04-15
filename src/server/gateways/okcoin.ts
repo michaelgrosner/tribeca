@@ -87,9 +87,15 @@ class OkCoinWebsocket {
         var t = Utils.date();
         try {
             var msg : OkCoinMessageIncomingMessage = JSON.parse(raw)[0];
+            if (typeof msg === "undefined") msg = JSON.parse(raw);
+            if (typeof msg === "undefined") throw new Error("Unkown message from OkCoin socket: " + raw);
 
             if (typeof msg.event !== "undefined" && msg.event == "ping") {
                 this._ws.send(this._serializedHeartbeat);
+                return;
+            }
+            if (typeof msg.event !== "undefined" && msg.event == "pong") {
+                this._stillAlive = true;
                 return;
             }
 
@@ -126,16 +132,22 @@ class OkCoinWebsocket {
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
+    private _stillAlive: boolean = true;
     private _log = Utils.log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
         this._ws = new ws(config.GetString("OkCoinWsUrl"));
-
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
         this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+        setInterval(() => {
+          if (!this._stillAlive) this._log.info('OkCoin heartbeat lost.');
+          this._stillAlive = false;
+          this._ws.send(this._serializedHeartping);
+        }, 7000);
     }
 }
 
