@@ -15,6 +15,7 @@ export class PositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
+    private _latestChart: Models.EWMAChart = null;
     private _latest: number = null;
     public get latestTargetPosition(): number {
         return this._latest;
@@ -29,6 +30,7 @@ export class PositionManager {
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics,
         private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>) {
+        _ewmaPublisher.registerSnapshot(() => [this._latestChart]);
         var lastTime = (this._data !== null && _.some(this._data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(20, 'minutes'), lastTime);
     }
@@ -52,7 +54,8 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._ewmaPublisher.publish(new Models.EWMAChart(Utils.roundFloat(newShort), Utils.roundFloat(newLong), Utils.roundFloat(fv.price), this._timeProvider.utcNow()));
+        this._latestChart = new Models.EWMAChart(Utils.roundFloat(newShort), Utils.roundFloat(newLong), Utils.roundFloat(fv.price), this._timeProvider.utcNow());
+        this._ewmaPublisher.publish(this._latestChart);
 
         this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:",
             Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
