@@ -397,7 +397,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._trades.push(trade);
             }
 
-            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, value, o.time));
+            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, (value * 100) / 100, o.time));
 
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this.cancelOpenOrders();

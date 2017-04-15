@@ -57,7 +57,10 @@ export class QuotingEngine {
         _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, _timeProvider)));
         _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
         _orderBroker.Trade.on(recalcWithoutInputTime);
-        _ewma.Updated.on(recalcWithoutInputTime);
+        _ewma.Updated.on(() => {
+          recalcWithoutInputTime();
+          _targetPosition.quoteEWMA = _ewma.latest;
+        });
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
         _safeties.NewValue.on(recalcWithoutInputTime);
 

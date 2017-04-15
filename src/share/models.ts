@@ -273,7 +273,8 @@ export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
 }
 
 export class EWMAChart implements ITimestamped {
-    constructor(public ewmaShort: number,
+    constructor(public ewmaQuote: number,
+                public ewmaShort: number,
                 public ewmaLong: number,
                 public fairValue: number,
                 public time: moment.Moment) {}

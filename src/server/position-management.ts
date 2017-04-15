@@ -13,6 +13,24 @@ import QuotingParameters = require("./quoting-parameters");
 export class PositionManager {
     private _log = Utils.log("rfv");
 
+    private newQuote: number = null;
+    private newShort: number = null;
+    private newLong: number = null;
+    private fairValue: number = null;
+    public set quoteEwma(quoteEwma: number) {
+      var fv = this._fvAgent.latestFairValue;
+      if (fv === null || quoteEwma === null) return;
+      this.fairValue = fv.price;
+      this.newQuote = quoteEwma;
+      this._ewmaPublisher.publish(new Models.EWMAChart(
+        Utils.roundFloat(quoteEwma),
+        null,
+        null,
+        Utils.roundFloat(fv.price),
+        this._timeProvider.utcNow()
+      ));
+    }
+
     public NewTargetPosition = new Utils.Evt();
 
     private _latestChart: Models.EWMAChart = null;
@@ -30,7 +48,13 @@ export class PositionManager {
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics,
         private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>) {
-        _ewmaPublisher.registerSnapshot(() => [this._latestChart]);
+        _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
+          this.newQuote?Utils.roundFloat(this.newQuote):null,
+          this.newShort?Utils.roundFloat(this.newShort):null,
+          this.newLong?Utils.roundFloat(this.newLong):null,
+          this.fairValue?Utils.roundFloat(this.fairValue):null,
+          this._timeProvider.utcNow()
+        ):null]);
         var lastTime = (this._data !== null && _.some(this._data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(20, 'minutes'), lastTime);
     }
@@ -39,12 +63,13 @@ export class PositionManager {
         var fv = this._fvAgent.latestFairValue;
         if (fv === null)
             return;
+        this.fairValue = fv.price;
 
         var rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
-        var newShort = this._shortEwma.addNewValue(fv.price);
-        var newLong = this._longEwma.addNewValue(fv.price);
-        var newTargetPosition = ((newShort * 100 / newLong) - 100) * 5;
+        this.newShort = this._shortEwma.addNewValue(fv.price);
+        this.newLong = this._longEwma.addNewValue(fv.price);
+        var newTargetPosition = ((this.newShort * 100 / this.newLong) - 100) * 5;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
@@ -54,11 +79,17 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._latestChart = new Models.EWMAChart(Utils.roundFloat(newShort), Utils.roundFloat(newLong), Utils.roundFloat(fv.price), this._timeProvider.utcNow());
+        this._latestChart = new Models.EWMAChart(
+          null,
+          Utils.roundFloat(this.newShort),
+          Utils.roundFloat(this.newLong),
+          Utils.roundFloat(fv.price),
+          this._timeProvider.utcNow()
+        );
         this._ewmaPublisher.publish(this._latestChart);
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:",
-            Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
+        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(this.newShort), "long:",
+            Utils.roundFloat(this.newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
         this._data = _.takeRight(this._data, 7);
@@ -75,6 +106,10 @@ export class TargetBasePositionManager {
     private _latest: Models.TargetBasePositionValue = null;
     public get latestTargetPosition(): Models.TargetBasePositionValue {
         return this._latest;
+    }
+
+    public set quoteEWMA(quoteEwma: number) {
+      this._positionManager.quoteEwma = quoteEwma;
     }
 
     constructor(
