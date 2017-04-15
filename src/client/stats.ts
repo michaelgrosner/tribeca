@@ -261,15 +261,15 @@ export class StatsComponent implements OnInit {
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
     this.fvChart.series[0].addPoint([
-      moment(time).valueOf(),
+      time,
       this.fairValue
     ]);
     this.fvChart.series[5].addPoint([
-      moment(time).valueOf(),
+      time,
       ewma.ewmaShort
     ]);
     this.fvChart.series[6].addPoint([
-      moment(time).valueOf(),
+      time,
       ewma.ewmaLong
     ]);
   }
@@ -290,7 +290,7 @@ export class StatsComponent implements OnInit {
     let time = moment(t.time).valueOf();
     if (this.fairValue)
       this.fvChart.series[0].addPoint([
-        moment(time).valueOf(),
+        time,
         this.fairValue
       ]);
     this.fvChart.series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([
