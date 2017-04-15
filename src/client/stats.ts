@@ -233,11 +233,11 @@ export class StatsComponent implements OnInit {
   ngOnInit() {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.FairValue)
-      .registerSubscriber(this.updateFairValue);
+      .registerSubscriber(this.addupdateFairValueChartData);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.EWMAChart)
-      .registerSubscriber(this.updateEWMA);
+      .registerSubscriber(this.addupdateEWMAChartData);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.WalletChart)
@@ -248,13 +248,13 @@ export class StatsComponent implements OnInit {
       .registerSubscriber(this.addTradesChartData);
   }
 
-  private updateFairValue = (fv: Models.FairValue) => {
+  private addupdateFairValueChartData = (fv: Models.FairValue) => {
     if (fv == null) return;
     this.fairValue = ((fv.price * 100) / 100);
     this.fvChart.series[0].addPoint([moment(fv.time).valueOf(), this.fairValue]);
   }
 
-  private updateEWMA = (ewma: Models.EWMAChart) => {
+  private addupdateEWMAChartData = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
     let time = moment(ewma.time).valueOf();
     this.fairValue = ((ewma.fairValue * 100) / 100);
