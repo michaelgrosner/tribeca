@@ -494,6 +494,7 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
 
     private static AllPairs = [
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
+        new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
         new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.CNY)
     ];
     public get supportedCurrencyPairs() {
