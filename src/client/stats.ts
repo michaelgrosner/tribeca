@@ -26,7 +26,6 @@ export class StatsComponent implements OnInit {
   public fvChart: any;
   public quoteChart: any;
   public baseChart: any;
-  @Output() chartsLoad = new EventEmitter();
   private saveInstance = (chartInstance, chartId) => {
     this[chartId+'Chart'] = Highcharts.charts.length;
     Highcharts.charts.push(chartInstance);
@@ -459,7 +458,7 @@ export class StatsComponent implements OnInit {
 
   private removeOldPoints = (chart: any, time: number) => {
     chart.series.forEach(serie => {
-      while(serie.data.length &&  Math.abs(time - serie.data[0].x) > 3600000) //21600000
+      while(serie.data.length &&  Math.abs(time - serie.data[0].x) > 21600000)
         serie.data[0].remove(false);
     });
   }
