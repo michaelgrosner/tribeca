@@ -11,14 +11,14 @@ import {AgGridModule} from 'ag-grid-angular/main';
 import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
 
-import moment = require("moment");
 import Highcharts = require('highcharts');
-import Highstock = require('highcharts/highstock');
 Highcharts.setOptions({
   global: {
     timezoneOffset: new Date().getTimezoneOffset()
   }
 });
+import moment = require("moment");
+
 import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
@@ -578,7 +578,7 @@ class ClientComponent implements OnInit {
       QuoteCurrencyCellComponent
     ]),
     ChartModule.forRoot(Highcharts),
-    ChartModule.forRoot(Highstock)
+    ChartModule.forRoot(require('highcharts/highstock'))
   ],
   declarations: [
     ClientComponent,
