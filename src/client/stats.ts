@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Output, EventEmitter, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, OnInit} from '@angular/core';
 import moment = require('moment');
 import Highcharts = require('highcharts');
 
