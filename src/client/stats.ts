@@ -43,45 +43,22 @@ export class StatsComponent implements OnInit {
         zoomType: 'x',
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
-    scrollbar: {
-        enabled: false
-    },
-    credits: {
-        enabled: false
-    },
+    scrollbar: {enabled: false},
+    credits: {enabled: false},
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {
-          setExtremes: this.syncExtremes
-      },
-      labels: {
-          enabled: false
-      },
+      events: {setExtremes: this.syncExtremes},
+      labels: {enabled: false},
       gridLineWidth: 0,
-      dateTimeLabelFormats: {
-        millisecond: '%H:%M:%S',
-        second: '%H:%M:%S',
-        minute: '%H:%M',
-        hour: '%H:%M',
-        day: '%m-%d',
-        week: '%m-%d',
-        month: '%m',
-        year: '%Y'
-      }
+      dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
     yAxis: {
-      title: {
-        text: 'Fair Value and Trades'
-      },
-      labels: {
-          enabled: false
-      },
+      title: {text: 'Fair Value and Trades'},
+      labels: {enabled: false},
       gridLineWidth: 0
     },
-    legend: {
-        enabled: false
-    },
+    legend: {enabled: false},
     tooltip: {
         shared: true,
         useHTML: true,
@@ -179,16 +156,10 @@ export class StatsComponent implements OnInit {
     title: 'quote wallet',
     chart: {
         zoomType: 'x',
-        resetZoomButton: {
-            theme: {
-                display: 'none'
-            }
-        },
+        resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
-    credits: {
-        enabled: false
-    },
+    credits: {enabled: false},
     tooltip: {
         shared: true,
         useHTML: true,
@@ -199,80 +170,46 @@ export class StatsComponent implements OnInit {
           return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
         }
     },
-    plotOptions: {
-        area: {
-            stacking: 'normal',
-            connectNulls: true
-        }
-    },
+    plotOptions: {area: {stacking: 'normal',connectNulls: true}},
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {
-          setExtremes: this.syncExtremes
-      },
-      labels: {
-          enabled: true
-      },
-      dateTimeLabelFormats: {
-        millisecond: '%H:%M:%S',
-        second: '%H:%M:%S',
-        minute: '%H:%M',
-        hour: '%H:%M',
-        day: '%m-%d',
-        week: '%m-%d',
-        month: '%m',
-        year: '%Y'
-      }
+      events: {setExtremes: this.syncExtremes},
+      labels: {enabled: true},
+      dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
     yAxis: [{
-      title: {
-        text: 'Total Position'
-      },
+      title: {text: 'Total Position'},
       opposite: true,
-      labels: {
-          enabled: false
-      },
+      labels: {enabled: false},
       gridLineWidth: 0
     },{
-      title: {
-        text: 'Available and Held'
-      },
+      title: {text: 'Available and Held'},
       min: 0,
-      labels: {
-          enabled: false
-      },
+      labels: {enabled: false},
       gridLineWidth: 0
     }],
-    legend: {
-        enabled: false
-    },
+    legend: {enabled: false},
     series: [{
       name: 'Total Position',
       type: 'spline',
       zIndex: 1,
       colorIndex:2,
       lineWidth:3,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       data: []
     },{
       name: 'Available',
       type: 'area',
       colorIndex:1,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       yAxis: 1,
       data: []
     },{
       name: 'Held',
       type: 'area',
       colorIndex:0,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       yAxis: 1,
       data: []
     }]
@@ -281,16 +218,10 @@ export class StatsComponent implements OnInit {
     title: 'base wallet',
     chart: {
         zoomType: 'x',
-        resetZoomButton: {
-            theme: {
-                display: 'none'
-            }
-        },
+        resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
-    credits: {
-        enabled: false
-    },
+    credits: {enabled: false},
     tooltip: {
         shared: true,
         headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
@@ -301,81 +232,47 @@ export class StatsComponent implements OnInit {
           return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ฿</b></td></tr>';
         }
     },
-    plotOptions: {
-        area: {
-            stacking: 'normal',
-            connectNulls: true
-        }
-    },
+    plotOptions: {area: {stacking: 'normal',connectNulls: true}},
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {
-          setExtremes: this.syncExtremes
-      },
-      labels: {
-          enabled: false
-      },
-      dateTimeLabelFormats: {
-        millisecond: '%H:%M:%S',
-        second: '%H:%M:%S',
-        minute: '%H:%M',
-        hour: '%H:%M',
-        day: '%m-%d',
-        week: '%m-%d',
-        month: '%m',
-        year: '%Y'
-      }
+      events: {setExtremes: this.syncExtremes},
+      labels: {enabled: false},
+      dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
     yAxis: [{
-      title: {
-        text: 'Total Position'
-      },
+      title: {text: 'Total Position'},
       opposite: true,
-      labels: {
-          enabled: false
-      },
+      labels: {enabled: false},
       gridLineWidth: 0
     },{
-      title: {
-        text: 'Available and Held'
-      },
+      title: {text: 'Available and Held'},
       min: 0,
-      labels: {
-          enabled: false
-      },
+      labels: {enabled: false},
       gridLineWidth: 0
     }],
-    legend: {
-        enabled: false
-    },
+    legend: {enabled: false},
     series: [{
       name: 'Total Position',
       type: 'spline',
       zIndex: 1,
       colorIndex:2,
       lineWidth:3,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       data: []
     },{
       name: 'Available',
       type: 'area',
       yAxis: 1,
       colorIndex:1,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       data: []
     },{
       name: 'Held',
       type: 'area',
       yAxis: 1,
       colorIndex:5,
-      marker: {
-          enabled: false
-      },
+      marker: {enabled: false},
       data: []
     }]
   };
@@ -415,6 +312,7 @@ export class StatsComponent implements OnInit {
         var chart, point, i, event;
         for (i = 0; i < Highcharts.charts.length; i = i + 1) {
           chart = Highcharts.charts[i];
+          if (jQuery(chart.container).offset().left == jQuery(this).offset().left && jQuery(chart.container).offset().top == jQuery(this).offset().top) continue;
           chart.pointer.reset = function () { return undefined; };
           let ev: any = jQuery.extend(jQuery.Event(e.originalEvent.type), {
               which: 1,
@@ -428,10 +326,10 @@ export class StatsComponent implements OnInit {
               screenY: e.originalEvent.screenY
           });
           event = chart.pointer.normalize(ev);
-          point = chart.series[0].searchPoint(ev, true);
+          point = chart.series[0].searchPoint(event, true);
           if (point) {
             point.onMouseOver();
-            point.series.chart.xAxis[0].drawCrosshair(ev, point);
+            point.series.chart.xAxis[0].drawCrosshair(event, point);
           }
         }
       });
