@@ -495,7 +495,7 @@ export class StatsComponent implements OnInit {
       x: time,
       title: Models.Side[t.side] == 'Bid' ? 'B' : 'S',
       useHTML:true,
-      text: '<td><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b></td><td></td></tr>'
+      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b></td></tr>'
         + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' €</b></td></tr>'
         + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ฿</b></td></tr>'
         + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b></td></tr>'
