@@ -45,6 +45,12 @@ export class StatsComponent implements OnInit {
         zoomType: 'x',
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
+    scrollbar: {
+        enabled: false
+    },
+    credits: {
+        enabled: false
+    },
     xAxis: {
       type: 'datetime',
       crosshair: true,
@@ -54,7 +60,17 @@ export class StatsComponent implements OnInit {
       labels: {
           enabled: false
       },
-      gridLineWidth: 0
+      gridLineWidth: 0,
+      dateTimeLabelFormats: {
+        millisecond: '%H:%M:%S',
+        second: '%H:%M:%S',
+        minute: '%H:%M',
+        hour: '%H:%M',
+        day: '%m-%d',
+        week: '%m-%d',
+        month: '%m',
+        year: '%Y'
+      }
     },
     yAxis: {
       title: {
@@ -69,7 +85,10 @@ export class StatsComponent implements OnInit {
         enabled: false
     },
     tooltip: {
-        shared: true
+        shared: true,
+        useHTML: true,
+        headerFormat: '<small>{point.key}</small><table>',
+        footerFormat: '</table>'
     },
     series: [{
       name: 'Fair Value',
@@ -79,7 +98,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: [],
@@ -91,7 +110,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: [],
@@ -110,7 +129,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: [],
@@ -130,7 +149,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: []
@@ -141,7 +160,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: []
@@ -152,7 +171,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
           }
       },
       data: []
@@ -169,11 +188,17 @@ export class StatsComponent implements OnInit {
         },
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
+    credits: {
+        enabled: false
+    },
     tooltip: {
         shared: true,
+        useHTML: true,
+        headerFormat: '<small>{point.key}</small><table>',
+        footerFormat: '</table>',
         pointFormatter:function () {
           var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(2)+' €</b><br/>';
+          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
         }
     },
     plotOptions: {
@@ -190,6 +215,16 @@ export class StatsComponent implements OnInit {
       },
       labels: {
           enabled: true
+      },
+      dateTimeLabelFormats: {
+        millisecond: '%H:%M:%S',
+        second: '%H:%M:%S',
+        minute: '%H:%M',
+        hour: '%H:%M',
+        day: '%m-%d',
+        week: '%m-%d',
+        month: '%m',
+        year: '%Y'
       }
     },
     yAxis: [{
@@ -255,11 +290,17 @@ export class StatsComponent implements OnInit {
         },
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
+    credits: {
+        enabled: false
+    },
     tooltip: {
         shared: true,
+        headerFormat: '<small>{point.key}</small><table>',
+        footerFormat: '</table>',
+        useHTML: true,
         pointFormatter:function () {
           var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+': <b>'+this.y.toFixed(8)+' ฿</b><br/>';
+          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ฿</b></td></tr>';
         }
     },
     plotOptions: {
@@ -276,6 +317,16 @@ export class StatsComponent implements OnInit {
       },
       labels: {
           enabled: false
+      },
+      dateTimeLabelFormats: {
+        millisecond: '%H:%M:%S',
+        second: '%H:%M:%S',
+        minute: '%H:%M',
+        hour: '%H:%M',
+        day: '%m-%d',
+        week: '%m-%d',
+        month: '%m',
+        year: '%Y'
       }
     },
     yAxis: [{
@@ -354,6 +405,14 @@ export class StatsComponent implements OnInit {
         .getSubscriber(this.zone, Models.Topics.WalletChart)
         .registerSubscriber(this.addWalletChartData);
 
+      Highcharts.setOptions({
+          global: {
+              getTimezoneOffset: function () {
+                  return new Date().getTimezoneOffset();
+              }
+          }
+      });
+
       jQuery('chart').bind('mousemove touchmove touchstart', function (e: any) {
         var chart, point, i, event;
         for (i = 0; i < Highcharts.charts.length; i = i + 1) {
@@ -397,7 +456,7 @@ export class StatsComponent implements OnInit {
   private addFairValueChartData = (fv: Models.FairValue) => {
     if (fv == null) return;
     this.fairValue = ((fv.price * 100) / 100);
-    let time = moment.utc().valueOf();
+    let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.fvChart], time);
     if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[5].addPoint([time, this.ewmaQuote], false);
     if (this.ewmaShort) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaShort], false);
@@ -407,7 +466,7 @@ export class StatsComponent implements OnInit {
 
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
-    let time = moment.utc().valueOf();
+    let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.fvChart], time);
     this.fairValue = ((ewma.fairValue * 100) / 100);
     if (ewma.ewmaQuote || this.ewmaQuote) {
@@ -426,7 +485,7 @@ export class StatsComponent implements OnInit {
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
-    let time = moment.utc().valueOf();
+    let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.fvChart], time);
     if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[5].addPoint([time, this.ewmaQuote], false);
     if (this.ewmaShort) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaShort], false);
@@ -445,7 +504,7 @@ export class StatsComponent implements OnInit {
   }
 
   private addWalletChartData = (w: Models.WalletChart) => {
-    let time = moment(w.time).valueOf();
+    let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.quoteChart], time);
     this.removeOldPoints(Highcharts.charts[this.baseChart], time);
     Highcharts.charts[this.quoteChart].series[0].addPoint([time, w.totalQuote], false);
