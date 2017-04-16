@@ -10,13 +10,8 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from 'ag-grid-angular/main';
 import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
-
 import Highcharts = require('highcharts');
-Highcharts.setOptions({
-  global: {
-    timezoneOffset: new Date().getTimezoneOffset()
-  }
-});
+
 import moment = require("moment");
 
 import Models = require('../share/models');
