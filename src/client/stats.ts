@@ -87,7 +87,7 @@ export class StatsComponent implements OnInit {
     tooltip: {
         shared: true,
         useHTML: true,
-        headerFormat: '<small>{point.key}</small><table>',
+        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>'
     },
     series: [{
@@ -194,7 +194,7 @@ export class StatsComponent implements OnInit {
     tooltip: {
         shared: true,
         useHTML: true,
-        headerFormat: '<small>{point.key}</small><table>',
+        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
         pointFormatter:function () {
           var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
@@ -295,7 +295,7 @@ export class StatsComponent implements OnInit {
     },
     tooltip: {
         shared: true,
-        headerFormat: '<small>{point.key}</small><table>',
+        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
         useHTML: true,
         pointFormatter:function () {
@@ -495,10 +495,10 @@ export class StatsComponent implements OnInit {
       x: time,
       title: Models.Side[t.side] == 'Bid' ? 'B' : 'S',
       useHTML:true,
-      text: '<b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b>:'
-        + '<br/>' + 'Price: <b>' + ((t.price * 100) / 100) + ' €</b>'
-        + '<br/>' + 'Qty: <b>' + t.quantity.toFixed(8) + ' ฿</b>'
-        + '<br/>' + 'Value: <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b>'
+      text: '<td><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b></td><td></td></tr>'
+        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' €</b></td></tr>'
+        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ฿</b></td></tr>'
+        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b></td></tr>'
     }, !this.fairValue);
     if (this.fairValue) Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], true);
   }
