@@ -24,8 +24,8 @@ export class PositionManager {
       this.newQuote = quoteEwma;
       this._ewmaPublisher.publish(new Models.EWMAChart(
         Utils.roundFloat(quoteEwma),
-        null,
-        null,
+        this.newShort?Utils.roundFloat(this.newShort):null,
+        this.newLong?Utils.roundFloat(this.newLong):null,
         Utils.roundFloat(fv.price),
         this._timeProvider.utcNow()
       ));
@@ -79,7 +79,7 @@ export class PositionManager {
         }
 
         this._latestChart = new Models.EWMAChart(
-          null,
+          this.newQuote?Utils.roundFloat(this.newQuote):null,
           Utils.roundFloat(this.newShort),
           Utils.roundFloat(this.newLong),
           Utils.roundFloat(fv.price),

@@ -81,7 +81,7 @@ Tribeca also exposes a REST API of all it's data. It's all the same data you wou
 
 ### Charts
 
-The metrics are not saved anywhere, is just UI data, to display over time:
+The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
 
  * Fair Value
  * Completed Trades
