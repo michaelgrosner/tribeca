@@ -7,15 +7,13 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-stats',
-  template: `<div style="position:absolute;">
-    <div class="col-md-6 col-xs-6">
+  template: `<div class="col-md-6 col-xs-6">
         <chart style="position:relative;top:5px;height:400px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
     </div>
     <div class="col-md-6 col-xs-6">
         <chart style="position:relative;top:15px;height:200px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
         <chart style="position:relative;top:21px;height:200px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
-    </div>
-  </div>`
+    </div>`
 })
 export class StatsComponent implements OnInit {
 

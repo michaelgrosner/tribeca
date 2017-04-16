@@ -54,7 +54,7 @@ export class PositionManager {
           this.fairValue?Utils.roundFloat(this.fairValue):null,
           this._timeProvider.utcNow()
         ):null]);
-        this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(20, 'minutes'));
+        this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(10, 'minutes'));
         this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(1, 'minutes'));
     }
 
