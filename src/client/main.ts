@@ -57,6 +57,8 @@ class DisplayOrder {
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
     this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
+    this.timeInForce = this.availableTifs[2];
+    this.orderType = this.availableOrderTypes[0];
   }
 
   public submit = () => {
@@ -325,41 +327,38 @@ class DisplayOrder {
                                               [popover]="myPopover">Submit Order
                                       </button>
                                       <popover-content #myPopover
-                                              placement="bottom"
-                                              [animation]="true"
-                                              [closeOnClickOutside]="true">
-                                              <div class="text-center">
-                                                <div class="form-group">
-                                                    <label>Side</label>
-                                                    <select class="form-control input-sm" [(ngModel)]="order.side">
+                                          placement="bottom"
+                                          [animation]="true"
+                                          [closeOnClickOutside]="true">
+                                              <table border="0">
+                                                <tr>
+                                                    <td><label>Side:</label> </td>
+                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
                                                       <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                    </select>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>Price</label>
-                                                    <input class="form-control input-sm" type="number" [(ngModel)]="order.price" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>Size</label>
-                                                    <input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>TIF</label>
-                                                    <select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                                    </select></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label>Price:</label> </td>
+                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.price" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label>Size:</label> </td>
+                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label>TIF:</label> </td>
+                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
                                                       <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                                                    </select>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>Type</label>
-                                                    <select class="form-control input-sm" [(ngModel)]="order.orderType">
+                                                    </select></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label>Type:</label> </td>
+                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.orderType">
                                                       <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                                                    </select>
-                                                </div>
-                                                <button type="button"
-                                                    class="btn btn-success"
-                                                    (click)="myPopover.hide()"
-                                                    (click)="order.submit()">Submit</button>
-                                              </div>
+                                                    </select></td>
+                                                </tr>
+                                                <tr><td colspan="2" class="text-center"><button type="button" class="btn btn-success" (click)="myPopover.hide()" (click)="order.submit()">Submit</button></td></tr>
+                                              </table>
                                       </popover-content>
                                   </div>
                                   <div style="padding-top: 2px;padding-bottom: 2px;">
