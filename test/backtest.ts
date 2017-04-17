@@ -5,7 +5,6 @@ import Utils = require("../src/server/utils");
 import Persister = require("../src/server/persister");
 import Models = require("../src/share/models");
 import Moment = require("moment");
-import util = require("util");
 
 describe("BacktestTests", () => {
     var timeProvider : Backtest.BacktestTimeProvider;
@@ -94,6 +93,9 @@ describe("BacktestTests", () => {
 
 describe("BacktestGatewayTests", () => {
     it("should read market data", () => {
+        assert.equal(new Models.MarketSide(1, 2).toString(), 'px=1;size=2');
+        assert.equal(true, new Models.OrderStatusReportImpl(new Models.CurrencyPair(Models.Currency.EUR,Models.Currency.BTC),null,null,null,null,null,'1',null,null,null,Moment.unix(1),null,2,null,null,null,null,null,null,null,null,null,null,null,null,null).toString().indexOf('lastPrice=2')>-1);
+
         var inputData : Array<Models.Market | Models.MarketTrade> = [
             new Models.Market([new Models.MarketSide(10, 5)], [new Models.MarketSide(20, 5)], Moment.unix(1)),
             new Models.Market([new Models.MarketSide(15, 5)], [new Models.MarketSide(20, 5)], Moment.unix(10)),
@@ -122,5 +124,12 @@ describe("BacktestGatewayTests", () => {
         gateway.run();
 
         assert(gotTrade !== false, "never got trade");
+    });
+});
+
+describe("BacktestFunctionTests", () => {
+    it("should execute utils", () => {
+        assert.equal(Moment.isMoment(Utils.timeOrDefault(new Models.FairValue(1, Moment.unix(2)), new Utils.RealTimeProvider())), true);
+        assert.equal(Utils.roundFloat(12.120001), 12.12);
     });
 });
