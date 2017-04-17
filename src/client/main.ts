@@ -338,7 +338,7 @@ class DisplayOrder {
                                                     </select></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Price:</label>&nbsp;</td>
+                                                    <td><label>Price:&nbsp;</label></td>
                                                     <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
