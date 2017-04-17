@@ -335,7 +335,7 @@ export class StatsComponent implements OnInit {
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.FairValue)
-        .registerSubscriber(this.addFairValueChartData);
+        .registerSubscriber(this.updateFairValue);
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.Position)
@@ -351,7 +351,7 @@ export class StatsComponent implements OnInit {
     }, 10000);
   }
 
-  private addFairValueChartData = (fv: Models.FairValue) => {
+  private updateFairValue = (fv: Models.FairValue) => {
     if (fv == null) return;
     this.fairValue = ((fv.price * 100) / 100);
     let time = new Date().getTime();
@@ -403,8 +403,10 @@ export class StatsComponent implements OnInit {
 
   private updatePosition = (o: Models.Timestamped<any[]>) => {
     let time = new Date().getTime();
-    (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[6]];
-    (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[7]];
+    if (!(<any>Highcharts).customBaseCurrency)
+      (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[6]];
+    if (!(<any>Highcharts).customQuoteCurrency)
+      (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[7]];
     this.removeOldPoints(Highcharts.charts[this.quoteChart], time);
     this.removeOldPoints(Highcharts.charts[this.baseChart], time);
     Highcharts.charts[this.quoteChart].series[0].addPoint([time, o.data[5]], false);
