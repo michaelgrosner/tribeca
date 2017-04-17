@@ -343,7 +343,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           orderBroker,
           gateway.pg,
           system.getPublisher(Models.Topics.Position, monitor),
-          system.getPublisher(Models.Topics.WalletChart, monitor),
           marketDataBroker
         );
 

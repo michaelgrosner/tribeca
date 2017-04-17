@@ -289,17 +289,6 @@ export class TradeChart implements ITimestamped {
                 public time: moment.Moment) {}
 }
 
-export class WalletChart implements ITimestamped {
-    constructor(public totalBase: number,
-                public totalQuote: number,
-                public availBase: number,
-                public availQuote: number,
-                public heldBase: number,
-                public heldQuote: number,
-                public fairValue: number,
-                public time: moment.Moment) {}
-}
-
 export class Trade implements ITimestamped {
     constructor(public tradeId: string,
                 public time: moment.Moment,

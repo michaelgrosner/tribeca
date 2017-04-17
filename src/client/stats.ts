@@ -73,7 +73,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: [],
@@ -85,7 +85,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: [],
@@ -104,7 +104,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: [],
@@ -124,7 +124,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: []
@@ -135,7 +135,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: []
@@ -146,7 +146,7 @@ export class StatsComponent implements OnInit {
       tooltip: {
           pointFormatter:function () {
             var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
           }
       },
       data: []
@@ -167,7 +167,7 @@ export class StatsComponent implements OnInit {
         footerFormat: '</table>',
         pointFormatter:function () {
           var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' €</b></td></tr>';
+          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
         }
     },
     plotOptions: {area: {stacking: 'normal',connectNulls: true}},
@@ -229,7 +229,7 @@ export class StatsComponent implements OnInit {
         useHTML: true,
         pointFormatter:function () {
           var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ฿</b></td></tr>';
+          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency || '฿') + '</b></td></tr>';
         }
     },
     plotOptions: {area: {stacking: 'normal',connectNulls: true}},
@@ -284,22 +284,8 @@ export class StatsComponent implements OnInit {
 
   ngOnInit() {
     setTimeout(() => {
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.FairValue)
-        .registerSubscriber(this.addFairValueChartData);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.EWMAChart)
-        .registerSubscriber(this.addEWMAChartData);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.TradesChart)
-        .registerSubscriber(this.addTradesChartData);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.WalletChart)
-        .registerSubscriber(this.addWalletChartData);
-
+      (<any>Highcharts).customBaseCurrency = false;
+      (<any>Highcharts).customQuoteCurrency = false;
       Highcharts.setOptions({
           global: {
               getTimezoneOffset: function () {
@@ -346,6 +332,22 @@ export class StatsComponent implements OnInit {
           }
         }
       });
+
+      this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.FairValue)
+        .registerSubscriber(this.addFairValueChartData);
+
+      this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.Position)
+        .registerSubscriber(this.updatePosition);
+
+      this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.EWMAChart)
+        .registerSubscriber(this.addEWMAChartData);
+
+      this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.TradesChart)
+        .registerSubscriber(this.addTradesChartData);
     }, 10000);
   }
 
@@ -392,23 +394,25 @@ export class StatsComponent implements OnInit {
       title: (t.type == 'Ping' ? '_' : '¯')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
       useHTML:true,
       text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> ('+t.type+')</td></tr>'
-        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' €</b></td></tr>'
-        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ฿</b></td></tr>'
-        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b></td></tr>'
+        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>'
+        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency || '฿') + '</b></td></tr>'
+        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>'
     }, !this.fairValue);
     if (this.fairValue) Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], true);
   }
 
-  private addWalletChartData = (w: Models.WalletChart) => {
+  private updatePosition = (o: Models.Timestamped<any[]>) => {
     let time = new Date().getTime();
+    (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[6]];
+    (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[7]];
     this.removeOldPoints(Highcharts.charts[this.quoteChart], time);
     this.removeOldPoints(Highcharts.charts[this.baseChart], time);
-    Highcharts.charts[this.quoteChart].series[0].addPoint([time, w.totalQuote], false);
-    Highcharts.charts[this.quoteChart].series[1].addPoint([time, w.availQuote], false);
-    Highcharts.charts[this.quoteChart].series[2].addPoint([time, w.heldQuote]), true;
-    Highcharts.charts[this.baseChart].series[0].addPoint([time, w.totalBase], false);
-    Highcharts.charts[this.baseChart].series[1].addPoint([time, w.availBase], false);
-    Highcharts.charts[this.baseChart].series[2].addPoint([time, w.heldBase], true);
+    Highcharts.charts[this.quoteChart].series[0].addPoint([time, o.data[5]], false);
+    Highcharts.charts[this.quoteChart].series[1].addPoint([time, o.data[1]], false);
+    Highcharts.charts[this.quoteChart].series[2].addPoint([time, o.data[3]]), true;
+    Highcharts.charts[this.baseChart].series[0].addPoint([time, o.data[4]], false);
+    Highcharts.charts[this.baseChart].series[1].addPoint([time, o.data[0]], false);
+    Highcharts.charts[this.baseChart].series[2].addPoint([time, o.data[2]], true);
   }
 
   private removeOldPoints = (chart: any, time: number) => {
