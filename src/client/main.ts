@@ -332,27 +332,27 @@ class DisplayOrder {
                                           [closeOnClickOutside]="true">
                                               <table border="0" style="width:139px;">
                                                 <tr>
-                                                    <td><label>Side:</label> </td>
+                                                    <td><label>Side:</label></td>
                                                     <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
                                                       <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
                                                     </select></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Price:</label> </td>
+                                                    <td><label>Price:</label>&nbsp;</td>
                                                     <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Size:</label> </td>
+                                                    <td><label>Size:</label></td>
                                                     <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.quantity" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>TIF:</label> </td>
+                                                    <td><label>TIF:</label></td>
                                                     <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
                                                       <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
                                                     </select></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Type:</label> </td>
+                                                    <td><label>Type:</label></td>
                                                     <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.orderType">
                                                       <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
                                                     </select></td>
