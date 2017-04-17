@@ -53,12 +53,12 @@ class DisplayOrder {
   constructor(
     fireFactory: FireFactory
   ) {
-    this.availableSides = DisplayOrder.getNames(Models.Side);
+    this.availableSides = DisplayOrder.getNames(Models.Side).slice(0,-1);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
     this.timeInForce = this.availableTifs[2];
     this.orderType = this.availableOrderTypes[0];
+    this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
   }
 
   public submit = () => {
