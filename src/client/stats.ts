@@ -389,9 +389,9 @@ export class StatsComponent implements OnInit {
     Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([time, ((t.price * 100) / 100)], false);
     (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint({
       x: time,
-      title: Models.Side[t.side] == 'Bid' ? 'B' : 'S',
+      title: (t.type == 'Ping' ? '_' : '¯')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
       useHTML:true,
-      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b></td></tr>'
+      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> ('+t.type+')</td></tr>'
         + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' €</b></td></tr>'
         + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ฿</b></td></tr>'
         + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' €</b></td></tr>'

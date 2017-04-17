@@ -229,8 +229,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.onOrderUpdate(rpt);
     };
 
-    private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade) => {
-      var gowhile = true;
+    private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade): string => {
+      let tradePingPongType = 'Ping';
+      let gowhile = true;
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
         gowhile = false;
@@ -247,6 +248,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             if (this._trades[i].quantity<=this._trades[i].Kqty)
               this._trades[i].Kdiff = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
             this._trades[i].loadedFromDB = false;
+            tradePingPongType = 'Pong';
             this._tradePublisher.publish(this._trades[i]);
             this._tradePersister.repersist(this._trades[i], this._trades[i]);
             break;
@@ -273,6 +275,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           this._trades.push(trade);
         }
       }
+      return tradePingPongType;
     };
 
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {
@@ -374,8 +377,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
+            let tradePingPongType = 'Ping';
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-              this._reTrade(this._trades.filter((x: Models.Trade) => (
+              tradePingPongType = this._reTrade(this._trades.filter((x: Models.Trade) => (
                 (trade.side==Models.Side.Bid?(x.price > (trade.price + this._qlParamRepo.latest.widthPong)):(x.price < (trade.price - this._qlParamRepo.latest.widthPong)))
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
@@ -397,7 +401,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._trades.push(trade);
             }
 
-            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, (value * 100) / 100, o.time));
+            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, (value * 100) / 100, tradePingPongType, o.time));
 
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
               this.cancelOpenOrders();
