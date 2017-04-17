@@ -531,14 +531,15 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var quoteAmount = quotePosition.amount;
         var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
         var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
-        var valueFiat = baseValue * mid;
         var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
+            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
         if (this._report !== null &&
                 Math.abs(positionReport.value - this._report.value) < 2e-2 &&
-                Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
+                Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
+                Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-2 &&
+                Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
                 Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
             return;
