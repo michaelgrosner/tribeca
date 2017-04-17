@@ -536,19 +536,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, valueFiat, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
-        if (!this.skipInternalMetrics)
-          this._walletPublisher.publish(new Models.WalletChart(
-            ((positionReport.value * 100000) / 100000),
-            Utils.roundFloat(positionReport.quoteValue),
-            ((baseAmount * 100000) / 100000),
-            Utils.roundFloat(quoteAmount),
-            ((basePosition.heldAmount * 100000) / 100000),
-            Utils.roundFloat(quotePosition.heldAmount),
-            Utils.roundFloat(mid),
-            this._timeProvider.utcNow()
-          ));
-        this.skipInternalMetrics = false;
-
         if (this._report !== null &&
                 Math.abs(positionReport.value - this._report.value) < 2e-2 &&
                 Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
@@ -562,7 +549,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     };
 
     private osr: Models.OrderStatusReport[] = [];
-    private skipInternalMetrics: boolean = false;
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
         if (o.orderStatus == Models.OrderStatus.New
@@ -583,7 +569,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
           amount -= osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
           heldAmount += osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
         });
-        this.skipInternalMetrics = true;
+
         this.onPositionUpdate(new Models.CurrencyPosition(
           amount,
           heldAmount,
@@ -596,7 +582,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _broker: Interfaces.IOrderBroker,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Publish.IPublish<Models.PositionReport>,
-                private _walletPublisher : Publish.IPublish<Models.WalletChart>,
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
