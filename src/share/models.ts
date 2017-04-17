@@ -285,6 +285,7 @@ export class TradeChart implements ITimestamped {
                 public side: Side,
                 public quantity: number,
                 public value: number,
+                public type: string,
                 public time: moment.Moment) {}
 }
 
