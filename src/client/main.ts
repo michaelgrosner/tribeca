@@ -330,7 +330,7 @@ class DisplayOrder {
                                           placement="bottom"
                                           [animation]="true"
                                           [closeOnClickOutside]="true">
-                                              <table border="0">
+                                              <table border="0" style="width:139px;">
                                                 <tr>
                                                     <td><label>Side:</label> </td>
                                                     <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
