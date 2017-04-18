@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
-import mongodb = require('mongodb');
 import Q = require("q");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
@@ -516,7 +515,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     }
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
-        this._currencies[rpt.currency] = rpt;
+        if (rpt !== null) this._currencies[rpt.currency] = rpt;
         var basePosition = this.getPosition(this._base.pair.base);
         var quotePosition = this.getPosition(this._base.pair.quote);
 
@@ -586,6 +585,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _mdBroker : Interfaces.IMarketDataBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
+        this._mdBroker.MarketData.on(() => this.onPositionUpdate(null));
 
         this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
     }

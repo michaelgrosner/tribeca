@@ -398,7 +398,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           quoter,
           positionBroker,
           fvEngine,
-          marketDataBroker,
           broker,
           new Active.ActiveRepository(
             system.startingActive,

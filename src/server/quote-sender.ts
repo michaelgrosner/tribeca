@@ -1,17 +1,12 @@
-import Config = require("./config");
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
-import Safety = require("./safety");
 import _ = require("lodash");
-import Statistics = require("./statistics");
 import Active = require("./active-state");
 import FairValue = require("./fair-value");
-import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
-import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingEngine = require("./quoting-engine");
 
@@ -35,7 +30,6 @@ export class QuoteSender {
             private _quoter: Quoter.Quoter,
             private _positionBroker: Interfaces.IPositionBroker,
             private _fv: FairValue.FairValueEngine,
-            private _broker: Interfaces.IMarketDataBroker,
             private _details: Interfaces.IBroker,
             private _activeRepo: Active.ActiveRepository) {
         _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()));
