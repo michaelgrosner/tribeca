@@ -536,11 +536,11 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
         if (this._report !== null &&
-                Math.abs(positionReport.value - this._report.value) < 2e-2 &&
+                Math.abs(positionReport.value - this._report.value) < 2e-6 &&
                 Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
-                Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-2 &&
+                Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
                 Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
-                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
+                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
                 Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
             return;
 
