@@ -1,9 +1,7 @@
-import Config = require("./config");
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
-import _ = require("lodash");
 
 export class MarketFiltration {
     private _latest: Models.Market = null;
@@ -23,7 +21,7 @@ export class MarketFiltration {
     private filterFullMarket = () => {
         var mkt = this._broker.currentBook;
 
-        if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1) {
+        if (mkt == null || !mkt.bids.length || !mkt.asks.length) {
             this.latestFilteredMarket = null;
             return;
         }
@@ -48,12 +46,12 @@ export class MarketFiltration {
             for (var i = 0; i < copiedMkts.length; i++) {
                 var m = copiedMkts[i];
 
-                if (Math.abs(q.price - m.price) < .005) {
+                if (Math.abs(q.price - m.price) < 5e-3) {
                     copiedMkts[i].size = m.size - q.size;
                 }
             }
         }
 
-        return copiedMkts.filter(m => m.size > 0.001);
+        return copiedMkts.filter(m => m.size > 1e-3);
     };
 }

@@ -1,8 +1,6 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import _ = require("lodash");
-import Statistics = require("./statistics");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
@@ -15,7 +13,7 @@ export class FairValueEngine {
     public set latestFairValue(val: Models.FairValue) {
         if (this._latest != null
             && val != null
-            && Math.abs(this._latest.price - val.price) < 0.02) return;
+            && Math.abs(this._latest.price - val.price) < 2e-2) return;
 
         this._latest = val;
         this.FairValueChanged.trigger();

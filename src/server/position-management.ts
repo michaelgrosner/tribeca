@@ -4,7 +4,6 @@ import Utils = require("./utils");
 import Statistics = require("./statistics");
 import _ = require("lodash");
 import Persister = require("./persister");
-import mongodb = require('mongodb');
 import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
@@ -33,7 +32,6 @@ export class PositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
-    private _latestChart: Models.EWMAChart = null;
     private _latest: number = null;
     public get latestTargetPosition(): number {
         return this._latest;
@@ -78,14 +76,13 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._latestChart = new Models.EWMAChart(
+        this._ewmaPublisher.publish(new Models.EWMAChart(
           this.newQuote?Utils.roundFloat(this.newQuote):null,
           Utils.roundFloat(this.newShort),
           Utils.roundFloat(this.newLong),
           Utils.roundFloat(fv.price),
           this._timeProvider.utcNow()
-        );
-        this._ewmaPublisher.publish(this._latestChart);
+        ));
 
         this._log.info("recalculated regular fair value, short:", Utils.roundFloat(this.newShort), "long:",
             Utils.roundFloat(this.newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
@@ -135,7 +132,7 @@ export class TargetBasePositionManager {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
 
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 0.01 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
             this._latest = new Models.TargetBasePositionValue(
               targetBasePosition,
               this.sideAPR,

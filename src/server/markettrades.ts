@@ -5,7 +5,6 @@ import Interfaces = require("./interfaces");
 import _ = require("lodash");
 import Persister = require("./persister");
 import Broker = require("./broker");
-import mongodb = require('mongodb');
 import Web = require("./web");
 import QuotingEngine = require("./quoting-engine");
 
