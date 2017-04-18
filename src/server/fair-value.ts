@@ -11,8 +11,7 @@ export class FairValueEngine {
     private _latest: Models.FairValue = null;
     public get latestFairValue() { return this._latest; }
     public set latestFairValue(val: Models.FairValue) {
-        if (this._latest != null
-            && val != null
+        if (this._latest != null && val != null
             && Math.abs(this._latest.price - val.price) < 2e-2) return;
 
         this._latest = val;
@@ -23,7 +22,7 @@ export class FairValueEngine {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _filtration: MarketFiltration.MarketFiltration,
-        private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
+        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _fvPublisher: Publish.IPublish<Models.FairValue>) {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
@@ -33,7 +32,7 @@ export class FairValueEngine {
     private static ComputeFVUnrounded(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         switch (model) {
             case Models.FairValueModel.BBO:
-                return (ask.price + bid.price) / 2.0;
+                return (ask.price + bid.price) / 2;
             case Models.FairValueModel.wBBO:
                 return (ask.price * ask.size + bid.price * bid.size) / (ask.size + bid.size);
         }
@@ -55,7 +54,7 @@ export class FairValueEngine {
         var bid = mkt.bids;
         var ask = mkt.asks;
 
-        if (ask.length < 1 || bid.length < 1) {
+        if (!ask.length || !bid.length) {
             this.latestFairValue = null;
             return;
         }

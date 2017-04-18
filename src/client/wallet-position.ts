@@ -6,18 +6,10 @@ import {SubscriberFactory} from './shared_directives';
 @Component({
   selector: 'wallet-position',
   template: `<div class="positions" *ngIf="value || quoteValue">
-      <h4 class="col-md-12 col-xs-2"><small>
-        {{ quoteCurrency }}:&nbsp;<span class="text-danger">{{ quotePosition | currency:quoteCurrency:true:'1.2-2' }}</span>
-        <br/>(<span [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | currency:quoteCurrency:true:'1.2-2' }}</span>)
-      </small></h4>
-      <h4 class="col-md-12 col-xs-2"><small>
-        {{ baseCurrency }}:&nbsp;<span class="text-danger">฿{{ basePosition | number:'1.3-3' }}</span>
-        <br/>(<span [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">฿{{ baseHeldPosition | number:'1.3-3' }}</span>)
-      </small></h4>
-      <h4 class="col-md-12 col-xs-2" style="margin-top: 1px;margin-bottom: 10px!important;">
-        <small>Value:</small><br>฿<b>{{ value | number:'1.5-5' }}</b><br/><b>{{ quoteValue | currency:quoteCurrency:true:'1.2-2' }}</b>
-      </h4>
-    </div>`
+    <h4 class="col-md-12 col-xs-2"><small>{{ quoteCurrency }}:<br><span title="{{ quoteCurrency }} Available" class="text-danger">{{ quotePosition | number:'1.2-2' }}</span><br/><span title="{{ quoteCurrency }} Held" [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | number:'1.2-2' }}</span></small></h4>
+    <h4 class="col-md-12 col-xs-2"><small>{{ baseCurrency }}:<br><span title="{{ baseCurrency }} Available" class="text-danger">{{ basePosition | number:'1.8-8' }}</span><br/><span title="{{ baseCurrency }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition | number:'1.8-8' }}</span></small></h4>
+    <h4 class="col-md-12 col-xs-2" style="margin-bottom: 14px!important;"><small>Value:</small><br><b title="{{ baseCurrency }} Total">{{ value | number:'1.8-8' }}</b><br/><b title="{{ quoteCurrency }} Total">{{ quoteValue | number:'1.2-2' }}</b></h4>
+  </div>`
 })
 export class WalletPositionComponent implements OnInit {
 
