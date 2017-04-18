@@ -409,6 +409,8 @@ export class StatsComponent implements OnInit {
       (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[7]];
     this.removeOldPoints(Highcharts.charts[this.quoteChart], time);
     this.removeOldPoints(Highcharts.charts[this.baseChart], time);
+    Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(o.data[5],Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), undefined, true, { trigger: 'syncExtremes' });
+    Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(o.data[4],Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), undefined, true, { trigger: 'syncExtremes' });
     Highcharts.charts[this.quoteChart].series[0].addPoint([time, o.data[5]], false);
     Highcharts.charts[this.quoteChart].series[1].addPoint([time, o.data[1]], false);
     Highcharts.charts[this.quoteChart].series[2].addPoint([time, o.data[3]]), true;
