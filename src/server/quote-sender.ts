@@ -81,12 +81,12 @@ export class QuoteSender {
 
         if (askStatus === Models.QuoteStatus.Live) {
             this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
-        } else if (quote.ask !== null && !this._quoter.quotesSent(Models.Side.Ask).filter(o => quote.ask.price === o.quote.price).length)
+        } else if (quote !== null && quote.ask !== null && !this._quoter.quotesSent(Models.Side.Ask).filter(o => quote.ask.price === o.quote.price).length)
             this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
 
         if (bidStatus === Models.QuoteStatus.Live) {
             this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
-        } else if (quote.bid !== null && !this._quoter.quotesSent(Models.Side.Bid).filter(o => quote.bid.price === o.quote.price).length)
+        } else if (quote !== null && quote.bid !== null && !this._quoter.quotesSent(Models.Side.Bid).filter(o => quote.bid.price === o.quote.price).length)
             this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
