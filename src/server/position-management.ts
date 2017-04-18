@@ -129,7 +129,7 @@ export class TargetBasePositionManager {
 
         var targetBasePosition: number = params.targetBasePosition;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
-            targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
+            targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
         }
 
         if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {

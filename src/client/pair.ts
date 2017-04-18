@@ -33,7 +33,6 @@ class FormViewModel<T> {
   };
 
   public update = (p: T) => {
-    // console.log("updating parameters", p);
     this.master = _.cloneDeep(p);
     this.display = _.cloneDeep(p);
     this.pending = false;
