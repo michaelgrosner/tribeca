@@ -107,11 +107,11 @@ export class Publisher<T> implements IPublish<T> {
 
     private compressPositionInc = (data: any): T => {
       return <any>new Models.Timestamped([
-        Math.round(data.baseAmount * 1e3) / 1e3,
+        Math.round(data.baseAmount * 1e8) / 1e8,
         Math.round(data.quoteAmount * 1e2) / 1e2,
-        Math.round(data.baseHeldAmount * 1e3) / 1e3,
+        Math.round(data.baseHeldAmount * 1e8) / 1e8,
         Math.round(data.quoteHeldAmount * 1e2) / 1e2,
-        Math.round(data.value * 1e5) / 1e5,
+        Math.round(data.value * 1e8) / 1e8,
         Math.round(data.quoteValue * 1e2) / 1e2,
         data.pair.base,
         data.pair.quote
