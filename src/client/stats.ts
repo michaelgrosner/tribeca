@@ -168,7 +168,7 @@ export class StatsComponent implements OnInit {
     }],
     legend: {enabled: false},
     series: [{
-      name: 'Total Position',
+      name: 'Total Value',
       type: 'spline',
       zIndex: 1,
       colorIndex:2,
@@ -235,7 +235,7 @@ export class StatsComponent implements OnInit {
     }],
     legend: {enabled: false},
     series: [{
-      name: 'Total Position',
+      name: 'Total Value',
       type: 'spline',
       zIndex: 1,
       colorIndex:2,
