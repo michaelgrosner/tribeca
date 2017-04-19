@@ -88,7 +88,9 @@ export class StatsComponent implements OnInit {
       data: [],
       id: 'sellseries'
     },{
+      name: 'Sell',
       type: 'flags',
+      zIndex:1,
       colorIndex: 5,
       data: [],
       onSeries: 'sellseries',
@@ -104,6 +106,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Buy',
       type: 'flags',
+      zIndex:1,
       colorIndex: 0,
       data: [],
       onSeries: 'buyseries',
