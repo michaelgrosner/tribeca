@@ -84,13 +84,15 @@ Tribeca also exposes a REST API of all it's data. It's all the same data you wou
 The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
 
  * Fair Value
- * Completed Trades
+ * Trades Complete
+ * Target Position for BTC currency (TBP)
+ * Target Position for Fiat currency
  * Amount available in wallet for buy
  * Amount held in open trades for buy
  * Amount available in wallet for sell
  * Amount held in open trades for sell
- * Total amount available in wallet and held in open trades in BTC currency
- * Total amount available in wallet and held in open trades in Fiat currency
+ * Total amount available and held at both sides in BTC currency
+ * Total amount available and held at both sides in Fiat currency
 
 ### Test units and Build notes
 
