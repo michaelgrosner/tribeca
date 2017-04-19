@@ -17,6 +17,7 @@ import {SubscriberFactory} from './shared_directives';
 })
 export class StatsComponent implements OnInit {
 
+  public targetBasePosition: number;
   public fairValue: number;
   public ewmaShort: number;
   public ewmaLong: number;
@@ -27,6 +28,12 @@ export class StatsComponent implements OnInit {
   private saveInstance = (chartInstance, chartId) => {
     this[chartId+'Chart'] = Highcharts.charts.length;
     Highcharts.charts.push(chartInstance);
+  }
+  private pointFormatterBase = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>';
+  }
+  private pointFormatterQuote = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>';
   }
   private syncExtremes = function (e) {
     var thisChart = this.chart;
@@ -70,24 +77,14 @@ export class StatsComponent implements OnInit {
       type: 'spline',
       lineWidth:4,
       colorIndex: 2,
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
       id: 'fvseries'
     },{
       name: 'Sell',
       type: 'spline',
       colorIndex: 5,
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
       id: 'sellseries'
     },{
@@ -101,12 +98,7 @@ export class StatsComponent implements OnInit {
       name: 'Buy',
       type: 'spline',
       colorIndex: 0,
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
       id: 'buyseries'
     },{
@@ -121,34 +113,19 @@ export class StatsComponent implements OnInit {
       name: 'Quote EWMA',
       type: 'spline',
       color: '#ffff00',
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
       name: 'Short EWMA',
       type: 'spline',
       colorIndex: 6,
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
       name: 'Long EWMA',
       type: 'spline',
       colorIndex: 3,
-      tooltip: {
-          pointFormatter:function () {
-            var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-            return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-          }
-      },
+      tooltip: {pointFormatter:this.pointFormatterBase},
       data: []
     }]
   };
@@ -165,12 +142,12 @@ export class StatsComponent implements OnInit {
         useHTML: true,
         headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
-        pointFormatter:function () {
-          var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(2)+' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>';
-        }
+        pointFormatter: this.pointFormatterBase
     },
-    plotOptions: {area: {stacking: 'normal',connectNulls: true}},
+    plotOptions: {
+      area: {stacking: 'normal',connectNulls: true,marker: {enabled: false}},
+      spline: {marker: {enabled: false}}
+    },
     xAxis: {
       type: 'datetime',
       crosshair: true,
@@ -196,21 +173,26 @@ export class StatsComponent implements OnInit {
       zIndex: 1,
       colorIndex:2,
       lineWidth:3,
-      marker: {enabled: false},
+      data: []
+    },{
+      name: 'Target',
+      type: 'spline',
+      yAxis: 1,
+      zIndex: 1,
+      colorIndex:6,
       data: []
     },{
       name: 'Available',
       type: 'area',
       colorIndex:1,
-      marker: {enabled: false},
       yAxis: 1,
       data: []
     },{
       name: 'Held',
       type: 'area',
       colorIndex:0,
-      marker: {enabled: false},
       yAxis: 1,
+      marker:{symbol:'triangle-down'},
       data: []
     }]
   };
@@ -227,12 +209,12 @@ export class StatsComponent implements OnInit {
         headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
         useHTML: true,
-        pointFormatter:function () {
-          var symbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-          return '<tr><td><span style="color:'+this.series.color+'">' + symbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency || '฿') + '</b></td></tr>';
-        }
+        pointFormatter: this.pointFormatterQuote
     },
-    plotOptions: {area: {stacking: 'normal',connectNulls: true}},
+    plotOptions: {
+      area: {stacking: 'normal',connectNulls: true,marker: {enabled: false}},
+      spline: {marker: {enabled: false}}
+    },
     xAxis: {
       type: 'datetime',
       crosshair: true,
@@ -258,21 +240,25 @@ export class StatsComponent implements OnInit {
       zIndex: 1,
       colorIndex:2,
       lineWidth:3,
-      marker: {enabled: false},
+      data: []
+    },{
+      name: 'Target',
+      type: 'spline',
+      yAxis: 1,
+      zIndex: 1,
+      colorIndex:6,
       data: []
     },{
       name: 'Available',
       type: 'area',
       yAxis: 1,
       colorIndex:1,
-      marker: {enabled: false},
       data: []
     },{
       name: 'Held',
       type: 'area',
       yAxis: 1,
       colorIndex:5,
-      marker: {enabled: false},
       data: []
     }]
   };
@@ -283,32 +269,28 @@ export class StatsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    (<any>Highcharts).customBaseCurrency = '';
+    (<any>Highcharts).customQuoteCurrency = '';
+    (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
+    Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
     setTimeout(() => {
-      (<any>Highcharts).customBaseCurrency = false;
-      (<any>Highcharts).customQuoteCurrency = false;
-      Highcharts.setOptions({
-          global: {
-              getTimezoneOffset: function () {
-                  return new Date().getTimezoneOffset();
-              }
-          }
-      });
-
       jQuery('chart').bind('mousemove touchmove touchstart', function (e: any) {
-        var chart, point, i, event;
-        for (i = 0; i < Highcharts.charts.length; i = i + 1) {
+        var chart, point, i, event, containerLeft, thisLeft;
+        for (i = 0; i < Highcharts.charts.length; ++i) {
           chart = Highcharts.charts[i];
-          if (jQuery(chart.container).offset().left == jQuery(this).offset().left && jQuery(chart.container).offset().top == jQuery(this).offset().top) continue;
+          containerLeft = jQuery(chart.container).offset().left;
+          thisLeft = jQuery(this).offset().left;
+          if (containerLeft == thisLeft && jQuery(chart.container).offset().top == jQuery(this).offset().top) continue;
           chart.pointer.reset = function () { return undefined; };
           let ev: any = jQuery.extend(jQuery.Event(e.originalEvent.type), {
               which: 1,
               chartX: e.originalEvent.chartX,
               chartY: e.originalEvent.chartY,
-              clientX: (jQuery(chart.container).offset().left != jQuery(this).offset().left)?jQuery(chart.container).offset().left - jQuery(this).offset().left + e.originalEvent.clientX:e.originalEvent.clientX,
+              clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
               clientY: e.originalEvent.clientY,
-              pageX: (jQuery(chart.container).offset().left != jQuery(this).offset().left)?jQuery(chart.container).offset().left - jQuery(this).offset().left + e.originalEvent.pageX:e.originalEvent.pageX,
+              pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
               pageY: e.originalEvent.pageY,
-              screenX: (jQuery(chart.container).offset().left != jQuery(this).offset().left)?jQuery(chart.container).offset().left - jQuery(this).offset().left + e.originalEvent.screenX:e.originalEvent.screenX,
+              screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
               screenY: e.originalEvent.screenY
           });
           event = chart.pointer.normalize(ev);
@@ -340,6 +322,10 @@ export class StatsComponent implements OnInit {
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.Position)
         .registerSubscriber(this.updatePosition);
+
+      this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.TargetBasePosition)
+        .registerSubscriber(this.updateTargetBasePosition);
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.EWMAChart)
@@ -394,11 +380,16 @@ export class StatsComponent implements OnInit {
       title: (t.type == 'Ping' ? '_' : '¯')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
       useHTML:true,
       text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> ('+t.type+')</td></tr>'
-        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>'
-        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency || '฿') + '</b></td></tr>'
-        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' ' + ((<any>Highcharts).customQuoteCurrency || '€') + '</b></td></tr>'
+        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + ((t.price * 100) / 100) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>'
+        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + ((t.value+'').substring(0,(t.value+'').indexOf('.')+3)) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
     }, !this.fairValue);
     if (this.fairValue) Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], true);
+  }
+
+  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
+    if (value == null) return;
+    this.targetBasePosition = value.data;
   }
 
   private updatePosition = (o: Models.Timestamped<any[]>) => {
@@ -411,12 +402,16 @@ export class StatsComponent implements OnInit {
     this.removeOldPoints(Highcharts.charts[this.baseChart], time);
     Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(o.data[5],Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), undefined, true, { trigger: 'syncExtremes' });
     Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(o.data[4],Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), undefined, true, { trigger: 'syncExtremes' });
+    if (this.targetBasePosition) {
+      Highcharts.charts[this.quoteChart].series[1].addPoint([time, (o.data[4]-this.targetBasePosition)*o.data[5]/o.data[4]], false);
+      Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
+    }
     Highcharts.charts[this.quoteChart].series[0].addPoint([time, o.data[5]], false);
-    Highcharts.charts[this.quoteChart].series[1].addPoint([time, o.data[1]], false);
-    Highcharts.charts[this.quoteChart].series[2].addPoint([time, o.data[3]]), true;
+    Highcharts.charts[this.quoteChart].series[2].addPoint([time, o.data[1]], false);
+    Highcharts.charts[this.quoteChart].series[3].addPoint([time, o.data[3]]), true;
     Highcharts.charts[this.baseChart].series[0].addPoint([time, o.data[4]], false);
-    Highcharts.charts[this.baseChart].series[1].addPoint([time, o.data[0]], false);
-    Highcharts.charts[this.baseChart].series[2].addPoint([time, o.data[2]], true);
+    Highcharts.charts[this.baseChart].series[2].addPoint([time, o.data[0]], false);
+    Highcharts.charts[this.baseChart].series[3].addPoint([time, o.data[2]], true);
   }
 
   private removeOldPoints = (chart: any, time: number) => {
