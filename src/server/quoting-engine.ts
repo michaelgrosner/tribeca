@@ -50,19 +50,17 @@ export class QuotingEngine {
           new PingPong.AK47QuoteStyle(),
         ]);
 
-        var recalcWithoutInputTime = () => this.recalcQuote(_timeProvider.utcNow());
-
-        _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, _timeProvider)));
-        _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
-        _orderBroker.Trade.on(recalcWithoutInputTime);
+        _filteredMarkets.FilteredMarketChanged.on(this.recalcQuote);
+        _qlParamRepo.NewParameters.on(this.recalcQuote);
+        _orderBroker.Trade.on(this.recalcQuote);
         _ewma.Updated.on(() => {
-          recalcWithoutInputTime();
+          this.recalcQuote();
           _targetPosition.quoteEWMA = _ewma.latest;
         });
-        _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
-        _safeties.NewValue.on(recalcWithoutInputTime);
+        _targetPosition.NewTargetPosition.on(this.recalcQuote);
+        _safeties.NewValue.on(this.recalcQuote);
 
-        _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
+        _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
@@ -218,7 +216,7 @@ export class QuotingEngine {
         return unrounded;
     }
 
-    private recalcQuote = (t: moment.Moment) => {
+    private recalcQuote = () => {
         var fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
@@ -239,10 +237,10 @@ export class QuotingEngine {
         }
 
         this.latestQuote = new Models.TwoSidedQuote(
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
-            t
-            );
+            QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, q => q.bid),
+            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, q => q.ask),
+            this._timeProvider.utcNow()
+        );
     };
 
     private static quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {

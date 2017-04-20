@@ -5,9 +5,7 @@ import Interfaces = require("./interfaces");
 import Quoter = require("./quoter");
 import _ = require("lodash");
 import Active = require("./active-state");
-import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
-import moment = require('moment');
 import QuotingEngine = require("./quoting-engine");
 
 export class QuoteSender {
@@ -29,11 +27,10 @@ export class QuoteSender {
             private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
             private _positionBroker: Interfaces.IPositionBroker,
-            private _fv: FairValue.FairValueEngine,
             private _details: Interfaces.IBroker,
             private _activeRepo: Active.ActiveRepository) {
-        _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()));
-        _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote, _timeProvider)));
+        _activeRepo.NewParameters.on(this.sendQuote);
+        _quotingEngine.QuoteChanged.on(this.sendQuote);
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }
 
@@ -53,7 +50,7 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t: moment.Moment): void => {
+    private sendQuote = (): void => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;
@@ -74,14 +71,14 @@ export class QuoteSender {
         }
 
         if (askStatus === Models.QuoteStatus.Live) {
-            this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
+            this._quoter.updateQuote(new Models.Timestamped(quote.ask, this._timeProvider.utcNow()), Models.Side.Ask);
         } else if (quote !== null && quote.ask !== null && !this._quoter.quotesSent(Models.Side.Ask).filter(o => quote.ask.price === o.quote.price).length)
-            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
+            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, this._timeProvider.utcNow()));
 
         if (bidStatus === Models.QuoteStatus.Live) {
-            this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
+            this._quoter.updateQuote(new Models.Timestamped(quote.bid, this._timeProvider.utcNow()), Models.Side.Bid);
         } else if (quote !== null && quote.bid !== null && !this._quoter.quotesSent(Models.Side.Bid).filter(o => quote.bid.price === o.quote.price).length)
-            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));
+            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, this._timeProvider.utcNow()));
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
     };

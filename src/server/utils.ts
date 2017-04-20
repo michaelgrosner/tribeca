@@ -13,16 +13,6 @@ export function fastDiff(x: moment.Moment, y: moment.Moment) : number {
     return x.valueOf() - y.valueOf();
 }
 
-export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): moment.Moment {
-    if (x === null)
-        return timeProvider.utcNow();
-
-    if (typeof x !== "undefined" && typeof x.time !== "undefined")
-        return x.time;
-
-    return timeProvider.utcNow();
-}
-
 export function log(name: string): bunyan {
     // don't log while testing
     const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
