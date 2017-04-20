@@ -39,10 +39,10 @@
     "body-parser": "^1.17.1",
     "browserify": "^14.3.0",
     "bunyan": "^1.8.10",
-    "codacy-coverage": "^2.0.1",
+    "codacy-coverage": "^2.0.2",
     "collections": "^5.0.6",
     "compression": "^1.6.2",
-    "connect": "^3.6.0",
+    "connect": "^3.6.1",
     "core-js": "^2.4.1",
     "es6-shim": "^0.35.3",
     "express": "^4.15.2",
@@ -64,7 +64,7 @@
     "typescript": "^2.3.0",
     "uglify-js": "^2.8.22",
     "uuid": "^3.0.1",
-    "ws": "^2.2.3",
+    "ws": "^2.3.0",
     "zone.js": "^0.8.5"
   },
   "devDependencies": {
