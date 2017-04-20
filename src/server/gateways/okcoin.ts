@@ -71,7 +71,7 @@ interface OkCoinTradeRecord {
 interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
-	send = <T>(channel : string, parameters: any) => {
+    send = <T>(channel : string, parameters: any) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
 
         if (parameters !== null)
@@ -100,14 +100,14 @@ class OkCoinWebsocket {
             }
 
             if (typeof msg.success !== "undefined") {
-                if (msg.success !== "true" && (typeof msg.errorcode === "undefined" || (
+                if (msg.success !== true && (typeof msg.errorcode === "undefined" || (
                   msg.errorcode != '10050' /* 10050=Can't cancel more than once */
                   && msg.errorcode != '10009' /* 10009=Order does not exist */
                   && msg.errorcode != '10010' /* 10010=Insufficient funds */
                   && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
                   // msg.errorcode != '10001' /* 10001=Request frequency too high */
                 ))) this._log.warn("Unsuccessful message %s received.", raw);
-                else if (msg.success === "true")
+                else if (msg.success)
                   return this._log.info("Successfully connected to %s", msg.channel);
                 if (typeof msg.errorcode !== "undefined" && (
                   msg.errorcode == '10050'
@@ -156,11 +156,10 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
-        // [tid, price, amount, time, type]
-        _.forEach(trades.data, trade => {
+        _.forEach(trades.data, trade => { // [tid, price, amount, time, type]
             var px = parseFloat(trade[1]);
             var amt = parseFloat(trade[2]);
-            var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid; // is this the make side?
+            var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid;
             var mt = new Models.GatewayMarketTrade(px, amt, trades.time, trades.data.length > 0, side);
             this.MarketTrade.trigger(mt);
         });
@@ -228,7 +227,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _ordersWaitingForAckQueue = [];
 
     sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        var o : Order = {
+        var o: Order = {
             symbol: this._symbolProvider.symbol,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
             price: order.price.toString(),
@@ -524,17 +523,15 @@ function GetCurrencySymbol(c: Models.Currency) : string {
 
 class OkCoinSymbolProvider {
     public symbol: string;
-    public symbolReversed: string;
-    public symbolBase: string;
     public symbolQuote: string;
     public symbolWithoutUnderscore: string;
+    public symbolReversed: string;
 
     constructor(pair: Models.CurrencyPair) {
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
-        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
-        this.symbolBase = GetCurrencySymbol(pair.base);
         this.symbolQuote = GetCurrencySymbol(pair.quote);
         this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
     }
 }
 
