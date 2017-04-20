@@ -16,7 +16,7 @@ var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
     channel : string;
-    success : string;
+    success : boolean;
     data : any;
     event? : string;
     errorcode : string;
