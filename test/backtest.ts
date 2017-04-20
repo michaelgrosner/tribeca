@@ -129,7 +129,6 @@ describe("BacktestGatewayTests", () => {
 
 describe("BacktestFunctionTests", () => {
     it("should execute utils", () => {
-        assert.equal(Moment.isMoment(Utils.timeOrDefault(new Models.FairValue(1, Moment.unix(2)), new Utils.RealTimeProvider())), true);
         assert.equal(Utils.roundFloat(12.120001), 12.12);
     });
 });
