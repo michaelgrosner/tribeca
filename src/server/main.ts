@@ -397,7 +397,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.QuoteStatus, monitor),
           quoter,
           positionBroker,
-          fvEngine,
           broker,
           new Active.ActiveRepository(
             system.startingActive,

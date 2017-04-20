@@ -3,7 +3,6 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
-import moment = require("moment");
 
 export class FairValueEngine {
     public FairValueChanged = new Utils.Evt<Models.FairValue>();
@@ -24,8 +23,8 @@ export class FairValueEngine {
         private _filtration: MarketFiltration.MarketFiltration,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _fvPublisher: Publish.IPublish<Models.FairValue>) {
-        _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
-        _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
+        _qlParamRepo.NewParameters.on(this.recalcFairValue);
+        _filtration.FilteredMarketChanged.on(this.recalcFairValue);
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
     }
 
@@ -43,7 +42,7 @@ export class FairValueEngine {
         return Utils.roundFloat(unrounded);
     }
 
-    private recalcFairValue = (t: moment.Moment) => {
+    private recalcFairValue = () => {
         var mkt = this._filtration.latestFilteredMarket;
 
         if (mkt == null) {
@@ -59,7 +58,7 @@ export class FairValueEngine {
             return;
         }
 
-        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
+        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
         this.latestFairValue = fv;
     };
 }
