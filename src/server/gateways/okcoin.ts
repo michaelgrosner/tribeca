@@ -99,24 +99,25 @@ class OkCoinWebsocket {
                 return;
             }
 
-            if (typeof msg.success !== "undefined") {
-                if (msg.success !== true && (typeof msg.errorcode === "undefined" || (
-                  msg.errorcode != '10050' /* 10050=Can't cancel more than once */
-                  && msg.errorcode != '10009' /* 10009=Order does not exist */
-                  && msg.errorcode != '10010' /* 10010=Insufficient funds */
-                  && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
-                  // msg.errorcode != '10001' /* 10001=Request frequency too high */
-                ))) this._log.warn("Unsuccessful message %s received.", raw);
-                else if (msg.success)
-                  return this._log.info("Successfully connected to %s", msg.channel);
-                if (typeof msg.errorcode !== "undefined" && (
-                  msg.errorcode == '10050'
-                  || msg.errorcode == '10009'
-                  // || msg.errorcode == '10001'
-                ))  return;
-            }
+            let channel: string = typeof msg.channel !== 'undefined' ? msg.channel : msg.data.channel;
+            let success: boolean = typeof msg.success !== 'undefined' ? msg.success : (typeof msg.data !== 'undefined' && typeof msg.data.result !== 'undefined' ? msg.data.result : true);
 
-            var handler = this._handlers[msg.channel];
+            if (!success && (typeof msg.errorcode === "undefined" || (
+              msg.errorcode != '10050' /* 10050=Can't cancel more than once */
+              && msg.errorcode != '10009' /* 10009=Order does not exist */
+              && msg.errorcode != '10010' /* 10010=Insufficient funds */
+              && msg.errorcode != '10016' /* 10016=Insufficient coins balance */
+              // msg.errorcode != '10001' /* 10001=Request frequency too high */
+            ))) this._log.warn("Unsuccessful message %s received.", raw);
+            else if (success && (channel == 'addChannel' || channel == 'login'))
+              return this._log.info("Successfully connected to %s", channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
+            if (typeof msg.errorcode !== "undefined" && (
+              msg.errorcode == '10050'
+              || msg.errorcode == '10009'
+              // || msg.errorcode == '10001'
+            ))  return;
+
+            var handler = this._handlers[channel];
 
             if (typeof handler === "undefined") {
                 this._log.warn("Got message on unknown topic", msg);
@@ -181,7 +182,7 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private _log = Utils.log("tribeca:gateway:OkCoinMD");
-    constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
+    constructor(socket: OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
         var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
         var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
 
