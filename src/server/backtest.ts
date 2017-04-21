@@ -44,16 +44,16 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     private setAction  = (action: () => void, time: moment.Duration, type : TimedType) => {
         var dueTime = this._internalTime.clone().add(time);
 
-        if (Utils.fastDiff(dueTime, this.utcNow()) < 0) {
+        if (dueTime.valueOf() - this.utcNow().valueOf() < 0) {
             return;
         }
 
         this._timeouts.push(new Timed(action, dueTime, type, time));
-        this._timeouts.sort((a, b) => Utils.fastDiff(a.time, b.time));
+        this._timeouts.sort((a, b) => a.time.valueOf() - b.time.valueOf());
     };
 
     scrollTimeTo = (time : moment.Moment) => {
-        if (Utils.fastDiff(time, this.utcNow()) < 0) {
+        if (time.valueOf() - this.utcNow().valueOf() < 0) {
             throw new Error("Cannot reverse time!");
         }
 
@@ -61,7 +61,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
             this._immediates.pop()();
         }
 
-        while (this._timeouts.length > 0 && Utils.fastDiff(_.first(this._timeouts).time, time) < 0) {
+        while (this._timeouts.length > 0 && _.first(this._timeouts).time.valueOf() - time.valueOf() < 0) {
             var evt : Timed = this._timeouts.shift();
             this._internalTime = evt.time;
             evt.action();

@@ -5,60 +5,37 @@ import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 
 export class FairValueEngine {
-    public FairValueChanged = new Utils.Evt<Models.FairValue>();
+  public FairValueChanged = new Utils.Evt<Models.FairValue>();
 
-    private _latest: Models.FairValue = null;
-    public get latestFairValue() { return this._latest; }
-    public set latestFairValue(val: Models.FairValue) {
-        if (this._latest != null && val != null
-            && Math.abs(this._latest.price - val.price) < 2e-2) return;
+  private _latest: Models.FairValue = null;
+  public get latestFairValue() { return this._latest; }
+  public set latestFairValue(val: Models.FairValue) {
+    if (this._latest != null && val != null
+      && Math.abs(this._latest.price - val.price) < 2e-2) return;
 
-        this._latest = val;
-        this.FairValueChanged.trigger();
-        this._fvPublisher.publish(this._latest);
-    }
+    this._latest = val;
+    this.FairValueChanged.trigger();
+    this._fvPublisher.publish(this._latest);
+  }
 
-    constructor(
-        private _timeProvider: Utils.ITimeProvider,
-        private _filtration: MarketFiltration.MarketFiltration,
-        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _fvPublisher: Publish.IPublish<Models.FairValue>) {
-        _qlParamRepo.NewParameters.on(this.recalcFairValue);
-        _filtration.FilteredMarketChanged.on(this.recalcFairValue);
-        _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
-    }
+  constructor(
+    private _timeProvider: Utils.ITimeProvider,
+    private _filtration: MarketFiltration.MarketFiltration,
+    private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+    private _fvPublisher: Publish.IPublish<Models.FairValue>
+  ) {
+    _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
+    _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
+    _fvPublisher.registerSnapshot(() => this.latestFairValue ? [this.latestFairValue] : []);
+  }
 
-    private static ComputeFVUnrounded(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
-        switch (model) {
-            case Models.FairValueModel.BBO:
-                return (ask.price + bid.price) / 2;
-            case Models.FairValueModel.wBBO:
-                return (ask.price * ask.size + bid.price * bid.size) / (ask.size + bid.size);
-        }
-    }
-
-    private static ComputeFV(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
-        var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
-        return Utils.roundFloat(unrounded);
-    }
-
-    private recalcFairValue = () => {
-        var mkt = this._filtration.latestFilteredMarket;
-
-        if (mkt == null) {
-            this.latestFairValue = null;
-            return;
-        }
-
-        var bid = mkt.bids;
-        var ask = mkt.asks;
-
-        if (!ask.length || !bid.length) {
-            this.latestFairValue = null;
-            return;
-        }
-
-        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
-        this.latestFairValue = fv;
-    };
+  private recalcFairValue = (mkt: Models.Market) => {
+    this.latestFairValue = (mkt && mkt.asks.length && mkt.bids.length)
+      ? new Models.FairValue(Utils.roundFloat(
+          this._qlParamRepo.latest.fvModel == Models.FairValueModel.BBO
+            ? (mkt.asks[0].price + mkt.bids[0].price) / 2
+            : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size)
+        ), this._timeProvider.utcNow())
+      : null;
+  };
 }

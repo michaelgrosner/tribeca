@@ -337,15 +337,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.MarketData, monitor)
         );
 
-        var positionBroker = new Broker.PositionBroker(
-          system.timeProvider,
-          broker,
-          orderBroker,
-          gateway.pg,
-          system.getPublisher(Models.Topics.Position, monitor),
-          marketDataBroker
-        );
-
         var quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
         var filtration = new MarketFiltration.MarketFiltration(quoter, marketDataBroker);
         var fvEngine = new FairValue.FairValueEngine(
@@ -353,6 +344,15 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           filtration,
           paramsRepo,
           system.getPublisher(Models.Topics.FairValue, monitor)
+        );
+
+        var positionBroker = new Broker.PositionBroker(
+          system.timeProvider,
+          broker,
+          orderBroker,
+          fvEngine,
+          gateway.pg,
+          system.getPublisher(Models.Topics.Position, monitor)
         );
 
         var quotingEngine = new QuotingEngine.QuotingEngine(

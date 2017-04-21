@@ -116,7 +116,7 @@ export class TargetBasePositionManager {
         private _wrapped: Publish.IPublish<Models.TargetBasePositionValue>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
-        _params.NewParameters.on(() => setTimeout(() => this.recomputeTargetPosition(), 121));
+        _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
         _positionManager.NewTargetPosition.on(() => this.recomputeTargetPosition());
     }
 
