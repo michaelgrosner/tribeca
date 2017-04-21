@@ -265,8 +265,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(osr);
     };
 
-    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
+    cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
+        var c: Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_cancel_order", this._signer.signMessage(c));
         return new Models.OrderGatewayActionReport(Utils.date());
     };

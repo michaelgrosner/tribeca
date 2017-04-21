@@ -6,6 +6,7 @@ import Q = require("q");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
+import FairValue = require("./fair-value");
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -168,7 +169,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
             exchange: exch,
-            latency: Utils.fastDiff(sent.sentTime, order.generatedTime),
+            latency: sent.sentTime.valueOf() - order.generatedTime.valueOf(),
             rejectMessage: order.msg};
         this.onOrderUpdate(rpt);
 
@@ -189,7 +190,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             price: replace.price,
             quantity: replace.quantity,
             time: sent.sentTime,
-            latency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
+            latency: sent.sentTime.valueOf() - replace.generatedTime.valueOf()};
         this.onOrderUpdate(rpt);
 
         return new Models.SentOrder(rpt.orderId);
@@ -223,7 +224,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               orderStatus: Models.OrderStatus.Working,
               pendingCancel: true,
               time: sent.sentTime,
-              latency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
+              latency: sent.sentTime.valueOf() - cancel.generatedTime.valueOf()};
         }
         this.onOrderUpdate(rpt);
     };
@@ -305,7 +306,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
 
         var quantity = getOrFallback(osr.quantity, orig.quantity);
-        var leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
 
         var cumQuantity : number = undefined;
         if (typeof osr.cumQuantity !== "undefined") {
@@ -331,7 +331,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             getOrFallback(osr.time, this._timeProvider.utcNow()),
             osr.lastQuantity,
             osr.lastPrice,
-            leavesQuantity,
+            getOrFallback(osr.leavesQuantity, orig.leavesQuantity),
             cumQuantity,
             cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
             getOrFallback(osr.liquidity, orig.liquidity),
@@ -518,19 +518,13 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         if (rpt !== null) this._currencies[rpt.currency] = rpt;
         var basePosition = this.getPosition(this._base.pair.base);
         var quotePosition = this.getPosition(this._base.pair.quote);
-
-        if (typeof basePosition === "undefined"
-            || typeof quotePosition === "undefined"
-            || this._mdBroker.currentBook === null
-            || this._mdBroker.currentBook.bids.length === 0
-            || this._mdBroker.currentBook.asks.length === 0)
-            return;
+        var fv = this._fvEngine.latestFairValue;
+        if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || fv === null) return;
 
         var baseAmount = basePosition.amount;
         var quoteAmount = quotePosition.amount;
-        var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
-        var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
-        var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
+        var baseValue = baseAmount + quoteAmount / fv.price + basePosition.heldAmount + quotePosition.heldAmount / fv.price;
+        var quoteValue = baseAmount * fv.price + quoteAmount + basePosition.heldAmount * fv.price + quotePosition.heldAmount;
         var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
@@ -580,12 +574,12 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _base : Interfaces.IBroker,
                 private _broker: Interfaces.IOrderBroker,
+                private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Publish.IPublish<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker) {
+                private _positionPublisher : Publish.IPublish<Models.PositionReport>) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
-        this._mdBroker.MarketData.on(() => this.onPositionUpdate(null));
+        this._fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
 
         this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
     }

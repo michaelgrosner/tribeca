@@ -9,10 +9,6 @@ require('events').EventEmitter.prototype._maxListeners = 100;
 
 export var date = moment.utc;
 
-export function fastDiff(x: moment.Moment, y: moment.Moment) : number {
-    return x.valueOf() - y.valueOf();
-}
-
 export function log(name: string): bunyan {
     // don't log while testing
     const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
