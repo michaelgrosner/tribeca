@@ -191,4 +191,4 @@ Lets say that you have a great idea about how to profitably make markets and are
 
 Tribeca is packaged with a backtesting mode.
 
-To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts`.
+To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts` (see [Issue #43](https://github.com/ctubio/tribeca/issues/43)).
