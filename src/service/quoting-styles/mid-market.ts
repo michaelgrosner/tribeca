@@ -6,12 +6,12 @@ import Models = require("../../common/models");
 export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
     
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters) : StyleHelpers.GeneratedQuote => {
-        var width = params.width;
-        var size = params.size;
+    GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
+        var width = input.params.width;
+        var size = input.params.size;
     
-        var bidPx = Math.max(fv.price - width, 0);
-        var askPx = fv.price + width;
+        var bidPx = Math.max(input.fv.price - width, 0);
+        var askPx = input.fv.price + width;
     
         return new StyleHelpers.GeneratedQuote(bidPx, size, askPx, size);
     };

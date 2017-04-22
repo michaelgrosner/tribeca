@@ -30,6 +30,7 @@ import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
+import {QuoteInput} from "./quoting-styles/helpers";
 
 export class QuotingEngine {
     private _log = Utils.log("quotingengine");
@@ -73,8 +74,10 @@ export class QuotingEngine {
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
-        var params = this._qlParamRepo.latest;
-        var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params);
+        const params = this._qlParamRepo.latest;
+        const minTick = this._details.minTickIncrement;
+        const input = new QuoteInput(filteredMkt, fv, params, minTick);
+        const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
         
         if (unrounded === null)
             return null;
@@ -89,15 +92,15 @@ export class QuotingEngine {
             }
         }
 
-        var tbp = this._targetPosition.latestTargetPosition;
+        const tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
             this._log.warn("cannot compute a quote since no position report exists!");
             return null;
         }
-        var targetBasePosition = tbp.data;
+        const targetBasePosition = tbp.data;
         
-        var latestPosition = this._positionBroker.latestReport;
-        var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        const latestPosition = this._positionBroker.latestReport;
+        const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;
@@ -113,7 +116,7 @@ export class QuotingEngine {
                 unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
         }
         
-        var safety = this._safeties.latest;
+        const safety = this._safeties.latest;
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
@@ -135,7 +138,6 @@ export class QuotingEngine {
             unrounded.bidSz = null;
         }
         
-        const minTick = this._details.minTickIncrement;
         if (unrounded.bidPx !== null) {
             unrounded.bidPx = Utils.roundFloat(unrounded.bidPx, minTick);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
@@ -160,19 +162,19 @@ export class QuotingEngine {
     }
 
     private recalcQuote = (t: moment.Moment) => {
-        var fv = this._fvEngine.latestFairValue;
+        const fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
             return;
         }
 
-        var filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (filteredMkt == null) {
             this.latestQuote = null;
             return;
         }
 
-        var genQt = this.computeQuote(filteredMkt, fv);
+        const genQt = this.computeQuote(filteredMkt, fv);
 
         if (genQt === null) {
             this.latestQuote = null;
@@ -189,7 +191,7 @@ export class QuotingEngine {
     private quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
         if (newQ.price === null && newQ.size === null) return null;
         if (prevTwoSided == null) return newQ;
-        var previousQ = sideGetter(prevTwoSided);
+        const previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
         return Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement ? previousQ : newQ;
