@@ -267,7 +267,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
         this._http.post("cancel_order.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
-            if (typeof (<any>msg.data).order_id == "undefined") return;
+            if (typeof (<any>msg.data).result == "undefined") return;
 
             var osr : Models.OrderStatusReport = { exchangeId: (<any>msg.data).order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
 
@@ -286,18 +286,20 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     osr = { exchangeId: (<any>msg.data).orders[0].order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
 
                     if ((<any>msg.data).result) {
-                      var avgPx = parseFloat((<any>msg.data).orders[0].avg_price);
-                      var lastQty = parseFloat((<any>msg.data).orders[0].deal_amount);
-                      var lastPx = parseFloat((<any>msg.data).orders[0].price);
-
                       osr.orderStatus = OkCoinOrderEntryGateway.getStatus((<any>msg.data).orders[0].status);
-                      osr.lastQuantity = lastQty > 0 ? lastQty : undefined;
-                      osr.lastPrice = lastPx > 0 ? lastPx : undefined;
-                      osr.averagePrice = avgPx > 0 ? avgPx : undefined;
-                      osr.pendingCancel = (<any>msg.data).orders[0].status === 4;
-                      osr.partiallyFilled = (<any>msg.data).orders[0].status === 1;
-                      osr.leavesQuantity = osr.orderStatus != Models.OrderStatus.Working ? 0 : (<any>msg.data).orders[0].amount - (<any>msg.data).orders[0].deal_amount;
-                    } else {
+                      if (osr.orderStatus == Models.OrderStatus.Working) {
+                        var avgPx = parseFloat((<any>msg.data).orders[0].avg_price);
+                        var lastQty = parseFloat((<any>msg.data).orders[0].deal_amount);
+                        var lastPx = parseFloat((<any>msg.data).orders[0].price);
+                        osr.lastQuantity = lastQty > 0 ? lastQty : undefined;
+                        osr.lastPrice = lastPx > 0 ? lastPx : undefined;
+                        osr.averagePrice = avgPx > 0 ? avgPx : undefined;
+                        osr.pendingCancel = (<any>msg.data).orders[0].status === 4;
+                        osr.partiallyFilled = (<any>msg.data).orders[0].status === 1;
+                        osr.leavesQuantity = (<any>msg.data).orders[0].amount - (<any>msg.data).orders[0].deal_amount;
+                      }
+                    }
+                    if (!osr.leavesQuantity) {
                       osr.orderStatus = Models.OrderStatus.Cancelled;
                       osr.leavesQuantity = 0;
                       osr.done = true;
