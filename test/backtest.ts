@@ -64,7 +64,7 @@ describe("BacktestTests", () => {
         assert.equal(nTimes, 3);
     });
 
-    it("Should handle both intervals and timouts", () => {
+    it("Should handle both intervals and timeouts", () => {
         var nTimes = 0;
         timeProvider.setInterval(() => nTimes += 1, Moment.duration(2, "seconds"));
 
