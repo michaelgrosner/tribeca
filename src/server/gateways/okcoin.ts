@@ -269,9 +269,10 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http.post("cancel_order.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
             if (typeof (<any>msg.data).result == "undefined") return;
 
-            var osr : Models.OrderStatusReport = { exchangeId: (<any>msg.data).order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
+            var osr : Models.OrderStatusReport = { orderId: cancel.clientOrderId, time: msg.time };
 
             if ((<any>msg.data).result) {
+                osr.exchangeId = (<any>msg.data).order_id.toString();
                 osr.orderStatus = Models.OrderStatus.Cancelled;
                 osr.leavesQuantity = 0;
                 osr.done = true;
@@ -283,11 +284,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                       || typeof (<any>msg.data).orders[0] == "undefined"
                       || typeof (<any>msg.data).orders[0].order_id == "undefined") return;
 
-                    osr = { exchangeId: (<any>msg.data).orders[0].order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
+                    osr = { orderId: cancel.clientOrderId, time: msg.time };
 
                     if ((<any>msg.data).result) {
                       osr.orderStatus = OkCoinOrderEntryGateway.getStatus((<any>msg.data).orders[0].status);
                       if (osr.orderStatus == Models.OrderStatus.Working) {
+                        osr.exchangeId = (<any>msg.data).orders[0].order_id.toString();
                         var avgPx = parseFloat((<any>msg.data).orders[0].avg_price);
                         var lastQty = parseFloat((<any>msg.data).orders[0].deal_amount);
                         var lastPx = parseFloat((<any>msg.data).orders[0].price);
