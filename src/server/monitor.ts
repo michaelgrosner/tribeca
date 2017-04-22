@@ -3,7 +3,6 @@ import Persister = require("./persister");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
-import Q = require("q");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
