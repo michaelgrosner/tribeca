@@ -18,7 +18,7 @@
     "@types/express-serve-static-core": "^4.0.44",
     "@types/highcharts": "^4.2.54",
     "@types/jquery": "^2.0.41",
-    "@types/lodash": "^4.14.62",
+    "@types/lodash": "^4.14.63",
     "@types/marked": "^0.0.28",
     "@types/mongodb": "^2.1.43",
     "@types/node": "^7.0.13",
@@ -65,7 +65,7 @@
     "uglify-js": "^2.8.22",
     "uuid": "^3.0.1",
     "ws": "^2.3.1",
-    "zone.js": "^0.8.5"
+    "zone.js": "^0.8.8"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.41",
