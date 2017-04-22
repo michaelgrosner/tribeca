@@ -455,11 +455,11 @@ export class ExchangeBroker implements Interfaces.IBroker {
     public get pair() {
         return this._pair;
     }
-    
-    public get supportedCurrencyPairs() : Models.CurrencyPair[] {
-        return this._baseGateway.supportedCurrencyPairs;
-    }
 
+    public get minTickIncrement() {
+        return this._baseGateway.minTickIncrement;
+    }
+    
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private mdConnected = Models.ConnectivityStatus.Disconnected;
     private oeConnected = Models.ConnectivityStatus.Disconnected;

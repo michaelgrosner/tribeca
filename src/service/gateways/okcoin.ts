@@ -446,13 +446,7 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.OkCoin;
     }
     
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
-    ];
-    public get supportedCurrencyPairs() {
-        return OkCoinBaseGateway.AllPairs;
-    }
+    constructor(public minTickIncrement: number) {}
 }
 
 function GetCurrencyEnum(c: string) : Models.Currency {
@@ -483,7 +477,7 @@ class OkCoinSymbolProvider {
     }
 }
 
-export class OkCoin extends Interfaces.CombinedGateway {
+class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new OkCoinSymbolProvider(pair);
         var signer = new OkCoinMessageSigner(config);
@@ -498,6 +492,10 @@ export class OkCoin extends Interfaces.CombinedGateway {
             new OkCoinMarketDataGateway(socket, symbol),
             orderGateway,
             new OkCoinPositionGateway(http),
-            new OkCoinBaseGateway());
+            new OkCoinBaseGateway(.01)); // uh... todo
         }
+}
+
+export async function createOkCoin(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    return new OkCoin(config, pair);
 }

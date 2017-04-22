@@ -123,19 +123,16 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     exchange(): Models.Exchange {
         return Models.Exchange.Null;
     }
-    
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
-    ];
-    public get supportedCurrencyPairs() {
-        return NullGatewayDetails.AllPairs;
-    }
+
+    constructor(public minTickIncrement: number = .01) {}
 }
 
-export class NullGateway extends Interfaces.CombinedGateway {
+class NullGateway extends Interfaces.CombinedGateway {
     constructor() {
         super(new NullMarketDataGateway(), new NullOrderGateway(), new NullPositionGateway(), new NullGatewayDetails());
     }
+}
+
+export function createNullGateway() : Promise<Interfaces.CombinedGateway> {
+    return Q(new NullGateway());
 }
