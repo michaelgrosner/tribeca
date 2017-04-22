@@ -144,6 +144,7 @@ export class ExchangeQuoter {
               ).length)
                 return Models.QuoteSent.UnsentDuplicate;
               this.cancelHigherQuotes(q.data.price, q.time);
+              price = Utils.roundFloat(price);
               q.data.price = price;
             } else
               return Models.QuoteSent.UnsentDuplicate;
