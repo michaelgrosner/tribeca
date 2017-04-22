@@ -299,7 +299,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(order.side),
             quantity: order.quantity * _lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
-            price: Utils.roundFloat(order.price),
+            price: Utils.roundFloat(order.price, this._details.minTickIncrement),
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
@@ -464,7 +464,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _log = Utils.log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
-    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
+    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
@@ -598,8 +598,9 @@ class HitBtcSymbolProvider {
 
 class HitBtc extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number) {
+        const details = new HitBtcBaseGateway(step);
         const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider)
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.
@@ -612,7 +613,7 @@ class HitBtc extends Interfaces.CombinedGateway {
             new HitBtcMarketDataGateway(config, symbolProvider),
             orderGateway,
             positionGateway,
-            new HitBtcBaseGateway(step));
+            details);
     }
 }
 

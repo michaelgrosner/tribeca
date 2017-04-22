@@ -210,9 +210,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private convertToOrderRequest = (order: Models.Order): BitfinexNewOrderRequest => {
         return {
-            amount: Utils.roundFloat(order.quantity).toString(),
+            amount: Utils.roundFloat(order.quantity, this._details.minTickIncrement).toString(),
             exchange: "bitfinex",
-            price: Utils.roundFloat(order.price).toString(),
+            price: Utils.roundFloat(order.price, this._details.minTickIncrement).toString(),
             side: encodeSide(order.side),
             symbol: this._symbolProvider.symbol,
             type: encodeTimeInForce(order.timeInForce, order.type)
@@ -317,7 +317,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private _since = moment.utc();
     private _log = Utils.log("tribeca:gateway:BitfinexOE");
-    constructor(timeProvider: Utils.ITimeProvider,
+    constructor(
+        timeProvider: Utils.ITimeProvider,
+        private _details: BitfinexBaseGateway,
         private _http: BitfinexHttp,
         private _symbolProvider: BitfinexSymbolProvider) {
 
@@ -529,16 +531,17 @@ class Bitfinex extends Interfaces.CombinedGateway {
     constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number) {
         const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
         const http = new BitfinexHttp(config, monitor);
-
+        const details = new BitfinexBaseGateway(pricePrecision);
+        
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, http, symbol)
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
             new BitfinexMarketDataGateway(timeProvider, http, symbol),
             orderGateway,
             new BitfinexPositionGateway(timeProvider, http),
-            new BitfinexBaseGateway(pricePrecision));
+            details);
     }
 }
 

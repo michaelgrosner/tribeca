@@ -33,6 +33,7 @@ export class PositionManager {
 
     private _timer: RegularTimer;
     constructor(
+        private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
@@ -58,13 +59,15 @@ export class PositionManager {
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
 
-        if (Math.abs(newTargetPosition - this._latest) > 1e-2) {
+        const minTick = this._details.minTickIncrement;
+        if (Math.abs(newTargetPosition - this._latest) > minTick) {
             this._latest = newTargetPosition;
             this.NewTargetPosition.trigger();
         }
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", 
-            Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
+        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort, minTick), "long:", 
+            Utils.roundFloat(newLong, minTick), "target:", Utils.roundFloat(this._latest, minTick), 
+            "currentFv:", Utils.roundFloat(fv.price, minTick));
 
         this._data.push(rfv);
         this._persister.persist(rfv);
@@ -113,7 +116,7 @@ export class TargetBasePositionManager {
             this._wrapped.publish(this.latestTargetPosition);
             this._persister.persist(this.latestTargetPosition);
 
-            this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
+            this._log.info("recalculated target base position:", this.latestTargetPosition.data);
         }
     };
 }
