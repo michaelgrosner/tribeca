@@ -39,7 +39,6 @@
     "body-parser": "^1.17.1",
     "browserify": "^14.3.0",
     "bunyan": "^1.8.10",
-    "codacy-coverage": "^2.0.2",
     "collections": "^5.0.6",
     "compression": "^1.6.2",
     "connect": "^3.6.1",
@@ -69,7 +68,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.41",
-    "codacy-coverage": "^2.0.1",
+    "codacy-coverage": "^2.0.2",
     "istanbul": "^1.0.0-alpha",
     "istanbul-coveralls": "^1.0.3",
     "mocha": "^3.2.0",
