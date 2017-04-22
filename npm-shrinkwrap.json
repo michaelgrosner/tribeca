@@ -98,9 +98,9 @@
       "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.41.tgz"
     },
     "@types/lodash": {
-      "version": "4.14.62",
-      "from": "@types/lodash@>=4.14.62 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.62.tgz"
+      "version": "4.14.63",
+      "from": "@types/lodash@4.14.63",
+      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.63.tgz"
     },
     "@types/marked": {
       "version": "0.0.28",
@@ -3552,9 +3552,9 @@
       "dev": true
     },
     "zone.js": {
-      "version": "0.8.5",
-      "from": "zone.js@>=0.8.5 <0.9.0",
-      "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.8.5.tgz"
+      "version": "0.8.8",
+      "from": "zone.js@0.8.8",
+      "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.8.8.tgz"
     }
   }
 }
