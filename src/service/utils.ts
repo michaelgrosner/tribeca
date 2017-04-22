@@ -59,8 +59,9 @@ export class Evt<T> {
     public removeAllListeners = () => this._event.removeAllListeners();
 }
 
-export function roundFloat(x: number) {
-    return Math.round(x * 100) / 100;
+export function roundFloat(x: number, minTick: number) {
+    const b = 1/minTick;
+    return Math.round(x * b) / b;
 }
 
 export interface ITimeProvider {

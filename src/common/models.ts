@@ -382,7 +382,7 @@ export class ExchangePairMessage<T> {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string) { }
+    constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string, public minTick: number) { }
 }
 
 export class Message implements ITimestamped {

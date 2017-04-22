@@ -44,6 +44,7 @@ export class FairValueEngine {
     }
 
     constructor(
+        private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _filtration: MarketFiltration.MarketFiltration,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
@@ -63,9 +64,9 @@ export class FairValueEngine {
         }
     }
 
-    private static ComputeFV(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
+    private ComputeFV(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
-        return Utils.roundFloat(unrounded);
+        return Utils.roundFloat(unrounded, this._details.minTickIncrement);
     }
 
     private recalcFairValue = (t: moment.Moment) => {
@@ -84,7 +85,7 @@ export class FairValueEngine {
             return;
         }
 
-        var fv = new Models.FairValue(FairValueEngine.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
+        var fv = new Models.FairValue(this.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
         this.latestFairValue = fv;
     };
 }

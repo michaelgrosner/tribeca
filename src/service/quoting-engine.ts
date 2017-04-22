@@ -55,6 +55,7 @@ export class QuotingEngine {
         private _quotePublisher: Messaging.IPublish<Models.TwoSidedQuote>,
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
+        private _details: Interfaces.IBroker,
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
@@ -134,24 +135,25 @@ export class QuotingEngine {
             unrounded.bidSz = null;
         }
         
+        const minTick = this._details.minTickIncrement;
         if (unrounded.bidPx !== null) {
-            unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
+            unrounded.bidPx = Utils.roundFloat(unrounded.bidPx, minTick);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
         
         if (unrounded.askPx !== null) {
-            unrounded.askPx = Utils.roundFloat(unrounded.askPx);
-            unrounded.askPx = Math.max(unrounded.bidPx + .01, unrounded.askPx);
+            unrounded.askPx = Utils.roundFloat(unrounded.askPx, minTick);
+            unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
         
         if (unrounded.askSz !== null) {
-            unrounded.askSz = Utils.roundFloat(unrounded.askSz);
-            unrounded.askSz = Math.max(0.01, unrounded.askSz);
+            unrounded.askSz = Utils.roundFloat(unrounded.askSz, minTick);
+            unrounded.askSz = Math.max(minTick, unrounded.askSz);
         }
         
         if (unrounded.bidSz !== null) {
-            unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
-            unrounded.bidSz = Math.max(0.01, unrounded.bidSz);
+            unrounded.bidSz = Utils.roundFloat(unrounded.bidSz, minTick);
+            unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
         }
 
         return unrounded;
@@ -178,18 +180,18 @@ export class QuotingEngine {
         }
 
         this.latestQuote = new Models.TwoSidedQuote(
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
+            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
             t
             );
     };
 
-    private static quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
+    private quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
         if (newQ.price === null && newQ.size === null) return null;
         if (prevTwoSided == null) return newQ;
         var previousQ = sideGetter(prevTwoSided);
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
-        return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
+        return Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement ? previousQ : newQ;
     }
 }
