@@ -13,7 +13,7 @@
 [![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)](https://david-dm.org/ctubio/tribeca)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 
-Runs on the latest node.js (v6 or greater). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
+Runs on the latest node.js (v6 or v7). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
@@ -33,7 +33,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 ### Manual Installation
 
-1. Ensure your target machine has node v6 or greater (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
+1. Ensure your target machine has node v6 or v7 (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
 
 2. Run `git clone ssh://git@github.com/ctubio/tribeca` in any location that you wish.
 
@@ -100,6 +100,8 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 Feel free to run `npm test` anytime.
 
 To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
+
+To debug the server code with chrome-devtools, attach the node debugger to the application with `nodejs --inspect tribeca.js`;
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
