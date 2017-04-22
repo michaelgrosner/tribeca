@@ -24,6 +24,7 @@ export class MarketFiltration {
     }
 
     constructor(
+        private _details: Interfaces.IBroker,
         private _scheduler: Utils.IActionScheduler,
         private _quoter: Quoter.Quoter,
         private _broker: Interfaces.IMarketDataBroker) {
@@ -58,7 +59,7 @@ export class MarketFiltration {
             for (var i = 0; i < copiedMkts.length; i++) {
                 var m = copiedMkts[i];
 
-                if (Math.abs(q.price - m.price) < .005) {
+                if (Math.abs(q.price - m.price) < this._details.minTickIncrement) {
                     copiedMkts[i].size = m.size - q.size;
                 }
             }
