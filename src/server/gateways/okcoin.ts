@@ -266,28 +266,47 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
-        var c: Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
-        this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_cancel_order", this._signer.signMessage(c));
+        this._http.post("cancel_order.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
+            if (typeof (<any>msg.data).order_id == "undefined") return;
+
+            var osr : Models.OrderStatusReport = { exchangeId: (<any>msg.data).order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
+
+            if ((<any>msg.data).result) {
+                osr.orderStatus = Models.OrderStatus.Cancelled;
+                osr.leavesQuantity = 0;
+                osr.done = true;
+                this.OrderUpdate.trigger(osr);
+            }
+            else {
+                this._http.post("order_info.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
+                    if (typeof (<any>msg.data).orders == "undefined"
+                      || typeof (<any>msg.data).orders[0] == "undefined"
+                      || typeof (<any>msg.data).orders[0].order_id == "undefined") return;
+
+                    osr = { exchangeId: (<any>msg.data).orders[0].order_id.toString(), orderId: cancel.clientOrderId, time: msg.time };
+
+                    if ((<any>msg.data).result) {
+                      var avgPx = parseFloat((<any>msg.data).orders[0].avg_price);
+                      var lastQty = parseFloat((<any>msg.data).orders[0].deal_amount);
+                      var lastPx = parseFloat((<any>msg.data).orders[0].price);
+
+                      osr.orderStatus = OkCoinOrderEntryGateway.getStatus((<any>msg.data).orders[0].status);
+                      osr.lastQuantity = lastQty > 0 ? lastQty : undefined;
+                      osr.lastPrice = lastPx > 0 ? lastPx : undefined;
+                      osr.averagePrice = avgPx > 0 ? avgPx : undefined;
+                      osr.pendingCancel = (<any>msg.data).orders[0].status === 4;
+                      osr.partiallyFilled = (<any>msg.data).orders[0].status === 1;
+                      osr.leavesQuantity = osr.orderStatus != Models.OrderStatus.Working ? 0 : (<any>msg.data).orders[0].amount - (<any>msg.data).orders[0].deal_amount;
+                    } else {
+                      osr.orderStatus = Models.OrderStatus.Cancelled;
+                      osr.leavesQuantity = 0;
+                      osr.done = true;
+                    }
+                    this.OrderUpdate.trigger(osr);
+                }).done();
+            }
+        }).done();
         return new Models.OrderGatewayActionReport(Utils.date());
-    };
-
-    private onCancel = (ts: Models.Timestamped<OrderAck>) => {
-        if (typeof ts.data.order_id == "undefined") return;
-
-        var osr : Models.OrderStatusReport = { exchangeId: ts.data.order_id.toString(), time: ts.time };
-
-        if (ts.data.result) {
-            osr.orderStatus = Models.OrderStatus.Cancelled;
-            osr.leavesQuantity = 0;
-            osr.done = true;
-        }
-        else {
-            osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected = true;
-            osr.leavesQuantity = 0;
-        }
-
-        this.OrderUpdate.trigger(osr);
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
@@ -346,13 +365,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private _log = Utils.log("tribeca:gateway:OkCoinOE");
-    constructor(
-            private _socket : OkCoinWebsocket,
+    constructor(private _http : OkCoinHttp,
+            private _socket: OkCoinWebsocket,
             private _signer: OkCoinMessageSigner,
             private _symbolProvider: OkCoinSymbolProvider) {
         _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
-        _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
         _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_userinfo", this.onPosition);
 
         _socket.ConnectChanged.on(cs => {
@@ -525,15 +543,15 @@ function GetCurrencySymbol(c: Models.Currency) : string {
 
 class OkCoinSymbolProvider {
     public symbol: string;
+    public symbolReversed: string;
     public symbolQuote: string;
     public symbolWithoutUnderscore: string;
-    public symbolReversed: string;
 
     constructor(pair: Models.CurrencyPair) {
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
+        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
         this.symbolQuote = GetCurrencySymbol(pair.quote);
         this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
-        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
     }
 }
 
@@ -545,7 +563,7 @@ export class OkCoin extends Interfaces.CombinedGateway {
         var socket = new OkCoinWebsocket(config);
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer, symbol)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
