@@ -117,12 +117,12 @@ var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesA
 var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
     Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
-var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
+var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) : SimulationClasses => {
     var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
     var exchange = Models.Exchange.Null;
     var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
+    var getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => Q(new Backtest.BacktestExchange(gw));
     
     var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
@@ -150,7 +150,7 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     };
 };
 
-var liveTradingSetup = () => {
+var liveTradingSetup = () : SimulationClasses => {
     var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
     
     var app = express();
@@ -185,13 +185,13 @@ var liveTradingSetup = () => {
     
     var exchange = getExchange();
     
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
+    var getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
         switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
-            case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
-            case Models.Exchange.Bitfinex: return <Interfaces.CombinedGateway>(new Bitfinex.Bitfinex(timeProvider, config, pair));
+            case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+            case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
+            case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+            case Models.Exchange.Null: return NullGw.createNullGateway();
+            case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
@@ -238,7 +238,7 @@ interface SimulationClasses {
     startingActive : Models.SerializedQuotesActive;
     startingParameters : Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
-    getExch(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
+    getExch(orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway>;
     getReceiver<T>(topic: string) : Messaging.IReceive<T>;
     getPersister<T>(collectionName: string) : Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
@@ -272,7 +272,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         paramsPersister.loadLatest(),
         activePersister.loadLatest(),
         rfvPersister.loadAll(50)
-    ]).spread((initOrders: Models.OrderStatusReport[],
+    ]).spread(async (initOrders: Models.OrderStatusReport[],
         initTrades: Models.Trade[],
         initMktTrades: Models.MarketTrade[],
         initMsgs: Models.Message[],
@@ -315,11 +315,8 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
         var cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
         
-        var gateway = classes.getExch(orderCache);
+        var gateway = await classes.getExch(orderCache);
         
-        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
-            throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
-    
         var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
         var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);

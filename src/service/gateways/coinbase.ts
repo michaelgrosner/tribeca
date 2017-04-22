@@ -781,14 +781,7 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return "Coinbase";
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
-    ];
-    public get supportedCurrencyPairs() {
-        return CoinbaseBaseGateway.AllPairs;
-    }
+    constructor(public minTickIncrement: number) {} 
 }
 
 function GetCurrencyEnum(name: string): Models.Currency {
@@ -823,25 +816,46 @@ class CoinbaseSymbolProvider {
     }
 }
 
-export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) {
-        var symbolProvider = new CoinbaseSymbolProvider(pair);
+class Coinbase extends Interfaces.CombinedGateway {
+    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair, symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number) {
 
-        var orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol, config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
-        var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
+        const orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol, config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
+        const authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
-        var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
+        const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
-        var positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
-        var mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(), orderEventEmitter, timeProvider);
+        const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
+        const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(), orderEventEmitter, timeProvider);
 
         super(
             mdGateway,
             orderGateway,
             positionGateway,
-            new CoinbaseBaseGateway());
+            new CoinbaseBaseGateway(quoteIncrement));
     }
 };
+
+interface Product {
+    id: string,
+    base_currency: string,
+    quote_currency: string,
+    base_min_size: string,
+    base_max_size: string,
+    quote_increment: string,
+}
+
+export async function createCoinbase(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    const productsUrl = config.GetString("CoinbaseRestUrl") + '/products';
+    const products = await Utils.getJSON<Product[]>(productsUrl);
+    const symbolProvider = new CoinbaseSymbolProvider(pair);
+    
+    for (let p of products) {
+        if (p.id === symbolProvider.symbol) 
+            return new Coinbase(config, orders, timeProvider, pair, symbolProvider, parseFloat(p.quote_increment));
+    }
+
+    throw new Error("unable to match pair to a coinbase symbol " + pair.toString());
+}
