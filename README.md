@@ -101,7 +101,7 @@ Feel free to run `npm test` anytime.
 
 To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
 
-To debug the server code with chrome-devtools, attach the node debugger to the application with `nodejs --inspect tribeca.js`;
+To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect tribeca.js`.
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
