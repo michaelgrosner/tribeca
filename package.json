@@ -91,6 +91,7 @@
     "restart": "npm stop && npm start",
     "stop": "forever stop -a -l /dev/null tribeca.js || :",
     "start": "npm run test-compile && forever start -a -l /dev/null tribeca.js",
+    "debug": "nodejs --inspect tribeca.js",
     "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install",
     "test": "mocha --compilers ts:ts-node/register test/*.ts",
     "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- test/*.ts",
