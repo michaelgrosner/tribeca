@@ -154,26 +154,6 @@ interface CoinbaseAuthenticatedClient {
     getAccount(accountID: string, cb: (err?: Error, response?: any, info?: CoinbaseAccountInformation) => void);
 }
 
-function convertConnectivityStatus(s: StateChange) {
-    return s.new === "processing" ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected;
-}
-
-function convertSide(msg: CoinbaseBase): Models.Side {
-    return msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
-}
-
-function convertPrice(pxStr: string) {
-    return parseFloat(pxStr);
-}
-
-function convertSize(szStr: string) {
-    return parseFloat(szStr);
-}
-
-function convertTime(time: string) {
-    return moment(time);
-}
-
 class PriceLevel {
     orders: { [id: string]: number } = {};
     marketUpdate = new Models.MarketSide(0, 0);
@@ -215,9 +195,9 @@ class CoinbaseOrderBook {
     };
 
     public onReceived = (msg: CoinbaseReceived, t: moment.Moment): boolean => {
-        var price = convertPrice(msg.price);
-        var size = convertSize(msg.size);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var size = parseFloat(msg.size);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
 
         var otherSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
         var storage = this.getStorage(otherSide);
@@ -246,15 +226,15 @@ class CoinbaseOrderBook {
     }
 
     public onOpen = (msg: CoinbaseOpen, t: moment.Moment) => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
         var storage = this.getStorage(side);
-        this.addToOrderBook(storage, price, convertSize(msg.remaining_size), msg.order_id);
+        this.addToOrderBook(storage, price, parseFloat(msg.remaining_size), msg.order_id);
     };
 
     public onDone = (msg: CoinbaseDone, t: moment.Moment): boolean => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
         var storage = this.getStorage(side);
 
         var priceLevelStorage = storage.get(price);
@@ -277,9 +257,9 @@ class CoinbaseOrderBook {
     };
 
     public onMatch = (msg: CoinbaseMatch, t: moment.Moment): boolean => {
-        var price = convertPrice(msg.price);
-        var size = convertSize(msg.size);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var size = parseFloat(msg.size);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
 
         var makerStorage = this.getStorage(side);
         var priceLevelStorage = makerStorage.get(price);
@@ -302,11 +282,11 @@ class CoinbaseOrderBook {
     };
 
     public onChange = (msg: CoinbaseChange, t: moment.Moment): boolean => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
         var storage = this.getStorage(side);
 
-        var priceLevelStorage: PriceLevel = storage.get(convertPrice(msg.price));
+        var priceLevelStorage: PriceLevel = storage.get(parseFloat(msg.price));
 
         if (typeof priceLevelStorage === "undefined")
             return false;
@@ -315,7 +295,7 @@ class CoinbaseOrderBook {
         if (typeof oldSize === "undefined")
             return false;
 
-        var newSize = convertSize(msg.new_size);
+        var newSize = parseFloat(msg.new_size);
 
         priceLevelStorage.orders[msg.order_id] = newSize;
         priceLevelStorage.marketUpdate.size -= (oldSize - newSize);
@@ -330,7 +310,7 @@ class CoinbaseOrderBook {
 
     public initialize = (book: CoinbaseBookStorage) => {
         var add = (st, u) =>
-            this.addToOrderBook(st, convertPrice(u.price), convertSize(u.size), u.id);
+            this.addToOrderBook(st, parseFloat(u.price), parseFloat(u.size), u.id);
 
         _.forEach(book.asks, a => add(this.asks, a));
         _.forEach(book.bids, b => add(this.bids, b));
@@ -351,15 +331,15 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private onOpen = (msg: CoinbaseOpen, t: moment.Moment) => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
         this._orderBook.onOpen(msg, t);
         this.onOrderBookChanged(t, side, price);
     };
 
     private onDone = (msg: CoinbaseDone, t: moment.Moment) => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
 
         if (this._orderBook.onDone(msg, t)) {
             this.onOrderBookChanged(t, side, price);
@@ -367,20 +347,20 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onMatch = (msg: CoinbaseMatch, t: moment.Moment) => {
-        var price = convertPrice(msg.price);
-        var size = convertSize(msg.size);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var size = parseFloat(msg.size);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
 
         if (this._orderBook.onMatch(msg, t)) {
             this.onOrderBookChanged(t, side, price);
         }
 
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false, side));
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, moment(msg.time), false, side));
     };
 
     private onChange = (msg: CoinbaseChange, t: moment.Moment) => {
-        var price = convertPrice(msg.price);
-        var side = convertSide(msg);
+        var price = parseFloat(msg.price);
+        var side = msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
 
         if (this._orderBook.onChange(msg, t)) {
             this.onOrderBookChanged(t, side, price);
@@ -414,7 +394,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private onStateChange = (s: StateChange) => {
         var t = this._timeProvider.utcNow();
-        var status = convertConnectivityStatus(s);
+        var status = s.new === "processing" ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected;
 
         if (status === Models.ConnectivityStatus.Connected) {
             this._orderBook.initialize(this._client.book);
@@ -614,7 +594,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     private onStateChange = (s: StateChange) => {
-        var status = convertConnectivityStatus(s);
+        var status = s.new === "processing" ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected;
         this.ConnectChanged.trigger(status);
     };
 
@@ -628,7 +608,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: msg.client_oid,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
-            leavesQuantity: convertSize(msg.size)
+            leavesQuantity: parseFloat(msg.size)
         };
 
         this.OrderUpdate.trigger(status);
@@ -645,7 +625,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
-            leavesQuantity: convertSize(msg.remaining_size)
+            leavesQuantity: parseFloat(msg.remaining_size)
         };
 
         this.OrderUpdate.trigger(status);
@@ -688,8 +668,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: client_oid,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
-            lastQuantity: convertSize(msg.size),
-            lastPrice: convertPrice(msg.price),
+            lastQuantity: parseFloat(msg.size),
+            lastPrice: parseFloat(msg.price),
             liquidity: liq
         };
 
@@ -706,7 +686,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
-            quantity: convertSize(msg.new_size)
+            quantity: parseFloat(msg.new_size)
         };
 
         this.OrderUpdate.trigger(status);
@@ -739,7 +719,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
             try {
                 _.forEach(data, d => {
                     var c = GetCurrencyEnum(d.currency);
-                    var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
+                    var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
                     this.PositionUpdate.trigger(rpt);
                 });
             } catch (error) {
