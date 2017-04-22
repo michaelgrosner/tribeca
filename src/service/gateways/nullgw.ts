@@ -7,6 +7,7 @@ import * as Q from "q";
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
+import Config = require("../config");
 var uuid = require('node-uuid');
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
@@ -124,15 +125,19 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Null;
     }
 
-    constructor(public minTickIncrement: number = .01) {}
+    constructor(public minTickIncrement: number) {}
 }
 
 class NullGateway extends Interfaces.CombinedGateway {
-    constructor() {
-        super(new NullMarketDataGateway(), new NullOrderGateway(), new NullPositionGateway(), new NullGatewayDetails());
+    constructor(config: Config.IConfigProvider) {
+        super(
+            new NullMarketDataGateway(), 
+            new NullOrderGateway(), 
+            new NullPositionGateway(), 
+            new NullGatewayDetails(config.GetNumber("NullGatewayTick")));
     }
 }
 
-export function createNullGateway() : Promise<Interfaces.CombinedGateway> {
-    return Q(new NullGateway());
+export function createNullGateway(config: Config.IConfigProvider) : Promise<Interfaces.CombinedGateway> {
+    return Q(new NullGateway(config));
 }

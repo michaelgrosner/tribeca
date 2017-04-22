@@ -210,7 +210,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private convertToOrderRequest = (order: Models.Order): BitfinexNewOrderRequest => {
         return {
-            amount: Utils.roundFloat(order.quantity, this._details.minTickIncrement).toString(),
+            amount: order.quantity.toString(),
             exchange: "bitfinex",
             price: Utils.roundFloat(order.price, this._details.minTickIncrement).toString(),
             side: encodeSide(order.side),
