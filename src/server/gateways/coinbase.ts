@@ -6,6 +6,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
+import _ = require("lodash");
 import Q = require("q");
 import io = require("socket.io-client");
 import moment = require("moment");
