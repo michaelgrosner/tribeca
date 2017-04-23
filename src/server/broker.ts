@@ -430,9 +430,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
                 private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
                 private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
-                private _cancelAllOrdersReciever : Publish.IReceive<Models.CancelAllOrdersRequest>,
-                private _cleanAllClosedOrdersReciever : Publish.IReceive<Models.CleanAllClosedOrdersRequest>,
-                private _cleanAllOrdersReciever : Publish.IReceive<Models.CleanAllOrdersRequest>,
+                private _cancelAllOrdersReciever : Publish.IReceive<object>,
+                private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
+                private _cleanAllOrdersReciever : Publish.IReceive<object>,
                 private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
@@ -468,26 +468,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         });
 
-        _cancelAllOrdersReciever.registerReceiver(o => {
-            this.cancelOpenOrders()
-                // .then(x => this._log.info("cancelled all ", x, " open orders"),
-                      // e => this._log.error(e, "error when cancelling all orders!"))
-                      ;
-        });
-
-        _cleanAllClosedOrdersReciever.registerReceiver(o => {
-            this.cleanClosedOrders()
-                // .then(x => this._log.info("cleaned all closed ", x, " closed orders"),
-                      // e => this._log.error(e, "error when cleaning all closed orders!"))
-                      ;
-        });
-
-        _cleanAllOrdersReciever.registerReceiver(o => {
-            this.cleanOrders()
-                // .then(x => this._log.info("cleaned all ", x, " closed orders"),
-                      // e => this._log.error(e, "error when cleaning all orders!"))
-                      ;
-        });
+        _cancelAllOrdersReciever.registerReceiver(() => this.cancelOpenOrders());
+        _cleanAllClosedOrdersReciever.registerReceiver(() => this.cleanClosedOrders());
+        _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
 
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
