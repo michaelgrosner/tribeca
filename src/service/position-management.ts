@@ -103,7 +103,7 @@ export class TargetBasePositionManager {
         if (params === null || latestPosition === null)
             return;
 
-        const targetBasePosition: number = params.targetBasePosition;
+        let targetBasePosition: number = params.targetBasePosition;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
