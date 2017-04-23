@@ -195,20 +195,20 @@ class PriceLevel {
 }
 
 class CoinbaseOrderBook {
-    private static Eq = (a, b) => Math.abs(a - b) < 1e-4;
+    private Eq = (a, b) => Math.abs(a - b) < .5*this._minTick;
 
-    private static BidCmp = (a, b) => {
-        if (CoinbaseOrderBook.Eq(a, b)) return 0;
+    private BidCmp = (a, b) => {
+        if (this.Eq(a, b)) return 0;
         return a > b ? -1 : 1
     };
 
-    private static AskCmp = (a, b) => {
-        if (CoinbaseOrderBook.Eq(a, b)) return 0;
+    private AskCmp = (a, b) => {
+        if (this.Eq(a, b)) return 0;
         return a > b ? 1 : -1
     };
 
-    public bids: any = new SortedArrayMap([], CoinbaseOrderBook.Eq, CoinbaseOrderBook.BidCmp);
-    public asks: any = new SortedArrayMap([], CoinbaseOrderBook.Eq, CoinbaseOrderBook.AskCmp);
+    public bids: any = new SortedArrayMap([], this.Eq, this.BidCmp);
+    public asks: any = new SortedArrayMap([], this.Eq, this.AskCmp);
 
     private getStorage = (side: Models.Side): any => {
         if (side === Models.Side.Bid) return this.bids;
@@ -350,6 +350,8 @@ class CoinbaseOrderBook {
         _.forEach(book.asks, a => add(this.asks, a));
         _.forEach(book.bids, b => add(this.bids, b));
     };
+
+    constructor(private _minTick: number) {}
 }
 
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
@@ -820,7 +822,7 @@ class Coinbase extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway();
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
-        const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(), orderEventEmitter, timeProvider);
+        const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(quoteIncrement), orderEventEmitter, timeProvider);
 
         super(
             mdGateway,
