@@ -1,4 +1,5 @@
 import * as moment from "moment";
+import * as _ from "lodash";
 
 export interface ITimestamped {
     time : moment.Moment;
@@ -57,8 +58,50 @@ export class MarketTrade implements ITimestamped {
                 public make_side: Side) {}
 }
 
+export enum Currency { 
+    USD, 
+    BTC, 
+    LTC, 
+    EUR, 
+    GBP, 
+    CNY, 
+    ETH, 
+    BFX, 
+    RRT, 
+    ZEC, 
+    BCN, 
+    DASH, 
+    DOGE, 
+    DSH, 
+    EMC, 
+    FCN, 
+    LSK, 
+    NXT, 
+    QCN, 
+    SDB, 
+    SCB, 
+    STEEM, 
+    XDN, 
+    XEM, 
+    XMR, 
+    ARDR, 
+    WAVES, 
+    BTU, 
+    MAID, 
+    AMP 
+}
+
+export function toCurrency(c: string) : Currency|undefined {
+    return Currency[c.toUpperCase()];
+}
+
+export function fromCurrency(c: Currency) : string|undefined {
+    const t = Currency[c];
+    if (t) return t.toUpperCase();
+    return undefined;
+}
+
 export enum GatewayType { MarketData, OrderEntry, Position }
-export enum Currency { USD, BTC, LTC, EUR, GBP, CNY, ETH, BFX, RRT, ZEC, BCN, DASH, DOGE, DSH, EMC, FCN, LSK, NXT, QCN, SDB, SCB, STEEM, XDN, XEM, XMR, ARDR, WAVES, BTU, MAID, AMP }
 export enum ConnectivityStatus { Connected, Disconnected }
 export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfinex }
 export enum Side { Bid, Ask, Unknown }
