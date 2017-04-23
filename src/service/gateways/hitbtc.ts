@@ -299,7 +299,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(order.side),
             quantity: order.quantity * _lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
-            price: Utils.roundSide(order.price, this._details.minTickIncrement, order.side),
+            price: order.price,
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 

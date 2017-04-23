@@ -182,18 +182,38 @@ export class QuotingEngine {
         }
 
         this.latestQuote = new Models.TwoSidedQuote(
-            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, t => t.bid),
-            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, t => t.ask),
+            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, Models.Side.Bid),
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, Models.Side.Ask),
             t
             );
     };
 
-    private quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
+    private quotesAreSame(
+            newQ: Models.Quote, 
+            prevTwoSided: Models.TwoSidedQuote, 
+            side: Models.Side): Models.Quote {
+                
         if (newQ.price === null && newQ.size === null) return null;
         if (prevTwoSided == null) return newQ;
-        const previousQ = sideGetter(prevTwoSided);
+        
+        const previousQ = Models.Side.Bid === side ? prevTwoSided.bid : prevTwoSided.ask;
+        
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
-        return Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement ? previousQ : newQ;
+        
+        if (Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement) {
+            return previousQ;
+        }
+        
+        let quoteWasWidened = true;
+        if (Models.Side.Bid === side && previousQ.price < newQ.price) quoteWasWidened = false;
+        if (Models.Side.Ask === side && previousQ.price > newQ.price) quoteWasWidened = false;
+        
+        // prevent flickering
+        if (!quoteWasWidened && Math.abs(Utils.fastDiff(moment.utc(), prevTwoSided.time)) < 300) {
+            return previousQ;
+        }
+        
+        return newQ;
     }
 }

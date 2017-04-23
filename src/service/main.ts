@@ -318,6 +318,15 @@ const runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         const cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
                 
         const broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
+        mainLog.info({
+            exchange: broker.exchange, 
+            pair: broker.pair.toString(), 
+            minTick: broker.minTickIncrement, 
+            makeFee: broker.makeFee,
+            takeFee: broker.takeFee,
+            hasSelfTradePrevention: broker.hasSelfTradePrevention,
+        }, "using the following exchange details");
+
         const orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
         const marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
