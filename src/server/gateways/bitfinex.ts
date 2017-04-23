@@ -276,7 +276,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http
             .post<BitfinexMyTradesRequest, BitfinexMyTradesResponse[]>("mytrades", tradesReq)
             .then(resps => {
-                resps.data.forEach(t => {
+                _.forEach(resps.data, t => {
 
                     this._http
                         .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", { order_id: t.order_id })
@@ -451,7 +451,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 
     private onRefreshPositions = () => {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
-            res.data.filter(x => x.type === "exchange").forEach(p => {
+            _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
                 var amt = parseFloat(p.amount);
                 var cur = GetCurrencyEnum(p.currency);
                 var held = amt - parseFloat(p.available);
