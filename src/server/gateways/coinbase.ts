@@ -439,7 +439,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             if (err) d.reject(err);
             else  {
                 var t = this._timeProvider.utcNow();
-                JSON.parse(Object(resp).body).forEach(cxl_id => {
+                _.forEach(Object(resp).body, cxl_id => {
                     this.OrderUpdate.trigger({
                         exchangeId: cxl_id,
                         time: t,
