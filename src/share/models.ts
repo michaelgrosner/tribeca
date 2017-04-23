@@ -169,7 +169,6 @@ export class BrokeredReplace implements Order {
 
 export class BrokeredCancel {
     constructor(public clientOrderId: string,
-                public requestId: string,
                 public side: Side,
                 public exchangeId: string) {}
 }
