@@ -55,7 +55,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
 }
 
 export interface IFire<T> {
-  fire(msg: T): void;
+  fire(msg?: T): void;
 }
 
 export class Fire<T> implements IFire<T> {
@@ -67,7 +67,7 @@ export class Fire<T> implements IFire<T> {
                     // .on("disconnect", () => _log("Fire disconnected to", this.topic));
     }
 
-    public fire = (msg : T) : void => {
-        this._socket.emit(Models.Prefixes.MESSAGE + this.topic, msg);
+    public fire = (msg?: T) : void => {
+        this._socket.emit(Models.Prefixes.MESSAGE + this.topic, msg || null);
     };
 }

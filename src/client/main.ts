@@ -447,15 +447,15 @@ class ClientComponent implements OnInit {
   ngOnInit() {
     this.cancelAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CancelAllOrders)
-      .fire(new Models.CancelAllOrdersRequest());
+      .fire();
 
     this.cleanAllClosedOrders = () => this.fireFactory
       .getFire(Models.Topics.CleanAllClosedOrders)
-      .fire(new Models.CleanAllClosedOrdersRequest());
+      .fire();
 
     this.cleanAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CleanAllOrders)
-      .fire(new Models.CleanAllOrdersRequest());
+      .fire();
 
     this.changeNotepad = (content:string) => this.fireFactory
       .getFire(Models.Topics.Notepad)
