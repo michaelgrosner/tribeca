@@ -309,8 +309,11 @@ class CoinbaseOrderBook {
     }
 
     public initialize = (book: CoinbaseBookStorage) => {
-        (<any>book.asks).forEach(a => this.addToOrderBook(this.asks, parseFloat(a.price), parseFloat(a.size), a.id));
-        (<any>book.bids).forEach(b => this.addToOrderBook(this.bids, parseFloat(b.price), parseFloat(b.size), b.id));
+      var add = (st, u) =>
+        this.addToOrderBook(st, parseFloat(u.price), parseFloat(u.size), u.id);
+
+        _.forEach(book.asks, a => add(this.asks, a));
+        _.forEach(book.bids, b => add(this.bids, b));
     };
 }
 
