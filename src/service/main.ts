@@ -190,7 +190,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
             case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-            case Models.Exchange.Null: return NullGw.createNullGateway();
+            case Models.Exchange.Null: return NullGw.createNullGateway(config);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
@@ -332,7 +332,7 @@ const runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         const active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
     
         const quoter = new Quoter.Quoter(orderBroker, broker);
-        const filtration = new MarketFiltration.MarketFiltration(new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
+        const filtration = new MarketFiltration.MarketFiltration(broker, new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
         const fvEngine = new FairValue.FairValueEngine(broker, timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
         const ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
@@ -412,7 +412,7 @@ const runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
             const n = ms - interval;
             if (n > 25)
-                mainLog.info("Event looped blocked for " + Utils.roundFloat(n, .001) + "ms");
+                mainLog.info(`Event looped blocked for ${Utils.roundUp(n, .001)}ms`);
             start = process.hrtime();
         }, interval).unref();
     

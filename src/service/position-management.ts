@@ -65,9 +65,7 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort, minTick), "long:", 
-            Utils.roundFloat(newLong, minTick), "target:", Utils.roundFloat(this._latest, minTick), 
-            "currentFv:", Utils.roundFloat(fv.price, minTick));
+        this._log.info(`recalculated regular fair value, short: ${newShort} long: ${newLong}, target: ${this._latest}, currentFv: ${fv.price}`);
 
         this._data.push(rfv);
         this._persister.persist(rfv);

@@ -66,7 +66,7 @@ export class FairValueEngine {
 
     private ComputeFV(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         var unrounded = FairValueEngine.ComputeFVUnrounded(ask, bid, model);
-        return Utils.roundFloat(unrounded, this._details.minTickIncrement);
+        return Utils.roundNearest(unrounded, this._details.minTickIncrement);
     }
 
     private recalcFairValue = (t: moment.Moment) => {
