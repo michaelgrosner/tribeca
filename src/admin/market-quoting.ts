@@ -129,7 +129,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
 
     var updateQuoteClass = () => {
         if (!angular.isUndefined($scope.levels) && $scope.levels.length > 0) {
-            var tol = .005;
+            var tol = 1e-6;
             for (var i = 0; i < $scope.levels.length; i++) {
                 var level = $scope.levels[i];
 

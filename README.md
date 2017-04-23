@@ -60,13 +60,38 @@ Runs on the latest node.js (v7.8 or greater). Persistence is acheived using mong
     
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
   
-  * TradedPair - The following currency pairs are supported on these exchanges:
+  * TradedPair - Any combination of the following currencies are supported, if the target EXCHANGE supports trading the currency pair:
   
-    1. `BTC/USD` - Coinbase, HitBtc, OkCoin, Null
-    
-    2. `BTC/EUR` - Coinbase, HitBtc, Null
-    
-    3. `BTC/GBP` - Coinbase, Null
+    - USD
+    - BTC
+    - LTC
+    - EUR
+    - GBP
+    - CNY
+    - ETH
+    - BFX
+    - RRT
+    - ZEC
+    - BCN
+    - DASH
+    - DOGE
+    - DSH
+    - EMC
+    - FCN
+    - LSK
+    - NXT
+    - QCN
+    - SDB
+    - SCB
+    - STEEM
+    - XDN
+    - XEM
+    - XMR
+    - ARDR
+    - WAVES
+    - BTU
+    - MAID
+    - AMP
     
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/michaelgrosner/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 

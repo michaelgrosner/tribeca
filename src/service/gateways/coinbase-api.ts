@@ -46,10 +46,8 @@ PublicClient.prototype = new function() {
 
     prototype.makeRequestCallback = function(callback) {
         return function(err, response, data) {
-            try {
+            if (typeof data === "string") {
                 data = JSON.parse(data);
-            } catch (e) {
-                data = null
             }
             callback(err, response, data);
         };

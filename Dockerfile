@@ -1,4 +1,4 @@
-FROM node:5
+FROM node:7.9
 RUN apt-get update
 
 RUN apt-get install -y git

@@ -47,17 +47,17 @@
         <tr class="info">
             <td>q</td>
             <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
-            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx|number:2 }}</td>
-            <td>{{ fairValue|number:2 }}</td>
-            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx|number:2 }}</td>
+            <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx }}</td>
+            <td>{{ fairValue }}</td>
+            <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx }}</td>
             <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
         </tr>
         <tr class="active" ng-repeat="level in levels">
             <td>mkt{{ $index }}</td>
             <td>{{ level.bidSize|number:2 }}</td>
-            <td ng-class="level.bidClass">{{ level.bidPrice|number:2 }}</td>
+            <td ng-class="level.bidClass">{{ level.bidPrice }}</td>
             <td></td>
-            <td ng-class="level.askClass">{{ level.askPrice|number:2 }}</td>
+            <td ng-class="level.askClass">{{ level.askPrice }}</td>
             <td>{{ level.askSize|number:2 }}</td>
         </tr>
     </table>
@@ -95,14 +95,14 @@
 <script type="text/ng-template" id="positions.html">
     <div>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ quoteCurrency }}: {{ quotePosition|currency:undefined:3 }} ({{ quoteHeldPosition|currency:undefined:3 }})
+            {{ quoteCurrency }}: {{ quotePosition|currency:undefined:8 }} ({{ quoteHeldPosition|currency:undefined:8 }})
         </small></h4>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ baseCurrency }}: {{ basePosition|currency:"B":3 }} ({{ baseHeldPosition|currency:"B":3 }})
+            {{ baseCurrency }}: {{ basePosition|currency:undefined:8 }} ({{ baseHeldPosition|currency:undefined:8 }})
         </small></h4>
-        <h4 class="col-md-12 col-xs-2">
-          Value: {{ value|currency:"B":3 }} ({{ quoteValue|currency:undefined:3 }})
-        </h4>
+        <h4 class="col-md-12 col-xs-2"><small>
+          Value: {{ value|currency:undefined:8 }} ({{ quoteValue|currency:undefined:8 }})
+        </small></h4>
     </div>
 </script>
 

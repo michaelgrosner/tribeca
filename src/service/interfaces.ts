@@ -12,8 +12,7 @@ export interface IExchangeDetailsGateway {
     makeFee(): number;
     takeFee(): number;
     exchange(): Models.Exchange;
-    supportedCurrencyPairs: Models.CurrencyPair[];
-
+    minTickIncrement: number;
     hasSelfTradePrevention: boolean;
 }
 
@@ -95,8 +94,9 @@ export interface IBroker extends IBrokerConnectivity {
     makeFee(): number;
     takeFee(): number;
     exchange(): Models.Exchange;
+
+    minTickIncrement: number;
     pair: Models.CurrencyPair;
-    supportedCurrencyPairs: Models.CurrencyPair[];
 
     hasSelfTradePrevention: boolean;
 }

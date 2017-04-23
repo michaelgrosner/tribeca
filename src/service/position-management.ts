@@ -33,38 +33,40 @@ export class PositionManager {
 
     private _timer: RegularTimer;
     constructor(
+        private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _data: Models.RegularFairValue[],
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
-        var lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
+        const lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
         this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
     }
 
     private updateEwmaValues = () => {
-        var fv = this._fvAgent.latestFairValue;
+        const fv = this._fvAgent.latestFairValue;
         if (fv === null)
             return;
 
-        var rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
+        const rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
-        var newShort = this._shortEwma.addNewValue(fv.price);
-        var newLong = this._longEwma.addNewValue(fv.price);
+        const newShort = this._shortEwma.addNewValue(fv.price);
+        const newLong = this._longEwma.addNewValue(fv.price);
 
-        var newTargetPosition = (newShort - newLong) / 2.0;
+        const minTick = this._details.minTickIncrement;    
+        const factor = 1/minTick;
+        let newTargetPosition = ((newShort * factor/ newLong) - factor) * 5;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
 
-        if (Math.abs(newTargetPosition - this._latest) > 1e-2) {
+        if (Math.abs(newTargetPosition - this._latest) > minTick) {
             this._latest = newTargetPosition;
             this.NewTargetPosition.trigger();
         }
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(newShort), "long:", 
-            Utils.roundFloat(newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
+        this._log.info(`recalculated regular fair value, short: ${newShort} long: ${newLong}, target: ${this._latest}, currentFv: ${fv.price}`);
 
         this._data.push(rfv);
         this._persister.persist(rfv);
@@ -95,13 +97,13 @@ export class TargetBasePositionManager {
     }
 
     private recomputeTargetPosition = () => {
-        var latestPosition = this._positionBroker.latestReport;
-        var params = this._params.latest;
+        const latestPosition = this._positionBroker.latestReport;
+        const params = this._params.latest;
 
         if (params === null || latestPosition === null)
             return;
 
-        var targetBasePosition: number = params.targetBasePosition;
+        let targetBasePosition: number = params.targetBasePosition;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2.0) * latestPosition.value;
         }
@@ -113,7 +115,7 @@ export class TargetBasePositionManager {
             this._wrapped.publish(this.latestTargetPosition);
             this._persister.persist(this.latestTargetPosition);
 
-            this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
+            this._log.info("recalculated target base position:", this.latestTargetPosition.data);
         }
     };
 }
@@ -129,7 +131,7 @@ export class RegularTimer {
             this.startTicking();
         }
         else {
-            var timeout = lastTime.add(_diffTime).diff(_timeProvider.utcNow());
+            const timeout = lastTime.add(_diffTime).diff(_timeProvider.utcNow());
 
             if (timeout > 0) {
                 _timeProvider.setTimeout(this.startTicking, moment.duration(timeout));

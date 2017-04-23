@@ -63,9 +63,9 @@ import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 
-var serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
+const serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
-var config = new Config.ConfigProvider();
+const config = new Config.ConfigProvider();
 
 let exitingEvent : () => Q.Promise<boolean>;
 
@@ -101,41 +101,41 @@ process.on("SIGINT", () => {
     performExit();
 });
 
-var mainLog = Utils.log("tribeca:main");
-var messagingLog = Utils.log("tribeca:messaging");
+const mainLog = Utils.log("tribeca:main");
+const messagingLog = Utils.log("tribeca:messaging");
 
 function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
-    var split = raw.split("/");
+    const split = raw.split("/");
     if (split.length !== 2) 
         throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/USD");
     
     return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
 }
-var pair = ParseCurrencyPair(config.GetString("TradedPair"));
+const pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
-var defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
-var defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
+const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
+const defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
     Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
-var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) => {
-    var timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
-    var exchange = Models.Exchange.Null;
-    var gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
+const backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) : SimulationClasses => {
+    const timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
+    const exchange = Models.Exchange.Null;
+    const gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(gw);
+    const getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => Q(new Backtest.BacktestExchange(gw));
     
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
+    const getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
     };
     
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
+    const getReceiver = <T>(topic: string) : Messaging.IReceive<T> => new Messaging.NullReceiver<T>();
     
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
+    const getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
     
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
+    const getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
     
-    var startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
-    var startingParameters : Models.QuotingParameters = parameters.quotingParameters;
+    const startingActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(true, timeProvider.utcNow());
+    const startingParameters : Models.QuotingParameters = parameters.quotingParameters;
 
     return {
         exchange: exchange,
@@ -150,29 +150,29 @@ var backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTr
     };
 };
 
-var liveTradingSetup = () => {
-    var timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
+const liveTradingSetup = () : SimulationClasses => {
+    const timeProvider : Utils.ITimeProvider = new Utils.RealTimeProvider();
     
-    var app = express();
-    var http_server = http.createServer(app);
-    var io = socket_io(http_server);
+    const app = express();
+    const http_server = http.createServer(app);
+    const io = socket_io(http_server);
 
-    var username = config.GetString("WebClientUsername");
-    var password = config.GetString("WebClientPassword");
+    const username = config.GetString("WebClientUsername");
+    const password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
         mainLog.info("Requiring authentication to web client");
-        var basicAuth = require('basic-auth-connect');
+        const basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "admin")));
     
-    var webport = config.GetNumber("WebClientListenPort");
+    const webport = config.GetNumber("WebClientListenPort");
     http_server.listen(webport, () => mainLog.info('Listening to admins on *:', webport));
     
-    var getExchange = (): Models.Exchange => {
-        var ex = config.GetString("EXCHANGE").toLowerCase();
+    const getExchange = (): Models.Exchange => {
+        const ex = config.GetString("EXCHANGE").toLowerCase();
         switch (ex) {
             case "hitbtc": return Models.Exchange.HitBtc;
             case "coinbase": return Models.Exchange.Coinbase;
@@ -183,41 +183,41 @@ var liveTradingSetup = () => {
         }
     };
     
-    var exchange = getExchange();
+    const exchange = getExchange();
     
-    var getExch = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => {
+    const getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
         switch (exchange) {
-            case Models.Exchange.HitBtc: return <Interfaces.CombinedGateway>(new HitBtc.HitBtc(config, pair));
-            case Models.Exchange.Coinbase: return <Interfaces.CombinedGateway>(new Coinbase.Coinbase(config, orderCache, timeProvider, pair));
-            case Models.Exchange.OkCoin: return <Interfaces.CombinedGateway>(new OkCoin.OkCoin(config, pair));
-            case Models.Exchange.Null: return <Interfaces.CombinedGateway>(new NullGw.NullGateway());
-            case Models.Exchange.Bitfinex: return <Interfaces.CombinedGateway>(new Bitfinex.Bitfinex(timeProvider, config, pair));
+            case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+            case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
+            case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+            case Models.Exchange.Null: return NullGw.createNullGateway(config);
+            case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
     
-    var getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
-        var socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
+    const getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => {
+        const socketIoPublisher = new Messaging.Publisher<T>(topic, io, null, messagingLog.info.bind(messagingLog));
         if (persister)
             return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
         else
             return socketIoPublisher;
     };
     
-    var getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
+    const getReceiver = <T>(topic: string) : Messaging.IReceive<T> => 
         new Messaging.Receiver<T>(topic, io, messagingLog.info.bind(messagingLog));
     
-    var db = Persister.loadDb(config);
+    const db = Persister.loadDb(config);
     
-    var loaderSaver = new Persister.LoaderSaver(exchange, pair);
-    var mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
+    const loaderSaver = new Persister.LoaderSaver(exchange, pair);
+    const mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
     
-    var getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
-        var ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
+    const getPersister = <T>(collectionName: string) : Persister.ILoadAll<T> => {
+        const ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
         return new Persister.Persister<T>(db, collectionName, exchange, pair, ls.loader, ls.saver);
     };
         
-    var getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
+    const getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
 
     return {
@@ -238,31 +238,31 @@ interface SimulationClasses {
     startingActive : Models.SerializedQuotesActive;
     startingParameters : Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
-    getExch(orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway;
+    getExch(orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway>;
     getReceiver<T>(topic: string) : Messaging.IReceive<T>;
     getPersister<T>(collectionName: string) : Persister.ILoadAll<T>;
     getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
 
-var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
-    var getPersister = classes.getPersister;
-    var orderPersister = getPersister("osr");
-    var tradesPersister = getPersister("trades");
-    var fairValuePersister = getPersister("fv");
-    var mktTradePersister = getPersister("mt");
-    var positionPersister = getPersister("pos");
-    var messagesPersister = getPersister("msg");
-    var rfvPersister = getPersister("rfv");
-    var tbpPersister = getPersister("tbp");
-    var tsvPersister = getPersister("tsv");
-    var marketDataPersister = getPersister(Messaging.Topics.MarketData);
+const runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
+    const getPersister = classes.getPersister;
+    const orderPersister = getPersister("osr");
+    const tradesPersister = getPersister("trades");
+    const fairValuePersister = getPersister("fv");
+    const mktTradePersister = getPersister("mt");
+    const positionPersister = getPersister("pos");
+    const messagesPersister = getPersister("msg");
+    const rfvPersister = getPersister("rfv");
+    const tbpPersister = getPersister("tbp");
+    const tsvPersister = getPersister("tsv");
+    const marketDataPersister = getPersister(Messaging.Topics.MarketData);
     
-    var activePersister = classes.getRepository(classes.startingActive, Messaging.Topics.ActiveChange);
-    var paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
+    const activePersister = classes.getRepository(classes.startingActive, Messaging.Topics.ActiveChange);
+    const paramsPersister = classes.getRepository(classes.startingParameters, Messaging.Topics.QuotingParametersChange);
     
-    var exchange = classes.exchange;
-    var completedSuccessfully = Q.defer<boolean>();
+    const exchange = classes.exchange;
+    const completedSuccessfully = Q.defer<boolean>();
     
     Q.all<any>([
         orderPersister.loadAll(10000, {source: {$gte: Models.OrderSource.OrderTicket}}),
@@ -272,7 +272,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         paramsPersister.loadLatest(),
         activePersister.loadLatest(),
         rfvPersister.loadAll(50)
-    ]).spread((initOrders: Models.OrderStatusReport[],
+    ]).spread(async (initOrders: Models.OrderStatusReport[],
         initTrades: Models.Trade[],
         initMktTrades: Models.MarketTrade[],
         initMsgs: Models.Message[],
@@ -283,69 +283,75 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         _.defaults(initParams, defaultQuotingParameters);
         _.defaults(initActive, defaultActive);
     
-        var orderCache = new Broker.OrderStateCache();
-        var timeProvider = classes.timeProvider;
-        var getPublisher = classes.getPublisher;
+        const orderCache = new Broker.OrderStateCache();
+        const timeProvider = classes.timeProvider;
+        const getPublisher = classes.getPublisher;
+
+        const gateway = await classes.getExch(orderCache);        
         
-        var advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"));
+        const advert = new Models.ProductAdvertisement(exchange, pair, config.GetString("TRIBECA_MODE"), gateway.base.minTickIncrement);
         getPublisher(Messaging.Topics.ProductAdvertisement).registerSnapshot(() => [advert]).publish(advert);
         
-        var quotePublisher = getPublisher(Messaging.Topics.Quote);
-        var fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
-        var marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
-        var orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
-        var tradePublisher = getPublisher(Messaging.Topics.Trades, tradesPersister);
-        var activePublisher = getPublisher(Messaging.Topics.ActiveChange);
-        var quotingParametersPublisher = getPublisher(Messaging.Topics.QuotingParametersChange);
-        var marketTradePublisher = getPublisher(Messaging.Topics.MarketTrade, mktTradePersister);
-        var messagesPublisher = getPublisher(Messaging.Topics.Message, messagesPersister);
-        var quoteStatusPublisher = getPublisher(Messaging.Topics.QuoteStatus);
-        var targetBasePositionPublisher = getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister);
-        var tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
-        var positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
-        var connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
+        const quotePublisher = getPublisher(Messaging.Topics.Quote);
+        const fvPublisher = getPublisher(Messaging.Topics.FairValue, fairValuePersister);
+        const marketDataPublisher = getPublisher(Messaging.Topics.MarketData, marketDataPersister);
+        const orderStatusPublisher = getPublisher(Messaging.Topics.OrderStatusReports, orderPersister);
+        const tradePublisher = getPublisher(Messaging.Topics.Trades, tradesPersister);
+        const activePublisher = getPublisher(Messaging.Topics.ActiveChange);
+        const quotingParametersPublisher = getPublisher(Messaging.Topics.QuotingParametersChange);
+        const marketTradePublisher = getPublisher(Messaging.Topics.MarketTrade, mktTradePersister);
+        const messagesPublisher = getPublisher(Messaging.Topics.Message, messagesPersister);
+        const quoteStatusPublisher = getPublisher(Messaging.Topics.QuoteStatus);
+        const targetBasePositionPublisher = getPublisher(Messaging.Topics.TargetBasePosition, tbpPersister);
+        const tradeSafetyPublisher = getPublisher(Messaging.Topics.TradeSafetyValue, tsvPersister);
+        const positionPublisher = getPublisher(Messaging.Topics.Position, positionPersister);
+        const connectivity = getPublisher(Messaging.Topics.ExchangeConnectivity);
         
-        var messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
+        const messages = new Messages.MessagesPubisher(timeProvider, messagesPersister, initMsgs, messagesPublisher);
         messages.publish("start up");
     
-        var getReceiver = classes.getReceiver;
-        var activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
-        var quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
-        var submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
-        var cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
-        var cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
-        
-        var gateway = classes.getExch(orderCache);
-        
-        if (!_.some(gateway.base.supportedCurrencyPairs, p => p.base === pair.base && p.quote === pair.quote))
-            throw new Error("Unsupported currency pair!. Please check that gateway " + gateway.base.name() + " supports the value specified in TradedPair config value");
-    
-        var broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
-        var orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
+        const getReceiver = classes.getReceiver;
+        const activeReceiver = getReceiver(Messaging.Topics.ActiveChange);
+        const quotingParametersReceiver = getReceiver(Messaging.Topics.QuotingParametersChange);
+        const submitOrderReceiver = getReceiver(Messaging.Topics.SubmitNewOrder);
+        const cancelOrderReceiver = getReceiver(Messaging.Topics.CancelOrder);
+        const cancelAllOrdersReceiver = getReceiver(Messaging.Topics.CancelAllOrders);
+                
+        const broker = new Broker.ExchangeBroker(pair, gateway.md, gateway.base, gateway.oe, connectivity);
+        mainLog.info({
+            exchange: broker.exchange, 
+            pair: broker.pair.toString(), 
+            minTick: broker.minTickIncrement, 
+            makeFee: broker.makeFee,
+            takeFee: broker.takeFee,
+            hasSelfTradePrevention: broker.hasSelfTradePrevention,
+        }, "using the following exchange details");
+
+        const orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
             tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades);
-        var marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
-        var positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
+        const marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
+        const positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
     
-        var paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
+        const paramsRepo = new QuotingParameters.QuotingParametersRepository(quotingParametersPublisher, quotingParametersReceiver, initParams);
         paramsRepo.NewParameters.on(() => paramsPersister.persist(paramsRepo.latest));
     
-        var safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
+        const safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
     
-        var startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
-        var active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
+        const startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
+        const active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
     
-        var quoter = new Quoter.Quoter(orderBroker, broker);
-        var filtration = new MarketFiltration.MarketFiltration(new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
-        var fvEngine = new FairValue.FairValueEngine(timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
-        var ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
+        const quoter = new Quoter.Quoter(orderBroker, broker);
+        const filtration = new MarketFiltration.MarketFiltration(broker, new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
+        const fvEngine = new FairValue.FairValueEngine(broker, timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
+        const ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
     
-        var rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
-        var shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
+        const rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
+        const shortEwma = new Statistics.EwmaStatisticCalculator(initParams.shortEwma);
         shortEwma.initialize(rfvValues);
-        var longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
+        const longEwma = new Statistics.EwmaStatisticCalculator(initParams.longEwma);
         longEwma.initialize(rfvValues);
         
-        var registry = new QuotingStyleRegistry.QuotingStyleRegistry([
+        const registry = new QuotingStyleRegistry.QuotingStyleRegistry([
             new MidMarket.MidMarketQuoteStyle(),
             new TopJoin.InverseJoinQuoteStyle(),
             new TopJoin.InverseTopOfTheMarketQuoteStyle(),
@@ -354,17 +360,17 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             new TopJoin.PingPongQuoteStyle(),
         ]);
     
-        var positionMgr = new PositionManagement.PositionManager(timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
-        var tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
-        var quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
-            orderBroker, positionBroker, ewma, tbp, safetyCalculator);
-        var quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
+        const positionMgr = new PositionManagement.PositionManager(broker, timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
+        const tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
+        const quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
+            orderBroker, positionBroker, broker, ewma, tbp, safetyCalculator);
+        const quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
     
-        var marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
+        const marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,
             quotingEngine, broker, mktTradePersister, initMktTrades);
             
         if (config.inBacktestMode) {
-            var t = Utils.date();
+            const t = Utils.date();
             console.log("starting backtest");
             try {
                 (<Backtest.BacktestExchange>gateway).run();
@@ -375,7 +381,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
                 return completedSuccessfully.promise;
             }
             
-            var results = [paramsRepo.latest, positionBroker.latestReport, {
+            const results = [paramsRepo.latest, positionBroker.latestReport, {
                 trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
                 volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
             }];
@@ -390,7 +396,7 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         }
         
         exitingEvent = () => {
-            var a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
+            const a = new Models.SerializedQuotesActive(active.savedQuotingMode, timeProvider.utcNow());
             mainLog.info("persisting active to", a.active);
             activePersister.persist(a);
 
@@ -408,14 +414,14 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
         };
     
         // event looped blocked timer
-        var start = process.hrtime();
-        var interval = 100;
+        let start = process.hrtime();
+        const interval = 100;
         setInterval(() => {
-            var delta = process.hrtime(start);
-            var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
-            var n = ms - interval;
+            const delta = process.hrtime(start);
+            const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
+            const n = ms - interval;
             if (n > 25)
-                mainLog.info("Event looped blocked for " + Utils.roundFloat(n) + "ms");
+                mainLog.info(`Event looped blocked for ${Utils.roundUp(n, .001)}ms`);
             start = process.hrtime();
         }, interval).unref();
     
@@ -424,12 +430,12 @@ var runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
     return completedSuccessfully.promise;
 };
 
-var harness = () : Q.Promise<any> => {
+const harness = () : Q.Promise<any> => {
     if (config.inBacktestMode) {
         console.log("enter backtest mode");
         
-        var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
-            var d = Q.defer<any>();
+        const getFromBacktestServer = (ep: string) : Q.Promise<any> => {
+            const d = Q.defer<any>();
             request.get(serverUrl+"/"+ep, (err, resp, body) => { 
                 if (err) d.reject(err);
                 else d.resolve(body);
@@ -437,27 +443,27 @@ var harness = () : Q.Promise<any> => {
             return d.promise;
         };
         
-        var inputDataPromise = getFromBacktestServer("inputData").then(body => {
-            var inp : Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
+        const inputDataPromise = getFromBacktestServer("inputData").then(body => {
+            const inp : Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
             
-            for (var i = 0; i < inp.length; i++) {
-                var d = inp[i];
+            for (let i = 0; i < inp.length; i++) {
+                const d = inp[i];
                 d.time = moment(d.time);
             }
             
             return inp;
         });
         
-        var nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
-            var p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
+        const nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
+            const p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
             console.log("Recv'd parameters", util.inspect(p));
             return (typeof p === "string") ? null : p;
         });
         
-        var promiseWhile = <T>(body : () => Q.Promise<boolean>) => {
-            var done = Q.defer<any>();
+        const promiseWhile = <T>(body : () => Q.Promise<boolean>) => {
+            const done = Q.defer<any>();
         
-            var loop = () => {
+            const loop = () => {
                 body().then(possibleResult => {
                     if (!possibleResult) return done.resolve(null);
                     else Q.when(possibleResult, loop, done.reject);
@@ -468,9 +474,9 @@ var harness = () : Q.Promise<any> => {
             return done.promise;
         };
         
-        var runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
-            var singleRun = () => {
-                var runWithParameters = (p : Backtest.BacktestParameters) => {
+        const runLoop = (inputMarketData : Array<Models.Market | Models.MarketTrade>) : Q.Promise<any> => {
+            const singleRun = () => {
+                const runWithParameters = (p : Backtest.BacktestParameters) => {
                     return p !== null ? runTradingSystem(backTestSimulationSetup(inputMarketData, p)) : false;
                 };
                     
