@@ -216,7 +216,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               }
           }
 
-          var cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
+          var cxl = new Models.BrokeredCancel(cancel.origOrderId, rpt.side, rpt.exchangeId);
           var sent = this._oeGateway.cancelOrder(cxl);
 
           rpt = {

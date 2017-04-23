@@ -143,7 +143,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     };
 

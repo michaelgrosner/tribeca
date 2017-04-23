@@ -336,7 +336,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     };
 

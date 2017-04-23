@@ -276,14 +276,14 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
         this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
-            cancelRequestClientOrderId: cancel.requestId,
+            cancelRequestClientOrderId: this.generateClientOrderId(),
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(cancel.side)});
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
     replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.side, replace.exchangeId));
         return this.sendOrder(replace);
     };
 
