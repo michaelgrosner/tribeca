@@ -1,7 +1,5 @@
 import {NgZone} from '@angular/core';
 
-import _ = require('lodash');
-
 import Models = require('../share/models');
 import Subscribe = require('./subscribe');
 import {FireFactory, SubscriberFactory} from './shared_directives';
@@ -23,17 +21,17 @@ class FormViewModel<T> {
 
     _sub.registerSubscriber(this.update);
     this.connected = _sub.connected;
-    this.master = _.cloneDeep(defaultParameter);
-    this.display = _.cloneDeep(defaultParameter);
+    this.master = JSON.parse(JSON.stringify(defaultParameter));
+    this.display = JSON.parse(JSON.stringify(defaultParameter));
   }
 
   public reset = () => {
-    this.display = _.cloneDeep(this.master);
+    this.display = JSON.parse(JSON.stringify(this.master));
   };
 
   public update = (p: T) => {
-    this.master = _.cloneDeep(p);
-    this.display = _.cloneDeep(p);
+    this.master = JSON.parse(JSON.stringify(p));
+    this.display = JSON.parse(JSON.stringify(p));
     this.pending = false;
   };
 
