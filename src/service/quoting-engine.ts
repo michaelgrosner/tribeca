@@ -139,22 +139,22 @@ export class QuotingEngine {
         }
         
         if (unrounded.bidPx !== null) {
-            unrounded.bidPx = Utils.roundFloat(unrounded.bidPx, minTick);
+            unrounded.bidPx = Utils.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
         
         if (unrounded.askPx !== null) {
-            unrounded.askPx = Utils.roundFloat(unrounded.askPx, minTick);
+            unrounded.askPx = Utils.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
             unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
         
         if (unrounded.askSz !== null) {
-            unrounded.askSz = Utils.roundFloat(unrounded.askSz, minTick);
+            unrounded.askSz = Utils.roundDown(unrounded.askSz, minTick);
             unrounded.askSz = Math.max(minTick, unrounded.askSz);
         }
         
         if (unrounded.bidSz !== null) {
-            unrounded.bidSz = Utils.roundFloat(unrounded.bidSz, minTick);
+            unrounded.bidSz = Utils.roundDown(unrounded.bidSz, minTick);
             unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
         }
 

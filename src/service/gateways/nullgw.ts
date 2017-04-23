@@ -82,17 +82,22 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
-    constructor() {
+    constructor(private _minTick: number) {
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
         setInterval(() => this.MarketData.trigger(this.generateMarketData()), 5000*Math.random());
         setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
-    private genMarketTrade = () => 
-        new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
+    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), this._minTick);
+
+    private genMarketTrade = () => {
+        const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
+        const sign = Models.Side.Ask === side ? 1 : -1;
+        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), Utils.date(), false, side);
+    }
 
     private genSingleLevel = (sign: number) => 
-        new Models.MarketSide(1000 + sign * 100 * Math.random(), Math.random());
+        new Models.MarketSide(this.getPrice(sign), Math.random());
 
     private readonly Depth: number = 25;
     private generateMarketData = () => {
@@ -130,11 +135,12 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 
 class NullGateway extends Interfaces.CombinedGateway {
     constructor(config: Config.IConfigProvider) {
+        const minTick = config.GetNumber("NullGatewayTick");
         super(
-            new NullMarketDataGateway(), 
+            new NullMarketDataGateway(minTick), 
             new NullOrderGateway(), 
             new NullPositionGateway(), 
-            new NullGatewayDetails(config.GetNumber("NullGatewayTick")));
+            new NullGatewayDetails(minTick));
     }
 }
 
