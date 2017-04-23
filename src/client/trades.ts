@@ -50,12 +50,12 @@ export class TradesComponent implements OnInit {
   private createColumnDefs = (): ColDef[] => {
     return [
       {width: 121, field:'time', headerName:'t', cellRenderer:(params) => {
-          return (params.value) ? Models.toUtcFormattedTime(params.value) : '';
+          return (params.value) ? params.value.format('D/M HH:mm:ss,SSS') : '';
         }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
           return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
       }, sort: 'desc'},
       {width: 121, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
-          return (params.value && params.value!='Invalid date') ? Models.toUtcFormattedTime(params.value) : '';
+          return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss,SSS') : '';
         }, cellClass: 'fs11px' },
       {width: 40, field:'side', headerName:'side', cellClass: (params) => {
         if (params.value === 'Buy') return 'buy';

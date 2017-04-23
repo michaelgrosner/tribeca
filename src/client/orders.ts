@@ -54,7 +54,7 @@ export class OrdersComponent implements OnInit {
   private createColumnDefs = (): ColDef[] => {
     return [
       { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
-          return (params.value) ? Models.toShortTimeString(params.value) : '';
+          return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
         },
         comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
         cellClass: (params) => {

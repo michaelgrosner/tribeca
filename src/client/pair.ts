@@ -22,7 +22,6 @@ class FormViewModel<T> {
       this._submitConverter = d => d;
 
     _sub.registerSubscriber(this.update);
-
     this.connected = _sub.connected;
     this.master = _.cloneDeep(defaultParameter);
     this.display = _.cloneDeep(defaultParameter);
@@ -68,7 +67,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 
   constructor(sub: Subscribe.ISubscribe<Models.QuotingParameters>,
     fire: Subscribe.IFire<Models.QuotingParameters>) {
-    super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
+    super(<Models.QuotingParameters>{}, sub, fire);
 
     this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
     this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);

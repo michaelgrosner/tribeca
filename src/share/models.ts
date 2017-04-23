@@ -8,7 +8,7 @@ export class Timestamped<T> implements ITimestamped {
     constructor(public data: T, public time: moment.Moment) {}
 
     public toString() {
-        return "time=" + toUtcFormattedTime(this.time) + ";data=" + this.data;
+        return "time=" + (this.time === null ? null : this.time.format('D/M HH:mm:ss,SSS')) + ";data=" + this.data;
     }
 }
 
@@ -338,11 +338,6 @@ export class OrderRequestFromUI {
                 public orderType: string) {}
 }
 
-export interface ReplaceRequestFromUI {
-    price : number;
-    quantity : number;
-}
-
 export class FairValue implements ITimestamped {
     constructor(public price: number, public time: moment.Moment) {}
 }
@@ -390,45 +385,37 @@ export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingA
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, x2trds, x3trds, x2Sz, x3Sz, x2trdsSz, x3trdsSz }
 
-export class QuotingParameters {
-    constructor(public widthPing: number,
-                public widthPong: number,
-                public buySize: number,
-                public buySizePercentage: number,
-                public sellSize: number,
-                public sellSizePercentage: number,
-                public pingAt: PingAt,
-                public pongAt: PongAt,
-                public mode: QuotingMode,
-                public fvModel: FairValueModel,
-                public targetBasePosition: number,
-                public positionDivergence: number,
-                public positionDivergencePercentage: number,
-                public percentageValues: boolean,
-                public autoPositionMode: AutoPositionMode,
-                public aggressivePositionRebalancing: APR,
-                public superTrades: SOP,
-                public tradesPerMinute: number,
-                public tradeRateSeconds: number,
-                public ewmaProtection: boolean,
-                public audio: boolean,
-                public bullets: number,
-                public range: number,
-                public longEwma: number,
-                public shortEwma: number,
-                public quotingEwma: number,
-                public aprMultiplier: number,
-                public sopWidthMultiplier: number,
-                public stepOverSize: number,
-                public delayUI: number) {}
-}
-
-export function toUtcFormattedTime(t: moment.Moment) {
-    return t === null ? null : t.format('D/M HH:mm:ss,SSS');
-}
-
-export function toShortTimeString(t: moment.Moment) {
-    return t.format('HH:mm:ss,SSS');
+export interface QuotingParameters {
+    widthPing?: number;
+    widthPong?: number;
+    buySize?: number;
+    buySizePercentage?: number;
+    sellSize?: number;
+    sellSizePercentage?: number;
+    pingAt?: PingAt;
+    pongAt?: PongAt;
+    mode?: QuotingMode;
+    fvModel?: FairValueModel;
+    targetBasePosition?: number;
+    positionDivergence?: number;
+    positionDivergencePercentage?: number;
+    percentageValues?: boolean;
+    autoPositionMode?: AutoPositionMode;
+    aggressivePositionRebalancing?: APR;
+    superTrades?: SOP;
+    tradesPerMinute?: number;
+    tradeRateSeconds?: number;
+    ewmaProtection?: boolean;
+    audio?: boolean;
+    bullets?: number;
+    range?: number;
+    longEwma?: number;
+    shortEwma?: number;
+    quotingEwma?: number;
+    aprMultiplier?: number;
+    sopWidthMultiplier?: number;
+    stepOverSize?: number;
+    delayUI?: number;
 }
 
 export class ExchangePairMessage<T> {
