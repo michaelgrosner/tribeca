@@ -714,7 +714,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
             try {
-                JSON.parse(data).forEach(d => {
+                _.forEach(data, d => {
                     var c = GetCurrencyEnum(d.currency);
                     var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
                     this.PositionUpdate.trigger(rpt);
