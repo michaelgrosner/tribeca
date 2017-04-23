@@ -39,38 +39,38 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 
-let defaultQuotingParameters: Models.QuotingParameters = new Models.QuotingParameters(
-  2                                  ,/* width and widthPing */
-  2                                  ,/* widthPong */
-  0.02                               ,/* buySize */
-  7                                  ,/* buySizePercentage */
-  0.01                               ,/* sellSize */
-  7                                  ,/* sellSizePercentage */
-  Models.PingAt.BothSides            ,/* pingAt */
-  Models.PongAt.ShortPingFair        ,/* pongAt */
-  Models.QuotingMode.AK47            ,/* mode */
-  Models.FairValueModel.BBO          ,/* fvModel */
-  1                                  ,/* targetBasePosition */
-  0.9                                ,/* positionDivergence */
-  21                                 ,/* positionDivergencePercentage */
-  false                              ,/* percentageValues */
-  Models.AutoPositionMode.EwmaBasic  ,/* autoPositionMode */
-  Models.APR.Off                     ,/* aggressivePositionRebalancing */
-  Models.SOP.Off                     ,/* superTrades */
-  0.9                                ,/* tradesPerMinute */
-  569                                ,/* tradeRateSeconds */
-  true                               ,/* ewmaProtection */
-  false                              ,/* audio */
-  2                                  ,/* bullets */
-  0.5                                ,/* range */
-  .095                               ,/* longEwma */
-  2*.095                             ,/* shortEwma */
-  .095                               ,/* quotingEwma */
-  3                                  ,/* aprMultiplier */
-  3                                  ,/* sopWidthMultiplier */
-  .1                                 ,/* stepOverSize */
-  1                                   /* delayUI */
-);
+let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
+  widthPing:                      2,
+  widthPong:                      2,
+  buySize:                        0.02,
+  buySizePercentage:              7,
+  sellSize:                       0.01,
+  sellSizePercentage:             7,
+  pingAt:                         Models.PingAt.BothSides,
+  pongAt:                         Models.PongAt.ShortPingFair,
+  mode:                           Models.QuotingMode.AK47,
+  fvModel:                        Models.FairValueModel.BBO,
+  targetBasePosition:             1,
+  positionDivergence:             0.9,
+  positionDivergencePercentage:   21,
+  percentageValues:               false,
+  autoPositionMode:               Models.AutoPositionMode.EwmaBasic,
+  aggressivePositionRebalancing:  Models.APR.Off,
+  superTrades:                    Models.SOP.Off,
+  tradesPerMinute:                0.9,
+  tradeRateSeconds:               69,
+  ewmaProtection:                 true,
+  audio:                          false,
+  bullets:                        2,
+  range:                          0.5,
+  longEwma:                       0.095,
+  shortEwma:                      2*0.095,
+  quotingEwma:                    0.095,
+  aprMultiplier:                  2,
+  sopWidthMultiplier:             2,
+  stepOverSize:                   0.1,
+  delayUI:                        7
+};
 
 let exitingEvent: () => Q.Promise<boolean>;
 
