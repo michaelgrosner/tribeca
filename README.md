@@ -111,13 +111,15 @@ Later you can scroll the color-formatted output in the log file with `npm run lo
 
 ### Unreleased Changelog:
 
-Added nodejs6, typescript2, angular2 and reactivexjs.
+Added nodejs7, typescript2, angular2 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
-Added david-dm, travis-ci, coveralls and codacy.
+Added npm scripts, david-dm, travis-ci, coveralls and codacy.
 
-Added charts to replace grafana.
+Added historical charts to replace grafana.
+
+Updated OKCoin API integration (since https://www.okcoin.com/t-354.html).
 
 ### Release 2.0 Changelog:
 
