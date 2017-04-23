@@ -209,10 +209,11 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => {
         var d = Q.defer<number>();
+        var len = 0;
         this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
             if (typeof (<any>msg.data).orders == "undefined"
               || typeof (<any>msg.data).orders[0] == "undefined"
-              || typeof (<any>msg.data).orders[0].order_id == "undefined") return;
+              || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.reject(0); return; }
             (<any>msg.data).orders.map((o) => {
                 this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
                     if (typeof (<any>msg.data).result == "undefined") return;
@@ -223,7 +224,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         osr.leavesQuantity = 0;
                         osr.done = true;
                         this.OrderUpdate.trigger(osr);
-                    } else d.reject(0);
+                    }
                 }).done();
             });
             d.resolve((<any>msg.data).orders.length);
