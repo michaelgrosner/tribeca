@@ -462,7 +462,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
             _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
                 var amt = parseFloat(p.amount);
-                var cur = GetCurrencyEnum(p.currency);
+                var cur = Models.toCurrency(p.currency);
                 var held = amt - parseFloat(p.available);
                 var rpt = new Models.CurrencyPosition(amt, held, cur);
                 this.PositionUpdate.trigger(rpt);
@@ -501,29 +501,11 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
     constructor(public minTickIncrement: number) {} 
 }
 
-function GetCurrencyEnum(c: string): Models.Currency {
-    switch (c.toLowerCase()) {
-        case "usd": return Models.Currency.USD;
-        case "ltc": return Models.Currency.LTC;
-        case "btc": return Models.Currency.BTC;
-        default: throw new Error("Unsupported currency " + c);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency): string {
-    switch (c) {
-        case Models.Currency.USD: return "usd";
-        case Models.Currency.LTC: return "ltc";
-        case Models.Currency.BTC: return "btc";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
-}
-
 class BitfinexSymbolProvider {
     public symbol: string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+        this.symbol = Models.fromCurrency(pair.base).toLowerCase() + Models.fromCurrency(pair.quote).toLowerCase();
     }
 }
 

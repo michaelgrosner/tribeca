@@ -753,7 +753,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
             try {
                 if (Array.isArray(data)) {
                     _.forEach(data, d => {
-                        var c = GetCurrencyEnum(d.currency);
+                        var c = Models.toCurrency(d.currency);
                         var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
                         this.PositionUpdate.trigger(rpt);
                     });
@@ -799,35 +799,11 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
     constructor(public minTickIncrement: number) {} 
 }
 
-function GetCurrencyEnum(name: string): Models.Currency {
-    switch (name.toUpperCase()) {
-        case "BTC": return Models.Currency.BTC;
-        case "USD": return Models.Currency.USD;
-        case "EUR": return Models.Currency.EUR;
-        case "GBP": return Models.Currency.GBP;
-        case "ETH": return Models.Currency.ETH;
-        case "LTC": return Models.Currency.LTC;
-        default: throw new Error("Unsupported currency " + name);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency): string {
-    switch (c) {
-        case Models.Currency.USD: return "USD";
-        case Models.Currency.GBP: return "GBP";
-        case Models.Currency.BTC: return "BTC";
-        case Models.Currency.EUR: return "EUR";
-        case Models.Currency.ETH: return "ETH";
-        case Models.Currency.LTC: return "LTC";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
-}
-
 class CoinbaseSymbolProvider {
     public symbol: string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = GetCurrencySymbol(pair.base) + "-" + GetCurrencySymbol(pair.quote);
+        this.symbol = Models.fromCurrency(pair.base) + "-" + Models.fromCurrency(pair.quote);
     }
 }
 

@@ -449,29 +449,12 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
     constructor(public minTickIncrement: number) {}
 }
 
-function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (c.toLowerCase()) {
-        case "usd": return Models.Currency.USD;
-        case "ltc": return Models.Currency.LTC;
-        case "btc": return Models.Currency.BTC;
-        default: throw new Error("Unsupported currency " + name);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency) : string {
-    switch (c) {
-        case Models.Currency.USD: return "usd";
-        case Models.Currency.LTC: return "ltc";
-        case Models.Currency.BTC: return "btc";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
-}
-
 class OkCoinSymbolProvider {
     public symbol : string;
     public symbolWithoutUnderscore: string;
     
     constructor(pair: Models.CurrencyPair) {
+        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s);
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
         this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
     }
