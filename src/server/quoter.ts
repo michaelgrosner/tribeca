@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
-import _ = require('lodash');
 import moment = require("moment");
 
 class QuoteOrder {
@@ -129,7 +128,7 @@ export class ExchangeQuoter {
               let incPrice: number = (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ));
               let oldPrice:number = 0;
               let len:number  = 0;
-              _.forEach(this._activeQuote, activeQuote => {
+              this._activeQuote.forEach(activeQuote => {
                 if (oldPrice>0 && (this._side === Models.Side.Bid?activeQuote.quote.price<price:activeQuote.quote.price>price)) {
                   price = oldPrice + incPrice;
                   if (Math.abs(activeQuote.quote.price - oldPrice)>incPrice) return false;
@@ -137,7 +136,7 @@ export class ExchangeQuoter {
                 oldPrice = activeQuote.quote.price;
                 ++len;
               });
-              if (len==this._activeQuote.length) price = _.last(this._activeQuote).quote.price + incPrice;
+              if (len==this._activeQuote.length) price = this._activeQuote.slice(-1).pop().quote.price + incPrice;
               if (this._activeQuote.filter(o =>
                 (price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
                 && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
@@ -181,7 +180,7 @@ export class ExchangeQuoter {
         if (!this._activeQuote.length)
             return Models.QuoteSent.UnsentDelete;
 
-        _.map(this._activeQuote, (q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
+        this._activeQuote.forEach((q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
         this._activeQuote = [];
         return Models.QuoteSent.Delete;
     };

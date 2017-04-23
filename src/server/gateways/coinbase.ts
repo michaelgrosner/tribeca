@@ -10,7 +10,6 @@ import Q = require("q");
 import io = require("socket.io-client");
 import moment = require("moment");
 import WebSocket = require('ws');
-import _ = require('lodash');
 
 var uuid = require('uuid');
 import CoinbaseExchange = require("./coinbase-api");
@@ -249,7 +248,7 @@ class CoinbaseOrderBook {
         priceLevelStorage.marketUpdate.size -= orderSize;
         delete priceLevelStorage.orders[msg.order_id];
 
-        if (_.isEmpty(priceLevelStorage.orders)) {
+        if (!priceLevelStorage.orders.length) {
             storage.delete(price);
         }
 
@@ -271,7 +270,7 @@ class CoinbaseOrderBook {
             if (priceLevelStorage.orders[msg.maker_order_id] < 1e-4)
                 delete priceLevelStorage.orders[msg.maker_order_id];
 
-            if (_.isEmpty(priceLevelStorage.orders)) {
+            if (!priceLevelStorage.orders.length) {
                 makerStorage.delete(price);
             }
 
@@ -309,11 +308,8 @@ class CoinbaseOrderBook {
     }
 
     public initialize = (book: CoinbaseBookStorage) => {
-        var add = (st, u) =>
-            this.addToOrderBook(st, parseFloat(u.price), parseFloat(u.size), u.id);
-
-        _.forEach(book.asks, a => add(this.asks, a));
-        _.forEach(book.bids, b => add(this.bids, b));
+        (<any>book.asks).forEach(a => this.addToOrderBook(this.asks, parseFloat(a.price), parseFloat(a.size), a.id));
+        (<any>book.bids).forEach(b => this.addToOrderBook(this.bids, parseFloat(b.price), parseFloat(b.size), b.id));
     };
 }
 
@@ -371,21 +367,21 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _cachedAsks: Models.MarketSide[] = null;
 
     private reevalBids = () => {
-        this._cachedBids = _.map(this._orderBook.bids.store.slice(0, 13), s => (<any>s).value.marketUpdate);
+        this._cachedBids = this._orderBook.bids.store.slice(0, 13).map(s => (<any>s).value.marketUpdate);
     };
 
     private reevalAsks = () => {
-        this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, 13), s => (<any>s).value.marketUpdate);
+        this._cachedAsks = this._orderBook.asks.store.slice(0, 13).map(s => (<any>s).value.marketUpdate);
     };
 
     private onOrderBookChanged = (t: moment.Moment, side: Models.Side, price: number) => {
         if (side === Models.Side.Bid) {
-            if (this._cachedBids.length > 0 && price < _.last(this._cachedBids).price) return;
+            if (this._cachedBids.length > 0 && price < this._cachedBids.slice(-1).pop().price) return;
             else this.reevalBids();
         }
 
         if (side === Models.Side.Ask) {
-            if (this._cachedAsks.length > 0 && price > _.last(this._cachedAsks).price) return;
+            if (this._cachedAsks.length > 0 && price > this._cachedAsks.slice(-1).pop().price) return;
             else this.reevalAsks();
         }
 
@@ -443,7 +439,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             if (err) d.reject(err);
             else  {
                 var t = this._timeProvider.utcNow();
-                _.forEach(Object(resp).body, cxl_id => {
+                Object(resp).body.forEach(cxl_id => {
                     this.OrderUpdate.trigger({
                         exchangeId: cxl_id,
                         time: t,
@@ -717,7 +713,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
             try {
-                _.forEach(data, d => {
+                data.forEach(d => {
                     var c = GetCurrencyEnum(d.currency);
                     var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
                     this.PositionUpdate.trigger(rpt);

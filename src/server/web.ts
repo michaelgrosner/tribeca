@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import _ = require("lodash");
 import express = require("express");
 import Q = require("q");
 import Persister = require("./persister");
@@ -25,7 +24,7 @@ export class StandaloneHttpPublisher<T> {
 
             var handler = (d: T[]) => {
                 if (max !== null && max <= d.length)
-                    d = _.takeRight(d, max);
+                    d = d.slice(max * -1);
                 res.json(d);
             };
 

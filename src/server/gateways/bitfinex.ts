@@ -67,7 +67,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     private _since: number = null;
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrades = (trades: Models.Timestamped<BitfinexMarketTrade[]>) => {
-        _.forEach(trades.data, trade => {
+        trades.data.forEach(trade => {
             var px = parseFloat(trade.price);
             var sz = parseFloat(trade.amount);
             var time = moment.unix(trade.timestamp);
@@ -92,7 +92,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private static ConvertToMarketSides(level: BitfinexMarketLevel[]): Models.MarketSide[] {
-        return _.map(level, BitfinexMarketDataGateway.ConvertToMarketSide);
+        return level.map(BitfinexMarketDataGateway.ConvertToMarketSide);
     }
 
     MarketData = new Utils.Evt<Models.Market>();
@@ -276,7 +276,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http
             .post<BitfinexMyTradesRequest, BitfinexMyTradesResponse[]>("mytrades", tradesReq)
             .then(resps => {
-                _.forEach(resps.data, t => {
+                resps.data.forEach(t => {
 
                     this._http
                         .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", { order_id: t.order_id })
@@ -451,7 +451,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 
     private onRefreshPositions = () => {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
-            _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
+            res.data.filter(x => x.type === "exchange").forEach(p => {
                 var amt = parseFloat(p.amount);
                 var cur = GetCurrencyEnum(p.currency);
                 var held = amt - parseFloat(p.available);
