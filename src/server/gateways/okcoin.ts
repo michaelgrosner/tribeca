@@ -207,7 +207,29 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     generateClientOrderId = () => shortId.generate();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    cancelAllOpenOrders = () : Q.Promise<number> => {
+        var d = Q.defer<number>();
+        this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
+            if (typeof (<any>msg.data).orders == "undefined"
+              || typeof (<any>msg.data).orders[0] == "undefined"
+              || typeof (<any>msg.data).orders[0].order_id == "undefined") return;
+            (<any>msg.data).orders.map((o) => {
+                this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
+                    if (typeof (<any>msg.data).result == "undefined") return;
+                    var osr : Models.OrderStatusReport = { time: msg.time };
+                    if ((<any>msg.data).result) {
+                        osr.exchangeId = (<any>msg.data).order_id.toString();
+                        osr.orderStatus = Models.OrderStatus.Cancelled;
+                        osr.leavesQuantity = 0;
+                        osr.done = true;
+                        this.OrderUpdate.trigger(osr);
+                    } else d.reject(0);
+                }).done();
+            });
+            d.resolve((<any>msg.data).orders.length);
+        }).done();
+        return d.promise;
+    };
 
     public cancelsByClientOrderId = false;
 

@@ -400,10 +400,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               this._trades.push(trade);
             }
 
-            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, (value * 100) / 100, tradePingPongType, o.time));
-
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-              this.cancelOpenOrders();
+            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, tradePingPongType, o.time));
         }
 
         if (o.done===true) {
