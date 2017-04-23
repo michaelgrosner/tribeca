@@ -23,7 +23,6 @@ ENV WebClientUsername NULL
 ENV WebClientPassword NULL
 ENV WebClientListenPort 3000
 ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
-ENV StatsDHostPort NULL
 
 # Set options only for your desired EXCHANGE:
 
