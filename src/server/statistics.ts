@@ -1,4 +1,3 @@
-import _ = require("lodash");
 import moment = require("moment");
 import Models = require("../share/models");
 import Utils = require("./utils");
@@ -14,7 +13,7 @@ export interface IComputeStatistics {
 export class EwmaStatisticCalculator implements IComputeStatistics {
     constructor(private _alpha: number, initRfv: Models.RegularFairValue[]) {
       if (initRfv !== null)
-        this.initialize(_.map(initRfv, (r: Models.RegularFairValue) => r.value));
+        this.initialize(initRfv.map((r: Models.RegularFairValue) => r.value));
     }
 
     public latest: number = null;

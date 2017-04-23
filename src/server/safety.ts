@@ -4,7 +4,6 @@ import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import Publish = require("./publish");
 import moment = require('moment');
-import _ = require("lodash");
 import FairValue = require("./fair-value");
 import Persister = require("./persister");
 
@@ -135,20 +134,15 @@ export class SafetyCalculator {
         if (buyPq) buyPing /= buyPq;
         if (sellPq) sellPong /= sellPq;
 
-        var orderTrades = (input: ITrade[], direction: number): ITrade[]=> {
-            return _.chain(input)
-                .filter(o => !this.isOlderThan(o.time, settings))
-                .sortBy((t: ITrade) => direction * t.price)
-                .value();
-        };
-
-        this._buys = orderTrades(this._buys, -1);
-        this._sells = orderTrades(this._sells, 1);
+        this._buys = this._buys.filter(o => !this.isOlderThan(o.time, settings))
+          .sort(function(a,b){return a.price>b.price?-1:(a.price<b.price?1:0)});
+        this._sells = this._sells.filter(o => !this.isOlderThan(o.time, settings))
+          .sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0)});
 
         // don't count good trades against safety
-        while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
-            var sell = _.last(this._sells);
-            var buy = _.last(this._buys);
+        while (this._buys.length && this._sells.length) {
+            var sell = this._sells.slice(-1).pop();
+            var buy = this._buys.slice(-1).pop();
             if (sell.price >= buy.price) {
 
                 var sellQty = sell.quantity;

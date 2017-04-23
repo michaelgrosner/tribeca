@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import _ = require("lodash");
 import Persister = require("./persister");
 import Broker = require("./broker");
 import Web = require("./web");
@@ -68,7 +67,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker
     ) {
-      _marketTradePublisher.registerSnapshot(() => _.takeRight(this.marketTrades, 69));
+      _marketTradePublisher.registerSnapshot(() => this.marketTrades.slice(-69));
       this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
     }
 }

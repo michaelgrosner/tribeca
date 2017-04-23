@@ -11,7 +11,6 @@ import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
-import _ = require("lodash");
 var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
@@ -158,7 +157,7 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
-        _.forEach(trades.data, trade => { // [tid, price, amount, time, type]
+        trades.data.forEach(trade => { // [tid, price, amount, time, type]
             var px = parseFloat(trade[1]);
             var amt = parseFloat(trade[2]);
             var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid;
@@ -175,8 +174,8 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
         var msg = depth.data;
 
-        var bids = _(msg.bids).take(13).map(OkCoinMarketDataGateway.GetLevel).value();
-        var asks = _(msg.asks).reverse().take(13).map(OkCoinMarketDataGateway.GetLevel).value();
+        var bids = msg.bids.slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
+        var asks = msg.asks.reverse().slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
         var mkt = new Models.Market(bids, asks, depth.time);
 
         this.MarketData.trigger(mkt);

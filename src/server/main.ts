@@ -1,4 +1,3 @@
-import _ = require("lodash");
 import Q = require("q");
 import path = require("path");
 import express = require('express');
@@ -105,10 +104,10 @@ process.on("SIGINT", () => {
 });
 
 var backTestSimulationSetup = (
-  inputData: Array<Models.Market | Models.MarketTrade>,
+  inputData: (Models.Market | Models.MarketTrade)[],
   parameters: Backtest.BacktestParameters
 ) => {
-    var timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
+    var timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(inputData.slice(0,1).pop().time, inputData.slice(-1).pop().time);
 
     var getExchange = (orderCache: Broker.OrderStateCache): Interfaces.CombinedGateway => new Backtest.BacktestExchange(
       new Backtest.BacktestGateway(
@@ -276,8 +275,6 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
       initParams: Models.QuotingParameters,
       initTrades: Models.Trade[]
     ) => {
-        _.defaults(initParams, defaultQuotingParameters);
-
         system.getPublisher(Models.Topics.ProductAdvertisement)
           .registerSnapshot(() => [new Models.ProductAdvertisement(
             system.exchange,

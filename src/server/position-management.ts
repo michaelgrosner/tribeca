@@ -88,7 +88,7 @@ export class PositionManager {
             Utils.roundFloat(this.newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
 
         this._data.push(rfv);
-        this._data = _.takeRight(this._data, 7);
+        this._data = this._data.slice(-7);
     };
 }
 

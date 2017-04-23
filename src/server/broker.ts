@@ -447,7 +447,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           }
           return flat;
         });
-        _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 1000));
+        _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {

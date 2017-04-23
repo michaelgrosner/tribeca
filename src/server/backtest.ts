@@ -244,7 +244,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     private _quoteHeld = 0;
 
     constructor(
-            private _inputData: Array<Models.Market | Models.MarketTrade>,
+            private _inputData: (Models.Market | Models.MarketTrade)[],
             private _baseAmount : number,
             private _quoteAmount : number,
             private timeProvider: Utils.IBacktestingTimeProvider) {}
@@ -256,7 +256,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
         this.timeProvider.setInterval(() => this.recomputePosition(), moment.duration(15, "seconds"));
 
-        _(this._inputData).forEach(i => {
+        this._inputData.forEach(i => {
             this.timeProvider.scrollTimeTo(i.time);
 
             if (typeof i["make_side"] !== "undefined") {
@@ -320,7 +320,7 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
     public loadAll = (limit?: number): Q.Promise<T[]> => {
         if (this.initialData) {
             if (limit) {
-                return Q(_.takeRight(this.initialData, limit));
+                return Q(this.initialData.slice(limit * -1));
             }
             else {
                 return Q(this.initialData);
@@ -380,7 +380,7 @@ var backtestServer = () => {
     var parameters: BacktestParameters[] = JSON.parse(rawParams);
     if (fs.existsSync(savedProgressFile)) {
         var l = parseInt(fs.readFileSync(savedProgressFile, 'utf8'));
-        parameters = _.takeRight(parameters, l);
+        parameters = parameters.slice(l * -1);
     }
     else if (fs.existsSync(backtestResultFile)) {
         fs.unlinkSync(backtestResultFile);
