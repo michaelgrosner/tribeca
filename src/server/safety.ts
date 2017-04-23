@@ -8,6 +8,12 @@ import _ = require("lodash");
 import FairValue = require("./fair-value");
 import Persister = require("./persister");
 
+interface ITrade {
+    price: number;
+    quantity: number;
+    time: moment.Moment;
+}
+
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
 
@@ -25,8 +31,8 @@ export class SafetyCalculator {
         }
     }
 
-    private _buys: Models.Trade[] = [];
-    private _sells: Models.Trade[] = [];
+    private _buys: ITrade[] = [];
+    private _sells: ITrade[] = [];
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
@@ -49,21 +55,19 @@ export class SafetyCalculator {
     };
 
     private onTrade = (ut: Models.Trade) => {
-        var u = _.cloneDeep(ut);
-        if (this.isOlderThan(u, this._qlParams.latest)) return;
+        if (this.isOlderThan(ut.time, this._qlParams.latest)) return;
 
-        if (u.side === Models.Side.Ask) {
-            this._sells.push(u);
-        }
-        else if (u.side === Models.Side.Bid) {
-            this._buys.push(u);
-        }
+        this[ut.side === Models.Side.Ask ? '_sells' : '_buys'].push(<ITrade>{
+          price: ut.price,
+          quantity: ut.quantity,
+          time: ut.time
+        });
 
         this.computeQtyLimit();
     };
 
-    private isOlderThan(o: Models.Trade, settings: Models.QuotingParameters) {
-        return Math.abs(this._timeProvider.utcNow().valueOf() - o.time.valueOf()) > settings.tradeRateSeconds * 1000;
+    private isOlderThan(time: moment.Moment, settings: Models.QuotingParameters) {
+        return Math.abs(this._timeProvider.utcNow().valueOf() - time.valueOf()) > settings.tradeRateSeconds * 1000;
     }
 
     private computeQtyLimit = () => {
@@ -131,10 +135,10 @@ export class SafetyCalculator {
         if (buyPq) buyPing /= buyPq;
         if (sellPq) sellPong /= sellPq;
 
-        var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
+        var orderTrades = (input: ITrade[], direction: number): ITrade[]=> {
             return _.chain(input)
-                .filter(o => !this.isOlderThan(o, settings))
-                .sortBy((t: Models.Trade) => direction * t.price)
+                .filter(o => !this.isOlderThan(o.time, settings))
+                .sortBy((t: ITrade) => direction * t.price)
                 .value();
         };
 
@@ -161,9 +165,9 @@ export class SafetyCalculator {
             }
         }
 
-        var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (buySize + sellSize / 2);
-        var computeSafetyBuy = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / buySize;
-        var computeSafetySell = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / sellSize;
+        var computeSafety = (t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (buySize + sellSize / 2);
+        var computeSafetyBuy = (t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / buySize;
+        var computeSafetySell = (t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / sellSize;
 
         this.latest = new Models.TradeSafety(
           computeSafetyBuy(this._buys),
