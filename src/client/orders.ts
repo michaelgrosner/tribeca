@@ -47,7 +47,6 @@ export class OrdersComponent implements OnInit {
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
-      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
   }
 

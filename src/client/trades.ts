@@ -43,7 +43,7 @@ export class TradesComponent implements OnInit {
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.Trades)
-      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
+      .registerConnectHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
   }
 

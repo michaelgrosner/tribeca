@@ -77,12 +77,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   }
 
   private static getMapping<T>(enumObject: T) {
-    var names = [];
-    for (var mem in enumObject) {
+    let names = [];
+    for (let mem in enumObject) {
       if (!enumObject.hasOwnProperty(mem)) continue;
-      var val = parseInt(mem, 10);
+      let val = parseInt(mem, 10);
       if (val >= 0) {
-        var str = String(enumObject[mem]);
+        let str = String(enumObject[mem]);
         if (str == 'AK47') str = 'AK-47';
         names.push({ 'str': str, 'val': val });
       }
@@ -93,7 +93,10 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 
 export class DisplayPair {
   name: string;
-  connected: boolean;
+  connected: boolean = false;
+  connectedToExchange = false;
+  connectedToServer = false;
+  connectionMessage : string = null;
 
   active: QuotingButtonViewModel;
   quotingParameters: DisplayQuotingParameters;
@@ -103,9 +106,14 @@ export class DisplayPair {
     subscriberFactory: SubscriberFactory,
     fireFactory: FireFactory
   ) {
-    subscriberFactory
+    this.connectedToServer = subscriberFactory
       .getSubscriber(zone, Models.Topics.ExchangeConnectivity)
-      .registerSubscriber(this.setConnectStatus);
+      .registerSubscriber(this.setExchangeStatus)
+      .registerConnectHandler(() => this.setServerStatus(true))
+      .registerDisconnectedHandler(() => this.setServerStatus(false))
+      .connected;
+
+    this.setStatus();
 
     this.active = new QuotingButtonViewModel(
       subscriberFactory
@@ -122,8 +130,30 @@ export class DisplayPair {
     );
   }
 
-  public setConnectStatus = (cs: Models.ConnectivityStatus) => {
-      this.connected = cs == Models.ConnectivityStatus.Connected;
+  private setStatus = () => {
+      this.connected = (this.connectedToExchange && this.connectedToServer);
+      console.log("connection status changed: ", this.connected, "connectedToExchange",
+          this.connectedToExchange, "connectedToServer", this.connectedToServer);
+      if (this.connected) {
+          this.connectionMessage = null;
+          return;
+      }
+      if (!this.connectedToExchange) {
+          this.connectionMessage = "Disconnected from exchange";
+      }
+      if (!this.connectedToServer) {
+          this.connectionMessage = "Disconnected from tribeca";
+      }
+  }
+
+  private setExchangeStatus = (cs: Models.ConnectivityStatus) => {
+      this.connectedToExchange = cs == Models.ConnectivityStatus.Connected;
+      this.setStatus();
+  };
+
+  private setServerStatus = (cs: boolean) => {
+      this.connectedToServer = cs;
+      this.setStatus();
   };
 
   public updateParameters = (p: Models.QuotingParameters) => {

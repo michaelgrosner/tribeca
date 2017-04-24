@@ -210,10 +210,11 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelAllOpenOrders = () : Q.Promise<number> => {
         var d = Q.defer<number>();
         var len = 0;
-        this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
+        if (len)
+          this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
             if (typeof (<any>msg.data).orders == "undefined"
               || typeof (<any>msg.data).orders[0] == "undefined"
-              || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.reject(0); return; }
+              || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
             (<any>msg.data).orders.map((o) => {
                 this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
                     if (typeof (<any>msg.data).result == "undefined") return;
@@ -228,7 +229,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 }).done();
             });
             d.resolve((<any>msg.data).orders.length);
-        }).done();
+          }).done();
+        else d.resolve(0);
         return d.promise;
     };
 
@@ -547,7 +549,7 @@ class OkCoinSymbolProvider {
     public symbolWithoutUnderscore: string;
 
     constructor(pair: Models.CurrencyPair) {
-        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s);
+        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s).toLowerCase();
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
         this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
         this.symbolQuote = GetCurrencySymbol(pair.quote);

@@ -38,8 +38,8 @@ export class MarketQuotingComponent implements OnInit {
 
   public levels: any[];
   public qBidSz: number;
-  public qBidPx: number;
-  public qAskPx: number;
+  public qBidPx: string;
+  public qAskPx: string;
   public qAskSz: number;
   public order_classes: any[];
   public bidIsLive: boolean;
@@ -48,6 +48,7 @@ export class MarketQuotingComponent implements OnInit {
   public diffPx: number;
   private targetBasePosition: number;
   private sideAPRSafety: string;
+  @Input() product: Models.ProductState;
 
   @Input() set connected(connected: boolean) {
     if (connected) return;
@@ -72,10 +73,12 @@ export class MarketQuotingComponent implements OnInit {
     ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)
-        .registerDisconnectedHandler(clearFn)
+        .registerConnectHandler(clearFn)
         .registerSubscriber(updateFn);
     }).call(this, x[0], x[1], x[2]));
   }
+
+  private toPrice = (px: number) : string => px.toFixed(this.product.fixed);
 
   private clearMarket = () => {
     this.levels = [];
@@ -111,8 +114,8 @@ export class MarketQuotingComponent implements OnInit {
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
       if (j >= this.levels.length)
         this.levels[j] = <any>{};
-      this.levels[j].askPrice = price + update.data[1][i] / 1e1;
-      price = this.levels[j].askPrice;
+      this.levels[j].askPrice = this.toPrice(price + update.data[1][i] / 1e1);
+      price = parseFloat(this.levels[j].askPrice);
       this.levels[j].askSize = update.data[1][++i] / 1e1;
     }
 
@@ -121,7 +124,7 @@ export class MarketQuotingComponent implements OnInit {
       var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
       if (bids.length) {
         var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
-        this.qBidPx = bid.price;
+        this.qBidPx = this.toPrice(bid.price);
         this.qBidSz = bid.quantity;
       } else {
         this.qBidPx = null;
@@ -129,7 +132,7 @@ export class MarketQuotingComponent implements OnInit {
       }
       if (asks.length) {
         var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
-        this.qAskPx = ask.price;
+        this.qAskPx = this.toPrice(ask.price);
         this.qAskSz = ask.quantity;
       } else {
         this.qAskPx = null;
@@ -146,11 +149,11 @@ export class MarketQuotingComponent implements OnInit {
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
       if (j >= this.levels.length)
         this.levels[j] = <any>{};
-      this.levels[j].bidPrice = Math.abs(price - update.data[0][i] / 1e1);
-      price = this.levels[j].bidPrice;
+      this.levels[j].bidPrice = this.toPrice(Math.abs(price - update.data[0][i] / 1e1));
+      price = parseFloat(this.levels[j].bidPrice);
       this.levels[j].bidSize = update.data[0][++i] / 1e1;
-      if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
-      else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
+      if (j==0) this.diffMD = parseFloat(this.levels[j].askPrice) - parseFloat(this.levels[j].bidPrice);
+      else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? parseFloat(this.qAskPx) - parseFloat(this.qBidPx) : 0, 0);
     }
 
     this.updateQuoteClass();
@@ -189,19 +192,18 @@ export class MarketQuotingComponent implements OnInit {
 
   private updateQuoteClass = () => {
     if (this.levels && this.levels.length > 0) {
-      var tol = 1e-6;
       for (var i = 0; i < this.levels.length; i++) {
         var level = this.levels[i];
         level.bidClass = 'active ';
         var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
         for (var j = 0; j < bids.length; j++)
-          if (Math.abs(bids[j].price - level.bidPrice) < tol)
+          if (bids[j].price === parseFloat(level.bidPrice))
             level.bidClass = 'success buy ';
         level.bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.bidSize)/Math.log(2))*4,19),1)));
         level.askClass = 'active ';
         var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
         for (var j = 0; j < asks.length; j++)
-          if (Math.abs(asks[j].price - level.askPrice) < tol)
+          if (asks[j].price === parseFloat(level.askPrice))
             level.askClass = 'success sell ';
         level.askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.askSize)/Math.log(2))*4,19),1)));
       }
