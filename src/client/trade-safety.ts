@@ -7,8 +7,8 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'trade-safety',
   template: `<div div class="tradeSafety img-rounded"><div>
       Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}">{{ fairValue }}</span>,
-      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span>,
-      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span>,
+      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety }}</span>,
+      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety }}</span>,
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
@@ -21,8 +21,8 @@ export class TradeSafetyComponent implements OnInit {
   public fairValue: string;
   private buySafety: number;
   private sellSafety: number;
-  private buySizeSafety: number;
-  private sellSizeSafety: number;
+  private buySizeSafety: string ;
+  private sellSizeSafety: string;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
@@ -51,8 +51,8 @@ export class TradeSafetyComponent implements OnInit {
     this.tradeSafetyValue = value.combined;
     this.buySafety = value.buy;
     this.sellSafety = value.sell;
-    this.buySizeSafety = value.buyPing;
-    this.sellSizeSafety = value.sellPong;
+    this.buySizeSafety = this.toPrice(value.buyPing);
+    this.sellSizeSafety = this.toPrice(value.sellPong);
   }
 
   private updateFairValue = (fv: Models.FairValue) => {
