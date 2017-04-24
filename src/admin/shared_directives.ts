@@ -8,6 +8,11 @@ import Models = require("../common/models");
 import io = require("socket.io-client");
 import * as moment from "moment";
 
+export interface ProductState {
+    advert: Models.ProductAdvertisement;
+    fixed: number
+}
+
 var mypopover = ($compile : ng.ICompileService, $templateCache : ng.ITemplateCacheService) => {
     var getTemplate = (contentType, template_url) => {
         var template = '';
@@ -98,6 +103,7 @@ angular.module(sharedDirectives, ['ui.bootstrap'])
        .directive('mypopover', mypopover)
        .directive('bindOnce', bindOnce)
        .factory("socket", () : SocketIOClient.Socket => io())
+       .factory("product", function() { return {advert: new Models.ProductAdvertisement(null, null, null, null)} })
        .service("subscriberFactory", SubscriberFactory)
        .service("fireFactory", FireFactory)
        .filter("veryShortDate", () => Models.veryShortDate)

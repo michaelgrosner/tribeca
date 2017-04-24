@@ -122,7 +122,7 @@ const backTestSimulationSetup = (inputData : Array<Models.Market | Models.Market
     const exchange = Models.Exchange.Null;
     const gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
-    const getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => Q(new Backtest.BacktestExchange(gw));
+    const getExch = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(gw);
     
     const getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();

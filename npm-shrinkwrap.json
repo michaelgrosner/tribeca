@@ -42,11 +42,6 @@
       "from": "@types/connect@latest",
       "resolved": "https://registry.npmjs.org/@types/connect/-/connect-3.4.30.tgz"
     },
-    "@types/es6-promise": {
-      "version": "0.0.32",
-      "from": "@types/es6-promise@latest",
-      "resolved": "https://registry.npmjs.org/@types/es6-promise/-/es6-promise-0.0.32.tgz"
-    },
     "@types/express": {
       "version": "4.0.35",
       "from": "@types/express@latest",
