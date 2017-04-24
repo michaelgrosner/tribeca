@@ -122,7 +122,7 @@ const backTestSimulationSetup = (inputData : Array<Models.Market | Models.Market
     const exchange = Models.Exchange.Null;
     const gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
-    const getExch = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => Q(new Backtest.BacktestExchange(gw));
+    const getExch = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(gw);
     
     const getPublisher = <T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T> => { 
         return new Messaging.NullPublisher<T>();
@@ -190,7 +190,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
             case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-            case Models.Exchange.Null: return NullGw.createNullGateway(config);
+            case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }

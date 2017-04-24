@@ -575,7 +575,7 @@ class HitBtcSymbolProvider {
 }
 
 class HitBtc extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number) {
+    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, pair: Models.CurrencyPair) {
         const details = new HitBtcBaseGateway(step);
         const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
@@ -584,7 +584,7 @@ class HitBtc extends Interfaces.CombinedGateway {
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(config);
         if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.NullPositionGateway();
+            positionGateway = new NullGateway.NullPositionGateway(pair);
         }
 
         super(
@@ -612,7 +612,7 @@ export async function createHitBtc(config : Config.IConfigProvider, pair: Models
 
     for (let s of symbols.symbols) {
         if (s.symbol === symbolProvider.symbol) 
-            return new HitBtc(config, symbolProvider, parseFloat(s.step));
+            return new HitBtc(config, symbolProvider, parseFloat(s.step), pair);
     }
 
     throw new Error("unable to match pair to a hitbtc symbol " + pair.toString());

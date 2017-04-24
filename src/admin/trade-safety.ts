@@ -33,7 +33,7 @@ var TradeSafetyController = ($scope : TradeSafetyScope, $log : ng.ILogService, s
     };
 
     var subscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.TradeSafetyValue)
-        .registerDisconnectedHandler(clear)
+        .registerConnectHandler(clear)
         .registerSubscriber(updateValue, us => us.forEach(updateValue));
 
     $scope.$on('$destroy', () => {

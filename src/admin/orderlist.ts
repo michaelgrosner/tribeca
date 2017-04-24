@@ -141,7 +141,6 @@ var OrderListController = ($scope: OrderListScope,
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.OrderStatusReports)
         .registerConnectHandler(clear)
-        .registerDisconnectedHandler(clear)
         .registerSubscriber(addOrderRpt, os => os.forEach(addOrderRpt));
 
     $scope.$on('$destroy', () => {
