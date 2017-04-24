@@ -126,9 +126,3 @@ describe("BacktestGatewayTests", () => {
         assert(gotTrade !== false, "never got trade");
     });
 });
-
-describe("BacktestFunctionTests", () => {
-    it("should execute utils", () => {
-        assert.equal(Utils.roundFloat(12.120001), 12.12);
-    });
-});

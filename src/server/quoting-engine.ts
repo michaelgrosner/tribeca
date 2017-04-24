@@ -9,6 +9,7 @@ import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
+import {QuoteInput} from "./quoting-styles/helpers";
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import PingPong = require("./quoting-styles/ping-pong");
@@ -36,6 +37,7 @@ export class QuotingEngine {
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
+        private _details: Interfaces.IBroker,
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
@@ -64,8 +66,10 @@ export class QuotingEngine {
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
-        var params = this._qlParamRepo.latest;
-        var unrounded = this._registry.Get(params.mode).GenerateQuote(filteredMkt, fv, params, this._positionBroker);
+        const params = this._qlParamRepo.latest;
+        const minTick = this._details.minTickIncrement;
+        const input = new QuoteInput(filteredMkt, fv, params, this._positionBroker, minTick);
+        const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
 
         if (unrounded === null)
             return null;
@@ -80,16 +84,16 @@ export class QuotingEngine {
             }
         }
 
-        var tbp = this._targetPosition.latestTargetPosition;
+        const tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
             // this._log.warn("cannot compute a quote since no position report exists!");
             return null;
         }
-        var targetBasePosition = tbp.data;
+        const targetBasePosition = tbp.data;
 
-        var latestPosition = this._positionBroker.latestReport;
-        var totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        var totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+        const latestPosition = this._positionBroker.latestReport;
+        const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
         let sideAPR: string[] = [];
 
         let superTradesMultipliers = (params.superTrades &&
@@ -136,7 +140,7 @@ export class QuotingEngine {
 
         this._targetPosition.sideAPR = sideAPR;
 
-        var safety = this._safeties.latest;
+        const safety = this._safeties.latest;
         if (safety === null) {
             this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
@@ -194,42 +198,42 @@ export class QuotingEngine {
         }
 
         if (unrounded.bidPx !== null) {
-            unrounded.bidPx = Utils.roundFloat(unrounded.bidPx);
+            unrounded.bidPx = Utils.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
 
         if (unrounded.askPx !== null) {
-            unrounded.askPx = Utils.roundFloat(unrounded.askPx);
-            unrounded.askPx = Math.max(unrounded.bidPx + 1e-2, unrounded.askPx);
+            unrounded.askPx = Utils.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
+            unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
 
         if (unrounded.askSz !== null) {
-            unrounded.askSz = Utils.roundFloat(unrounded.askSz);
-            unrounded.askSz = Math.max(1e-2, unrounded.askSz);
-        }
+            unrounded.askSz = Utils.roundDown(unrounded.askSz, minTick);
+            unrounded.askSz = Math.max(minTick, unrounded.askSz);
+          }
 
-        if (unrounded.bidSz !== null) {
-            unrounded.bidSz = Utils.roundFloat(unrounded.bidSz);
-            unrounded.bidSz = Math.max(1e-2, unrounded.bidSz);
-        }
+          if (unrounded.bidSz !== null) {
+            unrounded.bidSz = Utils.roundDown(unrounded.bidSz, minTick);
+            unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
+          }
 
         return unrounded;
     }
 
     private recalcQuote = () => {
-        var fv = this._fvEngine.latestFairValue;
+        const fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
             return;
         }
 
-        var filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (filteredMkt == null) {
             this.latestQuote = null;
             return;
         }
 
-        var genQt = this.computeQuote(filteredMkt, fv);
+        const genQt = this.computeQuote(filteredMkt, fv);
 
         if (genQt === null) {
             this.latestQuote = null;
@@ -237,18 +241,37 @@ export class QuotingEngine {
         }
 
         this.latestQuote = new Models.TwoSidedQuote(
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, q => q.bid),
-            QuotingEngine.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, q => q.ask),
+            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, Models.Side.Bid),
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, Models.Side.Ask),
             this._timeProvider.utcNow()
         );
     };
 
-    private static quotesAreSame(newQ: Models.Quote, prevTwoSided: Models.TwoSidedQuote, sideGetter: (q: Models.TwoSidedQuote) => Models.Quote): Models.Quote {
+    private quotesAreSame(
+            newQ: Models.Quote,
+            prevTwoSided: Models.TwoSidedQuote,
+            side: Models.Side): Models.Quote {
         if (newQ.price === null && newQ.size === null) return null;
         if (prevTwoSided == null) return newQ;
-        var previousQ = sideGetter(prevTwoSided);
+
+        const previousQ = Models.Side.Bid === side ? prevTwoSided.bid : prevTwoSided.ask;
+
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
-        return Math.abs(newQ.price - previousQ.price) < .009999 ? previousQ : newQ;
+
+        if (Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement) {
+            return previousQ;
+        }
+
+        let quoteWasWidened = true;
+        if (Models.Side.Bid === side && previousQ.price < newQ.price) quoteWasWidened = false;
+        if (Models.Side.Ask === side && previousQ.price > newQ.price) quoteWasWidened = false;
+
+        // prevent flickering
+        if (!quoteWasWidened && Math.abs(moment.utc().valueOf() - prevTwoSided.time.valueOf()) < 300) {
+            return previousQ;
+        }
+
+        return newQ;
     }
 }

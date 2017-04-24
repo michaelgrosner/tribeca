@@ -203,9 +203,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private convertToOrderRequest = (order: Models.Order): BitfinexNewOrderRequest => {
         return {
-            amount: Utils.roundFloat(order.quantity).toString(),
+            amount: order.quantity.toString(),
             exchange: "bitfinex",
-            price: Utils.roundFloat(order.price).toString(),
+            price: order.price.toString(),
             side: encodeSide(order.side),
             symbol: this._symbolProvider.symbol,
             type: encodeTimeInForce(order.timeInForce, order.type)
@@ -310,7 +310,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private _since = moment.utc();
     private _log = Utils.log("tribeca:gateway:BitfinexOE");
-    constructor(timeProvider: Utils.ITimeProvider,
+    constructor(
+        timeProvider: Utils.ITimeProvider,
+        private _details: BitfinexBaseGateway,
         private _http: BitfinexHttp,
         private _symbolProvider: BitfinexSymbolProvider) {
 
@@ -453,7 +455,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
             _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
                 var amt = parseFloat(p.amount);
-                var cur = GetCurrencyEnum(p.currency);
+                var cur = Models.toCurrency(p.currency);
                 var held = amt - parseFloat(p.available);
                 var rpt = new Models.CurrencyPosition(amt, held, cur);
                 this.PositionUpdate.trigger(rpt);
@@ -489,55 +491,52 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Bitfinex;
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
-    ];
-    public get supportedCurrencyPairs() {
-        return BitfinexBaseGateway.AllPairs;
-    }
-}
-
-function GetCurrencyEnum(c: string): Models.Currency {
-    switch (c.toLowerCase()) {
-        case "usd": return Models.Currency.USD;
-        case "ltc": return Models.Currency.LTC;
-        case "btc": return Models.Currency.BTC;
-        default: throw new Error("Unsupported currency " + c);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency): string {
-    switch (c) {
-        case Models.Currency.USD: return "usd";
-        case Models.Currency.LTC: return "ltc";
-        case Models.Currency.BTC: return "btc";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
+    constructor(public minTickIncrement: number) {} 
 }
 
 class BitfinexSymbolProvider {
     public symbol: string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+        this.symbol = Models.fromCurrency(pair.base).toLowerCase() + Models.fromCurrency(pair.quote).toLowerCase();
     }
 }
 
-export class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, pair: Models.CurrencyPair) {
-        var symbol = new BitfinexSymbolProvider(pair);
-        var monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
-        var http = new BitfinexHttp(config, monitor);
-
-        var orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, http, symbol)
+class Bitfinex extends Interfaces.CombinedGateway {
+    constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number) {
+        const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
+        const http = new BitfinexHttp(config, monitor);
+        const details = new BitfinexBaseGateway(pricePrecision);
+        
+        const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
             new BitfinexMarketDataGateway(timeProvider, http, symbol),
             orderGateway,
             new BitfinexPositionGateway(timeProvider, http),
-            new BitfinexBaseGateway());
+            details);
+    }
+}
+
+interface SymbolDetails {
+    pair: string,
+    price_precision: number,
+    initial_margin:string,
+    minimum_margin:string,
+    maximum_order_size:string,
+    minimum_order_size:string,
+    expiration:string
+}
+
+export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
+    const symbolDetails = await Utils.getJSON<SymbolDetails[]>(detailsUrl);
+    const symbol = new BitfinexSymbolProvider(pair);    
+
+    for (let s of symbolDetails) {
+        if (s.pair === symbol.symbol)
+            return new Bitfinex(timeProvider, config, symbol, 10**(-1*s.price_precision));
     }
 }

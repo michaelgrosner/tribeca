@@ -1,4 +1,5 @@
 import Models = require("../share/models");
+import Interfaces = require("./interfaces");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import MarketFiltration = require("./market-filtration");
@@ -19,6 +20,7 @@ export class FairValueEngine {
   }
 
   constructor(
+    private _details: Interfaces.IBroker,
     private _timeProvider: Utils.ITimeProvider,
     private _filtration: MarketFiltration.MarketFiltration,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
@@ -31,10 +33,11 @@ export class FairValueEngine {
 
   private recalcFairValue = (mkt: Models.Market) => {
     this.latestFairValue = (mkt && mkt.asks.length && mkt.bids.length)
-      ? new Models.FairValue(Utils.roundFloat(
+      ? new Models.FairValue(Utils.roundNearest(
           this._qlParamRepo.latest.fvModel == Models.FairValueModel.BBO
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
-            : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size)
+            : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
+          this._details.minTickIncrement
         ), this._timeProvider.utcNow())
       : null;
   };

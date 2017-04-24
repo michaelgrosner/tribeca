@@ -17,15 +17,16 @@ export class PositionManager {
     private newLong: number = null;
     private fairValue: number = null;
     public set quoteEwma(quoteEwma: number) {
-      var fv = this._fvAgent.latestFairValue;
+      const fv = this._fvAgent.latestFairValue;
       if (fv === null || quoteEwma === null) return;
       this.fairValue = fv.price;
       this.newQuote = quoteEwma;
+      const minTick = this._details.minTickIncrement;
       this._ewmaPublisher.publish(new Models.EWMAChart(
-        Utils.roundFloat(quoteEwma),
-        this.newShort?Utils.roundFloat(this.newShort):null,
-        this.newLong?Utils.roundFloat(this.newLong):null,
-        Utils.roundFloat(fv.price),
+        Utils.roundNearest(quoteEwma, minTick),
+        this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+        this.newLong?Utils.roundNearest(this.newLong, minTick):null,
+        Utils.roundNearest(fv.price, minTick),
         this._timeProvider.utcNow()
       ));
     }
@@ -40,16 +41,19 @@ export class PositionManager {
     private _data: Models.RegularFairValue[] = [];
 
     constructor(
+        private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _fvAgent: FairValue.FairValueEngine,
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics,
-        private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>) {
+        private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>
+    ) {
+        const minTick = this._details.minTickIncrement;
         _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
-          this.newQuote?Utils.roundFloat(this.newQuote):null,
-          this.newShort?Utils.roundFloat(this.newShort):null,
-          this.newLong?Utils.roundFloat(this.newLong):null,
-          this.fairValue?Utils.roundFloat(this.fairValue):null,
+          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
+          this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+          this.newLong?Utils.roundNearest(this.newLong, minTick):null,
+          this.fairValue?Utils.roundNearest(this.fairValue, minTick):null,
           this._timeProvider.utcNow()
         ):null]);
         this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(10, 'minutes'));
@@ -57,35 +61,37 @@ export class PositionManager {
     }
 
     private updateEwmaValues = () => {
-        var fv = this._fvAgent.latestFairValue;
+        const fv = this._fvAgent.latestFairValue;
         if (fv === null)
             return;
         this.fairValue = fv.price;
 
-        var rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
+        const rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
         this.newShort = this._shortEwma.addNewValue(fv.price);
         this.newLong = this._longEwma.addNewValue(fv.price);
-        var newTargetPosition = ((this.newShort * 100 / this.newLong) - 100) * 5;
+
+        const minTick = this._details.minTickIncrement;
+        const factor = 1/minTick;
+        let newTargetPosition = ((this.newShort * factor/ this.newLong) - factor) * 5;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
 
-        if (Math.abs(newTargetPosition - this._latest) > 1e-2) {
+        if (Math.abs(newTargetPosition - this._latest) > minTick) {
             this._latest = newTargetPosition;
             this.NewTargetPosition.trigger();
         }
 
         this._ewmaPublisher.publish(new Models.EWMAChart(
-          this.newQuote?Utils.roundFloat(this.newQuote):null,
-          Utils.roundFloat(this.newShort),
-          Utils.roundFloat(this.newLong),
-          Utils.roundFloat(fv.price),
+          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
+          Utils.roundNearest(this.newShort, minTick),
+          Utils.roundNearest(this.newLong, minTick),
+          Utils.roundNearest(fv.price, minTick),
           this._timeProvider.utcNow()
         ));
 
-        this._log.info("recalculated regular fair value, short:", Utils.roundFloat(this.newShort), "long:",
-            Utils.roundFloat(this.newLong), "target:", Utils.roundFloat(this._latest), "currentFv:", Utils.roundFloat(fv.price));
+        this._log.info(`recalculated regular fair value, short: ${this.newShort} long: ${this.newLong}, target: ${this._latest}, currentFv: ${fv.price}`);
 
         this._data.push(rfv);
         this._data = this._data.slice(-7);
@@ -121,13 +127,13 @@ export class TargetBasePositionManager {
     }
 
     private recomputeTargetPosition = () => {
-        var latestPosition = this._positionBroker.latestReport;
-        var params = this._params.latest;
+        const latestPosition = this._positionBroker.latestReport;
+        const params = this._params.latest;
 
         if (params === null || latestPosition === null)
             return;
 
-        var targetBasePosition: number = params.targetBasePosition;
+        let targetBasePosition: number = params.targetBasePosition;
         if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
         }
@@ -140,7 +146,7 @@ export class TargetBasePositionManager {
             );
             this.NewTargetPosition.trigger();
             this._wrapped.publish(this.latestTargetPosition);
-            this._log.info("recalculated target base position:", Utils.roundFloat(this.latestTargetPosition.data));
+            this._log.info("recalculated target base position:", this.latestTargetPosition.data);
         }
     };
 }

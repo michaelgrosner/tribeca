@@ -143,6 +143,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
+    private roundPrice = (price: number, side: Models.Side) : number => {
+        return Utils.roundSide(price, this._baseBroker.minTickIncrement, side);
+    }
+
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     private _cancelsWaitingForExchangeOrderId: {[clId : string]: Models.OrderCancel} = {};
 
@@ -153,7 +157,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         var orderId = this._oeGateway.generateClientOrderId();
         var exch = this._baseBroker.exchange();
         var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type,
-            order.price, order.timeInForce, exch, order.preferPostOnly);
+            this.roundPrice(order.price, order.side), order.timeInForce, exch, order.preferPostOnly);
 
         var sent = this._oeGateway.sendOrder(brokeredOrder);
 
@@ -164,7 +168,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             quantity: order.quantity,
             type: order.type,
             time: sent.sentTime,
-            price: order.price,
+            price: brokeredOrder.price,
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
@@ -179,7 +183,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         var rpt = this._orderCache.allOrders[replace.origOrderId];
         var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
-            rpt.type, replace.price, rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
+            rpt.type, this.roundPrice(replace.price, rpt.side), rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
         var sent = this._oeGateway.replaceOrder(br);
 
@@ -187,7 +191,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
             pendingReplace: true,
-            price: replace.price,
+            price: br.price,
             quantity: replace.quantity,
             time: sent.sentTime,
             latency: sent.sentTime.valueOf() - replace.generatedTime.valueOf()};
@@ -588,8 +592,8 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._pair;
     }
 
-    public get supportedCurrencyPairs() : Models.CurrencyPair[] {
-        return this._baseGateway.supportedCurrencyPairs;
+    public get minTickIncrement() {
+        return this._baseGateway.minTickIncrement;
     }
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
@@ -630,9 +634,6 @@ export class ExchangeBroker implements Interfaces.IBroker {
       private _oeGateway: Interfaces.IOrderEntryGateway,
       private _connectivityPublisher: Publish.IPublish<Models.ConnectivityStatus>
     ) {
-      if (!_.some(_baseGateway.supportedCurrencyPairs, p => p.base === _pair.base && p.quote === _pair.quote))
-        throw new Error("Unsupported currency pair! Please open issue in github or check that gateway " + _baseGateway.name() + " really supports the specified currencies defined in TradedPair configuration option.");
-
       this._mdGateway.ConnectChanged.on(s => {
         this.onConnect(Models.GatewayType.MarketData, s);
       });

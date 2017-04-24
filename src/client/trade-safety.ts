@@ -6,7 +6,7 @@ import {SubscriberFactory} from './shared_directives';
 @Component({
   selector: 'trade-safety',
   template: `<div div class="tradeSafety img-rounded"><div>
-      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}">{{ fairValue | number:'1.2-2' }}</span>,
+      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}">{{ fairValue }}</span>,
       BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.2-2' }}</span>,
       SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.2-2' }}</span>,
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,

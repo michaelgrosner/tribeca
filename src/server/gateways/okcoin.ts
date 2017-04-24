@@ -537,34 +537,7 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.OkCoin;
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.CNY)
-    ];
-    public get supportedCurrencyPairs() {
-        return OkCoinBaseGateway.AllPairs;
-    }
-}
-
-function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (c.toLowerCase()) {
-        case "usd": return Models.Currency.USD;
-        case "ltc": return Models.Currency.LTC;
-        case "btc": return Models.Currency.BTC;
-        case "cny": return Models.Currency.CNY;
-        default: throw new Error("Unsupported currency " + c);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency) : string {
-    switch (c) {
-        case Models.Currency.USD: return "usd";
-        case Models.Currency.LTC: return "ltc";
-        case Models.Currency.BTC: return "btc";
-        case Models.Currency.CNY: return "cny";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
+    constructor(public minTickIncrement: number) {}
 }
 
 class OkCoinSymbolProvider {
@@ -574,6 +547,7 @@ class OkCoinSymbolProvider {
     public symbolWithoutUnderscore: string;
 
     constructor(pair: Models.CurrencyPair) {
+        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s);
         this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
         this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
         this.symbolQuote = GetCurrencySymbol(pair.quote);
@@ -581,7 +555,7 @@ class OkCoinSymbolProvider {
     }
 }
 
-export class OkCoin extends Interfaces.CombinedGateway {
+class OkCoin extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new OkCoinSymbolProvider(pair);
         var signer = new OkCoinMessageSigner(config);
@@ -596,6 +570,9 @@ export class OkCoin extends Interfaces.CombinedGateway {
             new OkCoinMarketDataGateway(socket, symbol),
             orderGateway,
             new OkCoinPositionGateway(http),
-            new OkCoinBaseGateway());
+            new OkCoinBaseGateway(.01)); // uh... todo
         }
+}
+export async function createOkCoin(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    return new OkCoin(config, pair);
 }

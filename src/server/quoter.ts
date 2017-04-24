@@ -143,7 +143,7 @@ export class ExchangeQuoter {
               ).length)
                 return Models.QuoteSent.UnsentDuplicate;
               this.cancelHigherQuotes(q.data.price, q.time);
-              price = Utils.roundFloat(price);
+              price = Utils.roundNearest(price, this._exchBroker.minTickIncrement);
               q.data.price = price;
             } else
               return Models.QuoteSent.UnsentDuplicate;
