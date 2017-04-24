@@ -18,13 +18,14 @@ import {SubscriberFactory} from './shared_directives';
 })
 export class TradeSafetyComponent implements OnInit {
 
-  public fairValue: number;
+  public fairValue: string;
   private buySafety: number;
   private sellSafety: number;
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
+  @Input() product: Models.ProductState;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -34,14 +35,16 @@ export class TradeSafetyComponent implements OnInit {
   ngOnInit() {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.FairValue)
-      .registerDisconnectedHandler(this.clearFairValue)
+      .registerConnectHandler(this.clearFairValue)
       .registerSubscriber(this.updateFairValue);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
-      .registerDisconnectedHandler(this.clear)
+      .registerConnectHandler(this.clear)
       .registerSubscriber(this.updateValues);
   }
+
+  private toPrice = (px: number) : string => px.toFixed(this.product.fixed);
 
   private updateValues = (value : Models.TradeSafety) => {
     if (value == null) return;
@@ -58,7 +61,7 @@ export class TradeSafetyComponent implements OnInit {
       return;
     }
 
-    this.fairValue = fv.price;
+    this.fairValue = this.toPrice(fv.price);
   }
 
   private clearFairValue = () => {

@@ -280,6 +280,7 @@ class DisplayOrder {
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:50px"
                                                     type="submit"
+                                                    [disabled]="!pair.quotingParameters.connected"
                                                     (click)="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
@@ -295,10 +296,13 @@ class DisplayOrder {
                     <div class="row">
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                             <div class="row img-rounded exchange">
-                                <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
+                                <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" [disabled]="!pair.active.connected" (click)="pair.active.submit()">
                                     {{ exchange_name }}<br/>{{ pair_name }}
                                 </button>
-                                <wallet-position></wallet-position>
+                                <div *ngIf="pair.connectionMessage">
+     +                            <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
+                                </div>
+                                <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><a href="#" (click)="toggleStats()">Stats</a></div>
@@ -311,11 +315,11 @@ class DisplayOrder {
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
-                            <trade-safety [tradeFreq]="tradeFreq"></trade-safety>
+                            <trade-safety [tradeFreq]="tradeFreq" [product]="product"></trade-safety>
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                                <market-quoting [connected]="!!pair.active.display"></market-quoting>
+                                <market-quoting [connected]="!!pair.active.display" [product]="product"></market-quoting>
                             </div>
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
@@ -433,6 +437,10 @@ class ClientComponent implements OnInit {
   public toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
   };
+  public product: Models.ProductState = {
+    advert: new Models.ProductAdvertisement(null, null, "none", .01),
+    fixed: 2
+  };
 
   private user_theme: string = null;
   private system_theme: string = null;
@@ -465,16 +473,15 @@ class ClientComponent implements OnInit {
       .getFire(Models.Topics.ToggleConfigs)
       .fire(showConfigs);
 
-    this.notepad = null;
-    this.pair = null;
-    this.reset();
+    this.reset(false);
 
     this.order = new DisplayOrder(this.fireFactory);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
-      .registerDisconnectedHandler(() => this.reset());
+      .registerConnectHandler(() => this.reset(true))
+      .registerDisconnectedHandler(() => this.reset(false));
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.ApplicationState)
@@ -497,13 +504,15 @@ class ClientComponent implements OnInit {
     this.showConfigs = showConfigs;
   }
 
-  private reset = () => {
-    this.connected = false;
-    this.pair_name = null;
-    this.exchange_name = null;
-    this.exchange_market = null;
-    this.exchange_orders = null;
-    this.pair = null;
+  private reset = (connected: boolean) => {
+    this.connected = connected;
+    if (connected) {
+      this.pair_name = null;
+      this.exchange_name = null;
+      this.exchange_market = null;
+      this.exchange_orders = null;
+      this.pair = null;
+    }
   }
 
   private bytesToSize = (input:number, precision:number) => {
@@ -556,8 +565,9 @@ class ClientComponent implements OnInit {
         ? 'https://www.gdax.com/orders/'+this.pair_name.replace('/','-')
         : null
       );
-
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
+    this.product.advert = pa;
+    this.product.fixed = Math.floor(Math.log10(pa.minTick)) * -1;
   }
 }
 

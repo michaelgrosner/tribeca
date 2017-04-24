@@ -4,11 +4,13 @@ import Models = require("../share/models");
 
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
+  registerConnectHandler: (handler: () => void) => ISubscribe<T>;
   registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
   connected: boolean;
 }
 
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
+  private _connectHandler: () => void = null;
   private _disconnectHandler: () => void = null;
   private _socket: SocketIOClient.Socket;
 
@@ -19,11 +21,10 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     super(observer => {
       this._socket = io;
 
-      let onConnect = () => this._socket.emit(Models.Prefixes.SUBSCRIBE + this.topic);
-      if (this.connected) onConnect();
+      if (this.connected) this.onConnect();
 
       this._socket
-        .on("connect", onConnect)
+        .on("connect", this.onConnect)
         .on("disconnect", this.onDisconnect)
         .on(Models.Prefixes.MESSAGE + topic, (data) => observer.next(data))
         .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
@@ -35,6 +36,13 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   public get connected(): boolean {
     return this._socket.connected;
   }
+
+  private onConnect = () => {
+      if (this._connectHandler !== null)
+          this._connectHandler();
+
+      this._socket.emit(Models.Prefixes.SUBSCRIBE + this.topic);
+  };
 
   private onDisconnect = () => {
     if (this._disconnectHandler !== null)
@@ -51,6 +59,12 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     if (this._disconnectHandler === null) this._disconnectHandler = handler;
     else throw new Error("already registered disconnect handler for topic " + this.topic);
     return this;
+  };
+
+  public registerConnectHandler = (handler : () => void) => {
+      if (this._connectHandler === null) this._connectHandler = handler;
+      else throw new Error("already registered connect handler for topic " + this.topic);
+      return this;
   };
 }
 

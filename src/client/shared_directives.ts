@@ -36,6 +36,10 @@ class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
       return this._wrapped.registerSubscriber(x => this._scope.run(() => incrementalHandler(x)))
     };
 
+    public registerConnectHandler = (handler : () => void) => {
+        return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
+    };
+
     public registerDisconnectedHandler = (handler: () => void) => {
       return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
     };

@@ -148,6 +148,11 @@ export enum TimeInForce { IOC, FOK, GTC }
 export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 export enum Liquidity { Make, Take }
 
+export interface ProductState {
+    advert: ProductAdvertisement;
+    fixed: number
+}
+
 export interface Order {
     side : Side;
     quantity : number;
