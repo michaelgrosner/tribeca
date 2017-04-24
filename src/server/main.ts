@@ -73,7 +73,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
 
 let exitingEvent: () => Q.Promise<boolean>;
 
-var performExit = () => {
+const performExit = () => {
   Q.timeout(exitingEvent(), 2000).then(completed => {
     if (completed) Utils.log("main").info("All exiting event handlers have fired, exiting application.");
     else Utils.log("main").warn("Did not complete clean-up tasks successfully, still shutting down.");
@@ -103,13 +103,13 @@ process.on("SIGINT", () => {
   performExit();
 });
 
-var backTestSimulationSetup = (
+const backTestSimulationSetup = (
   inputData: (Models.Market | Models.MarketTrade)[],
   parameters: Backtest.BacktestParameters
 ) => {
-    var timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(inputData.slice(0,1).pop().time, inputData.slice(-1).pop().time);
+    const timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(inputData.slice(0,1).pop().time, inputData.slice(-1).pop().time);
 
-    var getExchange = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
+    const getExchange = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
       new Backtest.BacktestGateway(
         inputData,
         parameters.startingBasePosition,
@@ -118,15 +118,15 @@ var backTestSimulationSetup = (
       )
     );
 
-    var getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
         return new Publish.NullPublisher<T>();
     };
 
-    var getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.NullReceiver<T>();
+    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.NullReceiver<T>();
 
-    var getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
+    const getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => new Backtest.BacktestPersister<T>();
 
-    var getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
+    const getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
 
     return {
         config: null,
@@ -143,10 +143,10 @@ var backTestSimulationSetup = (
     };
 };
 
-var liveTradingSetup = (config: Config.ConfigProvider) => {
-    var timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
+const liveTradingSetup = (config: Config.ConfigProvider) => {
+    const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
-    var app = express();
+    const app = express();
 
     let web_server;
     try {
@@ -158,20 +158,20 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
       web_server = http.createServer(app)
     }
 
-    var io = socket_io(web_server);
+    const io = socket_io(web_server);
 
-    var username = config.GetString("WebClientUsername");
-    var password = config.GetString("WebClientPassword");
+    const username = config.GetString("WebClientUsername");
+    const password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
         Utils.log("main").info("Requiring authentication to web client");
-        var basicAuth = require('basic-auth-connect');
+        const basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
 
     app.use(compression());
     app.use(express.static(path.join(__dirname, "..", "pub")));
 
-    var webport = config.GetNumber("WebClientListenPort");
+    const webport = config.GetNumber("WebClientListenPort");
     web_server.listen(webport, () => Utils.log("main").info('Listening to admins on *:', webport));
 
     app.get("/view/*", (req: express.Request, res: express.Response) => {
@@ -183,12 +183,12 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
     });
 
     let pair = ((raw: string): Models.CurrencyPair => {
-      var split = raw.split("/");
+      const split = raw.split("/");
       if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
       return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
     })(config.GetString("TradedPair"));
 
-    var exchange = ((): Models.Exchange => {
+    const exchange = ((): Models.Exchange => {
       let ex: string = config.GetString("EXCHANGE").toLowerCase();
       switch (ex) {
         case "hitbtc": return Models.Exchange.HitBtc;
@@ -200,7 +200,7 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
       }
     })();
 
-    var getExchange = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
+    const getExchange = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
       switch (exchange) {
         case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
         case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
@@ -211,25 +211,25 @@ var liveTradingSetup = (config: Config.ConfigProvider) => {
       }
     };
 
-    var getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
       if (monitor && !monitor.io) monitor.io = io;
-      var socketIoPublisher = new Publish.Publisher<T>(topic, io, monitor, null);
+      const socketIoPublisher = new Publish.Publisher<T>(topic, io, monitor, null);
       if (persister) return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
       else return socketIoPublisher;
     };
 
-    var getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
+    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
 
-    var db = Persister.loadDb(config);
+    const db = Persister.loadDb(config);
 
-    var loaderSaver = new Persister.LoaderSaver(exchange, pair);
+    const loaderSaver = new Persister.LoaderSaver(exchange, pair);
 
-    var getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => {
+    const getPersister = <T>(collectionName: string): Persister.ILoadAll<T> => {
         let ls = collectionName === "mt" ? new MarketTrades.MarketTradesLoaderSaver(loaderSaver) : loaderSaver;
         return new Persister.Persister<T>(db, collectionName, exchange, pair, (collectionName === "trades"), ls.loader, ls.saver);
     };
 
-    var getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
+    const getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
 
     return {
@@ -262,11 +262,11 @@ interface TradingSystem {
 }
 
 var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
-    var tradesPersister = system.getPersister("trades");
+    const tradesPersister = system.getPersister("trades");
 
-    var paramsPersister = system.getRepository(system.startingParameters, Models.Topics.QuotingParametersChange);
+    const paramsPersister = system.getRepository(system.startingParameters, Models.Topics.QuotingParametersChange);
 
-    var completedSuccessfully = Q.defer<boolean>();
+    const completedSuccessfully = Q.defer<boolean>();
 
     Q.all<any>([
       paramsPersister.loadLatest(),
@@ -275,8 +275,8 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
       initParams: Models.QuotingParameters,
       initTrades: Models.Trade[]
     ) => {
-        var orderCache = new Broker.OrderStateCache();
-        var gateway = await system.getExchange(orderCache);
+        const orderCache = new Broker.OrderStateCache();
+        const gateway = await system.getExchange(orderCache);
 
         system.getPublisher(Models.Topics.ProductAdvertisement)
           .registerSnapshot(() => [new Models.ProductAdvertisement(
@@ -286,14 +286,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             gateway.base.minTickIncrement
           )]);
 
-        var paramsRepo = new QuotingParameters.QuotingParametersRepository(
+        const paramsRepo = new QuotingParameters.QuotingParametersRepository(
           system.getPublisher(Models.Topics.QuotingParametersChange),
           system.getReceiver(Models.Topics.QuotingParametersChange),
           initParams,
           paramsPersister
         );
 
-        var monitor = new Monitor.ApplicationState(
+        const monitor = new Monitor.ApplicationState(
           system.timeProvider,
           paramsRepo,
           system.getPublisher(Models.Topics.ApplicationState),
@@ -304,7 +304,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getRepository(0, 'dataSize')
         );
 
-        var broker = new Broker.ExchangeBroker(
+        const broker = new Broker.ExchangeBroker(
           system.pair,
           gateway.md,
           gateway.base,
@@ -321,7 +321,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
             hasSelfTradePrevention: broker.hasSelfTradePrevention,
         }, "using the following exchange details");
 
-        var orderBroker = new Broker.OrderBroker(
+        const orderBroker = new Broker.OrderBroker(
           system.timeProvider,
           paramsRepo,
           broker,
@@ -339,14 +339,14 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           initTrades
         );
 
-        var marketDataBroker = new Broker.MarketDataBroker(
+        const marketDataBroker = new Broker.MarketDataBroker(
           gateway.md,
           system.getPublisher(Models.Topics.MarketData, monitor)
         );
 
-        var quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
-        var filtration = new MarketFiltration.MarketFiltration(broker, quoter, marketDataBroker);
-        var fvEngine = new FairValue.FairValueEngine(
+        const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
+        const filtration = new MarketFiltration.MarketFiltration(broker, quoter, marketDataBroker);
+        const fvEngine = new FairValue.FairValueEngine(
           broker,
           system.timeProvider,
           filtration,
@@ -354,7 +354,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.FairValue, monitor)
         );
 
-        var positionBroker = new Broker.PositionBroker(
+        const positionBroker = new Broker.PositionBroker(
           system.timeProvider,
           broker,
           orderBroker,
@@ -363,7 +363,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
           system.getPublisher(Models.Topics.Position, monitor)
         );
 
-        var quotingEngine = new QuotingEngine.QuotingEngine(
+        const quotingEngine = new QuotingEngine.QuotingEngine(
           system.timeProvider,
           filtration,
           fvEngine,
@@ -425,7 +425,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
         );
 
         if (system.config.inBacktestMode) {
-            var t = Utils.date();
+            const t = Utils.date();
             console.log("starting backtest");
             try {
                 (<Backtest.BacktestExchange>gateway).run();
@@ -436,7 +436,7 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
                 return completedSuccessfully.promise;
             }
 
-            var results = [paramsRepo.latest, positionBroker.latestReport, {
+            const results = [paramsRepo.latest, positionBroker.latestReport, {
                 trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
                 volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
             }];
@@ -465,11 +465,11 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
         };
 
         let start = process.hrtime();
-        var interval = 500;
+        const interval = 500;
         setInterval(() => {
-            var delta = process.hrtime(start);
-            var ms = (delta[0] * 1e9 + delta[1]) / 1e6;
-            var n = ms - interval;
+            const delta = process.hrtime(start);
+            const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
+            const n = ms - interval;
             if (n > 121)
                 Utils.log("main").info("Event loop delay " + Utils.roundNearest(n, 100) + "ms");
             start = process.hrtime();
@@ -481,13 +481,13 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
 };
 
 ((): Q.Promise<any> => {
-  var config = new Config.ConfigProvider();
+  const config = new Config.ConfigProvider();
   if (!config.inBacktestMode) return runTradingSystem(liveTradingSetup(config));
 
   console.log("enter backtest mode");
 
-  var getFromBacktestServer = (ep: string) : Q.Promise<any> => {
-      var d = Q.defer<any>();
+  const getFromBacktestServer = (ep: string) : Q.Promise<any> => {
+      const d = Q.defer<any>();
       request.get(('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/"+ep, (err, resp, body) => {
         if (err) d.reject(err);
         else d.resolve(body);
@@ -495,27 +495,27 @@ var runTradingSystem = (system: TradingSystem) : Q.Promise<boolean> => {
       return d.promise;
   };
 
-  var inputDataPromise = getFromBacktestServer("inputData").then(body => {
-    var inp: Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
+  const inputDataPromise = getFromBacktestServer("inputData").then(body => {
+    const inp: Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
 
     for (let i = 0; i < inp.length; i++) {
-      var d = inp[i];
+      const d = inp[i];
       d.time = moment(d.time);
     }
 
     return inp;
   });
 
-  var nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
-    var p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
+  const nextParameters = () : Q.Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
+    const p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
     console.log("Recv'd parameters", util.inspect(p));
     return (typeof p === "string") ? null : p;
   });
 
-  var promiseWhile = <T>(body : () => Q.Promise<boolean>) => {
-    var done = Q.defer<any>();
+  const promiseWhile = <T>(body : () => Q.Promise<boolean>) => {
+    const done = Q.defer<any>();
 
-    var loop = () => {
+    const loop = () => {
       body().then(possibleResult => {
         if (!possibleResult) return done.resolve(null);
         else Q.when(possibleResult, loop, done.reject);
