@@ -103,21 +103,25 @@ var uiCtrl = ($scope : MainWindowScope,
         product.fixed = -1*Math.floor(Math.log10(pa.minTick)); 
     };
 
-    var reset = (reason : string) => {
+    var reset = (reason : string, connected: boolean) => {
         $log.info("reset", reason);
-        $scope.connected = false;
-        $scope.pair_name = null;
-        $scope.exch_name = null;
+        $scope.connected = connected;
 
-        if ($scope.pair !== null)
-            $scope.pair.dispose();
-        $scope.pair = null;
+        if (connected) {
+            $scope.pair_name = null;
+            $scope.exch_name = null;
+
+            if ($scope.pair !== null)
+                $scope.pair.dispose();
+            $scope.pair = null;
+        }
     };
-    reset("startup");
+    reset("startup", false);
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
         .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-        .registerDisconnectedHandler(() => reset("disconnect"));
+        .registerConnectHandler(() => reset("connect", true))
+        .registerDisconnectedHandler(() => reset("disconnect", false));
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
