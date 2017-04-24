@@ -111,7 +111,7 @@ Later you can scroll the color-formatted output in the log file with `npm run lo
 
 ### Unreleased Changelog:
 
-Added nodejs7, typescript2, angular2 and reactivexjs.
+Added nodejs7, typescript2, angular4 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
