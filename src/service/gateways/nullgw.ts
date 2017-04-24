@@ -69,11 +69,9 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 export class NullPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    constructor() {
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.USD)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.EUR)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.GBP)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(2, .5, Models.Currency.BTC)), 5000);
+    constructor(pair: Models.CurrencyPair) {
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.base)), 2500);
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.quote)), 2500);
     }
 }
 
@@ -134,16 +132,16 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 }
 
 class NullGateway extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider) {
+    constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
         const minTick = config.GetNumber("NullGatewayTick");
         super(
             new NullMarketDataGateway(minTick), 
             new NullOrderGateway(), 
-            new NullPositionGateway(), 
+            new NullPositionGateway(pair), 
             new NullGatewayDetails(minTick));
     }
 }
 
-export function createNullGateway(config: Config.IConfigProvider) : Promise<Interfaces.CombinedGateway> {
-    return Q(new NullGateway(config));
+export async function createNullGateway(config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    return new NullGateway(config, pair);
 }
