@@ -167,7 +167,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
     var makeSubscriber = <T>(topic: string, updateFn, clearFn) => {
         var sub = subscriberFactory.getSubscriber<T>($scope, topic)
             .registerSubscriber(updateFn, ms => ms.forEach(updateFn))
-            .registerDisconnectedHandler(clearFn);
+            .registerConnectHandler(clearFn);
         subscribers.push(sub);
     };
 

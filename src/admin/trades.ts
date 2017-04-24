@@ -78,7 +78,6 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Trades)
         .registerConnectHandler(() => $scope.trade_statuses.length = 0)
-        .registerDisconnectedHandler(() => $scope.trade_statuses.length = 0)
         .registerSubscriber(addTrade, trades => trades.forEach(addTrade));
 
     $scope.$on('$destroy', () => {

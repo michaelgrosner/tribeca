@@ -47,7 +47,7 @@ var MessagesController = ($scope: MessageLoggerScope, $log: ng.ILogService, subs
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.Message)
         .registerSubscriber(addNewMessage, x => x.forEach(addNewMessage))
-        .registerDisconnectedHandler(() => $scope.messages.length = 0);
+        .registerConnectHandler(() => $scope.messages.length = 0);
 
     $scope.$on('$destroy', () => {
         sub.disconnect();

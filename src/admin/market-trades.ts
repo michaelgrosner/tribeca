@@ -100,7 +100,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
 
     var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.MarketTrade)
         .registerSubscriber(addNewMarketTrade, x => x.forEach(addNewMarketTrade))
-        .registerDisconnectedHandler(() => $scope.marketTrades.length = 0);
+        .registerConnectHandler(() => $scope.marketTrades.length = 0);
 
     $scope.$on('$destroy', () => {
         sub.disconnect();
