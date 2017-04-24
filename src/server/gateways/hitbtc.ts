@@ -12,10 +12,10 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import Q = require("q");
 import util = require("util");
-var shortId = require("shortid");
-var SortedArray = require("collections/sorted-array");
+const shortId = require("shortid");
+const SortedArray = require("collections/sorted-array");
 
-var _lotMultiplier = 100.0;
+const _lotMultiplier = 100.0;
 
 interface NoncePayload<T> {
     nonce: number;
@@ -294,7 +294,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(order.side),
             quantity: order.quantity * _lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
-            price: Utils.roundFloat(order.price),
+            price: order.price,
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
@@ -459,7 +459,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _log = Utils.log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
-    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
+    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
@@ -501,27 +501,25 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             this.getAuth("/api/1/trading/balance"),
             (err, body, resp) => {
                 try {
-                    var rpts : Array<HitBtcPositionReport> = JSON.parse(resp).balance;
+                    var rpts: Array<HitBtcPositionReport> = JSON.parse(resp).balance;
                     if (typeof rpts === 'undefined' || err) {
                         this._log.warn(err, "Trouble getting positions", body.body);
                         return;
                     }
 
                     rpts.forEach(r => {
-			try {
-                            var currency = GetCurrencyEnum(r.currency_code);
-			}
-			catch (e)
-			{
-			    return;
-			}
+                        try {
+                            var currency = Models.toCurrency(r.currency_code);
+                        }
+                        catch (e) {
+                            return;
+                        }
                         if (currency == null) return;
                         var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
                         this.PositionUpdate.trigger(position);
                     });
                 }
-                catch (e)
-                {
+                catch (e) {
                     this._log.error(e, "Error processing JSON response ", resp);
                 }
             });
@@ -560,69 +558,57 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return "HitBtc";
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-
-        // don't use these yet.
-        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.BTC),
-        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.USD),
-        //new Models.CurrencyPair(Models.Currency.LTC, Models.Currency.EUR),
-        //new Models.CurrencyPair(Models.Currency.DOGE, Models.Currency.BTC),
-        //new Models.CurrencyPair(Models.Currency.XMR, Models.Currency.BTC),
-        //new Models.CurrencyPair(Models.Currency.BCN, Models.Currency.BTC),
-        //new Models.CurrencyPair(Models.Currency.XDN, Models.Currency.BTC),
-    ];
-    public get supportedCurrencyPairs() {
-        return HitBtcBaseGateway.AllPairs;
-    }
-}
-
-function GetCurrencyEnum(c: string) : Models.Currency {
-    switch (c.toUpperCase()) {
-        case "BTC": return Models.Currency.BTC;
-        case "USD": return Models.Currency.USD;
-        case "EUR": return Models.Currency.EUR;
-        case "LTC": return Models.Currency.LTC;
-        default: throw new Error("Unsupported currency " + c);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency) : string {
-    switch (c) {
-        case Models.Currency.USD: return "USD";
-        case Models.Currency.LTC: return "LTC";
-        case Models.Currency.BTC: return "BTC";
-        case Models.Currency.EUR: return "EUR";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
+    constructor(public minTickIncrement: number) {}
 }
 
 class HitBtcSymbolProvider {
     public symbol : string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+        this.symbol = Models.fromCurrency(pair.base) + Models.fromCurrency(pair.quote);
     }
 }
 
-export class HitBtc extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
-        var symbolProvider = new HitBtcSymbolProvider(pair);
-        var orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider)
+class HitBtc extends Interfaces.CombinedGateway {
+    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, pair: Models.CurrencyPair) {
+        const details = new HitBtcBaseGateway(step);
+        const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
             : new NullGateway.NullOrderGateway();
 
         // Payment actions are not permitted in demo mode -- helpful.
-        var positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(config);
+        let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(config);
         if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.NullPositionGateway();
+            positionGateway = new NullGateway.NullPositionGateway(pair);
         }
 
         super(
             new HitBtcMarketDataGateway(config, symbolProvider),
             orderGateway,
             positionGateway,
-            new HitBtcBaseGateway());
+            details);
     }
+}
+
+interface HitBtcSymbol {
+    symbol: string,
+    step: string,
+    lot: string,
+    currency: string,
+    commodity: string,
+    takeLiquidityRate: string,
+    provideLiquidityRate: string
+}
+
+export async function createHitBtc(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    const symbolsUrl = config.GetString("HitBtcPullUrl") + "/api/1/public/symbols";
+    const symbols = await Utils.getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
+    const symbolProvider = new HitBtcSymbolProvider(pair);
+
+    for (let s of symbols.symbols) {
+        if (s.symbol === symbolProvider.symbol)
+            return new HitBtc(config, symbolProvider, parseFloat(s.step), pair);
+    }
+
+    throw new Error("unable to match pair to a hitbtc symbol " + pair.toString());
 }

@@ -34,19 +34,21 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
 
     private _marketTrades: Models.MarketTrade[] = [];
     private handleNewMarketTrade = (u: Models.GatewayMarketTrade) => {
-        var qt = u.onStartup ? null : this._quoteEngine.latestQuote;
-        var mkt = u.onStartup ? null : this._mdBroker.currentBook;
+        const qt = u.onStartup ? null : this._quoteEngine.latestQuote;
+        const mkt = u.onStartup ? null : this._mdBroker.currentBook;
 
         var t = new Models.MarketTrade(this._base.exchange(), this._base.pair, u.price, u.size, u.time, qt,
             mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
 
         if (u.onStartup) {
-            for (var i = 0; i < this.marketTrades.length; i++) {
-                var existing = this.marketTrades[i];
+            for (let i = 0; i < this.marketTrades.length; i++) {
+                const existing = this.marketTrades[i];
 
                 try {
-                    var dt = Math.abs(existing.time.diff(u.time, 'minutes'));
-                    if (Math.abs(existing.size - u.size) < 1e-4 && Math.abs(existing.price - u.price) < 1e-4 && dt < 1)
+                    const dt = Math.abs(existing.time.diff(u.time, 'minutes'));
+                    if (Math.abs(existing.size - u.size) < 1e-4 && 
+                        Math.abs(existing.price - u.price) < (.5*this._base.minTickIncrement) && 
+                        dt < 1)
                         return;
                 } catch (error) {
                     // sigh

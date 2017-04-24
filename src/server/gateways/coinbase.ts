@@ -143,7 +143,17 @@ interface CoinbaseRESTTrade {
     side: string;
 }
 
+interface Product {
+    id: string,
+    base_currency: string,
+    quote_currency: string,
+    base_min_size: string,
+    base_max_size: string,
+    quote_increment: string,
+}
+
 interface CoinbaseAuthenticatedClient {
+    getProducts(cb: (err?: Error, response?: any, ack?: Product[]) => void);
     buy(order: CoinbaseOrder, cb: (err?: Error, response?: any, ack?: CoinbaseOrderAck) => void);
     sell(order: CoinbaseOrder, cb: (err?: Error, response?: any, ack?: CoinbaseOrderAck) => void);
     cancelOrder(id: string, cb: (err?: Error, response?: any) => void);
@@ -160,20 +170,20 @@ class PriceLevel {
 }
 
 class CoinbaseOrderBook {
-    private static Eq = (a, b) => Math.abs(a - b) < 1e-4;
+    private Eq = (a, b) => Math.abs(a - b) < .5*this._minTick;
 
-    private static BidCmp = (a, b) => {
-        if (CoinbaseOrderBook.Eq(a, b)) return 0;
+    private BidCmp = (a, b) => {
+        if (this.Eq(a, b)) return 0;
         return a > b ? -1 : 1
     };
 
-    private static AskCmp = (a, b) => {
-        if (CoinbaseOrderBook.Eq(a, b)) return 0;
+    private AskCmp = (a, b) => {
+        if (this.Eq(a, b)) return 0;
         return a > b ? 1 : -1
     };
 
-    public bids: any = new SortedArrayMap([], CoinbaseOrderBook.Eq, CoinbaseOrderBook.BidCmp);
-    public asks: any = new SortedArrayMap([], CoinbaseOrderBook.Eq, CoinbaseOrderBook.AskCmp);
+    public bids: any = new SortedArrayMap([], this.Eq, this.BidCmp);
+    public asks: any = new SortedArrayMap([], this.Eq, this.AskCmp);
 
     private getStorage = (side: Models.Side): any => {
         if (side === Models.Side.Bid) return this.bids;
@@ -315,6 +325,8 @@ class CoinbaseOrderBook {
         _.forEach(book.asks, a => add(this.asks, a));
         _.forEach(book.bids, b => add(this.bids, b));
     };
+
+    constructor(private _minTick: number) {}
 }
 
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
@@ -715,13 +727,18 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {
-        this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]) => {
+        this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
             try {
-                _.forEach(data, d => {
-                    var c = GetCurrencyEnum(d.currency);
-                    var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
-                    this.PositionUpdate.trigger(rpt);
-                });
+              if (Array.isArray(data)) {
+                    _.forEach(data, d => {
+                        var c = Models.toCurrency(d.currency);
+                        var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
+                        this.PositionUpdate.trigger(rpt);
+                    });
+                }
+                else {
+                    this._log.warn("Unable to get Coinbase positions", data)
+                }
             } catch (error) {
                 this._log.error(error, "Exception while downloading Coinbase positions", data)
             }
@@ -757,69 +774,57 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return "Coinbase";
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
-    ];
-    public get supportedCurrencyPairs() {
-        return CoinbaseBaseGateway.AllPairs;
-    }
-}
-
-function GetCurrencyEnum(name: string): Models.Currency {
-    switch (name.toUpperCase()) {
-        case "BTC": return Models.Currency.BTC;
-        case "USD": return Models.Currency.USD;
-        case "EUR": return Models.Currency.EUR;
-        case "GBP": return Models.Currency.GBP;
-        case "CAD": return Models.Currency.CAD;
-        case "ETH": return Models.Currency.ETH;
-        case "LTC": return Models.Currency.LTC;
-        default: throw new Error("Unsupported currency " + name);
-    }
-}
-
-function GetCurrencySymbol(c: Models.Currency): string {
-    switch (c) {
-        case Models.Currency.USD: return "USD";
-        case Models.Currency.GBP: return "GBP";
-        case Models.Currency.BTC: return "BTC";
-        case Models.Currency.EUR: return "EUR";
-        case Models.Currency.CAD: return "CAD";
-        case Models.Currency.ETH: return "ETH";
-        case Models.Currency.LTC: return "LTC";
-        default: throw new Error("Unsupported currency " + Models.Currency[c]);
-    }
+    constructor(public minTickIncrement: number) {}
 }
 
 class CoinbaseSymbolProvider {
     public symbol: string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = GetCurrencySymbol(pair.base) + "-" + GetCurrencySymbol(pair.quote);
+        this.symbol = Models.fromCurrency(pair.base) + "-" + Models.fromCurrency(pair.quote);
     }
 }
 
-export class Coinbase extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) {
-        var symbolProvider = new CoinbaseSymbolProvider(pair);
+class Coinbase extends Interfaces.CombinedGateway {
+    constructor(authClient: CoinbaseAuthenticatedClient, config: Config.IConfigProvider,
+        orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider,
+        symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number) {
 
-        var orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol, config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
-        var authClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
-            config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
+        const orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol,
+            config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
 
-        var orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
+        const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
-        var positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
-        var mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(), orderEventEmitter, timeProvider);
+        const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
+        const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(quoteIncrement), orderEventEmitter, timeProvider);
 
         super(
             mdGateway,
             orderGateway,
             positionGateway,
-            new CoinbaseBaseGateway());
+            new CoinbaseBaseGateway(quoteIncrement));
     }
 };
+
+export async function createCoinbase(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    const authClient : CoinbaseAuthenticatedClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
+            config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
+
+    const d = Q.defer<Product[]>();
+    authClient.getProducts((err, _, p) => {
+        if (err) d.reject(err);
+        else d.resolve(p);
+    });
+    const products = await d.promise;
+
+    const symbolProvider = new CoinbaseSymbolProvider(pair);
+
+    for (let p of products) {
+        if (p.id === symbolProvider.symbol)
+            return new Coinbase(authClient, config, orders, timeProvider, symbolProvider, parseFloat(p.quote_increment));
+    }
+
+    throw new Error("unable to match pair to a coinbase symbol " + pair.toString());
+}

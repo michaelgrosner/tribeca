@@ -4,6 +4,8 @@ import events = require("events");
 import bunyan = require("bunyan");
 import fs = require("fs");
 import _ = require("lodash");
+import * as request from "request";
+import * as Q from "q";
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
@@ -45,8 +47,26 @@ export class Evt<T> {
     public removeAllListeners = () => this._event.removeAllListeners();
 }
 
-export function roundFloat(x: number) {
-    return Math.round(x * 100) / 100;
+export function roundSide(x: number, minTick: number, side: Models.Side) {
+    switch (side) {
+        case Models.Side.Bid: return roundDown(x, minTick);
+        case Models.Side.Ask: return roundUp(x, minTick);
+        default: return roundNearest(x, minTick);
+    }
+}
+
+export function roundNearest(x: number, minTick: number) {
+    const up = roundUp(x, minTick);
+    const down = roundDown(x, minTick);
+    return (Math.abs(x - down) > Math.abs(up - x)) ? up : down;
+}
+
+export function roundUp(x: number, minTick: number) {
+    return Math.ceil(x/minTick)*minTick;
+}
+
+export function roundDown(x: number, minTick: number) {
+    return Math.floor(x/minTick)*minTick;
 }
 
 export interface ITimeProvider {
@@ -54,6 +74,24 @@ export interface ITimeProvider {
     setTimeout(action: () => void, time: moment.Duration);
     setImmediate(action: () => void);
     setInterval(action: () => void, time: moment.Duration);
+}
+
+export function getJSON<T>(url: string, qs?: any) : Q.Promise<T> {
+    const d = Q.defer<T>();
+    request({url: url, qs: qs}, (err, resp, body) => {
+        if (err) {
+            d.reject(err);
+        }
+        else {
+            try {
+                d.resolve(JSON.parse(body));
+            }
+            catch (e) {
+                d.reject(e);
+            }
+        }
+    });
+    return d.promise;
 }
 
 export interface IBacktestingTimeProvider extends ITimeProvider {

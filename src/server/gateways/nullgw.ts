@@ -1,8 +1,10 @@
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
+import Config = require("../config");
 var uuid = require('uuid');
 import Q = require("q");
+import _ = require("lodash");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
@@ -62,12 +64,9 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 
 export class NullPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
-    constructor() {
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.USD)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.EUR)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, Models.Currency.GBP)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(2, .5, Models.Currency.BTC)), 5000);
+    constructor(pair: Models.CurrencyPair) {
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.base)), 2500);
+        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.quote)), 2500);
     }
 }
 
@@ -76,28 +75,30 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
-    constructor() {
+    constructor(private _minTick: number) {
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 500);
         setInterval(() => this.MarketData.trigger(this.generateMarketData()), 5000);
         setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
-    private genMarketTrade = () => new Models.GatewayMarketTrade(Math.random(), Math.random(), Utils.date(), false, Models.Side.Bid);
+    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), this._minTick);
 
-    private genSingleLevel = () => new Models.MarketSide(200 + 100 * Math.random(), Math.random());
+    private genMarketTrade = () => {
+        const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
+        const sign = Models.Side.Ask === side ? 1 : -1;
+        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), Utils.date(), false, side);
+    }
 
+    private genSingleLevel = (sign: number) => new Models.MarketSide(this.getPrice(sign), Math.random());
+
+    private readonly Depth: number = 25;
     private generateMarketData = () => {
-        var genSide = () => {
-            var s = [];
-            for (var x = 0; x < 5; x++) {
-                s.push(this.genSingleLevel());
-            }
-            return s;
-        };
-        return new Models.Market(genSide(), genSide(), Utils.date());
+       const genSide = (sign: number) => {
+           const s = _.times(this.Depth, _ => this.genSingleLevel(sign));
+           return _.sortBy(s, i => sign*i.price);
+       };
+       return new Models.Market(genSide(-1), genSide(1), Utils.date());
     };
-
-
 }
 
 class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
@@ -121,18 +122,20 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Null;
     }
 
-    private static AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.EUR),
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.GBP)
-    ];
-    public get supportedCurrencyPairs() {
-        return NullGatewayDetails.AllPairs;
+    constructor(public minTickIncrement: number) {}
+}
+
+class NullGateway extends Interfaces.CombinedGateway {
+    constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
+        const minTick = config.GetNumber("NullGatewayTick");
+        super(
+            new NullMarketDataGateway(minTick),
+            new NullOrderGateway(),
+            new NullPositionGateway(pair),
+            new NullGatewayDetails(minTick));
     }
 }
 
-export class NullGateway extends Interfaces.CombinedGateway {
-    constructor() {
-        super(new NullMarketDataGateway(), new NullOrderGateway(), new NullPositionGateway(), new NullGatewayDetails());
-    }
+export async function createNullGateway(config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    return new NullGateway(config, pair);
 }

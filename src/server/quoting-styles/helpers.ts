@@ -5,15 +5,25 @@ export class GeneratedQuote {
   constructor(public bidPx: number, public bidSz: number, public askPx: number, public askSz: number) { }
 }
 
-export interface QuoteStyle {
-  Mode : Models.QuotingMode;
-  GenerateQuote(market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : GeneratedQuote;
+export class QuoteInput {
+    constructor(
+        public market: Models.Market,
+        public fv: Models.FairValue,
+        public params: Models.QuotingParameters,
+        public position: Interfaces.IPositionBroker,
+        public minTickIncrement: number,
+        public minSizeIncrement: number = 0.01) {}
 }
 
-export function getQuoteAtTopOfMarket(filteredMkt: Models.Market, params: Models.QuotingParameters): GeneratedQuote {
-  let topBid = (filteredMkt.bids[0].size > params.stepOverSize ? filteredMkt.bids[0] : filteredMkt.bids[1]);
-  if (typeof topBid === "undefined") topBid = filteredMkt.bids[0];
-  let topAsk = (filteredMkt.asks[0].size > params.stepOverSize ? filteredMkt.asks[0] : filteredMkt.asks[1]);
-  if (typeof topAsk === "undefined") topAsk = filteredMkt.asks[0];
+export interface QuoteStyle {
+  Mode : Models.QuotingMode;
+  GenerateQuote(input: QuoteInput) : GeneratedQuote;
+}
+
+export function getQuoteAtTopOfMarket(input: QuoteInput): GeneratedQuote {
+  let topBid = (input.market.bids[0].size > input.params.stepOverSize ? input.market.bids[0] : input.market.bids[1]);
+  if (typeof topBid === "undefined") topBid = input.market.bids[0];
+  let topAsk = (input.market.asks[0].size > input.params.stepOverSize ? input.market.asks[0] : input.market.asks[1]);
+  if (typeof topAsk === "undefined") topAsk = input.market.asks[0];
   return new GeneratedQuote(topBid.price, topBid.size, topAsk.price, topAsk.size);
 }

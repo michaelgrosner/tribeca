@@ -5,19 +5,19 @@ import Models = require("../../share/models");
 export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
 
-    GenerateQuote = (market: Models.Market, fv: Models.FairValue, params: Models.QuotingParameters, position:Interfaces.IPositionBroker) : StyleHelpers.GeneratedQuote => {
-        var widthPing = params.widthPing;
+    GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
+        var widthPing = input.params.widthPing;
 
-        let latestPosition = position.latestReport;
-        let buySize: number = (params.percentageValues && latestPosition != null)
-          ? params.buySizePercentage * latestPosition.value / 100
-          : params.buySize;
-        let sellSize: number = (params.percentageValues && latestPosition != null)
-          ? params.sellSizePercentage * latestPosition.value / 100
-          : params.sellSize;
+        let latestPosition = input.position.latestReport;
+        let buySize: number = (input.params.percentageValues && latestPosition != null)
+          ? input.params.buySizePercentage * latestPosition.value / 100
+          : input.params.buySize;
+        let sellSize: number = (input.params.percentageValues && latestPosition != null)
+          ? input.params.sellSizePercentage * latestPosition.value / 100
+          : input.params.sellSize;
 
-        var bidPx = Math.max(fv.price - widthPing, 0);
-        var askPx = fv.price + widthPing;
+        var bidPx = Math.max(input.fv.price - widthPing, 0);
+        var askPx = input.fv.price + widthPing;
 
         return new StyleHelpers.GeneratedQuote(bidPx, buySize, askPx, sellSize);
     };

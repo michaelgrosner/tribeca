@@ -277,6 +277,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 }
 
 class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
+    minTickIncrement: number = 0.01;
+
     public get hasSelfTradePrevention() {
         return false;
     }
@@ -295,13 +297,6 @@ class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 
     exchange(): Models.Exchange {
         return Models.Exchange.Null;
-    }
-
-    public AllPairs = [
-        new Models.CurrencyPair(Models.Currency.BTC, Models.Currency.USD)
-    ];
-    public get supportedCurrencyPairs() {
-        return this.AllPairs;
     }
 }
 
