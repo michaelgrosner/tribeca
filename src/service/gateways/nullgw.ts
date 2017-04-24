@@ -144,6 +144,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export function createNullGateway(config: Config.IConfigProvider) : Promise<Interfaces.CombinedGateway> {
-    return Q(new NullGateway(config));
+export async function createNullGateway(config: Config.IConfigProvider) : Promise<Interfaces.CombinedGateway> {
+    return new NullGateway(config);
 }

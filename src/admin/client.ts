@@ -83,7 +83,8 @@ var uiCtrl = ($scope : MainWindowScope,
               $timeout : ng.ITimeoutService,
               $log : ng.ILogService,
               subscriberFactory : Shared.SubscriberFactory,
-              fireFactory : Shared.FireFactory) => {
+              fireFactory : Shared.FireFactory,
+              product: Shared.ProductState) => {
     
     var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
     $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
@@ -98,6 +99,8 @@ var uiCtrl = ($scope : MainWindowScope,
         $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
         $scope.exch_name = Models.Exchange[pa.exchange];
         $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
+        product.advert = pa;
+        product.fixed = -1*Math.floor(Math.log10(pa.minTick)); 
     };
 
     var reset = (reason : string) => {
