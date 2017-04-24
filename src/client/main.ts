@@ -480,7 +480,6 @@ class ClientComponent implements OnInit {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
-      .registerConnectHandler(() => this.reset(true))
       .registerDisconnectedHandler(() => this.reset(false));
 
     this.subscriberFactory
@@ -506,13 +505,11 @@ class ClientComponent implements OnInit {
 
   private reset = (connected: boolean) => {
     this.connected = connected;
-    if (connected) {
-      this.pair_name = null;
-      this.exchange_name = null;
-      this.exchange_market = null;
-      this.exchange_orders = null;
-      this.pair = null;
-    }
+    this.pair_name = null;
+    this.exchange_name = null;
+    this.exchange_market = null;
+    this.exchange_orders = null;
+    this.pair = null;
   }
 
   private bytesToSize = (input:number, precision:number) => {
