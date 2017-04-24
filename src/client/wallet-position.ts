@@ -35,7 +35,9 @@ export class WalletPositionComponent implements OnInit {
       .registerSubscriber(this.updatePosition);
   }
 
-  private toAmt = (a: number) : string => a.toFixed(this.product.fixed+1);
+  private toAmt = (a: number) : string => a.toFixed(this.product.fixed);
+
+  private toCry = (a: number) : string => a.toFixed(8);
 
   private clearPosition = () => {
     this.baseCurrency = null;
@@ -49,11 +51,11 @@ export class WalletPositionComponent implements OnInit {
   }
 
   private updatePosition = (o: Models.Timestamped<any[]>) => {
-    this.basePosition = this.toAmt(o.data[0]);
+    this.basePosition = this.toCry(o.data[0]);
     this.quotePosition = this.toAmt(o.data[1]);
-    this.baseHeldPosition = this.toAmt(o.data[2]);
+    this.baseHeldPosition = this.toCry(o.data[2]);
     this.quoteHeldPosition = this.toAmt(o.data[3]);
-    this.value = this.toAmt(o.data[4]);
+    this.value = this.toCry(o.data[4]);
     this.quoteValue = this.toAmt(o.data[5]);
     this.baseCurrency = Models.Currency[o.data[6]];
     this.quoteCurrency = Models.Currency[o.data[7]];

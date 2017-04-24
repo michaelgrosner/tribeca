@@ -132,8 +132,7 @@ export class DisplayPair {
 
   private setStatus = () => {
       this.connected = (this.connectedToExchange && this.connectedToServer);
-      console.log("connection status changed: ", this.connected, "connectedToExchange",
-          this.connectedToExchange, "connectedToServer", this.connectedToServer);
+      // console.log("connection status changed: ", this.connected, "connectedToExchange", this.connectedToExchange, "connectedToServer", this.connectedToServer);
       if (this.connected) {
           this.connectionMessage = null;
           return;
