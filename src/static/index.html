@@ -95,13 +95,13 @@
 <script type="text/ng-template" id="positions.html">
     <div>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ quoteCurrency }}: {{ quotePosition|currency:undefined:8 }} ({{ quoteHeldPosition|currency:undefined:8 }})
+            {{ quoteCurrency }}: {{ quotePosition }} ({{ quoteHeldPosition }})
         </small></h4>
         <h4 class="col-md-12 col-xs-2"><small>
-            {{ baseCurrency }}: {{ basePosition|currency:undefined:8 }} ({{ baseHeldPosition|currency:undefined:8 }})
+            {{ baseCurrency }}: {{ basePosition }} ({{ baseHeldPosition }})
         </small></h4>
         <h4 class="col-md-12 col-xs-2"><small>
-          Value: {{ value|currency:undefined:8 }} ({{ quoteValue|currency:undefined:8 }})
+          Value: {{ value }} ({{ quoteValue }})
         </small></h4>
     </div>
 </script>
