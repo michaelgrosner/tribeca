@@ -14,16 +14,18 @@ import Shared = require("./shared_directives");
 
 interface PositionScope extends ng.IScope {
     baseCurrency : string;
-    basePosition : number;
+    basePosition : string;
     quoteCurrency : string;
-    quotePosition : number;
-    baseHeldPosition : number;
-    quoteHeldPosition : number;
-    value : number;
-    quoteValue : number;
+    quotePosition : string;
+    baseHeldPosition : string;
+    quoteHeldPosition : string;
+    value : string;
+    quoteValue : string;
 }
 
-var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory) => {
+var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscriberFactory : Shared.SubscriberFactory, product: Shared.ProductState) => {
+    const toAmt = (a: number) : string => a.toFixed(product.fixed+1);
+    
     var clearPosition = () => {
         $scope.baseCurrency = null;
         $scope.quoteCurrency = null;
@@ -38,12 +40,12 @@ var PositionController = ($scope : PositionScope, $log : ng.ILogService, subscri
     var updatePosition = (position : Models.PositionReport) => {
         $scope.baseCurrency = Models.Currency[position.pair.base];
         $scope.quoteCurrency = Models.Currency[position.pair.quote];
-        $scope.basePosition = position.baseAmount;
-        $scope.quotePosition = position.quoteAmount;
-        $scope.baseHeldPosition = position.baseHeldAmount;
-        $scope.quoteHeldPosition = position.quoteHeldAmount;
-        $scope.value = position.value;
-        $scope.quoteValue = position.quoteValue;
+        $scope.basePosition = toAmt(position.baseAmount);
+        $scope.quotePosition = toAmt(position.quoteAmount);
+        $scope.baseHeldPosition = toAmt(position.baseHeldAmount);
+        $scope.quoteHeldPosition = toAmt(position.quoteHeldAmount);
+        $scope.value = toAmt(position.value);
+        $scope.quoteValue = toAmt(position.quoteValue);
     };
 
     var positionSubscriber = subscriberFactory.getSubscriber($scope, Messaging.Topics.Position)

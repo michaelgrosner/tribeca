@@ -190,7 +190,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
             case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-            case Models.Exchange.Null: return NullGw.createNullGateway(config);
+            case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
