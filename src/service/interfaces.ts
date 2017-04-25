@@ -85,9 +85,8 @@ export interface IPositionBroker {
 }
 
 export interface IOrderStateCache {
-    allOrders: { [orderId: string]: Models.OrderStatusReport[] };
-    allOrdersFlat: Models.OrderStatusReport[];
-    exchIdsToClientIds: { [exchId: string]: string };
+    allOrders: Map<string, Models.OrderStatusReport>;
+    exchIdsToClientIds: Map<string, string>;
 }
 
 export interface IBroker extends IBrokerConnectivity {
