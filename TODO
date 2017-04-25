@@ -1,9 +1,14 @@
 ### TODO:
 
-0. Concurrent exchanges (https://github.com/ctubio/tribeca/issues/34)
+0. https://github.com/ctubio/tribeca/issues/34
+   Concurrent exchanges
 
-1. Add new exchanges (https://github.com/ctubio/tribeca/issues/29)
+1. https://github.com/ctubio/tribeca/issues/29
+   Add new exchanges
 
 2. Add new, smarter trading strategies (as always!)
 
 3. Support for currency pairs which do not trade in $0.01 increments (LTC, DOGE)
+
+4. https://github.com/ctubio/tribeca/issues/48
+   Bitfinex seems to report nearly twice the account value and trades report not enough money to complete.

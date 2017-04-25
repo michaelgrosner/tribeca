@@ -25,7 +25,7 @@ Runs on the latest node.js (v6 or v7). Persistence is acheived using mongodb. In
 
 3. OKCoin
 
-4. Bitfinex
+4. Bitfinex (see issue [#48](https://github.com/ctubio/tribeca/issues/48))
 
 ### Docker Installation
 
