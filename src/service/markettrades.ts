@@ -53,9 +53,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
             mkt === null ? null : mkt.bids[0], mkt === null ? null : mkt.asks[0], u.make_side);
 
         if (u.onStartup) {
-            for (let i = 0; i < this.marketTrades.length; i++) {
-                const existing = this.marketTrades[i];
-
+            for (let existing of this._marketTrades) {
                 try {
                     const dt = Math.abs(existing.time.diff(u.time, 'minutes'));
                     if (Math.abs(existing.size - u.size) < 1e-4 && 
@@ -69,7 +67,10 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
             }
         }
 
+        while (this.marketTrades.length >= 50)
+            this.marketTrades.shift();
         this.marketTrades.push(t);
+
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
         this._persister.persist(t);
