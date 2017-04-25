@@ -6,9 +6,9 @@ import {SubscriberFactory} from './shared_directives';
 @Component({
   selector: 'wallet-position',
   template: `<div class="positions" *ngIf="value || quoteValue">
-    <h4 class="col-md-12 col-xs-2"><small>{{ quoteCurrency }}:<br><span title="{{ quoteCurrency }} Available" class="text-danger">{{ quotePosition }}</span><br/><span title="{{ quoteCurrency }} Held" [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition }}</span></small></h4>
-    <h4 class="col-md-12 col-xs-2"><small>{{ baseCurrency }}:<br><span title="{{ baseCurrency }} Available" class="text-danger">{{ basePosition }}</span><br/><span title="{{ baseCurrency }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition }}</span></small></h4>
-    <h4 class="col-md-12 col-xs-2" style="margin-bottom: 14px!important;"><small>Value:</small><br><b title="{{ baseCurrency }} Total">{{ value }}</b><br/><b title="{{ quoteCurrency }} Total">{{ quoteValue }}</b></h4>
+    <h4 class="col-md-12 col-xs-2"><small>{{ quoteCurrency }}:<br><span title="{{ quoteCurrency }} Available" class="text-danger">{{ quotePosition | number:'1.'+product.fixed+'-'+product.fixed }}</span><br/><span title="{{ quoteCurrency }} Held" [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | number:'1.'+product.fixed+'-'+product.fixed }}</span></small></h4>
+    <h4 class="col-md-12 col-xs-2"><small>{{ baseCurrency }}:<br><span title="{{ baseCurrency }} Available" class="text-danger">{{ basePosition | number:'1.8-8' }}</span><br/><span title="{{ baseCurrency }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition | number:'1.8-8' }}</span></small></h4>
+    <h4 class="col-md-12 col-xs-2" style="margin-bottom: 14px!important;"><small>Value:</small><br><b title="{{ baseCurrency }} Total">{{ value | number:'1.8-8' }}</b><br/><b title="{{ quoteCurrency }} Total">{{ quoteValue | number:'1.'+product.fixed+'-'+product.fixed }}</b></h4>
   </div>`
 })
 export class WalletPositionComponent implements OnInit {
@@ -16,11 +16,11 @@ export class WalletPositionComponent implements OnInit {
   public baseCurrency: string;
   public basePosition: string;
   public quoteCurrency: string;
-  public quotePosition: string;
-  public baseHeldPosition: string;
-  public quoteHeldPosition: string;
-  public value: string;
-  public quoteValue: string;
+  public quotePosition: number;
+  public baseHeldPosition: number;
+  public quoteHeldPosition: number;
+  public value: number;
+  public quoteValue: number;
   @Input() product: Models.ProductState;
 
   constructor(
@@ -35,10 +35,6 @@ export class WalletPositionComponent implements OnInit {
       .registerSubscriber(this.updatePosition);
   }
 
-  private toAmt = (a: number) : string => a.toFixed(this.product.fixed);
-
-  private toCry = (a: number) : string => a.toFixed(8);
-
   private clearPosition = () => {
     this.baseCurrency = null;
     this.quoteCurrency = null;
@@ -51,12 +47,12 @@ export class WalletPositionComponent implements OnInit {
   }
 
   private updatePosition = (o: Models.Timestamped<any[]>) => {
-    this.basePosition = this.toCry(o.data[0]);
-    this.quotePosition = this.toAmt(o.data[1]);
-    this.baseHeldPosition = this.toCry(o.data[2]);
-    this.quoteHeldPosition = this.toAmt(o.data[3]);
-    this.value = this.toCry(o.data[4]);
-    this.quoteValue = this.toAmt(o.data[5]);
+    this.basePosition = o.data[0];
+    this.quotePosition = o.data[1];
+    this.baseHeldPosition = o.data[2];
+    this.quoteHeldPosition = o.data[3];
+    this.value = o.data[4];
+    this.quoteValue = o.data[5];
     this.baseCurrency = Models.Currency[o.data[6]];
     this.quoteCurrency = Models.Currency[o.data[7]];
   }
