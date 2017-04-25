@@ -107,8 +107,19 @@ export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfi
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
-export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
+export enum OrderStatus { New, Working, Complete, Cancelled, Rejected }
 export enum Liquidity { Make, Take }
+
+export const orderIsDone = (status: OrderStatus) => {
+    switch (status) {
+        case OrderStatus.Complete:
+        case OrderStatus.Cancelled:
+        case OrderStatus.Rejected:
+            return true;
+        default:
+            return false;
+    }
+}
 
 export enum MarketDataFlag {
     Unknown = 0,

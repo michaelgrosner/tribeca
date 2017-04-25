@@ -55,51 +55,42 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
 }
 
 export class OrderStateCache implements Interfaces.IOrderStateCache {
-    public allOrders : { [orderId: string]: Models.OrderStatusReport[] } = {};
-    public allOrdersFlat : Models.OrderStatusReport[] = [];
-    public exchIdsToClientIds : { [exchId: string] : string} = {};
+    public allOrders = new Map<string, Models.OrderStatusReport>();
+    public exchIdsToClientIds = new Map<string, string>();
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {
     private _log = Utils.log("oe:broker");
 
-    cancelOpenOrders() : Q.Promise<number> {
+    async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
         }
         
-        var deferred = Q.defer<number>();
+        const promiseMap = new Map<string, Q.Deferred<void>>();
 
-        var lateCancels : {[id: string] : boolean} = {};
-        for (var k in this._orderCache.allOrders) {
-            if (!(k in this._orderCache.allOrders)) continue;
-            var e : Models.OrderStatusReport = _.last(this._orderCache.allOrders[k]);
+        const orderUpdate = (o : Models.OrderStatusReport) => {
+            const p = promiseMap.get(o.orderId);
+            if (p && Models.orderIsDone(o.orderStatus))
+                p.resolve(null);
+        };
 
-            if (e.pendingCancel) continue;
+        this.OrderUpdate.on(orderUpdate);
 
-            switch (e.orderStatus) {
-                case Models.OrderStatus.New:
-                case Models.OrderStatus.Working:
-                    this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
-                    lateCancels[e.orderId] = false;
-                    break;
-            }
+        for (let e of this._orderCache.allOrders.values()) {
+            if (e.pendingCancel || Models.orderIsDone(e.orderStatus)) 
+                continue;
+
+            this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
+            promiseMap.set(e.orderId, Q.defer<void>());
         }
 
-        if (_.isEmpty(_.keys(lateCancels))) {
-            deferred.resolve(0);
-        }
+        const promises = Array.from(promiseMap.values());
+        await Q.all(promises);
+        
+        this.OrderUpdate.off(orderUpdate);
 
-        this.OrderUpdate.on(o => {
-            if (o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working)
-                return;
-
-            lateCancels[e.orderId] = true;
-            if (_.every(_.values(lateCancels)))
-                deferred.resolve(_.size(lateCancels));
-        });
-
-        return deferred.promise;
+        return promises.length;
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
@@ -113,14 +104,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
-        var orderId = this._oeGateway.generateClientOrderId();
-        var exch = this._baseBroker.exchange();
-        var brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
+        const orderId = this._oeGateway.generateClientOrderId();
+        const exch = this._baseBroker.exchange();
+        const brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
             this.roundPrice(order.price, order.side), order.timeInForce, exch, order.preferPostOnly, order.source);
 
-        var sent = this._oeGateway.sendOrder(brokeredOrder);
+        const sent = this._oeGateway.sendOrder(brokeredOrder);
 
-        var rpt : Models.OrderStatusReport = {
+        const rpt : Models.OrderStatusReport = {
             pair: this._baseBroker.pair,
             orderId: orderId,
             side: order.side,
@@ -142,14 +133,19 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
-        var rpt = _.last(this._orderCache.allOrders[replace.origOrderId]);
-        var br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
+        const rpt = this._orderCache.allOrders.get(replace.origOrderId);
+
+        if (!rpt) {
+            throw new Error("Unknown order, cannot replace " + replace.origOrderId);
+        }
+
+        const br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
             rpt.type, this.roundPrice(replace.price, rpt.side), rpt.timeInForce, rpt.exchange, rpt.exchangeId, 
             rpt.preferPostOnly, rpt.source);
 
-        var sent = this._oeGateway.replaceOrder(br);
+        const sent = this._oeGateway.replaceOrder(br);
 
-        var rpt : Models.OrderStatusReport = {
+        const report : Models.OrderStatusReport = {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
             pendingReplace: true,
@@ -159,11 +155,15 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             computationalLatency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
         this.onOrderUpdate(rpt);
 
-        return new Models.SentOrder(rpt.orderId);
+        return new Models.SentOrder(report.orderId);
     };
 
     cancelOrder = (cancel : Models.OrderCancel) => {
-        var rpt = _.last(this._orderCache.allOrders[cancel.origOrderId]);
+        const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
+
+        if (!rpt) {
+            throw new Error("Unknown order, cannot cancel " + cancel.origOrderId);
+        }
 
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
@@ -174,29 +174,29 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        var cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
-        var sent = this._oeGateway.cancelOrder(cxl);
+        const cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
+        const sent = this._oeGateway.cancelOrder(cxl);
 
-        var rpt : Models.OrderStatusReport = {
+        const report : Models.OrderStatusReport = {
             orderId: cancel.origOrderId,
             orderStatus: Models.OrderStatus.Working,
             pendingCancel: true,
             time: sent.sentTime,
             computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
-        this.onOrderUpdate(rpt);
+        this.onOrderUpdate(report);
     };
 
     public onOrderUpdate = (osr : Models.OrderStatusReport) => {
-        var orig : Models.OrderStatusReport;
+        let orig : Models.OrderStatusReport;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
         }
         else {
-            var orderChain = this._orderCache.allOrders[osr.orderId];
+            let orderChain = this._orderCache.allOrders[osr.orderId];
 
             if (typeof orderChain === "undefined") {
                 // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
-                var secondChance = this._orderCache.exchIdsToClientIds[osr.exchangeId];
+                const secondChance = this._orderCache.exchIdsToClientIds[osr.exchangeId];
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
                     orderChain = this._orderCache.allOrders[secondChance];
@@ -211,12 +211,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orig = _.last(orderChain);
         }
 
-        var getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
+        const getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
 
-        var quantity = getOrFallback(osr.quantity, orig.quantity);
-        var leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
+        const quantity = getOrFallback(osr.quantity, orig.quantity);
+        const leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
 
-        var cumQuantity : number = undefined;
+        let cumQuantity : number = undefined;
         if (typeof osr.cumQuantity !== "undefined") {
             cumQuantity = getOrFallback(osr.cumQuantity, orig.cumQuantity);
         }
@@ -224,9 +224,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             cumQuantity = getOrFallback(orig.cumQuantity, 0) + getOrFallback(osr.lastQuantity, 0);
         }
 
-        var partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
+        const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
-        var o = new Models.OrderStatusReportImpl(
+        const o = new Models.OrderStatusReportImpl(
             getOrFallback(osr.pair, orig.pair),
             getOrFallback(osr.side, orig.side),
             quantity,
@@ -262,7 +262,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 && typeof o.exchangeId !== "undefined"
                 && o.orderId in this._cancelsWaitingForExchangeOrderId) {
             this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
-            var cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
+            const cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
         }
@@ -295,18 +295,18 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        this._orderCache.exchIdsToClientIds[osr.exchangeId] = osr.orderId;
-
-        if (!(osr.orderId in this._orderCache.allOrders))
-            this._orderCache.allOrders[osr.orderId] = [osr];
-        else
-            this._orderCache.allOrders[osr.orderId].push(osr);
-
-        this._orderCache.allOrdersFlat.push(osr);
+        if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
+            this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+            this._orderCache.allOrders.set(osr.orderId, osr);
+        }
+        else  {
+            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+            this._orderCache.allOrders.delete(osr.orderId);
+        }
     };
 
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
-        if (o.source == null) throw Error(JSON.stringify(o));
+        if (o.source === null) throw Error(JSON.stringify(o));
 
         switch (o.source) {
             case Models.OrderSource.Quote:
@@ -331,13 +331,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        _orderStatusPublisher.registerSnapshot(() => _.filter(this._orderCache.allOrdersFlat, this.shouldPublish));
+        _orderStatusPublisher.registerSnapshot(() => _(this._orderCache.allOrders).values().filter(this.shouldPublish).value());
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             this._log.info("got new order req", o);
             try {
-                var order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
+                const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), 
                     false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
@@ -366,7 +366,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
 
         _.each(initOrders, this.addOrderStatusToMemory);
-        this._log.info("loaded %d osrs from %d orders", this._orderCache.allOrdersFlat.length, Object.keys(this._orderCache.allOrders).length);
+        this._log.info("loaded %d orders", _.keys(this._orderCache.allOrders).length);
 
         _.each(initTrades, t => this._trades.push(t));
         this._log.info("loaded %d trades", this._trades.length);
@@ -394,8 +394,8 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         this._currencies[rpt.currency] = rpt;
-        var basePosition = this.getPosition(this._base.pair.base);
-        var quotePosition = this.getPosition(this._base.pair.quote);
+        const basePosition = this.getPosition(this._base.pair.base);
+        const quotePosition = this.getPosition(this._base.pair.quote);
 
         if (typeof basePosition === "undefined"
             || typeof quotePosition === "undefined"
@@ -404,12 +404,12 @@ export class PositionBroker implements Interfaces.IPositionBroker {
             || this._mdBroker.currentBook.asks.length === 0)
             return;
 
-        var baseAmount = basePosition.amount;
-        var quoteAmount = quotePosition.amount;
-        var mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
-        var baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
-        var quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
-        var positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
+        const baseAmount = basePosition.amount;
+        const quoteAmount = quotePosition.amount;
+        const mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
+        const baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
+        const quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
+        const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
         if (this._report !== null && 
@@ -479,7 +479,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
             this.oeConnected = cs;
         }
 
-        var newStatus = this.mdConnected === Models.ConnectivityStatus.Connected && this.oeConnected === Models.ConnectivityStatus.Connected
+        const newStatus = this.mdConnected === Models.ConnectivityStatus.Connected && this.oeConnected === Models.ConnectivityStatus.Connected
             ? Models.ConnectivityStatus.Connected
             : Models.ConnectivityStatus.Disconnected;
 
