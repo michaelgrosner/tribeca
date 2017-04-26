@@ -127,7 +127,7 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 
 class NullGateway extends Interfaces.CombinedGateway {
     constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
-        const minTick = config.GetNumber("NullGatewayTick");
+        const minTick = .01; // config.GetNumber("NullGatewayTick");
         super(
             new NullMarketDataGateway(minTick),
             new NullOrderGateway(),
