@@ -408,15 +408,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        if (!Models.orderIsDone(osr.orderStatus)) {
-            this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-            this._orderCache.allOrders.set(osr.orderId, osr);
-        } else  {
-            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-            this._orderCache.allOrders.delete(osr.orderId);
-            if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
-              delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
-        }
+        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        this._orderCache.allOrders.set(osr.orderId, osr);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
