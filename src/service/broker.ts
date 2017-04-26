@@ -213,34 +213,34 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
-        const o = new Models.OrderStatusReportImpl(
-            getOrFallback(osr.pair, orig.pair),
-            getOrFallback(osr.side, orig.side),
-            quantity,
-            getOrFallback(osr.type, orig.type),
-            getOrFallback(osr.price, orig.price),
-            getOrFallback(osr.timeInForce, orig.timeInForce),
-            getOrFallback(osr.orderId, orig.orderId),
-            getOrFallback(osr.exchangeId, orig.exchangeId),
-            getOrFallback(osr.orderStatus, orig.orderStatus),
-            osr.rejectMessage,
-            getOrFallback(osr.time, this._timeProvider.utcNow()),
-            osr.lastQuantity,
-            osr.lastPrice,
-            leavesQuantity,
-            cumQuantity,
-            cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
-            getOrFallback(osr.liquidity, orig.liquidity),
-            getOrFallback(osr.exchange, orig.exchange),
-            getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
-            (typeof orig.version === "undefined") ? 0 : orig.version + 1,
-            partiallyFilled,
-            osr.pendingCancel,
-            osr.pendingReplace,
-            osr.cancelRejected,
-            getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
-            getOrFallback(osr.source, orig.source)
-        );
+        const o : Models.OrderStatusReport = {
+            pair: getOrFallback(osr.pair, orig.pair),
+            side: getOrFallback(osr.side, orig.side),
+            quantity: quantity,
+            type: getOrFallback(osr.type, orig.type),
+            price: getOrFallback(osr.price, orig.price),
+            timeInForce: getOrFallback(osr.timeInForce, orig.timeInForce),
+            orderId: getOrFallback(osr.orderId, orig.orderId),
+            exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
+            orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
+            rejectMessage: osr.rejectMessage,
+            time: getOrFallback(osr.time, this._timeProvider.utcNow()),
+            lastQuantity: osr.lastQuantity,
+            lastPrice: osr.lastPrice,
+            leavesQuantity: leavesQuantity,
+            cumQuantity: cumQuantity,
+            averagePrice: cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
+            liquidity: getOrFallback(osr.liquidity, orig.liquidity),
+            exchange: getOrFallback(osr.exchange, orig.exchange),
+            computationalLatency: getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
+            version: (typeof orig.version === "undefined") ? 0 : orig.version + 1,
+            partiallyFilled: partiallyFilled,
+            pendingCancel: osr.pendingCancel,
+            pendingReplace: osr.pendingReplace,
+            cancelRejected: osr.cancelRejected,
+            preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
+            source: getOrFallback(osr.source, orig.source)
+        };
 
         this.addOrderStatusToMemory(o);
 
