@@ -219,7 +219,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
     }
 
-    sendOrder = (order: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
+    sendOrder = (order: Models.OrderStatusReport) => {
         var req = this.convertToOrderRequest(order);
 
         this._http
@@ -243,10 +243,13 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 });
             }).done();
 
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this.OrderUpdate.trigger({
+            orderId: order.orderId,
+            computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+        });
     };
 
-    cancelOrder = (cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel: Models.OrderStatusReport) => {
         var req = { order_id: cancel.exchangeId };
         this._http
             .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
@@ -270,12 +273,15 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             })
             .done();
 
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this.OrderUpdate.trigger({
+            orderId: cancel.orderId,
+            computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+        });
     };
 
-    replaceOrder = (replace: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
+    replaceOrder = (replace: Models.OrderStatusReport) => {
         this.cancelOrder(replace);
-        return this.sendOrder(replace);
+        this.sendOrder(replace);
     };
 
     private downloadOrderStatuses = () => {
