@@ -174,39 +174,6 @@ export class OrderCancel {
                 public generatedTime: moment.Moment) {}
 }
 
-export class BrokeredOrder implements Order {
-    constructor(public orderId: string,
-                public side: Side,
-                public quantity: number,
-                public type: OrderType,
-                public price: number,
-                public timeInForce: TimeInForce,
-                public exchange: Exchange,
-                public preferPostOnly: boolean,
-                public source: OrderSource) {}
-}
-
-export class BrokeredReplace implements Order {
-    constructor(public orderId: string,
-                public origOrderId: string,
-                public side: Side,
-                public quantity: number,
-                public type: OrderType,
-                public price: number,
-                public timeInForce: TimeInForce,
-                public exchange: Exchange,
-                public exchangeId: string,
-                public preferPostOnly: boolean,
-                public source: OrderSource) {}
-}
-
-export class BrokeredCancel {
-    constructor(public clientOrderId: string,
-                public requestId: string,
-                public side: Side,
-                public exchangeId: string) {}
-}
-
 export class SentOrder {
     constructor(public sentOrderClientId: string) {}
 }
@@ -216,34 +183,35 @@ export class OrderGatewayActionReport {
 }
 
 export interface OrderStatusReport {
-    pair? : CurrencyPair;
-    side? : Side;
-    quantity? : number;
-    type? : OrderType;
-    price? : number;
-    timeInForce? : TimeInForce;
-    orderId? : string;
-    exchangeId? : string;
-    orderStatus? : OrderStatus;
-    rejectMessage? : string;
-    time? : moment.Moment;
-    lastQuantity? : number;
-    lastPrice? : number;
-    leavesQuantity? : number;
-    cumQuantity? : number;
-    averagePrice? : number;
-    liquidity? : Liquidity;
-    exchange? : Exchange;
-    computationalLatency? : number;
-    version? : number;
-    preferPostOnly?: boolean;
-    source?: OrderSource,
-
-    partiallyFilled? : boolean;
-    pendingCancel? : boolean;
-    pendingReplace? : boolean;
-    cancelRejected? : boolean;
+    pair : CurrencyPair;
+    side : Side;
+    quantity : number;
+    type : OrderType;
+    price : number;
+    timeInForce : TimeInForce;
+    orderId : string;
+    exchangeId : string;
+    orderStatus : OrderStatus;
+    rejectMessage : string;
+    time : moment.Moment;
+    lastQuantity : number;
+    lastPrice : number;
+    leavesQuantity : number;
+    cumQuantity : number;
+    averagePrice : number;
+    liquidity : Liquidity;
+    exchange : Exchange;
+    computationalLatency : number;
+    version : number;
+    preferPostOnly: boolean;
+    source: OrderSource,
+    partiallyFilled : boolean;
+    pendingCancel : boolean;
+    pendingReplace : boolean;
+    cancelRejected : boolean;
 }
+
+export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
     constructor(public pair: CurrencyPair,

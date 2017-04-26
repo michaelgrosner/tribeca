@@ -11,7 +11,7 @@ import Config = require("../config");
 var uuid = require('node-uuid');
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     
     supportsCancelAllOpenOrders = () : boolean => { return false; };
@@ -23,25 +23,25 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         return uuid.v1();
     }
 
-    sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport {
+    sendOrder(order: Models.OrderStatusReport): Models.OrderGatewayActionReport {
         if (order.timeInForce == Models.TimeInForce.IOC)
             throw new Error("Cannot send IOCs");
         setTimeout(() => this.trigger(order.orderId, Models.OrderStatus.Working, order), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }
 
-    cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport {
-        setTimeout(() => this.trigger(cancel.clientOrderId, Models.OrderStatus.Complete), 10);
+    cancelOrder(cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport {
+        setTimeout(() => this.trigger(cancel.orderId, Models.OrderStatus.Complete), 10);
         return new Models.OrderGatewayActionReport(Utils.date());
     }
 
-    replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+    replaceOrder(replace: Models.OrderStatusReport): Models.OrderGatewayActionReport {
+        this.cancelOrder(replace);
         return this.sendOrder(replace);
     }
 
-    private trigger(orderId: string, status: Models.OrderStatus, order?: Models.BrokeredOrder) {
-        var rpt: Models.OrderStatusReport = {
+    private trigger(orderId: string, status: Models.OrderStatus, order?: Models.OrderStatusReport) {
+        var rpt: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: status,
             time: Utils.date()
@@ -49,7 +49,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(rpt);
 
         if (status === Models.OrderStatus.Working && Math.random() < .1) {
-            var rpt: Models.OrderStatusReport = {
+            var rpt: Models.OrderStatusUpdate = {
                 orderId: orderId,
                 orderStatus: status,
                 time: Utils.date(),

@@ -106,28 +106,24 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         const orderId = this._oeGateway.generateClientOrderId();
         const exch = this._baseBroker.exchange();
-        const brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type, 
-            this.roundPrice(order.price, order.side), order.timeInForce, exch, order.preferPostOnly, order.source);
 
-        const sent = this._oeGateway.sendOrder(brokeredOrder);
-
-        const rpt : Models.OrderStatusReport = {
+        const rpt : Models.OrderStatusUpdate = {
             pair: this._baseBroker.pair,
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
             type: order.type,
-            time: sent.sentTime,
-            price: brokeredOrder.price,
+            price: this.roundPrice(order.price, order.side),
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
             exchange: exch,
-            computationalLatency: Utils.fastDiff(sent.sentTime, order.generatedTime),
             rejectMessage: order.msg,
             source: order.source
         };
-        this.onOrderUpdate(rpt);
+
+        const full = this.onOrderUpdate(rpt);        
+        const sent = this._oeGateway.sendOrder(full);
 
         return new Models.SentOrder(rpt.orderId);
     };
@@ -139,21 +135,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             throw new Error("Unknown order, cannot replace " + replace.origOrderId);
         }
 
-        const br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity, 
-            rpt.type, this.roundPrice(replace.price, rpt.side), rpt.timeInForce, rpt.exchange, rpt.exchangeId, 
-            rpt.preferPostOnly, rpt.source);
-
-        const sent = this._oeGateway.replaceOrder(br);
-
-        const report : Models.OrderStatusReport = {
+        const report : Models.OrderStatusUpdate = {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
             pendingReplace: true,
-            price: br.price,
-            quantity: replace.quantity,
-            time: sent.sentTime,
-            computationalLatency: Utils.fastDiff(sent.sentTime, replace.generatedTime)};
-        this.onOrderUpdate(rpt);
+            price: this.roundPrice(replace.price, rpt.side),
+            quantity: replace.quantity
+        };
+
+        const full = this.onOrderUpdate(rpt);
+        const sent = this._oeGateway.replaceOrder(full);        
 
         return new Models.SentOrder(report.orderId);
     };
@@ -174,20 +165,18 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             throw new Error("Unknown order, cannot cancel " + cancel.origOrderId);
         }
 
-        const cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
-        const sent = this._oeGateway.cancelOrder(cxl);
-
-        const report : Models.OrderStatusReport = {
+        const report : Models.OrderStatusUpdate = {
             orderId: cancel.origOrderId,
             orderStatus: Models.OrderStatus.Working,
-            pendingCancel: true,
-            time: sent.sentTime,
-            computationalLatency: Utils.fastDiff(sent.sentTime, cancel.generatedTime)};
-        this.onOrderUpdate(report);
+            pendingCancel: true
+        };
+
+        const full = this.onOrderUpdate(report);
+        const sent = this._oeGateway.cancelOrder(full);
     };
 
-    public onOrderUpdate = (osr : Models.OrderStatusReport) => {
-        let orig : Models.OrderStatusReport;
+    public onOrderUpdate = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
+        let orig : Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
         }
@@ -290,6 +279,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._tradePersister.persist(trade);
             this._trades.push(trade);
         }
+
+        return o;
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
@@ -315,6 +306,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
     };
 
+    private orderStatusSnapshot = () : Models.OrderStatusReport[] => {
+        return Array.from(this._orderCache.allOrders.values()).filter(this.shouldPublish);
+    }
+
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
@@ -329,7 +324,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
-        _orderStatusPublisher.registerSnapshot(() => _(this._orderCache.allOrders).values().filter(this.shouldPublish).value());
+        _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {

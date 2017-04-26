@@ -31,9 +31,9 @@ export interface IMarketDataGateway extends IGateway {
 }
 
 export interface IOrderEntryGateway extends IGateway {
-    sendOrder(order: Models.BrokeredOrder): Models.OrderGatewayActionReport;
-    cancelOrder(cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport;
-    replaceOrder(replace: Models.BrokeredReplace): Models.OrderGatewayActionReport;
+    sendOrder(order: Models.OrderStatusReport): Models.OrderGatewayActionReport;
+    cancelOrder(cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport;
+    replaceOrder(replace: Models.OrderStatusReport): Models.OrderGatewayActionReport;
     
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
     
