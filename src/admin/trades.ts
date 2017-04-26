@@ -56,7 +56,7 @@ var TradesListController = ($scope : TradesScope, $log : ng.ILogService, subscri
             {width: 80, field:'time', displayName:'t', cellFilter: 'momentShortDate',
                 sortingAlgorithm: Shared.fastDiff,
                 sort: { direction: uiGridConstants.DESC, priority: 1} },
-            {width: 55, field:'price', displayName:'px', cellFilter: 'currency'},
+            {width: 55, field:'price', displayName:'px' },
             {width: 50, field:'quantity', displayName:'qty'},
             {width: 30, field:'side', displayName:'side', cellClass: (grid, row, col, rowRenderIndex, colRenderIndex) => {
                 if (grid.getCellValue(row, col) === 'B') {

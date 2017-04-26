@@ -110,6 +110,17 @@ export enum TimeInForce { IOC, FOK, GTC }
 export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 export enum Liquidity { Make, Take }
 
+export const orderIsDone = (status: OrderStatus) => {
+    switch (status) {
+        case OrderStatus.Complete:
+        case OrderStatus.Cancelled:
+        case OrderStatus.Rejected:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export enum MarketDataFlag {
     Unknown = 0,
     NoChange = 1,
