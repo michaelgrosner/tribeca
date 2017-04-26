@@ -130,22 +130,13 @@ export enum MarketDataFlag {
     PriceAndSizeChanged = 1 << 4
 }
 
-export interface Order {
-    side : Side;
-    quantity : number;
-    type : OrderType;
-    price : number;
-    timeInForce : TimeInForce;
-    exchange : Exchange;
-}
-
 export enum OrderSource {
     Unknown = 0,
     Quote = 1,
     OrderTicket = 2
 }
 
-export class SubmitNewOrder implements Order {
+export class SubmitNewOrder {
     constructor(public side: Side,
                 public quantity: number,
                 public type: OrderType,
