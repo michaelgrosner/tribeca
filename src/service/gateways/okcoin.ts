@@ -74,13 +74,15 @@ interface OkCoinTradeRecord {
 interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
-	send = <T>(channel : string, parameters: any) => {
+	send = <T>(channel : string, parameters: any, cb?: () => void) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
         
         if (parameters !== null) 
             subsReq.parameters = parameters;
         
-        this._ws.send(JSON.stringify(subsReq));
+        this._ws.send(JSON.stringify(subsReq), (e: Error) => {
+            if (!e && cb) cb();
+        });
     }
     
     setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
@@ -211,7 +213,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     // will be acked first, so we can match up orders and their acks
     private _ordersWaitingForAckQueue = [];
 
-    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) => {
         var o : Order = {
             symbol: this._symbolProvider.symbol,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
@@ -220,8 +222,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             
         this._ordersWaitingForAckQueue.push(order.orderId);
             
-        this._socket.send<OrderAck>("ok_spotusd_trade", this._signer.signMessage(o));
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this._socket.send<OrderAck>("ok_spotusd_trade", this._signer.signMessage(o), () => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId,
+                computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            });
+        });
     };
     
     private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
@@ -244,10 +250,14 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(osr);
     };
 
-    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel : Models.OrderStatusReport) => {
         var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
-        this._socket.send<OrderAck>("ok_spotusd_cancel_order", this._signer.signMessage(c));
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this._socket.send<OrderAck>("ok_spotusd_cancel_order", this._signer.signMessage(c), () => {
+            this.OrderUpdate.trigger({
+                orderId: cancel.orderId,
+                computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+            });
+        });
     };
     
     private onCancel = (ts: Models.Timestamped<OrderAck>) => {
@@ -264,9 +274,9 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(osr);
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    replaceOrder = (replace : Models.OrderStatusReport) => {
         this.cancelOrder(replace);
-        return this.sendOrder(replace);
+        this.sendOrder(replace);
     };
     
     private static getStatus(status: number) : Models.OrderStatus {

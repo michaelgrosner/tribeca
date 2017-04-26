@@ -279,20 +279,24 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _nonce = 1;
 
-    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel : Models.OrderStatusReport) => {
         this.sendAuth("OrderCancel", {clientOrderId: cancel.orderId,
             cancelRequestClientOrderId: cancel.orderId + "C",
             symbol: this._symbolProvider.symbol,
-            side: HitBtcOrderEntryGateway.getSide(cancel.side)});
-        return new Models.OrderGatewayActionReport(Utils.date());
+            side: HitBtcOrderEntryGateway.getSide(cancel.side)}, () => {
+                this.OrderUpdate.trigger({
+                    orderId: cancel.orderId,
+                    computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+                });
+            });
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    replaceOrder = (replace : Models.OrderStatusReport) => {
         this.cancelOrder(replace);
         return this.sendOrder(replace);
     };
 
-    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) => {
         var hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
             symbol: this._symbolProvider.symbol,
@@ -303,8 +307,12 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
-        this.sendAuth("NewOrder", hitBtcOrder);
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this.sendAuth("NewOrder", hitBtcOrder, () => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId,
+                computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            });
+        });
     };
 
     private static getStatus(m : ExecutionReport) : Models.OrderStatus {
@@ -404,11 +412,13 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return {apikey: this._apiKey, signature: signMsg(msg), message: msg};
     };
 
-    private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
+    private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T, cb?: () => void) => {
         var v = {};
         v[msgType] = msg;
         var readyMsg = this.authMsg(v);
-        this._orderEntryWs.send(JSON.stringify(readyMsg));
+        this._orderEntryWs.send(JSON.stringify(readyMsg), (e:Error) => {
+            if (!e && cb) cb();
+        });
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();

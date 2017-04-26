@@ -169,10 +169,6 @@ export class SentOrder {
     constructor(public sentOrderClientId: string) {}
 }
 
-export class OrderGatewayActionReport {
-    constructor(public sentTime: moment.Moment) {}
-}
-
 export interface OrderStatusReport {
     pair : CurrencyPair;
     side : Side;
