@@ -49,6 +49,8 @@ export class Evt<T> {
     private _event = new events.EventEmitter();
 
     public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
+    
+    public off = (handler: (data?: T) => void) => this._event.removeListener("evt", handler);
 
     public trigger = (data?: T) => this._event.emit("evt", data);
     

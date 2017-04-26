@@ -403,7 +403,7 @@ const runTradingSystem = (classes: SimulationClasses) : Q.Promise<boolean> => {
             orderBroker.cancelOpenOrders().then(n_cancelled => {
                 mainLog.info("Cancelled all", n_cancelled, "open orders");
                 completedSuccessfully.resolve(true);
-            }).done();
+            });
 
             timeProvider.setTimeout(() => {
                 if (completedSuccessfully.promise.isFulfilled) return;
