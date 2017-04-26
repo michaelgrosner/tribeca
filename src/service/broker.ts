@@ -87,7 +87,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         const promises = Array.from(promiseMap.values());
         await Q.all(promises);
-        
+
         this.OrderUpdate.off(orderUpdate);
 
         return promises.length;
@@ -161,10 +161,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     cancelOrder = (cancel : Models.OrderCancel) => {
         const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
 
-        if (!rpt) {
-            throw new Error("Unknown order, cannot cancel " + cancel.origOrderId);
-        }
-
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
@@ -172,6 +168,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 this._log.info("Registered %s for late deletion", rpt.orderId);
                 return;
             }
+        }
+
+        if (!rpt) {
+            throw new Error("Unknown order, cannot cancel " + cancel.origOrderId);
         }
 
         const cxl = new Models.BrokeredCancel(cancel.origOrderId, this._oeGateway.generateClientOrderId(), rpt.side, rpt.exchangeId);
@@ -192,23 +192,21 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orig = osr;
         }
         else {
-            let orderChain = this._orderCache.allOrders[osr.orderId];
+            orig = this._orderCache.allOrders.get(osr.orderId);
 
-            if (typeof orderChain === "undefined") {
+            if (typeof orig === "undefined") {
                 // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
-                const secondChance = this._orderCache.exchIdsToClientIds[osr.exchangeId];
+                const secondChance = this._orderCache.exchIdsToClientIds.get(osr.exchangeId);
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
-                    orderChain = this._orderCache.allOrders[secondChance];
+                    orig = this._orderCache.allOrders.get(secondChance);
                 }
             }
 
-            if (typeof orderChain === "undefined") {
+            if (typeof orig === "undefined") {
                 this._log.error("cannot find orderId from", osr);
                 return;
             }
-
-            orig = _.last(orderChain);
         }
 
         const getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;

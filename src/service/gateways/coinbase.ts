@@ -597,7 +597,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
 
         if (order.type === Models.OrderType.Limit) {
-            o.price = order.price.toString();
+            o.price = order.price.toFixed(this._fixedPrecision);
 
             if (order.preferPostOnly)
                 o.post_only = true;
@@ -636,7 +636,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onReceived = (tsMsg: Models.Timestamped<CoinbaseReceived>) => {
         var msg = tsMsg.data;
-        if (typeof msg.client_oid === "undefined" || !this._orderData.allOrders.hasOwnProperty(msg.client_oid))
+        if (typeof msg.client_oid === "undefined" || !this._orderData.allOrders.has(msg.client_oid))
             return;
 
         var status: Models.OrderStatusReport = {
@@ -652,7 +652,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onOpen = (tsMsg: Models.Timestamped<CoinbaseOpen>) => {
         var msg = tsMsg.data;
-        var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
+        var orderId = this._orderData.exchIdsToClientIds.get(msg.order_id);
         if (typeof orderId === "undefined")
             return;
 
@@ -669,7 +669,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onDone = (tsMsg: Models.Timestamped<CoinbaseDone>) => {
         var msg = tsMsg.data;
-        var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
+        var orderId = this._orderData.exchIdsToClientIds.get(msg.order_id);
         if (typeof orderId === "undefined")
             return;
 
@@ -690,11 +690,11 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onMatch = (tsMsg: Models.Timestamped<CoinbaseMatch>) => {
         var msg = tsMsg.data;
         var liq: Models.Liquidity = Models.Liquidity.Make;
-        var client_oid = this._orderData.exchIdsToClientIds[msg.maker_order_id];
+        var client_oid = this._orderData.exchIdsToClientIds.get(msg.maker_order_id);
 
         if (typeof client_oid === "undefined") {
             liq = Models.Liquidity.Take;
-            client_oid = this._orderData.exchIdsToClientIds[msg.taker_order_id];
+            client_oid = this._orderData.exchIdsToClientIds.get(msg.taker_order_id);
         }
 
         if (typeof client_oid === "undefined")
@@ -714,7 +714,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onChange = (tsMsg: Models.Timestamped<CoinbaseChange>) => {
         var msg = tsMsg.data;
-        var orderId = this._orderData.exchIdsToClientIds[msg.order_id];
+        var orderId = this._orderData.exchIdsToClientIds.get(msg.order_id);
         if (typeof orderId === "undefined")
             return;
 
@@ -728,14 +728,17 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
+    private _fixedPrecision;
     private _log = Utils.log("tribeca:gateway:CoinbaseOE");
     constructor(
+        minTick: number,
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
         private _orderBook: CoinbaseOrderEmitter,
         private _authClient: CoinbaseAuthenticatedClient,
         private _symbolProvider: CoinbaseSymbolProvider) {
 
+        this._fixedPrecision = -1*Math.floor(Math.log10(minTick));
         this._orderBook.on("statechange", this.onStateChange);
 
         this._orderBook.on("received", this.onReceived)
@@ -818,7 +821,7 @@ class Coinbase extends Interfaces.CombinedGateway {
             config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
         
         const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
