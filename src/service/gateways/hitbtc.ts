@@ -269,7 +269,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
@@ -279,20 +279,20 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _nonce = 1;
 
-    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
-            cancelRequestClientOrderId: cancel.requestId,
+    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+        this.sendAuth("OrderCancel", {clientOrderId: cancel.orderId,
+            cancelRequestClientOrderId: cancel.orderId + "C",
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(cancel.side)});
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+        this.cancelOrder(replace);
         return this.sendOrder(replace);
     };
 
-    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
         var hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
             symbol: this._symbolProvider.symbol,
@@ -363,7 +363,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var msg = tsMsg.data;
 
         var ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
-        var status : Models.OrderStatusReport = {
+        var status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
             orderStatus: ordStatus,
@@ -381,7 +381,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onCancelReject = (tsMsg : Models.Timestamped<CancelReject>) => {
         var msg = tsMsg.data;
-        var status : Models.OrderStatusReport = {
+        var status : Models.OrderStatusUpdate = {
             orderId: msg.clientOrderId,
             rejectMessage: msg.rejectReasonText,
             orderStatus: Models.OrderStatus.Rejected,

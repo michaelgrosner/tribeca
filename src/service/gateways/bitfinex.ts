@@ -198,7 +198,7 @@ interface BitfinexOrderStatusResponse extends RejectableResponse {
 }
 
 class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
@@ -219,7 +219,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
     }
 
-    sendOrder = (order: Models.BrokeredOrder): Models.OrderGatewayActionReport => {
+    sendOrder = (order: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
         var req = this.convertToOrderRequest(order);
 
         this._http
@@ -246,7 +246,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
         var req = { order_id: cancel.exchangeId };
         this._http
             .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
@@ -255,7 +255,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     this.OrderUpdate.trigger({
                         orderStatus: Models.OrderStatus.Rejected,
                         cancelRejected: true,
-                        orderId: cancel.clientOrderId,
+                        orderId: cancel.orderId,
                         rejectMessage: resp.data.message,
                         time: resp.time
                     });
@@ -263,7 +263,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 }
 
                 this.OrderUpdate.trigger({
-                    orderId: cancel.clientOrderId,
+                    orderId: cancel.orderId,
                     time: resp.time,
                     orderStatus: Models.OrderStatus.Cancelled
                 });
@@ -273,8 +273,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return new Models.OrderGatewayActionReport(Utils.date());
     };
 
-    replaceOrder = (replace: Models.BrokeredReplace): Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+    replaceOrder = (replace: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
+        this.cancelOrder(replace);
         return this.sendOrder(replace);
     };
 
