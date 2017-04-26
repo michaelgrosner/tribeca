@@ -208,7 +208,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     public cancelsByClientOrderId = false;
 
-    private convertToOrderRequest = (order: Models.Order): BitfinexNewOrderRequest => {
+    private convertToOrderRequest = (order: Models.OrderStatusReport): BitfinexNewOrderRequest => {
         return {
             amount: order.quantity.toString(),
             exchange: "bitfinex",
