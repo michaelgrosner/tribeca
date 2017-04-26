@@ -148,6 +148,17 @@ export enum TimeInForce { IOC, FOK, GTC }
 export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
 export enum Liquidity { Make, Take }
 
+export const orderIsDone = (status: OrderStatus) => {
+    switch (status) {
+        case OrderStatus.Complete:
+        case OrderStatus.Cancelled:
+        case OrderStatus.Rejected:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export interface ProductState {
     advert: ProductAdvertisement;
     fixed: number
