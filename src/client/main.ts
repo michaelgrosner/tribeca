@@ -72,7 +72,7 @@ class DisplayOrder {
   selector: 'ui',
   template: `<div>
     <div *ngIf="!connected">
-        <h4 class="text-danger">&nbsp;Not connected</h4>
+        <h4 class="text-danger text-center">Not connected</h4>
     </div>
     <div *ngIf="connected">
         <div class="container-fluid">
