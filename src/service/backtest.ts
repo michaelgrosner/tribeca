@@ -100,7 +100,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     private _openBidOrders : {[orderId: string]: Models.OrderStatusReport} = {};
     private _openAskOrders : {[orderId: string]: Models.OrderStatusReport} = {};
 
-    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) => {
         this.timeProvider.setTimeout(() => {
             if (order.side === Models.Side.Bid) {
                 this._openBidOrders[order.orderId] = order;
@@ -115,11 +115,9 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             
             this.OrderUpdate.trigger({ orderId: order.orderId, orderStatus: Models.OrderStatus.Working });
         }, moment.duration(3));
-        
-        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel : Models.OrderStatusReport) => {
         this.timeProvider.setTimeout(() => {
             if (cancel.side === Models.Side.Bid) {
                 var existing = this._openBidOrders[cancel.orderId];
@@ -144,13 +142,11 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             
             this.OrderUpdate.trigger({ orderId: cancel.orderId, orderStatus: Models.OrderStatus.Cancelled });
         }, moment.duration(3));
-        
-        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    replaceOrder = (replace : Models.OrderStatusReport) => {
         this.cancelOrder(replace);
-        return this.sendOrder(replace);
+        this.sendOrder(replace);
     };
     
     private onMarketData = (market : Models.Market) => {
@@ -287,27 +283,29 @@ export class BacktestParameters {
 }
 
 export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.ILoadLatest<T> {
-    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Q.Promise<T[]> => {
+    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Promise<T[]> => {
         return this.loadAll(limit);    
     };
     
-    public loadAll = (limit?: number): Q.Promise<T[]> => { 
-        if (this.initialData) {
-            if (limit) {
-                return Q(_.takeRight(this.initialData, limit));
+    public loadAll = (limit?: number): Promise<T[]> => { 
+        return new Promise<T[]>(() => {
+            if (this.initialData) {
+                if (limit) {
+                    return _.takeRight(this.initialData, limit);
+                }
+                else {
+                    return this.initialData;
+                }
             }
-            else {
-                return Q(this.initialData);
-            }
-        }
-        return Q([]);
+            return [];
+        });
     };
     
     public persist = (report: T) => { };
     
-    public loadLatest = (): Q.Promise<T> => {
+    public loadLatest = (): Promise<T> => {
         if (this.initialData)
-            return Q(_.last(this.initialData));
+            return new Promise(() => _.last(this.initialData));
     };
     
     constructor(private initialData?: T[]) {
