@@ -226,7 +226,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         osr.exchangeId = (<any>msg.data).order_id.toString();
                         osr.orderStatus = Models.OrderStatus.Cancelled;
                         osr.leavesQuantity = 0;
-                        // osr.done = true;
+                        osr.done = true;
                         this.OrderUpdate.trigger(osr);
                     }
                 }).done();
@@ -290,7 +290,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            // osr.done = true;
+            osr.done = true;
         }
 
         this.OrderUpdate.trigger(osr);
@@ -306,7 +306,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 osr.exchangeId = (<any>msg.data).order_id.toString();
                 osr.orderStatus = Models.OrderStatus.Cancelled;
                 osr.leavesQuantity = 0;
-                // osr.done = true;
+                osr.done = true;
                 this.OrderUpdate.trigger(osr);
             }
             else {
@@ -335,7 +335,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     if (!osr.leavesQuantity) {
                       osr.orderStatus = Models.OrderStatus.Cancelled;
                       osr.leavesQuantity = 0;
-                      // osr.done = true;
+                      osr.done = true;
                     }
                     this.OrderUpdate.trigger(osr);
                 }).done();

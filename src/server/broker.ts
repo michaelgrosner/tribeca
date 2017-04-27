@@ -326,8 +326,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           pendingCancel: osr.pendingCancel,
           pendingReplace: osr.pendingReplace,
           cancelRejected: osr.cancelRejected,
-          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
-          // osr.done
+          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
+          done: osr.done
         };
 
         this.addOrderStatusToMemory(o);
@@ -388,25 +388,17 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         return o;
-
-        // if (o.done===true) {
-          // this._orderCache.exchIdsToClientIds.delete(o.exchangeId);
-          // this._orderCache.allOrders.delete(o.orderId);
-          // if (o.orderId in this._cancelsWaitingForExchangeOrderId)
-            // delete this._cancelsWaitingForExchangeOrderId[o.orderId];
-        // }
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        // this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-        // this._orderCache.allOrders.set(osr.orderId, osr);
-        if (!Models.orderIsDone(osr.orderStatus)) {
-            this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-            this._orderCache.allOrders.set(osr.orderId, osr);
-        }
-        else  {
-            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-            this._orderCache.allOrders.delete(osr.orderId);
+        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        this._orderCache.allOrders.set(osr.orderId, osr);
+
+        if (osr.done===true) {
+          this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          this._orderCache.allOrders.delete(osr.orderId);
+          if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
+            delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
         }
     };
 
