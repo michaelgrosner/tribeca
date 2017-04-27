@@ -94,7 +94,6 @@ describe("BacktestTests", () => {
 describe("BacktestGatewayTests", () => {
     it("should read market data", () => {
         assert.equal(new Models.MarketSide(1, 2).toString(), 'px=1;size=2');
-        assert.equal(true, new Models.OrderStatusReportImpl(new Models.CurrencyPair(Models.Currency.EUR,Models.Currency.BTC),null,null,null,null,null,'1',null,null,null,moment.unix(1),null,2,null,null,null,null,null,null,null,null,null,null,null,null,null).toString().indexOf('lastPrice=2')>-1);
 
         var inputData : Array<Models.Market | Models.MarketTrade> = [
             new Models.Market([new Models.MarketSide(10, 5)], [new Models.MarketSide(20, 5)], moment.unix(1)),
@@ -105,7 +104,16 @@ describe("BacktestGatewayTests", () => {
         var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
 
         gateway.MarketData.once(m => {
-            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Null, false));
+            gateway.sendOrder(<Models.OrderStatusReport>{
+                orderId: "A",
+                side: Models.Side.Ask,
+                quantity: 3,
+                type: Models.OrderType.Limit,
+                price: 12,
+                timeInForce: Models.TimeInForce.GTC,
+                exchange: Models.Exchange.Null,
+                preferPostOnly: false
+            });
         });
 
         var gotTrade = false;
