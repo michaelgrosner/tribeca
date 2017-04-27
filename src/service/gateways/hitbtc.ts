@@ -280,7 +280,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _nonce = 1;
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        this.sendAuth("OrderCancel", {clientOrderId: cancel.orderId,
+        this.sendAuth<OrderCancel>("OrderCancel", {clientOrderId: cancel.orderId,
             cancelRequestClientOrderId: cancel.orderId + "C",
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(cancel.side)}, () => {
@@ -307,7 +307,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
-        this.sendAuth("NewOrder", hitBtcOrder, () => {
+        this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
             this.OrderUpdate.trigger({
                 orderId: order.orderId,
                 computationalLatency: Utils.fastDiff(Utils.date(), order.time)

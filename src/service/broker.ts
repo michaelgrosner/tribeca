@@ -105,7 +105,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         const orderId = this._oeGateway.generateClientOrderId();
-        const exch = this._baseBroker.exchange();
 
         const rpt : Models.OrderStatusUpdate = {
             pair: this._baseBroker.pair,
@@ -117,13 +116,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
-            exchange: exch,
+            exchange: this._baseBroker.exchange(),
             rejectMessage: order.msg,
             source: order.source
         };
 
-        const full = this.onOrderUpdate(rpt);        
-        const sent = this._oeGateway.sendOrder(full);
+        this._oeGateway.sendOrder(this.updateOrderState(rpt));
 
         return new Models.SentOrder(rpt.orderId);
     };
@@ -143,8 +141,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             quantity: replace.quantity
         };
 
-        const full = this.onOrderUpdate(rpt);
-        const sent = this._oeGateway.replaceOrder(full);        
+        this._oeGateway.replaceOrder(this.updateOrderState(rpt));        
 
         return new Models.SentOrder(report.orderId);
     };
@@ -171,11 +168,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             pendingCancel: true
         };
 
-        const full = this.onOrderUpdate(report);
-        const sent = this._oeGateway.cancelOrder(full);
+        this._oeGateway.cancelOrder(this.updateOrderState(report));
     };
 
-    public onOrderUpdate = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
+    public updateOrderState = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
         let orig : Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
@@ -198,7 +194,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        const getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
+        const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
 
         const quantity = getOrFallback(osr.quantity, orig.quantity);
         const leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
@@ -356,7 +352,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                       e => this._log.error(e, "error when cancelling all orders!"));
         });
 
-        this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
+        this._oeGateway.OrderUpdate.on(this.updateOrderState);
 
         _.each(initOrders, this.addOrderStatusToMemory);
         this._log.info("loaded %d orders", _.keys(this._orderCache.allOrders).length);
