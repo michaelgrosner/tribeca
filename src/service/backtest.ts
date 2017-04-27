@@ -86,7 +86,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
@@ -97,10 +97,10 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
     public cancelsByClientOrderId = true;
     
-    private _openBidOrders : {[orderId: string]: Models.BrokeredOrder} = {};
-    private _openAskOrders : {[orderId: string]: Models.BrokeredOrder} = {};
+    private _openBidOrders : {[orderId: string]: Models.OrderStatusReport} = {};
+    private _openAskOrders : {[orderId: string]: Models.OrderStatusReport} = {};
 
-    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
         this.timeProvider.setTimeout(() => {
             if (order.side === Models.Side.Bid) {
                 this._openBidOrders[order.orderId] = order;
@@ -119,37 +119,37 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
         this.timeProvider.setTimeout(() => {
             if (cancel.side === Models.Side.Bid) {
-                var existing = this._openBidOrders[cancel.clientOrderId];
+                var existing = this._openBidOrders[cancel.orderId];
                 if (typeof existing === "undefined") {
-                    this.OrderUpdate.trigger({orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Rejected});
+                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Rejected});
                     return;
                 }
                 this._quoteHeld -= existing.price * existing.quantity;
                 this._quoteAmount += existing.price * existing.quantity;
-                delete this._openBidOrders[cancel.clientOrderId];
+                delete this._openBidOrders[cancel.orderId];
             }
             else {
-                var existing = this._openAskOrders[cancel.clientOrderId];
+                var existing = this._openAskOrders[cancel.orderId];
                 if (typeof existing === "undefined") {
-                    this.OrderUpdate.trigger({orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Rejected});
+                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Rejected});
                     return;
                 }
                 this._baseHeld -= existing.quantity;
                 this._baseAmount += existing.quantity;
-                delete this._openAskOrders[cancel.clientOrderId];
+                delete this._openAskOrders[cancel.orderId];
             }
             
-            this.OrderUpdate.trigger({ orderId: cancel.clientOrderId, orderStatus: Models.OrderStatus.Cancelled });
+            this.OrderUpdate.trigger({ orderId: cancel.orderId, orderStatus: Models.OrderStatus.Cancelled });
         }, moment.duration(3));
         
         return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
+    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+        this.cancelOrder(replace);
         return this.sendOrder(replace);
     };
     
@@ -160,7 +160,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         this.MarketData.trigger(market);
     };
     
-    private tryToMatch = (orders: Models.BrokeredOrder[], marketSides: Models.MarketSide[], side: Models.Side) => {
+    private tryToMatch = (orders: Models.OrderStatusReport[], marketSides: Models.MarketSide[], side: Models.Side) => {
         if (orders.length === 0 || marketSides.length === 0) 
             return _.keyBy(orders, k => k.orderId);
         
@@ -172,7 +172,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                     var px = order.price;
                     if (order.type === Models.OrderType.Market) px = mkt.price;
                     
-                    var update : Models.OrderStatusReport = { orderId: order.orderId, lastPrice: px };
+                    var update : Models.OrderStatusUpdate = { orderId: order.orderId, lastPrice: px };
                     if (mkt.size >= order.quantity) {
                         update.orderStatus = Models.OrderStatus.Complete;
                         update.lastQuantity = order.quantity;
