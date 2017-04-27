@@ -186,14 +186,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     cancelOrder = (cancel: Models.OrderCancel) => {
         const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
-        // if (!rpt) {
-          // this._oeGateway.cancelOrder(this.onOrderUpdate({
-              // orderId: cancel.origOrderId,
-              // orderStatus: Models.OrderStatus.Cancelled,
-              // leavesQuantity: 0,
-              // done: true}));
-          // return;
-        // }
+        if (!rpt) {
+          this._oeGateway.cancelOrder(this.updateOrderState(<Models.OrderStatusUpdate>{
+              orderId: cancel.origOrderId,
+              orderStatus: Models.OrderStatus.Cancelled,
+              leavesQuantity: 0,
+              done: true}));
+          return;
+        }
 
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
