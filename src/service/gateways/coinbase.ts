@@ -473,7 +473,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => {
@@ -501,9 +501,9 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return uuid.v1();
     }
 
-    cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel: Models.OrderStatusReport) => {
         this._authClient.cancelOrder(cancel.exchangeId, (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
-            var status: Models.OrderStatusReport
+            var status: Models.OrderStatusUpdate
             var t = this._timeProvider.utcNow();
 
             var msg = null;
@@ -517,7 +517,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
             if (msg !== null) {
                 status = {
-                    orderId: cancel.clientOrderId,
+                    orderId: cancel.orderId,
                     rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Rejected,
                     cancelRejected: true,
@@ -532,7 +532,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             }
             else {
                 status = {
-                    orderId: cancel.clientOrderId,
+                    orderId: cancel.orderId,
                     orderStatus: Models.OrderStatus.Cancelled,
                     time: t,
                     leavesQuantity: 0
@@ -541,17 +541,21 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
             this.OrderUpdate.trigger(status);
         });
-        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
+
+        this.OrderUpdate.trigger({
+            orderId: cancel.orderId,
+            computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+        });
     };
 
-    replaceOrder = (replace: Models.BrokeredReplace): Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.orderId, replace.side, replace.exchangeId));
-        return this.sendOrder(replace);
+    replaceOrder = (replace: Models.OrderStatusReport) => {
+        this.cancelOrder(replace);
+        this.sendOrder(replace);
     };
 
-    sendOrder = (order: Models.BrokeredOrder): Models.OrderGatewayActionReport => {
+    sendOrder = (order: Models.OrderStatusReport) => {
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
-            var status: Models.OrderStatusReport
+            var status: Models.OrderStatusUpdate
             var t = this._timeProvider.utcNow();
 
             if (ack == null || typeof ack.id === "undefined") {
@@ -622,7 +626,10 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         else if (order.side === Models.Side.Ask)
             this._authClient.sell(o, cb);
 
-        return new Models.OrderGatewayActionReport(this._timeProvider.utcNow());
+        this.OrderUpdate.trigger({
+            orderId: order.orderId,
+            computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+        });
     };
 
     public cancelsByClientOrderId = false;
@@ -639,7 +646,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof msg.client_oid === "undefined" || !this._orderData.allOrders.has(msg.client_oid))
             return;
 
-        var status: Models.OrderStatusReport = {
+        var status: Models.OrderStatusUpdate = {
             exchangeId: msg.order_id,
             orderId: msg.client_oid,
             orderStatus: Models.OrderStatus.Working,
@@ -657,7 +664,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             return;
 
         var t = this._timeProvider.utcNow();
-        var status: Models.OrderStatusReport = {
+        var status: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
@@ -677,7 +684,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             ? Models.OrderStatus.Complete
             : Models.OrderStatus.Cancelled;
 
-        var status: Models.OrderStatusReport = {
+        var status: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: ordStatus,
             time: tsMsg.time,
@@ -700,7 +707,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof client_oid === "undefined")
             return;
 
-        var status: Models.OrderStatusReport = {
+        var status: Models.OrderStatusUpdate = {
             orderId: client_oid,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
@@ -718,7 +725,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof orderId === "undefined")
             return;
 
-        var status: Models.OrderStatusReport = {
+        var status: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
             time: tsMsg.time,
