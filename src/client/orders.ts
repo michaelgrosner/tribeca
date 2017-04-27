@@ -14,7 +14,7 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Subscribe.IFire<Models.OrderStatusReport>;
+  private fireCxl: Subscribe.IFire<Models.OrderStatusUpdate>;
 
   @Input() set connected(connected: boolean) {
     if (connected) return;

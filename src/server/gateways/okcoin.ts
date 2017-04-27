@@ -221,7 +221,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             (<any>msg.data).orders.map((o) => {
                 this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
                     if (typeof (<any>msg.data).result == "undefined") return;
-                    var osr : Models.OrderStatusReport = { time: msg.time };
+                    var osr : Models.OrderStatusUpdate = { time: msg.time };
                     if ((<any>msg.data).result) {
                         osr.exchangeId = (<any>msg.data).order_id.toString();
                         osr.orderStatus = Models.OrderStatus.Cancelled;
@@ -267,7 +267,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
             this.OrderUpdate.trigger({
                 orderId: order.orderId,
-                computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
             });
         });
     };
@@ -296,11 +296,11 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(osr);
     };
 
-    cancelOrder = (cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel: Models.OrderStatusReport) => {
         this._http.post("cancel_order.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
             if (typeof (<any>msg.data).result == "undefined") return;
 
-            var osr : Models.OrderStatusReport = { orderId: cancel.orderId, time: msg.time };
+            var osr : Models.OrderStatusUpdate = { orderId: cancel.orderId, time: msg.time };
 
             if ((<any>msg.data).result) {
                 osr.exchangeId = (<any>msg.data).order_id.toString();
@@ -342,7 +342,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             }
         }).done();
     };
-    
+
     replaceOrder = (replace : Models.OrderStatusReport) => {
         this.cancelOrder(replace);
         this.sendOrder(replace);

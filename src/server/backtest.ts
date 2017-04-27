@@ -94,7 +94,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     private _openBidOrders : {[orderId: string]: Models.OrderStatusReport} = {};
     private _openAskOrders : {[orderId: string]: Models.OrderStatusReport} = {};
 
-    sendOrder = (order : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) => {
         this.timeProvider.setTimeout(() => {
             if (order.side === Models.Side.Bid) {
                 this._openBidOrders[order.orderId] = order;
@@ -109,11 +109,9 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
             this.OrderUpdate.trigger({ orderId: order.orderId, orderStatus: Models.OrderStatus.Working });
         }, moment.duration(3));
-
-        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    cancelOrder = (cancel : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel : Models.OrderStatusReport) => {
         this.timeProvider.setTimeout(() => {
             if (cancel.side === Models.Side.Bid) {
                 var existing = this._openBidOrders[cancel.orderId];
@@ -138,13 +136,11 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
             this.OrderUpdate.trigger({ orderId: cancel.orderId, orderStatus: Models.OrderStatus.Cancelled });
         }, moment.duration(3));
-
-        return new Models.OrderGatewayActionReport(this.timeProvider.utcNow());
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) : Models.OrderGatewayActionReport => {
+    replaceOrder = (replace : Models.OrderStatusReport) => {
         this.cancelOrder(replace);
-        return this.sendOrder(replace);
+        this.sendOrder(replace);
     };
 
     private onMarketData = (market : Models.Market) => {

@@ -315,7 +315,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           time: getOrFallback(osr.time, this._timeProvider.utcNow()),
           lastQuantity: osr.lastQuantity,
           lastPrice: osr.lastPrice,
-          leavesQuantity: leavesQuantity,
+          leavesQuantity: getOrFallback(osr.leavesQuantity, orig.leavesQuantity),
           cumQuantity: cumQuantity,
           averagePrice: cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
           liquidity: getOrFallback(osr.liquidity, orig.liquidity),
@@ -328,7 +328,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           cancelRejected: osr.cancelRejected,
           preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
           // osr.done
-        );
+        };
 
         this.addOrderStatusToMemory(o);
 
@@ -400,7 +400,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
         // this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
         // this._orderCache.allOrders.set(osr.orderId, osr);
-        if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
+        if (!Models.orderIsDone(osr.orderStatus)) {
             this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
             this._orderCache.allOrders.set(osr.orderId, osr);
         }
@@ -427,7 +427,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
-        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders).filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working).value());
+        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {

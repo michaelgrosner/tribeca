@@ -164,12 +164,6 @@ export interface ProductState {
     fixed: number
 }
 
-export enum OrderSource {
-    Unknown = 0,
-    Quote = 1,
-    OrderTicket = 2
-}
-
 export class SubmitNewOrder {
     constructor(public side: Side,
                 public quantity: number,
@@ -224,7 +218,6 @@ export interface OrderStatusReport {
     computationalLatency : number;
     version : number;
     preferPostOnly: boolean;
-    source: OrderSource,
     partiallyFilled : boolean;
     pendingCancel : boolean;
     pendingReplace : boolean;
@@ -232,6 +225,23 @@ export interface OrderStatusReport {
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
+
+export class EWMAChart implements ITimestamped {
+    constructor(public ewmaQuote: number,
+                public ewmaShort: number,
+                public ewmaLong: number,
+                public fairValue: number,
+                public time: moment.Moment) {}
+}
+
+export class TradeChart implements ITimestamped {
+    constructor(public price: number,
+                public side: Side,
+                public quantity: number,
+                public value: number,
+                public type: string,
+                public time: moment.Moment) {}
+}
 
 export class Trade implements ITimestamped {
     constructor(public tradeId: string,
