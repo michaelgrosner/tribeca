@@ -12,7 +12,7 @@ export class FairValueEngine {
   public get latestFairValue() { return this._latest; }
   public set latestFairValue(val: Models.FairValue) {
     if (this._latest != null && val != null
-      && Math.abs(this._latest.price - val.price) < 2e-2) return;
+      && Math.abs(this._latest.price - val.price) < this._details.minTickIncrement) return;
 
     this._latest = val;
     this.FairValueChanged.trigger();

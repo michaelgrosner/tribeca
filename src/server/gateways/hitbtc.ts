@@ -264,7 +264,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
@@ -274,20 +274,24 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     _nonce = 1;
 
-    cancelOrder = (cancel : Models.BrokeredCancel) : Models.OrderGatewayActionReport => {
-        this.sendAuth("OrderCancel", {clientOrderId: cancel.clientOrderId,
-            cancelRequestClientOrderId: this.generateClientOrderId(),
+    cancelOrder = (cancel : Models.OrderStatusReport) => {
+        this.sendAuth<OrderCancel>("OrderCancel", {clientOrderId: cancel.orderId,
+            cancelRequestClientOrderId: cancel.orderId + "C",
             symbol: this._symbolProvider.symbol,
-            side: HitBtcOrderEntryGateway.getSide(cancel.side)});
-        return new Models.OrderGatewayActionReport(Utils.date());
+            side: HitBtcOrderEntryGateway.getSide(cancel.side)}, () => {
+                this.OrderUpdate.trigger({
+                    orderId: cancel.orderId,
+                    computationalLatency: Utils.date().valueOf() - cancel.time.valueOf()
+                });
+            });
     };
 
-    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.side, replace.exchangeId));
+    replaceOrder = (replace : Models.OrderStatusReport) => {
+        this.cancelOrder(replace);
         return this.sendOrder(replace);
     };
 
-    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
+    sendOrder = (order : Models.OrderStatusReport) => {
         var hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
             symbol: this._symbolProvider.symbol,
@@ -298,8 +302,12 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
-        this.sendAuth("NewOrder", hitBtcOrder);
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId,
+                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
+            });
+        });
     };
 
     private static getStatus(m : ExecutionReport) : Models.OrderStatus {
@@ -358,7 +366,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var msg = tsMsg.data;
 
         var ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
-        var status : Models.OrderStatusReport = {
+        var status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
             orderStatus: ordStatus,
@@ -376,7 +384,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onCancelReject = (tsMsg : Models.Timestamped<CancelReject>) => {
         var msg = tsMsg.data;
-        var status : Models.OrderStatusReport = {
+        var status : Models.OrderStatusUpdate = {
             orderId: msg.clientOrderId,
             rejectMessage: msg.rejectReasonText,
             orderStatus: Models.OrderStatus.Rejected,
@@ -399,11 +407,13 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return {apikey: this._apiKey, signature: signMsg(msg), message: msg};
     };
 
-    private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T) => {
+    private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T, cb?: () => void) => {
         var v = {};
         v[msgType] = msg;
         var readyMsg = this.authMsg(v);
-        this._orderEntryWs.send(JSON.stringify(readyMsg));
+        this._orderEntryWs.send(JSON.stringify(readyMsg), (e:Error) => {
+            if (!e && cb) cb();
+        });
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();

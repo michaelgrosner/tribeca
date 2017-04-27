@@ -70,12 +70,15 @@ interface OkCoinTradeRecord {
 interface SubscriptionRequest extends SignedMessage { }
 
 class OkCoinWebsocket {
-    send = <T>(channel : string, parameters: any) => {
+	send = <T>(channel : string, parameters: any, cb?: () => void) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
 
         if (parameters !== null)
             subsReq.parameters = parameters;
-        this._ws.send(JSON.stringify(subsReq));
+
+        this._ws.send(JSON.stringify(subsReq), (e: Error) => {
+            if (!e && cb) cb();
+        });
     }
 
     setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
@@ -201,7 +204,7 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
+    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     generateClientOrderId = () => shortId.generate();
@@ -223,7 +226,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         osr.exchangeId = (<any>msg.data).order_id.toString();
                         osr.orderStatus = Models.OrderStatus.Cancelled;
                         osr.leavesQuantity = 0;
-                        osr.done = true;
+                        // osr.done = true;
                         this.OrderUpdate.trigger(osr);
                     }
                 }).done();
@@ -252,8 +255,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     // will be acked first, so we can match up orders and their acks
     private _ordersWaitingForAckQueue = [];
 
-    sendOrder = (order : Models.BrokeredOrder) : Models.OrderGatewayActionReport => {
-        var o: Order = {
+    sendOrder = (order : Models.OrderStatusReport) => {
+        var o : Order = {
             symbol: this._symbolProvider.symbol,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
             price: order.price.toString(),
@@ -261,8 +264,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this._ordersWaitingForAckQueue.push([order.orderId, order.quantity]);
 
-        this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o));
-        return new Models.OrderGatewayActionReport(Utils.date());
+        this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId,
+                computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            });
+        });
     };
 
     private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
@@ -274,7 +281,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             return;
         }
 
-        var osr : Models.OrderStatusReport = { orderId: orderId, time: ts.time };
+        var osr : Models.OrderStatusUpdate = { orderId: orderId, time: ts.time };
 
         if (typeof ts.data !== "undefined" && ts.data.result) {
             osr.exchangeId = ts.data.order_id.toString();
@@ -283,23 +290,23 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.done = true;
+            // osr.done = true;
         }
 
         this.OrderUpdate.trigger(osr);
     };
 
-    cancelOrder = (cancel: Models.BrokeredCancel): Models.OrderGatewayActionReport => {
+    cancelOrder = (cancel: Models.OrderStatusReport): Models.OrderGatewayActionReport => {
         this._http.post("cancel_order.do", <Cancel>{order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol }).then(msg => {
             if (typeof (<any>msg.data).result == "undefined") return;
 
-            var osr : Models.OrderStatusReport = { orderId: cancel.clientOrderId, time: msg.time };
+            var osr : Models.OrderStatusReport = { orderId: cancel.orderId, time: msg.time };
 
             if ((<any>msg.data).result) {
                 osr.exchangeId = (<any>msg.data).order_id.toString();
                 osr.orderStatus = Models.OrderStatus.Cancelled;
                 osr.leavesQuantity = 0;
-                osr.done = true;
+                // osr.done = true;
                 this.OrderUpdate.trigger(osr);
             }
             else {
@@ -308,7 +315,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                       || typeof (<any>msg.data).orders[0] == "undefined"
                       || typeof (<any>msg.data).orders[0].order_id == "undefined") return;
 
-                    osr = { orderId: cancel.clientOrderId, time: msg.time };
+                    osr = { orderId: cancel.orderId, time: msg.time };
 
                     if ((<any>msg.data).result) {
                       osr.orderStatus = OkCoinOrderEntryGateway.getStatus((<any>msg.data).orders[0].status);
@@ -328,18 +335,17 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     if (!osr.leavesQuantity) {
                       osr.orderStatus = Models.OrderStatus.Cancelled;
                       osr.leavesQuantity = 0;
-                      osr.done = true;
+                      // osr.done = true;
                     }
                     this.OrderUpdate.trigger(osr);
                 }).done();
             }
         }).done();
-        return new Models.OrderGatewayActionReport(Utils.date());
     };
-
-    replaceOrder = (replace : Models.BrokeredReplace) : Models.OrderGatewayActionReport => {
-        this.cancelOrder(new Models.BrokeredCancel(replace.origOrderId, replace.side, replace.exchangeId));
-        return this.sendOrder(replace);
+    
+    replaceOrder = (replace : Models.OrderStatusReport) => {
+        this.cancelOrder(replace);
+        this.sendOrder(replace);
     };
 
     private static getStatus(status: number) : Models.OrderStatus {
@@ -362,7 +368,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var lastQty = parseFloat(msg.sigTradeAmount);
         var lastPx = parseFloat(msg.sigTradePrice);
 
-        var status : Models.OrderStatusReport = {
+        var status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId.toString(),
             orderStatus: OkCoinOrderEntryGateway.getStatus(msg.status),
             time: t,

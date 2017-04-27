@@ -147,27 +147,22 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
         const orderId = this._oeGateway.generateClientOrderId();
-        const exch = this._baseBroker.exchange();
-        const brokeredOrder = new Models.BrokeredOrder(orderId, order.side, order.quantity, order.type,
-            this.roundPrice(order.price, order.side), order.timeInForce, exch, order.preferPostOnly);
 
-        const sent = this._oeGateway.sendOrder(brokeredOrder);
-
-        const rpt : Models.OrderStatusReport = {
+        const rpt : Models.OrderStatusUpdate = {
             pair: this._baseBroker.pair,
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
             type: order.type,
-            time: sent.sentTime,
-            price: brokeredOrder.price,
+            price: this.roundPrice(order.price, order.side),
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
-            exchange: exch,
-            latency: sent.sentTime.valueOf() - order.generatedTime.valueOf(),
-            rejectMessage: order.msg};
-        this.onOrderUpdate(rpt);
+            exchange: this._baseBroker.exchange(),
+            rejectMessage: order.msg
+        };
+
+        this._oeGateway.sendOrder(this.updateOrderState(rpt));
 
         return new Models.SentOrder(rpt.orderId);
     };
@@ -175,35 +170,30 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
         const rpt = this._orderCache.allOrders.get(replace.origOrderId);
         if (!rpt) throw new Error("Unknown order, cannot replace " + replace.origOrderId);
-        const br = new Models.BrokeredReplace(replace.origOrderId, replace.origOrderId, rpt.side, replace.quantity,
-            rpt.type, this.roundPrice(replace.price, rpt.side), rpt.timeInForce, rpt.exchange, rpt.exchangeId, rpt.preferPostOnly);
 
-        const sent = this._oeGateway.replaceOrder(br);
-
-        const report : Models.OrderStatusReport = {
+        const report : Models.OrderStatusUpdate = {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
             pendingReplace: true,
-            price: br.price,
-            quantity: replace.quantity,
-            time: sent.sentTime,
-            latency: sent.sentTime.valueOf() - replace.generatedTime.valueOf()};
-        this.onOrderUpdate(rpt);
+            price: this.roundPrice(replace.price, rpt.side),
+            quantity: replace.quantity
+        };
+
+        this._oeGateway.replaceOrder(this.updateOrderState(rpt));
 
         return new Models.SentOrder(report.orderId);
     };
 
     cancelOrder = (cancel: Models.OrderCancel) => {
         const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
-        if (!rpt) {
-          this.onOrderUpdate({
-              orderId: cancel.origOrderId,
-              orderStatus: Models.OrderStatus.Cancelled,
-              leavesQuantity: 0,
-              done: true,
-              time: cancel.generatedTime});
-          return;
-        }
+        // if (!rpt) {
+          // this._oeGateway.cancelOrder(this.onOrderUpdate({
+              // orderId: cancel.origOrderId,
+              // orderStatus: Models.OrderStatus.Cancelled,
+              // leavesQuantity: 0,
+              // done: true}));
+          // return;
+        // }
 
         if (!this._oeGateway.cancelsByClientOrderId) {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
@@ -215,16 +205,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         if (!rpt) throw new Error("Unknown order, cannot cancel " + cancel.origOrderId);
-        const cxl = new Models.BrokeredCancel(cancel.origOrderId, rpt.side, rpt.exchangeId);
-        const sent = this._oeGateway.cancelOrder(cxl);
 
-        const report = {
+        const report: Models.OrderStatusUpdate = {
             orderId: cancel.origOrderId,
             orderStatus: Models.OrderStatus.Working,
-            pendingCancel: true,
-            time: sent.sentTime,
-            latency: sent.sentTime.valueOf() - cancel.generatedTime.valueOf()};
-        this.onOrderUpdate(report);
+            pendingCancel: true
+        };
+
+        this._oeGateway.cancelOrder(this.updateOrderState(report));
     };
 
     private _reTrade = (reTrades: Models.Trade[], trade: Models.Trade): string => {
@@ -276,8 +264,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
       return tradePingPongType;
     };
 
-    public onOrderUpdate = (osr : Models.OrderStatusReport) => {
-        let orig : Models.OrderStatusReport;
+    public updateOrderState = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
+        let orig : Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
         }
@@ -299,7 +287,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        const getOrFallback = (n, o) => typeof n !== "undefined" ? n : o;
+        const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
 
         const quantity = getOrFallback(osr.quantity, orig.quantity);
 
@@ -313,33 +301,33 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
-        const o = new Models.OrderStatusReportImpl(
-            getOrFallback(osr.pair, orig.pair),
-            getOrFallback(osr.side, orig.side),
-            quantity,
-            getOrFallback(osr.type, orig.type),
-            getOrFallback(osr.price, orig.price),
-            getOrFallback(osr.timeInForce, orig.timeInForce),
-            getOrFallback(osr.orderId, orig.orderId),
-            getOrFallback(osr.exchangeId, orig.exchangeId),
-            getOrFallback(osr.orderStatus, orig.orderStatus),
-            osr.rejectMessage,
-            getOrFallback(osr.time, this._timeProvider.utcNow()),
-            osr.lastQuantity,
-            osr.lastPrice,
-            getOrFallback(osr.leavesQuantity, orig.leavesQuantity),
-            cumQuantity,
-            cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
-            getOrFallback(osr.liquidity, orig.liquidity),
-            getOrFallback(osr.exchange, orig.exchange),
-            getOrFallback(osr.latency, 0) + getOrFallback(orig.latency, 0),
-            (typeof orig.version === "undefined") ? 0 : orig.version + 1,
-            partiallyFilled,
-            osr.pendingCancel,
-            osr.pendingReplace,
-            osr.cancelRejected,
-            getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
-            osr.done
+        const o : Models.OrderStatusReport = {
+          pair: getOrFallback(osr.pair, orig.pair),
+          side: getOrFallback(osr.side, orig.side),
+          quantity: quantity,
+          type: getOrFallback(osr.type, orig.type),
+          price: getOrFallback(osr.price, orig.price),
+          timeInForce: getOrFallback(osr.timeInForce, orig.timeInForce),
+          orderId: getOrFallback(osr.orderId, orig.orderId),
+          exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
+          orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
+          rejectMessage: osr.rejectMessage,
+          time: getOrFallback(osr.time, this._timeProvider.utcNow()),
+          lastQuantity: osr.lastQuantity,
+          lastPrice: osr.lastPrice,
+          leavesQuantity: leavesQuantity,
+          cumQuantity: cumQuantity,
+          averagePrice: cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
+          liquidity: getOrFallback(osr.liquidity, orig.liquidity),
+          exchange: getOrFallback(osr.exchange, orig.exchange),
+          computationalLatency: getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
+          version: (typeof orig.version === "undefined") ? 0 : orig.version + 1,
+          partiallyFilled: partiallyFilled,
+          pendingCancel: osr.pendingCancel,
+          pendingReplace: osr.pendingReplace,
+          cancelRejected: osr.cancelRejected,
+          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
+          // osr.done
         );
 
         this.addOrderStatusToMemory(o);
@@ -399,17 +387,27 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, tradePingPongType, o.time));
         }
 
-        if (o.done===true) {
-          this._orderCache.exchIdsToClientIds.delete(o.exchangeId);
-          this._orderCache.allOrders.delete(o.orderId);
-          if (o.orderId in this._cancelsWaitingForExchangeOrderId)
-            delete this._cancelsWaitingForExchangeOrderId[o.orderId];
-        }
+        return o;
+
+        // if (o.done===true) {
+          // this._orderCache.exchIdsToClientIds.delete(o.exchangeId);
+          // this._orderCache.allOrders.delete(o.orderId);
+          // if (o.orderId in this._cancelsWaitingForExchangeOrderId)
+            // delete this._cancelsWaitingForExchangeOrderId[o.orderId];
+        // }
     };
 
     private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-        this._orderCache.allOrders.set(osr.orderId, osr);
+        // this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        // this._orderCache.allOrders.set(osr.orderId, osr);
+        if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
+            this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+            this._orderCache.allOrders.set(osr.orderId, osr);
+        }
+        else  {
+            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+            this._orderCache.allOrders.delete(osr.orderId);
+        }
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -429,7 +427,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
-        _orderStatusPublisher.registerSnapshot(() => _(this._orderCache.allOrders).values().filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working).value());
+        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders).filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working).value());
         _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
@@ -455,7 +453,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cleanAllClosedOrdersReciever.registerReceiver(() => this.cleanClosedOrders());
         _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
 
-        this._oeGateway.OrderUpdate.on(this.onOrderUpdate);
+        this._oeGateway.OrderUpdate.on(this.updateOrderState);
 
         _.each(initTrades, t => this._trades.push(t));
 

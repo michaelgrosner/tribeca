@@ -164,16 +164,13 @@ export interface ProductState {
     fixed: number
 }
 
-export interface Order {
-    side : Side;
-    quantity : number;
-    type : OrderType;
-    price : number;
-    timeInForce : TimeInForce;
-    exchange : Exchange;
+export enum OrderSource {
+    Unknown = 0,
+    Quote = 1,
+    OrderTicket = 2
 }
 
-export class SubmitNewOrder implements Order {
+export class SubmitNewOrder {
     constructor(public side: Side,
                 public quantity: number,
                 public type: OrderType,
@@ -201,150 +198,40 @@ export class OrderCancel {
                 public generatedTime: moment.Moment) {}
 }
 
-export class BrokeredOrder implements Order {
-    constructor(public orderId: string,
-                public side: Side,
-                public quantity: number,
-                public type: OrderType,
-                public price: number,
-                public timeInForce: TimeInForce,
-                public exchange: Exchange,
-                public preferPostOnly: boolean) {}
-}
-
-export class BrokeredReplace implements Order {
-    constructor(public orderId: string,
-                public origOrderId: string,
-                public side: Side,
-                public quantity: number,
-                public type: OrderType,
-                public price: number,
-                public timeInForce: TimeInForce,
-                public exchange: Exchange,
-                public exchangeId: string,
-                public preferPostOnly: boolean) {}
-}
-
-export class BrokeredCancel {
-    constructor(public clientOrderId: string,
-                public side: Side,
-                public exchangeId: string) {}
-}
-
 export class SentOrder {
     constructor(public sentOrderClientId: string) {}
 }
 
-export class OrderGatewayActionReport {
-    constructor(public sentTime: moment.Moment) {}
-}
-
 export interface OrderStatusReport {
-    pair? : CurrencyPair;
-    side? : Side;
-    quantity? : number;
-    type? : OrderType;
-    price? : number;
-    timeInForce? : TimeInForce;
-    orderId? : string;
-    exchangeId? : string;
-    orderStatus? : OrderStatus;
-    rejectMessage? : string;
-    time? : moment.Moment;
-    lastQuantity? : number;
-    lastPrice? : number;
-    leavesQuantity? : number;
-    cumQuantity? : number;
-    averagePrice? : number;
-    liquidity? : Liquidity;
-    exchange? : Exchange;
-    latency? : number;
-    version? : number;
-    preferPostOnly?: boolean;
-
-    partiallyFilled? : boolean;
-    pendingCancel? : boolean;
-    pendingReplace? : boolean;
-    cancelRejected? : boolean;
-    done? : boolean;
+    pair : CurrencyPair;
+    side : Side;
+    quantity : number;
+    type : OrderType;
+    price : number;
+    timeInForce : TimeInForce;
+    orderId : string;
+    exchangeId : string;
+    orderStatus : OrderStatus;
+    rejectMessage : string;
+    time : moment.Moment;
+    lastQuantity : number;
+    lastPrice : number;
+    leavesQuantity : number;
+    cumQuantity : number;
+    averagePrice : number;
+    liquidity : Liquidity;
+    exchange : Exchange;
+    computationalLatency : number;
+    version : number;
+    preferPostOnly: boolean;
+    source: OrderSource,
+    partiallyFilled : boolean;
+    pendingCancel : boolean;
+    pendingReplace : boolean;
+    cancelRejected : boolean;
 }
 
-export class OrderStatusReportImpl implements OrderStatusReport, ITimestamped {
-    constructor(public pair: CurrencyPair,
-                public side: Side,
-                public quantity: number,
-                public type: OrderType,
-                public price: number,
-                public timeInForce: TimeInForce,
-                public orderId: string,
-                public exchangeId: string,
-                public orderStatus: OrderStatus,
-                public rejectMessage: string,
-                public time: moment.Moment,
-                public lastQuantity: number,
-                public lastPrice: number,
-                public leavesQuantity: number,
-                public cumQuantity: number,
-                public averagePrice: number,
-                public liquidity: Liquidity,
-                public exchange: Exchange,
-                public latency: number,
-                public version: number,
-                public partiallyFilled: boolean,
-                public pendingCancel: boolean,
-                public pendingReplace: boolean,
-                public cancelRejected: boolean,
-                public preferPostOnly: boolean,
-                public done: boolean) {}
-
-    public toString() {
-        var components: string[] = [];
-
-        components.push("orderId=" + this.orderId);
-        components.push("time=" + this.time.format('M/d/YY h:mm:ss,SSS'));
-        if (typeof this.exchangeId !== "undefined") components.push("exchangeId=" + this.exchangeId);
-        components.push("pair=" + Currency[this.pair.base] + "/" + Currency[this.pair.quote]);
-        if (typeof this.exchange !== "undefined") components.push("exchange=" + Exchange[this.exchange]);
-        components.push("orderStatus=" + OrderStatus[this.orderStatus]);
-        if (this.partiallyFilled) components.push("partiallyFilled");
-        if (this.pendingCancel) components.push("pendingCancel");
-        if (this.pendingReplace) components.push("pendingReplace");
-        if (this.cancelRejected) components.push("cancelRejected");
-        components.push("side=" + Side[this.side]);
-        components.push("quantity=" + this.quantity);
-        components.push("price=" + this.price);
-        components.push("tif=" + TimeInForce[this.timeInForce]);
-        components.push("type=" + OrderType[this.type]);
-        components.push("version=" + this.version);
-        if (typeof this.rejectMessage !== "undefined") components.push(this.rejectMessage);
-        if (typeof this.latency !== "undefined") components.push("latency=" + this.latency);
-        if (typeof this.lastQuantity !== "undefined") components.push("lastQuantity=" + this.lastQuantity);
-        if (typeof this.lastPrice !== "undefined") components.push("lastPrice=" + this.lastPrice);
-        if (typeof this.leavesQuantity !== "undefined") components.push("leavesQuantity=" + this.leavesQuantity);
-        if (typeof this.cumQuantity !== "undefined") components.push("cumQuantity=" + this.cumQuantity);
-        if (typeof this.averagePrice !== "undefined") components.push("averagePrice=" + this.averagePrice);
-        if (typeof this.liquidity !== "undefined") components.push("liquidity=" + Liquidity[this.liquidity]);
-
-        return components.join(";");
-    }
-}
-
-export class EWMAChart implements ITimestamped {
-    constructor(public ewmaQuote: number,
-                public ewmaShort: number,
-                public ewmaLong: number,
-                public fairValue: number,
-                public time: moment.Moment) {}
-}
-
-export class TradeChart implements ITimestamped {
-    constructor(public price: number,
-                public side: Side,
-                public quantity: number,
-                public value: number,
-                public type: string,
-                public time: moment.Moment) {}
-}
+export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export class Trade implements ITimestamped {
     constructor(public tradeId: string,
