@@ -119,7 +119,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     private loadInternal = async (selector: Object, limit?: number) : Promise<T[]> => {
-        let query = this.collection.find(selector).project({ _id: 0 });
+        let query = this.collection.find(selector, {_id: 0});
 
         if (limit !== null) {
             const count = await this.collection.count(selector);
