@@ -119,7 +119,6 @@ export class QuotingEngine {
         
         const safety = this._safeties.latest;
         if (safety === null) {
-            this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
         }
         

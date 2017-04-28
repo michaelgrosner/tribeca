@@ -324,6 +324,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
+        _.each(initOrders, this.addOrderStatusInMemory);
+        _.each(initTrades, t => this._trades.push(t));
+                
         _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
@@ -357,12 +360,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         this._oeGateway.OrderUpdate.on(this.updateOrderState);
-
-        _.each(initOrders, this.addOrderStatusInMemory);
-        this._log.info("loaded %d orders", this._orderCache.allOrders.size);
-
-        _.each(initTrades, t => this._trades.push(t));
-        this._log.info("loaded %d trades", this._trades.length);
 
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
