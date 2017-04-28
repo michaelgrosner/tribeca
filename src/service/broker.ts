@@ -238,7 +238,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             source: getOrFallback(osr.source, orig.source)
         };
 
-        this.addOrderStatusToMemory(o);
+        this.updateOrderStatusInMemory(o);
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -279,15 +279,19 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
+    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
-            this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-            this._orderCache.allOrders.set(osr.orderId, osr);
+            this.addOrderStatusInMemory(osr);
         }
         else  {
             this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
             this._orderCache.allOrders.delete(osr.orderId);
         }
+    };
+
+    private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
+        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        this._orderCache.allOrders.set(osr.orderId, osr);
     };
 
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
@@ -320,6 +324,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
+        _.each(initOrders, this.addOrderStatusInMemory);
+        _.each(initTrades, t => this._trades.push(t));
+                
         _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
@@ -353,12 +360,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         });
 
         this._oeGateway.OrderUpdate.on(this.updateOrderState);
-
-        _.each(initOrders, this.addOrderStatusToMemory);
-        this._log.info("loaded %d orders", _.keys(this._orderCache.allOrders).length);
-
-        _.each(initTrades, t => this._trades.push(t));
-        this._log.info("loaded %d trades", this._trades.length);
 
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);

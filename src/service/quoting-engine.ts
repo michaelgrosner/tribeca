@@ -40,7 +40,8 @@ export class QuotingEngine {
     private _latest: Models.TwoSidedQuote = null;
     public get latestQuote() { return this._latest; }
     public set latestQuote(val: Models.TwoSidedQuote) {
-        if (_.isEqual(val, this._latest)) return;
+        if (!quotesChanged(this._latest, val, this._details.minTickIncrement)) 
+            return;
 
         this._latest = val;
         this.QuoteChanged.trigger();
@@ -118,7 +119,6 @@ export class QuotingEngine {
         
         const safety = this._safeties.latest;
         if (safety === null) {
-            this._log.warn("cannot compute a quote since trade safety is not yet computed!");
             return null;
         }
         
@@ -216,4 +216,27 @@ export class QuotingEngine {
         
         return newQ;
     }
+}
+
+const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => { 
+    if ((!o && n) || (o && !n)) return true;
+    if (!o && !n) return false;
+
+    const oPx = (o && o.price) || 0;
+    const nPx = (n && n.price) || 0;
+    if (Math.abs(oPx - nPx) > tick) 
+        return true;
+
+    const oSz = (o && o.size) || 0;
+    const nSz = (n && n.size) || 0;
+    return Math.abs(oSz - nSz) > .001;
+}
+
+const quotesChanged = (o: Models.TwoSidedQuote, n: Models.TwoSidedQuote, tick: number) : boolean => {
+    if ((!o && n) || (o && !n)) return true;
+    if (!o && !n) return false;
+
+    if (quoteChanged(o.bid, n.bid, tick)) return true;
+    if (quoteChanged(o.ask, n.ask, tick)) return true;
+    return false;
 }
