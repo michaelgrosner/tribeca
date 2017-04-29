@@ -311,7 +311,7 @@ class DisplayOrder {
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                          <market-stats></market-stats>
+                          <market-stats [setShowStats]="!!showStats" [product]="product"></market-stats>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
