@@ -72,7 +72,7 @@ export class OrdersComponent implements OnInit {
       { width: 60, field: 'lvQty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      { width: 60, field: 'value', headerName: 'value', cellClass: (params) => {
+      { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 45, field: 'type', headerName: 'type' },
