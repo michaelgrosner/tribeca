@@ -51,13 +51,24 @@ function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
     var minAsk = input.fv.price + input.params.widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
-    let latestPosition = input.position.latestReport;
+    genQt.bidSz = input.params.buySize;
+    genQt.askSz = input.params.sellSize;
+    const latestPosition = input.position.latestReport;
     genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-      ? input.params.buySizePercentage * latestPosition.value / 100
-      : input.params.buySize;
+        ? input.params.buySizePercentage * latestPosition.value / 100
+        : input.params.buySize;
     genQt.askSz = (input.params.percentageValues && latestPosition != null)
-      ? input.params.sellSizePercentage * latestPosition.value / 100
-      : input.params.sellSize;
+        ? input.params.sellSizePercentage * latestPosition.value / 100
+        : input.params.sellSize;
+    const tbp = input.latestTargetPosition;
+    if (tbp !== null) {
+      const targetBasePosition = tbp.data;
+      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
+        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
+      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
+        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
+    }
 
     return genQt;
 }
@@ -81,13 +92,24 @@ function computeInverseJoinQuote(input: StyleHelpers.QuoteInput) {
         genQt.bidPx -= input.params.widthPing / 4.0;
     }
 
-    let latestPosition = input.position.latestReport;
+    genQt.bidSz = input.params.buySize;
+    genQt.askSz = input.params.sellSize;
+    const latestPosition = input.position.latestReport;
     genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-      ? input.params.buySizePercentage * latestPosition.value / 100
-      : input.params.buySize;
+        ? input.params.buySizePercentage * latestPosition.value / 100
+        : input.params.buySize;
     genQt.askSz = (input.params.percentageValues && latestPosition != null)
-      ? input.params.sellSizePercentage * latestPosition.value / 100
-      : input.params.sellSize;
+        ? input.params.sellSizePercentage * latestPosition.value / 100
+        : input.params.sellSize;
+    const tbp = input.latestTargetPosition;
+    if (tbp !== null) {
+      const targetBasePosition = tbp.data;
+      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
+        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
+      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
+        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
+    }
 
     return genQt;
 }

@@ -13,10 +13,10 @@ import {SubscriberFactory} from './shared_directives';
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-bordered table-responsive text-center">
       <tr class="active">
         <th style="width:62px;">apr<span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></th>
-        <th>bidSz&nbsp;</th>
-        <th>bidPx</th>
-        <th>askPx</th>
-        <th>askSz&nbsp;</th>
+        <th>bidSize&nbsp;</th>
+        <th>bidPrice</th>
+        <th>askPrice</th>
+        <th>askSize&nbsp;</th>
       </tr>
       <tr class="info">
         <td class="text-left">quote</td>
