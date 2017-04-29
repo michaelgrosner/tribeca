@@ -330,7 +330,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           done: osr.done
         };
 
-        this.addOrderStatusToMemory(o);
+        this.updateOrderStatusInMemory(o);
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -390,9 +390,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private addOrderStatusToMemory = (osr : Models.OrderStatusReport) => {
-        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-        this._orderCache.allOrders.set(osr.orderId, osr);
+    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
+        this.addOrderStatusInMemory(osr);
 
         if (osr.done===true) {
           this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
@@ -400,6 +399,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
             delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
         }
+    };
+
+    private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
+        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        this._orderCache.allOrders.set(osr.orderId, osr);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -419,6 +423,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initTrades : Models.Trade[]) {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
+        _.each(initTrades, t => this._trades.push(t));
         _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
@@ -446,8 +451,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
 
         this._oeGateway.OrderUpdate.on(this.updateOrderState);
-
-        _.each(initTrades, t => this._trades.push(t));
 
         // this._oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);

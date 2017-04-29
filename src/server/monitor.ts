@@ -29,7 +29,7 @@ export class ApplicationState {
       );
       this._tradesMinute = 0;
       this._appStatePublisher.publish(this._app_state);
-    }).done();
+    });
   };
 
   private onDelay = () => {

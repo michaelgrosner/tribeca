@@ -55,18 +55,19 @@ export interface IPersist<T> {
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
-    loadLatest(): Q.Promise<T>;
-    loadDBSize(): Q.Promise<T>;
+    loadLatest(): Promise<T>;
+    loadDBSize(): Promise<T>;
 }
 
 export interface ILoadAll<T> extends IPersist<T> {
-    loadAll(limit?: number, start_time?: moment.Moment): Q.Promise<T[]>;
+    loadAll(limit?: number, query?: Object): Promise<T[]>;
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
     private _log = Utils.log("tribeca:exchangebroker:repopersister");
 
-    public loadDBSize = (): Q.Promise<T> => {
+    public loadDBSize = async (): Promise<T> => {
+
         var deferred = Q.defer<T>();
 
         this.db.then(db => {
@@ -87,30 +88,23 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return deferred.promise;
     };
 
-    public loadLatest = (): Q.Promise<T> => {
-        var deferred = Q.defer<T>();
 
-        this.collection.then(coll => {
-            coll.find({ exchange: this._exchange, pair: this._pair })
+    public loadLatest = async (): Promise<T> => {
+        const coll = await this.collection;
+
+        const selector = { exchange: this._exchange, pair: this._pair };
+        const docs = await coll.find(selector)
                 .limit(1)
                 .project({ _id: 0 })
                 .sort({ $natural: -1 })
-                .toArray((err, arr) => {
-                    if (err) {
-                        deferred.reject(err);
-                    }
-                    else if (arr.length === 0) {
-                        deferred.resolve(this._defaultParameter);
-                    }
-                    else {
-                        var v = <T>_.defaults(arr[0], this._defaultParameter);
-                        this._loader(v);
-                        deferred.resolve(v);
-                    }
-            });
-        }).done();
+                .toArray();
 
-        return deferred.promise;
+        if (docs.length === 0)
+            return this._defaultParameter;
+
+        var v = <T>_.defaults(docs[0], this._defaultParameter);
+        this._loader(v);
+        return v;
     };
 
     public repersist = (report: T, trade: Models.Trade) => { };
@@ -149,79 +143,49 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 export class Persister<T extends Persistable> implements ILoadAll<T> {
     private _log = Utils.log("persister");
 
-    public loadAll = (limit?: number, start_time?: moment.Moment): Q.Promise<T[]> => {
-        var selector = { exchange: this._exchange, pair: this._pair };
-        if (this._dbName != "trades" && start_time) {
-            selector["time"] = { $gte: start_time.toDate() };
-        }
-
+    public loadAll = (limit?: number, query?: any): Promise<T[]> => {
+        const selector: Object = { exchange: this._exchange, pair: this._pair };
+        if (this._dbName == "trades") delete query.time;
+        _.assign(selector, query);
         return this.loadInternal(selector, limit);
     };
 
-    private loadInternal = (selector: any, limit?: number) => {
-        var deferred = Q.defer<T[]>();
+    private loadInternal = async (selector: Object, limit?: number) : Promise<T[]> => {
+        let query = this.collection.find(selector, {_id: 0});
 
-        this.collection.then(coll => {
-            coll.count(selector, (err, count) => {
-                if (err) deferred.reject(err);
-                else {
-                    let query = coll.find(selector).project({ _id: 0 });
+        if (limit !== null) {
+            const count = await this.collection.count(selector);
+            query = query.limit(limit);
+            if (count !== 0)
+                query = query.skip(Math.max(count - limit, 0));
+        }
 
-                    if (limit !== null) {
-                        query = query.limit(limit);
-                        if (count !== 0)
-                            query = query.skip(Math.max(count - limit, 0));
-                    }
+        const loaded = await query.toArray();
+        _.forEach(loaded, p => this._loader(p, this._setDBFlag));
 
-                    query.toArray((err, arr) => {
-                        if (err) deferred.reject(err);
-                        else {
-                            _.forEach(arr, p => this._loader(p, this._setDBFlag));
-                            deferred.resolve(arr);
-                        }
-                    });
-                }
-            });
-
-        }).done();
-
-        return deferred.promise;
+        return loaded;
     };
 
+    private _persistQueue : T[] = [];
     public persist = (report: T) => {
-        this.collection.then(coll => {
-            this._saver(report);
-            if (this._dbName != 'trades')
-              coll.deleteMany({ time: { $exists:true } }, err => {
-                  if (err)
-                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
-              });
-            coll.insertOne(report, err => {
-                if (err)
-                    this._log.error(err, "Unable to insert", this._dbName, report);
-            });
-        }).done();
+        this._persistQueue.push(report);
     };
 
     public repersist = (report: T, trade: Models.Trade) => {
-        this.collection.then(coll => {
-            this._saver(report);
-            if (trade.Kqty<0)
-              coll.deleteOne({ tradeId: trade.tradeId }, err => {
-                  if (err)
-                      this._log.error(err, "Unable to deleteOne", this._dbName, report);
-              });
-            else
-              coll.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, Ktime: (moment.isMoment(trade.Ktime) ? trade.Ktime.format('Y-MM-DD HH:mm:ss') : moment(trade.Ktime).format('Y-MM-DD HH:mm:ss')), Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
-                  if (err)
-                      this._log.error(err, "Unable to repersist", this._dbName, report);
-              });
-        }).done();
+        this._saver(report);
+        if (trade.Kqty<0)
+          this.collection.deleteOne({ tradeId: trade.tradeId }, err => {
+              if (err) this._log.error(err, "Unable to deleteOne", this._dbName, report);
+          });
+        else
+          this.collection.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, Ktime: (moment.isMoment(trade.Ktime) ? trade.Ktime.format('Y-MM-DD HH:mm:ss') : moment(trade.Ktime).format('Y-MM-DD HH:mm:ss')), Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
+              if (err) this._log.error(err, "Unable to repersist", this._dbName, report);
+          });
     };
 
-    collection: Q.Promise<mongodb.Collection>;
     constructor(
-        db: Q.Promise<mongodb.Db>,
+        time: Utils.ITimeProvider,
+        private collection: mongodb.Collection,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair,
@@ -229,6 +193,26 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _loader: (p: Persistable, setDBFlag?: boolean) => void,
         private _saver: (p: Persistable) => void) {
             this._log = Utils.log("persister:"+_dbName);
-            this.collection = db.then(db => db.collection(this._dbName));
+
+            time.setInterval(() => {
+                if (this._persistQueue.length === 0) return;
+
+                this._persistQueue.forEach(this._saver);
+                if (this._dbName != 'trades')
+                  collection.deleteMany({ time: { $exists:true } }, err => {
+                      if (err) this._log.error(err, "Unable to deleteMany", this._dbName);
+                  });
+                // collection.insertOne(report, err => {
+                    // if (err)
+                        // this._log.error(err, "Unable to insert", this._dbName, report);
+                // });
+                collection.insertMany(this._persistQueue, (err, r) => {
+                    if (r.result.ok) {
+                        this._persistQueue.length = 0;
+                    }
+                    else if (err)
+                        this._log.error(err, "Unable to insert", this._dbName, this._persistQueue);
+                }, );
+            }, moment.duration(10, "seconds"));
     }
 }
