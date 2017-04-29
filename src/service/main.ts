@@ -59,6 +59,7 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Messages = require("./messages");
+import log from "./logging";
 
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
@@ -99,8 +100,8 @@ process.on("SIGINT", () => {
     performExit();
 });
 
-const mainLog = Utils.log("tribeca:main");
-const messagingLog = Utils.log("tribeca:messaging");
+const mainLog = log("tribeca:main");
+const messagingLog = log("tribeca:messaging");
 
 function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
     const split = raw.split("/");

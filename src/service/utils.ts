@@ -105,20 +105,20 @@ export class ImmediateActionScheduler implements IActionScheduler {
     };
 }
 
-export function getJSON<T>(url: string, qs?: any) : Q.Promise<T> {
-    const d = Q.defer<T>();
-    request({url: url, qs: qs}, (err, resp, body) => {
-        if (err) {
-            d.reject(err);
-        }
-        else {
-            try {
-                d.resolve(JSON.parse(body));
+export function getJSON<T>(url: string, qs?: any) : Promise<T> {
+    return new Promise((resolve, reject) => {
+        request({url: url, qs: qs}, (err: Error, resp, body) => {
+            if (err) {
+                reject(err);
             }
-            catch (e) {
-                d.reject(e);
+            else {
+                try {
+                    resolve(JSON.parse(body));
+                }
+                catch (e) {
+                    reject(e);
+                }
             }
-        }
+        });
     });
-    return d.promise;
  }
