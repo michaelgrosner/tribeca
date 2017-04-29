@@ -279,35 +279,33 @@ export class BacktestParameters {
 }
 
 export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.ILoadLatest<T> {
-    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Q.Promise<T[]> => {
+    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Promise<T[]> => {
         return this.loadAll(limit);
     };
 
-    public loadAll = (limit?: number): Q.Promise<T[]> => {
-        if (this.initialData) {
-            if (limit) {
-                return Q(this.initialData.slice(limit * -1));
-            }
-            else {
-                return Q(this.initialData);
-            }
+    public loadAll = (limit?: number): Promise<T[]> => {
+      if (this.initialData) {
+        if (limit) {
+          return new Promise((resolve, reject) => { resolve(this.initialData.slice(limit * -1)); });
         }
-        return Q([]);
+        else {
+          return new Promise((resolve, reject) => { resolve(this.initialData); });
+        }
+      }
+      return new Promise((resolve, reject) => { resolve([]); });
     };
 
     public persist = (report: T) => { };
 
     public repersist = (report: T, trade: Models.Trade) => { };
 
-    public loadDBSize = (): Q.Promise<T> => {
-      var deferred = Q.defer<T>();
-      deferred.resolve(null);
-      return deferred.promise;
+    public loadDBSize = (): Promise<T> => {
+      return new Promise((resolve, reject) => { resolve(null); });
     };
 
-    public loadLatest = (): Q.Promise<T> => {
+    public loadLatest = (): Promise<T> => {
         if (this.initialData)
-            return Q(_.last(this.initialData));
+            return new Promise((resolve, reject) => { resolve(_.last(this.initialData)); });
     };
 
     constructor(private initialData?: T[]) {

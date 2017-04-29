@@ -52,6 +52,7 @@
     "moment": "^2.18.1",
     "mongodb": "^2.2.26",
     "ng4-popover": "^0.0.21",
+    "promise-timeout": "^1.1.1",
     "q": "^1.5.0",
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
