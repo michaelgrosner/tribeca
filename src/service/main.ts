@@ -59,6 +59,7 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Messages = require("./messages");
+import log from "./logging";
 
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
@@ -99,8 +100,8 @@ process.on("SIGINT", () => {
     performExit();
 });
 
-const mainLog = Utils.log("tribeca:main");
-const messagingLog = Utils.log("tribeca:messaging");
+const mainLog = log("tribeca:main");
+const messagingLog = log("tribeca:messaging");
 
 function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
     const split = raw.split("/");
@@ -111,12 +112,12 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 }
 const pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
-const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, moment.unix(1));
+const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, new Date(1));
 const defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
     Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
 const backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) : SimulationClasses => {
-    const timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(_.first(inputData).time, _.last(inputData).time);
+    const timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(_.first(inputData).time), moment(_.last(inputData).time));
     const exchange = Models.Exchange.Null;
     const gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
@@ -207,17 +208,13 @@ const liveTradingSetup = () : SimulationClasses => {
     
     const db = Persister.loadDb(config);
     
-    const loaderSaver = new Persister.LoaderSaver(exchange, pair);
-    const mtLoaderSaver = new MarketTrades.MarketTradesLoaderSaver(loaderSaver);
-    
-    const getPersister = async <T>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
-        const ls = collectionName === "mt" ? mtLoaderSaver : loaderSaver;
+    const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
         const coll = (await (await db).collection(collectionName));
-        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair, ls.loader, ls.saver);
+        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
     };
         
-    const getRepository = <T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
-        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
+    const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string) : Persister.ILoadLatest<T> => 
+        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
 
     return {
         exchange: exchange,
@@ -239,8 +236,8 @@ interface SimulationClasses {
     timeProvider: Utils.ITimeProvider;
     getExch(orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway>;
     getReceiver<T>(topic: string) : Messaging.IReceive<T>;
-    getPersister<T>(collectionName: string) : Promise<Persister.ILoadAll<T>>;
-    getRepository<T>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
+    getPersister<T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>>;
+    getRepository<T extends Persister.Persistable>(defValue: T, collectionName: string) : Persister.ILoadLatest<T>;
     getPublisher<T>(topic: string, persister?: Persister.ILoadAll<T>): Messaging.IPublish<T>;
 }
 
@@ -329,7 +326,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
 
     const safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
-    const startQuoting = (timeProvider.utcNow().diff(initActive.time, 'minutes') < 3 && initActive.active);
+    const startQuoting = (moment(timeProvider.utcNow()).diff(moment(initActive.time), 'minutes') < 3 && initActive.active);
     const active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
     const quoter = new Quoter.Quoter(orderBroker, broker);
@@ -376,7 +373,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
             trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
             volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
         }];
-        console.log("sending back results, took: ", Utils.date().diff(t, "seconds"));
+        console.log("sending back results, took: ", moment(Utils.date()).diff(t, "seconds"));
         
         request({url: serverUrl+"/result", 
                     method: 'POST', 
@@ -422,7 +419,7 @@ const harness = async () : Promise<any> => {
             
             for (let i = 0; i < inp.length; i++) {
                 const d = inp[i];
-                d.time = moment(d.time);
+                d.time = new Date(d.time);
             }
             
             return inp;

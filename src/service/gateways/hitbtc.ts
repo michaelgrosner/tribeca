@@ -17,6 +17,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import util = require("util");
 import * as Q from "q";
+import log from "../logging";
 const shortId = require("shortid");
 const SortedArray = require("collections/sorted-array");
 
@@ -140,12 +141,12 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
     private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
-    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : moment.Moment) => {
+    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
     };
 
-    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : moment.Moment) => {
+    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol) return;
         this._lastAsks.clear();
         this._lastBids.clear();
@@ -153,7 +154,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._hasProcessedSnapshot = true;
     };
 
-    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : moment.Moment) => {
+    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Date) => {
         var ordBids = HitBtcMarketDataGateway.applyIncrementals(bids, this._lastBids);
         var ordAsks = HitBtcMarketDataGateway.applyIncrementals(asks, this._lastAsks);
 
@@ -182,7 +183,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private onMessage = (raw : string) => {
-        var t : moment.Moment = Utils.date();
+        var t : Date = new Date();
 
         try {
             var msg = JSON.parse(raw);
@@ -222,11 +223,11 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
         
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, side));
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
     };
 
     _tradesClient : SocketIOClient.Socket;
-    private _log = Utils.log("tribeca:gateway:HitBtcMD");
+    private _log = log("tribeca:gateway:HitBtcMD");
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
@@ -260,7 +261,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
                 JSON.parse((<any>body).body).trades.forEach(t => {
                     var price = parseFloat(t[1]);
                     var size = parseFloat(t[2]);
-                    var time = moment(t[3]);
+                    var time = new Date(t[3]);
 
                     this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, time, true, null));
                 });
@@ -471,7 +472,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return shortId.generate();
     }
 
-    private _log = Utils.log("tribeca:gateway:HitBtcOE");
+    private _log = log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
@@ -492,7 +493,7 @@ interface HitBtcPositionReport {
 }
 
 class HitBtcPositionGateway implements Interfaces.IPositionGateway {
-    private _log = Utils.log("tribeca:gateway:HitBtcPG");
+    private _log = log("tribeca:gateway:HitBtcPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private getAuth = (uri : string) : any => {

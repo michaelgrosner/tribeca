@@ -17,10 +17,9 @@ import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
 import * as moment from "moment";
+import log from "./logging";
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
-    private readonly _marketPublisher: BatchingPublisher<Models.Market>;
-
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook() : Models.Market { return this._currentBook; }
 
@@ -28,23 +27,24 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     private handleMarketData = (book : Models.Market) => {
         this._currentBook = book;
         this.MarketData.trigger(this.currentBook);
-
-        // publish once a second and only persist the top 3 levels of the book.
-        this._marketPublisher.publish(this.currentBook);
-        this._persister.persist(new Models.Market(
-            _.take(this.currentBook.bids, 3), 
-            _.take(this.currentBook.bids, 3), 
-            this._currentBook.time));
     };
 
     constructor(time: Utils.ITimeProvider,
                 private _mdGateway : Interfaces.IMarketDataGateway,
                 rawMarketPublisher : Messaging.IPublish<Models.Market>,
-                private _persister: Persister.IPersist<Models.Market>,
+                persister: Persister.IPersist<Models.Market>,
                 private _messages : Messages.MessagesPubisher) {
+
+        time.setInterval(() => {
+            if (!this.currentBook) return;
+            rawMarketPublisher.publish(this._currentBook);
+            persister.persist(new Models.Market(
+                _.take(this.currentBook.bids, 3), 
+                _.take(this.currentBook.bids, 3), 
+                new Date()));
+        }, moment.duration(1, "second"));
+
         rawMarketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
-        this._marketPublisher = new BatchingPublisher<Models.Market>(moment.duration(1, "second"), 
-            rawMarketPublisher, time)
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
@@ -60,7 +60,7 @@ export class OrderStateCache implements Interfaces.IOrderStateCache {
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {
-    private _log = Utils.log("oe:broker");
+    private _log = log("oe:broker");
 
     async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
@@ -189,7 +189,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orig === "undefined") {
-                this._log.error("cannot find orderId from", osr);
+                this._log.error({
+                    update: osr,
+                    existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
+                    existingIds: Array.from(this._orderCache.allOrders.keys())
+                }, "no existing order for non-New update!");
                 return;
             }
         }
@@ -238,7 +242,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             source: getOrFallback(osr.source, orig.source)
         };
 
-        this.updateOrderStatusInMemory(o);
+        const added = this.updateOrderStatusInMemory(o);
+        if (this._log.debug())
+            this._log.debug(o, (added ? "added" : "removed") + " order status");
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -279,19 +285,36 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
+    private _pendingRemovals = new Array<Models.OrderStatusReport>();
+    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) : boolean => {
         if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
             this.addOrderStatusInMemory(osr);
+            return true;
         }
         else  {
-            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-            this._orderCache.allOrders.delete(osr.orderId);
+            this._pendingRemovals.push(osr);
+            return false;
         }
     };
 
     private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
         this._orderCache.allOrders.set(osr.orderId, osr);
+    };
+
+    private clearPendingRemovals = () => {
+        const now = new Date().getTime();
+        const kept = new Array<Models.OrderStatusReport>();
+        for (let osr of this._pendingRemovals) {
+            if (now - osr.time.getTime() > 5000) {
+                this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+                this._orderCache.allOrders.delete(osr.orderId);
+            }
+            else {
+                kept.push(osr);
+            }
+        }
+        this._pendingRemovals = kept;
     };
 
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
@@ -364,11 +387,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
         });
+
+        this._timeProvider.setInterval(this.clearPendingRemovals, moment.duration(5, "seconds"));
     }
 }
 
 export class PositionBroker implements Interfaces.IPositionBroker {
-    private _log = Utils.log("pos:broker");
+    private _log = log("pos:broker");
 
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
@@ -428,7 +453,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 }
 
 export class ExchangeBroker implements Interfaces.IBroker {
-    private _log = Utils.log("ex:broker");
+    private _log = log("ex:broker");
 
     public get hasSelfTradePrevention() {
         return this._baseGateway.hasSelfTradePrevention;
@@ -500,23 +525,4 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
-}
-
-export class BatchingPublisher<T> {
-    private _latest: T = null;
-
-    constructor(
-            interval: moment.Duration,
-            private _decorated: Messaging.IPublish<T>, 
-            private _time: Utils.ITimeProvider) {
-        _time.setInterval(() => {
-            if (this._latest === null) return;
-            _decorated.publish(this._latest);
-            this._latest = null;
-        }, interval);
-    }
-
-    public publish = (msg : T) => {
-        this._latest = msg;
-    };
 }

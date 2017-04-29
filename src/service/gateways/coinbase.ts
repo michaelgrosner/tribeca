@@ -16,6 +16,7 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import Q = require("q");
 import _ = require('lodash');
+import log from "../logging";
 
 var uuid = require('node-uuid');
 import CoinbaseExchange = require("./coinbase-api");
@@ -185,8 +186,8 @@ function convertSize(szStr: string) {
     return parseFloat(szStr);
 }
 
-function convertTime(time: string) {
-    return moment(time);
+function convertTime(time: string) : Date {
+    return new Date(time);
 }
 
 class PriceLevel {
@@ -229,7 +230,7 @@ class CoinbaseOrderBook {
         priceLevelStorage.orders[order_id] = size;
     };
 
-    public onReceived = (msg: CoinbaseReceived, t: moment.Moment): boolean => {
+    public onReceived = (msg: CoinbaseReceived, t: Date): boolean => {
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
@@ -260,14 +261,14 @@ class CoinbaseOrderBook {
         return changed;
     }
 
-    public onOpen = (msg: CoinbaseOpen, t: moment.Moment) => {
+    public onOpen = (msg: CoinbaseOpen, t: Date) => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
         this.addToOrderBook(storage, price, convertSize(msg.remaining_size), msg.order_id);
     };
 
-    public onDone = (msg: CoinbaseDone, t: moment.Moment): boolean => {
+    public onDone = (msg: CoinbaseDone, t: Date): boolean => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
@@ -291,7 +292,7 @@ class CoinbaseOrderBook {
         return true;
     };
 
-    public onMatch = (msg: CoinbaseMatch, t: moment.Moment): boolean => {
+    public onMatch = (msg: CoinbaseMatch, t: Date): boolean => {
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
@@ -316,7 +317,7 @@ class CoinbaseOrderBook {
         return false;
     };
 
-    public onChange = (msg: CoinbaseChange, t: moment.Moment): boolean => {
+    public onChange = (msg: CoinbaseChange, t: Date): boolean => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         var storage = this.getStorage(side);
@@ -359,7 +360,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.MarketSide>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    private onReceived = (msg: CoinbaseReceived, t: moment.Moment) => {
+    private onReceived = (msg: CoinbaseReceived, t: Date) => {
         if (this._orderBook.onReceived(msg, t)) {
             this.reevalBids();
             this.reevalAsks();
@@ -367,14 +368,14 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     }
 
-    private onOpen = (msg: CoinbaseOpen, t: moment.Moment) => {
+    private onOpen = (msg: CoinbaseOpen, t: Date) => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
         this._orderBook.onOpen(msg, t);
         this.onOrderBookChanged(t, side, price);
     };
 
-    private onDone = (msg: CoinbaseDone, t: moment.Moment) => {
+    private onDone = (msg: CoinbaseDone, t: Date) => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
 
@@ -383,7 +384,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 
-    private onMatch = (msg: CoinbaseMatch, t: moment.Moment) => {
+    private onMatch = (msg: CoinbaseMatch, t: Date) => {
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
@@ -395,7 +396,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, convertTime(msg.time), false, side));
     };
 
-    private onChange = (msg: CoinbaseChange, t: moment.Moment) => {
+    private onChange = (msg: CoinbaseChange, t: Date) => {
         var price = convertPrice(msg.price);
         var side = convertSide(msg);
 
@@ -417,7 +418,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._cachedAsks = _.map(this._orderBook.asks.store.slice(0, this.Depth), s => (<any>s).value.marketUpdate);
     };
 
-    private onOrderBookChanged = (t: moment.Moment, side: Models.Side, price: number) => {
+    private onOrderBookChanged = (t: Date, side: Models.Side, price: number) => {
         if (side === Models.Side.Bid) {
             if (this._cachedBids.length > 0 && price < _.last(this._cachedBids).price) return;
             else this.reevalBids();
@@ -449,7 +450,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.raiseMarketData(t);
     };
 
-    private raiseMarketData = (t: moment.Moment) => {
+    private raiseMarketData = (t: Date) => {
         if (typeof this._cachedBids[0] !== "undefined" && typeof this._cachedAsks[0] !== "undefined") {
             if (this._cachedBids[0].price > this._cachedAsks[0].price) {
                 this._log.warn("Crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
@@ -461,7 +462,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 
-    private _log = Utils.log("tribeca:gateway:CoinbaseMD");
+    private _log = log("tribeca:gateway:CoinbaseMD");
     constructor(private _orderBook: CoinbaseOrderBook, private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("statechange", m => this.onStateChange(m));
         this._client.on("received", m => this.onReceived(m.data, m.time));
@@ -544,7 +545,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: cancel.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+            computationalLatency: Utils.fastDiff(new Date(), cancel.time)
         });
     };
 
@@ -628,7 +629,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: order.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            computationalLatency: Utils.fastDiff(new Date(), order.time)
         });
     };
 
@@ -736,7 +737,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private _fixedPrecision;
-    private _log = Utils.log("tribeca:gateway:CoinbaseOE");
+    private _log = log("tribeca:gateway:CoinbaseOE");
     constructor(
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
@@ -757,7 +758,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 }
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    private _log = Utils.log("tribeca:gateway:CoinbasePG");
+    private _log = log("tribeca:gateway:CoinbasePG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {

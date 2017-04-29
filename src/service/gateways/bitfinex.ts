@@ -18,6 +18,7 @@ import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
+import log from "../logging";
 var shortId = require("shortid");
 var Deque = require("collections/deque");
 
@@ -77,7 +78,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         _.forEach(trades.data, trade => {
             var px = parseFloat(trade.price);
             var sz = parseFloat(trade.amount);
-            var time = moment.unix(trade.timestamp);
+            var time = moment.unix(trade.timestamp).toDate();
             var side = decodeSide(trade.type);
             var mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
             this.MarketTrade.trigger(mt);
@@ -245,7 +246,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: order.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            computationalLatency: Utils.fastDiff(new Date(), order.time)
         });
     };
 
@@ -275,7 +276,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: cancel.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+            computationalLatency: Utils.fastDiff(new Date(), cancel.time)
         });
     };
 
@@ -322,7 +323,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private _since = moment.utc();
-    private _log = Utils.log("tribeca:gateway:BitfinexOE");
+    private _log = log("tribeca:gateway:BitfinexOE");
     constructor(
         timeProvider: Utils.ITimeProvider,
         private _details: BitfinexBaseGateway,
@@ -336,7 +337,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 
 class RateLimitMonitor {
-    private _log = Utils.log("tribeca:gateway:rlm");
+    private _log = log("tribeca:gateway:rlm");
     
     private _queue = Deque();
     private _durationMs: number;
@@ -423,7 +424,7 @@ class BitfinexHttp {
             }
             else {
                 try {
-                    var t = Utils.date();
+                    var t = new Date();
                     var data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }
@@ -437,7 +438,7 @@ class BitfinexHttp {
         return d.promise;
     };
 
-    private _log = Utils.log("tribeca:gateway:BitfinexHTTP");
+    private _log = log("tribeca:gateway:BitfinexHTTP");
     private _baseUrl: string;
     private _apiKey: string;
     private _secret: string;
@@ -476,7 +477,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     }
 
-    private _log = Utils.log("tribeca:gateway:BitfinexPG");
+    private _log = log("tribeca:gateway:BitfinexPG");
     constructor(timeProvider: Utils.ITimeProvider, private _http: BitfinexHttp) {
         timeProvider.setInterval(this.onRefreshPositions, moment.duration(15, "seconds"));
         this.onRefreshPositions();

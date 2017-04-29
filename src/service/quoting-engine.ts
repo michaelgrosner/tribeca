@@ -31,9 +31,10 @@ import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
+import log from "./logging";
 
 export class QuotingEngine {
-    private _log = Utils.log("quotingengine");
+    private _log = log("quotingengine");
 
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
@@ -161,7 +162,7 @@ export class QuotingEngine {
         return unrounded;
     }
 
-    private recalcQuote = (t: moment.Moment) => {
+    private recalcQuote = (t: Date) => {
         const fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
@@ -210,7 +211,7 @@ export class QuotingEngine {
         if (Models.Side.Ask === side && previousQ.price > newQ.price) quoteWasWidened = false;
         
         // prevent flickering
-        if (!quoteWasWidened && Math.abs(Utils.fastDiff(moment.utc(), prevTwoSided.time)) < 300) {
+        if (!quoteWasWidened && Math.abs(Utils.fastDiff(new Date(), prevTwoSided.time)) < 300) {
             return previousQ;
         }
         

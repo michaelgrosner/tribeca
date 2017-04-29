@@ -9,12 +9,13 @@ import _ = require('lodash');
 import request = require('request');
 import Models = require("../../common/models");
 import moment = require("moment");
+import log from "../logging";
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;
 var EventEmitter = require('events').EventEmitter;
 import WebSocket = require('ws');
 
-var coinbaseLog = Utils.log("tribeca:gateway:coinbase-api");
+var coinbaseLog = log("tribeca:gateway:coinbase-api");
 
 var keepaliveAgent = new HttpsAgent();
 
@@ -420,7 +421,7 @@ _.assign(OrderBook.prototype, new function() {
             });
     };
 
-    prototype.processMessage = function(message, t: moment.Moment) {
+    prototype.processMessage = function(message, t: Date) {
         var self = this;
         if (message.sequence <= self.book.sequence) {
             self.emit('ignored', message);

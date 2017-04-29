@@ -20,9 +20,10 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
+import log from "./logging";
 
 export class PositionManager {
-    private _log = Utils.log("rfv");
+    private _log = log("rfv");
 
     public NewTargetPosition = new Utils.Evt();
 
@@ -41,7 +42,7 @@ export class PositionManager {
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
         const lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
-        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
+        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), moment(lastTime));
     }
 
     private updateEwmaValues = () => {
@@ -74,7 +75,7 @@ export class PositionManager {
 }
 
 export class TargetBasePositionManager {
-    private _log = Utils.log("positionmanager");
+    private _log = log("positionmanager");
 
     public NewTargetPosition = new Utils.Evt();
 
