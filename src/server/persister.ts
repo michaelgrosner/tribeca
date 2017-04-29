@@ -145,7 +145,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     public loadAll = (limit?: number, query?: any): Promise<T[]> => {
         const selector: Object = { exchange: this._exchange, pair: this._pair };
-        if (this._dbName == "trades") delete query.time;
+        if (query && query.time && this._dbName == "trades") delete query.time;
         _.assign(selector, query);
         return this.loadInternal(selector, limit);
     };

@@ -75,7 +75,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
 let exitingEvent: () => Promise<number>;
 
 const performExit = () => {
-  Promises.timeout(2000, exitingEvent()).then(completed => {
+  Promises.timeout(2000, exitingEvent).then(completed => {
     Utils.log('main').info("All exiting event handlers have fired, exiting application.");
     process.exit();
   }).catch(() => {
