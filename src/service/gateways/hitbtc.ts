@@ -140,12 +140,12 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
     private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
-    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : moment.Moment) => {
+    private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
     };
 
-    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : moment.Moment) => {
+    private onMarketDataSnapshotFullRefresh = (msg : MarketDataSnapshotFullRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol) return;
         this._lastAsks.clear();
         this._lastBids.clear();
@@ -153,7 +153,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._hasProcessedSnapshot = true;
     };
 
-    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : moment.Moment) => {
+    private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Date) => {
         var ordBids = HitBtcMarketDataGateway.applyIncrementals(bids, this._lastBids);
         var ordAsks = HitBtcMarketDataGateway.applyIncrementals(asks, this._lastAsks);
 
@@ -182,7 +182,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private onMessage = (raw : string) => {
-        var t : moment.Moment = Utils.date();
+        var t : Date = new Date();
 
         try {
             var msg = JSON.parse(raw);
@@ -222,7 +222,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
         
-        this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, Utils.date(), false, side));
+        this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
     };
 
     _tradesClient : SocketIOClient.Socket;
@@ -260,7 +260,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
                 JSON.parse((<any>body).body).trades.forEach(t => {
                     var price = parseFloat(t[1]);
                     var size = parseFloat(t[2]);
-                    var time = moment(t[3]);
+                    var time = new Date(t[3]);
 
                     this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, time, true, null));
                 });

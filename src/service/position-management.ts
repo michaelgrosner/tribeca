@@ -41,7 +41,7 @@ export class PositionManager {
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics) {
         const lastTime = (this._data !== null && _.some(_data)) ? _.last(this._data).time : null;
-        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), lastTime);
+        this._timer = new RegularTimer(_timeProvider, this.updateEwmaValues, moment.duration(1, 'hours'), moment(lastTime));
     }
 
     private updateEwmaValues = () => {

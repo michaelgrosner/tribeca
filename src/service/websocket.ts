@@ -48,7 +48,7 @@ export class WebSocket {
             })
             .on("message", data => {
                 try {
-                    const t = moment.utc();
+                    const t = new Date();
                     this._onData(new Models.Timestamped<string>(data, t));
                 } catch (e) {
                     this._log.error("error handling websocket message!", {data: data, error: e});

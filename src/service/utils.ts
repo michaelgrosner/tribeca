@@ -9,13 +9,13 @@ import * as Q from "q";
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
-export var date = moment.utc;
+export const date = () => new Date();
 
-export function fastDiff(x: moment.Moment, y: moment.Moment) : number {
-    return x.valueOf() - y.valueOf();
+export function fastDiff(x: Date, y: Date) : number {
+    return x.getTime() - y.getTime();
 }
 
-export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): moment.Moment {
+export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): Date {
     if (x === null)
         return timeProvider.utcNow();
 
@@ -84,7 +84,7 @@ export function roundDown(x: number, minTick: number) {
 }
 
 export interface ITimeProvider {
-    utcNow() : moment.Moment;
+    utcNow() : Date;
     setTimeout(action: () => void, time: moment.Duration);
     setImmediate(action: () => void);
     setInterval(action: () => void, time: moment.Duration);
@@ -97,7 +97,7 @@ export interface IBacktestingTimeProvider extends ITimeProvider {
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
     
-    utcNow = () => moment.utc();
+    utcNow = () => new Date();
     
     setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
     

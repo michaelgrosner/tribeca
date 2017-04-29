@@ -17,24 +17,7 @@ import Broker = require("./broker");
 import mongodb = require('mongodb');
 import Web = require("./web");
 import QuotingEngine = require("./quoting-engine");
-
-export class MarketTradesLoaderSaver {
-    public loader = (x : Models.MarketTrade) => {
-        this._wrapped.loader(x);
-        
-        if (typeof x.quote !== "undefined" && x.quote !== null)
-            this._wrapped.loader(x.quote);
-    };
-    
-    public saver = (x : Models.MarketTrade) => {
-        this._wrapped.saver(x);
-        
-        if (typeof x.quote !== "undefined" && x.quote !== null)
-            this._wrapped.saver(x.quote);
-    };
-    
-    constructor(private _wrapped: P.LoaderSaver) {}
-}
+import * as moment from "moment"
 
 export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     private _log = Utils.log("mt:broker");
@@ -55,7 +38,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         if (u.onStartup) {
             for (let existing of this._marketTrades) {
                 try {
-                    const dt = Math.abs(existing.time.diff(u.time, 'minutes'));
+                    const dt = Math.abs(moment(existing.time).diff(moment(u.time), 'minutes'));
                     if (Math.abs(existing.size - u.size) < 1e-4 && 
                         Math.abs(existing.price - u.price) < (.5*this._base.minTickIncrement) && 
                         dt < 1)
