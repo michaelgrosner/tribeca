@@ -17,6 +17,7 @@ import io = require("socket.io-client");
 import moment = require("moment");
 import util = require("util");
 import * as Q from "q";
+import log from "../logging";
 const shortId = require("shortid");
 const SortedArray = require("collections/sorted-array");
 
@@ -226,7 +227,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     _tradesClient : SocketIOClient.Socket;
-    private _log = Utils.log("tribeca:gateway:HitBtcMD");
+    private _log = log("tribeca:gateway:HitBtcMD");
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
@@ -471,7 +472,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return shortId.generate();
     }
 
-    private _log = Utils.log("tribeca:gateway:HitBtcOE");
+    private _log = log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
@@ -492,7 +493,7 @@ interface HitBtcPositionReport {
 }
 
 class HitBtcPositionGateway implements Interfaces.IPositionGateway {
-    private _log = Utils.log("tribeca:gateway:HitBtcPG");
+    private _log = log("tribeca:gateway:HitBtcPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private getAuth = (uri : string) : any => {

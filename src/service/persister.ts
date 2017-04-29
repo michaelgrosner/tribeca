@@ -13,6 +13,7 @@ import Q = require("q");
 import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
+import log from "./logging";
 
 export function loadDb(config: Config.IConfigProvider) {
     var deferred = Q.defer<mongodb.Db>();
@@ -42,7 +43,7 @@ export interface ILoadAll<T> extends IPersist<T> {
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
-    private _log = Utils.log("tribeca:exchangebroker:repopersister");
+    private _log = log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = async (): Promise<T> => {
         const coll = await this.collection;
@@ -92,7 +93,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 }
 
 export class Persister<T extends Persistable> implements ILoadAll<T> {
-    private _log = Utils.log("persister");
+    private _log = log("persister");
 
     public loadAll = (limit?: number, query?: any): Promise<T[]> => {
         const selector: Object = { exchange: this._exchange, pair: this._pair };
@@ -143,7 +144,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair) {
-            this._log = Utils.log("persister:"+_dbName);
+            this._log = log("persister:"+_dbName);
 
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;

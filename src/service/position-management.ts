@@ -20,9 +20,10 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
+import log from "./logging";
 
 export class PositionManager {
-    private _log = Utils.log("rfv");
+    private _log = log("rfv");
 
     public NewTargetPosition = new Utils.Evt();
 
@@ -74,7 +75,7 @@ export class PositionManager {
 }
 
 export class TargetBasePositionManager {
-    private _log = Utils.log("positionmanager");
+    private _log = log("positionmanager");
 
     public NewTargetPosition = new Utils.Evt();
 

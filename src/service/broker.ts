@@ -17,6 +17,7 @@ import Persister = require("./persister");
 import util = require("util");
 import Messages = require("./messages");
 import * as moment from "moment";
+import log from "./logging";
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -59,7 +60,7 @@ export class OrderStateCache implements Interfaces.IOrderStateCache {
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {
-    private _log = Utils.log("oe:broker");
+    private _log = log("oe:broker");
 
     async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
@@ -367,7 +368,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 }
 
 export class PositionBroker implements Interfaces.IPositionBroker {
-    private _log = Utils.log("pos:broker");
+    private _log = log("pos:broker");
 
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
@@ -427,7 +428,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 }
 
 export class ExchangeBroker implements Interfaces.IBroker {
-    private _log = Utils.log("ex:broker");
+    private _log = log("ex:broker");
 
     public get hasSelfTradePrevention() {
         return this._baseGateway.hasSelfTradePrevention;

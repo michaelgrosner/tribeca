@@ -17,6 +17,7 @@ import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
+import log from "../logging";
 var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
@@ -124,7 +125,7 @@ class OkCoinWebsocket {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
-    private _log = Utils.log("tribeca:gateway:OkCoinWebsocket");
+    private _log = log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
@@ -167,7 +168,7 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketData.trigger(mkt);
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinMD");
+    private _log = log("tribeca:gateway:OkCoinMD");
     constructor(socket : OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
         var depthChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_depth";
         var tradesChannel = "ok_" + symbolProvider.symbolWithoutUnderscore + "_trades_v1";
@@ -313,7 +314,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinOE");
+    private _log = log("tribeca:gateway:OkCoinOE");
     constructor(
             private _socket : OkCoinWebsocket, 
             private _signer: OkCoinMessageSigner,
@@ -393,7 +394,7 @@ class OkCoinHttp {
         return d.promise;
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinHTTP");
+    private _log = log("tribeca:gateway:OkCoinHTTP");
     private _baseUrl : string;
     constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
@@ -428,7 +429,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinPG");
+    private _log = log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 10);
