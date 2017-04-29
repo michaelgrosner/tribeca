@@ -35,16 +35,12 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
                 persister: Persister.IPersist<Models.Market>,
                 private _messages : Messages.MessagesPubisher) {
 
-        time.setInterval(() => {
-            if (!this.currentBook) return;
-            rawMarketPublisher.publish(this._currentBook);
-            persister.persist(new Models.Market(
+        timedPublisherPersister(rawMarketPublisher, persister, time, () => {
+            return new Models.Market(
                 _.take(this.currentBook.bids, 3), 
                 _.take(this.currentBook.bids, 3), 
-                new Date()));
-        }, moment.duration(1, "second"));
-
-        rawMarketPublisher.registerSnapshot(() => this.currentBook === null ? [] : [this.currentBook]);
+                new Date());
+        });
 
         this._mdGateway.MarketData.on(this.handleMarketData);
         this._mdGateway.ConnectChanged.on(s => {
@@ -445,10 +441,10 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.IPersist<Models.PositionReport>,
-                private _mdBroker : Interfaces.IMarketDataBroker) {
+                private _mdBroker : Interfaces.IMarketDataBroker,
+                private _orders: Interfaces.IOrderBroker) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
-
-        this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
+        timedPublisherPersister(_positionPublisher, _positionPersister, _timeProvider, () => this._report);
     }
 }
 
@@ -525,4 +521,26 @@ export class ExchangeBroker implements Interfaces.IBroker {
 
         this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
     }
+}
+
+function timedPublisherPersister<T>(
+        rawPublisher: Messaging.IPublish<T>,
+        persister: Persister.IPersist<T>,
+        time: Utils.ITimeProvider,
+        getCurrent: () => T) {
+
+    time.setInterval(() => {
+        const current = getCurrent();
+        if (!current) return;
+        rawPublisher.publish(current);
+        persister.persist(current);
+    }, moment.duration(1, "second"));
+
+    const snapshot = () : T[] => {
+        const current = getCurrent();
+        return current ? [current] : [];
+    }
+
+    rawPublisher.registerSnapshot(snapshot);
+
 }
