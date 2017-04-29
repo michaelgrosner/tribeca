@@ -11,6 +11,8 @@ import {AgGridModule} from 'ag-grid-angular/main';
 import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from "ng4-popover";
 import Highcharts = require('highcharts');
+import Highstock = require('highcharts/highstock');
+require('highcharts/highcharts-more.js')(Highstock);
 
 import moment = require("moment");
 
@@ -300,7 +302,7 @@ class DisplayOrder {
                                     {{ exchange_name }}<br/>{{ pair_name }}
                                 </button>
                                 <div *ngIf="pair.connectionMessage">
-     +                            <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
+                                  <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
                                 </div>
                                 <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
@@ -579,7 +581,7 @@ class ClientComponent implements OnInit {
       QuoteCurrencyCellComponent
     ]),
     ChartModule.forRoot(Highcharts),
-    ChartModule.forRoot(require('highcharts/highstock'))
+    ChartModule.forRoot(Highstock)
   ],
   declarations: [
     ClientComponent,

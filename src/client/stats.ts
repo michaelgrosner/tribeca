@@ -18,6 +18,7 @@ export class StatsComponent implements OnInit {
 
   public targetBasePosition: number;
   public fairValue: number;
+  public width: number;
   public ewmaShort: number;
   public ewmaLong: number;
   public ewmaQuote: number;
@@ -29,7 +30,10 @@ export class StatsComponent implements OnInit {
     Highcharts.charts.push(chartInstance);
   }
   private pointFormatterBase = function () {
-    return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>';
+    return (this.series.name=='Width')
+      ? '<tr><td><span style="color:'+this.series.color+'">●</span> High Value:</td><td style="text-align:right;"> <b>'+this.high.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+        + '<tr><td><span style="color:'+this.series.color+'">●</span> Low Value:</td><td style="text-align:right;"> <b>'+this.low.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+      : '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>';
   }
   private pointFormatterQuote = function () {
     return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>';
@@ -79,6 +83,15 @@ export class StatsComponent implements OnInit {
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
       id: 'fvseries'
+    },{
+      name: 'Width',
+      type: 'arearange',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      lineWidth: 0,
+      colorIndex: 2,
+      fillOpacity: 0.2,
+      zIndex: -1,
+      data: []
     },{
       name: 'Sell',
       type: 'spline',
@@ -335,6 +348,10 @@ export class StatsComponent implements OnInit {
         .registerSubscriber(this.updateFairValue);
 
       this.subscriberFactory
+        .getSubscriber(this.zone, Models.Topics.MarketData)
+        .registerSubscriber(this.updateMarket);
+
+      this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.Position)
         .registerSubscriber(this.updatePosition);
 
@@ -354,13 +371,14 @@ export class StatsComponent implements OnInit {
 
   private updateFairValue = (fv: Models.FairValue) => {
     if (fv == null) return;
-    this.fairValue = ((fv.price * 100) / 100);
+    this.fairValue = fv.price;
     let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.fvChart], time);
-    if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[5].addPoint([time, this.ewmaQuote], false);
-    if (this.ewmaShort) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaShort], false);
-    if (this.ewmaLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaLong], false);
+    if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
+    if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
+    if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
     Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+    if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue+this.width, this.fairValue-this.width], this.showStats, false, false);
   }
 
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
@@ -370,27 +388,33 @@ export class StatsComponent implements OnInit {
     this.fairValue = ewma.fairValue;
     if (ewma.ewmaQuote || this.ewmaQuote) {
       if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
-      Highcharts.charts[this.fvChart].series[5].addPoint([time, this.ewmaQuote], false);
+      Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
     }
     if (ewma.ewmaShort || this.ewmaShort) {
       if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
-      Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaShort], false);
+      Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
     }
     if (ewma.ewmaLong || this.ewmaLong) {
       if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;
-      Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaLong], false);
+      Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
     }
     Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+    if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue+this.width, this.fairValue-this.width], this.showStats, false, false);
+  }
+
+  private updateMarket = (update: Models.Timestamped<any[]>) => {
+    if (update && update.data[0].length && update.data[1].length)
+      this.width = (update.data[1][0] / 1e1 - update.data[0][0] / 1e1 ) / 2;
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = new Date().getTime();
     this.removeOldPoints(Highcharts.charts[this.fvChart], time);
-    if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[5].addPoint([time, this.ewmaQuote], false);
-    if (this.ewmaShort) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaShort], false);
-    if (this.ewmaLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaLong], false);
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 3 : 1].addPoint([time, t.price.toFixed((<any>Highcharts).customProductFixed)], false);
-    (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint({
+    if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
+    if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
+    if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
+    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price.toFixed((<any>Highcharts).customProductFixed)], false);
+    (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint({
       x: time,
       title: (t.type == 'Ping' ? '_' : '¯')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
       useHTML:true,
@@ -399,7 +423,10 @@ export class StatsComponent implements OnInit {
         + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>'
         + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + t.value.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
     }, this.showStats && !this.fairValue);
-    if (this.fairValue) Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+      if (this.fairValue) {
+        Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+        if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue+this.width, this.fairValue-this.width], this.showStats, false, false);
+    }
   }
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
