@@ -9,9 +9,10 @@ import Interfaces = require("./interfaces");
 import Messaging = require("../common/messaging");
 import _ = require("lodash");
 import Utils = require("./utils");
+import log from "./logging";
 
 class Repository<T> implements Interfaces.IRepository<T> {
-    private _log = Utils.log("tribeca:" + this._name);
+    private _log = log("tribeca:" + this._name);
 
     NewParameters = new Utils.Evt();
 

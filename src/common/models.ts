@@ -1,12 +1,12 @@
-import * as moment from "moment";
 import * as _ from "lodash";
+import * as moment from "moment"
 
 export interface ITimestamped {
-    time : moment.Moment;
+    time : Date;
 }
 
 export class Timestamped<T> implements ITimestamped {
-    constructor(public data: T, public time: moment.Moment) {}
+    constructor(public data: T, public time: Date) {}
 
     public toString() {
         return "time=" + toUtcFormattedTime(this.time) + ";data=" + this.data;
@@ -25,7 +25,7 @@ export class MarketSide {
 export class GatewayMarketTrade implements ITimestamped {
     constructor(public price: number,
                 public size: number,
-                public time: moment.Moment,
+                public time: Date,
                 public onStartup: boolean,
                 public make_side: Side) { }
 }
@@ -39,7 +39,7 @@ export function marketSideEquals(t: MarketSide, other: MarketSide, tol?: number)
 export class Market implements ITimestamped {
     constructor(public bids: MarketSide[],
                 public asks: MarketSide[],
-                public time: moment.Moment) { }
+                public time: Date) { }
 
     public toString() {
         return "asks: [" + this.asks.join(";") + "] bids: [" + this.bids.join(";") + "]";
@@ -51,7 +51,7 @@ export class MarketTrade implements ITimestamped {
                 public pair: CurrencyPair,
                 public price: number,
                 public size: number,
-                public time: moment.Moment,
+                public time: Date,
                 public quote: TwoSidedQuote,
                 public bid: MarketSide,
                 public ask: MarketSide,
@@ -143,7 +143,7 @@ export class SubmitNewOrder {
                 public price: number,
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment,
+                public generatedTime: Date,
                 public preferPostOnly: boolean,
                 public source: OrderSource,
                 public msg?: string) {
@@ -156,13 +156,13 @@ export class CancelReplaceOrder {
                 public quantity: number,
                 public price: number,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment) {}
+                public generatedTime: Date) {}
 }
 
 export class OrderCancel {
     constructor(public origOrderId: string,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment) {}
+                public generatedTime: Date) {}
 }
 
 export class SentOrder {
@@ -180,7 +180,7 @@ export interface OrderStatusReport {
     exchangeId : string;
     orderStatus : OrderStatus;
     rejectMessage : string;
-    time : moment.Moment;
+    time : Date;
     lastQuantity : number;
     lastPrice : number;
     leavesQuantity : number;
@@ -202,7 +202,7 @@ export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export class Trade implements ITimestamped {
     constructor(public tradeId: string,
-                public time: moment.Moment,
+                public time: Date,
                 public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
@@ -232,7 +232,7 @@ export class PositionReport {
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class OrderRequestFromUI {
@@ -249,7 +249,7 @@ export interface ReplaceRequestFromUI {
 }
 
 export class FairValue implements ITimestamped {
-    constructor(public price: number, public time: moment.Moment) {}
+    constructor(public price: number, public time: Date) {}
 }
 
 export enum QuoteAction { New, Cancel }
@@ -266,13 +266,13 @@ export class Quote {
 }
 
 export class TwoSidedQuote implements ITimestamped {
-    constructor(public bid: Quote, public ask: Quote, public time: moment.Moment) {}
+    constructor(public bid: Quote, public ask: Quote, public time: Date) {}
 }
 
 export enum QuoteStatus { Live, Held }
 
 export class SerializedQuotesActive {
-    constructor(public active: boolean, public time: moment.Moment) {}
+    constructor(public active: boolean, public time: Date) {}
 }
 
 export class TwoSidedQuoteStatus {
@@ -335,11 +335,11 @@ export class ProductAdvertisement {
 }
 
 export class Message implements ITimestamped {
-    constructor(public text: string, public time: moment.Moment) {}
+    constructor(public text: string, public time: Date) {}
 }
 
 export class RegularFairValue {
-    constructor(public time: moment.Moment, public value: number) {}
+    constructor(public time: Date, public value: number) {}
 }
 
 export class TradeSafety {
@@ -348,11 +348,11 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class TargetBasePositionValue {
-    constructor(public data: number, public time: moment.Moment) {}
+    constructor(public data: number, public time: Date) {}
 }
 
 export class CancelAllOrdersRequest {

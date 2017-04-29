@@ -10,9 +10,10 @@ import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
+import log from "./logging";
 
 export class ActiveRepository implements Interfaces.IRepository<boolean> {
-    private _log = Utils.log("tribeca:active");
+    private _log = log("tribeca:active");
 
     NewParameters = new Utils.Evt();
 

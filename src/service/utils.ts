@@ -2,20 +2,19 @@ import Models = require("../common/models");
 import moment = require('moment');
 import events = require("events");
 import util = require("util");
-import bunyan = require("bunyan");
 import _ = require("lodash");
 import * as request from "request";
 import * as Q from "q";
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
-export var date = moment.utc;
+export const date = () => new Date();
 
-export function fastDiff(x: moment.Moment, y: moment.Moment) : number {
-    return x.valueOf() - y.valueOf();
+export function fastDiff(x: Date, y: Date) : number {
+    return x.getTime() - y.getTime();
 }
 
-export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): moment.Moment {
+export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvider): Date {
     if (x === null)
         return timeProvider.utcNow();
 
@@ -23,25 +22,6 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
         return x.time;
 
     return timeProvider.utcNow();
-}
-
-export function log(name: string) : bunyan {
-    // don't log while testing
-    const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
-    if (isRunFromMocha) {
-        return bunyan.createLogger({name: name, stream: process.stdout, level: bunyan.FATAL});
-    }
-
-    return bunyan.createLogger({
-        name: name,
-        streams: [{
-            level: 'info',
-            stream: process.stdout            // log INFO and above to stdout
-        }, {
-            level: 'info',
-            path: './tribeca.log'  // log ERROR and above to a file
-        }
-    ]});
 }
 
 // typesafe wrapper around EventEmitter
@@ -84,7 +64,7 @@ export function roundDown(x: number, minTick: number) {
 }
 
 export interface ITimeProvider {
-    utcNow() : moment.Moment;
+    utcNow() : Date;
     setTimeout(action: () => void, time: moment.Duration);
     setImmediate(action: () => void);
     setInterval(action: () => void, time: moment.Duration);
@@ -97,7 +77,7 @@ export interface IBacktestingTimeProvider extends ITimeProvider {
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
     
-    utcNow = () => moment.utc();
+    utcNow = () => new Date();
     
     setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
     
@@ -125,20 +105,20 @@ export class ImmediateActionScheduler implements IActionScheduler {
     };
 }
 
-export function getJSON<T>(url: string, qs?: any) : Q.Promise<T> {
-    const d = Q.defer<T>();
-    request({url: url, qs: qs}, (err, resp, body) => {
-        if (err) {
-            d.reject(err);
-        }
-        else {
-            try {
-                d.resolve(JSON.parse(body));
+export function getJSON<T>(url: string, qs?: any) : Promise<T> {
+    return new Promise((resolve, reject) => {
+        request({url: url, qs: qs}, (err: Error, resp, body) => {
+            if (err) {
+                reject(err);
             }
-            catch (e) {
-                d.reject(e);
+            else {
+                try {
+                    resolve(JSON.parse(body));
+                }
+                catch (e) {
+                    reject(e);
+                }
             }
-        }
+        });
     });
-    return d.promise;
  }

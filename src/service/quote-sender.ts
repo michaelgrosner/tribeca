@@ -28,9 +28,10 @@ import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingEngine = require("./quoting-engine");
+import log from "./logging";
 
 export class QuoteSender {
-    private _log = Utils.log("quotesender");
+    private _log = log("quotesender");
 
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
@@ -74,7 +75,7 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t: moment.Moment): void => {
+    private sendQuote = (t: Date): void => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;

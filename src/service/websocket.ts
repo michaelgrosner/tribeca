@@ -3,6 +3,7 @@ import * as Util from "./utils";
 import * as Models from "../common/models";
 import * as bunyan from "bunyan";
 import * as moment from "moment";
+import log from "./logging";
 
 export class WebSocket {
     private readonly _log : bunyan;
@@ -13,7 +14,7 @@ export class WebSocket {
                 private _onData: (msgs : Models.Timestamped<string>) => void = null,
                 private _onConnected: () => void = null, 
                 private _onDisconnected: () => void = null) {
-        this._log = Util.log(`ws:${this._url}`);
+        this._log = log(`ws:${this._url}`);
         this._onData = this._onData || (_ => {});
         this._onConnected = this._onConnected || (() => {});
         this._onDisconnected = this._onDisconnected || (() => {});
@@ -48,7 +49,7 @@ export class WebSocket {
             })
             .on("message", data => {
                 try {
-                    const t = moment.utc();
+                    const t = new Date();
                     this._onData(new Models.Timestamped<string>(data, t));
                 } catch (e) {
                     this._log.error("error handling websocket message!", {data: data, error: e});
