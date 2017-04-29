@@ -69,7 +69,7 @@ export class FairValueEngine {
         return Utils.roundNearest(unrounded, this._details.minTickIncrement);
     }
 
-    private recalcFairValue = (t: moment.Moment) => {
+    private recalcFairValue = (t: Date) => {
         var mkt = this._filtration.latestFilteredMarket;
 
         if (mkt == null) {

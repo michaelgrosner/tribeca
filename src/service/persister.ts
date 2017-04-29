@@ -24,31 +24,9 @@ export function loadDb(config: Config.IConfigProvider) {
 }
 
 export interface Persistable {
-    time?: moment.Moment|Date;
+    time?: Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
-}
-
-export class LoaderSaver {
-    public loader = (x: Persistable) => {
-        if (typeof x.time !== "undefined")
-            x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-    };
-
-    public saver = (x: Persistable) => {
-        if (typeof x.time !== "undefined")
-            x.time = (moment.isMoment(x.time) ? <moment.Moment>x.time : moment(x.time)).toDate();
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-    };
-
-    constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
 }
 
 export interface IPersist<T> {
@@ -80,14 +58,12 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
             return this._defaultParameter;
         
         var v = <T>_.defaults(docs[0], this._defaultParameter);
-        this._loader(v); 
-        return v;
+        return this.converter(v);
     };
 
     public persist = (report: T) => {
-        this._saver(report);
         this.collection.then(coll => {
-            coll.insertOne(report, err => {
+            coll.insertOne(this.converter(report), err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
                 else
@@ -96,15 +72,21 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         }).done();
     };
 
+    private converter = (x: T) : T => {
+        if (typeof x.exchange === "undefined")
+            x.exchange = this._exchange;
+        if (typeof x.pair === "undefined")
+            x.pair = this._pair;
+        return x;
+    };
+
     collection: Q.Promise<mongodb.Collection>;
     constructor(
         db: Q.Promise<mongodb.Db>,
         private _defaultParameter: T,
         private _dbName: string,
         private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair,
-        private _loader: (p: Persistable) => void,
-        private _saver: (p: Persistable) => void) {
+        private _pair: Models.CurrencyPair) {
         this.collection = db.then(db => db.collection(this._dbName));
     }
 }
@@ -128,8 +110,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 query = query.skip(Math.max(count - limit, 0));
         }
 
-        const loaded = await query.toArray();
-        _.forEach(loaded, this._loader);
+        const loaded = _.map(await query.toArray(), this.converter);
 
         this._log.info({
             selector: selector,
@@ -146,21 +127,28 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         this._persistQueue.push(report);
     };
 
+    private converter = (x: T) : T => {
+        if (typeof x.time === "undefined")
+            x.time = new Date();
+        if (typeof x.exchange === "undefined")
+            x.exchange = this._exchange;
+        if (typeof x.pair === "undefined")
+            x.pair = this._pair;
+        return x;
+    };
+
     constructor(
         time: Utils.ITimeProvider,
         private collection: mongodb.Collection,
         private _dbName: string,
         private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair,
-        private _loader: (p: Persistable) => void,
-        private _saver: (p: Persistable) => void) {
+        private _pair: Models.CurrencyPair) {
             this._log = Utils.log("persister:"+_dbName);
 
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;
                 
-                this._persistQueue.forEach(this._saver);
-                collection.insertMany(this._persistQueue, (err, r) => {
+                collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
                     if (r.result.ok) {
                         this._persistQueue.length = 0;
                     }

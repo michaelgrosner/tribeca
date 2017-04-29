@@ -77,7 +77,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         _.forEach(trades.data, trade => {
             var px = parseFloat(trade.price);
             var sz = parseFloat(trade.amount);
-            var time = moment.unix(trade.timestamp);
+            var time = moment.unix(trade.timestamp).toDate();
             var side = decodeSide(trade.type);
             var mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
             this.MarketTrade.trigger(mt);
@@ -245,7 +245,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: order.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), order.time)
+            computationalLatency: Utils.fastDiff(new Date(), order.time)
         });
     };
 
@@ -275,7 +275,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this.OrderUpdate.trigger({
             orderId: cancel.orderId,
-            computationalLatency: Utils.fastDiff(Utils.date(), cancel.time)
+            computationalLatency: Utils.fastDiff(new Date(), cancel.time)
         });
     };
 
@@ -423,7 +423,7 @@ class BitfinexHttp {
             }
             else {
                 try {
-                    var t = Utils.date();
+                    var t = new Date();
                     var data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }

@@ -74,7 +74,7 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t: moment.Moment): void => {
+    private sendQuote = (t: Date): void => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;

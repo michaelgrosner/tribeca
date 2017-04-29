@@ -161,7 +161,7 @@ export class QuotingEngine {
         return unrounded;
     }
 
-    private recalcQuote = (t: moment.Moment) => {
+    private recalcQuote = (t: Date) => {
         const fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
@@ -210,7 +210,7 @@ export class QuotingEngine {
         if (Models.Side.Ask === side && previousQ.price > newQ.price) quoteWasWidened = false;
         
         // prevent flickering
-        if (!quoteWasWidened && Math.abs(Utils.fastDiff(moment.utc(), prevTwoSided.time)) < 300) {
+        if (!quoteWasWidened && Math.abs(Utils.fastDiff(new Date(), prevTwoSided.time)) < 300) {
             return previousQ;
         }
         

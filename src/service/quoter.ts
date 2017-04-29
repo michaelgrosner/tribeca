@@ -93,7 +93,7 @@ export class ExchangeQuoter {
         return this.start(q);
     };
 
-    public cancelQuote = (t: moment.Moment): Models.QuoteSent => {
+    public cancelQuote = (t: Date): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
@@ -123,7 +123,7 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stop = (t: moment.Moment): Models.QuoteSent => {
+    private stop = (t: Date): Models.QuoteSent => {
         if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDelete;
         }
