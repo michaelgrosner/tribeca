@@ -2,7 +2,6 @@ import Models = require("../common/models");
 import moment = require('moment');
 import events = require("events");
 import util = require("util");
-import bunyan = require("bunyan");
 import _ = require("lodash");
 import * as request from "request";
 import * as Q from "q";
@@ -23,25 +22,6 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
         return x.time;
 
     return timeProvider.utcNow();
-}
-
-export function log(name: string) : bunyan {
-    // don't log while testing
-    const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
-    if (isRunFromMocha) {
-        return bunyan.createLogger({name: name, stream: process.stdout, level: bunyan.FATAL});
-    }
-
-    return bunyan.createLogger({
-        name: name,
-        streams: [{
-            level: 'info',
-            stream: process.stdout            // log INFO and above to stdout
-        }, {
-            level: 'info',
-            path: './tribeca.log'  // log ERROR and above to a file
-        }
-    ]});
 }
 
 // typesafe wrapper around EventEmitter

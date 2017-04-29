@@ -16,6 +16,7 @@ import moment = require("moment");
 import WebSocket = require('ws');
 import Q = require("q");
 import _ = require('lodash');
+import log from "../logging";
 
 var uuid = require('node-uuid');
 import CoinbaseExchange = require("./coinbase-api");
@@ -461,7 +462,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 
-    private _log = Utils.log("tribeca:gateway:CoinbaseMD");
+    private _log = log("tribeca:gateway:CoinbaseMD");
     constructor(private _orderBook: CoinbaseOrderBook, private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("statechange", m => this.onStateChange(m));
         this._client.on("received", m => this.onReceived(m.data, m.time));
@@ -736,7 +737,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private _fixedPrecision;
-    private _log = Utils.log("tribeca:gateway:CoinbaseOE");
+    private _log = log("tribeca:gateway:CoinbaseOE");
     constructor(
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
@@ -757,7 +758,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 }
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    private _log = Utils.log("tribeca:gateway:CoinbasePG");
+    private _log = log("tribeca:gateway:CoinbasePG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {

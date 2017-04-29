@@ -31,9 +31,10 @@ import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
+import log from "./logging";
 
 export class QuotingEngine {
-    private _log = Utils.log("quotingengine");
+    private _log = log("quotingengine");
 
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
