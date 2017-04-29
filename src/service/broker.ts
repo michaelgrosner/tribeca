@@ -189,7 +189,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orig === "undefined") {
-                this._log.error("cannot find orderId from", osr);
+                this._log.error({
+                    update: osr,
+                    existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
+                    existingIds: Array.from(this._orderCache.allOrders.keys())
+                }, "no existing order for non-New update!");
                 return;
             }
         }
@@ -238,7 +242,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             source: getOrFallback(osr.source, orig.source)
         };
 
-        this.updateOrderStatusInMemory(o);
+        const added = this.updateOrderStatusInMemory(o);
+        if (this._log.debug())
+            this._log.debug(o, (added ? "added" : "removed") + " order status");
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -279,19 +285,36 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
+    private _pendingRemovals = new Array<Models.OrderStatusReport>();
+    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) : boolean => {
         if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
             this.addOrderStatusInMemory(osr);
+            return true;
         }
         else  {
-            this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-            this._orderCache.allOrders.delete(osr.orderId);
+            this._pendingRemovals.push(osr);
+            return false;
         }
     };
 
     private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
         this._orderCache.allOrders.set(osr.orderId, osr);
+    };
+
+    private clearPendingRemovals = () => {
+        const now = new Date().getTime();
+        const kept = new Array<Models.OrderStatusReport>();
+        for (let osr of this._pendingRemovals) {
+            if (now - osr.time.getTime() > 5000) {
+                this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+                this._orderCache.allOrders.delete(osr.orderId);
+            }
+            else {
+                kept.push(osr);
+            }
+        }
+        this._pendingRemovals = kept;
     };
 
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
@@ -364,6 +387,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._oeGateway.ConnectChanged.on(s => {
             _messages.publish("OE gw " + Models.ConnectivityStatus[s]);
         });
+
+        this._timeProvider.setInterval(this.clearPendingRemovals, moment.duration(5, "seconds"));
     }
 }
 

@@ -6,6 +6,7 @@ import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import FairValue = require("./fair-value");
 import moment = require("moment");
+import log from "./logging";
 
 export interface IComputeStatistics {
     latest: number;
@@ -44,7 +45,7 @@ export class EmptyEWMACalculator implements Interfaces.IEwmaCalculator {
 }
 
 export class ObservableEWMACalculator implements Interfaces.IEwmaCalculator {
-    private _log = Utils.log("ewma");
+    private _log = log("ewma");
 
     constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
         this._alpha = _alpha || .095;
