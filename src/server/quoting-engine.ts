@@ -83,7 +83,10 @@ export class QuotingEngine {
           this.recalcQuote();
           _targetPosition.quoteEWMA = _ewma.latest;
         });
-        _targetPosition.NewTargetPosition.on(this.recalcQuote);
+        _targetPosition.NewTargetPosition.on(() => {
+          this._safeties.latestTargetPosition = this._targetPosition.latestTargetPosition;
+          this.recalcQuote();
+        });
         _safeties.NewValue.on(this.recalcQuote);
 
         _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
@@ -92,7 +95,7 @@ export class QuotingEngine {
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
-        const input = new QuoteInput(filteredMkt, fv, params, this._positionBroker, minTick);
+        const input = new QuoteInput(filteredMkt, fv, params, this._positionBroker, this._targetPosition.latestTargetPosition, minTick);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
 
         if (unrounded === null)
@@ -123,34 +126,39 @@ export class QuotingEngine {
         let superTradesMultipliers = (params.superTrades &&
           params.widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
-          (params.superTrades == Models.SOP.x2trds || params.superTrades == Models.SOP.x2trdsSz
-            ? 2 : (params.superTrades == Models.SOP.x3trds || params.superTrades == Models.SOP.x3trdsSz
+          (params.superTrades == Models.SOP.x2trds || params.superTrades == Models.SOP.x2trdsSize
+            ? 2 : (params.superTrades == Models.SOP.x3trds || params.superTrades == Models.SOP.x3trdsSize
               ? 3 : 1)),
-          (params.superTrades == Models.SOP.x2Sz || params.superTrades == Models.SOP.x2trdsSz
-            ? 2 : (params.superTrades == Models.SOP.x3Sz || params.superTrades == Models.SOP.x3trdsSz
+          (params.superTrades == Models.SOP.x2Size || params.superTrades == Models.SOP.x2trdsSize
+            ? 2 : (params.superTrades == Models.SOP.x3Size || params.superTrades == Models.SOP.x3trdsSize
               ? 3 : 1))
         ] : [1, 1];
 
-        let buySize: number = (params.percentageValues)
-          ? params.buySizePercentage * latestPosition.value / 100
-          : params.buySize;
-        let sellSize: number = (params.percentageValues)
-          ? params.sellSizePercentage * latestPosition.value / 100
-          : params.sellSize;
-        if (superTradesMultipliers[1] > 1) {
-          unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv.price) / 2);
-          unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
-        }
-
+        let buySize: number = params.percentageValues
+             ? params.buySizePercentage * latestPosition.value / 100
+             : params.buySize;
+        if (params.aggressivePositionRebalancing != Models.APR.Off && params.buySizeMax)
+          buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
+        let sellSize: number = params.percentageValues
+            ? params.sellSizePercentage * latestPosition.value / 100
+            : params.sellSize
+        if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
+          sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
         let pDiv: number  = (params.percentageValues)
           ? params.positionDivergencePercentage * latestPosition.value / 100
           : params.positionDivergence;
+
+        if (superTradesMultipliers[1] > 1) {
+          if (!params.buySizeMax) unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv.price) / 2);
+          if (!params.sellSizeMax) unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
+        }
+
         if (totalBasePosition < targetBasePosition - pDiv) {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Bid');
-              unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
+              if (!params.buySizeMax) unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
             }
         }
         if (totalBasePosition > targetBasePosition + pDiv) {
@@ -158,7 +166,7 @@ export class QuotingEngine {
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR.push('Sell');
-              unrounded.askSz = Math.min(params.aprMultiplier*sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
+              if (!params.sellSizeMax) unrounded.askSz = Math.min(params.aprMultiplier*sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
             }
         }
 

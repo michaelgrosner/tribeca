@@ -95,8 +95,8 @@ class DisplayOrder {
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
-                                            <th>bidSz<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
-                                            <th>askSz<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">max</span></th>
+                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">max</span></th>
                                             <th>fv</th>
                                         </tr>
                                     </thead>
@@ -160,6 +160,10 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
                                             </td>
+                                            <td *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.buySizeMax">
+                                            </td>
                                             <td *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number"
@@ -171,6 +175,10 @@ class DisplayOrder {
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
+                                            </td>
+                                            <td *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.sellSizeMax">
                                             </td>
                                             <td style="width:88px;">
                                                 <select class="form-control input-sm"

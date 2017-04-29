@@ -96,6 +96,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Sell',
       type: 'spline',
+      zIndex:1,
       colorIndex: 5,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
@@ -103,7 +104,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Sell',
       type: 'flags',
-      zIndex:1,
+      zIndex:2,
       colorIndex: 5,
       data: [],
       onSeries: 'sellseries',
@@ -112,6 +113,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Buy',
       type: 'spline',
+      zIndex:1,
       colorIndex: 0,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: [],
@@ -119,7 +121,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Buy',
       type: 'flags',
-      zIndex:1,
+      zIndex:2,
       colorIndex: 0,
       data: [],
       onSeries: 'buyseries',
@@ -283,11 +285,8 @@ export class StatsComponent implements OnInit {
 
   private showStats: boolean;
   @Input() set setShowStats(showStats: boolean) {
-    if (!this.showStats && showStats) {
-      Highcharts.charts[this.fvChart].redraw();
-      Highcharts.charts[this.baseChart].redraw();
-      Highcharts.charts[this.quoteChart].redraw();
-    }
+    if (!this.showStats && showStats)
+      Highcharts.charts.forEach(chart => { chart.redraw(); } );
     this.showStats = showStats;
   }
 
@@ -374,10 +373,10 @@ export class StatsComponent implements OnInit {
 
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
-    if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
-    if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
-    if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
     if (this.fairValue) {
+      if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
+      if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
+      if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
       if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
@@ -417,7 +416,7 @@ export class StatsComponent implements OnInit {
 
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = new Date().getTime();
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price.toFixed((<any>Highcharts).customProductFixed)], false);
+    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
     (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint({
       x: time,
       title: (t.type == 'Ping' ? '_' : '¯')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),

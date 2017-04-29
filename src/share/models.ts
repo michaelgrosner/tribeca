@@ -338,15 +338,17 @@ export enum AutoPositionMode { Off, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
-export enum SOP { Off, x2trds, x3trds, x2Sz, x3Sz, x2trdsSz, x3trdsSz }
+export enum SOP { Off, x2trds, x3trds, x2Size, x3Size, x2trdsSize, x3trdsSize }
 
 export interface QuotingParameters {
     widthPing?: number;
     widthPong?: number;
     buySize?: number;
     buySizePercentage?: number;
+    buySizeMax?: boolean;
     sellSize?: number;
     sellSizePercentage?: number;
+    sellSizeMax?: boolean;
     pingAt?: PingAt;
     pongAt?: PongAt;
     mode?: QuotingMode;

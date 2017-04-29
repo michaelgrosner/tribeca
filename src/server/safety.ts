@@ -32,6 +32,7 @@ export class SafetyCalculator {
 
     private _buys: ITrade[] = [];
     private _sells: ITrade[] = [];
+    public latestTargetPosition: Models.TargetBasePositionValue = null;
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
@@ -70,14 +71,21 @@ export class SafetyCalculator {
     }
 
     private computeQtyLimit = () => {
-        var settings = this._qlParams.latest;
-        var latestPosition = this._positionBroker.latestReport;
-        let buySize: number = (settings.percentageValues && latestPosition != null)
-          ? settings.buySizePercentage * latestPosition.value / 100
-          : settings.buySize;
+        const settings = this._qlParams.latest;
+        const latestPosition = this._positionBroker.latestReport;
+        let buySize: number  = (settings.percentageValues && latestPosition != null)
+            ? settings.buySizePercentage * latestPosition.value / 100
+            : settings.buySize;
         let sellSize: number = (settings.percentageValues && latestPosition != null)
-          ? settings.sellSizePercentage * latestPosition.value / 100
-          : settings.sellSize;
+              ? settings.sellSizePercentage * latestPosition.value / 100
+              : settings.sellSize;
+        const tbp = this.latestTargetPosition;
+        if (tbp !== null) {
+          const targetBasePosition = tbp.data;
+          const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+          if (settings.aggressivePositionRebalancing != Models.APR.Off && settings.buySizeMax) buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
+          if (settings.aggressivePositionRebalancing != Models.APR.Off && settings.sellSizeMax) sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
+        }
         var buyPing = 0;
         var sellPong = 0;
         var buyPq = 0;

@@ -67,7 +67,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 In the web UI, there are two rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
 
-* `%` - If enabled, the values of `bidSz`, `askSz` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
+* `%` - If enabled, the values of `bidSize`, `askSize` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
 
 * `mode` - Sets the quoting mode
 
@@ -117,19 +117,22 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `widthPong` from the `fair value`.
 
-* `fv` - Sets the fair value calculation mode
-
-  * `BBO` - `FV = ([best bid price] + [best ask price])/2.0`
-
-  * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
 * `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
-* `bidSz` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` will always be respected.
+* `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size`.
 
-* `askSz` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size` will always be respected.
+* `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size`.
+
+* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible size based on the current target based position (just as having enabled `apr` on `Size` but before your position diverges more than `pDiv`).
+
+* `fv` - Sets the fair value calculation mode
+
+  * `BBO` - `FV = ([best bid price] + [best ask price])/2.0`
+
+  * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
 * `apMode`
 

@@ -11,6 +11,7 @@ export class QuoteInput {
         public fv: Models.FairValue,
         public params: Models.QuotingParameters,
         public position: Interfaces.IPositionBroker,
+        public latestTargetPosition: Models.TargetBasePositionValue,
         public minTickIncrement: number,
         public minSizeIncrement: number = 0.01) {}
 }
