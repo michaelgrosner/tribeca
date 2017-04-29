@@ -284,15 +284,16 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
     };
 
     public loadAll = (limit?: number): Promise<T[]> => {
-      if (this.initialData) {
-        if (limit) {
-          return new Promise((resolve, reject) => { resolve(this.initialData.slice(limit * -1)); });
-        }
-        else {
-          return new Promise((resolve, reject) => { resolve(this.initialData); });
-        }
-      }
-      return new Promise((resolve, reject) => { resolve([]); });
+      return null;
+      // if (this.initialData) {
+        // if (limit) {
+          // return new Promise((resolve, reject) => { resolve(this.initialData.slice(limit * -1)); });
+        // }
+        // else {
+          // return new Promise((resolve, reject) => { resolve(this.initialData); });
+        // }
+      // }
+      // return new Promise((resolve, reject) => { resolve([]); });
     };
 
     public persist = (report: T) => { };
@@ -300,12 +301,14 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
     public repersist = (report: T, trade: Models.Trade) => { };
 
     public loadDBSize = (): Promise<T> => {
-      return new Promise((resolve, reject) => { resolve(null); });
+      return null;
+      // return new Promise((resolve, reject) => { resolve(null); });
     };
 
     public loadLatest = (): Promise<T> => {
-        if (this.initialData)
-            return new Promise((resolve, reject) => { resolve(_.last(this.initialData)); });
+      return null;
+      // if (this.initialData)
+          // return new Promise((resolve, reject) => { resolve(_.last(this.initialData)); });
     };
 
     constructor(private initialData?: T[]) {
