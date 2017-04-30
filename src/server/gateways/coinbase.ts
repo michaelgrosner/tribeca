@@ -530,7 +530,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     orderStatus: Models.OrderStatus.Cancelled,
                     time: t,
                     leavesQuantity: 0
-                    // ,done: true
+                    ,done: true
                 };
             }
 
@@ -576,7 +576,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Rejected,
                     time: t
-                    // ,done: true
+                    ,done: true
                 };
             }
             else {

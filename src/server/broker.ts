@@ -51,14 +51,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         const orderUpdate = (o : Models.OrderStatusReport) => {
             const p = promiseMap.get(o.orderId);
-            if (p && Models.orderIsDone(o.orderStatus))
+            if (p && (o.orderStatus == Models.OrderStatus.Complete || o.orderStatus == Models.OrderStatus.Cancelled || o.orderStatus == Models.OrderStatus.Rejected))
                 p.resolve(null);
         };
 
         this.OrderUpdate.on(orderUpdate);
 
         for (let e of this._orderCache.allOrders.values()) {
-            if (e.pendingCancel || Models.orderIsDone(e.orderStatus))
+            if (e.pendingCancel || e.orderStatus == Models.OrderStatus.Complete || e.orderStatus == Models.OrderStatus.Cancelled || e.orderStatus == Models.OrderStatus.Rejected)
                 continue;
 
             this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
@@ -194,7 +194,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
               orderId: cancel.origOrderId,
               orderStatus: Models.OrderStatus.Cancelled,
               leavesQuantity: 0
-              // ,done: true
+              ,done: true
           }));
           return;
         }
@@ -336,7 +336,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           cancelRejected: osr.cancelRejected,
           preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
           source: getOrFallback(osr.source, orig.source)
-          // ,done: osr.done
+          ,done: osr.done
         };
 
         const added = this.updateOrderStatusInMemory(o);
@@ -356,8 +356,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         this.OrderUpdate.trigger(o);
-        if (this.shouldPublish(o))
-          this._orderStatusPublisher.publish(o);
+        this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
@@ -404,55 +403,22 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private _pendingRemovals = new Array<Models.OrderStatusReport>();
-
     private updateOrderStatusInMemory = (osr: Models.OrderStatusReport): boolean => {
-       if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
-          this.addOrderStatusInMemory(osr);
-          return true;
-        }
-        else  {
-          this._pendingRemovals.push(osr);
+        this.addOrderStatusInMemory(osr);
+
+        if (osr.done===true) {
+          this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          this._orderCache.allOrders.delete(osr.orderId);
+          if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
+            delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
           return false;
         }
-        // this.addOrderStatusInMemory(osr);
-
-        // if (osr.done===true) {
-          // this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-          // this._orderCache.allOrders.delete(osr.orderId);
-          // if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
-            // delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
-        // }
+        return true;
     };
 
     private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
         this._orderCache.allOrders.set(osr.orderId, osr);
-    };
-
-    private clearPendingRemovals = () => {
-        const now = new Date().getTime();
-        const kept = new Array<Models.OrderStatusReport>();
-        for (let osr of this._pendingRemovals) {
-            if (now - osr.time.getTime() > 5000) {
-                this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-                this._orderCache.allOrders.delete(osr.orderId);
-            }
-            else {
-                kept.push(osr);
-            }
-        }
-        this._pendingRemovals = kept;
-    };
-
-    private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
-        if (o.source === null) throw Error(JSON.stringify(o));
-
-        return o.source !== Models.OrderSource.Unknown;
-    };
-
-    private orderStatusSnapshot = () : Models.OrderStatusReport[] => {
-        return Array.from(this._orderCache.allOrders.values()).filter(this.shouldPublish);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -473,7 +439,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
         _.each(initTrades, t => this._trades.push(t));
-        _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
+        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
@@ -501,7 +467,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.updateOrderState);
 
-        this._timeProvider.setInterval(this.clearPendingRemovals, moment.duration(5, "seconds"));
         // this._oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);
         // });
