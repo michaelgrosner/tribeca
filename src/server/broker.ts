@@ -161,7 +161,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
             exchange: this._baseBroker.exchange(),
-            rejectMessage: order.msg
+            rejectMessage: order.msg,
+            source: order.source
         };
 
         this._oeGateway.sendOrder(this.updateOrderState(rpt));
@@ -333,7 +334,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           pendingCancel: osr.pendingCancel,
           pendingReplace: osr.pendingReplace,
           cancelRejected: osr.cancelRejected,
-          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
+          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
+          source: getOrFallback(osr.source, orig.source)
           // ,done: osr.done
         };
 
@@ -354,7 +356,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         }
 
         this.OrderUpdate.trigger(o);
-        this._orderStatusPublisher.publish(o);
+        if (this.shouldPublish(o))
+          this._orderStatusPublisher.publish(o);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
@@ -404,7 +407,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private _pendingRemovals = new Array<Models.OrderStatusReport>();
 
     private updateOrderStatusInMemory = (osr: Models.OrderStatusReport): boolean => {
-       if (!Models.orderIsDone(osr.orderStatus)) {
+       if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
           this.addOrderStatusInMemory(osr);
           return true;
         }
@@ -442,6 +445,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this._pendingRemovals = kept;
     };
 
+    private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
+        if (o.source === null) throw Error(JSON.stringify(o));
+
+        return o.source !== Models.OrderSource.Unknown;
+    };
+
+    private orderStatusSnapshot = () : Models.OrderStatusReport[] => {
+        return Array.from(this._orderCache.allOrders.values()).filter(this.shouldPublish);
+    };
+
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _baseBroker : Interfaces.IBroker,
@@ -460,13 +473,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           this._oeGateway.cancelAllOpenOrders();
         _.each(initTrades, t => this._trades.push(t));
-        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter((o: Models.OrderStatusReport) => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
         _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
                 const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false);
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
             }
             catch (e) {

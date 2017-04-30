@@ -164,6 +164,12 @@ export interface ProductState {
     fixed: number
 }
 
+export enum OrderSource {
+    Unknown = 0,
+    Quote = 1,
+    OrderTicket = 2
+}
+
 export class SubmitNewOrder {
     constructor(public side: Side,
                 public quantity: number,
@@ -173,6 +179,7 @@ export class SubmitNewOrder {
                 public exchange: Exchange,
                 public generatedTime: Date,
                 public preferPostOnly: boolean,
+                public source: OrderSource,
                 public msg?: string) {
                     this.msg = msg || null;
                 }
@@ -218,6 +225,7 @@ export interface OrderStatusReport {
     computationalLatency : number;
     version : number;
     preferPostOnly: boolean;
+    source: OrderSource;
     partiallyFilled : boolean;
     pendingCancel : boolean;
     pendingReplace : boolean;
