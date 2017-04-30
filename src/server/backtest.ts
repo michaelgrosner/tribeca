@@ -27,7 +27,7 @@ class Timed {
 export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     constructor(private _internalTime : moment.Moment, private _endTime : moment.Moment) { }
 
-    utcNow = () => this._internalTime;
+    utcNow = () => this._internalTime.toDate();
 
     private _immediates = new Array<() => void>();
     setImmediate = (action: () => void) => this._immediates.push(action);
@@ -44,16 +44,16 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
     private setAction  = (action: () => void, time: moment.Duration, type : TimedType) => {
         var dueTime = this._internalTime.clone().add(time);
 
-        if (dueTime.valueOf() - this.utcNow().valueOf() < 0) {
+        if (dueTime.toDate().getTime() - this.utcNow().getTime() < 0) {
             return;
         }
 
         this._timeouts.push(new Timed(action, dueTime, type, time));
-        this._timeouts.sort((a, b) => a.time.valueOf() - b.time.valueOf());
+        this._timeouts.sort((a, b) => a.time.toDate().getTime() - b.time.toDate().getTime());
     };
 
     scrollTimeTo = (time : moment.Moment) => {
-        if (time.valueOf() - this.utcNow().valueOf() < 0) {
+        if (time.toDate().getTime() - this.utcNow().getTime() < 0) {
             throw new Error("Cannot reverse time!");
         }
 
@@ -61,7 +61,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
             this._immediates.pop()();
         }
 
-        while (this._timeouts.length > 0 && _.first(this._timeouts).time.valueOf() - time.valueOf() < 0) {
+        while (this._timeouts.length > 0 && _.first(this._timeouts).time.toDate().getTime() - time.toDate().getTime() < 0) {
             var evt : Timed = this._timeouts.shift();
             this._internalTime = evt.time;
             evt.action();
@@ -228,7 +228,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         this.timeProvider.setInterval(() => this.recomputePosition(), moment.duration(15, "seconds"));
 
         this._inputData.forEach(i => {
-            this.timeProvider.scrollTimeTo(i.time);
+            this.timeProvider.scrollTimeTo(moment(i.time));
 
             if (typeof i["make_side"] !== "undefined") {
                 this.onMarketTrade(<Models.MarketTrade>i);

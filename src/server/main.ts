@@ -9,7 +9,6 @@ import http = require("http");
 import https = require('https');
 import socket_io = require('socket.io');
 import marked = require('marked');
-import Promises = require('promise-timeout');
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
@@ -38,6 +37,8 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
+import Promises = require('./promises');
+import log from "./logging";
 
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
   widthPing:                      2,
@@ -77,31 +78,31 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
 let exitingEvent: () => Promise<number>;
 
 const performExit = () => {
-  Promises.timeout(2000, exitingEvent).then(completed => {
-    Utils.log('main').info("All exiting event handlers have fired, exiting application.");
+  Promises.timeout(2000, exitingEvent()).then(completed => {
+    log('main').info("All exiting event handlers have fired, exiting application.");
     process.exit();
   }).catch(() => {
-    Utils.log('main').warn("Did not complete clean-up tasks successfully, still shutting down.");
+    log('main').warn("Did not complete clean-up tasks successfully, still shutting down.");
     process.exit(1);
   });
 };
 
 process.on("uncaughtException", err => {
-  Utils.log("main").error(err, "Unhandled exception!");
+  log("main").error(err, "Unhandled exception!");
   performExit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
-  Utils.log("main").error(reason, "Unhandled promise rejection!", p);
+  log("main").error(reason, "Unhandled promise rejection!", p);
   performExit();
 });
 
 process.on("exit", (code) => {
-  Utils.log("main").info("Exiting with code", code);
+  log("main").info("Exiting with code", code);
 });
 
 process.on("SIGINT", () => {
-  Utils.log("main").info("Handling SIGINT");
+  log("main").info("Handling SIGINT");
   performExit();
 });
 
@@ -109,7 +110,7 @@ const backTestSimulationSetup = (
   inputData: (Models.Market | Models.MarketTrade)[],
   parameters: Backtest.BacktestParameters
 ) => {
-    const timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(inputData.slice(0,1).pop().time, inputData.slice(-1).pop().time);
+    const timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(inputData.slice(0,1).pop().time), moment(inputData.slice(-1).pop().time));
 
     const getExchange = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
       new Backtest.BacktestGateway(
@@ -165,7 +166,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     const username = config.GetString("WebClientUsername");
     const password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
-        Utils.log("main").info("Requiring authentication to web client");
+        log("main").info("Requiring authentication to web client");
         const basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
@@ -174,7 +175,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     app.use(express.static(path.join(__dirname, "..", "pub")));
 
     const webport = config.GetNumber("WebClientListenPort");
-    web_server.listen(webport, () => Utils.log("main").info('Listening to admins on *:', webport));
+    web_server.listen(webport, () => log("main").info('Listening to admins on *:', webport));
 
     app.get("/view/*", (req: express.Request, res: express.Response) => {
       try {
@@ -222,18 +223,15 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
 
     const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
 
-    const db = Persister.loadDb(config);
+    const db = Persister.loadDb(config)
 
-    const loaderSaver = new Persister.LoaderSaver(exchange, pair);
-
-    const getPersister = async <T>(collectionName: string): Promise<Persister.ILoadAll<T>> => {
-        let ls = collectionName === "mt" ? new MarketTrades.MarketTradesLoaderSaver(loaderSaver) : loaderSaver;
+    const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
         const coll = (await (await db).collection(collectionName));
-        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair, (collectionName === "trades"), ls.loader, ls.saver);
+        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair, (collectionName === "trades"));
     };
 
-    const getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
-        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair, loaderSaver.loader, loaderSaver.saver);
+    const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
+        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
 
     return {
         config: config,
@@ -259,8 +257,8 @@ interface TradingSystem {
     timeProvider: Utils.ITimeProvider;
     getExchange(orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway>;
     getReceiver<T>(topic: string): Publish.IReceive<T>;
-    getPersister<T>(collectionName: string): Promise<Persister.ILoadAll<T>>;
-    getRepository<T>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
+    getPersister<T extends Persister.Persistable>(collectionName: string): Promise<Persister.ILoadAll<T>>;
+    getRepository<T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
     getPublisher<T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T>;
 }
 
@@ -312,7 +310,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getPublisher(Models.Topics.ExchangeConnectivity)
     );
 
-    Utils.log("main").info({
+    log("main").info({
         exchange: broker.exchange,
         pair: broker.pair.toString(),
         minTick: broker.minTickIncrement,
@@ -439,7 +437,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
         volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
       }];
-      console.log("sending back results, took: ", Utils.date().diff(t, "seconds"));
+      console.log("sending back results, took: ", moment(Utils.date()).diff(t, "seconds"));
 
       request({url: ('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/result",
          method: 'POST',
@@ -457,7 +455,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
       const n = ms - interval;
       if (n > 121)
-        Utils.log("main").info("Event loop delay " + Utils.roundNearest(n, 100) + "ms");
+        log("main").info("Event loop delay " + Utils.roundNearest(n, 100) + "ms");
       start = process.hrtime();
     }, interval).unref();
 };
@@ -482,7 +480,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
 
     for (let i = 0; i < inp.length; i++) {
       const d = inp[i];
-      d.time = moment(d.time);
+      d.time = new Date(d.time);
     }
 
     return inp;

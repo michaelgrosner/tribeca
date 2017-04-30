@@ -90,7 +90,7 @@ export class ExchangeQuoter {
       return this.start(q);
     };
 
-    public cancelHigherQuotes = (price: number, time: moment.Moment) => {
+    public cancelHigherQuotes = (price: number, time: Date) => {
       this._activeQuote.filter(o =>
         this._side === Models.Side.Bid
           ? price < o.quote.price
@@ -102,7 +102,7 @@ export class ExchangeQuoter {
       });
     };
 
-    public cancelQuote = (t: moment.Moment): Models.QuoteSent => {
+    public cancelQuote = (t: Date): Models.QuoteSent => {
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
@@ -165,7 +165,7 @@ export class ExchangeQuoter {
         return Models.QuoteSent.First;
     };
 
-    private stopLowest = (t: moment.Moment): Models.QuoteSent => {
+    private stopLowest = (t: Date): Models.QuoteSent => {
         if (!this._activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
@@ -176,7 +176,7 @@ export class ExchangeQuoter {
         return Models.QuoteSent.Delete;
     };
 
-    private stop = (t: moment.Moment): Models.QuoteSent => {
+    private stop = (t: Date): Models.QuoteSent => {
         if (!this._activeQuote.length)
             return Models.QuoteSent.UnsentDelete;
 

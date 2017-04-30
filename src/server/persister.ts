@@ -6,6 +6,7 @@ import Q = require("q");
 import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
+import log from "./logging";
 
 export function loadDb(config: Config.IConfigProvider) {
     var deferred = Q.defer<mongodb.Db>();
@@ -17,36 +18,10 @@ export function loadDb(config: Config.IConfigProvider) {
 }
 
 export interface Persistable {
-    time?: moment.Moment|Date;
+    time?: Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
     loadedFromDB?: boolean;
-}
-
-export class LoaderSaver {
-    public loader = (x: Persistable, setDBFlag?: boolean) => {
-        if (typeof x.time !== "undefined")
-            x.time = moment.isMoment(x.time) ? x.time : moment(x.time);
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-        if (setDBFlag === true)
-            x.loadedFromDB = true;
-    };
-
-    public saver = (x: Persistable) => {
-        if (typeof x.time !== "undefined")
-            x.time = (moment.isMoment(x.time) ? <moment.Moment>x.time : moment(x.time)).toDate();
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-        if (typeof x.loadedFromDB !== "undefined")
-            delete x.loadedFromDB;
-    };
-
-    constructor(private _exchange: Models.Exchange, private _pair: Models.CurrencyPair) { }
 }
 
 export interface IPersist<T> {
@@ -64,7 +39,7 @@ export interface ILoadAll<T> extends IPersist<T> {
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
-    private _log = Utils.log("tribeca:exchangebroker:repopersister");
+    private _log = log("tribeca:exchangebroker:repopersister");
 
     public loadDBSize = async (): Promise<T> => {
 
@@ -103,21 +78,19 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
             return this._defaultParameter;
 
         var v = <T>_.defaults(docs[0], this._defaultParameter);
-        this._loader(v);
-        return v;
+        return this.converter(v);
     };
 
     public repersist = (report: T, trade: Models.Trade) => { };
 
     public persist = (report: T) => {
-        this._saver(report);
         this.collection.then(coll => {
             if (this._dbName != 'trades')
               coll.deleteMany({ _id: { $exists:true } }, err => {
                   if (err)
                       this._log.error(err, "Unable to deleteMany", this._dbName, report);
               });
-            coll.insertOne(report, err => {
+            coll.insertOne(this.converter(report), err => {
                 if (err)
                     this._log.error(err, "Unable to insert", this._dbName, report);
                 else
@@ -126,22 +99,31 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         }).done();
     };
 
+    private converter = (x: T, setDBFlag?: boolean) : T => {
+        if (typeof x.exchange === "undefined")
+            x.exchange = this._exchange;
+        if (typeof x.pair === "undefined")
+            x.pair = this._pair;
+        if (setDBFlag === true)
+            x.loadedFromDB = true;
+        return x;
+    };
+
     collection: Q.Promise<mongodb.Collection>;
     constructor(
         private db: Q.Promise<mongodb.Db>,
         private _defaultParameter: T,
         private _dbName: string,
         private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair,
-        private _loader: (p: Persistable) => void,
-        private _saver: (p: Persistable) => void) {
+        private _pair: Models.CurrencyPair
+    ) {
         if (this._dbName != 'dataSize')
           this.collection = db.then(db => db.collection(this._dbName));
     }
 }
 
 export class Persister<T extends Persistable> implements ILoadAll<T> {
-    private _log = Utils.log("persister");
+    private _log = log("persister");
 
     public loadAll = (limit?: number, query?: any): Promise<T[]> => {
         const selector: Object = { exchange: this._exchange, pair: this._pair };
@@ -160,8 +142,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 query = query.skip(Math.max(count - limit, 0));
         }
 
-        const loaded = await query.toArray();
-        _.forEach(loaded, p => this._loader(p, this._setDBFlag));
+        const loaded = _.map(await query.toArray(), p => this.converter(p, this._setDBFlag));
 
         return loaded;
     };
@@ -172,7 +153,6 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     public repersist = (report: T, trade: Models.Trade) => {
-        this._saver(report);
         if (trade.Kqty<0)
           this.collection.deleteOne({ tradeId: trade.tradeId }, err => {
               if (err) this._log.error(err, "Unable to deleteOne", this._dbName, report);
@@ -183,21 +163,38 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
           });
     };
 
+    private converter = (x: T, setDBFlag?: boolean) : T => {
+        if (typeof x.time === "undefined")
+            x.time = new Date();
+        if (typeof x.exchange === "undefined")
+            x.exchange = this._exchange;
+        if (typeof x.pair === "undefined")
+            x.pair = this._pair;
+        if (setDBFlag === true)
+            x.loadedFromDB = true;
+        return x;
+    };
+
+    private unConverter = (x: T) : T => {
+        if (typeof x.loadedFromDB !== "undefined")
+            delete x.loadedFromDB;
+        return x;
+    };
+
     constructor(
         time: Utils.ITimeProvider,
         private collection: mongodb.Collection,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair,
-        private _setDBFlag: boolean,
-        private _loader: (p: Persistable, setDBFlag?: boolean) => void,
-        private _saver: (p: Persistable) => void) {
-            this._log = Utils.log("persister:"+_dbName);
+        private _setDBFlag: boolean
+    ) {
+            this._log = log("persister:"+_dbName);
 
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;
 
-                this._persistQueue.forEach(this._saver);
+                this._persistQueue.forEach(this.unConverter);
                 if (this._dbName != 'trades')
                   collection.deleteMany({ time: { $exists:true } }, err => {
                       if (err) this._log.error(err, "Unable to deleteMany", this._dbName);
@@ -206,7 +203,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                     // if (err)
                         // this._log.error(err, "Unable to insert", this._dbName, report);
                 // });
-                collection.insertMany(this._persistQueue, (err, r) => {
+                collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
                     if (r.result.ok) {
                         this._persistQueue.length = 0;
                     }
