@@ -126,7 +126,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
-* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible size based on the current target based position (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
+* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible `size` based on the current "Target Base Position" (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
 
 * `fv` - Sets the fair value calculation mode
 
