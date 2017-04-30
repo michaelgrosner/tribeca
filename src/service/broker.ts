@@ -271,7 +271,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
+                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged, o.orderId);
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
@@ -392,48 +392,117 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     private _log = log("pos:broker");
 
     public NewReport = new Utils.Evt<Models.PositionReport>();
-
     private _report : Models.PositionReport = null;
     public get latestReport() : Models.PositionReport {
         return this._report;
     }
 
-    private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
-    public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
-        return this._currencies[currency];
-    }
+    private readonly _defaultUnconfirmedChanges = () => {
+        return {
+            quote: 0,
+            base: 0,
+            quoteAvailable: 0,
+            baseAvailable: 0,
+            quoteHeld: 0,
+            baseHeld: 0
+        }
+    };
+    private _unconfirmedChanges = this._defaultUnconfirmedChanges();
+    private readonly _currencies = new Map<number, Models.CurrencyPosition>();    
 
-    private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
-        this._currencies[rpt.currency] = rpt;
-        const basePosition = this.getPosition(this._base.pair.base);
-        const quotePosition = this.getPosition(this._base.pair.quote);
+    private recomputePosition = (source: any) => {
+        const basePosition = this._currencies.get(this._base.pair.base);
+        const quotePosition = this._currencies.get(this._base.pair.quote);
 
-        if (typeof basePosition === "undefined"
-            || typeof quotePosition === "undefined"
+        if (!basePosition || !quotePosition
             || this._mdBroker.currentBook === null
             || this._mdBroker.currentBook.bids.length === 0
             || this._mdBroker.currentBook.asks.length === 0)
             return;
 
-        const baseAmount = basePosition.amount;
-        const quoteAmount = quotePosition.amount;
-        const mid = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
-        const baseValue = baseAmount + quoteAmount / mid + basePosition.heldAmount + quotePosition.heldAmount / mid;
-        const quoteValue = baseAmount * mid + quoteAmount + basePosition.heldAmount * mid + quotePosition.heldAmount;
-        const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
+        const confirmedBaseAmount = basePosition.amount;
+        const confirmedQuoteAmount = quotePosition.amount;
+        const confirmedBaseAvailable = basePosition.availableAmount || (confirmedBaseAmount - basePosition.heldAmount);
+        const confirmedQuoteAvailable = quotePosition.availableAmount || (confirmedQuoteAmount - quotePosition.heldAmount);
+        const midPx = (this._mdBroker.currentBook.bids[0].price + this._mdBroker.currentBook.asks[0].price) / 2.0;
+        const baseValue = confirmedBaseAmount + confirmedQuoteAmount / midPx + basePosition.heldAmount + quotePosition.heldAmount / midPx;
+        const quoteValue = confirmedBaseAmount * midPx + confirmedQuoteAmount + basePosition.heldAmount * midPx + quotePosition.heldAmount;
+        
+        const positionReport = new Models.PositionReport(
+            confirmedBaseAmount + this._unconfirmedChanges.base,
+            confirmedQuoteAmount + this._unconfirmedChanges.quote,
+            confirmedBaseAvailable + this._unconfirmedChanges.baseAvailable,
+            confirmedQuoteAvailable + this._unconfirmedChanges.quoteAvailable,
+            basePosition.heldAmount + this._unconfirmedChanges.baseHeld,
+            quotePosition.heldAmount + this._unconfirmedChanges.quoteHeld,
+            confirmedBaseAmount, 
+            confirmedQuoteAmount, 
+            confirmedBaseAvailable,
+            confirmedQuoteAvailable,
+            basePosition.heldAmount, 
+            quotePosition.heldAmount, 
+            baseValue, 
+            quoteValue, 
+            this._base.pair, 
+            this._base.exchange(), 
+            this._timeProvider.utcNow());
 
-        if (this._report !== null && 
-                Math.abs(positionReport.value - this._report.value) < 2e-2 && 
-                Math.abs(baseAmount - this._report.baseAmount) < 2e-2 &&
-                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-2 &&
-                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
-            return;
+        if (this._log.debug())
+            this._log.debug({current: positionReport, source: source}, "recalc position report");
 
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
         this._positionPublisher.publish(positionReport);
         this._positionPersister.persist(positionReport);
+    };
+
+    private onPositionUpdates = (reports : Models.CurrencyPosition[]) => {
+        for (let rpt of reports)
+            this._currencies.set(rpt.currency, rpt);
+
+        this._unconfirmedChanges = this._defaultUnconfirmedChanges();      
+        this.recomputePosition(reports);
+    };
+
+    private _trackedOrders = new Set<string>();
+    private onOrderUpdate = (o : Models.OrderStatusReport) => {
+        let heldQtyChange;
+        if (this._trackedOrders.has(o.orderId) && Models.orderIsDone(o.orderStatus)) {
+            heldQtyChange = -1*(o.quantity - o.cumQuantity);            
+            this._trackedOrders.delete(o.orderId);
+        }
+        else if (o.version === 0) {
+            heldQtyChange = o.quantity;
+            this._trackedOrders.add(o.orderId);
+        }
+        else {
+            return;
+        }
+
+        const fee = o.preferPostOnly ? this._base.makeFee() : Math.max(this._base.makeFee(), this._base.takeFee());
+        this._unconfirmedChanges.baseHeld += Math.max(0, heldQtyChange);
+        this._unconfirmedChanges.quoteHeld += Math.max(0, (1+fee)*heldQtyChange*o.price);
+        this._unconfirmedChanges.baseAvailable -= Math.max(0, this._unconfirmedChanges.baseHeld);
+        this._unconfirmedChanges.quoteAvailable -= Math.max(0, this._unconfirmedChanges.quoteHeld);
+
+        this.recomputePosition(o);
+    };
+
+    private onTrade = (t: Models.Trade) => {
+        if (!this._trackedOrders.has(t.originatingOrderId)) 
+            return;
+        
+        const baseQtyChange = (Models.Side.Bid === t.side ? 1 : -1)*t.quantity;
+        const quoteQtyChange = -1*baseQtyChange*t.price;
+
+        this._unconfirmedChanges.base += Math.max(0, baseQtyChange);
+        this._unconfirmedChanges.quote += Math.max(0, quoteQtyChange);
+        this._unconfirmedChanges.baseAvailable += Math.max(0, baseQtyChange);
+        this._unconfirmedChanges.quoteAvailable += Math.max(0, quoteQtyChange);
+        this._unconfirmedChanges.baseHeld -= Math.max(0, baseQtyChange);
+        this._unconfirmedChanges.quoteHeld -= Math.max(0, quoteQtyChange);
+
+        this.recomputePosition(t);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -442,9 +511,12 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 private _positionPublisher : Messaging.IPublish<Models.PositionReport>,
                 private _positionPersister : Persister.IPersist<Models.PositionReport>,
                 private _mdBroker : Interfaces.IMarketDataBroker,
-                private _orders: Interfaces.IOrderBroker) {
-        this._posGateway.PositionUpdate.on(this.onPositionUpdate);
+                orders: Interfaces.IOrderBroker) {
+        this._posGateway.PositionUpdate.on(this.onPositionUpdates);
         timedPublisherPersister(_positionPublisher, _positionPersister, _timeProvider, () => this._report);
+
+        orders.OrderUpdate.on(this.onOrderUpdate);
+        orders.Trade.on(this.onTrade);
     }
 }
 

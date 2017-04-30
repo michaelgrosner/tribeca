@@ -45,7 +45,7 @@ export interface IOrderEntryGateway extends IGateway {
 }
 
 export interface IPositionGateway {
-    PositionUpdate: Utils.Evt<Models.CurrencyPosition>;
+    PositionUpdate: Utils.Evt<Models.CurrencyPosition[]>;
 }
 
 export class CombinedGateway {
@@ -79,7 +79,6 @@ export interface IOrderBroker extends ITradeBroker {
 }
 
 export interface IPositionBroker {
-    getPosition(currency: Models.Currency): Models.CurrencyPosition;
     latestReport: Models.PositionReport;
     NewReport: Utils.Evt<Models.PositionReport>;
 }

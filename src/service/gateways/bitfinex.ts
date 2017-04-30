@@ -19,8 +19,8 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
 import log from "../logging";
-var shortId = require("shortid");
-var Deque = require("collections/deque");
+const shortId = require("shortid");
+const Deque = require("collections/deque");
 
 interface BitfinexMarketTrade {
     tid: number;
@@ -76,11 +76,11 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrades = (trades: Models.Timestamped<BitfinexMarketTrade[]>) => {
         _.forEach(trades.data, trade => {
-            var px = parseFloat(trade.price);
-            var sz = parseFloat(trade.amount);
-            var time = moment.unix(trade.timestamp).toDate();
-            var side = decodeSide(trade.type);
-            var mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
+            const px = parseFloat(trade.price);
+            const sz = parseFloat(trade.amount);
+            const time = moment.unix(trade.timestamp).toDate();
+            const side = decodeSide(trade.type);
+            const mt = new Models.GatewayMarketTrade(px, sz, time, this._since === null, side);
             this.MarketTrade.trigger(mt);
         });
 
@@ -88,7 +88,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private downloadMarketTrades = () => {
-        var qs = { timestamp: this._since === null ? moment.utc().subtract(60, "seconds").unix() : this._since };
+        const qs = { timestamp: this._since === null ? moment.utc().subtract(60, "seconds").unix() : this._since };
         this._http
             .get<BitfinexMarketTrade[]>("trades/" + this._symbolProvider.symbol, qs)
             .then(this.onTrades)
@@ -105,8 +105,8 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     MarketData = new Utils.Evt<Models.Market>();
     private onMarketData = (book: Models.Timestamped<BitfinexOrderBook>) => {
-        var bids = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.bids);
-        var asks = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.asks);
+        const bids = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.bids);
+        const asks = BitfinexMarketDataGateway.ConvertToMarketSides(book.data.asks);
         this.MarketData.trigger(new Models.Market(bids, asks, book.time));
     };
 
@@ -221,7 +221,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     sendOrder = (order: Models.OrderStatusReport) => {
-        var req = this.convertToOrderRequest(order);
+        const req = this.convertToOrderRequest(order);
 
         this._http
             .post<BitfinexNewOrderRequest, BitfinexNewOrderResponse>("order/new", req)
@@ -251,7 +251,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
-        var req = { order_id: cancel.exchangeId };
+        const req = { order_id: cancel.exchangeId };
         this._http
             .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
             .then(resp => {
@@ -286,7 +286,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private downloadOrderStatuses = () => {
-        var tradesReq = { timestamp: this._since.unix(), symbol: this._symbolProvider.symbol };
+        const tradesReq = { timestamp: this._since.unix(), symbol: this._symbolProvider.symbol };
         this._http
             .post<BitfinexMyTradesRequest, BitfinexMyTradesResponse[]>("mytrades", tradesReq)
             .then(resps => {
@@ -343,7 +343,7 @@ class RateLimitMonitor {
     private _durationMs: number;
 
     public add = () => {
-        var now = moment.utc();
+        const now = moment.utc();
 
         while (now.diff(this._queue.peek()) > this._durationMs) {
             this._queue.shift();
@@ -368,7 +368,7 @@ class BitfinexHttp {
 
     get = <T>(actionUrl: string, qs?: any): Q.Promise<Models.Timestamped<T>> => {
         const url = this._baseUrl + "/" + actionUrl;
-        var opts = {
+        const opts = {
             timeout: this._timeout,
             url: url,
             qs: qs || undefined,
@@ -382,7 +382,7 @@ class BitfinexHttp {
     // Retry here - look to mitigate in the future by batching orders?
     post = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Q.Promise<Models.Timestamped<TResponse>> => {
         return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg)).then(resp => {
-            var rejectMsg: string = (<any>(resp.data)).message;
+            const rejectMsg: string = (<any>(resp.data)).message;
             if (typeof rejectMsg !== "undefined" && rejectMsg.indexOf("Nonce is too small") > -1)
                 return this.post<TRequest, TResponse>(actionUrl, _.clone(msg));
             else
@@ -395,11 +395,11 @@ class BitfinexHttp {
         msg["nonce"] = this._nonce.toString();
         this._nonce += 1;
 
-        var payload = new Buffer(JSON.stringify(msg)).toString("base64");
-        var signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
+        const payload = new Buffer(JSON.stringify(msg)).toString("base64");
+        const signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
 
         const url = this._baseUrl + "/" + actionUrl;
-        var opts: request.Options = {
+        const opts: request.Options = {
             timeout: this._timeout,
             url: url,
             headers: {
@@ -414,7 +414,7 @@ class BitfinexHttp {
     };
 
     private doRequest = <TResponse>(msg: request.Options, url: string): Q.Promise<Models.Timestamped<TResponse>> => {
-        var d = Q.defer<Models.Timestamped<TResponse>>();
+        const d = Q.defer<Models.Timestamped<TResponse>>();
 
         this._monitor.add();
         request(msg, (err, resp, body) => {
@@ -424,8 +424,8 @@ class BitfinexHttp {
             }
             else {
                 try {
-                    var t = new Date();
-                    var data = JSON.parse(body);
+                    const t = new Date();
+                    const data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (err) {
@@ -463,17 +463,16 @@ interface BitfinexPositionResponseItem {
 }
 
 class BitfinexPositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
 
     private onRefreshPositions = () => {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
-            _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
-                var amt = parseFloat(p.amount);
-                var cur = Models.toCurrency(p.currency);
-                var held = amt - parseFloat(p.available);
-                var rpt = new Models.CurrencyPosition(amt, held, cur);
-                this.PositionUpdate.trigger(rpt);
-            });
+            this.PositionUpdate.trigger(_.map(_.filter(res.data, x => x.type === "exchange"), p => {
+                const amt = parseFloat(p.amount);
+                const cur = Models.toCurrency(p.currency);
+                const available = parseFloat(p.available);
+                return new Models.CurrencyPosition(amt, amt-available, cur, available);
+            }));
         }).done();
     }
 

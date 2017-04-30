@@ -402,7 +402,7 @@ class OkCoinHttp {
 }
 
 class OkCoinPositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
 
     private static convertCurrency(name : string) : Models.Currency {
         switch (name.toLowerCase()) {
@@ -418,14 +418,16 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
             var free = (<any>msg.data).info.funds.free;
             var freezed = (<any>msg.data).info.funds.freezed;
 
+            const updates = new Array<Models.CurrencyPosition>();
             for (var currencyName in free) {
                 if (!free.hasOwnProperty(currencyName)) continue;
-                var amount = parseFloat(free[currencyName]);
+                var available = parseFloat(free[currencyName]);
                 var held = parseFloat(freezed[currencyName]);
 
-                var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
-                this.PositionUpdate.trigger(pos);
+                var pos = new Models.CurrencyPosition(available+held, held, OkCoinPositionGateway.convertCurrency(currencyName), available);
+                updates.push(pos);
             }
+            this.PositionUpdate.trigger(updates);
         }).done();
     };
 

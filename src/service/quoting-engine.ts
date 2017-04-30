@@ -102,7 +102,7 @@ export class QuotingEngine {
         const targetBasePosition = tbp.data;
         
         const latestPosition = this._positionBroker.latestReport;
-        const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+        const totalBasePosition = latestPosition.baseAmount;
         
         if (totalBasePosition < targetBasePosition - params.positionDivergence) {
             unrounded.askPx = null;

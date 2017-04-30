@@ -494,7 +494,7 @@ interface HitBtcPositionReport {
 
 class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     private _log = log("tribeca:gateway:HitBtcPG");
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
 
     private getAuth = (uri : string) : any => {
         var nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
@@ -523,7 +523,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                         return;
                     }
 
-                    rpts.forEach(r => {
+                    this.PositionUpdate.trigger(rpts.map(r => {
                         try {
                             var currency = Models.toCurrency(r.currency_code);
                         }
@@ -531,9 +531,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                             return;
                         }
                         if (currency == null) return;
-                        var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
-                        this.PositionUpdate.trigger(position);
-                    });
+                        return new Models.CurrencyPosition(r.cash, r.reserved, currency);
+                    }));
                 }
                 catch (e) {
                     this._log.error(e, "Error processing JSON response ", resp);

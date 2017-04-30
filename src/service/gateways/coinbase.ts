@@ -759,17 +759,18 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     private _log = log("tribeca:gateway:CoinbasePG");
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
 
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
             try {
                 if (Array.isArray(data)) {
-                    _.forEach(data, d => {
-                        var c = Models.toCurrency(d.currency);
-                        var rpt = new Models.CurrencyPosition(convertPrice(d.available), convertPrice(d.hold), c);
-                        this.PositionUpdate.trigger(rpt);
-                    });
+                    this.PositionUpdate.trigger(_.map(data, d => 
+                        new Models.CurrencyPosition(
+                            convertPrice(d.available), 
+                            convertPrice(d.hold), 
+                            Models.toCurrency(d.currency), 
+                            convertPrice(d.available))));
                 }
                 else {
                     this._log.warn("Unable to get Coinbase positions", data)

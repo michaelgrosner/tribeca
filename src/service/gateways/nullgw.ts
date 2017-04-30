@@ -74,11 +74,12 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 }
 
 export class NullPositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
 
     constructor(pair: Models.CurrencyPair) {
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.base)), 2500);
-        setInterval(() => this.PositionUpdate.trigger(new Models.CurrencyPosition(500, 50, pair.quote)), 2500);
+        setInterval(() => this.PositionUpdate.trigger([
+            new Models.CurrencyPosition(500, 50, pair.base),
+            new Models.CurrencyPosition(500, 50, pair.quote)]), 15000);
     }
 }
 

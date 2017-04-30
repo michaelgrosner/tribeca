@@ -210,13 +210,15 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
-                public feeCharged: number) {}
+                public feeCharged: number,
+                public originatingOrderId: string) {}
 }
 
 export class CurrencyPosition {
     constructor(public amount: number,
                 public heldAmount: number,
-                public currency: Currency) {}
+                public currency: Currency,
+                public availableAmount?: number) {}
 
     public toString() {
         return "currency=" + Currency[this.currency] + ";amount=" + this.amount;
@@ -226,8 +228,16 @@ export class CurrencyPosition {
 export class PositionReport {
     constructor(public baseAmount: number,
                 public quoteAmount: number,
+                public baseAvailableAmount: number,
+                public quoteAvailableAmount: number,
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
+                public confirmedBaseAmount: number,
+                public confirmedQuoteAmount: number,
+                public confirmedAvailableBaseAmount: number,
+                public confirmedAvailableQuoteAmount: number,
+                public confirmedBaseHeldAmount: number,
+                public confirmedQuoteHeldAmount: number,
                 public value: number,
                 public quoteValue: number,
                 public pair: CurrencyPair,

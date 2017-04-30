@@ -82,12 +82,12 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (quote.ask !== null && this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
+            if (quote.ask !== null && this.hasEnoughPosition(true, quote.ask.size) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price))) {
                 askStatus = Models.QuoteStatus.Live;
             }
 
-            if (quote.bid !== null && this.hasEnoughPosition(this._details.pair.quote, quote.bid.size * quote.bid.price) &&
+            if (quote.bid !== null && this.hasEnoughPosition(false, quote.bid.size * quote.bid.price) &&
                 (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price))) {
                 bidStatus = Models.QuoteStatus.Live;
             }
@@ -112,8 +112,14 @@ export class QuoteSender {
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
     };
 
-    private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
-        var pos = this._positionBroker.getPosition(cur);
-        return pos != null && pos.amount > minAmt;
+    private hasEnoughPosition = (isBase: boolean, minAmt: number): boolean => {
+        const rpt = this._positionBroker.latestReport;
+        if (!rpt) return false;
+        if (isBase) {
+            return rpt.baseAvailableAmount > minAmt;
+        }
+        else {
+            return rpt.quoteAvailableAmount > minAmt;
+        }
     };
 }
