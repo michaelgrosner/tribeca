@@ -103,6 +103,8 @@ To rebuild the application with your modifications, please run `npm install` or 
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect tribeca.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
+Another way to debug is to use some `if (log.debug())` blocks here and there, then execute it passing `debug` parameter after `tribeca.js`.
+
 To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
 To save the output in `log/tribeca.log` file, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
