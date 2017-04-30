@@ -7,6 +7,8 @@ import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
+import moment = require("moment");
+import log from "./logging";
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -38,7 +40,7 @@ export class OrderStateCache implements Interfaces.IOrderStateCache {
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {
-    private _log = Utils.log("oe:broker");
+    private _log = log("oe:broker");
 
     async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
@@ -190,8 +192,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           this._oeGateway.cancelOrder(this.updateOrderState(<Models.OrderStatusUpdate>{
               orderId: cancel.origOrderId,
               orderStatus: Models.OrderStatus.Cancelled,
-              leavesQuantity: 0,
-              done: true}));
+              leavesQuantity: 0
+              // ,done: true
+          }));
           return;
         }
 
@@ -282,7 +285,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orig === "undefined") {
-                // this._log.error("cannot find orderId from", osr);
+                this._log.error({
+                    update: osr,
+                    existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
+                    existingIds: Array.from(this._orderCache.allOrders.keys())
+                }, "no existing order for non-New update!");
                 return;
             }
         }
@@ -326,11 +333,15 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           pendingCancel: osr.pendingCancel,
           pendingReplace: osr.pendingReplace,
           cancelRejected: osr.cancelRejected,
-          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
-          done: osr.done
+          preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly)
+          // ,done: osr.done
         };
 
-        this.updateOrderStatusInMemory(o);
+        const added = this.updateOrderStatusInMemory(o);
+        if (this._log.debug()) {
+            // this._log.debug(o, (added ? "added" : "removed") + " order status");
+            this._log.debug(this._orderCache.exchIdsToClientIds.size+' '+this._orderCache.allOrders.size + " order status");
+        }
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -390,20 +401,45 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
-        this.addOrderStatusInMemory(osr);
+    private _pendingRemovals = new Array<Models.OrderStatusReport>();
 
-        if (osr.done===true) {
-          this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-          this._orderCache.allOrders.delete(osr.orderId);
-          if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
-            delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
+    private updateOrderStatusInMemory = (osr: Models.OrderStatusReport): boolean => {
+       if (!Models.orderIsDone(osr.orderStatus)) {
+          this.addOrderStatusInMemory(osr);
+          return true;
         }
+        else  {
+          this._pendingRemovals.push(osr);
+          return false;
+        }
+        // this.addOrderStatusInMemory(osr);
+
+        // if (osr.done===true) {
+          // this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          // this._orderCache.allOrders.delete(osr.orderId);
+          // if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
+            // delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
+        // }
     };
 
     private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
         this._orderCache.allOrders.set(osr.orderId, osr);
+    };
+
+    private clearPendingRemovals = () => {
+        const now = new Date().getTime();
+        const kept = new Array<Models.OrderStatusReport>();
+        for (let osr of this._pendingRemovals) {
+            if (now - osr.time.getTime() > 5000) {
+                this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+                this._orderCache.allOrders.delete(osr.orderId);
+            }
+            else {
+                kept.push(osr);
+            }
+        }
+        this._pendingRemovals = kept;
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -452,6 +488,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         this._oeGateway.OrderUpdate.on(this.updateOrderState);
 
+        this._timeProvider.setInterval(this.clearPendingRemovals, moment.duration(5, "seconds"));
         // this._oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);
         // });
@@ -459,7 +496,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 }
 
 export class PositionBroker implements Interfaces.IPositionBroker {
-    private _log = Utils.log("pos:broker");
+    private _log = log("pos:broker");
 
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
@@ -545,7 +582,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 }
 
 export class ExchangeBroker implements Interfaces.IBroker {
-    private _log = Utils.log("ex:broker");
+    private _log = log("ex:broker");
 
     public get hasSelfTradePrevention() {
         return this._baseGateway.hasSelfTradePrevention;

@@ -17,7 +17,7 @@ describe("BacktestTests", () => {
 
     it("Should increment time", () => {
         timeProvider.scrollTimeTo(moment.unix(2));
-        assert.equal(timeProvider.utcNow().diff(moment.unix(2)), 0);
+        assert.equal(moment(timeProvider.utcNow()).diff(moment.unix(2)), 0);
     });
 
     it("Should not allow rewinding time", () => {
@@ -96,8 +96,8 @@ describe("BacktestGatewayTests", () => {
         assert.equal(new Models.MarketSide(1, 2).toString(), 'px=1;size=2');
 
         var inputData : Array<Models.Market | Models.MarketTrade> = [
-            new Models.Market([new Models.MarketSide(10, 5)], [new Models.MarketSide(20, 5)], moment.unix(1)),
-            new Models.Market([new Models.MarketSide(15, 5)], [new Models.MarketSide(20, 5)], moment.unix(10)),
+            new Models.Market([new Models.MarketSide(10, 5)], [new Models.MarketSide(20, 5)], moment.unix(1).toDate()),
+            new Models.Market([new Models.MarketSide(15, 5)], [new Models.MarketSide(20, 5)], moment.unix(10).toDate()),
         ];
 
         var timeProvider = new Backtest.BacktestTimeProvider(moment.unix(1), moment.unix(40));

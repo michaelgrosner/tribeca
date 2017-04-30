@@ -2735,11 +2735,6 @@
       "from": "process-nextick-args@>=1.0.6 <1.1.0",
       "resolved": "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-1.0.7.tgz"
     },
-    "promise-timeout": {
-      "version": "1.1.1",
-      "from": "promise-timeout@>=1.1.1 <2.0.0",
-      "resolved": "https://registry.npmjs.org/promise-timeout/-/promise-timeout-1.1.1.tgz"
-    },
     "prompt": {
       "version": "0.2.14",
       "from": "prompt@0.2.14",

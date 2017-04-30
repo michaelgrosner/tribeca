@@ -11,6 +11,7 @@ import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
+import log from "../logging";
 var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
@@ -139,7 +140,7 @@ class OkCoinWebsocket {
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
     private _stillAlive: boolean = true;
-    private _log = Utils.log("tribeca:gateway:OkCoinWebsocket");
+    private _log = log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
@@ -184,11 +185,10 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketData.trigger(mkt);
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinMD");
+    private _log = log("tribeca:gateway:OkCoinMD");
     constructor(socket: OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
         var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
         var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
-
         socket.setHandler(depthChannel, this.onDepth);
         socket.setHandler(tradesChannel, this.onTrade);
 
@@ -226,7 +226,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         osr.exchangeId = (<any>msg.data).order_id.toString();
                         osr.orderStatus = Models.OrderStatus.Cancelled;
                         osr.leavesQuantity = 0;
-                        osr.done = true;
+                        // osr.done = true;
                         this.OrderUpdate.trigger(osr);
                     }
                 }).done();
@@ -290,7 +290,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
         else {
             osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.done = true;
+            // osr.done = true;
         }
 
         this.OrderUpdate.trigger(osr);
@@ -306,7 +306,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 osr.exchangeId = (<any>msg.data).order_id.toString();
                 osr.orderStatus = Models.OrderStatus.Cancelled;
                 osr.leavesQuantity = 0;
-                osr.done = true;
+                // osr.done = true;
                 this.OrderUpdate.trigger(osr);
             }
             else {
@@ -335,7 +335,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     if (!osr.leavesQuantity) {
                       osr.orderStatus = Models.OrderStatus.Cancelled;
                       osr.leavesQuantity = 0;
-                      osr.done = true;
+                      // osr.done = true;
                     }
                     this.OrderUpdate.trigger(osr);
                 }).done();
@@ -398,8 +398,9 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     }
 
-    private _log = Utils.log("tribeca:gateway:OkCoinOE");
-    constructor(private _http : OkCoinHttp,
+    private _log = log("tribeca:gateway:OkCoinOE");
+    constructor(
+            private _http: OkCoinHttp,
             private _socket: OkCoinWebsocket,
             private _signer: OkCoinMessageSigner,
             private _symbolProvider: OkCoinSymbolProvider) {
@@ -478,7 +479,7 @@ class OkCoinHttp {
         return d.promise;
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinHTTP");
+    private _log = log("tribeca:gateway:OkCoinHTTP");
     private _baseUrl : string;
     constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
@@ -517,7 +518,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
         }).done();
     };
 
-    private _log = Utils.log("tribeca:gateway:OkCoinPG");
+    private _log = log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 10);

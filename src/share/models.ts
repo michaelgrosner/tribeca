@@ -1,14 +1,14 @@
-import moment = require("moment");
+import * as moment from "moment";
 
 export interface ITimestamped {
-    time: moment.Moment;
+    time : Date;
 }
 
 export class Timestamped<T> implements ITimestamped {
-    constructor(public data: T, public time: moment.Moment) {}
+    constructor(public data: T, public time: Date) {}
 
     public toString() {
-        return "time=" + (this.time === null ? null : this.time.format('D/M HH:mm:ss,SSS')) + ";data=" + this.data;
+        return "time=" + (this.time === null ? null : moment(this.time).format('D/M HH:mm:ss,SSS')) + ";data=" + this.data;
     }
 }
 
@@ -63,7 +63,7 @@ export class MarketSide {
 export class GatewayMarketTrade implements ITimestamped {
     constructor(public price: number,
                 public size: number,
-                public time: moment.Moment,
+                public time: Date,
                 public onStartup: boolean,
                 public make_side: Side) { }
 }
@@ -77,7 +77,7 @@ export function marketSideEquals(t: MarketSide, other: MarketSide, tol?: number)
 export class Market implements ITimestamped {
     constructor(public bids: MarketSide[],
                 public asks: MarketSide[],
-                public time: moment.Moment) { }
+                public time: Date) { }
 
     public toString() {
         return "asks: [" + this.asks.join(";") + "] bids: [" + this.bids.join(";") + "]";
@@ -89,7 +89,7 @@ export class MarketTrade implements ITimestamped {
                 public pair: CurrencyPair,
                 public price: number,
                 public size: number,
-                public time: moment.Moment,
+                public time: Date,
                 public quote: TwoSidedQuote,
                 public bid: MarketSide,
                 public ask: MarketSide,
@@ -171,7 +171,7 @@ export class SubmitNewOrder {
                 public price: number,
                 public timeInForce: TimeInForce,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment,
+                public generatedTime: Date,
                 public preferPostOnly: boolean,
                 public msg?: string) {
                     this.msg = msg || null;
@@ -183,13 +183,13 @@ export class CancelReplaceOrder {
                 public quantity: number,
                 public price: number,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment) {}
+                public generatedTime: Date) {}
 }
 
 export class OrderCancel {
     constructor(public origOrderId: string,
                 public exchange: Exchange,
-                public generatedTime: moment.Moment) {}
+                public generatedTime: Date) {}
 }
 
 export class SentOrder {
@@ -207,7 +207,7 @@ export interface OrderStatusReport {
     exchangeId : string;
     orderStatus : OrderStatus;
     rejectMessage : string;
-    time : moment.Moment;
+    time : Date;
     lastQuantity : number;
     lastPrice : number;
     leavesQuantity : number;
@@ -222,7 +222,7 @@ export interface OrderStatusReport {
     pendingCancel : boolean;
     pendingReplace : boolean;
     cancelRejected : boolean;
-    done : boolean;
+    // done : boolean;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
@@ -232,7 +232,7 @@ export class EWMAChart implements ITimestamped {
                 public ewmaShort: number,
                 public ewmaLong: number,
                 public fairValue: number,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class TradeChart implements ITimestamped {
@@ -241,12 +241,12 @@ export class TradeChart implements ITimestamped {
                 public quantity: number,
                 public value: number,
                 public type: string,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class Trade implements ITimestamped {
     constructor(public tradeId: string,
-                public time: moment.Moment,
+                public time: Date,
                 public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
@@ -254,7 +254,7 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
-                public Ktime: moment.Moment,
+                public Ktime: Date,
                 public Kqty: number,
                 public Kprice: number,
                 public Kvalue: number,
@@ -282,7 +282,7 @@ export class PositionReport {
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class OrderRequestFromUI {
@@ -294,7 +294,7 @@ export class OrderRequestFromUI {
 }
 
 export class FairValue implements ITimestamped {
-    constructor(public price: number, public time: moment.Moment) {}
+    constructor(public price: number, public time: Date) {}
 }
 
 export enum QuoteAction { New, Cancel }
@@ -311,7 +311,7 @@ export class Quote {
 }
 
 export class TwoSidedQuote implements ITimestamped {
-    constructor(public bid: Quote, public ask: Quote, public time: moment.Moment) {}
+    constructor(public bid: Quote, public ask: Quote, public time: Date) {}
 }
 
 export enum QuoteStatus { Live, Held }
@@ -388,7 +388,7 @@ export class ApplicationState {
 }
 
 export class RegularFairValue {
-    constructor(public time: moment.Moment, public value: number) {}
+    constructor(public time: Date, public value: number) {}
 }
 
 export class TradeSafety {
@@ -397,13 +397,13 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
-                public time: moment.Moment) {}
+                public time: Date) {}
 }
 
 export class TargetBasePositionValue {
     constructor(
       public data: number,
       public sideAPR: string[],
-      public time: moment.Moment
+      public time: Date
     ) {}
 }

@@ -4,7 +4,7 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
-import moment = require("moment");
+import * as moment from "moment";
 
 export class ApplicationState {
 

@@ -1,43 +1,20 @@
 import Models = require("../share/models");
 import moment = require('moment');
 import events = require("events");
-import bunyan = require("bunyan");
-import fs = require("fs");
 import _ = require("lodash");
 import * as request from "request";
 import * as Q from "q";
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
-export var date = moment.utc;
-
-export function log(name: string): bunyan {
-    // don't log while testing
-    const isRunFromMocha = process.argv.length >= 2 && _.includes(process.argv[1], "mocha");
-    if (isRunFromMocha) {
-        return bunyan.createLogger({name: name, stream: process.stdout, level: bunyan.FATAL});
-    }
-
-    if (!fs.existsSync('./log')) fs.mkdirSync('./log');
-
-    return bunyan.createLogger({
-        name: name,
-        streams: [{
-            level: 'info',
-            stream: process.stdout            // log INFO and above to stdout
-        }, {
-            level: 'info',
-            path: './log/tribeca.log'  // log ERROR and above to a file
-        }
-    ]});
-}
+export const date = () => new Date();
 
 // typesafe wrapper around EventEmitter
 export class Evt<T> {
     private _event = new events.EventEmitter();
 
     public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
-    
+
     public off = (handler: (data?: T) => void) => this._event.removeListener("evt", handler);
 
     public trigger = (data?: T) => this._event.emit("evt", data);
@@ -72,42 +49,43 @@ export function roundDown(x: number, minTick: number) {
 }
 
 export interface ITimeProvider {
-    utcNow() : moment.Moment;
+    utcNow() : Date;
     setTimeout(action: () => void, time: moment.Duration);
     setImmediate(action: () => void);
     setInterval(action: () => void, time: moment.Duration);
 }
 
-export function getJSON<T>(url: string, qs?: any) : Q.Promise<T> {
-    const d = Q.defer<T>();
-    request({url: url, qs: qs}, (err, resp, body) => {
-        if (err) {
-            d.reject(err);
-        }
-        else {
-            try {
-                d.resolve(JSON.parse(body));
-            }
-            catch (e) {
-                d.reject(e);
-            }
-        }
-    });
-    return d.promise;
-}
-
-export interface IBacktestingTimeProvider extends ITimeProvider {
-    scrollTimeTo(time : moment.Moment);
-}
-
 export class RealTimeProvider implements ITimeProvider {
     constructor() { }
 
-    utcNow = () => moment.utc();
+    utcNow = () => new Date();
 
     setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
 
     setImmediate = (action: () => void) => setImmediate(action);
 
     setInterval = (action: () => void, time: moment.Duration) => setInterval(action, time.asMilliseconds());
+}
+
+export interface IBacktestingTimeProvider extends ITimeProvider {
+    scrollTimeTo(time : moment.Moment);
+}
+
+export interface IActionScheduler {
+    schedule(action: () => void);
+}
+
+export class ImmediateActionScheduler implements IActionScheduler {
+    constructor(private _timeProvider: ITimeProvider) {}
+
+    private _shouldSchedule = true;
+    public schedule = (action: () => void) => {
+        if (this._shouldSchedule) {
+            this._shouldSchedule = false;
+            this._timeProvider.setImmediate(() => {
+                action();
+                this._shouldSchedule = true;
+            });
+        }
+    };
 }

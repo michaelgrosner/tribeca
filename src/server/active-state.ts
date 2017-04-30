@@ -2,9 +2,10 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import log from './logging';
 
 export class ActiveRepository implements Interfaces.IRepository<boolean> {
-    private _log = Utils.log("tribeca:active");
+    private _log = log("tribeca:active");
 
     NewParameters = new Utils.Evt();
 

@@ -1,6 +1,7 @@
 import Utils = require("./utils");
 import _ = require("lodash");
 import fs = require("fs");
+import log from "./logging";
 
 export interface IConfigProvider {
     GetString(configKey: string): string;
@@ -10,7 +11,7 @@ export interface IConfigProvider {
 }
 
 export class ConfigProvider implements IConfigProvider {
-    private static Log = Utils.log("tribeca:config");
+    private static Log = log("tribeca:config");
     private _config: { [key: string]: string } = {};
 
     constructor() {

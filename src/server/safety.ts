@@ -6,17 +6,18 @@ import Publish = require("./publish");
 import moment = require('moment');
 import FairValue = require("./fair-value");
 import Persister = require("./persister");
+import log from "./logging";
 
 interface ITrade {
     price: number;
     quantity: number;
-    time: moment.Moment;
+    time: Date;
 }
 
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
 
-    private _log = Utils.log("safety");
+    private _log = log("safety");
 
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
@@ -66,7 +67,7 @@ export class SafetyCalculator {
         this.computeQtyLimit();
     };
 
-    private isOlderThan(time: moment.Moment, settings: Models.QuotingParameters) {
+    private isOlderThan(time: Date, settings: Models.QuotingParameters) {
         return Math.abs(this._timeProvider.utcNow().valueOf() - time.valueOf()) > settings.tradeRateSeconds * 1000;
     }
 
