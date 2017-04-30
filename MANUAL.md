@@ -87,7 +87,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
 
-* `bullets` - maximum amount of trades placed in each side (only affects `AK-47`).
+* `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
 
 * `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
 
@@ -122,11 +122,11 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
-* `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size`.
+* `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
-* `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `size`.
+* `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
-* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible size based on the current target based position (just as having enabled `apr` on `Size` but before your position diverges more than `pDiv`).
+* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible size based on the current target based position (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
 
 * `fv` - Sets the fair value calculation mode
 
