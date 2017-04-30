@@ -153,7 +153,7 @@ export class ExchangeQuoter {
 
         var quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
           new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
-            price, Models.TimeInForce.GTC, this._exchange, q.time, true)
+            price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote)
         ).sentOrderClientId);
 
         this.quotesSent.push(quoteOrder);
