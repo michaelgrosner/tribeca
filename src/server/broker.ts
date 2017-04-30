@@ -407,7 +407,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private _pendingRemovals = new Array<Models.OrderStatusReport>();
 
     private updateOrderStatusInMemory = (osr: Models.OrderStatusReport): boolean => {
-       if (this.shouldPublish(osr) || !Models.orderIsDone(osr.orderStatus)) {
+       if (this.shouldPublish(osr)) {
           this.addOrderStatusInMemory(osr);
           return true;
         }
@@ -448,7 +448,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
         if (o.source === null) throw Error(JSON.stringify(o));
 
-        return o.source !== Models.OrderSource.Unknown;
+        return o.source !== Models.OrderSource.Unknown && !this._pendingRemovals.filter(x => (x.orderId !== null && x.orderId === o.orderId) || (x.exchangeId !== null && x.exchangeId === o.exchangeId)).length;
     };
 
     private orderStatusSnapshot = () : Models.OrderStatusReport[] => {
