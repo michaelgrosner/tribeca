@@ -579,7 +579,12 @@ class OkCoin extends Interfaces.CombinedGateway {
             new OkCoinMarketDataGateway(socket, symbol),
             orderGateway,
             new OkCoinPositionGateway(http),
-            new OkCoinBaseGateway(.01)); // uh... todo
+            new OkCoinBaseGateway(parseFloat(
+              symbol.symbolQuote
+                .replace('usd', '0.01')
+                .replace('ltc', '0.001')
+            ))
+        );
         }
 }
 export async function createOkCoin(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
