@@ -127,11 +127,11 @@ export class QuotingEngine {
         let superTradesMultipliers = (params.superTrades &&
           params.widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
-          (params.superTrades == Models.SOP.x2trds || params.superTrades == Models.SOP.x2trdsSize
-            ? 2 : (params.superTrades == Models.SOP.x3trds || params.superTrades == Models.SOP.x3trdsSize
+          (params.superTrades == Models.SOP.x2trades || params.superTrades == Models.SOP.x2tradesSize
+            ? 2 : (params.superTrades == Models.SOP.x3trades || params.superTrades == Models.SOP.x3tradesSize
               ? 3 : 1)),
-          (params.superTrades == Models.SOP.x2Size || params.superTrades == Models.SOP.x2trdsSize
-            ? 2 : (params.superTrades == Models.SOP.x3Size || params.superTrades == Models.SOP.x3trdsSize
+          (params.superTrades == Models.SOP.x2Size || params.superTrades == Models.SOP.x2tradesSize
+            ? 2 : (params.superTrades == Models.SOP.x3Size || params.superTrades == Models.SOP.x3tradesSize
               ? 3 : 1))
         ] : [1, 1];
 

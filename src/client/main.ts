@@ -197,7 +197,7 @@ class DisplayOrder {
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
                                             <th>sop</th>
-                                            <th>trds</th>
+                                            <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
                                             <th>ewma?</th>
                                             <th>delayUI</th>
@@ -256,6 +256,7 @@ class DisplayOrder {
                                             <td>
                                                 <input class="form-control input-sm"
                                                    type="number"
+                                                   style="text-align:right;"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.tradesPerMinute">
                                             </td>

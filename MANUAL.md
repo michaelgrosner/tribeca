@@ -152,9 +152,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `SizeWidth` - Same as `Size` but also will aggressively make use of smaller `width` values (respecting always aggressive `pongAt` option and `widthPong`).
 
-* `sop` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trds` and/or the `size`, in both sides at the same time.
+* `sop` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trades` and/or the `size`, in both sides at the same time.
 
-* `trds` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trds` and `/sec` are highly related: If you do more than `trds` buy trades in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trds`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trds` is 2 and `/sec` is 1800 (half an hour):
+* `trades` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trades` and `/sec` are highly related: If you successfully complete more orders than `trades` in `/sec` seconds, Tribeca will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trades`, Tribeca will stop sending buy orders, and the same for sells. For example, if `trades` is 2 and `/sec` is 1800 (half an hour):
 
 Time     | Side | Price | Size | BuyTS | SellTS | Notes
 -------- |------|------:|-----:|------:|-------:|------------------------------------------------:
@@ -165,7 +165,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 12:00:06 | Buy  | 10    | 0.5  | 1.75  | 0      |
 12:00:07 | Buy  | 10    | 0.5  | 2.75  | 0      | Stop sending buy orders until 12:30:07!
 
-* `/sec` - see `trds`.
+* `/sec` - see `trades`.
 
 * `ewma?` - Use also a protection of 100 minute EWMA smoothed line of the price to stop sending orders.
 
