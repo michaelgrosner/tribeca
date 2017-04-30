@@ -165,6 +165,7 @@ export class MarketQuotingComponent implements OnInit {
     if (o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
       || o.data[1] == Models.OrderStatus.Rejected
+      || (typeof o.data[9] != 'undefined' && !o.data[9])
     ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.data[0]);
     else if (!this.order_classes.filter(x => x.orderId === o.data[0]).length)
       this.order_classes.push({
