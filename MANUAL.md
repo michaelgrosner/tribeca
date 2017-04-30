@@ -126,7 +126,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
-* `max` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible `size` based on the current "Target Base Position" (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
+* `maxBidSize?` and `maxAskSize?` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible `size` based on the current "Target Base Position" (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
 
 * `fv` - Sets the fair value calculation mode
 
@@ -144,7 +144,7 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `pDiv` - If your "Target Base Position" diverges more from this value, Tribeca will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
-* `apr?` - If you're in a state where Tribeca has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
+* `apr` - If you're in a state where Tribeca has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
 
   * `Off` - Tribeca will not try to aggressively try to stabilize the target based position.
 
@@ -167,7 +167,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use also a protection of 100 minute EWMA smoothed line of the price to stop sending orders.
+* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to stop sending orders.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
