@@ -218,7 +218,7 @@ export class CurrencyPosition {
     constructor(public amount: number,
                 public heldAmount: number,
                 public currency: Currency,
-                public availableAmount?: number) {}
+                public availableAmount: number) {}
 
     public toString() {
         return "currency=" + Currency[this.currency] + ";amount=" + this.amount;

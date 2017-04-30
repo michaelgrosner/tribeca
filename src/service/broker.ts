@@ -35,7 +35,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
                 persister: Persister.IPersist<Models.Market>,
                 private _messages : Messages.MessagesPubisher) {
 
-        timedPublisherPersister(rawMarketPublisher, persister, time, () => {
+        timedPublisherPersister(rawMarketPublisher, persister, time, () => this.currentBook, () => {
             return new Models.Market(
                 _.take(this.currentBook.bids, 3), 
                 _.take(this.currentBook.bids, 3), 
@@ -599,13 +599,14 @@ function timedPublisherPersister<T>(
         rawPublisher: Messaging.IPublish<T>,
         persister: Persister.IPersist<T>,
         time: Utils.ITimeProvider,
-        getCurrent: () => T) {
+        getCurrent: () => T,
+        asPersisted: (t: T) => T = (t => t)) {
 
     time.setInterval(() => {
         const current = getCurrent();
         if (!current) return;
         rawPublisher.publish(current);
-        persister.persist(current);
+        persister.persist(asPersisted(current));
     }, moment.duration(1, "second"));
 
     const snapshot = () : T[] => {

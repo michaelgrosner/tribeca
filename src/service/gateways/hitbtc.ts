@@ -531,7 +531,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                             return;
                         }
                         if (currency == null) return;
-                        return new Models.CurrencyPosition(r.cash, r.reserved, currency);
+                        return new Models.CurrencyPosition(r.cash, r.reserved, currency, r.cash - r.reserved);
                     }));
                 }
                 catch (e) {

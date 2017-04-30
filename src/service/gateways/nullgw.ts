@@ -78,8 +78,8 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
 
     constructor(pair: Models.CurrencyPair) {
         setInterval(() => this.PositionUpdate.trigger([
-            new Models.CurrencyPosition(500, 50, pair.base),
-            new Models.CurrencyPosition(500, 50, pair.quote)]), 15000);
+            new Models.CurrencyPosition(500, 50, pair.base, 450),
+            new Models.CurrencyPosition(500, 50, pair.quote, 450)]), 15000);
     }
 }
 

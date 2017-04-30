@@ -209,10 +209,12 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
     
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    PositionUpdate = new Utils.Evt<Models.CurrencyPosition[]>();
     private recomputePosition = () => {
-        this.PositionUpdate.trigger(new Models.CurrencyPosition(this._baseAmount, this._baseHeld, Models.Currency.BTC));
-        this.PositionUpdate.trigger(new Models.CurrencyPosition(this._quoteAmount, this._quoteHeld, Models.Currency.USD));
+        this.PositionUpdate.trigger([
+            new Models.CurrencyPosition(this._baseAmount, this._baseHeld, Models.Currency.BTC, this._baseAmount-this._baseHeld),
+            new Models.CurrencyPosition(this._quoteAmount, this._quoteHeld, Models.Currency.USD, this._quoteAmount-this._quoteHeld)
+            ]);
     };
     
     private _baseHeld = 0;
