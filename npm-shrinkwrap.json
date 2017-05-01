@@ -119,9 +119,9 @@
       "dev": true
     },
     "@types/mongodb": {
-      "version": "2.2.0",
-      "from": "@types/mongodb@>=2.2.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/@types/mongodb/-/mongodb-2.2.0.tgz"
+      "version": "2.2.1",
+      "from": "@types/mongodb@2.2.1",
+      "resolved": "https://registry.npmjs.org/@types/mongodb/-/mongodb-2.2.1.tgz"
     },
     "@types/node": {
       "version": "7.0.14",

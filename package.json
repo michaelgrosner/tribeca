@@ -20,7 +20,7 @@
     "@types/jquery": "^2.0.41",
     "@types/lodash": "^4.14.63",
     "@types/marked": "^0.0.28",
-    "@types/mongodb": "^2.2.0",
+    "@types/mongodb": "^2.2.1",
     "@types/node": "^7.0.14",
     "@types/q": "^1.0.0",
     "@types/request": "^0.0.42",
@@ -75,8 +75,8 @@
     "ts-node": "^3.0.2"
   },
   "main": "./tribeca.js",
-  "config" : {
-    "config" : "tribeca.json"
+  "config": {
+    "config": "tribeca.json"
   },
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
