@@ -583,7 +583,7 @@ class OkCoin extends Interfaces.CombinedGateway {
               symbol.symbolQuote
                 .replace('usd', '0.01')
                 .replace('ltc', '0.001')
-            ))
+            ) || 0.01)
         );
         }
 }
