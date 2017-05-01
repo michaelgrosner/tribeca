@@ -79,7 +79,7 @@ To run alternative instances using other config files:
 
 4. Modify the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-5. Start the new instance with `npm start --tribeca:config=autobot2.json`, also you can add the parameter `--tribeca:config=` to `npm stop` or `npm restart` commands, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
+5. Start the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
 
 ### Application Usage
