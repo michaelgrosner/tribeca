@@ -196,13 +196,14 @@ export class StatsComponent implements OnInit {
       name: 'Target',
       type: 'spline',
       yAxis: 1,
-      zIndex: 1,
+      zIndex: 2,
       colorIndex:6,
       data: []
     },{
       name: 'Available',
       type: 'area',
-      colorIndex:1,
+      colorIndex:0,
+      fillOpacity: 0.2,
       yAxis: 1,
       data: []
     },{
@@ -263,14 +264,15 @@ export class StatsComponent implements OnInit {
       name: 'Target (TBP)',
       type: 'spline',
       yAxis: 1,
-      zIndex: 1,
+      zIndex: 2,
       colorIndex:6,
       data: []
     },{
       name: 'Available',
       type: 'area',
       yAxis: 1,
-      colorIndex:1,
+      colorIndex:5,
+      fillOpacity: 0.2,
       data: []
     },{
       name: 'Held',
