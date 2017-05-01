@@ -1,5 +1,4 @@
 import fs = require("fs");
-import log from "./logging";
 
 export interface IConfigProvider {
     GetString(configKey: string): string;
