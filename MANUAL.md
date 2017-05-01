@@ -136,11 +136,11 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `apMode`
 
-  * `Off` - Tribeca will not try to automatically manage positions.
+  * `Manual` - Tribeca will not try to automatically manage positions, instead you will need to manually set `tbp`.
 
   * `EwmaBasic` - Tribeca will use a 200 minute and 100 minute exponential weighted moving average calculation to buy up BTC when the 100 minute line crosses over the 200 minute line, and sell BTC when the reverse happens. The values of 100mins and 200mins are currently not exposed in the UI, but are represented in the code as `shortEwma` and `longEwma`.
 
-* `tbp` - Only used when `apMode` is `Off`. Sets a static "Target Base Position" for Tribeca to stay near. In off auto-position mode, Tribeca will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Off`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
+* `tbp` - Only used when `apMode` is `Manual`. Sets a static "Target Base Position" for Tribeca to stay near. In manual position mode, Tribeca will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Manual`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 
 * `pDiv` - If your "Target Base Position" diverges more from this value, Tribeca will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
