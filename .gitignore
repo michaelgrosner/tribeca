@@ -1,4 +1,4 @@
-etc/tribeca.json
+etc/*.json
 app
 *log
 test/coverage

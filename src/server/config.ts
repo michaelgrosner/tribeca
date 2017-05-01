@@ -1,5 +1,3 @@
-import Utils = require("./utils");
-import _ = require("lodash");
 import fs = require("fs");
 import log from "./logging";
 
@@ -11,13 +9,14 @@ export interface IConfigProvider {
 }
 
 export class ConfigProvider implements IConfigProvider {
-    private static Log = log("tribeca:config");
     private _config: { [key: string]: string } = {};
 
     constructor() {
         this.inBacktestMode = (process.env["TRIBECA_BACKTEST_MODE"] || "false") === "true";
 
-        var configFile = process.env["TRIBECA_CONFIG_FILE"] || "./etc/tribeca.json";
+        let configFile = process.env["TRIBECA_CONFIG_FILE"] || ('./etc/'+
+          process.argv.filter(arg => arg.substr(-5)==='.json').concat('tribeca.json')[0]
+        );
 
         if (fs.existsSync(configFile)) {
             this._config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
@@ -30,7 +29,6 @@ export class ConfigProvider implements IConfigProvider {
 
     public GetString = (configKey: string): string => {
         var value = this.Fetch(configKey);
-        // ConfigProvider.Log.info("%s = %s", configKey, value);
         return value;
     };
 

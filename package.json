@@ -75,10 +75,13 @@
     "ts-node": "^3.0.2"
   },
   "main": "./tribeca.js",
+  "config" : {
+    "config" : "tribeca.json"
+  },
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
-    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run reinstall || echo Already running latest `_ @{u}` version!",
-    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && npm restart",
+    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}`&& npm run reinstall || echo Already running latest `_ @{u}` version!",
+    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever stopall && npm start",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "log-git": "git --no-pager log --graph --oneline @..@{u}",
     "log": "bunyan log/tribeca.log 2>/dev/null",
@@ -88,10 +91,11 @@
     "compile-client": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts",
     "compile-public": "cp -R src/pub/* app/pub/",
     "compile-bundle": "browserify -t [ babelify --presets [ babili es2015 ] ] app/pub/js/client/main.js | uglifyjs > app/pub/js/client/bundle.min.js",
-    "restart": "npm stop && npm start",
-    "stop": "forever stop -a -l /dev/null tribeca.js || :",
-    "start": "npm run test-compile && forever start -a -l /dev/null tribeca.js",
-    "debug": "nodejs --inspect tribeca.js",
+    "restart": "npm stop --tribeca:config=$npm_package_config_config && npm start --$npm_package_name:config=$npm_package_config_config",
+    "debug": "nodejs --inspect tribeca.js $npm_package_config_config",
+    "list": "forever list",
+    "stop": "forever stop -a -l /dev/null $npm_package_config_config || :",
+    "start": "npm run test-compile && forever start --uid $npm_package_config_config -a -l /dev/null tribeca.js $npm_package_config_config",
     "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install",
     "test": "mocha --compilers ts:ts-node/register test/*.ts",
     "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- test/*.ts",
