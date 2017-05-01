@@ -281,6 +281,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         system.exchange,
         system.pair,
         system.config.GetString("TRIBECA_MODE").replace('auto',''),
+        system.config.GetString("MatryoshkaUrl"),
         gateway.base.minTickIncrement
       )]);
 

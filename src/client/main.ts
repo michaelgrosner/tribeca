@@ -74,7 +74,7 @@ class DisplayOrder {
   selector: 'ui',
   template: `<div>
     <div *ngIf="!connected">
-        <h4 class="text-danger text-center">{{ product.advert.environment != 'none' ? product.advert.environment+' is d' : 'D' }}isconnected.</h4>
+        <h4 class="text-danger text-center">{{ product.advert.environment ? product.advert.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
     <div *ngIf="connected">
         <div class="container-fluid">
@@ -428,6 +428,7 @@ class DisplayOrder {
 })
 class ClientComponent implements OnInit {
 
+  public matryoshka: string;
   public server_memory: string;
   public client_memory: string;
   public db_size: string;
@@ -450,7 +451,7 @@ class ClientComponent implements OnInit {
     if (++this.showStats>=3) this.showStats = 0;
   };
   public openMatryoshka = () => {
-    const url = window.prompt('Enter the URL of another instance:','https://');
+    const url = window.prompt('Enter the URL of another instance:',this.matryoshka||'https://');
     jQuery('iframe').height((url&&url!='https://')?589:0);
     jQuery('iframe').attr('src', url);
   };
@@ -459,7 +460,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+jQuery('body').height(), '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, "none", .01),
+    advert: new Models.ProductAdvertisement(null, null, null, null, .01),
     fixed: 2
   };
 
@@ -576,6 +577,7 @@ class ClientComponent implements OnInit {
   private onAdvert = (pa : Models.ProductAdvertisement) => {
     this.connected = true;
     window.document.title = 'tribeca ['+pa.environment+']';
+    this.matryoshka = pa.matryoshka;
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
     this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
