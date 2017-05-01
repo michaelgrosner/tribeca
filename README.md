@@ -129,6 +129,8 @@ To debug the server code with chrome-devtools, attach the node debugger with `no
 
 Another way to debug is to use some `if (log.debug())` blocks here and there, then execute it passing `debug` parameter after `tribeca.js`.
 
+Passing a config filename as a parameter after `tribeca.js` is also allowed.
+
 To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
 To save the output in `log/tribeca.log` file, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
