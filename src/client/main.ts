@@ -401,17 +401,17 @@ class DisplayOrder {
                                   </div>
                                 </div>
                                 <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">
-                                  <order-list [connected]="!!pair.active.display"></order-list>
+                                  <order-list [connected]="!!pair.active.display" [product]="product"></order-list>
                                 </div>
                               </div>
                               <div class="row">
-                                <trade-list></trade-list>
+                                <trade-list [product]="product"></trade-list>
                               </div>
                             </div>
                           </div>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                            <market-trades></market-trades>
+                            <market-trades [product]="product"></market-trades>
                         </div>
                     </div>
                 </div>
