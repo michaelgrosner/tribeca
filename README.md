@@ -73,13 +73,13 @@ To run alternative instances using other config files:
 
 1. Copy your current config file under `etc` folder to a new file also under `etc` folder with `.json` extension, for example to `etc/autobot2.json`.
 
-2. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have an unique port to display the UI.
+    1. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have an unique port to display the UI.
 
-3. Edit the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have an unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
+    2. Edit the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have an unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
 
-4. Edit the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+    3. Edit the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-5. Run the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`, hence an "instance" is in fact a config file.
+2. Run the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`, hence an "instance" is in fact a config file.
 
 
 ### Application Usage
