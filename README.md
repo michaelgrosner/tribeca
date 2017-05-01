@@ -83,6 +83,8 @@ To run alternative instances using other config files:
 
 3. Open in your web browser the different ports of your different running instances.
 
+To display the UI of all instances together in a single page, use the MATRYOSHKA link in the footer.
+
 ### Application Usage
 
 1. Open your web browser to connect to HTTPS port `3000` (or value of `WebClientListenPort`) of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.

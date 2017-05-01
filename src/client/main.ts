@@ -74,7 +74,7 @@ class DisplayOrder {
   selector: 'ui',
   template: `<div>
     <div *ngIf="!connected">
-        <h4 class="text-danger text-center">Not connected</h4>
+        <h4 class="text-danger text-center">{{ product.advert.environment != 'none' ? product.advert.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
     <div *ngIf="connected">
         <div class="container-fluid">
@@ -420,9 +420,10 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <a href="https://github.com/ctubio/tribeca/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="https://github.com/ctubio/tribeca/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
       </small>
     </address>
+    <iframe style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src=""></iframe>
   </div>`
 })
 class ClientComponent implements OnInit {
@@ -447,6 +448,15 @@ class ClientComponent implements OnInit {
   public changeNotepad = (content: string) => {};
   public toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
+  };
+  public openMatryoshka = () => {
+    const url = window.prompt('Enter the URL of another instance:','https://');
+    jQuery('iframe').height((url&&url!='https://')?589:0);
+    jQuery('iframe').attr('src', url);
+  };
+  public resizeMatryoshka = () => {
+    if (window.parent === window) return;
+    window.parent.postMessage('height='+jQuery('body').height(), '*');
   };
   public product: Models.ProductState = {
     advert: new Models.ProductAdvertisement(null, null, "none", .01),
@@ -480,9 +490,18 @@ class ClientComponent implements OnInit {
       .getFire(Models.Topics.Notepad)
       .fire(content);
 
-    this.toggleConfigs = (showConfigs:boolean) => this.fireFactory
-      .getFire(Models.Topics.ToggleConfigs)
-      .fire(showConfigs);
+    this.toggleConfigs = (showConfigs:boolean) => {
+      this.fireFactory
+        .getFire(Models.Topics.ToggleConfigs)
+        .fire(showConfigs);
+      setTimeout(this.resizeMatryoshka, 100);
+    }
+
+    window.addEventListener("message", e => {
+      if (e.data.indexOf('height=')==-1) return;
+      jQuery('iframe').height(e.data.replace('height=',''));
+      this.resizeMatryoshka();
+    }, false);
 
     this.reset(false);
 
@@ -576,6 +595,7 @@ class ClientComponent implements OnInit {
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
     this.product.fixed = Math.floor(Math.log10(pa.minTick)) * -1;
+    setTimeout(this.resizeMatryoshka, 5000);
   }
 }
 
