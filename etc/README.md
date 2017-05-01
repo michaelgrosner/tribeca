@@ -70,6 +70,8 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 
+  * MatryoshkaUrl - The URL of the next instance (see [Multiple instances party time](https://github.com/ctubio/tribeca#multiple-instances-party-time); it will only autofill the prompt to avoid to type everytime.
+
 Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on.
 
 If you set in your exchange the `OrderDestination` value as `Null`, all API calls will be redirect to NullGateway (testing mode).

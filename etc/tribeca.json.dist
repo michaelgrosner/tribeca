@@ -6,6 +6,7 @@
     "WebClientUsername": "NULL",
     "WebClientPassword": "NULL",
     "WebClientListenPort": "3000",
+    "MatryoshkaUrl": "https://",
 
     "HitBtcPullUrl": "http://api.hitbtc.com",
     "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",

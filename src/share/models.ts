@@ -377,7 +377,7 @@ export class ExchangePairMessage<T> {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string, public minTick: number) { }
+    constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string, public matryoshka: string, public minTick: number) { }
 }
 
 export class ApplicationState {
