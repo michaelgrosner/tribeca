@@ -59,6 +59,29 @@ Feel free anytime to check if there are new modifications with `npm run diff`.
 
 Once you decide that is time to upgrade, execute `npm run latest` to download and install the latest modifications in your remote branch (or directly `npm run reinstall` to skip the display of the new commit messages).
 
+If you are running multiple instances, this will stop all instances and only restart `tribeca.json`.
+
+### Multiple instances party time
+
+Please note, an "instance" is in fact a config file under `etc` folder; using the same source folder, you can run as many instances as config files you have in `etc` folder.
+
+You can list the current instances running anytime with `npm run list`.
+
+Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined), will make use of `etc/tribeca.json`.
+
+To run alternative instances using other config files:
+
+1. Duplicate the config file under `etc` folder to a new file also under `etc` folder with `.json` extension, for example `etc/autobot2.json`.
+
+2. Modify the value of `WebClientListenPort` in the new config file to set a new port, so all applications have an unique port to display the UI.
+
+3. Modify the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have an unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
+
+4. Modify the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+
+5. Start the new instance with `npm start --tribeca:config=autobot2.json`, also you can add the parameter `--tribeca:config=` to `npm stop` or `npm restart` commands, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
+
+
 ### Application Usage
 
 1. Open your web browser to connect to HTTPS port `3000` of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
