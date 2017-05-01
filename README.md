@@ -67,7 +67,7 @@ Please note, an "instance" is in fact a config file under `etc` folder; using th
 
 You can list the current instances running anytime with `npm run list`.
 
-Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined), will make use of `etc/tribeca.json`.
+Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined) will use the default config file `etc/tribeca.json`.
 
 To run alternative instances using other config files:
 
