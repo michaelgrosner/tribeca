@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Persister = require("./persister");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import * as moment from "moment";
 
@@ -23,7 +22,7 @@ export class ApplicationState {
     this._dbSizePersister.loadDBSize().then(dbSize => {
       this._app_state = new Models.ApplicationState(
         process.memoryUsage().rss,
-        moment.utc().hours(),
+        (new Date()).getHours(),
         this._tradesMinute,
         dbSize
       );

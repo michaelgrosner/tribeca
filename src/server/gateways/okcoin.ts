@@ -580,9 +580,9 @@ class OkCoin extends Interfaces.CombinedGateway {
             orderGateway,
             new OkCoinPositionGateway(http),
             new OkCoinBaseGateway(parseFloat(
-              symbol.symbolQuote
-                .replace('usd', '0.01')
-                .replace('ltc', '0.001')
+              Models.fromCurrency(pair.base)
+                .replace('BTC', '0.01')
+                .replace('LTC', '0.001')
             ) || 0.01)
         );
         }
