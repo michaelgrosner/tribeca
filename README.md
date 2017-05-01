@@ -143,13 +143,15 @@ Added nodejs7, typescript2, angular4 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
+Added support for multiple instances/config files.
+
 Added npm scripts, david-dm, travis-ci, coveralls and codacy.
 
 Added historical charts to replace grafana.
 
 Updated OKCoin API integration (since https://www.okcoin.com/t-354.html).
 
-### Release 2.0 Changelog:
+### Release 2.0 Changelog:.
 
 Added new quoting styles PingPong, Boomerang, AK-47.
 
