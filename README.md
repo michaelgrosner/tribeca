@@ -71,20 +71,20 @@ Simple commands like `npm start`, `npm stop` or `npm restart` (without any confi
 
 To run alternative instances using other config files:
 
-1. Duplicate the config file under `etc` folder to a new file also under `etc` folder with `.json` extension, for example `etc/autobot2.json`.
+1. Copy your current config file under `etc` folder to a new file also under `etc` folder with `.json` extension, for example to `etc/autobot2.json`.
 
-2. Modify the value of `WebClientListenPort` in the new config file to set a new port, so all applications have an unique port to display the UI.
+2. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have an unique port to display the UI.
 
-3. Modify the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have an unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
+3. Edit the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have an unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
 
-4. Modify the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+4. Edit the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-5. Start the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`, hence an "instance" is in fact a config file.
+5. Run the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`, hence an "instance" is in fact a config file.
 
 
 ### Application Usage
 
-1. Open your web browser to connect to HTTPS port `3000` of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
+1. Open your web browser to connect to HTTPS port `3000` (or value of `WebClientListenPort`) of the machine running tribeca. If you're running tribeca locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
 2. Read up on how to use tribeca and market making in the [manual](https://github.com/ctubio/tribeca/blob/master/MANUAL.md).
 
@@ -92,7 +92,7 @@ To run alternative instances using other config files:
 
 ### Web UI
 
-Once `tribeca` is up and running, visit HTTPS port `3000` of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
+Once `tribeca` is up and running, visit HTTPS port `3000` (or value of `WebClientListenPort`) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
