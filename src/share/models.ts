@@ -331,7 +331,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
-export enum AutoPositionMode { Off, EwmaBasic }
+export enum AutoPositionMode { Manual, EwmaBasic }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
