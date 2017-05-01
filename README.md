@@ -81,9 +81,7 @@ To run alternative instances using other config files:
 
 2. Run the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`, hence an "instance" is in fact a config file.
 
-3. Open in your web browser the different ports of your different running instances.
-
-To display the UI of all instances together in a single page, use the MATRYOSHKA link in the footer.
+3. Open in your web browser the different pages of the ports of your different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer.
 
 ### Application Usage
 
