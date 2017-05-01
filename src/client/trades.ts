@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -18,6 +18,8 @@ export class TradesComponent implements OnInit {
   public audio: boolean;
 
   private sortTimeout: number;
+
+  @Input() product: Models.ProductState;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -141,7 +143,8 @@ export class TradesComponent implements OnInit {
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
-          quoteSymbol: Models.Currency[t.pair.quote]
+          quoteSymbol: Models.Currency[t.pair.quote],
+          productFixed: this.product.fixed
         }]);
         if (t.loadedFromDB === false && this.audio) {
           var audio = new Audio('/audio/boom.mp3');

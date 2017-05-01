@@ -16,6 +16,8 @@ export class OrdersComponent implements OnInit {
 
   private fireCxl: Subscribe.IFire<Models.OrderStatusUpdate>;
 
+  @Input() product: Models.ProductState;
+
   @Input() set connected(connected: boolean) {
     if (connected) return;
     if (!this.gridOptions.api) return;
@@ -131,7 +133,8 @@ export class OrdersComponent implements OnInit {
         tif: Models.TimeInForce[o.data[7]],
         lat: o.data[8]+'ms',
         lvQty: o.data[9],
-        quoteSymbol: Models.Currency[o.data[10]]
+        quoteSymbol: Models.Currency[o.data[10]],
+        productFixed: this.product.fixed
       }]);
   }
 }

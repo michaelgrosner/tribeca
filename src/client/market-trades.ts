@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -12,6 +12,8 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 export class MarketTradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
+
+  @Input() product: Models.ProductState;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -84,7 +86,8 @@ export class MarketTradesComponent implements OnInit {
         mAz: (trade.ask != null ? trade.ask.size : null),
         mBz: (trade.bid != null ? trade.bid.size : null),
         make_side: Models.Side[trade.make_side],
-        quoteSymbol: Models.Currency[trade.pair.quote]
+        quoteSymbol: Models.Currency[trade.pair.quote],
+        productFixed: this.product.fixed
       }]);
 
     this.gridOptions.api.forEachNode((node: RowNode) => {
