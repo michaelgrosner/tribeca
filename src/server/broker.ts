@@ -286,11 +286,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
 
             if (typeof orig === "undefined") {
-                this._log.error({
-                    update: osr,
-                    existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
-                    existingIds: Array.from(this._orderCache.allOrders.keys())
-                }, "no existing order for non-New update!");
+                // this._log.error({
+                    // update: osr,
+                    // existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
+                    // existingIds: Array.from(this._orderCache.allOrders.keys())
+                // }, "no existing order for non-New update!");
                 return;
             }
         }
