@@ -351,6 +351,7 @@ export interface QuotingParameters {
     mode?: QuotingMode;
     fvModel?: FairValueModel;
     targetBasePosition?: number;
+    targetBasePositionPercentage?: number;
     positionDivergence?: number;
     positionDivergencePercentage?: number;
     percentageValues?: boolean;

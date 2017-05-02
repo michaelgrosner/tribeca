@@ -134,10 +134,12 @@ export class TargetBasePositionManager {
         if (params === null || latestPosition === null)
             return;
 
-        let targetBasePosition: number = params.targetBasePosition;
-        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic) {
+        let targetBasePosition: number = params.percentageValues
+          ? params.targetBasePositionPercentage * latestPosition.value / 100
+          : params.targetBasePosition;
+
+        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic)
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
-        }
 
         if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
             this._latest = new Models.TargetBasePositionValue(

@@ -193,7 +193,7 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
                                             <th>sop</th>
@@ -223,11 +223,17 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td *ngIf="pair.quotingParameters.display.autoPositionMode==0">
+                                            <td *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm"
                                                    type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
+                                            </td>
+                                            <td *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
+                                                <input class="form-control input-sm"
+                                                   type="number"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
                                             <td *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
