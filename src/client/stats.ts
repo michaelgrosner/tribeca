@@ -413,7 +413,7 @@ export class StatsComponent implements OnInit {
 
   private updateMarket = (update: Models.Timestamped<any[]>) => {
     if (update && update.data[0].length && update.data[1].length)
-      this.width = (update.data[1][0] / 1e1 - update.data[0][0] / 1e1 ) / 2;
+      this.width = (update.data[1][0] - update.data[0][0]) / 2;
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
