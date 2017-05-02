@@ -54,6 +54,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   mode:                           Models.QuotingMode.AK47,
   fvModel:                        Models.FairValueModel.BBO,
   targetBasePosition:             1,
+  targetBasePositionPercentage:   50,
   positionDivergence:             0.9,
   positionDivergencePercentage:   21,
   percentageValues:               false,
