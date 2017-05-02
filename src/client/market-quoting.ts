@@ -108,13 +108,9 @@ export class MarketQuotingComponent implements OnInit {
       return;
     }
 
-    let price: number = 0;
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
-      if (j >= this.levels.length)
-        this.levels[j] = <any>{};
-      this.levels[j].askPrice = price + update.data[1][i] / 1e1;
-      price = this.levels[j].askPrice;
-      this.levels[j].askSize = update.data[1][++i] / 1e1;
+      if (j >= this.levels.length) this.levels[j] = <any>{};
+      this.levels[j] = { askPrice: update.data[1][i], askSize: update.data[1][++i] };
     }
 
     if (this.order_classes.length) {
@@ -143,13 +139,9 @@ export class MarketQuotingComponent implements OnInit {
       this.qAskSz = null;
     }
 
-    price = 0;
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
-      if (j >= this.levels.length)
-        this.levels[j] = <any>{};
-      this.levels[j].bidPrice = Math.abs(price - update.data[0][i] / 1e1);
-      price = this.levels[j].bidPrice;
-      this.levels[j].bidSize = update.data[0][++i] / 1e1;
+      if (j >= this.levels.length) this.levels[j] = <any>{};
+      this.levels[j] = Object.assign(this.levels[j], { bidPrice: update.data[0][i], bidSize: update.data[0][++i] });
       if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
       else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
     }
