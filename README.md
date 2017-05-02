@@ -69,9 +69,9 @@ You can list the current instances running anytime with `npm run list`.
 
 Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined) will use the default config file `etc/tribeca.json`.
 
-To run alternative instances using other config files:
+To run multiple instances using a collection of config files:
 
-1. Copy your current config file under `etc` folder to a new file also under `etc` folder with `.json` extension, for example to `etc/autobot2.json`.
+1. Create a new config file with `cp etc/tribeca.json etc/Xibeca_party_time.json` (feel free to choose the filename).
 
     1. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have a unique port to display the UI.
 
@@ -79,9 +79,9 @@ To run alternative instances using other config files:
 
     3. Edit the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `npm start --tribeca:config=autobot2.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `npm start --tribeca:config=Xibeca_party_time.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
-3. Open in your web browser the different pages of the ports of your different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
+3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`1.
 
 ### Application Usage
 
