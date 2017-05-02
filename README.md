@@ -71,7 +71,7 @@ Simple commands like `npm start`, `npm stop` or `npm restart` (without any confi
 
 To run multiple instances using a collection of config files:
 
-1. Create a new config file with `cp etc/tribeca.json etc/Xibeca_party_time.json` (feel free to choose the filename).
+1. Create a new config file with `cp etc/tribeca.json etc/Xibeca_party_time.json` (with any name but `.json` extension).
 
     1. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have a unique port to display the UI.
 
