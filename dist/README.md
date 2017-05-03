@@ -14,7 +14,7 @@ Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will
 ### Dockerfile
 To run tribeca under winy or mac, make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):
 
-1. Please install [docker](https://www.docker.com/) for your system before preceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker or docker-machine is set up, depending on Docker version. See [the docs](https://docs.docker.com/installation/mac/) for more help.
+1. Please install [docker](https://www.docker.com/) for your system before proceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker or docker-machine is set up, depending on Docker version. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
 2. Set up mongodb. If you do not have a mongodb instance already running: `docker run -p 27017:27017 --name tribeca-mongo -d mongo`.
 
