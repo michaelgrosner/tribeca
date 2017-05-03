@@ -55,7 +55,7 @@
     "q": "^1.5.0",
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
-    "rxjs": "^5.3.0",
+    "rxjs": "^5.3.1",
     "shortid": "^2.2.8",
     "socket.io": "^1.7.3",
     "socket.io-client": "^1.7.3",
@@ -80,7 +80,7 @@
   },
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
-    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}`&& npm run reinstall || echo Already running latest `_ @{u}` version!",
+    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run reinstall || echo Already running latest `_ @{u}` version!",
     "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever stopall && npm start",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "log-git": "git --no-pager log --graph --oneline @..@{u}",

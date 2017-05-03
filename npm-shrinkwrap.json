@@ -2961,9 +2961,9 @@
       "resolved": "https://registry.npmjs.org/ripemd160/-/ripemd160-1.0.1.tgz"
     },
     "rxjs": {
-      "version": "5.3.0",
-      "from": "rxjs@>=5.3.0 <6.0.0",
-      "resolved": "https://registry.npmjs.org/rxjs/-/rxjs-5.3.0.tgz"
+      "version": "5.3.1",
+      "from": "rxjs@5.3.1",
+      "resolved": "https://registry.npmjs.org/rxjs/-/rxjs-5.3.1.tgz"
     },
     "safe-buffer": {
       "version": "5.0.1",
