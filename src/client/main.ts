@@ -136,25 +136,25 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:142px;">
+                                            <td style="width:88px;">
                                                 <input class="width-option form-control input-sm"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPing">
                                             </td>
-                                            <td style="width:142px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="width:88px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <input class="width-option form-control input-sm"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
-                                            <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:142px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:142px;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
@@ -164,13 +164,13 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                             </td>
-                                            <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:142px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
-                                            <td  style="width:88px;"*ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td  style="width:142px;"*ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
