@@ -148,13 +148,13 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
-                                            <td style="width:142px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
-                                            <td style="width:142px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
@@ -164,13 +164,13 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                             </td>
-                                            <td style="width:142px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
-                                            <td  style="width:142px;"*ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td  style="width:169px;"*ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
