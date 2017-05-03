@@ -6,9 +6,8 @@ import {SubscriberFactory} from './shared_directives';
 @Component({
   selector: 'wallet-position',
   template: `<div class="positions" *ngIf="value || quoteValue">
-    <h4 class="col-md-12 col-xs-2"><small>{{ quoteCurrency }}:<br><span title="{{ quoteCurrency }} Available" class="text-danger">{{ quotePosition | number:'1.'+product.fixed+'-'+product.fixed }}</span><br/><span title="{{ quoteCurrency }} Held" [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | number:'1.'+product.fixed+'-'+product.fixed }}</span></small></h4>
-    <h4 class="col-md-12 col-xs-2"><small>{{ baseCurrency }}:<br><span title="{{ baseCurrency }} Available" class="text-danger">{{ basePosition | number:'1.8-8' }}</span><br/><span title="{{ baseCurrency }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition | number:'1.8-8' }}</span></small></h4>
-    <h4 class="col-md-12 col-xs-2" style="margin-bottom: 14px!important;"><small>Value:</small><br><b title="{{ baseCurrency }} Total">{{ value | number:'1.8-8' }}</b><br/><b title="{{ quoteCurrency }} Total">{{ quoteValue | number:'1.'+product.fixed+'-'+product.fixed }}</b></h4>
+    <h4 class="col-md-12 col-xs-2"><small>{{ quoteCurrency }}:<br/></small><b title="{{ quoteCurrency }} Total">{{ quoteValue | number:'1.'+product.fixed+'-'+product.fixed }}</b><br /><small><span title="{{ quoteCurrency }} Available" class="text-danger">{{ quotePosition | number:'1.'+product.fixed+'-'+product.fixed }}</span><br/><span title="{{ quoteCurrency }} Held" [ngClass]="quoteHeldPosition ? 'buy' : 'text-muted'">{{ quoteHeldPosition | number:'1.'+product.fixed+'-'+product.fixed }}</span></small></h4>
+    <h4 class="col-md-12 col-xs-2"><small>{{ baseCurrency }}:<br></small><b title="{{ baseCurrency }} Total">{{ value | number:'1.8-8' }}</b><br /><small><span title="{{ baseCurrency }} Available" class="text-danger">{{ basePosition | number:'1.8-8' }}</span><br/><span title="{{ baseCurrency }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition | number:'1.8-8' }}</span></small></h4>
   </div>`
 })
 export class WalletPositionComponent implements OnInit {
