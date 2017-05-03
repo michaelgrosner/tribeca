@@ -261,7 +261,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px;">
                                                 <input class="form-control input-sm"
-                                                   type="number" step="1" min="0"
+                                                   type="number" step="0.1" min="0"
                                                    style="text-align:right;"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.tradesPerMinute">
