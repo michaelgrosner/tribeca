@@ -13,7 +13,7 @@
 [![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)](https://david-dm.org/ctubio/tribeca)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 
-Runs on the latest node.js (v6 or v7). Persistence is acheived using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
+Runs on the latest node.js (v6 or v7). Persistence is achieved using mongodb. Installation via Docker is supported, but manual installation in a dedicated fresh unix-like instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/img/web_ui_preview.png)
 
