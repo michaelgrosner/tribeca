@@ -518,7 +518,7 @@
 .ephemeralnotepad::-webkit-input-placeholder{font-size:13px;line-height:13px;}
 .ephemeralnotepad::-moz-placeholder{font-size:13px;line-height:13px;}
 .fairvalue,input.width-option{color:#0d0!important;}.exchange{background:black;padding-bottom:7px;border-top-left-radius:0px;border-top-right-radius:0px;}
-.exchangeActions{background:black;padding-top:8px;padding-bottom:8px;border-top-left-radius:0px;border-top-right-radius:0px;}
+.exchangeActions{background:black;padding-top:13px;padding-bottom:8px;border-top-left-radius:0px;border-top-right-radius:0px;}
 .tradeSafety, .tradeSafety2 {font-size:12px;background:black;padding:3px 5px;border-top-left-radius:0px;border-bottom-left-radius:0px;}.tradeSafety2 {border-top-right-radius:0px;border-bottom-right-radius:0px;}
 .tradeSafety div,.tradeSafety2 div {padding:2px;}
 h4{margin:4px 0px!important;}
