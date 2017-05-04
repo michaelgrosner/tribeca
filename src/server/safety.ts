@@ -43,11 +43,7 @@ export class SafetyCalculator {
         private _broker: Broker.OrderBroker,
         private _publisher: Publish.IPublish<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);
-        _qlParams.NewParameters.on(_ => {
-          this.computeQtyLimit();
-          if (_qlParams.latest.mode === Models.QuotingMode.AK47)
-            _broker.cancelOpenOrders();
-        });
+        _qlParams.NewParameters.on(this.computeQtyLimit);
         _broker.Trade.on(this.onTrade);
 
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
