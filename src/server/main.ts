@@ -228,7 +228,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
 
     const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
         const coll = (await (await db).collection(collectionName));
-        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair, (collectionName === "trades"));
+        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
     };
 
     const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
