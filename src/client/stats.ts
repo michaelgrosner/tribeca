@@ -51,6 +51,7 @@ export class StatsComponent implements OnInit {
   public fvChartOptions = {
     title: 'fair value',
     chart: {
+        height: 400,
         zoomType: 'x',
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
@@ -150,6 +151,7 @@ export class StatsComponent implements OnInit {
   public quoteChartOptions = {
     title: 'quote wallet',
     chart: {
+        height: 200,
         zoomType: 'x',
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -218,6 +220,7 @@ export class StatsComponent implements OnInit {
   public baseChartOptions = {
     title: 'base wallet',
     chart: {
+        height: 200,
         zoomType: 'x',
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
