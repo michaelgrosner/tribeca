@@ -36,7 +36,7 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
-    setTimeout(this.loadSubscriber, 1000);
+    setTimeout(this.loadSubscriber, 500);
   }
 
   private subscribed: boolean = false;
