@@ -21,7 +21,6 @@ export interface Persistable {
     time?: Date;
     pair?: Models.CurrencyPair;
     exchange?: Models.Exchange;
-    loadedFromDB?: boolean;
 }
 
 export interface IPersist<T> {
@@ -99,13 +98,11 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         }).done();
     };
 
-    private converter = (x: T, setDBFlag?: boolean) : T => {
+    private converter = (x: T) : T => {
         if (typeof x.exchange === "undefined")
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
-        if (setDBFlag === true)
-            x.loadedFromDB = true;
         return x;
     };
 
@@ -142,7 +139,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 query = query.skip(Math.max(count - limit, 0));
         }
 
-        const loaded = _.map(await query.toArray(), p => this.converter(p, this._setDBFlag));
+        const loaded = _.map(await query.toArray(), this.converter);
 
         return loaded;
     };
@@ -163,21 +160,13 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
           });
     };
 
-    private converter = (x: T, setDBFlag?: boolean) : T => {
+    private converter = (x: T) : T => {
         if (typeof x.time === "undefined")
             x.time = new Date();
         if (typeof x.exchange === "undefined")
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
             x.pair = this._pair;
-        if (setDBFlag === true)
-            x.loadedFromDB = true;
-        return x;
-    };
-
-    private unConverter = (x: T) : T => {
-        if (typeof x.loadedFromDB !== "undefined")
-            delete x.loadedFromDB;
         return x;
     };
 
@@ -186,15 +175,13 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private collection: mongodb.Collection,
         private _dbName: string,
         private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair,
-        private _setDBFlag: boolean
+        private _pair: Models.CurrencyPair
     ) {
             this._log = log("persister:"+_dbName);
 
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;
 
-                this._persistQueue.forEach(this.unConverter);
                 if (this._dbName != 'trades')
                   collection.deleteMany({ time: { $exists:true } }, err => {
                       if (err) this._log.error(err, "Unable to deleteMany", this._dbName);

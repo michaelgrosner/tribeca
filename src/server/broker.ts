@@ -440,7 +440,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           this._oeGateway.cancelAllOpenOrders();
         _.each(initTrades, t => this._trades.push(t));
         _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
-        _tradePublisher.registerSnapshot(() => this._trades.slice(-1000));
+        _tradePublisher.registerSnapshot(() => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
