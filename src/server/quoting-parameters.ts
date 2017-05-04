@@ -46,7 +46,7 @@ export class QuotingParametersRepository extends Repository<Models.QuotingParame
   ) {
     super("qpr",
       (p: Models.QuotingParameters) => p.buySize > 0 || p.sellSize > 0 || p.buySizePercentage > 0 || p.sellSizePercentage > 0 || p.widthPing > 0 || p.widthPong > 0,
-      (a: Models.QuotingParameters, b: Models.QuotingParameters) => !_.isEqual(a, b),
+      (a: Models.QuotingParameters, b: Models.QuotingParameters) => !_.isEqual(a, Object.assign(b, {audio:a.audio, delayUI:a.delayUI})),
       initParam, rec, pub);
     this.NewParameters.on(() => paramsPersister.persist(this.latest));
   }
