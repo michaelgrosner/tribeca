@@ -288,7 +288,7 @@ export class StatsComponent implements OnInit {
   private showStats: boolean;
   @Input() set setShowStats(showStats: boolean) {
     if (!this.showStats && showStats)
-      Highcharts.charts.forEach(chart => { chart.redraw(); } );
+      Highcharts.charts.forEach(chart => chart.redraw(false) );
     this.showStats = showStats;
   }
 
