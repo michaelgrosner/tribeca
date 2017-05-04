@@ -119,7 +119,7 @@ class DisplayOrder {
                                                    [(ngModel)]="pair.quotingParameters.display.bullets">
                                             </td>
                                             <td *ngIf="pair.quotingParameters.display.mode==7">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-1"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
@@ -137,25 +137,25 @@ class DisplayOrder {
                                                 </select>
                                             </td>
                                             <td style="width:88px;">
-                                                <input class="width-option form-control input-sm"
+                                                <input class="width-option form-control input-sm unit-1"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPing">
                                             </td>
                                             <td style="width:88px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
-                                                <input class="width-option form-control input-sm"
+                                                <input class="width-option form-control input-sm unit-1"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
                                             <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
                                             <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
@@ -165,13 +165,13 @@ class DisplayOrder {
                                                    [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                             </td>
                                             <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
                                             <td  style="width:169px;"*ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
@@ -224,25 +224,25 @@ class DisplayOrder {
                                                 </select>
                                             </td>
                                             <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
                                             </td>
                                             <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
                                             <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                             </td>
                                             <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm"
+                                                <input class="form-control input-sm unit-0"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
@@ -586,7 +586,7 @@ class ClientComponent implements OnInit {
     this.matryoshka = pa.matryoshka;
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
-    this.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+    this.pair_name = Models.Currency[pa.pair.base] + '/' + Models.Currency[pa.pair.quote];
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
@@ -603,6 +603,10 @@ class ClientComponent implements OnInit {
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
     this.product.fixed = Math.floor(Math.log10(pa.minTick)) * -1;
+    setTimeout(() =>{
+      jQuery('input.unit-0').attr('unit', Models.Currency[pa.pair.base]);
+      jQuery('input.unit-1').attr('unit', Models.Currency[pa.pair.quote]);
+    }, 1000);
     setTimeout(this.resizeMatryoshka, 5000);
   }
 }
