@@ -93,9 +93,9 @@
       "resolved": "https://registry.npmjs.org/@types/highcharts/-/highcharts-4.2.54.tgz"
     },
     "@types/jquery": {
-      "version": "2.0.42",
-      "from": "@types/jquery@>=2.0.42 <3.0.0",
-      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.42.tgz"
+      "version": "2.0.43",
+      "from": "@types/jquery@2.0.43",
+      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.43.tgz"
     },
     "@types/lodash": {
       "version": "4.14.63",
@@ -124,9 +124,9 @@
       "resolved": "https://registry.npmjs.org/@types/mongodb/-/mongodb-2.2.2.tgz"
     },
     "@types/node": {
-      "version": "7.0.16",
-      "from": "@types/node@>=7.0.16 <8.0.0",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.16.tgz"
+      "version": "7.0.18",
+      "from": "@types/node@7.0.18",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.18.tgz"
     },
     "@types/q": {
       "version": "1.0.0",
@@ -134,9 +134,9 @@
       "resolved": "https://registry.npmjs.org/@types/q/-/q-1.0.0.tgz"
     },
     "@types/request": {
-      "version": "0.0.42",
-      "from": "@types/request@>=0.0.42 <0.0.43",
-      "resolved": "https://registry.npmjs.org/@types/request/-/request-0.0.42.tgz"
+      "version": "0.0.43",
+      "from": "@types/request@0.0.43",
+      "resolved": "https://registry.npmjs.org/@types/request/-/request-0.0.43.tgz"
     },
     "@types/serve-static": {
       "version": "1.7.31",
