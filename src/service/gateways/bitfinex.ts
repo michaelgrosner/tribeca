@@ -511,7 +511,7 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class BitfinexSymbolProvider {
     public symbol: string;
 
-    constructor(pair: Models.CurrencyPair) {
+    constructor(public readonly pair: Models.CurrencyPair) {
         this.symbol = Models.fromCurrency(pair.base).toLowerCase() + Models.fromCurrency(pair.quote).toLowerCase();
     }
 }
@@ -524,7 +524,7 @@ class Bitfinex extends Interfaces.CombinedGateway {
         
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, symbol)
-            : new NullGateway.NullOrderGateway();
+            : new NullGateway.TestingGateway(pricePrecision, symbol.pair);
 
         super(
             new BitfinexMarketDataGateway(timeProvider, http, symbol),

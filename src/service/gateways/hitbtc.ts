@@ -590,12 +590,12 @@ class HitBtc extends Interfaces.CombinedGateway {
         const details = new HitBtcBaseGateway(step);
         const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
-            : new NullGateway.NullOrderGateway();
+            : new NullGateway.TestingGateway(step, pair);
 
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(config);
         if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.NullPositionGateway(pair);
+            positionGateway = new NullGateway.TestingGateway(step, pair);
         }
 
         super(

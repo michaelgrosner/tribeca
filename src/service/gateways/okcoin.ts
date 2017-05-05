@@ -480,7 +480,7 @@ class OkCoin extends Interfaces.CombinedGateway {
 
         var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
             ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer, symbol)
-            : new NullGateway.NullOrderGateway();
+            : new NullGateway.TestingGateway(.01, pair);
 
         super(
             new OkCoinMarketDataGateway(socket, symbol),

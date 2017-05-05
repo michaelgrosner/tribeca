@@ -815,7 +815,7 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class CoinbaseSymbolProvider {
     public symbol: string;
 
-    constructor(pair: Models.CurrencyPair) {
+    constructor(public readonly pair: Models.CurrencyPair) {
         this.symbol = Models.fromCurrency(pair.base) + "-" + Models.fromCurrency(pair.quote);
     }
 }
@@ -830,7 +830,7 @@ class Coinbase extends Interfaces.CombinedGateway {
         
         const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
-            : new NullGateway.NullOrderGateway();
+            : new NullGateway.TestingGateway(quoteIncrement, symbolProvider.pair);
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
         const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(quoteIncrement), orderEventEmitter, timeProvider);

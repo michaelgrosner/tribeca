@@ -141,7 +141,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             quantity: replace.quantity
         };
 
-        this._oeGateway.replaceOrder(this.updateOrderState(rpt));        
+        this._oeGateway.replaceOrder(this.updateOrderState(report));        
 
         return new Models.SentOrder(report.orderId);
     };
@@ -198,18 +198,17 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
+        const getOrFallback = <T>(n: T|undefined, o: T) => typeof n !== "undefined" ? n : o;
 
         const quantity = getOrFallback(osr.quantity, orig.quantity);
-        const leavesQuantity = getOrFallback(osr.leavesQuantity, orig.leavesQuantity);
-
-        let cumQuantity : number = undefined;
-        if (typeof osr.cumQuantity !== "undefined") {
-            cumQuantity = getOrFallback(osr.cumQuantity, orig.cumQuantity);
+        let cumQuantity : number;
+        let leavesQuantity : number;
+        if (!_.isUndefined(osr.lastQuantity)) {
+            if (_.isUndefined(osr.cumQuantity)) cumQuantity = osr.lastQuantity + (orig.cumQuantity || 0);
+            if (_.isUndefined(osr.leavesQuantity)) leavesQuantity = quantity - osr.lastQuantity;
         }
-        else {
-            cumQuantity = getOrFallback(orig.cumQuantity, 0) + getOrFallback(osr.lastQuantity, 0);
-        }
+        cumQuantity = osr.cumQuantity || cumQuantity;
+        leavesQuantity = osr.leavesQuantity || leavesQuantity;
 
         const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
@@ -229,7 +228,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             lastPrice: osr.lastPrice,
             leavesQuantity: leavesQuantity,
             cumQuantity: cumQuantity,
-            averagePrice: cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
+            averagePrice: osr.averagePrice || orig.averagePrice,
             liquidity: getOrFallback(osr.liquidity, orig.liquidity),
             exchange: getOrFallback(osr.exchange, orig.exchange),
             computationalLatency: getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
