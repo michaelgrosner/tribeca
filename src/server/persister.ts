@@ -86,14 +86,10 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         this.collection.then(coll => {
             if (this._dbName != 'trades')
               coll.deleteMany({ _id: { $exists:true } }, err => {
-                  if (err)
-                      this._log.error(err, "Unable to deleteMany", this._dbName, report);
+                  if (err) this._log.error(err, "Unable to deleteMany", this._dbName, report);
               });
             coll.insertOne(this.converter(report), err => {
-                if (err)
-                    this._log.error(err, "Unable to insert", this._dbName, report);
-                else
-                    this._log.info("Persisted", report);
+                if (err) this._log.error(err, "Unable to insert", this._dbName, report);
             });
         }).done();
     };
