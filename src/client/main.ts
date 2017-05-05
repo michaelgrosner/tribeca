@@ -558,7 +558,7 @@ class ClientComponent implements OnInit {
 
   private onAppState = (as : Models.ApplicationState) => {
     this.server_memory = this.bytesToSize(as.memory, 0);
-    this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 0, 0);
+    this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
     this.db_size = this.bytesToSize(as.dbsize, 0);
     this.system_theme = this.getTheme(as.hour);
     this.tradeFreq = (as.freq);
