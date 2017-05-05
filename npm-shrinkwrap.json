@@ -94,13 +94,13 @@
     },
     "@types/jquery": {
       "version": "2.0.43",
-      "from": "@types/jquery@2.0.43",
+      "from": "@types/jquery@>=2.0.43 <3.0.0",
       "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.43.tgz"
     },
     "@types/lodash": {
-      "version": "4.14.63",
-      "from": "@types/lodash@>=4.14.63 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.63.tgz"
+      "version": "4.14.64",
+      "from": "@types/lodash@>=4.14.64 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.64.tgz"
     },
     "@types/marked": {
       "version": "0.0.28",
@@ -125,7 +125,7 @@
     },
     "@types/node": {
       "version": "7.0.18",
-      "from": "@types/node@7.0.18",
+      "from": "@types/node@>=7.0.18 <8.0.0",
       "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.18.tgz"
     },
     "@types/q": {
