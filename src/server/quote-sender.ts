@@ -27,7 +27,6 @@ export class QuoteSender {
             private _quotingEngine: QuotingEngine.QuotingEngine,
             private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
-            private _positionBroker: Interfaces.IPositionBroker,
             private _details: Interfaces.IBroker,
             private _activeRepo: Active.ActiveRepository) {
         _activeRepo.NewParameters.on(this.sendQuote);
@@ -58,17 +57,11 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (quote.ask !== null) {
-              if ((this.hasEnoughPosition(this._details.pair.base, quote.ask.size) || (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this._quoter.quotesSent(Models.Side.Ask).length)) &&
-                (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
+            if (quote.ask !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
                 askStatus = Models.QuoteStatus.Live;
-            }
 
-            if (quote.bid !== null) {
-              if ((this.hasEnoughPosition(this._details.pair.quote, quote.bid.size * quote.bid.price) || (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 && this._quoter.quotesSent(Models.Side.Bid).length)) &&
-                (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
+            if (quote.bid !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
                 bidStatus = Models.QuoteStatus.Live;
-            }
         }
 
         if (askStatus === Models.QuoteStatus.Live) {
@@ -82,10 +75,5 @@ export class QuoteSender {
             this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, this._timeProvider.utcNow()));
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
-    };
-
-    private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
-        var pos = this._positionBroker.getPosition(cur);
-        return pos != null && pos.amount > minAmt;
     };
 }
