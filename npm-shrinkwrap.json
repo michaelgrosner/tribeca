@@ -3,54 +3,54 @@
   "version": "2.0.0",
   "dependencies": {
     "@angular/common": {
-      "version": "4.1.0",
-      "from": "@angular/common@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/common/-/common-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/common@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/common/-/common-4.1.1.tgz"
     },
     "@angular/compiler": {
-      "version": "4.1.0",
-      "from": "@angular/compiler@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/compiler/-/compiler-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/compiler@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/compiler/-/compiler-4.1.1.tgz"
     },
     "@angular/compiler-cli": {
-      "version": "4.1.0",
-      "from": "@angular/compiler-cli@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/compiler-cli/-/compiler-cli-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/compiler-cli@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/compiler-cli/-/compiler-cli-4.1.1.tgz"
     },
     "@angular/core": {
-      "version": "4.1.0",
-      "from": "@angular/core@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/core/-/core-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/core@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/core/-/core-4.1.1.tgz"
     },
     "@angular/forms": {
-      "version": "4.1.0",
-      "from": "@angular/forms@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/forms/-/forms-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/forms@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/forms/-/forms-4.1.1.tgz"
     },
     "@angular/http": {
-      "version": "4.1.0",
-      "from": "@angular/http@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/http/-/http-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/http@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/http/-/http-4.1.1.tgz"
     },
     "@angular/platform-browser": {
-      "version": "4.1.0",
-      "from": "@angular/platform-browser@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/platform-browser@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-4.1.1.tgz"
     },
     "@angular/platform-browser-dynamic": {
-      "version": "4.1.0",
-      "from": "@angular/platform-browser-dynamic@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/platform-browser-dynamic@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-4.1.1.tgz"
     },
     "@angular/router": {
-      "version": "4.1.0",
-      "from": "@angular/router@>=4.1.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@angular/router/-/router-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/router@>=4.1.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/@angular/router/-/router-4.1.1.tgz"
     },
     "@angular/tsc-wrapped": {
-      "version": "4.1.0",
-      "from": "@angular/tsc-wrapped@4.1.0",
-      "resolved": "https://registry.npmjs.org/@angular/tsc-wrapped/-/tsc-wrapped-4.1.0.tgz"
+      "version": "4.1.1",
+      "from": "@angular/tsc-wrapped@4.1.1",
+      "resolved": "https://registry.npmjs.org/@angular/tsc-wrapped/-/tsc-wrapped-4.1.1.tgz"
     },
     "@types/angular": {
       "version": "1.6.17",
@@ -3315,9 +3315,9 @@
       "resolved": "https://registry.npmjs.org/ts-helpers/-/ts-helpers-1.1.2.tgz"
     },
     "ts-node": {
-      "version": "3.0.3",
-      "from": "ts-node@>=3.0.3 <4.0.0",
-      "resolved": "https://registry.npmjs.org/ts-node/-/ts-node-3.0.3.tgz",
+      "version": "3.0.4",
+      "from": "ts-node@>=3.0.4 <4.0.0",
+      "resolved": "https://registry.npmjs.org/ts-node/-/ts-node-3.0.4.tgz",
       "dev": true
     },
     "tsconfig": {
