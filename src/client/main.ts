@@ -119,7 +119,7 @@ class DisplayOrder {
                                                    [(ngModel)]="pair.quotingParameters.display.bullets">
                                             </td>
                                             <td *ngIf="pair.quotingParameters.display.mode==7">
-                                                <input class="form-control input-sm unit-1"
+                                                <input class="form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
@@ -137,25 +137,25 @@ class DisplayOrder {
                                                 </select>
                                             </td>
                                             <td style="width:88px;">
-                                                <input class="width-option form-control input-sm unit-1"
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPing">
                                             </td>
                                             <td style="width:88px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
-                                                <input class="width-option form-control input-sm unit-1"
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
                                             <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
                                             <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
@@ -165,13 +165,13 @@ class DisplayOrder {
                                                    [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                             </td>
                                             <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
                                             <td  style="width:169px;"*ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
@@ -224,25 +224,25 @@ class DisplayOrder {
                                                 </select>
                                             </td>
                                             <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
                                             </td>
                                             <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
                                             <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                             </td>
                                             <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                                <input class="form-control input-sm unit-0"
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
@@ -314,7 +314,7 @@ class DisplayOrder {
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                             <div class="row img-rounded exchange">
                                 <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" [disabled]="!pair.active.connected" (click)="pair.active.submit()">
-                                    {{ exchange_name }}<br/>{{ pair_name }}
+                                    {{ exchange_name }}<br/>{{ pair_name.join('/') }}
                                 </button>
                                 <div *ngIf="pair.connectionMessage">
                                   <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
@@ -426,7 +426,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="https://github.com/ctubio/tribeca/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="https://github.com/ctubio/tribeca/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
       </small>
     </address>
     <iframe style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src=""></iframe>
@@ -447,7 +447,7 @@ class ClientComponent implements OnInit {
   public exchange_name: string;
   public exchange_market: string;
   public exchange_orders: string;
-  public pair_name: string;
+  public pair_name: string[];
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
@@ -542,7 +542,7 @@ class ClientComponent implements OnInit {
 
   private reset = (connected: boolean) => {
     this.connected = connected;
-    this.pair_name = null;
+    this.pair_name = [null, null];
     this.exchange_name = null;
     this.exchange_market = null;
     this.exchange_orders = null;
@@ -586,7 +586,7 @@ class ClientComponent implements OnInit {
     this.matryoshka = pa.matryoshka;
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
-    this.pair_name = Models.Currency[pa.pair.base] + '/' + Models.Currency[pa.pair.quote];
+    this.pair_name = [Models.Currency[pa.pair.base], Models.Currency[pa.pair.quote]];
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
@@ -597,16 +597,12 @@ class ClientComponent implements OnInit {
     this.exchange_orders = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/trade/entrust.do'
       : (this.exchange_name=='Coinbase'
-        ? 'https://www.gdax.com/orders/'+this.pair_name.replace('/','-')
+        ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
         : null
       );
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
     this.product.fixed = Math.floor(Math.log10(pa.minTick)) * -1;
-    setTimeout(() =>{
-      jQuery('input.unit-0').attr('unit', Models.Currency[pa.pair.base]);
-      jQuery('input.unit-1').attr('unit', Models.Currency[pa.pair.quote]);
-    }, 1000);
     setTimeout(this.resizeMatryoshka, 5000);
   }
 }
