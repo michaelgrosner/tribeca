@@ -587,7 +587,7 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return "HitBtc";
     }
 
-    constructor(public minTickIncrement: number) {}
+    constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class HitBtcSymbolProvider {
@@ -599,8 +599,8 @@ class HitBtcSymbolProvider {
 }
 
 class HitBtc extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, pair: Models.CurrencyPair) {
-        const details = new HitBtcBaseGateway(step);
+    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, minSize: number, pair: Models.CurrencyPair) {
+        const details = new HitBtcBaseGateway(step, minSize);
         const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
             : new NullGateway.NullOrderGateway();
@@ -636,7 +636,7 @@ export async function createHitBtc(config : Config.IConfigProvider, pair: Models
 
     for (let s of symbols.symbols) {
         if (s.symbol === symbolProvider.symbol)
-            return new HitBtc(config, symbolProvider, parseFloat(s.step), pair);
+            return new HitBtc(config, symbolProvider, parseFloat(s.step), 0.01, pair);
     }
 
     throw new Error("unable to match pair to a hitbtc symbol " + pair.toString());

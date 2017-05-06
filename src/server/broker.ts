@@ -588,6 +588,10 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._baseGateway.minTickIncrement;
     }
 
+    public get minSize() {
+        return this._baseGateway.minSize;
+    }
+
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private mdConnected = Models.ConnectivityStatus.Disconnected;
     private oeConnected = Models.ConnectivityStatus.Disconnected;

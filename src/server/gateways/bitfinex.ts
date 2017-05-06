@@ -516,7 +516,7 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Bitfinex;
     }
 
-    constructor(public minTickIncrement: number) {}
+    constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class BitfinexSymbolProvider {
@@ -528,10 +528,10 @@ class BitfinexSymbolProvider {
 }
 
 class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number) {
+    constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
         const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
         const http = new BitfinexHttp(config, monitor);
-        const details = new BitfinexBaseGateway(pricePrecision);
+        const details = new BitfinexBaseGateway(pricePrecision, minSize);
 
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, symbol)
@@ -562,6 +562,6 @@ export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: 
 
     for (let s of symbolDetails) {
         if (s.pair === symbol.symbol)
-            return new Bitfinex(timeProvider, config, symbol, 10**(-1*s.price_precision));
+            return new Bitfinex(timeProvider, config, symbol, 10**(-1*s.price_precision), parseFloat(s.minimum_order_size));
     }
 }

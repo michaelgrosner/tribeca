@@ -96,6 +96,7 @@ export class QuotingEngine {
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
+        const minSize = this._details.minSize;
         const input = new QuoteInput(filteredMkt, fv, params, this._positionBroker, this._targetPosition.latestTargetPosition, minTick);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
 
@@ -240,15 +241,11 @@ export class QuotingEngine {
             unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
 
-        if (unrounded.askSz !== null) {
-            unrounded.askSz = Utils.roundDown(unrounded.askSz, minTick);
-            unrounded.askSz = Math.max(minTick, unrounded.askSz);
-          }
+        if (unrounded.askSz !== null)
+            unrounded.askSz = Math.max(minSize, Utils.roundDown(unrounded.askSz, minTick));
 
-          if (unrounded.bidSz !== null) {
-            unrounded.bidSz = Utils.roundDown(unrounded.bidSz, minTick);
-            unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
-          }
+          if (unrounded.bidSz !== null)
+            unrounded.bidSz = Math.max(minSize, Utils.roundDown(unrounded.bidSz, minTick));
 
         return unrounded;
     }
