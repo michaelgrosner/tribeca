@@ -590,6 +590,6 @@ export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: 
 
     for (let s of symbolDetails) {
         if (s.pair === symbol.symbol)
-            return new Bitfinex(timeProvider, config, symbol, 10**(-1*s.price_precision), parseFloat(s.minimum_order_size));
+            return new Bitfinex(timeProvider, config, symbol, parseFloat(s.minimum_order_size), parseFloat(s.minimum_order_size));
     }
 }
