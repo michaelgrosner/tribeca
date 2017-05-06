@@ -342,6 +342,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             exchangeId: msg.orderId.toString(),
             orderStatus: OkCoinOrderEntryGateway.getStatus(msg.status),
             time: t,
+            side: msg.tradeType.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
             lastQuantity: lastQty > 0 ? lastQty : undefined,
             lastPrice: lastPx > 0 ? lastPx : undefined,
             averagePrice: avgPx > 0 ? avgPx : undefined,
@@ -517,7 +518,7 @@ class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.OkCoin;
     }
 
-    constructor(public minTickIncrement: number) {}
+    constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class OkCoinSymbolProvider {
@@ -554,7 +555,7 @@ class OkCoin extends Interfaces.CombinedGateway {
               Models.fromCurrency(pair.base)
                 .replace('BTC', '0.01')
                 .replace('LTC', '0.001')
-            ) || 0.01)
+            ) || 0.01, 0.01)
         );
         }
 }

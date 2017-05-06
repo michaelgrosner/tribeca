@@ -249,6 +249,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
 class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     minTickIncrement: number = 0.01;
+    minSize: number = 0.01;
 
     public get hasSelfTradePrevention() {
         return false;

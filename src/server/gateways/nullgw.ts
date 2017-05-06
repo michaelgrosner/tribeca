@@ -129,7 +129,7 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
         return Models.Exchange.Null;
     }
 
-    constructor(public minTickIncrement: number) {}
+    constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class NullGateway extends Interfaces.CombinedGateway {
@@ -139,7 +139,7 @@ class NullGateway extends Interfaces.CombinedGateway {
             new NullMarketDataGateway(minTick),
             new NullOrderGateway(),
             new NullPositionGateway(pair),
-            new NullGatewayDetails(minTick));
+            new NullGatewayDetails(minTick, 0.01));
     }
 }
 

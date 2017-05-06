@@ -8,6 +8,7 @@ export interface IExchangeDetailsGateway {
     takeFee(): number;
     exchange(): Models.Exchange;
     minTickIncrement: number;
+    minSize: number;
     hasSelfTradePrevention: boolean;
 }
 
@@ -90,6 +91,7 @@ export interface IBroker extends IBrokerConnectivity {
     exchange(): Models.Exchange;
 
     minTickIncrement: number;
+    minSize: number;
     pair: Models.CurrencyPair;
 
     hasSelfTradePrevention: boolean;

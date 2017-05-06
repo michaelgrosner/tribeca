@@ -805,7 +805,7 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return "Coinbase";
     }
 
-    constructor(public minTickIncrement: number) {}
+    constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class CoinbaseSymbolProvider {
@@ -819,7 +819,7 @@ class CoinbaseSymbolProvider {
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(authClient: CoinbaseAuthenticatedClient, config: Config.IConfigProvider,
         orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider,
-        symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number) {
+        symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number, minSize: number) {
 
         const orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol,
             config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
@@ -835,7 +835,7 @@ class Coinbase extends Interfaces.CombinedGateway {
             mdGateway,
             orderGateway,
             positionGateway,
-            new CoinbaseBaseGateway(quoteIncrement));
+            new CoinbaseBaseGateway(quoteIncrement, minSize));
     }
 };
 
@@ -854,7 +854,7 @@ export async function createCoinbase(config: Config.IConfigProvider, orders: Int
 
     for (let p of products) {
         if (p.id === symbolProvider.symbol)
-            return new Coinbase(authClient, config, orders, timeProvider, symbolProvider, parseFloat(p.quote_increment));
+            return new Coinbase(authClient, config, orders, timeProvider, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size));
     }
 
     throw new Error("unable to match pair to a coinbase symbol " + pair.toString());
