@@ -1,13 +1,11 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
 ///<reference path="../interfaces.ts"/>
 
 import Config = require("../config");
 import request = require('request');
 import url = require("url");
 import querystring = require("querystring");
-import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
@@ -828,9 +826,7 @@ class Coinbase extends Interfaces.CombinedGateway {
         const orderEventEmitter = new CoinbaseExchange.OrderBook(symbolProvider.symbol, 
             config.GetString("CoinbaseWebsocketUrl"), config.GetString("CoinbaseRestUrl"), timeProvider);
         
-        const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
-            : new NullGateway.TestingGateway(quoteIncrement, symbolProvider.pair);
+        const orderGateway = new CoinbaseOrderEntryGateway(quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider);
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
         const mdGateway = new CoinbaseMarketDataGateway(new CoinbaseOrderBook(quoteIncrement), orderEventEmitter, timeProvider);

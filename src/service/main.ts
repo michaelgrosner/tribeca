@@ -32,7 +32,7 @@ import socket_io = require('socket.io')
 
 import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
-import NullGw = require("./gateways/nullgw");
+import TestGw = require("./gateways/test");
 import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
 
@@ -118,7 +118,7 @@ const defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingPa
 
 const backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) : SimulationClasses => {
     const timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(_.first(inputData).time), moment(_.last(inputData).time));
-    const exchange = Models.Exchange.Null;
+    const exchange = Models.Exchange.Test;
     const gw = new Backtest.BacktestGateway(inputData, parameters.startingBasePosition, parameters.startingQuotePosition, <Backtest.BacktestTimeProvider>timeProvider);
     
     const getExch = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(gw);
@@ -176,7 +176,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case "hitbtc": return Models.Exchange.HitBtc;
             case "coinbase": return Models.Exchange.Coinbase;
             case "okcoin": return Models.Exchange.OkCoin;
-            case "null": return Models.Exchange.Null;
+            case "null": return Models.Exchange.Test;
             case "bitfinex": return Models.Exchange.Bitfinex;
             default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
         }
@@ -189,7 +189,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
             case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-            case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+            case Models.Exchange.Test: return TestGw.createNullGateway(config, pair);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }

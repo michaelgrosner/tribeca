@@ -1,6 +1,5 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
 ///<reference path="../config.ts"/>
 ///<reference path="../utils.ts"/>
 ///<reference path="../interfaces.ts"/>
@@ -11,7 +10,6 @@ import request = require("request");
 import url = require("url");
 import querystring = require("querystring");
 import Config = require("../config");
-import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import util = require("util");
@@ -521,10 +519,7 @@ class Bitfinex extends Interfaces.CombinedGateway {
         const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
         const http = new BitfinexHttp(config, monitor);
         const details = new BitfinexBaseGateway(pricePrecision);
-        
-        const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, symbol)
-            : new NullGateway.TestingGateway(pricePrecision, symbol.pair);
+        const orderGateway = new BitfinexOrderEntryGateway(timeProvider, details, http, symbol);
 
         super(
             new BitfinexMarketDataGateway(timeProvider, http, symbol),

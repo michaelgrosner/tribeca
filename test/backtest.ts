@@ -1,5 +1,6 @@
 /// <reference path="../src/service/safety.ts" />
 
+import mocha = require("mocha");
 import assert = require("assert");
 import Backtest = require("../src/service/backtest");
 import Interfaces = require("../src/service/interfaces");
@@ -106,7 +107,7 @@ describe("BacktestGatewayTests", () => {
         var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
         
         gateway.MarketData.once(m => {
-            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Null));
+            gateway.sendOrder(new Models.BrokeredOrder("A", Models.Side.Ask, 3, Models.OrderType.Limit, 12, Models.TimeInForce.GTC, Models.Exchange.Test));
         });
         
         var gotTrade = false;

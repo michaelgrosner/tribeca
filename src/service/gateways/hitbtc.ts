@@ -1,6 +1,5 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
 ///<reference path="../interfaces.ts"/>
 
 import Config = require("../config");
@@ -9,7 +8,6 @@ import WebSocket = require('ws');
 import request = require('request');
 import url = require("url");
 import querystring = require("querystring");
-import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
@@ -585,17 +583,26 @@ class HitBtcSymbolProvider {
     }
 }
 
+class DemoHitBtcPosition {
+    readonly PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+
+    constructor(pair: Models.CurrencyPair) {
+        setTimeout(() => {
+            this.PositionUpdate.trigger(new Models.CurrencyPosition(100000, 0, pair.base));
+            this.PositionUpdate.trigger(new Models.CurrencyPosition(100000, 0, pair.quote));
+        }, 500);
+    }
+}
+
 class HitBtc extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, pair: Models.CurrencyPair) {
         const details = new HitBtcBaseGateway(step);
-        const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
-            : new NullGateway.TestingGateway(step, pair);
+        const orderGateway = new HitBtcOrderEntryGateway(config, symbolProvider, details);
 
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(config);
         if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.TestingGateway(step, pair);
+            positionGateway = new DemoHitBtcPosition(pair);
         }
 
         super(

@@ -10,6 +10,9 @@ import Interfaces = require("../interfaces");
 import Config = require("../config");
 import Promises = require("../promises");
 
+const make_fee = -.0025
+const take_fee = .005
+
 var uuid = require('node-uuid');
 
 type MatchingEngineCommand = Order | Cancel | Replace | BatchOrder;
@@ -91,7 +94,7 @@ class MatchingEngine {
     private hasEnoughFunds = (order: Order) : boolean => {
         if (!order.isPlacedOrder) return true;
 
-        let notEnoughFunds = 
+        const notEnoughFunds = 
             (order.side === Models.Side.Bid && order.leavesQty*order.price < this._availableQuote) ||
             (order.side === Models.Side.Ask && order.leavesQty < this._availableBase);
 
@@ -433,10 +436,10 @@ export class TestingGateway implements Interfaces.IPositionGateway, Interfaces.I
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
     public get hasSelfTradePrevention() { return false; }
-    name = () => "null";
-    makeFee = () => 0;
-    takeFee = () => 0;
-    exchange = () => Models.Exchange.Null;
+    name = () => "test";
+    makeFee = () => make_fee;
+    takeFee = () => take_fee;
+    exchange = () => Models.Exchange.Test;
 
     constructor(
             public minTickIncrement: number, 

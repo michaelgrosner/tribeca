@@ -271,7 +271,7 @@ class BacktestGatewayDetails implements Interfaces.IExchangeDetailsGateway {
     }
 
     exchange(): Models.Exchange {
-        return Models.Exchange.Null;
+        return Models.Exchange.Test;
     }
 }
 

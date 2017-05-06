@@ -1,6 +1,5 @@
 /// <reference path="../utils.ts" />
 /// <reference path="../../common/models.ts" />
-/// <reference path="nullgw.ts" />
 ///<reference path="../interfaces.ts"/>
 
 import ws = require('ws');
@@ -10,7 +9,6 @@ import request = require("request");
 import url = require("url");
 import querystring = require("querystring");
 import Config = require("../config");
-import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import util = require("util");
@@ -477,10 +475,7 @@ class OkCoin extends Interfaces.CombinedGateway {
         var signer = new OkCoinMessageSigner(config);
         var http = new OkCoinHttp(config, signer);
         var socket = new OkCoinWebsocket(config);
-
-        var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(socket, signer, symbol)
-            : new NullGateway.TestingGateway(.01, pair);
+        var orderGateway = new OkCoinOrderEntryGateway(socket, signer, symbol);
 
         super(
             new OkCoinMarketDataGateway(socket, symbol),
