@@ -214,7 +214,33 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    cancelAllOpenOrders = () : Q.Promise<number> => {
+        var d = Q.defer<number>();
+        this._http
+            .post<any, any[]>("orders", {})
+            .then(resps => {
+                _.forEach(resps.data, t => {
+                    var req = { order_id: t.id };
+                    this._http
+                        .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
+                        .then(resp => {
+                            if (typeof resp.data.message !== "undefined")
+                                return;
+
+                            this.OrderUpdate.trigger({
+                                exchangeId: t.id,
+                                leavesQuantity: 0,
+                                time: resp.time,
+                                orderStatus: Models.OrderStatus.Cancelled,
+                                done: true
+                            });
+                        })
+                        .done();
+                });
+                d.resolve(resps.data.length);
+            }).done();
+        return d.promise;
+    };
 
     generateClientOrderId = () => shortId.generate();
 
