@@ -597,13 +597,19 @@ class ClientComponent implements OnInit {
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='Coinbase'
         ? 'https://gdax.com/trade'
-        : null
+        : (this.exchange_name=='Bitfinex'
+            ? 'https://www.bitfinex.com/trading/'+this.pair_name.join()
+            : null
+          )
       );
     this.exchange_orders = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/trade/entrust.do'
       : (this.exchange_name=='Coinbase'
         ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
-        : null
+        : (this.exchange_name=='Bitfinex'
+          ? 'https://www.bitfinex.com/reports/orders'
+          : null
+        )
       );
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
