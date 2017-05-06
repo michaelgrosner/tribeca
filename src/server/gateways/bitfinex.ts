@@ -123,7 +123,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private downloadMarketData = () => {
         this._http
-            .get<BitfinexOrderBook>("book/" + this._symbolProvider.symbol, { limit_bids: 5, limit_asks: 5 })
+            .get<BitfinexOrderBook>("book/" + this._symbolProvider.symbol, { limit_bids: 13, limit_asks: 13 })
             .then(this.onMarketData)
             .done();
     };
