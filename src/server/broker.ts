@@ -487,7 +487,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 
     private _currencies : { [currency : number] : Models.CurrencyPosition } = {};
     public getPosition(currency : Models.Currency) : Models.CurrencyPosition {
-        return this._currencies[currency];
+        return this._currencies[currency] || new Models.CurrencyPosition(0, 0, currency);
     }
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
