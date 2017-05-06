@@ -7,11 +7,11 @@ import {SubscriberFactory} from './shared_directives';
 @Component({
   selector: 'market-stats',
   template: `<div class="col-md-6 col-xs-6">
-        <chart style="position:relative;top:5px;height:400px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+        <chart style="position:relative;top:5px;height:350px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
     </div>
     <div class="col-md-6 col-xs-6">
-        <chart style="position:relative;top:10px;height:200px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
-        <chart style="position:relative;top:11px;height:200px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+        <chart style="position:relative;top:10px;height:175px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+        <chart style="position:relative;top:11px;height:175px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
     </div>`
 })
 export class StatsComponent implements OnInit {
@@ -51,7 +51,7 @@ export class StatsComponent implements OnInit {
   public fvChartOptions = {
     title: 'fair value',
     chart: {
-        height: 400,
+        height: 350,
         zoomType: 'x',
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
@@ -151,7 +151,7 @@ export class StatsComponent implements OnInit {
   public quoteChartOptions = {
     title: 'quote wallet',
     chart: {
-        height: 200,
+        height: 175,
         zoomType: 'x',
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -220,7 +220,7 @@ export class StatsComponent implements OnInit {
   public baseChartOptions = {
     title: 'base wallet',
     chart: {
-        height: 200,
+        height: 175,
         zoomType: 'x',
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
