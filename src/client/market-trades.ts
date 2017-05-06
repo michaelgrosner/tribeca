@@ -48,7 +48,7 @@ export class MarketTradesComponent implements OnInit {
         sort: 'desc', cellClass: (params) => {
           return 'fs11px '+(!params.data.recent ? "text-muted" : "");
       } },
-      { width: 60, field: 'price', headerName: 'px', cellClass: (params) => {
+      { width: 75, field: 'price', headerName: 'px', cellClass: (params) => {
           return (params.data.make_side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 50, field: 'size', headerName: 'sz', cellClass: (params) => {
@@ -59,8 +59,8 @@ export class MarketTradesComponent implements OnInit {
         else if (params.value === 'Ask') return "sell";
       }},
       { width: 50, field: 'qBz', headerName: 'qBz', cellRendererFramework: BaseCurrencyCellComponent },
-      { width: 60, field: 'qB', headerName: 'qB', cellRendererFramework: QuoteCurrencyCellComponent },
-      { width: 60, field: 'qA', headerName: 'qA', cellRendererFramework: QuoteCurrencyCellComponent },
+      { width: 75, field: 'qB', headerName: 'qB', cellRendererFramework: QuoteCurrencyCellComponent },
+      { width: 75, field: 'qA', headerName: 'qA', cellRendererFramework: QuoteCurrencyCellComponent },
       { width: 50, field: 'qAz', headerName: 'qAz', cellRendererFramework: BaseCurrencyCellComponent },
       { width: 50, field: 'mBz', headerName: 'mBz', cellRendererFramework: BaseCurrencyCellComponent },
       { width: 60, field: 'mB', headerName: 'mB', cellRendererFramework: QuoteCurrencyCellComponent },
