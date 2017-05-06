@@ -98,6 +98,7 @@ class DisplayOrder {
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxAskSize?</span></th>
                                             <th>fv</th>
+                                            <th>cxl</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -185,6 +186,10 @@ class DisplayOrder {
                                                     [(ngModel)]="pair.quotingParameters.display.fvModel">
                                                    <option *ngFor="let option of pair.quotingParameters.availableFvModels" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.cancelOrdersAuto">
                                             </td>
                                         </tr>
                                     </tbody>

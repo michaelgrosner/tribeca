@@ -72,6 +72,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   quotingEwma:                    0.095,
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,
+  cancelOrdersAuto:               false,
   stepOverSize:                   0.1,
   delayUI:                        7
 };
