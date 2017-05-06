@@ -21,11 +21,11 @@ Runs on the latest node.js (v6 or v7). Persistence is achieved using mongodb. In
 
 1. Coinbase
 
-2. HitBTC
+2. OKCoin
 
-3. OKCoin
+3. Bitfinex
 
-4. Bitfinex
+4. HitBTC
 
 ### Docker Installation
 
