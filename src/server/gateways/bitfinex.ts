@@ -159,6 +159,7 @@ interface BitfinexNewOrderRequest {
 
 interface BitfinexNewOrderResponse extends RejectableResponse {
     order_id: string;
+    remaining_amount?: string;
 }
 
 interface BitfinexCancelOrderRequest {
@@ -276,6 +277,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 this.OrderUpdate.trigger({
                     orderId: order.orderId,
                     exchangeId: resp.data.order_id,
+                    leavesQuantity: parseFloat(resp.data.remaining_amount),
                     time: resp.time,
                     orderStatus: Models.OrderStatus.Working
                 });
@@ -337,7 +339,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                             this.OrderUpdate.trigger({
                                 exchangeId: t.order_id,
                                 lastPrice: parseFloat(t.price),
-                                lastQuantity: parseFloat(t.amount),
+                                lastQuantity: parseFloat(r.data.remaining_amount),
                                 orderStatus: BitfinexOrderEntryGateway.GetOrderStatus(r.data),
                                 averagePrice: parseFloat(r.data.avg_execution_price),
                                 leavesQuantity: parseFloat(r.data.remaining_amount),
