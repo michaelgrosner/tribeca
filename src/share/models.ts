@@ -369,6 +369,7 @@ export interface QuotingParameters {
     quotingEwma?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
+    cancelOrdersAuto?: boolean;
     stepOverSize?: number;
     delayUI?: number;
 }

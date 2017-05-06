@@ -436,16 +436,18 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cleanAllOrdersReciever : Publish.IReceive<object>,
                 private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
-        if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-          this._oeGateway.cancelAllOpenOrders();
+        if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+          _oeGateway.cancelAllOpenOrders();
+        _timeProvider.setTimeout(() => { if (_qlParamRepo.latest.cancelOrdersAuto) _oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
+
         _.each(initTrades, t => this._trades.push(t));
-        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _orderStatusPublisher.registerSnapshot(() => Array.from(_orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
                 const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
+                    o.price, Models.TimeInForce[o.timeInForce], _baseBroker.exchange(), _timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
             }
             catch (e) {
@@ -465,9 +467,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cleanAllClosedOrdersReciever.registerReceiver(() => this.cleanClosedOrders());
         _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
 
-        this._oeGateway.OrderUpdate.on(this.updateOrderState);
+        _oeGateway.OrderUpdate.on(this.updateOrderState);
 
-        // this._oeGateway.ConnectChanged.on(s => {
+        // _oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);
         // });
     }
