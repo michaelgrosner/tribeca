@@ -103,6 +103,7 @@ export enum Currency {
     EUR,
     GBP,
     CNY,
+    CAD,
     ETH,
     BFX,
     RRT,
