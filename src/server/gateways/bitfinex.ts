@@ -71,29 +71,29 @@ class BitfinexWebsocket {
         var t = Utils.date();
         try {
             var msg:any = JSON.parse(raw);
-            if (typeof msg === "undefined") throw new Error("Unkown message from Bitfinex socket: " + raw);
-
-            if (typeof msg.event !== "undefined" && msg.event == "subscribed") {
-                this._handlers[msg.chanId.toString()] = this._handlers[msg.channel];
+            if (typeof msg === "undefined")
+              throw new Error("Unkown message from Bitfinex socket: " + raw);
+            else if (typeof msg.event !== "undefined" && msg.event == "subscribed") {
+                this._handlers['c'+msg.chanId] = this._handlers[msg.channel];
                 delete this._handlers[msg.channel];
                 this._log.info("Successfully connected to %s", msg.channel);
                 return;
             }
-            if (typeof msg.event !== "undefined" && msg.event == "auth") {
-                this._handlers[msg.chanId.toString()] = this._handlers[msg.event];
+            else if (typeof msg.event !== "undefined" && msg.event == "auth") {
+                this._handlers['c'+msg.chanId] = this._handlers[msg.event];
                 delete this._handlers[msg.channel];
                 this._log.info("Bitfinex authentication status:", msg.status);
                 return;
             }
-            if (typeof msg.event !== "undefined" && msg.event == "info") {
+            else if (typeof msg.event !== "undefined" && msg.event == "info") {
                 this._log.info("Bitfinex info:", msg);
                 return;
             }
-            if (typeof msg.event !== "undefined" && msg.event == "ping") {
+            else if (typeof msg.event !== "undefined" && msg.event == "ping") {
                 this._ws.send(this._serializedHeartbeat);
                 return;
             }
-            if (typeof msg.event !== "undefined" && msg.event == "error") {
+            else if (typeof msg.event !== "undefined" && msg.event == "error") {
                 this._log.info("Error on Bitfinex API:", msg.code+':'+msg.msg);
                 return;
             }
@@ -101,8 +101,12 @@ class BitfinexWebsocket {
                 this._stillAlive = true;
                 return;
             }
+            else if (msg[1]=='n') {
+              this._log.info("Bitfinex notice:", msg[2][6], msg[2][7]);
+              return;
+            }
 
-            var handler = this._handlers[msg[0].toString()];
+            var handler = this._handlers['c'+msg[0]];
 
             if (typeof handler === "undefined") {
                 this._log.warn("Got message on unknown topic", msg);
@@ -112,13 +116,9 @@ class BitfinexWebsocket {
             if (typeof msg[1][0] == 'object')
               handler(new Models.Timestamped(msg[1], t));
             else {
-              if (msg[1]=='n') {
-                this._log.info("Bitfinex notice:", msg[2][6], msg[2][7]);
-                return;
-              }
               if (['hos','hts'].indexOf(msg[1]) > -1) return;
               handler(new Models.Timestamped(
-                ['os','ou'].indexOf(msg[1]) > -1
+                ['os','ou','oc'].indexOf(msg[1]) > -1
                   ? [msg[1], msg[2]]
                   : [msg[1] == 'te' ? msg[2] : msg[1]],
                 t
@@ -142,6 +142,7 @@ class BitfinexWebsocket {
         this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
+        this._ws.on("error", (x) => this._log.info('Bitfinex WS ERROR', x));
         this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
         setInterval(() => {
           if (!this._stillAlive) this._log.info('Bitfinex heartbeat lost.');
@@ -278,7 +279,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     sendOrder = (order: Models.OrderStatusReport) => {
         this._socket.send<Order>("on", <Order>{
             gid: 0,
-            cid: parseInt(order.orderId),
+            cid: parseInt(order.orderId,10),
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
             price: order.price.toFixed(this._details.minTickIncrement).toString(),
             symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
@@ -310,17 +311,20 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
-        this._socket.send<Cancel>("oc", <Cancel>{
-            cid: parseInt(cancel.orderId),
+        this._socket.send<Cancel>("oc", cancel.exchangeId?<Cancel>{
+            id: parseInt(cancel.exchangeId, 10)
+        }:<Cancel>{
+            cid: parseInt(cancel.orderId, 10),
             cid_date: moment(cancel.time).format('YYYY-MM-DD')
         }, () => {
-          this.OrderUpdate.trigger({
-              orderId: cancel.orderId,
-              leavesQuantity: 0,
-              time: cancel.time,
-              orderStatus: Models.OrderStatus.Cancelled,
-              done: true
-          });
+          if (cancel.orderStatus !== Models.OrderStatus.Working)
+            this.OrderUpdate.trigger({
+                orderId: cancel.orderId,
+                leavesQuantity: 0,
+                time: cancel.time,
+                orderStatus: Models.OrderStatus.Cancelled,
+                done: true
+            });
         });
     };
 
@@ -351,7 +355,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
-          if (['on','ou'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], msg.time);
+          if (['ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], msg.time);
         });
 
         _socket.ConnectChanged.on(cs => {
@@ -382,6 +386,7 @@ interface Order extends SignedMessage {
 }
 
 interface Cancel extends SignedMessage {
+    id?: number;
     cid?: number;
     cid_date?: string;
 }
