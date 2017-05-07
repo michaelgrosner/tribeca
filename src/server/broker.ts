@@ -155,6 +155,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
+            leavesQuantity: order.quantity,
             type: order.type,
             price: this.roundPrice(order.price, order.side),
             timeInForce: order.timeInForce,
