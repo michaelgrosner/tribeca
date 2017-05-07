@@ -211,33 +211,6 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 }
 
-interface RejectableResponse {
-    message: string;
-}
-
-interface BitfinexCancelOrderRequest {
-    order_id: string;
-}
-
-interface BitfinexCancelReplaceOrderResponse extends BitfinexCancelOrderRequest, RejectableResponse { }
-
-interface BitfinexOrderStatusResponse extends RejectableResponse {
-    symbol: string;
-    exchange: string; // bitstamp or bitfinex
-    price: number;
-    avg_execution_price: string;
-    side: string;
-    type: string; // "market" / "limit" / "stop" / "trailing-stop".
-    timestamp: number;
-    is_live: boolean;
-    is_cancelled: boolean;
-    is_hidden: boolean;
-    was_forced: boolean;
-    executed_amount: string;
-    remaining_amount: string;
-    original_amount: string;
-}
-
 class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
@@ -249,9 +222,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             .post<any, any[]>("orders", {})
             .then(resps => {
                 _.forEach(resps.data, t => {
-                    var req = { order_id: t.id };
                     this._http
-                        .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
+                        .post<any, any>("order/cancel", { order_id: t.id })
                         .then(resp => {
                             if (typeof resp.data.message !== "undefined")
                                 return;
@@ -274,7 +246,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     generateClientOrderId = (): number => parseInt((Math.random()+'').substr(-8), 10);
 
     public cancelsByClientOrderId = true;
-
 
     sendOrder = (order: Models.OrderStatusReport) => {
         this._socket.send<Order>("on", <Order>{
@@ -319,8 +290,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 orderId: cancel.orderId,
                 leavesQuantity: 0,
                 time: cancel.time,
-                orderStatus: Models.OrderStatus.Cancelled,
-                done: true
+                orderStatus: Models.OrderStatus.Cancelled
+                // ,done: true
             });
         });
     };
@@ -352,7 +323,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
-          if (['ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], msg.time);
+          if (['ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], timeProvider.utcNow());
         });
 
         _socket.ConnectChanged.on(cs => {
