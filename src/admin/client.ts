@@ -65,6 +65,14 @@ class DisplayOrder {
 
     private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
     constructor(fireFactory : Shared.FireFactory, private _log : ng.ILogService) {
+        const stored : Models.OrderRequestFromUI = JSON.parse(window.localStorage.getItem("order_ticket"));
+        if (stored) {
+            this.side = stored.side;
+            this.price = stored.price;
+            this.quantity = stored.quantity;
+            this.timeInForce = stored.timeInForce;
+            this.orderType = stored.orderType;
+        }
         this.availableSides = DisplayOrder.getNames(Models.Side);
         this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
         this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
@@ -73,7 +81,9 @@ class DisplayOrder {
     }
 
     public submit = () => {
-        var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
+        const msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
+        window.localStorage.setItem("order_ticket", JSON.stringify(msg));
+        
         this._log.info("submitting order", msg);
         this._fire.fire(msg);
     };
