@@ -92,8 +92,6 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ));
 
-        this._log.info(`recalculated regular fair value, short: ${this.newShort} long: ${this.newLong}, target: ${this._latest}, currentFv: ${fv.price}`);
-
         this._data.push(rfv);
         this._data = this._data.slice(-7);
     };

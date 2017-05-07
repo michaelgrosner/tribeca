@@ -274,12 +274,10 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         let orig : Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
-        }
-        else {
+        } else {
             orig = this._orderCache.allOrders.get(osr.orderId);
 
             if (typeof orig === "undefined") {
-                // this step and _exchIdsToClientIds is really BS, the exchanges should get their act together
                 const secondChance = this._orderCache.exchIdsToClientIds.get(osr.exchangeId);
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
@@ -334,11 +332,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
           ,done: osr.done
         };
 
-        const added = this.updateOrderStatusInMemory(o);
-        if (this._log.debug()) {
-            // this._log.debug(o, (added ? "added" : "removed") + " order status");
-            this._log.debug(this._orderCache.exchIdsToClientIds.size+' '+this._orderCache.allOrders.size + " order status");
-        }
+        this.updateOrderStatusInMemory(o);
 
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId
@@ -398,22 +392,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return o;
     };
 
-    private updateOrderStatusInMemory = (osr: Models.OrderStatusReport): boolean => {
-        this.addOrderStatusInMemory(osr);
+    private updateOrderStatusInMemory = (osr: Models.OrderStatusReport) => {
+        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+        this._orderCache.allOrders.set(osr.orderId, osr);
 
         if (osr.done===true) {
           this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
           this._orderCache.allOrders.delete(osr.orderId);
           if (osr.orderId in this._cancelsWaitingForExchangeOrderId)
             delete this._cancelsWaitingForExchangeOrderId[osr.orderId];
-          return false;
         }
-        return true;
-    };
-
-    private addOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
-        this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-        this._orderCache.allOrders.set(osr.orderId, osr);
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -514,7 +502,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     };
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
-        const qs = this._quoter.quotesSent(o.side);
+        const qs = this._quoter.quotesActive(o.side);
         if (!qs.length || !this._report) return;
         var amount = o.side == Models.Side.Ask
           ? this._report.baseAmount + this._report.baseHeldAmount
