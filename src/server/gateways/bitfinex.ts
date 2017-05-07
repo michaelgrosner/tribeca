@@ -12,7 +12,6 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
 import log from "../logging";
-var Deque = require("collections/deque");
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
     if (type === Models.OrderType.Market) {
@@ -377,30 +376,6 @@ class BitfinexMessageSigner {
     }
 }
 
-class RateLimitMonitor {
-    private _log = log("tribeca:gateway:rlm");
-    private _queue = Deque();
-    private _durationMs: number;
-
-    public add = () => {
-        var now = moment.utc();
-
-        while (now.diff(this._queue.peek()) > this._durationMs) {
-            this._queue.shift();
-        }
-
-        this._queue.push(now);
-
-        if (this._queue.length > this._number) {
-            this._log.error("Exceeded rate limit", { nRequests: this._queue.length, max: this._number, durationMs: this._durationMs });
-        }
-    }
-
-    constructor(private _number: number, duration: moment.Duration) {
-        this._durationMs = duration.asMilliseconds();
-    }
-}
-
 class BitfinexHttp {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
@@ -456,7 +431,6 @@ class BitfinexHttp {
     private doRequest = <TResponse>(msg: request.Options, url: string): Q.Promise<Models.Timestamped<TResponse>> => {
         var d = Q.defer<Models.Timestamped<TResponse>>();
 
-        this._monitor.add();
         request(msg, (err, resp, body) => {
             if (err) {
                 this._log.error(err, "Error returned: url=", url, "err=", err);
@@ -484,7 +458,7 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
 
-    constructor(config: Config.IConfigProvider, private _monitor: RateLimitMonitor) {
+    constructor(config: Config.IConfigProvider) {
         this._baseUrl = config.GetString("BitfinexHttpUrl");
         this._apiKey = config.GetString("BitfinexKey");
         this._secret = config.GetString("BitfinexSecret");
@@ -558,8 +532,7 @@ class BitfinexSymbolProvider {
 
 class Bitfinex extends Interfaces.CombinedGateway {
     constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
-        const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
-        const http = new BitfinexHttp(config, monitor);
+        const http = new BitfinexHttp(config);
         const signer = new BitfinexMessageSigner(config);
         const socket = new BitfinexWebsocket(config);
         const details = new BitfinexBaseGateway(pricePrecision, minSize);
