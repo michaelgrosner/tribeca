@@ -200,8 +200,8 @@ export interface OrderStatusReport {
     type : OrderType;
     price : number;
     timeInForce : TimeInForce;
-    orderId : string;
-    exchangeId : string;
+    orderId : any;
+    exchangeId : any;
     orderStatus : OrderStatus;
     rejectMessage : string;
     time : Date;

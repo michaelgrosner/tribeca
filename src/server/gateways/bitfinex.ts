@@ -271,7 +271,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return d.promise;
     };
 
-    generateClientOrderId = () => parseInt((Math.random()+'').substr(-10) ,10).toString();
+    generateClientOrderId = (): number => parseInt((Math.random()+'').substr(-8), 10);
 
     public cancelsByClientOrderId = true;
 
@@ -279,7 +279,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     sendOrder = (order: Models.OrderStatusReport) => {
         this._socket.send<Order>("on", <Order>{
             gid: 0,
-            cid: parseInt(order.orderId,10),
+            cid: order.orderId,
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
             price: order.price.toFixed(this._details.minTickIncrement).toString(),
             symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
@@ -295,9 +295,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onOrderAck = (orders: any[], time: Date) => {
         orders.forEach(order => {
             this.OrderUpdate.trigger({
-              orderId: order[2].toString(),
+              orderId: order[2],
               time: time,
-              exchangeId: order[0].toString(),
+              exchangeId: order[0],
               orderStatus: BitfinexOrderEntryGateway.GetOrderStatus(order[13]),
               leavesQuantity: Math.abs(order[6]),
               lastPrice: order[16],
@@ -311,10 +311,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
-        this._socket.send<Cancel>("oc", cancel.exchangeId?<Cancel>{
-            id: parseInt(cancel.exchangeId, 10)
-        }:<Cancel>{
-            cid: parseInt(cancel.orderId, 10),
+        this._socket.send<Cancel>("oc", {
+            cid: cancel.orderId,
             cid_date: moment(cancel.time).format('YYYY-MM-DD')
         }, () => {
             this.OrderUpdate.trigger({
