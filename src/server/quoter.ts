@@ -46,13 +46,22 @@ export class Quoter {
                 return this._bidQuoter.quotesSent;
         }
     };
+
+    public quotesActive = (s: Models.Side): QuoteOrder[] => {
+        switch (s) {
+            case Models.Side.Ask:
+                return this._askQuoter.activeQuote;
+            case Models.Side.Bid:
+                return this._bidQuoter.activeQuote;
+        }
+    };
 }
 
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
     public quotesSent: QuoteOrder[] = [];
 
-    private _activeQuote: QuoteOrder[] = [];
+    public activeQuote: QuoteOrder[] = [];
     private _exchange: Models.Exchange;
 
     constructor(private _broker: Interfaces.IOrderBroker,
@@ -68,7 +77,7 @@ export class ExchangeQuoter {
             case Models.OrderStatus.Cancelled:
             case Models.OrderStatus.Complete:
             case Models.OrderStatus.Rejected:
-                this._activeQuote = this._activeQuote.filter(q => q.orderId !== o.orderId);
+                this.activeQuote = this.activeQuote.filter(q => q.orderId !== o.orderId);
                 this.quotesSent = this.quotesSent.filter(q => q.orderId !== o.orderId);
         }
     };
@@ -77,10 +86,10 @@ export class ExchangeQuoter {
       if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
         return Models.QuoteSent.UnableToSend;
 
-      let dupe = this._activeQuote.filter(o => q.data.price === o.quote.price).length;
+      let dupe = this.activeQuote.filter(o => q.data.price === o.quote.price).length;
 
       if (this._qlParamRepo.latest.mode !== Models.QuotingMode.AK47)
-        return this._activeQuote.length
+        return this.activeQuote.length
           ? (dupe ? Models.QuoteSent.UnsentDuplicate : this.modify(q))
           : this.start(q);
 
@@ -91,14 +100,14 @@ export class ExchangeQuoter {
     };
 
     public cancelHigherQuotes = (price: number, time: Date) => {
-      this._activeQuote.filter(o =>
+      this.activeQuote.filter(o =>
         this._side === Models.Side.Bid
           ? price < o.quote.price
           : price > o.quote.price
       ).map(o => {
         var cxl = new Models.OrderCancel(o.orderId, this._exchange, time);
         this._broker.cancelOrder(cxl);
-        this._activeQuote = this._activeQuote.filter(q => q.orderId !== cxl.origOrderId);
+        this.activeQuote = this.activeQuote.filter(q => q.orderId !== cxl.origOrderId);
       });
     };
 
@@ -119,7 +128,7 @@ export class ExchangeQuoter {
 
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         let price: number = q.data.price;
-        if (this._activeQuote.filter(o =>
+        if (this.activeQuote.filter(o =>
           (price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
           && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
         ).length) {
@@ -128,7 +137,7 @@ export class ExchangeQuoter {
               let incPrice: number = (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ));
               let oldPrice:number = 0;
               let len:number  = 0;
-              this._activeQuote.forEach(activeQuote => {
+              this.activeQuote.forEach(activeQuote => {
                 if (oldPrice>0 && (this._side === Models.Side.Bid?activeQuote.quote.price<price:activeQuote.quote.price>price)) {
                   price = oldPrice + incPrice;
                   if (Math.abs(activeQuote.quote.price - oldPrice)>incPrice) return false;
@@ -136,8 +145,8 @@ export class ExchangeQuoter {
                 oldPrice = activeQuote.quote.price;
                 ++len;
               });
-              if (len==this._activeQuote.length) price = this._activeQuote.slice(-1).pop().quote.price + incPrice;
-              if (this._activeQuote.filter(o =>
+              if (len==this.activeQuote.length) price = this.activeQuote.slice(-1).pop().quote.price + incPrice;
+              if (this.activeQuote.filter(o =>
                 (price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
                 && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
               ).length)
@@ -157,31 +166,31 @@ export class ExchangeQuoter {
         ).sentOrderClientId);
 
         this.quotesSent.push(quoteOrder);
-        this._activeQuote.push(quoteOrder);
+        this.activeQuote.push(quoteOrder);
         if (this._side === Models.Side.Bid)
-          this._activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
-        else this._activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
+          this.activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
+        else this.activeQuote.sort(function(a,b){return a.quote.price>b.quote.price?1:(a.quote.price<b.quote.price?-1:0);});
 
         return Models.QuoteSent.First;
     };
 
     private stopLowest = (t: Date): Models.QuoteSent => {
-        if (!this._activeQuote.length) {
+        if (!this.activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
-        var cxl = new Models.OrderCancel(this._activeQuote.shift().orderId, this._exchange, t);
+        var cxl = new Models.OrderCancel(this.activeQuote.shift().orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
-        this._activeQuote = this._activeQuote.filter(q => q.orderId !== cxl.origOrderId);
+        this.activeQuote = this.activeQuote.filter(q => q.orderId !== cxl.origOrderId);
 
         return Models.QuoteSent.Delete;
     };
 
     private stop = (t: Date): Models.QuoteSent => {
-        if (!this._activeQuote.length)
+        if (!this.activeQuote.length)
             return Models.QuoteSent.UnsentDelete;
 
-        this._activeQuote.forEach((q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
-        this._activeQuote = [];
+        this.activeQuote.forEach((q: QuoteOrder) => this._broker.cancelOrder(new Models.OrderCancel(q.orderId, this._exchange, t)));
+        this.activeQuote = [];
         return Models.QuoteSent.Delete;
     };
 }
