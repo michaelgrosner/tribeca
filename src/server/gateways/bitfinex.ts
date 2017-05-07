@@ -12,52 +12,15 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
 import log from "../logging";
-var shortId = require("shortid");
 var Deque = require("collections/deque");
-
-interface BitfinexMarketTrade {
-    tid: number;
-    timestamp: number;
-    price: string;
-    amount: string;
-    exchange: string;
-    type: string;
-}
-
-interface BitfinexMarketLevel {
-    price: string;
-    amount: string;
-    timestamp: string;
-}
-
-interface BitfinexOrderBook {
-    bids: BitfinexMarketLevel[];
-    asks: BitfinexMarketLevel[];
-}
-
-function decodeSide(side: string) {
-    switch (side) {
-        case "buy": return Models.Side.Bid;
-        case "sell": return Models.Side.Ask;
-        default: return Models.Side.Unknown;
-    }
-}
-
-function encodeSide(side: Models.Side) {
-    switch (side) {
-        case Models.Side.Bid: return "buy";
-        case Models.Side.Ask: return "sell";
-        default: return "";
-    }
-}
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
     if (type === Models.OrderType.Market) {
-        return "exchange market";
+        return "EXCHANGE MARKET";
     }
     else if (type === Models.OrderType.Limit) {
-        if (tif === Models.TimeInForce.FOK) return "exchange fill-or-kill";
-        if (tif === Models.TimeInForce.GTC) return "exchange limit";
+        if (tif === Models.TimeInForce.FOK) return "EXCHANGE FOK";
+        if (tif === Models.TimeInForce.GTC) return "EXCHANGE LIMIT";
     }
     throw new Error("unsupported tif " + Models.TimeInForce[tif] + " and order type " + Models.OrderType[type]);
 }
@@ -81,11 +44,19 @@ function getJSON<T>(url: string, qs?: any) : Promise<T> {
 }
 
 class BitfinexWebsocket {
-	send = <T>(channel : string, parameters: any, cb?: () => void) => {
-        var subsReq : any = {event: 'subscribe', channel: channel};
+	send = <T>(channel: string, parameters: any, cb?: () => void) => {
+        var subsReq: any;
 
-        if (parameters !== null)
-            subsReq = Object.assign(subsReq, parameters);
+        if (['on','oc'].indexOf(channel)>-1) {
+          subsReq = [0, channel, null, parameters];
+        }
+        else {
+          subsReq = channel == 'auth'
+            ? {event: channel} : {event: 'subscribe', channel: channel};
+
+          if (parameters !== null)
+              subsReq = Object.assign(subsReq, parameters);
+        }
 
         this._ws.send(JSON.stringify(subsReq), (e: Error) => {
             if (!e && cb) cb();
@@ -103,9 +74,19 @@ class BitfinexWebsocket {
             if (typeof msg === "undefined") throw new Error("Unkown message from Bitfinex socket: " + raw);
 
             if (typeof msg.event !== "undefined" && msg.event == "subscribed") {
-                this._handlers[msg.chanId] = this._handlers[msg.channel];
+                this._handlers[msg.chanId.toString()] = this._handlers[msg.channel];
                 delete this._handlers[msg.channel];
                 this._log.info("Successfully connected to %s", msg.channel);
+                return;
+            }
+            if (typeof msg.event !== "undefined" && msg.event == "auth") {
+                this._handlers[msg.chanId.toString()] = this._handlers[msg.event];
+                delete this._handlers[msg.channel];
+                this._log.info("Bitfinex authentication status:", msg.status);
+                return;
+            }
+            if (typeof msg.event !== "undefined" && msg.event == "info") {
+                this._log.info("Bitfinex info:", msg);
                 return;
             }
             if (typeof msg.event !== "undefined" && msg.event == "ping") {
@@ -121,7 +102,7 @@ class BitfinexWebsocket {
                 return;
             }
 
-            var handler = this._handlers[msg[0]];
+            var handler = this._handlers[msg[0].toString()];
 
             if (typeof handler === "undefined") {
                 this._log.warn("Got message on unknown topic", msg);
@@ -130,8 +111,19 @@ class BitfinexWebsocket {
 
             if (typeof msg[1][0] == 'object')
               handler(new Models.Timestamped(msg[1], t));
-            else
-              handler(new Models.Timestamped([msg[1] == 'te' ? msg[2] : msg[1]], t));
+            else {
+              if (msg[1]=='n') {
+                this._log.info("Bitfinex notice:", msg[2][6], msg[2][7]);
+                return;
+              }
+              if (['hos','hts'].indexOf(msg[1]) > -1) return;
+              handler(new Models.Timestamped(
+                ['os','ou'].indexOf(msg[1]) > -1
+                  ? [msg[1], msg[2]]
+                  : [msg[1] == 'te' ? msg[2] : msg[1]],
+                t
+              ));
+            }
         }
         catch (e) {
             this._log.error(e, "Error parsing msg", raw);
@@ -222,52 +214,11 @@ interface RejectableResponse {
     message: string;
 }
 
-interface BitfinexNewOrderRequest {
-    symbol: string;
-    amount: string;
-    price: string; //Price to buy or sell at. Must be positive. Use random number for market orders.
-    exchange: string; //always "bitfinex"
-    side: string; // buy or sell
-    type: string; // "market" / "limit" / "stop" / "trailing-stop" / "fill-or-kill" / "exchange market" / "exchange limit" / "exchange stop" / "exchange trailing-stop" / "exchange fill-or-kill". (type starting by "exchange " are exchange orders, others are margin trading orders)
-    is_hidden?: boolean;
-}
-
-interface BitfinexNewOrderResponse extends RejectableResponse {
-    order_id: string;
-    remaining_amount?: string;
-    original_amount?: string;
-}
-
 interface BitfinexCancelOrderRequest {
     order_id: string;
 }
 
-interface BitfinexCancelReplaceOrderRequest extends BitfinexNewOrderRequest {
-    order_id: string;
-}
-
 interface BitfinexCancelReplaceOrderResponse extends BitfinexCancelOrderRequest, RejectableResponse { }
-
-interface BitfinexOrderStatusRequest {
-    order_id: string;
-}
-
-interface BitfinexMyTradesRequest {
-    symbol: string;
-    timestamp: number;
-}
-
-interface BitfinexMyTradesResponse extends RejectableResponse {
-    price: string;
-    amount: string;
-    timestamp: number;
-    exchange: string;
-    type: string;
-    fee_currency: string;
-    fee_amount: string;
-    tid: number;
-    order_id: string;
-}
 
 interface BitfinexOrderStatusResponse extends RejectableResponse {
     symbol: string;
@@ -319,74 +270,57 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return d.promise;
     };
 
-    generateClientOrderId = () => shortId.generate();
+    generateClientOrderId = () => parseInt((Math.random()+'').substr(-10),10).toString();
 
-    public cancelsByClientOrderId = false;
+    public cancelsByClientOrderId = true;
 
-    private convertToOrderRequest = (order: Models.OrderStatusReport): BitfinexNewOrderRequest => {
-        return {
-            amount: order.quantity.toString(),
-            exchange: "bitfinex",
-            price: order.price.toString(),
-            side: encodeSide(order.side),
-            symbol: this._symbolProvider.symbol,
-            type: encodeTimeInForce(order.timeInForce, order.type)
-        };
-    }
 
     sendOrder = (order: Models.OrderStatusReport) => {
-        var req = this.convertToOrderRequest(order);
+        this._socket.send<Order>("on", <Order>{
+            gid: 0,
+            cid: parseInt(order.orderId),
+            amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
+            price: order.price.toFixed(this._details.minTickIncrement).toString(),
+            symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
+            type: encodeTimeInForce(order.timeInForce, order.type)
+        }, () => {
+            this.OrderUpdate.trigger({
+                orderId: order.orderId,
+                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
+            });
+        });
+    };
 
-        this._http
-            .post<BitfinexNewOrderRequest, BitfinexNewOrderResponse>("order/new", req)
-            .then(resp => {
-                if (typeof resp.data.message !== "undefined") {
-                    this.OrderUpdate.trigger({
-                        orderStatus: Models.OrderStatus.Rejected,
-                        orderId: order.orderId,
-                        rejectMessage: resp.data.message,
-                        time: resp.time
-                    });
-                    return;
-                }
-
-                this.OrderUpdate.trigger({
-                    orderId: order.orderId,
-                    exchangeId: resp.data.order_id,
-                    time: resp.time,
-                    orderStatus: Models.OrderStatus.Working
-                });
-            }).done();
+    private onOrderAck = (orders: any[], time: Date) => {
+        orders.forEach(order => {
+            this.OrderUpdate.trigger({
+              orderId: order[2].toString(),
+              time: time,
+              exchangeId: order[0].toString(),
+              orderStatus: BitfinexOrderEntryGateway.GetOrderStatus(order[13]),
+              leavesQuantity: Math.abs(order[6]),
+              lastPrice: order[16],
+              lastQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6])),
+              averagePrice: order[17],
+              side: order[7] > 0 ? Models.Side.Bid : Models.Side.Ask,
+              cumQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6])),
+              quantity: Math.abs(order[7])
+            });
+        });
     };
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
-        var req = { order_id: cancel.exchangeId };
-        this._http
-            .post<BitfinexCancelOrderRequest, any>("order/cancel", req)
-            .then(resp => {
-                if (typeof resp.data.message !== "undefined") {
-                    this.OrderUpdate.trigger({
-                        orderStatus: Models.OrderStatus.Rejected,
-                        cancelRejected: true,
-                        orderId: cancel.orderId,
-                        rejectMessage: resp.data.message,
-                        time: resp.time
-                    });
-                    return;
-                }
-
-                this.OrderUpdate.trigger({
-                    orderId: cancel.orderId,
-                    time: resp.time,
-                    orderStatus: Models.OrderStatus.Cancelled
-                });
-            })
-            .done();
-
-        this.OrderUpdate.trigger({
-            orderId: cancel.orderId,
-            computationalLatency: (new Date()).getTime() - cancel.time.getTime()
-
+        this._socket.send<Cancel>("oc", <Cancel>{
+            cid: parseInt(cancel.orderId),
+            cid_date: moment(cancel.time).format('YYYY-MM-DD')
+        }, () => {
+          this.OrderUpdate.trigger({
+              orderId: cancel.orderId,
+              leavesQuantity: 0,
+              time: cancel.time,
+              orderStatus: Models.OrderStatus.Cancelled,
+              done: true
+          });
         });
     };
 
@@ -395,51 +329,96 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.sendOrder(replace);
     };
 
-    private downloadOrderStatuses = () => {
-        var tradesReq = { timestamp: this._since.unix(), symbol: this._symbolProvider.symbol };
-        this._http
-            .post<BitfinexMyTradesRequest, BitfinexMyTradesResponse[]>("mytrades", tradesReq)
-            .then(resps => {
-                _.forEach(resps.data, t => {
-                    this._http
-                        .post<BitfinexOrderStatusRequest, BitfinexOrderStatusResponse>("order/status", { order_id: t.order_id })
-                        .then(r => {
-                            this.OrderUpdate.trigger({
-                                exchangeId: t.order_id,
-                                lastPrice: parseFloat(t.price),
-                                time: moment.utc().toDate(),
-                                lastQuantity: parseFloat(r.data.remaining_amount),
-                                orderStatus: BitfinexOrderEntryGateway.GetOrderStatus(r.data),
-                                averagePrice: parseFloat(r.data.avg_execution_price),
-                                leavesQuantity: parseFloat(r.data.remaining_amount),
-                                cumQuantity: parseFloat(r.data.executed_amount),
-                                quantity: parseFloat(r.data.original_amount)
-                            });
-                        })
-                        .done();
-                });
-            }).done();
-
-        this._since = moment.utc();
-    };
-
-    private static GetOrderStatus(r: BitfinexOrderStatusResponse) {
-        if (r.is_cancelled) return Models.OrderStatus.Cancelled;
-        if (r.is_live) return Models.OrderStatus.Working;
-        if (r.executed_amount === r.original_amount) return Models.OrderStatus.Complete;
-        return Models.OrderStatus.Other;
+    private static GetOrderStatus(r: string) {
+        switch(r) {
+          case 'ACTIVE': return Models.OrderStatus.Working;
+          case 'EXECUTED': return Models.OrderStatus.Complete;
+          case 'PARTIALLY FILLED': return Models.OrderStatus.Working;
+          case 'CANCELED': return Models.OrderStatus.Cancelled;
+          default: return Models.OrderStatus.Other;
+        }
     }
 
-    private _since = moment.utc();
     private _log = log("tribeca:gateway:BitfinexOE");
     constructor(
         timeProvider: Utils.ITimeProvider,
         private _details: BitfinexBaseGateway,
         private _http: BitfinexHttp,
         private _socket: BitfinexWebsocket,
+        private _signer: BitfinexMessageSigner,
         private _symbolProvider: BitfinexSymbolProvider) {
         _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
-        timeProvider.setInterval(this.downloadOrderStatuses, moment.duration(8, "seconds"));
+
+        _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
+          if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
+          if (['on','ou'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], msg.time);
+        });
+
+        _socket.ConnectChanged.on(cs => {
+            this.ConnectChanged.trigger(cs);
+
+            if (cs === Models.ConnectivityStatus.Connected) {
+                _socket.send("auth", _signer.signMessage({filter: ['trading']}));
+            }
+        });
+    }
+}
+
+interface SignedMessage {
+    apiKey?: string;
+    authNonce?: number;
+    authPayload?: string;
+    authSig?: string;
+    filter?: string[];
+}
+
+interface Order extends SignedMessage {
+    id?: number;
+    cid?: number;
+    amount?: string;
+    price?: string;
+    symbol?: string;
+    type?: string;
+}
+
+interface Cancel extends SignedMessage {
+    cid?: number;
+    cid_date?: string;
+}
+
+class BitfinexMessageSigner {
+    private _secretKey : string;
+    private _api_key : string;
+
+    public signMessage = (m : SignedMessage) : SignedMessage => {
+        var els : string[] = [];
+
+        if (!m.hasOwnProperty("api_key"))
+            m.apiKey = this._api_key;
+
+        var keys = [];
+        for (var key in m) {
+            if (m.hasOwnProperty(key))
+                keys.push(key);
+        }
+        keys.sort();
+
+        for (var i = 0; i < keys.length; i++) {
+            const k = keys[i];
+            if (m.hasOwnProperty(k))
+                els.push(k + "=" + m[k]);
+        }
+
+        m.authNonce = Date.now() * 1000;
+        m.authPayload = 'AUTH' + m.authNonce;
+        m.authSig = crypto.createHmac("sha384", this._secretKey).update(m.authPayload).digest('hex')
+
+        return m;
+    };
+
+    constructor(config : Config.IConfigProvider) {
+        this._api_key = config.GetString("BitfinexKey");
+        this._secretKey = config.GetString("BitfinexSecret");
     }
 }
 
@@ -498,8 +477,8 @@ class BitfinexHttp {
 
     private postOnce = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Q.Promise<Models.Timestamped<TResponse>> => {
         msg["request"] = "/v1/" + actionUrl;
+        this._nonce = Date.now() * 1000;
         msg["nonce"] = this._nonce.toString();
-        this._nonce += 1;
 
         var payload = new Buffer(JSON.stringify(msg)).toString("base64");
         var signature = crypto.createHmac("sha384", this._secret).update(payload).digest('hex');
@@ -626,11 +605,12 @@ class Bitfinex extends Interfaces.CombinedGateway {
     constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
         const monitor = new RateLimitMonitor(60, moment.duration(1, "minutes"));
         const http = new BitfinexHttp(config, monitor);
+        const signer = new BitfinexMessageSigner(config);
         const socket = new BitfinexWebsocket(config);
         const details = new BitfinexBaseGateway(pricePrecision, minSize);
 
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, socket, symbol)
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
