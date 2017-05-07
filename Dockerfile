@@ -18,7 +18,7 @@ EXPOSE 3000 5000
 
 # General config properties. Properties with `NULL` should be replaced with your own exchange account information.
 ENV TRIBECA_MODE dev
-ENV EXCHANGE null
+ENV EXCHANGE test
 ENV TradedPair BTC/USD
 ENV WebClientUsername NULL
 ENV WebClientPassword NULL

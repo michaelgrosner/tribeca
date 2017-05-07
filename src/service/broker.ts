@@ -201,13 +201,17 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         const getOrFallback = <T>(n: T|undefined, o: T) => typeof n !== "undefined" ? n : o;
 
         const quantity = getOrFallback(osr.quantity, orig.quantity);
+
         let cumQuantity : number;
-        let leavesQuantity : number;
-        if (!_.isUndefined(osr.lastQuantity)) {
-            if (_.isUndefined(osr.cumQuantity)) cumQuantity = osr.lastQuantity + (orig.cumQuantity || 0);
-            if (_.isUndefined(osr.leavesQuantity)) leavesQuantity = quantity - osr.lastQuantity;
+        if (!_.isUndefined(osr.lastQuantity) && _.isUndefined(osr.cumQuantity)) {
+            cumQuantity = osr.lastQuantity + (orig.cumQuantity || 0);
         }
         cumQuantity = osr.cumQuantity || cumQuantity;
+
+        let leavesQuantity : number;
+        if (!_.isUndefined(osr.lastQuantity) && _.isUndefined(osr.leavesQuantity)) {
+            leavesQuantity = quantity - cumQuantity;
+        }
         leavesQuantity = osr.leavesQuantity || leavesQuantity;
 
         const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;

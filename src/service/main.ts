@@ -176,7 +176,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case "hitbtc": return Models.Exchange.HitBtc;
             case "coinbase": return Models.Exchange.Coinbase;
             case "okcoin": return Models.Exchange.OkCoin;
-            case "null": return Models.Exchange.Test;
+            case "test": return Models.Exchange.Test;
             case "bitfinex": return Models.Exchange.Bitfinex;
             default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
         }
@@ -189,7 +189,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
             case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-            case Models.Exchange.Test: return TestGw.createNullGateway(config, pair);
+            case Models.Exchange.Test: return TestGw.createTestGateway(config, pair);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }

@@ -6,18 +6,25 @@
     "configurations": [
         {
             "type": "node",
-            "request": "attach",
-            "name": "Attach",
-            "port": 5858
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceRoot}/tribeca/service/main.js",
+            "cwd": "${workspaceRoot}/tribeca/service",
+            "args": [
+                "debug"
+            ],
+            "outFiles": [
+                "${workspaceRoot}/tribeca/service/**/*"
+            ],
+            "sourceMaps": true,
+            "protocol": "inspector"
         },
         {
             "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceRoot}/Gruntfile.js",
-            "outFiles": [
-                "${workspaceRoot}/out/**/*.js"
-            ]
+            "request": "attach",
+            "name": "Attach",
+            "port": 5858,
+            "protocol": "inspector"
         }
     ]
 }

@@ -10,8 +10,9 @@ import Interfaces = require("../interfaces");
 import Config = require("../config");
 import Promises = require("../promises");
 
-const make_fee = -.0025
-const take_fee = .005
+const make_fee = -.0025;
+const take_fee = .005;
+const min_size = 0.0001;
 
 var uuid = require('node-uuid');
 
@@ -150,7 +151,21 @@ class MatchingEngine {
             anyWereAccepted = true;
         }
 
-        if (anyWereAccepted) this.raiseMarket();
+        if (anyWereAccepted) 
+            this.match();
+
+        _(orders).filter(o => o.tif === Models.TimeInForce.IOC && o.leavesQty > 0).forEach(o => {
+            this.Update.trigger({
+                kind: "order",
+                isPlacedOrder: o.isPlacedOrder,
+                payload: {
+                    exchangeId: o.priortity.toString(),
+                    orderStatus: Models.OrderStatus.Cancelled,
+                    orderId: o.id,
+                    leavesQuantity: 0,
+                }
+            });
+        }).value();
     };
 
     private cancel = (cancels: Cancel[]) => {
@@ -201,12 +216,14 @@ class MatchingEngine {
 
     private match = () => {
         const match = (buy: Order, sell: Order) => {
+            // already trapped order below in delete
+            if ((buy.leavesQty <= min_size) || (sell.leavesQty <= min_size)) return;
             let fillQty = Math.min(buy.leavesQty, sell.leavesQty);
             buy.leavesQty -= fillQty;
             sell.leavesQty -= fillQty;
 
-            if (buy.leavesQty <= 0.001) this._buys.delete(buy.id);
-            if (sell.leavesQty <= 0.001) this._sells.delete(sell.id);
+            if (buy.leavesQty <= min_size) this._buys.delete(buy.id);
+            if (sell.leavesQty <= min_size) this._sells.delete(sell.id);
 
             const fillPx = buy.priortity < sell.priortity ? buy.price : sell.price;
 
@@ -224,7 +241,7 @@ class MatchingEngine {
                         lastPrice: fillPx,
                         lastQuantity: fillQty,
                         liquidity: liq,
-                        orderStatus: o.leavesQty <= 0.001 ? Models.OrderStatus.Complete : Models.OrderStatus.Working
+                        orderStatus: o.leavesQty <= min_size ? Models.OrderStatus.Complete : Models.OrderStatus.Working
                     }
                 });
 
@@ -251,8 +268,8 @@ class MatchingEngine {
         if (this._buys.size <= 0 || this._sells.size <= 0)
             return;
 
-        const orderedBuys = _.sortBy(Array.from(this._buys.values()), o => -1*o.price);
-        const orderedSells = _.sortBy(Array.from(this._sells.values()), o => o.price);
+        const orderedBuys = _.sortBy([...this._buys.values()], o => -1*o.price);
+        const orderedSells = _.sortBy([...this._sells.values()], o => o.price);
 
         if (orderedBuys[0].price < orderedSells[0].price)
             return;
@@ -321,7 +338,7 @@ class TestOrderGenerator {
         const qty = Math.random();
         const o : Order = {
             kind: "order",
-            id: uuid.v1(),
+            id: uuid.v4(),
             isPlacedOrder: false,
             leavesQty: qty,
             price: price,
@@ -462,13 +479,15 @@ export class TestingGateway implements Interfaces.IPositionGateway, Interfaces.I
             case "order": 
                 if (u.isPlacedOrder)
                     return this.OrderUpdate.trigger(u.payload);
+                else
+                    break;
             case "order_book": 
-                return this.OrderUpdate.trigger(u.payload);
+                return this.MarketData.trigger(u.payload);
         }
     };
 }
 
-class NullGateway extends Interfaces.CombinedGateway {
+class TestGateway extends Interfaces.CombinedGateway {
     constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
         const minTick = config.GetNumber("NullGatewayTick");
         const matchingEngine = new MatchingEngine(pair);
@@ -481,6 +500,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createNullGateway(config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
-    return new NullGateway(config, pair);
+export async function createTestGateway(config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+    return new TestGateway(config, pair);
 }

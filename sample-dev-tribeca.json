@@ -1,6 +1,6 @@
 {
     "TRIBECA_MODE": "dev",
-    "EXCHANGE": "null",
+    "EXCHANGE": "test",
     "TradedPair": "BTC/USD",
     "MongoDbUrl": "mongodb://localhost:27017/tribeca",
     "WebClientUsername": "NULL",
