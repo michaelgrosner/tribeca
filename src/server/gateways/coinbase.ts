@@ -660,7 +660,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof orderId === "undefined")
             return;
 
-        var t = this._timeProvider.utcNow();
         var status: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: Models.OrderStatus.Working,
