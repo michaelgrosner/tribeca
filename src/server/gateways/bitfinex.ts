@@ -276,7 +276,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               averagePrice: order[17],
               side: order[7] > 0 ? Models.Side.Bid : Models.Side.Ask,
               cumQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6]))
-              ,quantity: Math.abs(order[7])
             });
         });
     };
@@ -290,7 +289,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 leavesQuantity: 0,
                 time: cancel.time,
                 orderStatus: Models.OrderStatus.Cancelled
-                // ,done: true
             });
         });
     };
