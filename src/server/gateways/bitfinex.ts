@@ -271,7 +271,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return d.promise;
     };
 
-    generateClientOrderId = () => parseInt((Math.random()+'').substr(-10),10).toString();
+    generateClientOrderId = () => parseInt((Math.random()+'').substr(-10) ,10).toString();
 
     public cancelsByClientOrderId = true;
 
@@ -317,7 +317,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             cid: parseInt(cancel.orderId, 10),
             cid_date: moment(cancel.time).format('YYYY-MM-DD')
         }, () => {
-          if (cancel.orderStatus !== Models.OrderStatus.Working)
             this.OrderUpdate.trigger({
                 orderId: cancel.orderId,
                 leavesQuantity: 0,
@@ -334,10 +333,10 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private static GetOrderStatus(r: string) {
-        switch(r) {
+        switch(r.split(' ')[0]) {
           case 'ACTIVE': return Models.OrderStatus.Working;
           case 'EXECUTED': return Models.OrderStatus.Complete;
-          case 'PARTIALLY FILLED': return Models.OrderStatus.Working;
+          case 'PARTIALLY': return Models.OrderStatus.Working;
           case 'CANCELED': return Models.OrderStatus.Cancelled;
           default: return Models.OrderStatus.Other;
         }
