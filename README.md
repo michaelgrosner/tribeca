@@ -149,7 +149,9 @@ Added npm scripts, david-dm, travis-ci, coveralls and codacy.
 
 Added historical charts to replace grafana.
 
-Updated OKCoin API integration (since https://www.okcoin.com/t-354.html).
+Updated OKCoin API (since https://www.okcoin.com/t-354.html).
+
+Added Bitfinex API v2.
 
 ### Release 2.0 Changelog:.
 
