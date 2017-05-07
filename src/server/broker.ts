@@ -3,6 +3,7 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
 import Q = require("q");
+import Quoter = require("./quoter");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
@@ -286,14 +287,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 }
             }
 
-            if (typeof orig === "undefined") {
-                // this._log.error({
-                    // update: osr,
-                    // existingExchangeIdsToClientIds: this._orderCache.exchIdsToClientIds,
-                    // existingIds: Array.from(this._orderCache.allOrders.keys())
-                // }, "no existing order for non-New update!");
-                return;
-            }
+            if (typeof orig === "undefined") return;
         }
 
         const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
@@ -519,26 +513,16 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         this._positionPublisher.publish(positionReport);
     };
 
-    private osr: Models.OrderStatusReport[] = [];
-
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
-        if (o.orderStatus == Models.OrderStatus.New
-          || o.orderStatus == Models.OrderStatus.Cancelled
-          || o.orderStatus == Models.OrderStatus.Complete
-          || o.orderStatus == Models.OrderStatus.Rejected
-        ) this.osr = this.osr.filter(x => x.orderId !== o.orderId);
-        else if (!this.osr.filter(x => x.orderId === o.orderId).length)
-          this.osr.push(o);
-
-        if (!this.osr.length || !this._report) return;
+        const qs = this._quoter.quotesSent(o.side);
+        if (!qs.length || !this._report) return;
         var amount = o.side == Models.Side.Ask
           ? this._report.baseAmount + this._report.baseHeldAmount
           : this._report.quoteAmount + this._report.quoteHeldAmount;
         var heldAmount = 0;
-        this.osr.map((osr: Models.OrderStatusReport) => {
-          if (osr.side!=o.side || !osr.quantity) return;
-          amount -= osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
-          heldAmount += osr.quantity * (osr.side == Models.Side.Bid ? osr.price : 1);
+        qs.forEach((q) => {
+          amount -= q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
+          heldAmount += q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
         });
 
         this.onPositionUpdate(new Models.CurrencyPosition(
@@ -551,6 +535,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _base : Interfaces.IBroker,
                 private _broker: Interfaces.IOrderBroker,
+                private _quoter: Quoter.Quoter,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _positionPublisher : Publish.IPublish<Models.PositionReport>) {

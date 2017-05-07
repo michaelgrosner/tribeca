@@ -359,6 +359,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.timeProvider,
       broker,
       orderBroker,
+      quoter,
       fvEngine,
       gateway.pg,
       system.getPublisher(Models.Topics.Position, monitor)

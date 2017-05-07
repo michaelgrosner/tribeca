@@ -38,7 +38,7 @@ export class Quoter {
         }
     };
 
-    public quotesSent = (s: Models.Side) => {
+    public quotesSent = (s: Models.Side): QuoteOrder[] => {
         switch (s) {
             case Models.Side.Ask:
                 return this._askQuoter.quotesSent;
