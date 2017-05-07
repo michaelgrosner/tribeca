@@ -30,6 +30,7 @@
     "OkCoinOrderDestination": "OkCoin",
 
     "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
+    "BitfinexWebsocketUrl": "wss://api.bitfinex.com/ws/2",
     "BitfinexKey": "NULL",
     "BitfinexSecret": "NULL",
     "BitfinexOrderDestination": "Bitfinex"
