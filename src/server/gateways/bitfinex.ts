@@ -245,10 +245,10 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     generateClientOrderId = (): number => parseInt((Math.random()+'').substr(-8), 10);
 
-    public cancelsByClientOrderId = true;
+    public cancelsByClientOrderId = false;
 
     sendOrder = (order: Models.OrderStatusReport) => {
-        this._socket.send<Order>("on", <Order>{
+        this._socket.send("on", {
             gid: 0,
             cid: order.orderId,
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
@@ -275,16 +275,15 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               lastQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6])),
               averagePrice: order[17],
               side: order[7] > 0 ? Models.Side.Bid : Models.Side.Ask,
-              cumQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6])),
-              quantity: Math.abs(order[7])
+              cumQuantity: Math.abs(Math.abs(order[7]) - Math.abs(order[6]))
+              ,quantity: Math.abs(order[7])
             });
         });
     };
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
-        this._socket.send<Cancel>("oc", {
-            cid: cancel.orderId,
-            cid_date: moment(cancel.time).format('YYYY-MM-DD')
+        this._socket.send("oc", {
+            id: cancel.exchangeId
         }, () => {
             this.OrderUpdate.trigger({
                 orderId: cancel.orderId,
@@ -342,21 +341,6 @@ interface SignedMessage {
     authPayload?: string;
     authSig?: string;
     filter?: string[];
-}
-
-interface Order extends SignedMessage {
-    id?: number;
-    cid?: number;
-    amount?: string;
-    price?: string;
-    symbol?: string;
-    type?: string;
-}
-
-interface Cancel extends SignedMessage {
-    id?: number;
-    cid?: number;
-    cid_date?: string;
 }
 
 class BitfinexMessageSigner {
