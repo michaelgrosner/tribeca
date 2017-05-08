@@ -220,7 +220,6 @@ export interface OrderStatusReport {
     pendingCancel : boolean;
     pendingReplace : boolean;
     cancelRejected : boolean;
-    done : boolean;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
