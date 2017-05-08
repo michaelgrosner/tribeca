@@ -151,7 +151,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
               if (err) this._log.error(err, "Unable to deleteOne", this._dbName, report);
           });
         else
-          this.collection.updateOne({ tradeId: trade.tradeId }, { $set: { time: (moment.isMoment(trade.time) ? trade.time.format('Y-MM-DD HH:mm:ss') : moment(trade.time).format('Y-MM-DD HH:mm:ss')), quantity : trade.quantity, value : trade.value, Ktime: (moment.isMoment(trade.Ktime) ? trade.Ktime.format('Y-MM-DD HH:mm:ss') : moment(trade.Ktime).format('Y-MM-DD HH:mm:ss')), Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
+          this.collection.updateOne({ tradeId: trade.tradeId }, { $set: { time: trade.time, quantity : trade.quantity, value : trade.value, Ktime: trade.Ktime, Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
               if (err) this._log.error(err, "Unable to repersist", this._dbName, report);
           });
     };
