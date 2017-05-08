@@ -12,7 +12,6 @@ import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import log from "../logging";
-var shortId = require("shortid");
 
 interface OkCoinMessageIncomingMessage {
     channel: string;
@@ -207,7 +206,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    generateClientOrderId = () => shortId.generate();
+    generateClientOrderId = () => parseInt((Math.random()+'').substr(-8), 10).toString();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Q.Promise<number> => {
