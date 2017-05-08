@@ -261,7 +261,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._ordersWaitingForAckQueue.push([order.orderId, order.quantity]);
 
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
-            this.OrderUpdate.trigger(<Models.OrderStatusReport>{
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: order.orderId,
                 computationalLatency: Utils.date().valueOf() - order.time.valueOf()
             });
