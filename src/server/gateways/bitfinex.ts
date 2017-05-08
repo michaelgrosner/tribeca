@@ -231,8 +231,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                                 exchangeId: t.id,
                                 leavesQuantity: 0,
                                 time: resp.time,
-                                orderStatus: Models.OrderStatus.Cancelled,
-                                done: true
+                                orderStatus: Models.OrderStatus.Cancelled
                             });
                         })
                         .done();
