@@ -226,8 +226,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         .then(resp => {
                             if (typeof resp.data.message !== "undefined")
                                 return;
-
-                            this.OrderUpdate.trigger({
+                            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                                 exchangeId: t.id,
                                 leavesQuantity: 0,
                                 time: resp.time,
@@ -254,7 +253,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
             type: encodeTimeInForce(order.timeInForce, order.type)
         }, () => {
-            this.OrderUpdate.trigger({
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: order.orderId,
                 computationalLatency: Utils.date().valueOf() - order.time.valueOf()
             });
@@ -263,7 +262,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onOrderAck = (orders: any[], time: Date) => {
         orders.forEach(order => {
-            this.OrderUpdate.trigger({
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
               orderId: order[2],
               time: time,
               exchangeId: order[0],
@@ -282,7 +281,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._socket.send("oc", {
             id: cancel.exchangeId
         }, () => {
-            this.OrderUpdate.trigger({
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: cancel.orderId,
                 leavesQuantity: 0,
                 time: cancel.time,
