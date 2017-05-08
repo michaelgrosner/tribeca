@@ -497,7 +497,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
         this._authClient.cancelOrder(cancel.exchangeId, (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
-            var status: Models.OrderStatusUpdate
+            var status: Models.OrderStatusUpdate;
             var t = this._timeProvider.utcNow();
 
             var msg = null;
@@ -508,7 +508,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 if (ack.message) msg = ack.message;
                 if (ack.error) msg = ack.error;
             }
-
             if (msg !== null) {
                 status = {
                     orderId: cancel.orderId,
