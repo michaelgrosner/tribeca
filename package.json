@@ -61,7 +61,7 @@
     "socket.io-client": "^1.7.4",
     "ts-helpers": "^1.1.2",
     "typescript": "^2.3.2",
-    "uglify-js": "^2.8.23",
+    "uglify-js": "^3.0.1",
     "uuid": "^3.0.1",
     "ws": "^2.3.1",
     "zone.js": "^0.8.10"
@@ -90,7 +90,7 @@
     "compile-server": "tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts",
     "compile-client": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts",
     "compile-public": "cp -R src/pub/* app/pub/",
-    "compile-bundle": "browserify -t [ babelify --presets [ babili es2015 ] ] app/pub/js/client/main.js | uglifyjs -b beautify=false,max-line-len=120000 > app/pub/js/client/bundle.min.js",
+    "compile-bundle": "browserify -t [ babelify --presets [ babili es2015 ] ] app/pub/js/client/main.js | uglifyjs > app/pub/js/client/bundle.min.js",
     "restart": "npm stop --tribeca:config=$npm_package_config_config && npm start --$npm_package_name:config=$npm_package_config_config",
     "debug": "nodejs --inspect tribeca.js $npm_package_config_config",
     "list": "forever list",
