@@ -108,33 +108,41 @@ export class MarketQuotingComponent implements OnInit {
       return;
     }
 
+    var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
+    var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
+    for (let i: number = 0; i < asks.length; i++)
+      if (update.data[1].indexOf(asks[i].price)==-1) {
+        for (var j: number = 0; j < update.data[1].length;j++)
+          if (update.data[1][j++]>asks[i].price) break;
+        update.data[1].splice(j-1, 0, asks[i].price, asks[i].quantity);
+        update.data[1] = update.data[1].slice(0, -2);
+      }
+    for (let i: number = 0; i < bids.length; i++)
+      if (update.data[0].indexOf(bids[i].price)==-1) {
+        for (var j: number = 0; j < update.data[0].length;j++)
+          if (update.data[0][j++]>bids[i].price) break;
+        update.data[0].splice(j-1, 0, bids[i].price, bids[i].quantity);
+        update.data[0] = update.data[0].slice(0, -2);
+      }
+
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
       if (j >= this.levels.length) this.levels[j] = <any>{};
       this.levels[j] = { askPrice: update.data[1][i], askSize: update.data[1][++i] };
     }
 
-    if (this.order_classes.length) {
-      var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
-      var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
-      if (bids.length) {
-        var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
-        this.qBidPx = bid.price;
-        this.qBidSz = bid.quantity;
-      } else {
-        this.qBidPx = null;
-        this.qBidSz = null;
-      }
-      if (asks.length) {
-        var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
-        this.qAskPx = ask.price;
-        this.qAskSz = ask.quantity;
-      } else {
-        this.qAskPx = null;
-        this.qAskSz = null;
-      }
+    if (bids.length) {
+      var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
+      this.qBidPx = bid.price;
+      this.qBidSz = bid.quantity;
     } else {
       this.qBidPx = null;
       this.qBidSz = null;
+    }
+    if (asks.length) {
+      var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
+      this.qAskPx = ask.price;
+      this.qAskSz = ask.quantity;
+    } else {
       this.qAskPx = null;
       this.qAskSz = null;
     }
