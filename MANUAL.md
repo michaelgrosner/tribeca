@@ -130,11 +130,11 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `fv` - Sets the fair value calculation mode
 
-* `cxl` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
-
   * `BBO` - `FV = ([best bid price] + [best ask price])/2.0`
 
   * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
+
+* `cxl` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
 * `apMode`
 
