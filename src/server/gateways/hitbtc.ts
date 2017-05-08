@@ -13,7 +13,6 @@ import moment = require("moment");
 import util = require("util");
 import * as Q from "q";
 import log from "../logging";
-const shortId = require("shortid");
 const SortedArray = require("collections/sorted-array");
 
 const _lotMultiplier = 100.0;
@@ -481,9 +480,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     };
 
-    generateClientOrderId = () => {
-        return shortId.generate();
-    }
+    generateClientOrderId = (): string => parseInt((Math.random()+'').substr(-8), 10).toString();
 
     private _log = log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;

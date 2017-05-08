@@ -8,7 +8,6 @@ import Persister = require("./persister");
 import Q = require("q");
 import stream = require("stream");
 
-var shortId = require("shortid");
 var uuid = require('uuid');
 
 enum TimedType {
@@ -86,7 +85,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
 
     generateClientOrderId = () => {
-        return "BACKTEST-" + shortId.generate();
+        return "BACKTEST-" + parseInt((Math.random()+'').substr(-8), 10);
     }
 
     public cancelsByClientOrderId = true;
