@@ -3058,11 +3058,6 @@
       "from": "shell-quote@>=1.6.1 <2.0.0",
       "resolved": "https://registry.npmjs.org/shell-quote/-/shell-quote-1.6.1.tgz"
     },
-    "shortid": {
-      "version": "2.2.8",
-      "from": "shortid@>=2.2.8 <3.0.0",
-      "resolved": "https://registry.npmjs.org/shortid/-/shortid-2.2.8.tgz"
-    },
     "shush": {
       "version": "1.0.0",
       "from": "shush@>=1.0.0 <2.0.0",
