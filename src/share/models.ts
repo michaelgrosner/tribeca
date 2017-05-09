@@ -105,6 +105,7 @@ export enum Currency {
     CNY,
     CAD,
     ETH,
+    ETC,
     BFX,
     RRT,
     ZEC,
