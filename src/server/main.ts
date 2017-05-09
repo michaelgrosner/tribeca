@@ -409,6 +409,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getPublisher(Models.Topics.QuoteStatus, monitor),
       quoter,
       broker,
+      positionBroker,
       new Active.ActiveRepository(
         system.startingActive,
         broker,
