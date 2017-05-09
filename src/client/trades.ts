@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, EventEmitter, Input, Output, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
@@ -20,6 +20,8 @@ export class TradesComponent implements OnInit {
   private sortTimeout: number;
 
   @Input() product: Models.ProductState;
+
+  @Output() onTradesLength = new EventEmitter<number>();
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -153,6 +155,8 @@ export class TradesComponent implements OnInit {
         }
       }
     }
+
+    this.onTradesLength.emit(this.gridOptions.api.getModel().getRowCount());
   }
 
   private updateQP = (qp: Models.QuotingParameters) => {
