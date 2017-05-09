@@ -548,44 +548,10 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     sendOrder = (order: Models.OrderStatusReport) => {
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
-            var status: Models.OrderStatusUpdate
-            var t = this._timeProvider.utcNow();
-
             if (ack == null || typeof ack.id === "undefined") {
               if (ack==null || (ack.message && ack.message!='Insufficient funds'))
                 this._log.warn("WARNING FROM GATEWAY:", order.orderId, err, ack);
             }
-
-            var msg = null;
-            if (err) {
-                if (err.message) msg = err.message;
-            }
-            else if (ack != null) {
-                if (ack.message) msg = ack.message;
-                if (ack.error) msg = ack.error;
-            }
-            else if (ack == null) {
-                msg = "No ack provided!!"
-            }
-
-            if (msg !== null) {
-                status = {
-                    orderId: order.orderId,
-                    rejectMessage: msg,
-                    orderStatus: Models.OrderStatus.Rejected,
-                    time: t
-                };
-            }
-            else {
-                status = {
-                    exchangeId: ack.id,
-                    orderId: order.orderId,
-                    orderStatus: Models.OrderStatus.Working,
-                    time: t
-                };
-            }
-
-            this.OrderUpdate.trigger(status);
         };
 
         var o: CoinbaseOrder = {
