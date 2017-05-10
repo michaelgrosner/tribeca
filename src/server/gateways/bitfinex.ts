@@ -251,7 +251,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
             price: order.price.toString(),
             symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
-            type: encodeTimeInForce(order.timeInForce, order.type)
+            type: encodeTimeInForce(order.timeInForce, order.type),
+            postonly: +order.preferPostOnly
         }, () => {
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: order.orderId,
