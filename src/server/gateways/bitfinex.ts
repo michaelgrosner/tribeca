@@ -249,7 +249,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             gid: 0,
             cid: order.orderId,
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
-            price: order.price.toFixed(this._details.minTickIncrement).toString(),
+            price: order.price.toString(),
             symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
             type: encodeTimeInForce(order.timeInForce, order.type)
         }, () => {
@@ -557,13 +557,26 @@ interface SymbolDetails {
     expiration:string
 }
 
+interface SymbolTicker {
+  mid: string,
+  bid: string,
+  ask: string,
+  last_price: string,
+  low: string,
+  high: string,
+  volume: string
+}
+
 export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);
 
     for (let s of symbolDetails) {
-        if (s.pair === symbol.symbol)
-            return new Bitfinex(timeProvider, config, symbol, parseFloat(s.minimum_order_size), parseFloat(s.minimum_order_size));
+        if (s.pair === symbol.symbol) {
+            const tickerUrl = config.GetString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
+            const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
+            return new Bitfinex(timeProvider, config, symbol, parseFloat('1e-'+symbolTicker.last_price.replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
+        }
     }
 }
