@@ -114,14 +114,14 @@ export class MarketQuotingComponent implements OnInit {
       if (update.data[1].indexOf(asks[i].price)==-1) {
         for (var j: number = 0; j < update.data[1].length;j++)
           if (update.data[1][j++]>asks[i].price) break;
-        update.data[1].splice(j-1, 0, asks[i].price, asks[i].quantity);
+        update.data[1].splice(j-(j==update.data[1].length?0:1), 0, asks[i].price, asks[i].quantity);
         update.data[1] = update.data[1].slice(0, -2);
       }
     for (let i: number = 0; i < bids.length; i++)
       if (update.data[0].indexOf(bids[i].price)==-1) {
         for (var j: number = 0; j < update.data[0].length;j++)
           if (update.data[0][j++]<bids[i].price) break;
-        update.data[0].splice(j-1, 0, bids[i].price, bids[i].quantity);
+        update.data[0].splice(j-(j==update.data[0].length?0:1), 0, bids[i].price, bids[i].quantity);
         update.data[0] = update.data[0].slice(0, -2);
       }
 
