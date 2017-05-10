@@ -2955,9 +2955,9 @@
       "resolved": "https://registry.npmjs.org/ripemd160/-/ripemd160-1.0.1.tgz"
     },
     "rxjs": {
-      "version": "5.3.1",
-      "from": "rxjs@>=5.3.1 <6.0.0",
-      "resolved": "https://registry.npmjs.org/rxjs/-/rxjs-5.3.1.tgz"
+      "version": "5.4.0",
+      "from": "rxjs@5.4.0",
+      "resolved": "https://registry.npmjs.org/rxjs/-/rxjs-5.4.0.tgz"
     },
     "safe-buffer": {
       "version": "5.0.1",
@@ -3329,9 +3329,9 @@
       "resolved": "https://registry.npmjs.org/typescript/-/typescript-2.3.2.tgz"
     },
     "uglify-js": {
-      "version": "3.0.1",
-      "from": "uglify-js@3.0.1",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.1.tgz"
+      "version": "3.0.3",
+      "from": "uglify-js@3.0.3",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.3.tgz"
     },
     "uglify-to-browserify": {
       "version": "1.0.2",
