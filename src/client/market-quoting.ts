@@ -111,14 +111,14 @@ export class MarketQuotingComponent implements OnInit {
     var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
     var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
     for (let i: number = 0; i < asks.length; i++)
-      if (update.data[1].indexOf(asks[i].price)==-1) {
+      if (!update.data[1].filter(x => x===asks[i].price).length) {
         for (var j: number = 0; j < update.data[1].length;j++)
           if (update.data[1][j++]>asks[i].price) break;
         update.data[1].splice(j-(j==update.data[1].length?0:1), 0, asks[i].price, asks[i].quantity);
         update.data[1] = update.data[1].slice(0, -2);
       }
     for (let i: number = 0; i < bids.length; i++)
-      if (update.data[0].indexOf(bids[i].price)==-1) {
+      if (!update.data[0].filter(x => x===bids[i].price).length) {
         for (var j: number = 0; j < update.data[0].length;j++)
           if (update.data[0][j++]<bids[i].price) break;
         update.data[0].splice(j-(j==update.data[0].length?0:1), 0, bids[i].price, bids[i].quantity);
