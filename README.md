@@ -19,11 +19,15 @@ Runs on the latest node.js (v6 or v7). Persistence is achieved using mongodb. In
 
 ### Compatible Exchanges
 
-1. Coinbase
+with Post-Only Orders support:
 
-2. OKCoin
+1. Coinbase GDAX
 
-3. Bitfinex
+2. Bitfinex
+
+without:
+
+3. OKCoin.com OKCoin.cn
 
 4. HitBTC
 
