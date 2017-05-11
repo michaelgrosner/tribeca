@@ -600,7 +600,7 @@ class ClientComponent implements OnInit {
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='Coinbase'
-        ? 'https://gdax.com/trade'
+        ? 'https://gdax.com/trade/'+this.pair_name.join('-')
         : (this.exchange_name=='Bitfinex'
             ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
             : null
