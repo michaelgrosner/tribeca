@@ -28,7 +28,6 @@ export class QuoteSender {
             private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
             private _details: Interfaces.IBroker,
-            private _positionBroker: Interfaces.IPositionBroker,
             private _activeRepo: Active.ActiveRepository) {
         _activeRepo.NewParameters.on(this.sendQuote);
         _quotingEngine.QuoteChanged.on(this.sendQuote);
@@ -58,10 +57,10 @@ export class QuoteSender {
         var bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null && this._activeRepo.latest) {
-            if (quote.ask !== null && this.hasEnoughPosition(this._details.pair.base, quote.ask.size) && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
+            if (quote.ask !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
                 askStatus = Models.QuoteStatus.Live;
 
-            if (quote.bid !== null && this.hasEnoughPosition(this._details.pair.quote, quote.bid.size) && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
+            if (quote.bid !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
                 bidStatus = Models.QuoteStatus.Live;
         }
 
@@ -76,10 +75,5 @@ export class QuoteSender {
             this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, this._timeProvider.utcNow()));
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
-    };
-
-    private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
-        var pos = this._positionBroker.getPosition(cur);
-        return pos != null && pos.amount > minAmt;
     };
 }
