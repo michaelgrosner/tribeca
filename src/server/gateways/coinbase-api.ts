@@ -1,6 +1,7 @@
 var util = require('util');
 var crypto = require('crypto');
 
+import { EventEmitter } from 'eventemitter3';
 import Utils = require("../utils");
 import _ = require('lodash');
 import request = require('request');
@@ -9,7 +10,6 @@ import moment = require("moment");
 import log from "../logging";
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;
-var EventEmitter = require('events').EventEmitter;
 import WebSocket = require('uws');
 
 var coinbaseLog = log("tribeca:gateway:coinbase-api");

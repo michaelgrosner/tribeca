@@ -67,6 +67,11 @@
       "from": "@types/bunyan@>=0.0.36 <0.0.37",
       "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.36.tgz"
     },
+    "@types/eventemitter3": {
+      "version": "2.0.2",
+      "from": "@types/eventemitter3@latest",
+      "resolved": "https://registry.npmjs.org/@types/eventemitter3/-/eventemitter3-2.0.2.tgz"
+    },
     "@types/express": {
       "version": "4.0.35",
       "from": "@types/express@>=4.0.35 <5.0.0",
@@ -1479,6 +1484,11 @@
       "version": "0.4.14",
       "from": "eventemitter2@0.4.14",
       "resolved": "https://registry.npmjs.org/eventemitter2/-/eventemitter2-0.4.14.tgz"
+    },
+    "eventemitter3": {
+      "version": "2.0.3",
+      "from": "eventemitter3@latest",
+      "resolved": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-2.0.3.tgz"
     },
     "events": {
       "version": "1.1.1",
