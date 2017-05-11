@@ -10,7 +10,7 @@ import log from "../logging";
 
 var HttpsAgent = require('agentkeepalive').HttpsAgent;
 var EventEmitter = require('events').EventEmitter;
-import WebSocket = require('ws');
+import WebSocket = require('uws');
 
 var coinbaseLog = log("tribeca:gateway:coinbase-api");
 

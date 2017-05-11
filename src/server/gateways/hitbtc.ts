@@ -1,6 +1,6 @@
 import Config = require("../config");
 import crypto = require('crypto');
-import WebSocket = require('ws');
+import WebSocket = require('uws');
 import request = require('request');
 import url = require("url");
 import querystring = require("querystring");
