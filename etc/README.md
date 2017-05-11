@@ -43,7 +43,9 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
     - EUR
     - GBP
     - CNY
+    - CAD
     - ETH
+    - ETC
     - BFX
     - RRT
     - ZEC
