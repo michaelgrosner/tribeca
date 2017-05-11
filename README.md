@@ -31,6 +31,8 @@ without:
 
 4. HitBTC
 
+All currency pairs are supported, otherwise please open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Missing%20currency%20pair) to easily include any missing currency that you would like.
+
 ### Docker Installation
 
 See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) section if you use winy or mac.
