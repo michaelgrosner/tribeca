@@ -4,47 +4,47 @@
   "dependencies": {
     "@angular/common": {
       "version": "4.1.2",
-      "from": "@angular/common@>=4.1.1 <5.0.0",
+      "from": "@angular/common@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/common/-/common-4.1.2.tgz"
     },
     "@angular/compiler": {
       "version": "4.1.2",
-      "from": "@angular/compiler@>=4.1.1 <5.0.0",
+      "from": "@angular/compiler@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/compiler/-/compiler-4.1.2.tgz"
     },
     "@angular/compiler-cli": {
       "version": "4.1.2",
-      "from": "@angular/compiler-cli@>=4.1.1 <5.0.0",
+      "from": "@angular/compiler-cli@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/compiler-cli/-/compiler-cli-4.1.2.tgz"
     },
     "@angular/core": {
       "version": "4.1.2",
-      "from": "@angular/core@>=4.1.1 <5.0.0",
+      "from": "@angular/core@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/core/-/core-4.1.2.tgz"
     },
     "@angular/forms": {
       "version": "4.1.2",
-      "from": "@angular/forms@>=4.1.1 <5.0.0",
+      "from": "@angular/forms@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/forms/-/forms-4.1.2.tgz"
     },
     "@angular/http": {
       "version": "4.1.2",
-      "from": "@angular/http@>=4.1.1 <5.0.0",
+      "from": "@angular/http@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/http/-/http-4.1.2.tgz"
     },
     "@angular/platform-browser": {
       "version": "4.1.2",
-      "from": "@angular/platform-browser@>=4.1.1 <5.0.0",
+      "from": "@angular/platform-browser@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/platform-browser/-/platform-browser-4.1.2.tgz"
     },
     "@angular/platform-browser-dynamic": {
       "version": "4.1.2",
-      "from": "@angular/platform-browser-dynamic@>=4.1.1 <5.0.0",
+      "from": "@angular/platform-browser-dynamic@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/platform-browser-dynamic/-/platform-browser-dynamic-4.1.2.tgz"
     },
     "@angular/router": {
       "version": "4.1.2",
-      "from": "@angular/router@>=4.1.1 <5.0.0",
+      "from": "@angular/router@>=4.1.2 <5.0.0",
       "resolved": "https://registry.npmjs.org/@angular/router/-/router-4.1.2.tgz"
     },
     "@angular/tsc-wrapped": {
@@ -66,11 +66,6 @@
       "version": "0.0.36",
       "from": "@types/bunyan@>=0.0.36 <0.0.37",
       "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.36.tgz"
-    },
-    "@types/eventemitter3": {
-      "version": "2.0.2",
-      "from": "@types/eventemitter3@latest",
-      "resolved": "https://registry.npmjs.org/@types/eventemitter3/-/eventemitter3-2.0.2.tgz"
     },
     "@types/express": {
       "version": "4.0.35",
@@ -788,6 +783,12 @@
       "from": "binary-extensions@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/binary-extensions/-/binary-extensions-1.8.0.tgz"
     },
+    "bindings": {
+      "version": "1.2.1",
+      "from": "bindings@>=1.2.0 <1.3.0",
+      "resolved": "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz",
+      "optional": true
+    },
     "blob": {
       "version": "0.0.4",
       "from": "blob@0.0.4",
@@ -1253,14 +1254,14 @@
       "resolved": "https://registry.npmjs.org/create-ecdh/-/create-ecdh-4.0.0.tgz"
     },
     "create-hash": {
-      "version": "1.1.2",
+      "version": "1.1.3",
       "from": "create-hash@>=1.1.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/create-hash/-/create-hash-1.1.2.tgz"
+      "resolved": "https://registry.npmjs.org/create-hash/-/create-hash-1.1.3.tgz"
     },
     "create-hmac": {
-      "version": "1.1.4",
+      "version": "1.1.6",
       "from": "create-hmac@>=1.1.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/create-hmac/-/create-hmac-1.1.4.tgz"
+      "resolved": "https://registry.npmjs.org/create-hmac/-/create-hmac-1.1.6.tgz"
     },
     "cryptiles": {
       "version": "2.0.5",
@@ -1487,7 +1488,7 @@
     },
     "eventemitter3": {
       "version": "2.0.3",
-      "from": "eventemitter3@latest",
+      "from": "eventemitter3@>=2.0.3 <3.0.0",
       "resolved": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-2.0.3.tgz"
     },
     "events": {
@@ -1792,6 +1793,11 @@
       "from": "has-flag@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/has-flag/-/has-flag-1.0.0.tgz",
       "dev": true
+    },
+    "hash-base": {
+      "version": "2.0.2",
+      "from": "hash-base@>=2.0.0 <3.0.0",
+      "resolved": "https://registry.npmjs.org/hash-base/-/hash-base-2.0.2.tgz"
     },
     "hash.js": {
       "version": "1.0.3",
@@ -2360,6 +2366,12 @@
       "from": "micromatch@>=2.1.5 <3.0.0",
       "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-2.3.11.tgz"
     },
+    "microtime": {
+      "version": "2.1.3",
+      "from": "microtime@>=2.1.3 <3.0.0",
+      "resolved": "https://registry.npmjs.org/microtime/-/microtime-2.1.3.tgz",
+      "optional": true
+    },
     "miller-rabin": {
       "version": "4.0.0",
       "from": "miller-rabin@>=4.0.0 <5.0.0",
@@ -2488,7 +2500,7 @@
     },
     "nan": {
       "version": "2.6.2",
-      "from": "nan@>=2.3.3 <3.0.0",
+      "from": "nan@>=2.6.0 <2.7.0",
       "resolved": "https://registry.npmjs.org/nan/-/nan-2.6.2.tgz",
       "optional": true
     },
@@ -2679,9 +2691,9 @@
       "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-0.1.7.tgz"
     },
     "pbkdf2": {
-      "version": "3.0.9",
+      "version": "3.0.11",
       "from": "pbkdf2@>=3.0.3 <4.0.0",
-      "resolved": "https://registry.npmjs.org/pbkdf2/-/pbkdf2-3.0.9.tgz"
+      "resolved": "https://registry.npmjs.org/pbkdf2/-/pbkdf2-3.0.11.tgz"
     },
     "performance-now": {
       "version": "0.2.0",
@@ -2960,9 +2972,9 @@
       }
     },
     "ripemd160": {
-      "version": "1.0.1",
-      "from": "ripemd160@>=1.0.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/ripemd160/-/ripemd160-1.0.1.tgz"
+      "version": "2.0.1",
+      "from": "ripemd160@>=2.0.0 <3.0.0",
+      "resolved": "https://registry.npmjs.org/ripemd160/-/ripemd160-2.0.1.tgz"
     },
     "rxjs": {
       "version": "5.4.0",
@@ -3019,7 +3031,7 @@
     },
     "sha.js": {
       "version": "2.4.8",
-      "from": "sha.js@>=2.3.6 <3.0.0",
+      "from": "sha.js@>=2.4.0 <3.0.0",
       "resolved": "https://registry.npmjs.org/sha.js/-/sha.js-2.4.8.tgz"
     },
     "shasum": {
