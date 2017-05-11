@@ -26,7 +26,7 @@
     "@types/request": "0.0.43",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
-    "@types/ws": "0.0.41",
+    "@types/uws": "^0.13.0",
     "ag-grid": "^9.1.0",
     "ag-grid-angular": "^9.1.0",
     "agentkeepalive": "^3.1.0",
@@ -62,7 +62,7 @@
     "typescript": "^2.3.2",
     "uglify-js": "^3.0.3",
     "uuid": "^3.0.1",
-    "ws": "^2.3.1",
+    "uws": "^0.14.5",
     "zone.js": "^0.8.10"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import ws = require('ws');
+import ws = require('uws');
 import Q = require("q");
 import crypto = require("crypto");
 import request = require("request");
