@@ -1,17 +1,15 @@
 import Models = require("../share/models");
 import moment = require('moment');
-import events = require("events");
 import _ = require("lodash");
 import * as request from "request";
 import * as Q from "q";
-
-require('events').EventEmitter.prototype._maxListeners = 100;
+import { EventEmitter } from 'eventemitter3';
 
 export const date = () => new Date();
 
 // typesafe wrapper around EventEmitter
 export class Evt<T> {
-    private _event = new events.EventEmitter();
+    private _event = new EventEmitter();
 
     public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
 
@@ -20,8 +18,6 @@ export class Evt<T> {
     public trigger = (data?: T) => this._event.emit("evt", data);
 
     public once = (handler: (data?: T) => void) => this._event.once("evt", handler);
-
-    public setMaxListeners = (max: number) => this._event.setMaxListeners(max);
 
     public removeAllListeners = () => this._event.removeAllListeners();
 }
