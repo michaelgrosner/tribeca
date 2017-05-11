@@ -39,7 +39,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 ### Manual Installation
 
-1. Ensure your target machine has g++ installed (`g++ -v`), node v6 or v7 (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
+1. Ensure your target machine has installed g++ compiler (`g++ -v`), node v6 or v7 (`nodejs -v`) and mongoDB v3 or greater (`mongo --version`).
 
 2. Run `git clone ssh://git@github.com/ctubio/tribeca` in any location that you wish.
 
