@@ -327,7 +327,7 @@ class DisplayOrder {
                                 <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><a href="#" (click)="toggleStats()">Stats</a></div>
+                                <br/><div><a href="#" (click)="toggleStats()">Stats</a>, <a href="#" (click)="toggleWatch()">Watch</a></div>
                                 <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a>
                             </div>
                         </div>
@@ -464,6 +464,8 @@ class ClientComponent implements OnInit {
   public openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.matryoshka||'https://');
     jQuery('#matryoshka').attr('src', url).height((url&&url!='https://')?589:0);
+  };
+  public toggleWatch = () => {
   };
   public resizeMatryoshka = () => {
     if (window.parent === window) return;
