@@ -12,3 +12,177 @@
 address{font-style:normal;line-height:1.42857143}.highcharts-navigator-xaxis, .highcharts-range-selector-buttons,.highcharts-input-group,.highcharts-axis-title {display:none;}
 .highcharts-navigator-outline {stroke:transparent!important;}.absolute-charts {z-index:3;height:0px!important;min-height:0px!important;}.relative-charts {height:354px;}
 address {margin-bottom:0px;}input:invalid { border:1px #ff8e7a solid; }
+
+/* Skin for Simple Dialog Box Plugin */
+.dialog-box {
+  width:300px;
+  height:150px;
+  background-color:white;
+  border:1px solid #ccc;
+  -webkit-box-shadow:0 1px 5px rgba(0,0,0,.2);
+  -mz-box-shadow:0 1px 5px rgba(0,0,0,.2);
+  box-shadow:0 1px 5px rgba(0,0,0,.2);
+  position:absolute;
+  width:200px;
+  height:100px;
+  margin-top:-51px;
+  margin-left:-101px;
+  z-index:9999;
+  color:#666;
+  visibility:hidden;
+  opacity:0;
+}
+.dialog-box .dialog-title {
+  margin:0;
+  padding:0;
+  font:inherit;
+  color:inherit;
+  font-weight:bold;
+  height:2em;
+  line-height:2em;
+  overflow:hidden;
+  padding:0 .8em;
+  background-color:#eee;
+  cursor:move;
+}
+.dialog-box .dialog-content {
+  border-top:1px solid #ccc;
+  padding:1em;
+  position:absolute;
+  top:2em;
+  right:0;
+  bottom:3em;
+  left:0;
+  overflow:auto;
+}
+.dialog-box .dialog-content iframe {
+  display:block;
+  border:none;
+  background:none;
+  margin:0;
+  padding:0;
+  overflow:auto;
+  width:100%;
+  height:100%;
+}
+.dialog-box .dialog-content::-webkit-scrollbar {
+  width:8px;
+  height:8px;
+  background-color:#f5f5f5;
+  border-left:1px solid #ccc;
+}
+.dialog-box .dialog-content::-webkit-scrollbar-thumb {
+  background-color:#666;
+  border:none;
+}
+.dialog-box .dialog-content::-webkit-scrollbar-thumb:hover {background-color:#555}
+.dialog-box .dialog-content::-webkit-scrollbar-thumb:active {background-color:#444}
+.dialog-box .dialog-action {
+  position:absolute;
+  right:0;
+  bottom:0;
+  left:0;
+  height:2em;
+  padding:.5em;
+  background-color:#eee;
+  border-top:1px solid #ccc;
+  text-align:right;
+}
+.dialog-box .dialog-action .btn {
+  text-decoration:none;
+  border:none;
+  outline:none;
+  color:inherit;
+  font-weight:bold;
+  background-color:white;
+  border:1px solid #ccc;
+  -webkit-border-radius:.2em;
+  -moz-border-radius:.2em;
+  border-radius:.2em;
+  padding:.4em 1em;
+  margin-left:.2em;
+  line-height:2em;
+  cursor:pointer;
+}
+.dialog-box .dialog-close,
+.dialog-box .dialog-minmax {
+  border:none;
+  outline:none;
+  background:none;
+  font:inherit;
+  font-family:Arial,Sans-Serif;
+  font-style:normal;
+  font-weight:bold;
+  font-size:150%;
+  line-height:1.4em;
+  color:#aaa;
+  text-decoration:none;
+  position:absolute;
+  top:0;
+  right:.3em;
+  text-align:center;
+  cursor:pointer;
+}
+.dialog-box .dialog-minmax {right:1.5em}
+.dialog-box .dialog-close:focus,
+.dialog-box .dialog-minmax:focus,
+.dialog-box .dialog-action .btn:focus {
+  border-width:0;
+  outline:none;
+}
+.dialog-box .dialog-close:hover,
+.dialog-box .dialog-minmax:hover {color:#777}
+.dialog-box .dialog-close:focus,
+.dialog-box .dialog-minmax:focus {color:#C90000}
+.dialog-box .dialog-close:active,
+.dialog-box .dialog-minmax:active {color:#444}
+.dialog-box .dialog-action .btn:hover {border-color:#bbb}
+.dialog-box .dialog-action .btn:focus {
+  border-color:#aaa;
+  border-width:1px;
+}
+.dialog-box .dialog-action .btn:active {
+  border-color:#aaa;
+  background-color:#f5f5f5;
+}
+.dialog-box + .dialog-box-overlay {
+  background-color:black;
+  opacity:.2;
+  filter:alpha(opacity=20);
+  position:fixed !important;
+  position:absolute;
+  top:0;
+  right:0;
+  bottom:0;
+  left:0;
+  z-index:9997;
+  display:none;
+}
+.dialog-box.fixed-dialog-box {
+  position:fixed !important;
+  position:absolute;
+}
+.dialog-box.minimize {
+  width:2em !important;
+  height:2em !important;
+  overflow:hidden !important;
+  margin-top:0 !important;
+  margin-left:0 !important;
+  top:-1px !important;
+  left:1em !important;
+}
+.dialog-box.minimize .dialog-title {
+  color:transparent;
+  text-shadow:none;
+  text-indent:-9999px;
+}
+.dialog-box.minimize .dialog-minmax {
+  right:0;
+  left:0;
+}
+.dialog-box.minimize .dialog-close,
+.dialog-box.minimize .dialog-content,
+.dialog-box.minimize .dialog-action {
+  display:none;
+  visibility:hidden;
+}
