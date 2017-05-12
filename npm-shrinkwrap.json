@@ -3351,9 +3351,9 @@
       "resolved": "https://registry.npmjs.org/typescript/-/typescript-2.3.2.tgz"
     },
     "uglify-js": {
-      "version": "3.0.3",
-      "from": "uglify-js@>=3.0.3 <4.0.0",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.3.tgz"
+      "version": "3.0.4",
+      "from": "uglify-js@3.0.4",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.4.tgz"
     },
     "uglify-to-browserify": {
       "version": "1.0.2",
