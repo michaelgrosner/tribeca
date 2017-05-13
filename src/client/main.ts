@@ -327,7 +327,7 @@ class DisplayOrder {
                                 <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><a href="#" (click)="toggleStats()">Stats</a>, <a href="#" (click)="toggleWatch()">Watch</a></div>
+                                <br/><div><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, <a href="#" (click)="toggleStats()">Stats</a></div>
                                 <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a>
                             </div>
                         </div>
@@ -434,7 +434,7 @@ class DisplayOrder {
         <a href="/view/README.md" target="_blank">README</a> - <a href="/view/MANUAL.md" target="_blank">MANUAL</a> - <a href="https://github.com/ctubio/tribeca" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="https://github.com/ctubio/tribeca/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
       </small>
     </address>
-    <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src=""></iframe>
+    <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
   </div>`
 })
 class ClientComponent implements OnInit {
@@ -461,11 +461,35 @@ class ClientComponent implements OnInit {
   public toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
   };
+  public toggleWatch = (watchExchange: string, watchPair: string) => {
+    if (window.parent !== window) {
+      window.parent.postMessage('cryptoWatch='+watchExchange+','+watchPair, '*');
+      return;
+    }
+    var self = this;
+    var toggleWatch = function() {
+      self._toggleWatch(watchExchange, watchPair);
+     };
+    if (!(<any>window).cryptowatch) (function(d, script) {
+        script = d.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = toggleWatch;
+        script.src = 'https://static.cryptowat.ch/assets/scripts/embed.bundle.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      }(document));
+    else toggleWatch();
+  };
+  public _toggleWatch = (watchExchange: string, watchPair: string) => {
+    if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
+      (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
+      if (!jQuery('#cryptoWatch'+watchExchange+watchPair+'.resizable').length) jQuery('#cryptoWatch'+watchExchange+watchPair).resizable({handleSelector: '#cryptoWatch'+watchExchange+watchPair+' .dialog-resize'});
+      (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
+    } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
   public openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.matryoshka||'https://');
-    jQuery('#matryoshka').attr('src', url).height((url&&url!='https://')?589:0);
-  };
-  public toggleWatch = () => {
+    jQuery('#matryoshka').attr('src', url||'about:blank').height((url&&url!='https://')?589:0);
   };
   public resizeMatryoshka = () => {
     if (window.parent === window) return;
@@ -512,9 +536,14 @@ class ClientComponent implements OnInit {
     }
 
     window.addEventListener("message", e => {
-      if (e.data.indexOf('height=')==-1) return;
-      jQuery('iframe').height(e.data.replace('height=',''));
-      this.resizeMatryoshka();
+      if (e.data.indexOf('height=')===0) {
+        jQuery('iframe').height(e.data.replace('height=',''));
+        this.resizeMatryoshka();
+      }
+      else if (e.data.indexOf('cryptoWatch=')===0) {
+        var data = e.data.replace('cryptoWatch=','').split(',');
+        this._toggleWatch(data[0], data[1]);
+      }
     }, false);
 
     this.reset(false);
