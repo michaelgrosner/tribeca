@@ -341,6 +341,7 @@ export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3trade
 export interface QuotingParameters {
     widthPing?: number;
     widthPong?: number;
+    bestWidth?: boolean;
     buySize?: number;
     buySizePercentage?: number;
     buySizeMax?: boolean;

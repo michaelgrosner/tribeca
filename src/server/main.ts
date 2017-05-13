@@ -43,9 +43,10 @@ import log from "./logging";
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
   widthPing:                      2,
   widthPong:                      2,
+  bestWidth:                      true,
   buySize:                        0.02,
   buySizePercentage:              7,
-  buySizeMax:                    false,
+  buySizeMax:                     false,
   sellSize:                       0.01,
   sellSizePercentage:             7,
   sellSizeMax:                    false,

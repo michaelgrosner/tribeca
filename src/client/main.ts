@@ -92,6 +92,7 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
+                                            <th>bw</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
@@ -136,6 +137,10 @@ class DisplayOrder {
                                                    [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
+                                            </td>
+                                            <td style="width:25px;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.bestWidth">
                                             </td>
                                             <td style="width:88px;">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
