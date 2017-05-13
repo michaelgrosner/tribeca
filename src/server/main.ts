@@ -78,7 +78,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   delayUI:                        7
 };
 
-let exitingEvent: () => Promise<number>;
+let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
   Promises.timeout(2000, exitingEvent()).then(completed => {
