@@ -69,7 +69,7 @@ const serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_S
 
 const config = new Config.ConfigProvider();
 
-let exitingEvent : () => Promise<number>;
+let exitingEvent : () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
     Promises.timeout(2000, exitingEvent()).then(completed => {
