@@ -1,5 +1,4 @@
 import ws = require('uws');
-import Q = require("q");
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
@@ -12,6 +11,7 @@ import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import log from "../logging";
+import * as Promises from '../promises';
 
 interface OkCoinMessageIncomingMessage {
     channel: string;
@@ -209,8 +209,8 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     generateClientOrderId = (): string => parseInt((Math.random()+'').substr(-8), 10).toString();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => {
-        var d = Q.defer<number>();
+    cancelAllOpenOrders = () : Promise<number> => {
+        var d = Promises.defer<number>();
         this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
           if (typeof (<any>msg.data).orders == "undefined"
             || typeof (<any>msg.data).orders[0] == "undefined"
@@ -226,10 +226,10 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         orderStatus: Models.OrderStatus.Cancelled
                       });
                   }
-              }).done();
+              });
           });
           d.resolve((<any>msg.data).orders.length);
-        }).done();
+        });
         return d.promise;
     };
 
@@ -434,8 +434,8 @@ class OkCoinMessageSigner {
 }
 
 class OkCoinHttp {
-    post = <T>(actionUrl: string, msg : SignedMessage) : Q.Promise<Models.Timestamped<T>> => {
-        var d = Q.defer<Models.Timestamped<T>>();
+    post = <T>(actionUrl: string, msg : SignedMessage) : Promise<Models.Timestamped<T>> => {
+        var d = Promises.defer<Models.Timestamped<T>>();
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
@@ -496,7 +496,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
                 var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
                 this.PositionUpdate.trigger(pos);
             }
-        }).done();
+        });
     };
 
     private _log = log("tribeca:gateway:OkCoinPG");

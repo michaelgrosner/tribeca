@@ -2,14 +2,14 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
-import Q = require("q");
 import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
 import log from "./logging";
+import * as Promises from './promises';
 
 export function loadDb(config: Config.IConfigProvider) {
-    var deferred = Q.defer<mongodb.Db>();
+    var deferred = Promises.defer<mongodb.Db>();
     mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
         if (err) deferred.reject(err);
         else deferred.resolve(db);
@@ -42,7 +42,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 
     public loadDBSize = async (): Promise<T> => {
 
-        var deferred = Q.defer<T>();
+        var deferred = Promises.defer<T>();
 
         this.db.then(db => {
           db.stats((err, arr) => {
@@ -57,7 +57,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
               deferred.resolve(v);
             }
           });
-        }).done();
+        });
 
         return deferred.promise;
     };
@@ -91,7 +91,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
             coll.insertOne(this.converter(report), err => {
                 if (err) this._log.error(err, "Unable to insert", this._dbName, report);
             });
-        }).done();
+        });
     };
 
     private converter = (x: T) : T => {
@@ -102,9 +102,9 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return x;
     };
 
-    collection: Q.Promise<mongodb.Collection>;
+    collection: Promise<mongodb.Collection>;
     constructor(
-        private db: Q.Promise<mongodb.Db>,
+        private db: Promise<mongodb.Db>,
         private _defaultParameter: T,
         private _dbName: string,
         private _exchange: Models.Exchange,

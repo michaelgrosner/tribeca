@@ -1,6 +1,5 @@
 import Utils = require("./utils");
 import Models = require("../share/models");
-import q = require("q");
 
 export interface IExchangeDetailsGateway {
     name(): string;
@@ -37,7 +36,7 @@ export interface IOrderEntryGateway extends IGateway {
     generateClientOrderId(): any;
 
     supportsCancelAllOpenOrders() : boolean;
-    cancelAllOpenOrders() : q.Promise<number>;
+    cancelAllOpenOrders() : Promise<number>;
 }
 
 export interface IPositionGateway {

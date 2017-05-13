@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import moment = require('moment');
 import _ = require("lodash");
 import * as request from "request";
-import * as Q from "q";
 import { EventEmitter } from 'eventemitter3';
 
 export const date = () => new Date();

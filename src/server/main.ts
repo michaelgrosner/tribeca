@@ -1,4 +1,4 @@
-import Q = require("q");
+import './promises';
 import path = require("path");
 import express = require('express');
 import util = require('util');
@@ -37,7 +37,7 @@ import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
-import Promises = require('./promises');
+import Promises = require("./promises");
 import log from "./logging";
 
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
@@ -268,8 +268,6 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
     const tradesPersister = await system.getPersister<Models.Trade>("trades");
 
     const paramsPersister = system.getRepository<Models.QuotingParameters>(system.startingParameters, Models.Topics.QuotingParametersChange);
-
-    const completedSuccessfully = Q.defer<boolean>();
 
     const [initParams, initTrades] = await Promise.all([
       paramsPersister.loadLatest(),
