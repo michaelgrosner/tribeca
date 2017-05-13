@@ -1,4 +1,5 @@
 import './promises';
+require('events').EventEmitter.prototype._maxListeners = 30;
 import path = require("path");
 import express = require('express');
 import util = require('util');
