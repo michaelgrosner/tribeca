@@ -122,6 +122,8 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
+* `bw` - Enable Best Width to place orders avoiding "hollows" in the book, while accomodating new orders right near to existent orders in the book, without leaving "hollows" in between.
+
 * `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
 * `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.

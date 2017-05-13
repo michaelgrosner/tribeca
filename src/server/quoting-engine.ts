@@ -193,24 +193,26 @@ export class QuotingEngine {
           )) unrounded.bidPx = safety.sellPong - params.widthPong;
         }
 
-        if (unrounded.askPx !== null)
-          for (var fai = 0; fai < filteredMkt.asks.length; fai++)
-            if (filteredMkt.asks[fai].price > unrounded.askPx) {
-              let bestAsk: number = filteredMkt.asks[fai].price - 1e-2;
-              if (bestAsk > fv.price) {
-                unrounded.askPx = bestAsk;
-                break;
+        if (params.bestWidth) {
+          if (unrounded.askPx !== null)
+            for (var fai = 0; fai < filteredMkt.asks.length; fai++)
+              if (filteredMkt.asks[fai].price > unrounded.askPx) {
+                let bestAsk: number = filteredMkt.asks[fai].price - 1e-2;
+                if (bestAsk > fv.price) {
+                  unrounded.askPx = bestAsk;
+                  break;
+                }
               }
-            }
-        if (unrounded.bidPx !== null)
-          for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
-            if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-              let bestBid: number = filteredMkt.bids[fbi].price + 1e-2;
-              if (bestBid < fv.price) {
-                unrounded.bidPx = bestBid;
-                break;
+          if (unrounded.bidPx !== null)
+            for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
+              if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
+                let bestBid: number = filteredMkt.bids[fbi].price + 1e-2;
+                if (bestBid < fv.price) {
+                  unrounded.bidPx = bestBid;
+                  break;
+                }
               }
-            }
+        }
 
         if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0]) || (
             (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
