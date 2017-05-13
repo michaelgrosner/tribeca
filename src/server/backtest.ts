@@ -5,7 +5,6 @@ import moment = require("moment");
 import _ = require('lodash');
 import fs = require("fs");
 import Persister = require("./persister");
-import Q = require("q");
 import stream = require("stream");
 
 var uuid = require('uuid');
@@ -82,7 +81,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    cancelAllOpenOrders = () : Promise<number> => { return Promise.resolve(0); };
 
     generateClientOrderId = () => {
         return "BACKTEST-" + parseInt((Math.random()+'').substr(-8), 10);

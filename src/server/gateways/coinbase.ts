@@ -4,9 +4,9 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
-import Q = require("q");
 import _ = require('lodash');
 import log from "../logging";
+import * as Promises from '../promises';
 
 var uuid = require('uuid');
 import CoinbaseExchange = require("./coinbase-api");
@@ -465,8 +465,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => {
-        var d = Q.defer<number>();
+    cancelAllOpenOrders = () : Promise<number> => {
+        var d = Promises.defer<number>();
         this._authClient.cancelAllOrders((err, resp) => {
             if (err) d.reject(err);
             else  {
@@ -800,7 +800,7 @@ export async function createCoinbase(config: Config.IConfigProvider, orders: Int
     const authClient : CoinbaseAuthenticatedClient = new CoinbaseExchange.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
-    const d = Q.defer<Product[]>();
+    const d = Promises.defer<Product[]>();
     authClient.getProducts((err, _, p) => {
         if (err) d.reject(err);
         else d.resolve(p);

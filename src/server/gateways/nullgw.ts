@@ -3,7 +3,6 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import Config = require("../config");
 var uuid = require('uuid');
-import Q = require("q");
 import _ = require("lodash");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
@@ -11,7 +10,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(0); };
+    cancelAllOpenOrders = () : Promise<number> => { return Promise.resolve(0); };
 
     public cancelsByClientOrderId = true;
 

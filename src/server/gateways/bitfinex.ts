@@ -1,5 +1,4 @@
 import ws = require('uws');
-import Q = require("q");
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
@@ -12,6 +11,7 @@ import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
 import log from "../logging";
+import * as Promises from '../promises';
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
     if (type === Models.OrderType.Market) {
@@ -215,8 +215,8 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Q.Promise<number> => {
-        var d = Q.defer<number>();
+    cancelAllOpenOrders = () : Promise<number> => {
+        var d = Promises.defer<number>();
         this._http
             .post<any, any[]>("orders", {})
             .then(resps => {
@@ -232,11 +232,10 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                                 time: resp.time,
                                 orderStatus: Models.OrderStatus.Cancelled
                             });
-                        })
-                        .done();
+                        });
                 });
                 d.resolve(resps.data.length);
-            }).done();
+            });
         return d.promise;
     };
 
@@ -380,7 +379,7 @@ class BitfinexHttp {
 
     private _timeout = 15000;
 
-    get = <T>(actionUrl: string, qs?: any): Q.Promise<Models.Timestamped<T>> => {
+    get = <T>(actionUrl: string, qs?: any): Promise<Models.Timestamped<T>> => {
         const url = this._baseUrl + "/" + actionUrl;
         var opts = {
             timeout: this._timeout,
@@ -394,7 +393,7 @@ class BitfinexHttp {
 
     // Bitfinex seems to have a race condition where nonces are processed out of order when rapidly placing orders
     // Retry here - look to mitigate in the future by batching orders?
-    post = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Q.Promise<Models.Timestamped<TResponse>> => {
+    post = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Promise<Models.Timestamped<TResponse>> => {
         return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg)).then(resp => {
             var rejectMsg: string = (<any>(resp.data)).message;
             if (typeof rejectMsg !== "undefined" && rejectMsg.indexOf("Nonce is too small") > -1)
@@ -404,7 +403,7 @@ class BitfinexHttp {
         });
     }
 
-    private postOnce = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Q.Promise<Models.Timestamped<TResponse>> => {
+    private postOnce = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Promise<Models.Timestamped<TResponse>> => {
         msg["request"] = "/v1/" + actionUrl;
         this._nonce = Date.now() * 1000;
         msg["nonce"] = this._nonce.toString();
@@ -427,8 +426,8 @@ class BitfinexHttp {
         return this.doRequest<TResponse>(opts, url);
     };
 
-    private doRequest = <TResponse>(msg: request.Options, url: string): Q.Promise<Models.Timestamped<TResponse>> => {
-        var d = Q.defer<Models.Timestamped<TResponse>>();
+    private doRequest = <TResponse>(msg: request.Options, url: string): Promise<Models.Timestamped<TResponse>> => {
+        var d = Promises.defer<Models.Timestamped<TResponse>>();
 
         request(msg, (err, resp, body) => {
             if (err) {
@@ -487,7 +486,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
                 var rpt = new Models.CurrencyPosition(amt, held, cur);
                 this.PositionUpdate.trigger(rpt);
             });
-        }).done();
+        });
     }
 
     private _log = log("tribeca:gateway:BitfinexPG");

@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import express = require("express");
-import Q = require("q");
 import Persister = require("./persister");
 import moment = require("moment");
 

@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
-import Q = require("q");
 import Quoter = require("./quoter");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
@@ -10,6 +9,7 @@ import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
 import moment = require("moment");
 import log from "./logging";
+import * as Promises from './promises';
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -48,7 +48,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             return this._oeGateway.cancelAllOpenOrders();
         }
 
-        const promiseMap = new Map<string, Q.Deferred<void>>();
+        const promiseMap = new Map<string, Promises.Deferred<void>>();
 
         const orderUpdate = (o : Models.OrderStatusReport) => {
             const p = promiseMap.get(o.orderId);
@@ -63,19 +63,19 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 continue;
 
             this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
-            promiseMap.set(e.orderId, Q.defer<void>());
+            promiseMap.set(e.orderId, Promises.defer<void>());
         }
 
         const promises = Array.from(promiseMap.values());
-        await Q.all(promises);
+        await Promise.all(promises);
 
         this.OrderUpdate.off(orderUpdate);
 
         return promises.length;
     }
 
-    cleanClosedOrders() : Q.Promise<number> {
-        var deferred = Q.defer<number>();
+    cleanClosedOrders() : Promise<number> {
+        var deferred = Promises.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
         for(var i = 0;i<this._trades.length;i++) {
@@ -107,8 +107,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
-    cleanOrders() : Q.Promise<number> {
-        var deferred = Q.defer<number>();
+    cleanOrders() : Promise<number> {
+        var deferred = Promises.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
         for(var i = 0;i<this._trades.length;i++) {
