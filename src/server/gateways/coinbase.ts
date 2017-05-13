@@ -160,26 +160,6 @@ interface CoinbaseAuthenticatedClient {
     getAccount(accountID: string, cb: (err?: Error, response?: any, info?: CoinbaseAccountInformation) => void);
 }
 
-function convertConnectivityStatus(s: StateChange) {
-    return s.new === "processing" ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected;
-}
-
-function convertSide(msg: CoinbaseBase): Models.Side {
-    return msg.side === "buy" ? Models.Side.Bid : Models.Side.Ask;
-}
-
-function convertPrice(pxStr: string) {
-    return parseFloat(pxStr);
-}
-
-function convertSize(szStr: string) {
-    return parseFloat(szStr);
-}
-
-function convertTime(time: string) : Date {
-    return new Date(time);
-}
-
 class PriceLevel {
     orders: { [id: string]: number } = {};
     marketUpdate = new Models.MarketSide(0, 0);
@@ -546,6 +526,26 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             if (ack == null || typeof ack.id === "undefined") {
               if (ack==null || (ack.message && ack.message!='Insufficient funds'))
                 this._log.warn("WARNING FROM GATEWAY:", order.orderId, err, ack);
+            }
+            var msg = null;
+            if (err) {
+                if (err.message) msg = err.message;
+            }
+            else if (ack != null) {
+                if (ack.message) msg = ack.message;
+                if (ack.error) msg = ack.error;
+            }
+            else if (ack == null) {
+                msg = "No ack provided!!";
+            }
+
+            if (msg !== null) {
+              this.OrderUpdate.trigger({
+                  orderId: order.orderId,
+                  rejectMessage: msg,
+                  orderStatus: Models.OrderStatus.Rejected,
+                  time: this._timeProvider.utcNow()
+              });
             }
         };
 
