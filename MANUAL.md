@@ -171,7 +171,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to stop sending orders.
+* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to limit the price while sending new orders.
+
+* `stdev?` - Use a quote protection of 20 minute STDEV of the price to limit the price while sending new orders.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
