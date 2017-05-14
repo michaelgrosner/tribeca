@@ -542,7 +542,7 @@ class ClientComponent implements OnInit {
 
     window.addEventListener("message", e => {
       if (e.data.indexOf('height=')===0) {
-        jQuery('iframe').height(e.data.replace('height=',''));
+        jQuery('#matryoshka').height(e.data.replace('height=',''));
         this.resizeMatryoshka();
       }
       else if (e.data.indexOf('cryptoWatch=')===0) {
