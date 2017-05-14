@@ -210,6 +210,7 @@ class DisplayOrder {
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
                                             <th>ewma?</th>
+                                            <th>stdev?</th>
                                             <th>delayUI</th>
                                             <th>audio?</th>
                                             <th colspan="2">
@@ -285,6 +286,10 @@ class DisplayOrder {
                                             <td>
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.stdevProtection">
                                             </td>
                                             <td style="width:88px;">
                                                 <input class="form-control input-sm"

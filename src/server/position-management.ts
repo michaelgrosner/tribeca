@@ -13,6 +13,7 @@ import log from "./logging";
 export class PositionManager {
     private _log = log("rfv");
 
+    private newWidth: number = null;
     private newQuote: number = null;
     private newShort: number = null;
     private newLong: number = null;
@@ -24,7 +25,23 @@ export class PositionManager {
       this.newQuote = quoteEwma;
       const minTick = this._details.minTickIncrement;
       this._ewmaPublisher.publish(new Models.EWMAChart(
+        Utils.roundNearest(this.newWidth, minTick),
         Utils.roundNearest(quoteEwma, minTick),
+        this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+        this.newLong?Utils.roundNearest(this.newLong, minTick):null,
+        Utils.roundNearest(fv.price, minTick),
+        this._timeProvider.utcNow()
+      ));
+    }
+    public set widthStdev(widthStdev: number) {
+      const fv = this._fvAgent.latestFairValue;
+      if (fv === null || widthStdev === null) return;
+      this.fairValue = fv.price;
+      this.newWidth = widthStdev;
+      const minTick = this._details.minTickIncrement;
+      this._ewmaPublisher.publish(new Models.EWMAChart(
+        Utils.roundNearest(widthStdev, minTick),
+        Utils.roundNearest(this.newQuote, minTick),
         this.newShort?Utils.roundNearest(this.newShort, minTick):null,
         this.newLong?Utils.roundNearest(this.newLong, minTick):null,
         Utils.roundNearest(fv.price, minTick),
@@ -51,6 +68,7 @@ export class PositionManager {
     ) {
         const minTick = this._details.minTickIncrement;
         _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
+          this.newWidth?Utils.roundNearest(this.newWidth, minTick):null,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           this.newShort?Utils.roundNearest(this.newShort, minTick):null,
           this.newLong?Utils.roundNearest(this.newLong, minTick):null,
@@ -85,6 +103,7 @@ export class PositionManager {
         }
 
         this._ewmaPublisher.publish(new Models.EWMAChart(
+          this.newWidth?Utils.roundNearest(this.newWidth, minTick):null,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           Utils.roundNearest(this.newShort, minTick),
           Utils.roundNearest(this.newLong, minTick),
@@ -111,6 +130,10 @@ export class TargetBasePositionManager {
 
     public set quoteEWMA(quoteEwma: number) {
       this._positionManager.quoteEwma = quoteEwma;
+    }
+
+    public set widthSTDEV(widthStdev: number) {
+      this._positionManager.widthStdev = widthStdev;
     }
 
     constructor(

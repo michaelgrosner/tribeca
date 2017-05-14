@@ -96,7 +96,7 @@ export interface IBroker extends IBrokerConnectivity {
     hasSelfTradePrevention: boolean;
 }
 
-export interface IEwmaCalculator {
+export interface ICalculator {
     latest: number;
     Updated: Utils.Evt<any>;
 }

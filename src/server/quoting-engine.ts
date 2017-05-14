@@ -63,7 +63,8 @@ export class QuotingEngine {
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Interfaces.IPositionBroker,
         private _details: Interfaces.IBroker,
-        private _ewma: Interfaces.IEwmaCalculator,
+        private _ewma: Interfaces.ICalculator,
+        private _stdev: Interfaces.ICalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
         this._registry = new QuotingStyleRegistry.QuotingStyleRegistry([
@@ -83,6 +84,10 @@ export class QuotingEngine {
         _ewma.Updated.on(() => {
           this.recalcQuote();
           _targetPosition.quoteEWMA = _ewma.latest;
+        });
+        _stdev.Updated.on(() => {
+          this.recalcQuote();
+          _targetPosition.widthSTDEV = _stdev.latest;
         });
         _targetPosition.NewTargetPosition.on(() => {
           this._safeties.latestTargetPosition = this._targetPosition.latestTargetPosition;
@@ -110,6 +115,16 @@ export class QuotingEngine {
 
             if (this._ewma.latest < unrounded.bidPx) {
                 unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
+            }
+        }
+
+        if (params.stdevProtection && this._stdev.latest !== null) {
+            if (this._stdev.latest > unrounded.askPx) {
+                unrounded.askPx = Math.max(fv.price + this._stdev.latest / 2, unrounded.askPx);
+            }
+
+            if (this._stdev.latest < unrounded.bidPx) {
+                unrounded.bidPx = Math.min(fv.price - this._stdev.latest / 2, unrounded.bidPx);
             }
         }
 
