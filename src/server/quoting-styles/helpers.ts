@@ -22,9 +22,9 @@ export interface QuoteStyle {
 }
 
 export function getQuoteAtTopOfMarket(input: QuoteInput): GeneratedQuote {
-  let topBid = (input.market.bids[0].size > input.params.stepOverSize ? input.market.bids[0] : input.market.bids[1]);
+  let topBid = (input.market.bids[0].size > input.minTickIncrement ? input.market.bids[0] : input.market.bids[1]);
   if (typeof topBid === "undefined") topBid = input.market.bids[0];
-  let topAsk = (input.market.asks[0].size > input.params.stepOverSize ? input.market.asks[0] : input.market.asks[1]);
+  let topAsk = (input.market.asks[0].size > input.minTickIncrement ? input.market.asks[0] : input.market.asks[1]);
   if (typeof topAsk === "undefined") topAsk = input.market.asks[0];
   return new GeneratedQuote(topBid.price, topBid.size, topAsk.price, topAsk.size);
 }
