@@ -197,7 +197,7 @@ export class QuotingEngine {
           if (unrounded.askPx !== null)
             for (var fai = 0; fai < filteredMkt.asks.length; fai++)
               if (filteredMkt.asks[fai].price > unrounded.askPx) {
-                let bestAsk: number = filteredMkt.asks[fai].price - 1e-2;
+                let bestAsk: number = filteredMkt.asks[fai].price - minTick;
                 if (bestAsk > fv.price) {
                   unrounded.askPx = bestAsk;
                   break;
@@ -206,7 +206,7 @@ export class QuotingEngine {
           if (unrounded.bidPx !== null)
             for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
               if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-                let bestBid: number = filteredMkt.bids[fbi].price + 1e-2;
+                let bestBid: number = filteredMkt.bids[fbi].price + minTick;
                 if (bestBid < fv.price) {
                   unrounded.bidPx = bestBid;
                   break;
