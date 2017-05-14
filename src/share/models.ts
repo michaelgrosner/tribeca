@@ -226,7 +226,8 @@ export interface OrderStatusReport {
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export class EWMAChart implements ITimestamped {
-    constructor(public ewmaQuote: number,
+    constructor(public stdevWidth: number,
+                public ewmaQuote: number,
                 public ewmaShort: number,
                 public ewmaLong: number,
                 public fairValue: number,
@@ -363,12 +364,14 @@ export interface QuotingParameters {
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
     ewmaProtection?: boolean;
+    stdevProtection?: boolean;
     audio?: boolean;
     bullets?: number;
     range?: number;
     longEwma?: number;
     shortEwma?: number;
     quotingEwma?: number;
+    widthStdevPeriodMinutes?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     cancelOrdersAuto?: boolean;

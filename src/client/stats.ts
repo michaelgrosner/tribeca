@@ -23,6 +23,7 @@ export class StatsComponent implements OnInit {
   public ewmaShort: number;
   public ewmaLong: number;
   public ewmaQuote: number;
+  public stdevWidth: number;
   public fvChart: any;
   public quoteChart: any;
   public baseChart: any;
@@ -65,11 +66,16 @@ export class StatsComponent implements OnInit {
       gridLineWidth: 0,
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
-    yAxis: {
+    yAxis: [{
       title: {text: 'Fair Value and Trades'},
       labels: {enabled: false},
       gridLineWidth: 0
-    },
+    },{
+      title: {text: 'STDEV 20'},
+      labels: {enabled: false},
+      opposite: true,
+      gridLineWidth: 0
+    }],
     legend: {enabled: false},
     tooltip: {
         shared: true,
@@ -145,6 +151,14 @@ export class StatsComponent implements OnInit {
       type: 'spline',
       colorIndex: 3,
       tooltip: {pointFormatter:this.pointFormatterBase},
+      data: []
+    },{
+      name: 'STDEV 20',
+      type: 'spline',
+      lineWidth:1,
+      colorIndex: 2,
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      yAxis: 1,
       data: []
     }]
   };
@@ -379,6 +393,7 @@ export class StatsComponent implements OnInit {
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
     if (this.fairValue) {
+      if (this.stdevWidth) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidth], false);
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
       if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
@@ -409,6 +424,7 @@ export class StatsComponent implements OnInit {
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
     this.fairValue = ewma.fairValue;
+    if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
     if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
     if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
     if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;
