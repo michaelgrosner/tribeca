@@ -109,23 +109,13 @@ export class QuotingEngine {
             return null;
 
         if (params.ewmaProtection && this._ewma.latest !== null) {
-            if (this._ewma.latest > unrounded.askPx) {
-                unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
-            }
-
-            if (this._ewma.latest < unrounded.bidPx) {
-                unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
-            }
+            unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
+            unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
         }
 
         if (params.stdevProtection && this._stdev.latest !== null) {
-            if (this._stdev.latest > unrounded.askPx) {
-                unrounded.askPx = Math.max(fv.price + this._stdev.latest / 2, unrounded.askPx);
-            }
-
-            if (this._stdev.latest < unrounded.bidPx) {
-                unrounded.bidPx = Math.min(fv.price - this._stdev.latest / 2, unrounded.bidPx);
-            }
+            unrounded.askPx = Math.max(fv.price + this._stdev.latest / 2, unrounded.askPx);
+            unrounded.bidPx = Math.min(fv.price - this._stdev.latest / 2, unrounded.bidPx);
         }
 
         const tbp = this._targetPosition.latestTargetPosition;
