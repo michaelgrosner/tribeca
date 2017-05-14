@@ -75,7 +75,6 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,
   cancelOrdersAuto:               false,
-  stepOverSize:                   0.1,
   delayUI:                        7
 };
 
