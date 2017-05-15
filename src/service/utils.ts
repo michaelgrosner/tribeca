@@ -24,21 +24,42 @@ export function timeOrDefault(x: Models.ITimestamped, timeProvider : ITimeProvid
     return timeProvider.utcNow();
 }
 
-// typesafe wrapper around EventEmitter
+// typesafe event raiser
+type EvtCallback<T> = (data?: T) => void;
 export class Evt<T> {
-    private _event = new events.EventEmitter();
+    private _singleCallback : EvtCallback<T> = null;
+    private _multiCallback = new Array<EvtCallback<T>>();
 
-    public on = (handler: (data?: T) => void) => this._event.addListener("evt", handler);
+    public on = (handler: EvtCallback<T>) => {
+        if (this._singleCallback) {
+            this._multiCallback = [this._singleCallback, handler];            
+            this._singleCallback = null;
+        }
+        else if (this._multiCallback.length > 0) {
+            this._multiCallback.push(handler);
+        }
+        else {
+            this._singleCallback = handler;
+        }
+    };
     
-    public off = (handler: (data?: T) => void) => this._event.removeListener("evt", handler);
+    public off = (handler: EvtCallback<T>) => {
+        if (this._multiCallback.length > 0) 
+            this._multiCallback = _.pull(this._multiCallback, handler);
+        if (this._singleCallback === handler) 
+            this._singleCallback = null;
+    };
 
-    public trigger = (data?: T) => this._event.emit("evt", data);
-    
-    public once = (handler: (data?: T) => void) => this._event.once("evt", handler);
-    
-    public setMaxListeners = (max: number) => this._event.setMaxListeners(max);
-    
-    public removeAllListeners = () => this._event.removeAllListeners();
+    public trigger = (data?: T) => {
+        if (this._singleCallback !== null) {
+            this._singleCallback(data);
+        }
+        else {
+            const len = this._multiCallback.length;
+            for (let i = 0; i < len; i++)
+                this._multiCallback[i](data);
+        }
+    };
 }
 
 export function roundSide(x: number, minTick: number, side: Models.Side) {
