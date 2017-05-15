@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import moment = require('moment');
-import _ = require("lodash");
 
 export const date = () => new Date();
 
