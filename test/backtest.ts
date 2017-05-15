@@ -103,7 +103,7 @@ describe("BacktestGatewayTests", () => {
         var timeProvider = new Backtest.BacktestTimeProvider(moment.unix(1), moment.unix(40));
         var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
 
-        gateway.MarketData.once(m => {
+        gateway.MarketData.on(m => {
             gateway.sendOrder(<Models.OrderStatusReport>{
                 orderId: "A",
                 side: Models.Side.Ask,
