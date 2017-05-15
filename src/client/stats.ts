@@ -156,7 +156,7 @@ export class StatsComponent implements OnInit {
       name: 'STDEV 20',
       type: 'spline',
       lineWidth:1,
-      colorIndex: 2,
+      color:'#9e4b2d',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
       data: []
