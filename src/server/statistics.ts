@@ -117,7 +117,7 @@ export class ObservableSTDEVCalculator implements Interfaces.ICalculator {
         }
 
         this.fvs.push(fv.price);
-        this.fvs = this.fvs.slice(0, 20);
+        this.fvs = this.fvs.slice(-20);
 
         if (this.fvs.length < 2) return;
 
