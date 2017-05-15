@@ -18,6 +18,7 @@ import util = require("util");
 import Messages = require("./messages");
 import * as moment from "moment";
 import log from "./logging";
+import * as OrderState from "./order-state";
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -172,9 +173,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     public updateOrderState = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
-        let orig : Models.OrderStatusUpdate;
+        let orig : Models.OrderStatusReport;
         if (osr.orderStatus === Models.OrderStatus.New) {
-            orig = osr;
+            orig = <Models.OrderStatusReport>osr;
         }
         else {
             orig = this._orderCache.allOrders.get(osr.orderId);
@@ -198,52 +199,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         }
 
-        const getOrFallback = <T>(n: T|undefined, o: T) => typeof n !== "undefined" ? n : o;
-
-        const quantity = getOrFallback(osr.quantity, orig.quantity);
-
-        let cumQuantity : number;
-        if (!_.isUndefined(osr.lastQuantity) && _.isUndefined(osr.cumQuantity)) {
-            cumQuantity = osr.lastQuantity + (orig.cumQuantity || 0);
-        }
-        cumQuantity = osr.cumQuantity || cumQuantity;
-
-        let leavesQuantity : number;
-        if (!_.isUndefined(osr.lastQuantity) && _.isUndefined(osr.leavesQuantity)) {
-            leavesQuantity = quantity - cumQuantity;
-        }
-        leavesQuantity = osr.leavesQuantity || leavesQuantity;
-
-        const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
-
-        const o : Models.OrderStatusReport = {
-            pair: getOrFallback(osr.pair, orig.pair),
-            side: getOrFallback(osr.side, orig.side),
-            quantity: quantity,
-            type: getOrFallback(osr.type, orig.type),
-            price: getOrFallback(osr.price, orig.price),
-            timeInForce: getOrFallback(osr.timeInForce, orig.timeInForce),
-            orderId: getOrFallback(osr.orderId, orig.orderId),
-            exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
-            orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
-            rejectMessage: osr.rejectMessage,
-            time: getOrFallback(osr.time, this._timeProvider.utcNow()),
-            lastQuantity: osr.lastQuantity,
-            lastPrice: osr.lastPrice,
-            leavesQuantity: leavesQuantity,
-            cumQuantity: cumQuantity,
-            averagePrice: osr.averagePrice || orig.averagePrice,
-            liquidity: getOrFallback(osr.liquidity, orig.liquidity),
-            exchange: getOrFallback(osr.exchange, orig.exchange),
-            computationalLatency: getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
-            version: (typeof orig.version === "undefined") ? 0 : orig.version + 1,
-            partiallyFilled: partiallyFilled,
-            pendingCancel: osr.pendingCancel,
-            pendingReplace: osr.pendingReplace,
-            cancelRejected: osr.cancelRejected,
-            preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
-            source: getOrFallback(osr.source, orig.source)
-        };
+        const [o, trade] = this._processor.applyOrderUpdate(osr, orig);
 
         const added = this.updateOrderStatusInMemory(o);
         if (this._log.debug())
@@ -265,20 +221,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         if (this.shouldPublish(o))
             this._orderStatusPublisher.publish(o);
 
-        if (osr.lastQuantity > 0) {
-            let value = Math.abs(o.lastPrice * o.lastQuantity);
-
-            const liq = o.liquidity;
-            let feeCharged = null;
-            if (typeof liq !== "undefined") {
-                // negative fee is a rebate, positive fee is a fee
-                feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
-                const sign = (o.side === Models.Side.Bid ? 1 : -1);
-                value = value * (1 + sign * feeCharged);
-            }
-
-            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair, 
-                o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, feeCharged);
+        if (trade) {
             this.Trade.trigger(trade);
             this._tradePublisher.publish(trade);
             this._tradePersister.persist(trade);
@@ -336,6 +279,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return Array.from(this._orderCache.allOrders.values()).filter(this.shouldPublish);
     }
 
+    private readonly _processor : OrderState.OrderStateProcessor;
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
@@ -350,6 +294,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
                 initTrades : Models.Trade[]) {
+        this._processor = new OrderState.OrderStateProcessor(_timeProvider, 
+            this._baseBroker.makeFee(), this._baseBroker.takeFee());
+
         _.each(initOrders, this.addOrderStatusInMemory);
         _.each(initTrades, t => this._trades.push(t));
                 

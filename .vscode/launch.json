@@ -17,7 +17,8 @@
                 "${workspaceRoot}/tribeca/service/**/*"
             ],
             "sourceMaps": true,
-            "protocol": "inspector"
+            "protocol": "inspector",
+            "showAsyncStacks": true
         },
         {
             "type": "node",

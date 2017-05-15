@@ -196,6 +196,7 @@ export interface OrderStatusReport {
     pendingCancel : boolean;
     pendingReplace : boolean;
     cancelRejected : boolean;
+    openQtyChange : number;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }

@@ -9,6 +9,7 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import Config = require("../config");
 import Promises = require("../promises");
+import * as OrderState from "../order-state";
 
 const make_fee = -.0025;
 const take_fee = .005;
@@ -16,36 +17,32 @@ const min_size = 0.0001;
 
 var uuid = require('node-uuid');
 
-type MatchingEngineCommand = Order | Cancel | Replace | BatchOrder;
+type ExchangeClientCommand = OrderRequest | Cancel | Replace;
 
-interface Order {
-    kind: "order"
-    id: string
-    price: number
-    cumQty: number
-    leavesQty: number
-    priortity?: number
-    isPlacedOrder: boolean
-    side: Models.Side
-    type: Models.OrderType
-    tif: Models.TimeInForce
+interface MatchingEngineOrderState {
+    clientId: string
+    priortity: number
+    state: Models.OrderStatusReport
 }
 
-interface BatchOrder {
-    kind: "batch_order"
-    orders: Order[]
+interface MatchingEngineRequest {
+    clientId: string
+    request: OrderRequest | Cancel | Replace
+}
+
+interface OrderRequest {
+    kind: "order",
+    order: Models.OrderStatusUpdate;
 }
 
 interface Cancel {
     kind: "cancel"
     id: string
-    isPlacedOrder: boolean
 }
 
 interface Replace {
     kind: "replace"
     id: string
-    isPlacedOrder: boolean
     price: number
     newQty: number
 }
@@ -53,7 +50,6 @@ interface Replace {
 interface OrderUpdate {
     kind: "order"
     payload: Models.OrderStatusUpdate,
-    isPlacedOrder: boolean
 }
 
 interface Market {
@@ -66,218 +62,259 @@ interface Trade {
     payload: Models.GatewayMarketTrade
 }
 
-type MatchingEngineUpdate = OrderUpdate | Market | Trade;
+type MatchingEngineUpdate = Market | Trade;
 
-class MatchingEngine {
-    private _priority = 0;
-    private readonly _buys = new Map<string, Order>();
-    private readonly _sells = new Map<string, Order>();
+class ExchangeClient {
+    private readonly _orders = new  Map<string, Models.OrderStatusReport>();
 
-    private _availableBase = 10;
-    private _availableQuote = 5000;
+    private _availableBase = 100;
+    private _availableQuote = 50000;
     private _heldBase = 0;
     private _heldQuote = 0;
 
-    public readonly Update = new Utils.Evt<MatchingEngineUpdate>();
+    public readonly Update = new Utils.Evt<MatchingEngineUpdate | OrderUpdate>();
 
-    constructor(private readonly _pair: Models.CurrencyPair) {}
+    constructor(
+        private readonly _clientId: string,
+        private readonly _engine: MatchingEngine,
+        private readonly _pair: Models.CurrencyPair) {
+            _engine.subscribe(_clientId, this.interceptStatus);
+            _engine.Update.on(d => this.Update.trigger(d));
+        }
 
-    public post = async (command: MatchingEngineCommand) => {
+    public post = async (command: ExchangeClientCommand) => {
         await Promises.delay(5);
-        switch (command.kind) {
-            case "order": return this.accept([command]);                
-            case "cancel": return this.cancel([command]);
-            case "batch_order": return this.accept(command.orders);                
-            case "replace": return this.replace(command);
+
+        if (this.intercept(command)) {
+            this._engine.post({clientId: this._clientId, request: command});
         }
     };
 
-    private hasEnoughFunds = (order: Order) : boolean => {
-        if (!order.isPlacedOrder) return true;
-
-        const notEnoughFunds = 
-            (order.side === Models.Side.Bid && order.leavesQty*order.price < this._availableQuote) ||
-            (order.side === Models.Side.Ask && order.leavesQty < this._availableBase);
-
-        if (!notEnoughFunds) {
-            if (order.side === Models.Side.Bid) {
-                this._availableQuote -= order.leavesQty*order.price;
-                this._heldQuote += order.leavesQty*order.price;
-            }
-            else {
-                this._availableBase -= order.leavesQty;
-                this._heldBase += order.leavesQty;
-            }
-            return true;
+    private intercept = (command: ExchangeClientCommand) : boolean => {
+        switch (command.kind) {
+            case "order":
+                return this.interceptOrder(command);
+            case "cancel": 
+                return true;
         }
-            
-        this.Update.trigger({
-            kind: "order",
-            isPlacedOrder: true,
-            payload: {
-                exchangeId: order.priortity.toString(),
-                pendingCancel: false,
-                orderStatus: Models.OrderStatus.Rejected,
-                orderId: order.id,
-                leavesQuantity: 0,
-                rejectMessage: "not enough funds"
-            }
-        });
-
         return false;
     }
 
-    private accept = (orders: Order[]) => {
-        let anyWereAccepted = false;
-        for (let order of orders) {
-            if (!this.hasEnoughFunds(order)) continue;
+    private interceptOrder = (command : OrderRequest) : boolean => {
+        const order = command.order;
+        const hasEnoughFunds = 
+            (order.side === Models.Side.Bid && order.quantity*order.price < this._availableQuote) ||
+            (order.side === Models.Side.Ask && order.quantity < this._availableBase);
 
-            order.priortity = this._priority++;
-
-            let sideMap = order.side === Models.Side.Bid ? this._buys : this._sells;
-            sideMap.set(order.id, order);
-
-            this.Update.trigger({
-                kind: "order",
-                isPlacedOrder: order.isPlacedOrder,
-                payload: {
-                    exchangeId: order.priortity.toString(),
-                    orderStatus: Models.OrderStatus.Working,
-                    orderId: order.id,
-                    leavesQuantity: order.leavesQty
-                }
-            });
-
-            anyWereAccepted = true;
+        if (hasEnoughFunds) {
+            if (order.side === Models.Side.Bid) {
+                this._availableQuote -= order.quantity*order.price;
+                this._heldQuote += order.quantity*order.price;
+            }
+            else {
+                this._availableBase -= order.quantity;
+                this._heldBase += order.quantity;
+            }
+            return true;
         }
-
-        if (anyWereAccepted) 
-            this.match();
-
-        _(orders).filter(o => o.tif === Models.TimeInForce.IOC && o.leavesQty > 0).forEach(o => {
-            this.Update.trigger({
-                kind: "order",
-                isPlacedOrder: o.isPlacedOrder,
-                payload: {
-                    exchangeId: o.priortity.toString(),
-                    orderStatus: Models.OrderStatus.Cancelled,
-                    orderId: o.id,
-                    leavesQuantity: 0,
-                }
-            });
-        }).value();
-    };
-
-    private cancel = (cancels: Cancel[]) => {
-        let anyWereAccepted = false;
-        for (let cancel of cancels) {
-            const orderId = cancel.id;
-
-            let existing : Order;
-            if (this._buys.has(orderId)) {
-                existing = this._buys.get(orderId);
-                this._buys.delete(orderId);
-            }
-            else if (this._sells.has(orderId)) {
-                existing = this._sells.get(orderId);
-                this._sells.delete(orderId);
-            }
-
-            this.Update.trigger({
-                kind: "order",
-                isPlacedOrder: cancel.isPlacedOrder,
-                payload: {
-                    orderId: orderId,
-                    orderStatus: existing ? Models.OrderStatus.Cancelled : Models.OrderStatus.Rejected,
-                    pendingCancel: false
-                }
-            });
-
-            if (existing && cancel.isPlacedOrder) {
-                if (existing.side === Models.Side.Bid) {
-                    this._availableQuote += existing.leavesQty*existing.price;
-                    this._heldQuote -= existing.leavesQty*existing.price;
-                }
-                else {
-                    this._availableBase += existing.leavesQty;
-                    this._heldBase -= existing.leavesQty;
-                }
-            }
-
-            if (existing) anyWereAccepted = true;
+        else {
+            const p : Models.OrderStatusReport = <Models.OrderStatusReport>{
+                orderStatus: Models.OrderStatus.Rejected, 
+                orderId: command.order.orderId
+            };
+            this.Update.trigger({kind: "order", payload: p});
+            return false;
         }
-
-        if (anyWereAccepted) this.raiseMarket();
     }
 
-    private replace = (replace: Replace) => {
-        throw new Error("replace not implemented")
+    private interceptStatus = (report: Models.OrderStatusReport) => {
+        if (report.openQtyChange > 0) {
+            this.recalcHeldPositions();
+            
+            if (report.side === Models.Side.Bid) {
+                this._availableQuote += report.openQtyChange*report.price;
+            }
+            else {
+                this._availableBase += report.openQtyChange;
+            }
+        }
+
+        this.Update.trigger({kind: "order", payload: report})
+    }
+
+    private recalcHeldPositions = () => {
+        this._heldBase = _([...this._orders.values()]).filter(s => s.side === Models.Side.Ask).sumBy(i => i.leavesQuantity);
+        this._heldQuote = _([...this._orders.values()]).filter(s => s.side === Models.Side.Bid).sumBy(i => i.leavesQuantity*i.price);
+    };
+
+    public cancelAll = () => {
+        return Q.delay(5).then(() => {
+            for (let o of this._orders.values())
+                this._engine.post({
+                    clientId: this._clientId, 
+                    request: {kind: "cancel", id: o.orderId}
+                });
+
+            return this._orders.size;
+        });
+    };
+
+    public getPositions = async () => {
+        await Promises.delay(5);
+
+        return [
+            new Models.CurrencyPosition(this._availableBase + this._heldBase, this._heldBase, this._pair.base),
+            new Models.CurrencyPosition(this._availableQuote + this._heldQuote, this._heldQuote, this._pair.quote)]
+    };
+}
+
+class MatchingEngine {
+    private _priority = 0;
+    private readonly _buys = new Map<string, MatchingEngineOrderState>();
+    private readonly _sells = new Map<string, MatchingEngineOrderState>();
+    private readonly _processor : OrderState.OrderStateProcessor;
+
+    public readonly Update = new Utils.Evt<MatchingEngineUpdate>();
+
+    constructor(private readonly _pair: Models.CurrencyPair) {
+        this._processor = new OrderState.OrderStateProcessor(new Utils.RealTimeProvider(), make_fee, take_fee);
+    }
+
+    public post = async (command: MatchingEngineRequest) => {
+        await Promises.delay(5);
+        switch (command.request.kind) {
+            case "order": return this.accept(command.clientId, command.request);                
+            case "cancel": return this.cancel(command.clientId, command.request);
+            case "replace": throw new Error("replace not implemented");
+        }
+    };
+
+    private accept = (clientId: string, order: OrderRequest) => {
+        const orderId = order.order.orderId;
+
+        let existing = this._buys.get(orderId) || this._sells.get(orderId);
+        if (existing) 
+            return this.sendUpdate(clientId, <Models.OrderStatusReport>{
+                orderId: orderId,
+                orderStatus: Models.OrderStatus.Rejected,
+                rejectMessage: "Duplicate ID"
+            });
+
+        const state : MatchingEngineOrderState = {
+            clientId: clientId,
+            priortity: this._priority++,
+            state: this._processor.applyOrderUpdate({
+                exchangeId: orderId,
+                orderStatus: Models.OrderStatus.Working,
+                orderId: orderId,
+                leavesQuantity: order.order.quantity
+            }, <Models.OrderStatusReport>order.order)[0]
+        };
+
+        const sideMap = order.order.side === Models.Side.Bid ? this._buys : this._sells;
+        sideMap.set(orderId, state);
+
+        let report = state.state;
+        this.sendUpdate(clientId, report);
+
+        this.match();
+
+        if (report.timeInForce === Models.TimeInForce.IOC && report.leavesQuantity > 0) {
+            report = this._processor.applyOrderUpdate({
+                orderStatus: Models.OrderStatus.Cancelled,
+                leavesQuantity: 0,
+            }, report)[0]
+            this.sendUpdate(clientId, report);
+            
+            sideMap.delete(report.orderId);
+        }
+    };
+
+    private cancel = (clientId: string, cancel: Cancel) => {
+        const orderId = cancel.id;
+
+        let existing : MatchingEngineOrderState;
+        if (this._buys.has(orderId)) {
+            existing = this._buys.get(orderId);
+            this._buys.delete(orderId);
+        }
+        else if (this._sells.has(orderId)) {
+            existing = this._sells.get(orderId);
+            this._sells.delete(orderId);
+        }
+
+        const [report, _] = this._processor.applyOrderUpdate({
+            orderId: orderId,
+            orderStatus: existing ? Models.OrderStatus.Cancelled : Models.OrderStatus.Rejected,
+            pendingCancel: false
+        }, existing.state);
+
+        if (existing)
+            existing.state = report;
+
+        this.sendUpdate(existing.clientId, report);
+
+        (report.side === Models.Side.Bid ? this._buys : this._sells).delete(report.orderId);
+
+        if (existing)
+            this.raiseMarket();
     }
 
     private match = () => {
-        const match = (buy: Order, sell: Order) => {
+        const match = (buy: MatchingEngineOrderState, sell: MatchingEngineOrderState) => {
+            let buyLeaves = buy.state.leavesQuantity;
+            let sellLeaves = sell.state.leavesQuantity;
+
             // already trapped order below in delete
-            if ((buy.leavesQty <= min_size) || (sell.leavesQty <= min_size)) return;
-            let fillQty = Math.min(buy.leavesQty, sell.leavesQty);
-            buy.leavesQty -= fillQty;
-            sell.leavesQty -= fillQty;
+            if ((buyLeaves <= min_size) || (sellLeaves <= min_size)) return;
+            let fillQty = Math.min(buyLeaves, sellLeaves);
+            buyLeaves -= fillQty;
+            sellLeaves -= fillQty;
 
-            if (buy.leavesQty <= min_size) this._buys.delete(buy.id);
-            if (sell.leavesQty <= min_size) this._sells.delete(sell.id);
+            if (buyLeaves <= min_size) this._buys.delete(buy.state.orderId);
+            if (sellLeaves <= min_size) this._sells.delete(sell.state.orderId);
 
-            const fillPx = buy.priortity < sell.priortity ? buy.price : sell.price;
+            const fillPx = buy.priortity < sell.priortity ? buy.state.price : sell.state.price;
 
-            const trigger = (o: Order) => {
+            const trigger = (o: MatchingEngineOrderState, newLeaves: number) => {
                 let liq = Models.Liquidity.Make;
-                if ((o.side === Models.Side.Bid && sell.priortity < buy.priortity) || 
-                    (o.side === Models.Side.Ask && sell.priortity > buy.priortity))
+                if ((o.state.side === Models.Side.Bid && sell.priortity < buy.priortity) || 
+                    (o.state.side === Models.Side.Ask && sell.priortity > buy.priortity))
                     liq = Models.Liquidity.Take;
 
-                this.Update.trigger({
-                    kind: "order",
-                    isPlacedOrder: o.isPlacedOrder,
-                    payload: {
-                        orderId: o.id,
-                        lastPrice: fillPx,
-                        lastQuantity: fillQty,
-                        liquidity: liq,
-                        orderStatus: o.leavesQty <= min_size ? Models.OrderStatus.Complete : Models.OrderStatus.Working
-                    }
-                });
+                const [report, trade] = this._processor.applyOrderUpdate({
+                    orderId: o.state.orderId,
+                    lastPrice: fillPx,
+                    lastQuantity: fillQty,
+                    liquidity: liq,
+                    orderStatus: newLeaves <= min_size ? Models.OrderStatus.Complete : Models.OrderStatus.Working
+                }, o.state);
 
-                if (o.isPlacedOrder) {
-                    if (o.side === Models.Side.Bid) {
-                        this._availableQuote += fillQty*fillPx;
-                        this._heldQuote -= fillQty*fillPx;
-                    }
-                    else {
-                        this._availableBase += fillQty;
-                        this._heldBase -= fillQty;
-                    }
-                }
+                o.state = report;
+                this.sendUpdate(o.clientId, report);
 
                 if (liq === Models.Liquidity.Make)
                     this.Update.trigger({kind: "market_trade", payload: new Models.GatewayMarketTrade(
-                        fillPx, fillQty, new Date(), false, o.side)});
+                        fillPx, fillQty, new Date(), false, o.state.side)});
             }
 
-            trigger(buy);
-            trigger(sell);
+            trigger(buy, buyLeaves);
+            trigger(sell, sellLeaves);
         };
 
         if (this._buys.size <= 0 || this._sells.size <= 0)
             return;
 
-        const orderedBuys = _.sortBy([...this._buys.values()], o => -1*o.price);
-        const orderedSells = _.sortBy([...this._sells.values()], o => o.price);
+        const orderedBuys = _.sortBy([...this._buys.values()], o => -1*o.state.price);
+        const orderedSells = _.sortBy([...this._sells.values()], o => o.state.price);
 
-        if (orderedBuys[0].price < orderedSells[0].price)
+        if (orderedBuys[0].state.price < orderedSells[0].state.price)
             return;
 
-        for (let buy of orderedBuys) {
-            for (let sell of orderedSells) {
-                if (buy.price < sell.price) break;
-                match(buy, sell);
+        for (let b of orderedBuys) {
+            for (let s of orderedSells) {
+                if (b.state.price < s.state.price) break;
+                match(b, s);
             }
         }
 
@@ -285,12 +322,12 @@ class MatchingEngine {
     };
 
     private raiseMarket = () => {
-        const getMarketSide = (side: Map<string, Order>, i: number) : Models.MarketSide[] => {
-            const byPrice = _.values(_.groupBy([...side.values()], g => g.price));
+        const getMarketSide = (side: Map<string, MatchingEngineOrderState>, i: number) : Models.MarketSide[] => {
+            const byPrice = _.values(_.groupBy([...side.values()], g => g.state.price));
             return _(byPrice)
-                .sortBy(s => i * s[0].price)
+                .sortBy(s => i * s[0].state.price)
                 .take(25)
-                .map(b => new Models.MarketSide(b[0].price, _.sumBy(b, x => x.leavesQty)))
+                .map(b => new Models.MarketSide(b[0].state.price, _.sumBy(b, x => x.state.leavesQuantity)))
                 .value();
         }
 
@@ -303,25 +340,14 @@ class MatchingEngine {
         });
     };
 
-    public cancelAll = () => {
-        return Q.delay(5).then(() => {
-            const placedOrders = [...this._buys.values()]
-                    .concat([...this._sells.values()])
-                    .filter(o => o.isPlacedOrder)
-                    .map<Cancel>(o => { return {kind: "cancel", id: o.id, isPlacedOrder: true}; });
-
-            this.cancel(placedOrders);
-
-            return placedOrders.length;
-        });
+    private _orderCallbacks = new Map<string, (o: Models.OrderStatusReport) => void>();
+    public subscribe = (clientId: string, handler: (o: Models.OrderStatusReport) => void) => {
+        this._orderCallbacks.set(clientId, handler);
     };
 
-    public getPositions = async () => {
-        await Promises.delay(5);
-
-        return [
-            new Models.CurrencyPosition(this._availableBase + this._heldBase, this._heldBase, this._pair.base),
-            new Models.CurrencyPosition(this._availableQuote + this._heldQuote, this._heldQuote, this._pair.quote)]
+    private sendUpdate = (clientId: string, o: Models.OrderStatusReport) => {
+        const handler = this._orderCallbacks.get(clientId);
+        if (handler) handler(o);
     };
 }
 
@@ -336,19 +362,16 @@ class TestOrderGenerator {
         const sign = Models.Side.Ask === side ? 1 : -1;
         const price = this.getPrice(crossing ? -sign : sign);
         const qty = Math.random();
-        const o : Order = {
-            kind: "order",
-            id: uuid.v4(),
-            isPlacedOrder: false,
-            leavesQty: qty,
+        const o : Models.OrderStatusUpdate = {
+            orderId: uuid.v4(),
+            quantity: qty,
             price: price,
-            cumQty: 0,
             side: side,
             type: Models.OrderType.Limit,
-            tif: tif
+            timeInForce: tif
         }
 
-        this._orders.add(o.id);
+        this._orders.add(o.orderId);
 
         return o;
     };
@@ -357,29 +380,30 @@ class TestOrderGenerator {
         if (Math.random() > .55) {
             const shouldCross = Math.random() > .05;
             const tif = shouldCross ? Models.TimeInForce.IOC : Models.TimeInForce.GTC;
-            const o = this.generateOrder(tif, shouldCross);
 
-            this._engine.post(o);
+            this._client.post({
+                kind: "order", 
+                order: this.generateOrder(tif, shouldCross)
+            });
         }
         else if (this._orders.size > 0) {
-            const cxl : Cancel = {
+            this._client.post({
                 kind: "cancel",
                 id: _.sample([...this._orders.values()]),
-                isPlacedOrder: false,
-            }
-
-            this._engine.post(cxl);
+            });
         }
     };
 
     public start = () => {
         setInterval(this.createMarketActivity, 1000);
-        const bulkOrder = _.times(500, () => this.generateOrder(Models.TimeInForce.GTC));
-        this._engine.post({kind: "batch_order", orders: bulkOrder});
+
+        for (let o of _.times(500, () => this.generateOrder(Models.TimeInForce.GTC))) {
+            this._client.post({kind: "order", order: o});
+        }
     };
 
-    private onUpdate = (u: MatchingEngineUpdate) => {
-        if (u.kind === "order" && !u.isPlacedOrder && Models.orderIsDone(u.payload.orderStatus)) {
+    private onUpdate = (u: OrderUpdate) => {
+        if (Models.orderIsDone(u.payload.orderStatus)) {
             this._orders.delete(u.payload.orderId);
         }
     };
@@ -387,8 +411,8 @@ class TestOrderGenerator {
     constructor(
             public minTickIncrement: number, 
             private readonly _pair: Models.CurrencyPair,
-            private readonly _engine: MatchingEngine) {
-        _engine.Update.on(this.onUpdate);
+            private readonly _client: ExchangeClient) {
+        _client.Update.on(this.onUpdate);
     }
 }
 
@@ -399,52 +423,38 @@ export class TestingGateway implements Interfaces.IPositionGateway, Interfaces.I
     
     supportsCancelAllOpenOrders = () : boolean => { return true; };
 
-    cancelAllOpenOrders = () => this._engine.cancelAll();
+    cancelAllOpenOrders = () => this._client.cancelAll();
 
     public cancelsByClientOrderId = true;
 
     generateClientOrderId = (): string => uuid.v1();
 
     sendOrder(order: Models.OrderStatusReport) {
-        const o : Order = {
-            kind: "order",
-            id: order.orderId,
-            price: order.price,
-            cumQty: 0,
-            leavesQty: order.quantity,
-            isPlacedOrder: true,
-            side: order.side,
-            tif: order.timeInForce,
-            type: order.type
-        };
-
-        this._engine.post(o);
+        this._client.post({kind: "order", order: order});
     }
 
     cancelOrder(cancel: Models.OrderStatusReport) {
         const c : Cancel = {
             kind: "cancel", 
             id: cancel.orderId, 
-            isPlacedOrder: true, 
         };
 
-        this._engine.post(c);
+        this._client.post(c);
     }
 
     replaceOrder(replace: Models.OrderStatusReport) {
         const r : Replace = {
             kind: "replace",
             id: replace.orderId,
-            isPlacedOrder: true,
             newQty: replace.quantity,
             price: replace.price,
         };
 
-        this._engine.post(r);
+        this._client.post(r);
     }
 
     private downloadPosition = async () => {
-        for (let p of await this._engine.getPositions()) {
+        for (let p of await this._client.getPositions()) {
             this.PositionUpdate.trigger(p);
         }
     }
@@ -461,7 +471,7 @@ export class TestingGateway implements Interfaces.IPositionGateway, Interfaces.I
     constructor(
             public minTickIncrement: number, 
             private readonly _pair: Models.CurrencyPair,
-            private readonly _engine: MatchingEngine) {
+            private readonly _client: ExchangeClient) {
         setTimeout(() => {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
             this.downloadPosition();      
@@ -469,18 +479,15 @@ export class TestingGateway implements Interfaces.IPositionGateway, Interfaces.I
 
         setInterval(this.downloadPosition, 15000);
 
-        _engine.Update.on(this.onEngineUpdate);
+        _client.Update.on(this.onEngineUpdate);
     }
 
-    private onEngineUpdate = (u: MatchingEngineUpdate) => {
+    private onEngineUpdate = (u: MatchingEngineUpdate | OrderUpdate) => {
         switch (u.kind) {
             case "market_trade": 
                 return this.MarketTrade.trigger(u.payload);
             case "order": 
-                if (u.isPlacedOrder)
-                    return this.OrderUpdate.trigger(u.payload);
-                else
-                    break;
+                return this.OrderUpdate.trigger(u.payload);
             case "order_book": 
                 return this.MarketData.trigger(u.payload);
         }
@@ -491,8 +498,8 @@ class TestGateway extends Interfaces.CombinedGateway {
     constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
         const minTick = config.GetNumber("NullGatewayTick");
         const matchingEngine = new MatchingEngine(pair);
-        const generator = new TestOrderGenerator(minTick, pair, matchingEngine);
-        const all = new TestingGateway(minTick, pair, matchingEngine);
+        const generator = new TestOrderGenerator(minTick, pair, new ExchangeClient("gen", matchingEngine, pair));
+        const all = new TestingGateway(minTick, pair, new ExchangeClient("me", matchingEngine, pair));
 
         generator.start();
 
