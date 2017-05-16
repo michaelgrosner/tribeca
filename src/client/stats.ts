@@ -23,7 +23,8 @@ export class StatsComponent implements OnInit {
   public ewmaShort: number;
   public ewmaLong: number;
   public ewmaQuote: number;
-  public stdevWidth: number;
+  public stdevWidthBid: number;
+  public stdevWidthAsk: number;
   public fvChart: any;
   public quoteChart: any;
   public baseChart: any;
@@ -153,7 +154,15 @@ export class StatsComponent implements OnInit {
       tooltip: {pointFormatter:this.pointFormatterBase},
       data: []
     },{
-      name: 'STDEV 20',
+      name: 'STDEV 20 Ask',
+      type: 'spline',
+      lineWidth:1,
+      color:'#af451e',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      yAxis: 1,
+      data: []
+    },{
+      name: 'STDEV 20 Bid',
       type: 'spline',
       lineWidth:1,
       color:'#9e4b2d',
@@ -393,7 +402,8 @@ export class StatsComponent implements OnInit {
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
     if (this.fairValue) {
-      if (this.stdevWidth) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidth], false);
+      if (this.stdevWidthAsk) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidthAsk], false);
+      if (this.stdevWidthBid) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidthBid], false);
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
       if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
@@ -424,7 +434,8 @@ export class StatsComponent implements OnInit {
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
     if (ewma == null) return;
     this.fairValue = ewma.fairValue;
-    if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
+    if (ewma.stdevWidthBid) this.stdevWidthBid = ewma.stdevWidthBid;
+    if (ewma.stdevWidthAsk) this.stdevWidthAsk = ewma.stdevWidthAsk;
     if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
     if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
     if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;

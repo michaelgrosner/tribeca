@@ -64,7 +64,7 @@ export class QuotingEngine {
         private _positionBroker: Interfaces.IPositionBroker,
         private _details: Interfaces.IBroker,
         private _ewma: Interfaces.ICalculator,
-        private _stdev: Interfaces.ICalculator,
+        private _stdev: Interfaces.ISilentCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
         this._registry = new QuotingStyleRegistry.QuotingStyleRegistry([
@@ -84,9 +84,6 @@ export class QuotingEngine {
         _ewma.Updated.on(() => {
           this.recalcQuote();
           _targetPosition.quoteEWMA = _ewma.latest;
-        });
-        _stdev.Updated.on(() => {
-          this.recalcQuote();
           _targetPosition.widthSTDEV = _stdev.latest;
         });
         _targetPosition.NewTargetPosition.on(() => {
@@ -111,11 +108,6 @@ export class QuotingEngine {
         if (params.ewmaProtection && this._ewma.latest !== null) {
             unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
             unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
-        }
-
-        if (params.stdevProtection && this._stdev.latest !== null) {
-            unrounded.askPx = Math.max(fv.price + this._stdev.latest / 2, unrounded.askPx);
-            unrounded.bidPx = Math.min(fv.price - this._stdev.latest / 2, unrounded.bidPx);
         }
 
         const tbp = this._targetPosition.latestTargetPosition;
@@ -174,6 +166,13 @@ export class QuotingEngine {
               sideAPR.push('Sell');
               if (!params.sellSizeMax) unrounded.askSz = Math.min(params.aprMultiplier*sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
             }
+        }
+
+        if (params.stdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
+            if (unrounded.askPx && (params.stdevProtection === Models.STDEV.On || sideAPR.indexOf('Sell')===-1))
+              unrounded.askPx = Math.max(fv.price + this._stdev.latest.ask, unrounded.askPx);
+            if (unrounded.bidPx && (params.stdevProtection === Models.STDEV.On || sideAPR.indexOf('Bid')===-1))
+              unrounded.bidPx = Math.min(fv.price - this._stdev.latest.bid, unrounded.bidPx);
         }
 
         this._targetPosition.sideAPR = sideAPR;

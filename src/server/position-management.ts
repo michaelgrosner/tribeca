@@ -13,34 +13,26 @@ import log from "./logging";
 export class PositionManager {
     private _log = log("rfv");
 
-    private newWidth: number = null;
+    private newWidthBid: number = null;
+    private newWidthAsk: number = null;
     private newQuote: number = null;
     private newShort: number = null;
     private newLong: number = null;
     private fairValue: number = null;
     public set quoteEwma(quoteEwma: number) {
-      const fv = this._fvAgent.latestFairValue;
-      if (fv === null || quoteEwma === null) return;
-      this.fairValue = fv.price;
+      if (quoteEwma === null) return;
       this.newQuote = quoteEwma;
-      const minTick = this._details.minTickIncrement;
-      this._ewmaPublisher.publish(new Models.EWMAChart(
-        Utils.roundNearest(this.newWidth, minTick),
-        Utils.roundNearest(quoteEwma, minTick),
-        this.newShort?Utils.roundNearest(this.newShort, minTick):null,
-        this.newLong?Utils.roundNearest(this.newLong, minTick):null,
-        Utils.roundNearest(fv.price, minTick),
-        this._timeProvider.utcNow()
-      ));
     }
-    public set widthStdev(widthStdev: number) {
+    public set widthStdev(widthStdev: Interfaces.IStdev) {
       const fv = this._fvAgent.latestFairValue;
       if (fv === null || widthStdev === null) return;
       this.fairValue = fv.price;
-      this.newWidth = widthStdev;
+      this.newWidthBid = widthStdev.bid;
+      this.newWidthAsk = widthStdev.ask;
       const minTick = this._details.minTickIncrement;
       this._ewmaPublisher.publish(new Models.EWMAChart(
-        Utils.roundNearest(widthStdev, minTick),
+        Utils.roundNearest(widthStdev.bid, minTick),
+        Utils.roundNearest(widthStdev.ask, minTick),
         Utils.roundNearest(this.newQuote, minTick),
         this.newShort?Utils.roundNearest(this.newShort, minTick):null,
         this.newLong?Utils.roundNearest(this.newLong, minTick):null,
@@ -68,7 +60,8 @@ export class PositionManager {
     ) {
         const minTick = this._details.minTickIncrement;
         _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
-          this.newWidth?Utils.roundNearest(this.newWidth, minTick):null,
+          this.newWidthBid?Utils.roundNearest(this.newWidthBid, minTick):null,
+          this.newWidthAsk?Utils.roundNearest(this.newWidthAsk, minTick):null,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           this.newShort?Utils.roundNearest(this.newShort, minTick):null,
           this.newLong?Utils.roundNearest(this.newLong, minTick):null,
@@ -103,7 +96,8 @@ export class PositionManager {
         }
 
         this._ewmaPublisher.publish(new Models.EWMAChart(
-          this.newWidth?Utils.roundNearest(this.newWidth, minTick):null,
+          this.newWidthBid?Utils.roundNearest(this.newWidthBid, minTick):null,
+          this.newWidthAsk?Utils.roundNearest(this.newWidthAsk, minTick):null,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           Utils.roundNearest(this.newShort, minTick),
           Utils.roundNearest(this.newLong, minTick),
@@ -132,7 +126,7 @@ export class TargetBasePositionManager {
       this._positionManager.quoteEwma = quoteEwma;
     }
 
-    public set widthSTDEV(widthStdev: number) {
+    public set widthSTDEV(widthStdev: Interfaces.IStdev) {
       this._positionManager.widthStdev = widthStdev;
     }
 
