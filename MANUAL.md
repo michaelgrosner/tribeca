@@ -171,7 +171,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of 100 minutes EWMA smoothed line of the price to limit the price while sending new orders.
+* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to limit the price while sending new orders.
 
 * `stdev`
 
