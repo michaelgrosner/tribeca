@@ -98,9 +98,9 @@
       "resolved": "https://registry.npmjs.org/@types/highcharts/-/highcharts-4.2.54.tgz"
     },
     "@types/jquery": {
-      "version": "2.0.43",
-      "from": "@types/jquery@>=2.0.43 <3.0.0",
-      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.43.tgz"
+      "version": "2.0.44",
+      "from": "@types/jquery@2.0.44",
+      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.44.tgz"
     },
     "@types/lodash": {
       "version": "4.14.64",
@@ -3359,9 +3359,9 @@
       "resolved": "https://registry.npmjs.org/typescript/-/typescript-2.3.2.tgz"
     },
     "uglify-js": {
-      "version": "3.0.5",
-      "from": "uglify-js@3.0.5",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.5.tgz"
+      "version": "3.0.7",
+      "from": "uglify-js@3.0.7",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.7.tgz"
     },
     "uglify-to-browserify": {
       "version": "1.0.2",
