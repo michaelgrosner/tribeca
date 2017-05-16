@@ -92,14 +92,8 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
                                             <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
-                                            <th>bw</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxAskSize?</span></th>
-                                            <th>fv</th>
-                                            <th>cxl</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -138,22 +132,6 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:25px;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.bestWidth">
-                                            </td>
-                                            <td style="width:88px;">
-                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.widthPing">
-                                            </td>
-                                            <td style="width:88px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
-                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.widthPong">
-                                            </td>
                                             <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
@@ -176,7 +154,7 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
-                                            <td  style="width:169px;"*ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
@@ -186,20 +164,10 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizeMax">
                                             </td>
-                                            <td style="width:88px;">
-                                                <select class="form-control input-sm"
-                                                    [(ngModel)]="pair.quotingParameters.display.fvModel">
-                                                   <option *ngFor="let option of pair.quotingParameters.availableFvModels" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.cancelOrdersAuto">
-                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <table class="table table-responsive table-bordered">
+                                <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
@@ -207,23 +175,10 @@ class DisplayOrder {
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
                                             <th>sop</th>
-                                            <th style="text-align:right;">trades</th>
-                                            <th>/sec</th>
-                                            <th>ewma?</th>
-                                            <th>stdev?</th>
-                                            <th>delayUI</th>
-                                            <th>audio?</th>
-                                            <th colspan="2">
-                                                <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
-                                                    Applied
-                                                </span>
-                                                <span *ngIf="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
-                                                    Pending
-                                                </span>
-                                                <span *ngIf="!pair.quotingParameters.connected" class="text-danger">
-                                                    Not Connected
-                                                </span>
-                                            </th>
+                                            <th>bw?</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -270,6 +225,56 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
+                                            <td style="width:25px;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.bestWidth">
+                                            </td>
+                                            <td style="width:169px;">
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                                   type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPing">
+                                            </td>
+                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                                   type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPong">
+                                            </td>
+                                    </tbody>
+                                </table>
+                                <table class="table table-responsive table-bordered">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>fv</th>
+                                            <th style="text-align:right;">trades</th>
+                                            <th>/sec</th>
+                                            <th>ewma?</th>
+                                            <th>stdev?</th>
+                                            <th>cxl?</th>
+                                            <th>delayUI</th>
+                                            <th>audio?</th>
+                                            <th colspan="2">
+                                                <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                                    Applied
+                                                </span>
+                                                <span *ngIf="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                                    Pending
+                                                </span>
+                                                <span *ngIf="!pair.quotingParameters.connected" class="text-danger">
+                                                    Not Connected
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="active">
+                                            <td style="width:88px;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.fvModel">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableFvModels" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
                                             <td style="width:88px;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.1" min="0"
@@ -290,6 +295,10 @@ class DisplayOrder {
                                             <td>
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.stdevProtection">
+                                            </td>
+                                            <td>
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.cancelOrdersAuto">
                                             </td>
                                             <td style="width:88px;">
                                                 <input class="form-control input-sm"
@@ -322,7 +331,7 @@ class DisplayOrder {
                             </div>
                         </div>
                         <div class="col-md-3 col-xs-12">
-                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:98px;width: 100%;max-width: 100%;"></textarea>
+                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:146px;width: 100%;max-width: 100%;"></textarea>
                         </div>
                     </div>
                     <div class="row">
