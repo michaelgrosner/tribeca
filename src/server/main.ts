@@ -66,14 +66,14 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   tradesPerMinute:                0.9,
   tradeRateSeconds:               69,
   ewmaProtection:                 true,
-  stdevProtection:                false,
+  stdevProtection:                Models.STDEV.Off,
   audio:                          false,
   bullets:                        2,
   range:                          0.5,
   longEwma:                       0.095,
   shortEwma:                      2*0.095,
   quotingEwma:                    0.095,
-  widthStdevPeriodMinutes:        1,
+  widthStdevPeriods:              1200,
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,
   cancelOrdersAuto:               false,
@@ -382,8 +382,9 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       ),
       new Statistics.ObservableSTDEVCalculator(
         system.timeProvider,
-        fvEngine,
-        initParams.widthStdevPeriodMinutes
+        filtration,
+        broker.minTickIncrement,
+        paramsRepo
       ),
       new PositionManagement.TargetBasePositionManager(
         system.timeProvider,

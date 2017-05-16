@@ -226,7 +226,8 @@ export interface OrderStatusReport {
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export class EWMAChart implements ITimestamped {
-    constructor(public stdevWidth: number,
+    constructor(public stdevWidthBid: number,
+                public stdevWidthAsk: number,
                 public ewmaQuote: number,
                 public ewmaShort: number,
                 public ewmaLong: number,
@@ -338,6 +339,7 @@ export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide,
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }
+export enum STDEV { Off, On, OnAPROff }
 
 export interface QuotingParameters {
     widthPing?: number;
@@ -364,14 +366,14 @@ export interface QuotingParameters {
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
     ewmaProtection?: boolean;
-    stdevProtection?: boolean;
+    stdevProtection?: STDEV;
     audio?: boolean;
     bullets?: number;
     range?: number;
     longEwma?: number;
     shortEwma?: number;
     quotingEwma?: number;
-    widthStdevPeriodMinutes?: number;
+    widthStdevPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     cancelOrdersAuto?: boolean;

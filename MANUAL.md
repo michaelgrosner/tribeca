@@ -171,9 +171,17 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to limit the price while sending new orders.
+* `ewma?` - Use a quote protection of 100 minutes EWMA smoothed line of the price to limit the price while sending new orders.
 
-* `stdev?` - Use a quote protection of 20 minute STDEV of the price to limit the price while sending new orders.
+* `stdev`
+
+  * `Off` - Do not limit the price of new orders.
+
+  * `On` - Use a quote protection of `periods` periods of 1 second to calculate the STDEV of the best bid and also of the best ask in the market order book. to limit the price while sending new orders.
+
+  * `OnAPROff` - Same as `On` when the system is not aggressively rebalancing positions, otherwise if is rebalancing is like same as `Off`.
+
+* `periods` - Maximum amount of values collected in the sequence used to calculate the STDEV, each side have its own STDEV calculation. Tribeca will collect sequentially every 1 second the value of the last bid and also of the last ask in the market order book. Then before place new orders will limit the price using a calculation of the STDEV, taking into account only the last `periods` in each side.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 

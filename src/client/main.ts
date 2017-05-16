@@ -250,7 +250,8 @@ class DisplayOrder {
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
                                             <th>ewma?</th>
-                                            <th>stdev?</th>
+                                            <th>stdev</th>
+                                            <th *ngIf="pair.quotingParameters.display.stdevProtection">periods</th>
                                             <th>cxl?</th>
                                             <th>delayUI</th>
                                             <th>audio?</th>
@@ -292,9 +293,17 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
                                             </td>
-                                            <td>
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.stdevProtection">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.stdevProtection">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.stdevProtection">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthStdevPeriods">
                                             </td>
                                             <td>
                                                 <input type="checkbox"

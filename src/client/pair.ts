@@ -62,6 +62,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   availableSuperTrades = [];
   availablePingAt = [];
   availablePongAt = [];
+  availableSTDEV = [];
 
   constructor(sub: Subscribe.ISubscribe<Models.QuotingParameters>,
     fire: Subscribe.IFire<Models.QuotingParameters>) {
@@ -74,6 +75,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     this.availableSuperTrades = DisplayQuotingParameters.getMapping(Models.SOP);
     this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
     this.availablePongAt = DisplayQuotingParameters.getMapping(Models.PongAt);
+    this.availableSTDEV = DisplayQuotingParameters.getMapping(Models.STDEV);
   }
 
   private static getMapping<T>(enumObject: T) {

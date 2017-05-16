@@ -1,7 +1,9 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
+import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
 import log from "./logging";
 
@@ -70,7 +72,6 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
     constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
         this._alpha = _alpha || .095;
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
-        this.onTick();
     }
 
     private onTick = () => {
@@ -98,42 +99,50 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
     Updated = new Utils.Evt<any>();
 }
 
-export class ObservableSTDEVCalculator implements Interfaces.ICalculator {
+export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private _log = log("stdev");
+    private _interval = null;
+    private _lastBids: number[] = [];
+    private _lastAsks: number[] = [];
 
-    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, minutes?: number) {
-        _timeProvider.setInterval(this.onTick, moment.duration(minutes, "minutes"));
-        this.onTick();
+    private _latest: Interfaces.IStdev = null;
+    public get latest() { return this._latest; }
+
+    constructor(
+      private _timeProvider: Utils.ITimeProvider,
+      private _filteredMarkets: MarketFiltration.MarketFiltration,
+      private _minTick: number,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository
+    ) {
+        _qlParamRepo.NewParameters.on(this.onNewParameters);
+        this.onNewParameters();
     }
 
-    private fvs: number[] = [];
+    private onNewParameters = () => {
+      if (this._interval) clearInterval(this._interval);
+      if (this._qlParamRepo.latest.stdevProtection !== Models.STDEV.Off && this._qlParamRepo.latest.widthStdevPeriods)
+        this._interval = this._timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
+    };
 
     private onTick = () => {
-        var fv = this._fv.latestFairValue;
+        if (this._qlParamRepo.latest.stdevProtection === Models.STDEV.Off || !this._qlParamRepo.latest.widthStdevPeriods) return;
 
-        if (fv === null) {
+        const filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        if (filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             this._log.info("Unable to compute STDEV value");
             return;
         }
 
-        this.fvs.push(fv.price);
-        this.fvs = this.fvs.slice(-20);
+        this._lastBids.push(filteredMkt.bids[0].price);
+        this._lastAsks.push(filteredMkt.asks[0].price);
+        this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
 
-        if (this.fvs.length < 2) return;
+        if (this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
-        var value = computeStdev(this.fvs);
-
-        this.setLatest(value);
+        this._latest = <Interfaces.IStdev>{
+          bid: computeStdev(this._lastBids),
+          ask: computeStdev(this._lastAsks)
+        };
     };
-
-    private _latest: number = null;
-    public get latest() { return this._latest; }
-    private setLatest = (v: number) => {
-        if (Math.abs(v - this._latest) > 1e-3) {
-            this._latest = v;
-            this.Updated.trigger();
-        }
-    };
-
-    Updated = new Utils.Evt<any>();
 }
