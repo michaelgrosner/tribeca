@@ -58,9 +58,9 @@
       "resolved": "https://registry.npmjs.org/@types/angular/-/angular-1.6.17.tgz"
     },
     "@types/bluebird": {
-      "version": "3.5.3",
-      "from": "@types/bluebird@latest",
-      "resolved": "https://registry.npmjs.org/@types/bluebird/-/bluebird-3.5.3.tgz"
+      "version": "3.5.4",
+      "from": "@types/bluebird@3.5.4",
+      "resolved": "https://registry.npmjs.org/@types/bluebird/-/bluebird-3.5.4.tgz"
     },
     "@types/bson": {
       "version": "1.0.3",
@@ -93,14 +93,14 @@
       "resolved": "https://registry.npmjs.org/@types/geojson/-/geojson-1.0.2.tgz"
     },
     "@types/highcharts": {
-      "version": "4.2.54",
-      "from": "@types/highcharts@>=4.2.54 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@types/highcharts/-/highcharts-4.2.54.tgz"
+      "version": "4.2.55",
+      "from": "@types/highcharts@4.2.55",
+      "resolved": "https://registry.npmjs.org/@types/highcharts/-/highcharts-4.2.55.tgz"
     },
     "@types/jquery": {
-      "version": "2.0.44",
-      "from": "@types/jquery@2.0.44",
-      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.44.tgz"
+      "version": "2.0.45",
+      "from": "@types/jquery@2.0.45",
+      "resolved": "https://registry.npmjs.org/@types/jquery/-/jquery-2.0.45.tgz"
     },
     "@types/lodash": {
       "version": "4.14.64",
