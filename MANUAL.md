@@ -177,9 +177,13 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
   * `Off` - Do not limit the price of new orders.
 
-  * `On` - Use a quote protection of `periods` periods of 1 second to calculate the STDEV of the best bid and also of the best ask in the market order book. to limit the price while sending new orders.
+  * `OnFV` - Use a quote protection of STDEV, calculated from a sequence of `fair value` values during `periods` periods of 1 second, to limit the price equally in both sides while sending new orders.
 
-  * `OnAPROff` - Same as `On` when the system is not aggressively rebalancing positions, otherwise if is rebalancing is like same as `Off`.
+  * `OnFVAPROff` - Same as `OnFV` when the system is not aggressively rebalancing positions; otherwise if is rebalancing, is same as `Off`.
+
+  * `OnSides` - Use a quote protection STDEV, calculated from a sequence of of the `best bid` and also of the `best ask` value in the market order book during `periods` periods of 1 second, to limit the price independently on each side while sending new orders.
+
+  * `OnSidesAPROff` - Same as `OnSides` when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
 
 * `periods` - Maximum amount of values collected in the sequence used to calculate the STDEV, each side have its own STDEV calculation. Tribeca will collect sequentially every 1 second the value of the last bid and also of the last ask in the market order book. Then before place new orders will limit the price using a calculation of the STDEV, taking into account only the last `periods` in each side.
 

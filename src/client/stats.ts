@@ -23,8 +23,7 @@ export class StatsComponent implements OnInit {
   public ewmaShort: number;
   public ewmaLong: number;
   public ewmaQuote: number;
-  public stdevWidthBid: number;
-  public stdevWidthAsk: number;
+  public stdevWidth: Models.IStdev;
   public fvChart: any;
   public quoteChart: any;
   public baseChart: any;
@@ -154,6 +153,14 @@ export class StatsComponent implements OnInit {
       tooltip: {pointFormatter:this.pointFormatterBase},
       data: []
     },{
+      name: 'STDEV 20 Fair',
+      type: 'spline',
+      lineWidth:1,
+      color:'#af451e',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      yAxis: 1,
+      data: []
+    },{
       name: 'STDEV 20 Ask',
       type: 'spline',
       lineWidth:1,
@@ -165,7 +172,7 @@ export class StatsComponent implements OnInit {
       name: 'STDEV 20 Bid',
       type: 'spline',
       lineWidth:1,
-      color:'#9e4b2d',
+      color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
       data: []
@@ -402,8 +409,11 @@ export class StatsComponent implements OnInit {
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
     if (this.fairValue) {
-      if (this.stdevWidthAsk) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidthAsk], false);
-      if (this.stdevWidthBid) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidthBid], false);
+      if (this.stdevWidth) {
+        if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidth.fv], false);
+        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidth.ask], false);
+        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.bid], false);
+      }
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);
       if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
@@ -432,13 +442,12 @@ export class StatsComponent implements OnInit {
   }
 
   private addEWMAChartData = (ewma: Models.EWMAChart) => {
-    if (ewma == null) return;
+    if (ewma === null) return;
     this.fairValue = ewma.fairValue;
-    if (ewma.stdevWidthBid) this.stdevWidthBid = ewma.stdevWidthBid;
-    if (ewma.stdevWidthAsk) this.stdevWidthAsk = ewma.stdevWidthAsk;
     if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
     if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
     if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;
+    if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
   }
 
   private updateMarket = (update: Models.Timestamped<any[]>) => {

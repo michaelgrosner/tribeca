@@ -96,11 +96,6 @@ export interface IBroker extends IBrokerConnectivity {
     hasSelfTradePrevention: boolean;
 }
 
-export interface IStdev {
-    bid: number;
-    ask: number;
-}
-
 export interface ICalculator {
     latest: number;
     Updated: Utils.Evt<any>;

@@ -225,9 +225,14 @@ export interface OrderStatusReport {
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
+export interface IStdev {
+    bid: number;
+    ask: number;
+    fv: number;
+}
+
 export class EWMAChart implements ITimestamped {
-    constructor(public stdevWidthBid: number,
-                public stdevWidthAsk: number,
+    constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
                 public ewmaShort: number,
                 public ewmaLong: number,
@@ -339,7 +344,7 @@ export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide,
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }
-export enum STDEV { Off, On, OnAPROff }
+export enum STDEV { Off, OnFV, OnFVAPROff, OnSides, OnSidesAPROff }
 
 export interface QuotingParameters {
     widthPing?: number;

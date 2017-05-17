@@ -169,10 +169,16 @@ export class QuotingEngine {
         }
 
         if (params.stdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
-            if (unrounded.askPx && (params.stdevProtection === Models.STDEV.On || sideAPR.indexOf('Sell')===-1))
-              unrounded.askPx = Math.max(fv.price + this._stdev.latest.ask, unrounded.askPx);
-            if (unrounded.bidPx && (params.stdevProtection === Models.STDEV.On || sideAPR.indexOf('Bid')===-1))
-              unrounded.bidPx = Math.min(fv.price - this._stdev.latest.bid, unrounded.bidPx);
+            if (unrounded.askPx && (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnSides || sideAPR.indexOf('Sell')===-1))
+              unrounded.askPx = Math.max(fv.price + this._stdev.latest[
+                (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fv' : 'ask'
+              ], unrounded.askPx);
+            if (unrounded.bidPx && (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnSides || sideAPR.indexOf('Bid')===-1))
+              unrounded.bidPx = Math.min(fv.price - this._stdev.latest[
+                (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fv' : 'bid'
+              ], unrounded.bidPx);
         }
 
         this._targetPosition.sideAPR = sideAPR;
