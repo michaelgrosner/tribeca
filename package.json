@@ -42,7 +42,7 @@
     "bunyan": "^1.8.10",
     "collections": "^5.0.6",
     "compression": "^1.6.2",
-    "connect": "^3.6.1",
+    "connect": "^3.6.2",
     "core-js": "^2.4.1",
     "es6-shim": "^0.35.3",
     "eventemitter3": "^2.0.3",
