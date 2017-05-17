@@ -104,12 +104,14 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private _interval = null;
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
+    private _lastFV: number[] = [];
 
-    private _latest: Interfaces.IStdev = null;
+    private _latest: Models.IStdev = null;
     public get latest() { return this._latest; }
 
     constructor(
       private _timeProvider: Utils.ITimeProvider,
+      private _fv: FairValue.FairValueEngine,
       private _filteredMarkets: MarketFiltration.MarketFiltration,
       private _minTick: number,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository
@@ -127,20 +129,24 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private onTick = () => {
         if (this._qlParamRepo.latest.stdevProtection === Models.STDEV.Off || !this._qlParamRepo.latest.widthStdevPeriods) return;
 
+        const fv = this._fv.latestFairValue;
         const filteredMkt = this._filteredMarkets.latestFilteredMarket;
-        if (filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
+        if (fv === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             this._log.info("Unable to compute STDEV value");
             return;
         }
 
+        this._lastFV.push(fv.price);
         this._lastBids.push(filteredMkt.bids[0].price);
         this._lastAsks.push(filteredMkt.asks[0].price);
+        this._lastFV = this._lastFV.slice(-this._qlParamRepo.latest.widthStdevPeriods);
         this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
         this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
 
-        if (this._lastBids.length < 2 || this._lastAsks.length < 2) return;
+        if (this._lastFV.length < 2 ||this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
-        this._latest = <Interfaces.IStdev>{
+        this._latest = <Models.IStdev>{
+          fv: computeStdev(this._lastFV),
           bid: computeStdev(this._lastBids),
           ask: computeStdev(this._lastAsks)
         };

@@ -382,6 +382,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       ),
       new Statistics.ObservableSTDEVCalculator(
         system.timeProvider,
+        fvEngine,
         filtration,
         broker.minTickIncrement,
         paramsRepo
