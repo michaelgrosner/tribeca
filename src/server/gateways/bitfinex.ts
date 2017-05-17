@@ -117,7 +117,7 @@ class BitfinexWebsocket {
             else {
               if (['hos','hts'].indexOf(msg[1]) > -1) return;
               handler(new Models.Timestamped(
-                ['os','ou','oc'].indexOf(msg[1]) > -1
+                ['on','os','ou','oc'].indexOf(msg[1]) > -1
                   ? [msg[1], msg[2]]
                   : [msg[1] == 'te' ? msg[2] : msg[1]],
                 t
@@ -317,7 +317,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
-          if (['ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], timeProvider.utcNow());
+          if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], timeProvider.utcNow());
         });
 
         _socket.ConnectChanged.on(cs => {
