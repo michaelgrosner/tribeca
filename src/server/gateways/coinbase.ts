@@ -451,7 +451,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             if (err) d.reject(err);
             else  {
                 var t = this._timeProvider.utcNow();
-                _.forEach(Object(resp).body, cxl_id => {
+                _.forEach(JSON.parse(Object(resp).body), cxl_id => {
                     this.OrderUpdate.trigger({
                         exchangeId: cxl_id,
                         time: t,
@@ -492,6 +492,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     time: t,
                     leavesQuantity: 0
                 };
+                this.OrderUpdate.trigger(status);
 
                 if (msg === "You have exceeded your request rate of 5 r/s." || msg === "BadRequest") {
                     this._timeProvider.setTimeout(() => this.cancelOrder(cancel), moment.duration(500));
@@ -507,12 +508,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 };
             }
 
-            this.OrderUpdate.trigger(status);
-        });
-
-        this.OrderUpdate.trigger({
-            orderId: cancel.orderId,
-            computationalLatency: (new Date()).getTime() - cancel.time.getTime()
         });
     };
 

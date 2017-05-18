@@ -479,7 +479,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     };
 
-    generateClientOrderId = (): string => parseInt((Math.random()+'').substr(-8), 10).toString();
+    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);;
 
     private _log = log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;

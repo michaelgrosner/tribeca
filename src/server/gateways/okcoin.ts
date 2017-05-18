@@ -135,6 +135,13 @@ class OkCoinWebsocket {
         }
     };
 
+    private connectWS = (config: Config.IConfigProvider) => {
+        this._ws = new ws(config.GetString("OkCoinWsUrl"));
+        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        this._ws.on("message", this.onMessage);
+        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+    };
+
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
@@ -142,16 +149,16 @@ class OkCoinWebsocket {
     private _log = log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(config : Config.IConfigProvider) {
-        this._ws = new ws(config.GetString("OkCoinWsUrl"));
-        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
-        this._ws.on("message", this.onMessage);
-        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+    constructor(config: Config.IConfigProvider) {
+        this.connectWS(config);
         setInterval(() => {
-          if (!this._stillAlive) this._log.info('OkCoin heartbeat lost.');
-          this._stillAlive = false;
+          if (!this._stillAlive) {
+            this._log.info('OkCoin heartbeat lost, reconnecting...');
+            this._stillAlive = true;
+            this.connectWS(config);
+          } else this._stillAlive = false;
           this._ws.send(this._serializedHeartping);
-        }, 7000);
+        }, 21000);
     }
 }
 
@@ -206,7 +213,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    generateClientOrderId = (): string => parseInt((Math.random()+'').substr(-8), 10).toString();
+    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
@@ -342,7 +349,6 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onTrade = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
         var t = tsMsg.time;
         var msg : OkCoinTradeRecord = tsMsg.data;
-
         var avgPx = parseFloat(msg.averagePrice);
         var lastQty = parseFloat(msg.sigTradeAmount);
         var lastPx = parseFloat(msg.sigTradePrice);
