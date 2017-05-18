@@ -130,6 +130,14 @@ class BitfinexWebsocket {
         }
     };
 
+    private connectWS = (config: Config.IConfigProvider) => {
+        this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
+        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        this._ws.on("message", this.onMessage);
+        this._ws.on("error", (x) => this._log.info('Bitfinex WS ERROR', x));
+        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+    };
+
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
@@ -138,14 +146,13 @@ class BitfinexWebsocket {
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
-        this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
-        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
-        this._ws.on("message", this.onMessage);
-        this._ws.on("error", (x) => this._log.info('Bitfinex WS ERROR', x));
-        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+        this.connectWS(config);
         setInterval(() => {
-          if (!this._stillAlive) this._log.info('Bitfinex heartbeat lost.');
-          this._stillAlive = false;
+          if (!this._stillAlive) {
+            this._log.info('Bitfinex heartbeat lost, reconnecting...');
+            this._stillAlive = true;
+            this.connectWS(config);
+          } else this._stillAlive = false;
           this._ws.send(this._serializedHeartping);
         }, 7000);
     }
@@ -239,7 +246,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return d.promise;
     };
 
-    generateClientOrderId = (): number => parseInt((Math.random()+'').substr(-8), 10);
+    generateClientOrderId = (): number => parseInt(new Date().valueOf().toString().substr(-9), 10);
 
     public cancelsByClientOrderId = false;
 

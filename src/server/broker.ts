@@ -192,11 +192,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     cancelOrder = (cancel: Models.OrderCancel) => {
         const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
         if (!rpt) {
-          this._oeGateway.cancelOrder(this.updateOrderState(<Models.OrderStatusUpdate>{
+          this.updateOrderState(<Models.OrderStatusUpdate>{
               orderId: cancel.origOrderId,
               orderStatus: Models.OrderStatus.Cancelled,
               leavesQuantity: 0
-          }));
+          });
           return;
         }
 
@@ -284,7 +284,9 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 }
             }
 
-            if (typeof orig === "undefined") return;
+            if (typeof orig === "undefined") {
+              return;
+            }
         }
 
         const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
@@ -333,13 +335,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         this.updateOrderStatusInMemory(o);
 
         // cancel any open orders waiting for oid
-        if (!this._oeGateway.cancelsByClientOrderId
-                && typeof o.exchangeId !== "undefined"
-                && o.orderId in this._cancelsWaitingForExchangeOrderId) {
+        if (!this._oeGateway.cancelsByClientOrderId) {
+          if (typeof o.exchangeId !== "undefined" && o.orderId in this._cancelsWaitingForExchangeOrderId) {
             // this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
             const cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
+            if (o.orderStatus===Models.OrderStatus.Working) return;
+          }
         }
 
         this.OrderUpdate.trigger(o);
@@ -391,27 +394,14 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
 
-    private _pendingRemovals = new Array<Models.OrderStatusReport>();
     private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete && osr.orderStatus != Models.OrderStatus.Rejected) {
           this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
           this._orderCache.allOrders.set(osr.orderId, osr);
-        } else this._pendingRemovals.push(osr);
-    };
-
-    private clearPendingRemovals = () => {
-        const now = new Date().getTime();
-        const kept = new Array<Models.OrderStatusReport>();
-        for (let osr of this._pendingRemovals) {
-            if (now - osr.time.getTime() > 5000) {
-                this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-                this._orderCache.allOrders.delete(osr.orderId);
-            }
-            else {
-                kept.push(osr);
-            }
+        } else {
+          this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          this._orderCache.allOrders.delete(osr.orderId);
         }
-        this._pendingRemovals = kept;
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
@@ -419,7 +409,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
-                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
+                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport|Models.OrderStatusUpdate>,
                 private _tradePublisher : Publish.IPublish<Models.Trade>,
                 private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
                 private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
@@ -431,16 +421,16 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initTrades : Models.Trade[]) {
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
-        _timeProvider.setTimeout(() => { if (_qlParamRepo.latest.cancelOrdersAuto) _oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
+        _timeProvider.setTimeout(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(1, 'minutes'));
 
         _.each(initTrades, t => this._trades.push(t));
-        _orderStatusPublisher.registerSnapshot(() => Array.from(_orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
                 const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], _baseBroker.exchange(), _timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
+                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), this._timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
             }
             catch (e) {
@@ -450,7 +440,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
         _cancelOrderReciever.registerReceiver(o => {
             try {
-                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, _timeProvider.utcNow()));
+                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow()));
             } catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);
             }
@@ -461,8 +451,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
 
         _oeGateway.OrderUpdate.on(this.updateOrderState);
-
-        _timeProvider.setInterval(this.clearPendingRemovals, moment.duration(5, "seconds"));
 
         // _oeGateway.ConnectChanged.on(s => {
             // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);

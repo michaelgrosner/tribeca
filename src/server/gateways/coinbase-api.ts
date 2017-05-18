@@ -18,7 +18,6 @@ var keepaliveAgent = new HttpsAgent();
 
 export var PublicClient = function(apiURI?: string) {
     var self = this;
-    console.log("starting coinbase public client, apiURI = ", apiURI);
     self.apiURI = apiURI || 'https://api.exchange.coinbase.com';
 };
 
