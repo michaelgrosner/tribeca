@@ -161,7 +161,7 @@ export class StatsComponent implements OnInit {
       yAxis: 1,
       data: []
     },{
-      name: 'STDEV 20 Ask',
+      name: 'STDEV 20 Tops',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
@@ -169,7 +169,15 @@ export class StatsComponent implements OnInit {
       yAxis: 1,
       data: []
     },{
-      name: 'STDEV 20 Bid',
+      name: 'STDEV 20 TopAsk',
+      type: 'spline',
+      lineWidth:1,
+      color:'#af451e',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      yAxis: 1,
+      data: []
+    },{
+      name: 'STDEV 20 TopBid',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
@@ -411,8 +419,9 @@ export class StatsComponent implements OnInit {
     if (this.fairValue) {
       if (this.stdevWidth) {
         if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.stdevWidth.fv], false);
-        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidth.ask], false);
-        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.bid], false);
+        if (this.stdevWidth.tops) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidth.tops], false);
+        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.ask], false);
+        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[12].addPoint([time, this.stdevWidth.bid], false);
       }
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaShort], false);

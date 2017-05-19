@@ -40,18 +40,18 @@ export function computeEwma(newValue: number, previous: number, alpha: number): 
     return newValue;
 }
 
-export function computeStdev(arrFV: number[]): number {
-    var n = arrFV.length;
+export function computeStdev(sequence: number[]): number {
+    var n = sequence.length;
     var sum = 0;
-    arrFV.forEach((fv) => sum += fv);
+    sequence.forEach((x) => sum += x);
     var mean = sum / n;
     var variance = 0.0;
     var v1 = 0.0;
     var v2 = 0.0;
     if (n != 1) {
         for (var i = 0; i<n; i++) {
-            v1 = v1 + (arrFV[i] - mean) * (arrFV[i] - mean);
-            v2 = v2 + (arrFV[i] - mean);
+            v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
+            v2 = v2 + (sequence[i] - mean);
         }
         v2 = v2 * v2 / n;
         variance = (v1 - v2) / (n-1);
@@ -105,6 +105,7 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
     private _lastFV: number[] = [];
+    private _lastTops: number[] = [];
 
     private _latest: Models.IStdev = null;
     public get latest() { return this._latest; }
@@ -137,16 +138,19 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         }
 
         this._lastFV.push(fv.price);
+        this._lastTops.push(filteredMkt.bids[0].price, filteredMkt.asks[0].price);
         this._lastBids.push(filteredMkt.bids[0].price);
         this._lastAsks.push(filteredMkt.asks[0].price);
         this._lastFV = this._lastFV.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.widthStdevPeriods * 2);
         this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
         this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
 
-        if (this._lastFV.length < 2 ||this._lastBids.length < 2 || this._lastAsks.length < 2) return;
+        if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
         this._latest = <Models.IStdev>{
           fv: computeStdev(this._lastFV),
+          tops: computeStdev(this._lastTops),
           bid: computeStdev(this._lastBids),
           ask: computeStdev(this._lastAsks)
         };

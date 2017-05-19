@@ -226,9 +226,10 @@ export interface OrderStatusReport {
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export interface IStdev {
+    fv: number;
+    tops: number;
     bid: number;
     ask: number;
-    fv: number;
 }
 
 export class EWMAChart implements ITimestamped {
@@ -344,7 +345,7 @@ export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide,
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }
-export enum STDEV { Off, OnFV, OnFVAPROff, OnSides, OnSidesAPROff }
+export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export interface QuotingParameters {
     widthPing?: number;
