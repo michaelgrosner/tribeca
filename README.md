@@ -58,7 +58,7 @@ Feel free anytime to check if there are new modifications with `npm run diff`.
 
 Once you decide that is time to upgrade, execute `npm run latest` to download and install the latest modifications in your remote branch (or directly `npm run reinstall` to skip the display of the new commit messages).
 
-After install the latest version all running instances will be restarted.
+After install the latest version, all running instances will be restarted.
 
 ### Multiple instances party time
 
@@ -81,6 +81,8 @@ To run multiple instances using a collection of config files:
 2. Run the new instance with `npm start --tribeca:config=Xibeca_party_time.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
+
+After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `npm run startall`, `npm run stopall` and `npm run restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
 ### Application Usage
 
