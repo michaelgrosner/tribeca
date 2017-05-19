@@ -81,7 +81,6 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
 
 export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private _log = log("stdev");
-    private _interval = null;
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
     private _lastFV: number[] = [];
@@ -97,19 +96,10 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
       private _minTick: number,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository
     ) {
-        _qlParamRepo.NewParameters.on(this.onNewParameters);
-        this.onNewParameters();
+        _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
     }
 
-    private onNewParameters = () => {
-      if (this._interval) clearInterval(this._interval);
-      if (this._qlParamRepo.latest.stdevProtection !== Models.STDEV.Off && this._qlParamRepo.latest.widthStdevPeriods)
-        this._interval = this._timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
-    };
-
     private onTick = () => {
-        if (this._qlParamRepo.latest.stdevProtection === Models.STDEV.Off || !this._qlParamRepo.latest.widthStdevPeriods) return;
-
         const fv = this._fv.latestFairValue;
         const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (fv === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
@@ -135,7 +125,6 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
           ask: this.computeStdev(this._lastAsks)
         };
     };
-
 
    private computeStdev(sequence: number[]): number {
       const n = sequence.length;
