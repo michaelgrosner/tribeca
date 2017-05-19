@@ -177,15 +177,19 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
   * `Off` - Do not limit the price of new orders.
 
-  * `OnFV` - Use a quote protection of STDEV, calculated from a sequence of `fair value` values during `periods` periods of 1 second, to limit the price equally in both sides while sending new orders.
+  * `OnFV` - Use a quote protection of STDEV, calculated from a sequence of `fair value` values during `periods` periods of 1 second, to limit the price equally on both sides while sending new orders.
 
   * `OnFVAPROff` - Same as `OnFV` when the system is not aggressively rebalancing positions; otherwise if is rebalancing, is same as `Off`.
 
-  * `OnSides` - Use a quote protection STDEV, calculated from a sequence of the `best bid` and also of the `best ask` value in the market order book during `periods` periods of 1 second, to limit the price independently on each side while sending new orders.
+  * `OnTops` - Use a quote protection STDEV, calculated from a unique sequence of both `best bid` and `best ask` values in the market order book during `periods * 2` periods of 1 second, to limit the price equally on both sides while sending new orders.
 
-  * `OnSidesAPROff` - Same as `OnSides` when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
+  * `OnTopsAPROff` - Same as `OnTops` when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
 
-* `periods` - Maximum amount of values collected in the sequence used to calculate the STDEV, each side have its own STDEV calculation. Tribeca will collect sequentially every 1 second the value of the `fair value`, `last bid` and also of the `last ask` from the market order book. Then before place new orders will limit the price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
+  * `OnTop` - Use a quote protection STDEV, calculated from two sequences of the `best bid` (first sequence) and also of the `best ask` (second sequence) value in the market order book during `periods` periods of 1 second, to limit the price independently on each side while sending new orders.
+
+  * `OnTopAPROff` - Same as `OnTop` when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
+
+* `periods` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. Once are collect sequentially every 1 second the value of the `fair value`, `last bid` and also of the `last ask` from the market order book, before place new orders, a limit will be always applied to the price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
