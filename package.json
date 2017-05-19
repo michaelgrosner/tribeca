@@ -61,7 +61,7 @@
     "socket.io-client": "^2.0.1",
     "ts-helpers": "^1.1.2",
     "typescript": "^2.3.2",
-    "uglify-js": "^3.0.8",
+    "uglify-js": "^3.0.9",
     "uuid": "^3.0.1",
     "uws": "^0.14.5",
     "zone.js": "^0.8.10"
