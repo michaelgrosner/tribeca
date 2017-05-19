@@ -107,6 +107,39 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return deferred.promise;
     }
 
+    cleanTrade(tradeId: string) : Promise<number> {
+        var deferred = Promises.defer<number>();
+
+        var lateCleans : {[id: string] : boolean} = {};
+        for(var i = 0;i<this._trades.length;i++) {
+          if (this._trades[i].tradeId == tradeId) {
+            lateCleans[this._trades[i].tradeId] = true;
+          }
+        }
+
+        if (_.isEmpty(_.keys(lateCleans))) {
+            deferred.resolve(0);
+        }
+
+        for (var k in lateCleans) {
+          if (!(k in lateCleans)) continue;
+          for(var i = 0;i<this._trades.length;i++) {
+            if (k == this._trades[i].tradeId) {
+              this._trades[i].Kqty = -1;
+              this._tradePublisher.publish(this._trades[i]);
+              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._trades.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        if (_.every(_.values(lateCleans)))
+            deferred.resolve(_.size(lateCleans));
+
+        return deferred.promise;
+    }
+
     cleanOrders() : Promise<number> {
         var deferred = Promises.defer<number>();
 
@@ -417,6 +450,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cancelAllOrdersReciever : Publish.IReceive<object>,
                 private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
                 private _cleanAllOrdersReciever : Publish.IReceive<object>,
+                private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
                 private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
@@ -438,17 +472,11 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             }
         });
 
-        _cancelOrderReciever.registerReceiver(o => {
-            try {
-                this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow()));
-            } catch (e) {
-                this._log.error(e, "unhandled exception while submitting order", o);
-            }
-        });
-
+        _cancelOrderReciever.registerReceiver(o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
         _cancelAllOrdersReciever.registerReceiver(() => this.cancelOpenOrders());
         _cleanAllClosedOrdersReciever.registerReceiver(() => this.cleanClosedOrders());
         _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
+        _cleanTradeReciever.registerReceiver(t => this.cleanTrade(t.tradeId));
 
         _oeGateway.OrderUpdate.on(this.updateOrderState);
 

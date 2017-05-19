@@ -54,6 +54,9 @@ export class OrdersComponent implements OnInit {
 
   private createColumnDefs = (): ColDef[] => {
     return [
+      { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
+      } },
       { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
           return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
         },
@@ -61,10 +64,6 @@ export class OrdersComponent implements OnInit {
         cellClass: (params) => {
           return 'fs11px'+(Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? " text-muted" : "");
       }  },
-      { width: 35, field: 'lat', headerName: 'lat'},
-      { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
-          return (params.value) ? params.value.toString().split('-')[0] : '';
-        }},
       { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
@@ -81,17 +80,18 @@ export class OrdersComponent implements OnInit {
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 45, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
-      { width: 40, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
-        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
-      } },
+      { width: 35, field: 'lat', headerName: 'lat'},
+      { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
+          return (params.value) ? params.value.toString().split('-')[0] : '';
+        }},
     ];
   }
 
   public onCellClicked = ($event) => {
     if ($event.event.target.getAttribute("data-action-type")!='remove') return;
     this.fireCxl.fire({
-      orderId:$event.data.orderId,
-      exchange:$event.data.exchange
+      orderId: $event.data.orderId,
+      exchange: $event.data.exchange
     });
     this.gridOptions.api.removeItems([$event.node]);
   }
