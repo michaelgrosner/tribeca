@@ -81,7 +81,7 @@
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run log-git",
     "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run reinstall || echo Already running latest `_ @{u}` version!",
-    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever stopall && npm start",
+    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever restartall",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "log-git": "git --no-pager log --graph --oneline @..@{u}",
     "log": "bunyan log/tribeca.log 2>/dev/null",

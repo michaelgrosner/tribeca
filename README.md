@@ -58,7 +58,7 @@ Feel free anytime to check if there are new modifications with `npm run diff`.
 
 Once you decide that is time to upgrade, execute `npm run latest` to download and install the latest modifications in your remote branch (or directly `npm run reinstall` to skip the display of the new commit messages).
 
-If you are running multiple instances, this will stop all instances and only restart `tribeca.json`.
+After install the latest version all running instances will be restarted.
 
 ### Multiple instances party time
 
