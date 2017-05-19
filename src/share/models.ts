@@ -46,9 +46,10 @@ export var Topics = {
   CancelAllOrders: 'x',
   CleanAllClosedOrders: 'y',
   CleanAllOrders: 'z',
-  TradesChart: 'A',
-  WalletChart: 'B',
-  EWMAChart: 'C'
+  CleanTrade: 'A',
+  TradesChart: 'B',
+  WalletChart: 'C',
+  EWMAChart: 'D'
 }
 
 export class MarketSide {

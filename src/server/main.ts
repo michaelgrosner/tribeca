@@ -339,6 +339,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getReceiver(Models.Topics.CancelAllOrders),
       system.getReceiver(Models.Topics.CleanAllClosedOrders),
       system.getReceiver(Models.Topics.CleanAllOrders),
+      system.getReceiver(Models.Topics.CleanTrade),
       orderCache,
       initTrades
     );

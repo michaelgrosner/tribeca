@@ -3,15 +3,18 @@ import {GridOptions, ColDef, RowNode} from "ag-grid/main";
 import moment = require('moment');
 
 import Models = require('../share/models');
-import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import Subscribe = require('./subscribe');
+import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-angular #tradeList class="ag-fresh ag-dark" style="height: 159px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-angular>`
+  template: `<ag-grid-angular #tradeList class="ag-fresh ag-dark" style="height: 159px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class TradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
+
+  private fireCxl: Subscribe.IFire<object>;
 
   public exch: Models.Exchange;
   public pair: Models.CurrencyPair;
@@ -25,7 +28,8 @@ export class TradesComponent implements OnInit {
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
+    @Inject(FireFactory) private fireFactory: FireFactory
   ) {}
 
   ngOnInit() {
@@ -41,6 +45,9 @@ export class TradesComponent implements OnInit {
     if (this.subscribed) return;
     this.subscribed = true;
 
+    this.fireCxl = this.fireFactory
+      .getFire(Models.Topics.CleanTrade);
+
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
       .registerSubscriber(this.updateQP);
@@ -53,6 +60,9 @@ export class TradesComponent implements OnInit {
 
   private createColumnDefs = (): ColDef[] => {
     return [
+      { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
+      } },
       {width: 95, field:'time', headerName:'t', cellRenderer:(params) => {
           return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
         }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
@@ -89,6 +99,13 @@ export class TradesComponent implements OnInit {
         if (params.data.side === 'K') return "kira"; else return "";
       }, cellRendererFramework: QuoteCurrencyCellComponent}
     ];
+  }
+
+  public onCellClicked = ($event) => {
+    if ($event.event.target.getAttribute("data-action-type")!='remove') return;
+    this.fireCxl.fire({
+      tradeId: $event.data.tradeId
+    });
   }
 
   private addRowData = (t: Models.Trade) => {
