@@ -184,11 +184,10 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
           this.mkt[side] = this.mkt[side].filter(a => a.price != x[0]);
           if (x[1]) this.mkt[side].push(new Models.MarketSide(x[0], Math.abs(x[2])));
         });
-        this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0,13);
-        this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0,13);
-        this.mkt.time = depth.time;
+        this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 21);
+        this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 21);
 
-        this.MarketData.trigger(this.mkt);
+        this.MarketData.trigger(new Models.Market(this.mkt.bids.slice(0, 13), this.mkt.asks.slice(0, 13), depth.time));
     };
 
     constructor(
