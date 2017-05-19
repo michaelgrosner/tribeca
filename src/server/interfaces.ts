@@ -33,7 +33,7 @@ export interface IOrderEntryGateway extends IGateway {
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
 
     cancelsByClientOrderId: boolean;
-    generateClientOrderId(): any;
+    generateClientOrderId(): string|number;
 
     supportsCancelAllOpenOrders() : boolean;
     cancelAllOpenOrders() : Promise<number>;
