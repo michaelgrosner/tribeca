@@ -78,9 +78,9 @@
       "resolved": "https://registry.npmjs.org/@types/express/-/express-4.0.35.tgz"
     },
     "@types/express-serve-static-core": {
-      "version": "4.0.44",
-      "from": "@types/express-serve-static-core@>=4.0.44 <5.0.0",
-      "resolved": "https://registry.npmjs.org/@types/express-serve-static-core/-/express-serve-static-core-4.0.44.tgz"
+      "version": "4.0.45",
+      "from": "@types/express-serve-static-core@4.0.45",
+      "resolved": "https://registry.npmjs.org/@types/express-serve-static-core/-/express-serve-static-core-4.0.45.tgz"
     },
     "@types/form-data": {
       "version": "0.0.33",
@@ -3540,9 +3540,9 @@
       "dev": true
     },
     "zone.js": {
-      "version": "0.8.10",
-      "from": "zone.js@>=0.8.10 <0.9.0",
-      "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.8.10.tgz"
+      "version": "0.8.11",
+      "from": "zone.js@0.8.11",
+      "resolved": "https://registry.npmjs.org/zone.js/-/zone.js-0.8.11.tgz"
     }
   }
 }
