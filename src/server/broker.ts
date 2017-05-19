@@ -409,7 +409,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _baseBroker : Interfaces.IBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
-                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport|Models.OrderStatusUpdate>,
+                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
                 private _tradePublisher : Publish.IPublish<Models.Trade>,
                 private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
                 private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
