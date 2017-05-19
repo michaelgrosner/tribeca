@@ -62,7 +62,9 @@ export class OrdersComponent implements OnInit {
           return 'fs11px'+(Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? " text-muted" : "");
       }  },
       { width: 35, field: 'lat', headerName: 'lat'},
-      { width: 90, field: 'orderId', headerName: 'openOrderId' },
+      { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
+          return (params.value) ? params.value.substr(0,params.value.indexOf('-')) : '';
+        }},
       { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
