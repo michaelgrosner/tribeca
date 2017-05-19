@@ -117,7 +117,6 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `widthPong` from the `fair value`.
 
-
 * `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
@@ -190,6 +189,8 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
   * `OnTopAPROff` - Same as `OnTop` when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
 
 * `periods` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. Once are collect sequentially every 1 second the value of the `fair value`, `last bid` and also of the `last ask` from the market order book, before place new orders, a limit will be always applied to the price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
+
+* `factor` - Multiplier used to increase or decrease the value of the selected `stdev` calculation, a `factor` of 1 does effectively nothing.
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 

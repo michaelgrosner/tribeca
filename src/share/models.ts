@@ -379,6 +379,7 @@ export interface QuotingParameters {
     longEwma?: number;
     shortEwma?: number;
     quotingEwma?: number;
+    widthStdevFactor?: number;
     widthStdevPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
