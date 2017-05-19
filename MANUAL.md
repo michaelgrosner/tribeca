@@ -213,6 +213,8 @@ Lets say that you have a great idea about how to profitably make markets and are
 
 3. Rebuild with `npm install` and restart with `npm restart`.
 
+Alternatively, you can always open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Missing%20trading%20strategy) to request a new feature.
+
 # How can I test new trading strategies?
 
 Tribeca is packaged with a backtesting mode.
