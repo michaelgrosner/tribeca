@@ -63,7 +63,7 @@ export class OrdersComponent implements OnInit {
       }  },
       { width: 35, field: 'lat', headerName: 'lat'},
       { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
-          return (params.value) ? params.value.substr(0,params.value.indexOf('-')) : '';
+          return (params.value) ? params.value.split('-')[0] : '';
         }},
       { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
