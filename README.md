@@ -21,8 +21,8 @@ Runs on the latest node.js (v6 or v7). Persistence is achieved using mongodb. In
 
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
-|**with Maker and Taker fees**|Bitfinex|HitBTC|
 |**without Maker fees**|Coinbase GDAX|OKCoin.com, OKCoin.cn|
+|**with Maker and Taker fees**|Bitfinex|HitBTC|
 
 All currency pairs are supported, otherwise please open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Missing%20currency%20pair) to easily include any missing currency that you would like.
 
