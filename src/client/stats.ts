@@ -153,7 +153,7 @@ export class StatsComponent implements OnInit {
       tooltip: {pointFormatter:this.pointFormatterBase},
       data: []
     },{
-      name: 'STDEV 20 Fair',
+      name: 'STDEV Fair',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
@@ -161,7 +161,7 @@ export class StatsComponent implements OnInit {
       yAxis: 1,
       data: []
     },{
-      name: 'STDEV 20 Tops',
+      name: 'STDEV Tops',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
@@ -169,7 +169,7 @@ export class StatsComponent implements OnInit {
       yAxis: 1,
       data: []
     },{
-      name: 'STDEV 20 TopAsk',
+      name: 'STDEV TopAsk',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
@@ -177,7 +177,7 @@ export class StatsComponent implements OnInit {
       yAxis: 1,
       data: []
     },{
-      name: 'STDEV 20 TopBid',
+      name: 'STDEV TopBid',
       type: 'spline',
       lineWidth:1,
       color:'#af451e',
