@@ -252,6 +252,7 @@ class DisplayOrder {
                                             <th>ewma?</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.stdevProtection">periods</th>
+                                            <th *ngIf="pair.quotingParameters.display.stdevProtection">factor</th>
                                             <th>cxl?</th>
                                             <th>delayUI</th>
                                             <th>audio?</th>
@@ -301,9 +302,15 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px;" *ngIf="pair.quotingParameters.display.stdevProtection">
                                                 <input class="form-control input-sm"
-                                                   type="number" step="1" min="0"
+                                                   type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthStdevPeriods">
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.stdevProtection">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0.1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthStdevFactor">
                                             </td>
                                             <td>
                                                 <input type="checkbox"

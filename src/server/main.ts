@@ -73,6 +73,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   longEwma:                       0.095,
   shortEwma:                      2*0.095,
   quotingEwma:                    0.095,
+  widthStdevFactor:               1,
   widthStdevPeriods:              1200,
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,

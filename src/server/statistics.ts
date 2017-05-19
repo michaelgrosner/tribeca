@@ -40,26 +40,6 @@ export function computeEwma(newValue: number, previous: number, alpha: number): 
     return newValue;
 }
 
-export function computeStdev(sequence: number[]): number {
-    var n = sequence.length;
-    var sum = 0;
-    sequence.forEach((x) => sum += x);
-    var mean = sum / n;
-    var variance = 0.0;
-    var v1 = 0.0;
-    var v2 = 0.0;
-    if (n != 1) {
-        for (var i = 0; i<n; i++) {
-            v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
-            v2 = v2 + (sequence[i] - mean);
-        }
-        v2 = v2 * v2 / n;
-        variance = (v1 - v2) / (n-1);
-        if (variance < 0) variance = 0;
-    }
-    return Math.round(Math.sqrt(variance) * 100) / 100;
-}
-
 export class EmptyEWMACalculator implements Interfaces.ICalculator {
     constructor() { }
     latest: number = null;
@@ -149,10 +129,31 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
         this._latest = <Models.IStdev>{
-          fv: computeStdev(this._lastFV),
-          tops: computeStdev(this._lastTops),
-          bid: computeStdev(this._lastBids),
-          ask: computeStdev(this._lastAsks)
+          fv: this.computeStdev(this._lastFV),
+          tops: this.computeStdev(this._lastTops),
+          bid: this.computeStdev(this._lastBids),
+          ask: this.computeStdev(this._lastAsks)
         };
     };
+
+
+   private computeStdev(sequence: number[]): number {
+      const n = sequence.length;
+      let sum = 0;
+      sequence.forEach((x) => sum += x);
+      const mean = sum / n;
+      let variance = 0.0;
+      let v1 = 0.0;
+      let v2 = 0.0;
+      if (n != 1) {
+          for (let i = 0; i<n; i++) {
+              v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
+              v2 = v2 + (sequence[i] - mean);
+          }
+          v2 = v2 * v2 / n;
+          variance = (v1 - v2) / (n-1);
+          if (variance < 0) variance = 0;
+      }
+      return Utils.roundNearest(Math.sqrt(variance) * this._qlParamRepo.latest.widthStdevFactor, this._minTick);
+  };
 }
