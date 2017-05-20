@@ -49,7 +49,7 @@ class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
 
 @Component({
     selector: 'base-currency-cell',
-    template: `{{ params.value | number:'1.3-3' }}`
+    template: `{{ params.value | number:'1.4-4' }}`
 })
 export class BaseCurrencyCellComponent implements AgRendererComponent {
   private params:any;
