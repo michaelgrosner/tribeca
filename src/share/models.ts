@@ -129,7 +129,8 @@ export enum Currency {
     WAVES,
     BTU,
     MAID,
-    AMP
+    AMP,
+    XRP
 }
 
 export function toCurrency(c: string) : Currency|undefined {
