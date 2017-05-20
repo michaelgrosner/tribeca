@@ -63,6 +63,14 @@ export class TradesComponent implements OnInit {
       { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
       } },
+      {width: 95, field:'time', headerName:'t', cellRenderer:(params) => {
+          return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
+        }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
+          return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
+      }, sort: 'desc'},
+      {width: 95, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
+          return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss') : '';
+        }, cellClass: 'fs11px' },
       {width: 40, field:'side', headerName:'side', cellClass: (params) => {
         if (params.value === 'Buy') return 'buy';
         else if (params.value === 'Sell') return "sell";
@@ -89,15 +97,7 @@ export class TradesComponent implements OnInit {
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 95, field:'time', headerName:'t', cellRenderer:(params) => {
-          return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
-        }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
-          return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
-      }, sort: 'desc'},
-      {width: 95, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
-          return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss') : '';
-        }, cellClass: 'fs11px' }
+      }, cellRendererFramework: QuoteCurrencyCellComponent}
     ];
   }
 
