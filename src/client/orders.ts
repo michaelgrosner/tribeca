@@ -57,13 +57,6 @@ export class OrdersComponent implements OnInit {
       { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
       } },
-      { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
-          return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
-        },
-        comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-        cellClass: (params) => {
-          return 'fs11px'+(Math.abs(moment.utc().valueOf() - params.data.time.valueOf()) > 7000 ? " text-muted" : "");
-      }  },
       { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
@@ -84,6 +77,11 @@ export class OrdersComponent implements OnInit {
       { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
           return (params.value) ? params.value.toString().split('-')[0] : '';
         }},
+      { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
+          return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
+        },
+        cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
+      }
     ];
   }
 
