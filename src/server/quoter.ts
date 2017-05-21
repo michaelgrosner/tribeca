@@ -1,8 +1,8 @@
 import Models = require("../share/models");
-import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
+var bindings = require('bindings')('tribeca.node');
 
 class QuoteOrder {
     constructor(public quote: Models.Quote, public orderId: string) { }
@@ -152,7 +152,7 @@ export class ExchangeQuoter {
               ).length)
                 return Models.QuoteSent.UnsentDuplicate;
               this.cancelHigherQuotes(q.data.price, q.time);
-              price = Utils.roundNearest(price, this._exchBroker.minTickIncrement);
+              price = bindings.roundNearest(price, this._exchBroker.minTickIncrement);
               q.data.price = price;
             } else
               return Models.QuoteSent.UnsentDuplicate;

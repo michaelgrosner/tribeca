@@ -1,6 +1,6 @@
 etc/*.json
 app
-*log
+build
 test/coverage
 node_modules
 *.js.map

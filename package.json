@@ -35,6 +35,7 @@
     "babelify": "^7.3.0",
     "basic-auth": "^1.1.0",
     "basic-auth-connect": "^1.0.0",
+    "bindings": "^1.2.1",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
     "browserify": "^14.3.0",
@@ -52,6 +53,7 @@
     "marked": "0.3.6",
     "moment": "^2.18.1",
     "mongodb": "^2.2.26",
+    "nan": "^2.6.2",
     "ng4-popover": "^0.0.21",
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
@@ -72,6 +74,7 @@
     "mocha": "^3.4.1",
     "ts-node": "^3.0.4"
   },
+  "gypfile": true,
   "main": "./tribeca.js",
   "config": {
     "config": "tribeca.json"

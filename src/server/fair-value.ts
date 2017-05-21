@@ -4,6 +4,7 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
+var bindings = require('bindings')('tribeca.node');
 
 export class FairValueEngine {
   public FairValueChanged = new Utils.Evt<Models.FairValue>();
@@ -33,7 +34,7 @@ export class FairValueEngine {
 
   private recalcFairValue = (mkt: Models.Market) => {
     this.latestFairValue = (mkt && mkt.asks.length && mkt.bids.length)
-      ? new Models.FairValue(Utils.roundNearest(
+      ? new Models.FairValue(bindings.roundNearest(
           this._qlParamRepo.latest.fvModel == Models.FairValueModel.BBO
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
             : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
