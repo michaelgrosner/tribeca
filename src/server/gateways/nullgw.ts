@@ -2,7 +2,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import Config = require("../config");
-var uuid = require('uuid');
 import _ = require("lodash");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
@@ -15,7 +14,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     public cancelsByClientOrderId = true;
 
     generateClientOrderId = (): string => {
-        return uuid.v1();
+        return new Date().valueOf().toString().substr(-9);
     }
 
     private raiseTimeEvent = (o: Models.OrderStatusReport) => {

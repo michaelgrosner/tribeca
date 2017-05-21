@@ -7,8 +7,6 @@ import fs = require("fs");
 import Persister = require("./persister");
 import stream = require("stream");
 
-var uuid = require('uuid');
-
 enum TimedType {
     Interval,
     Timeout
