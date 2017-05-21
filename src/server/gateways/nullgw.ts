@@ -20,7 +20,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     private raiseTimeEvent = (o: Models.OrderStatusReport) => {
         this.OrderUpdate.trigger({
             orderId: o.orderId,
-            computationalLatency: Utils.date().valueOf() - o.time.valueOf()
+            computationalLatency: new Date().valueOf() - o.time.valueOf()
         })
     };
 
@@ -45,7 +45,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         var rpt: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: status,
-            time: Utils.date()
+            time: new Date()
         };
         this.OrderUpdate.trigger(rpt);
 
@@ -53,7 +53,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
             var rpt: Models.OrderStatusUpdate = {
                 orderId: orderId,
                 orderStatus: status,
-                time: Utils.date(),
+                time: new Date(),
                 lastQuantity: order.quantity,
                 lastPrice: order.price,
                 liquidity: Math.random() < .5 ? Models.Liquidity.Make : Models.Liquidity.Take
@@ -91,7 +91,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     private genMarketTrade = () => {
         const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
         const sign = Models.Side.Ask === side ? 1 : -1;
-        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), Utils.date(), false, side);
+        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), new Date(), false, side);
     }
 
     private genSingleLevel = (sign: number) => new Models.MarketSide(this.getPrice(sign), Math.random());
@@ -102,7 +102,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
            const s = _.times(this.Depth, _ => this.genSingleLevel(sign));
            return _.sortBy(s, i => sign*i.price);
        };
-       return new Models.Market(genSide(-1), genSide(1), Utils.date());
+       return new Models.Market(genSide(-1), genSide(1), new Date());
     };
 }
 

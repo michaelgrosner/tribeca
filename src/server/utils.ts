@@ -1,8 +1,6 @@
 import Models = require("../share/models");
 import moment = require('moment');
 
-export const date = () => new Date();
-
 // typesafe event raiser
 type EvtCallback<T> = (data?: T) => void;
 export class Evt<T> {
@@ -80,23 +78,4 @@ export class RealTimeProvider implements ITimeProvider {
 
 export interface IBacktestingTimeProvider extends ITimeProvider {
     scrollTimeTo(time : moment.Moment);
-}
-
-export interface IActionScheduler {
-    schedule(action: () => void);
-}
-
-export class ImmediateActionScheduler implements IActionScheduler {
-    constructor(private _timeProvider: ITimeProvider) {}
-
-    private _shouldSchedule = true;
-    public schedule = (action: () => void) => {
-        if (this._shouldSchedule) {
-            this._shouldSchedule = false;
-            this._timeProvider.setImmediate(() => {
-                action();
-                this._shouldSchedule = true;
-            });
-        }
-    };
 }

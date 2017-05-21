@@ -437,7 +437,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
     );
 
     if (system.config.inBacktestMode) {
-      const t = Utils.date();
+      const t = new Date();
       console.log("starting backtest");
       try {
         (<Backtest.BacktestExchange>gateway).run();
@@ -451,7 +451,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
         volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
       }];
-      console.log("sending back results, took: ", moment(Utils.date()).diff(t, "seconds"));
+      console.log("sending back results, took: ", moment(new Date()).diff(t, "seconds"));
 
       request({url: ('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/result",
          method: 'POST',
