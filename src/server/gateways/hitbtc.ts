@@ -262,7 +262,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         request.get(
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
             (err, body, resp) => {
-                this.onMarketDataSnapshotFullRefresh(resp, Utils.date());
+                this.onMarketDataSnapshotFullRefresh(resp, new Date());
             });
 
         request.get(
@@ -298,7 +298,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(cancel.side)}, () => {
                 this.OrderUpdate.trigger({
                     orderId: cancel.orderId,
-                    computationalLatency: Utils.date().valueOf() - cancel.time.valueOf()
+                    computationalLatency: new Date().valueOf() - cancel.time.valueOf()
                 });
             });
     };
@@ -322,7 +322,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
             this.OrderUpdate.trigger({
                 orderId: order.orderId,
-                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
+                computationalLatency: new Date().valueOf() - order.time.valueOf()
             });
         });
     };
@@ -461,7 +461,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onMessage = (raw : string) => {
         try {
-            var t = Utils.date();
+            var t = new Date();
             var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("ExecutionReport")) {
                 this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, t));

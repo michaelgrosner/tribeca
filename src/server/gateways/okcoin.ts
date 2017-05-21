@@ -86,7 +86,7 @@ class OkCoinWebsocket {
     }
 
     private onMessage = (raw : string) => {
-        var t = Utils.date();
+        var t = new Date();
         try {
             var msg : OkCoinMessageIncomingMessage = JSON.parse(raw)[0];
             if (typeof msg === "undefined") msg = JSON.parse(raw);
@@ -270,7 +270,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: order.orderId,
-                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
+                computationalLatency: new Date().valueOf() - order.time.valueOf()
             });
         });
     };
@@ -452,7 +452,7 @@ class OkCoinHttp {
             if (err) d.reject(err);
             else {
                 try {
-                    var t = Utils.date();
+                    var t = new Date();
                     var data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }

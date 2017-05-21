@@ -67,7 +67,7 @@ class BitfinexWebsocket {
     }
 
     private onMessage = (raw : string) => {
-        var t = Utils.date();
+        var t = new Date();
         try {
             var msg:any = JSON.parse(raw);
             if (typeof msg === "undefined")
@@ -261,7 +261,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }, () => {
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                 orderId: order.orderId,
-                computationalLatency: Utils.date().valueOf() - order.time.valueOf()
+                computationalLatency: new Date().valueOf() - order.time.valueOf()
             });
         });
     };
