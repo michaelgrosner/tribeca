@@ -1,8 +1,10 @@
 #include <nan.h>
 #include "round.h"
 
-NAN_MODULE_INIT(InitAll){
-  Round::Init(target);
-}
+namespace tribeca {
+  NAN_MODULE_INIT(InitAll){
+    Round::Init(target);
+  }
 
-NODE_MODULE(tribeca, InitAll);
+  NODE_MODULE(tribeca, InitAll);
+}
