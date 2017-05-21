@@ -260,7 +260,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         var o: CoinbaseOrder = {
             client_oid: order.orderId,
-            size: order.quantity.toString(),
+            size: order.quantity.toFixed(8),
             product_id: this._symbolProvider.symbol
         };
 
