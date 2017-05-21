@@ -10,7 +10,6 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require("lodash");
-import log from "../logging";
 import * as Promises from '../promises';
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
@@ -75,17 +74,17 @@ class BitfinexWebsocket {
             else if (typeof msg.event !== "undefined" && msg.event == "subscribed") {
                 this._handlers['c'+msg.chanId] = this._handlers[msg.channel];
                 delete this._handlers[msg.channel];
-                this._log.info("Successfully connected to %s", msg.channel);
+                console.info('bitfinex', 'Successfully connected to', msg.channel);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "auth") {
                 this._handlers['c'+msg.chanId] = this._handlers[msg.event];
                 delete this._handlers[msg.channel];
-                this._log.info("Bitfinex authentication status:", msg.status);
+                console.info('bitfinex', 'Authentication status:', msg.status);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "info") {
-                this._log.info("Bitfinex info:", msg);
+                console.info('bitfinex', 'Bitfinex info:', msg);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "ping") {
@@ -93,7 +92,7 @@ class BitfinexWebsocket {
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "error") {
-                this._log.info("Error on Bitfinex API:", msg.code+':'+msg.msg);
+                console.info('bitfinex', 'Error on Bitfinex API:', msg.code+':'+msg.msg);
                 return;
             }
             if (msg[1] == 'hb' || (typeof msg.event !== "undefined" && msg.event == "pong")) {
@@ -101,14 +100,14 @@ class BitfinexWebsocket {
                 return;
             }
             else if (msg[1]=='n') {
-              this._log.info("Bitfinex notice:", msg[2][6], msg[2][7]);
+              console.info('bitfinex', 'Bitfinex notice:', msg[2][6], msg[2][7]);
               return;
             }
 
             var handler = this._handlers['c'+msg[0]];
 
             if (typeof handler === "undefined") {
-                this._log.warn("Got message on unknown topic", msg);
+                console.warn('bitfinex', 'Got message on unknown topic', msg);
                 return;
             }
 
@@ -125,7 +124,7 @@ class BitfinexWebsocket {
             }
         }
         catch (e) {
-            this._log.error(e, "Error parsing msg", raw);
+            console.error('bitfinex', e, 'Error parsing msg', raw);
             throw e;
         }
     };
@@ -134,7 +133,7 @@ class BitfinexWebsocket {
         this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
-        this._ws.on("error", (x) => this._log.info('Bitfinex WS ERROR', x));
+        this._ws.on("error", (x) => console.error('bitfinex', 'WS ERROR', x));
         this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
     };
 
@@ -142,14 +141,13 @@ class BitfinexWebsocket {
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
     private _stillAlive: boolean = true;
-    private _log = log("tribeca:gateway:BitfinexWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config : Config.IConfigProvider) {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            this._log.info('Bitfinex heartbeat lost, reconnecting...');
+            console.warn('bitfinex', 'Heartbeat lost, reconnecting...');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
@@ -311,7 +309,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     }
 
-    private _log = log("tribeca:gateway:BitfinexOE");
     constructor(
         timeProvider: Utils.ITimeProvider,
         private _details: BitfinexBaseGateway,
@@ -437,7 +434,7 @@ class BitfinexHttp {
 
         request(msg, (err, resp, body) => {
             if (err) {
-                this._log.error(err, "Error returned: url=", url, "err=", err);
+                console.error('bitfinex', err, 'Error returned: url=', url, 'err=', err);
                 d.reject(err);
             }
             else {
@@ -447,7 +444,7 @@ class BitfinexHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (err) {
-                    this._log.error(err, "Error parsing JSON url=", url, "err=", err, ", body=", body);
+                    console.error('bitfinex', err, 'Error parsing JSON url=', url, 'err=', err, ', body=', body);
                     d.reject(err);
                 }
             }
@@ -456,7 +453,6 @@ class BitfinexHttp {
         return d.promise;
     };
 
-    private _log = log("tribeca:gateway:BitfinexHTTP");
     private _baseUrl: string;
     private _apiKey: string;
     private _secret: string;
@@ -468,7 +464,7 @@ class BitfinexHttp {
         this._secret = config.GetString("BitfinexSecret");
 
         this._nonce = new Date().valueOf();
-        this._log.info("Starting nonce: ", this._nonce);
+        console.info('bitfinex', 'Starting nonce:', this._nonce);
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
@@ -495,7 +491,6 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         });
     }
 
-    private _log = log("tribeca:gateway:BitfinexPG");
     constructor(timeProvider: Utils.ITimeProvider, private _http: BitfinexHttp) {
         timeProvider.setInterval(this.onRefreshPositions, moment.duration(15, "seconds"));
         this.onRefreshPositions();

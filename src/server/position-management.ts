@@ -8,11 +8,8 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
-import log from "./logging";
 
 export class PositionManager {
-    private _log = log("rfv");
-
     private newWidth: Models.IStdev = null;
     private newQuote: number = null;
     private newShort: number = null;
@@ -106,8 +103,6 @@ export class PositionManager {
 }
 
 export class TargetBasePositionManager {
-    private _log = log("positionmanager");
-
     public NewTargetPosition = new Utils.Evt();
 
     public sideAPR: string[] = [];
@@ -159,7 +154,7 @@ export class TargetBasePositionManager {
             );
             this.NewTargetPosition.trigger();
             this._wrapped.publish(this.latestTargetPosition);
-            this._log.info("recalculated target base position:", this.latestTargetPosition.data);
+            console.info('tbp', 'recalculated', this.latestTargetPosition.data);
         }
     };
 }

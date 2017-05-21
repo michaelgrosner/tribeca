@@ -11,7 +11,6 @@ import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
 import util = require("util");
-import log from "../logging";
 const SortedArray = require("collections/sorted-array");
 
 const _lotMultiplier = 100.0;
@@ -200,7 +199,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             var msg = JSON.parse(raw);
         }
         catch (e) {
-            this._log.error(e, "Error parsing msg", raw);
+            console.error('hitbtc', e, 'Error parsing msg', raw);
             throw e;
         }
 
@@ -211,7 +210,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, t);
         }
         else {
-            this._log.info("unhandled message", msg);
+            console.info('hitbtc', 'unhandled message', msg);
         }
     };
 
@@ -238,22 +237,22 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     _tradesClient : SocketIOClient.Socket;
-    private _log = log("tribeca:gateway:HitBtcMD");
+
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
         this._marketDataWs.on("close", (code, msg) => {
             this.onConnectionStatusChange();
-            this._log.warn("close code=%d msg=%s", code, msg);
+            console.warn('hitbtc', 'close code=', code, 'msg=', msg);
         });
         this._marketDataWs.on("error", err => {
             this.onConnectionStatusChange();
-            this._log.error(err);
+            console.error('hitbtc', err);
             throw err;
         });
 
-        this._log.info("socket.io: %s", config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
+        console.info('hitbtc', 'socket.io', config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient.on("connect", this.onConnectionStatusChange);
         this._tradesClient.on("trade", this.onTrade);
@@ -450,12 +449,12 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onClosed = (code, msg) => {
         this.onConnectionStatusChange();
-        this._log.warn("close code=%d msg=%s", code, msg);
+        console.warn('hitbtc', 'close code=', code, 'msg=', msg);
     };
 
     private onError = (err : Error) => {
         this.onConnectionStatusChange();
-        this._log.error(err);
+        console.error('hitbtc', err);
         throw err;
     };
 
@@ -470,18 +469,17 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 this.onCancelReject(new Models.Timestamped(msg.CancelReject, t));
             }
             else {
-                this._log.info("unhandled message", msg);
+                console.info('hitbtc', 'unhandled message', msg);
             }
         }
         catch (e) {
-            this._log.error(e, "exception while processing message", raw);
+            console.error('hitbtc', e, 'exception while processing message', raw);
             throw e;
         }
     };
 
     generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);;
 
-    private _log = log("tribeca:gateway:HitBtcOE");
     private _apiKey : string;
     private _secret : string;
     constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
@@ -502,7 +500,6 @@ interface HitBtcPositionReport {
 }
 
 class HitBtcPositionGateway implements Interfaces.IPositionGateway {
-    private _log = log("tribeca:gateway:HitBtcPG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private getAuth = (uri : string) : any => {
@@ -528,7 +525,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                 try {
                     var rpts: Array<HitBtcPositionReport> = JSON.parse(resp).balance;
                     if (typeof rpts === 'undefined' || err) {
-                        this._log.warn(err, "Trouble getting positions", body.body);
+                        console.warn('hitbtc', err, 'Error getting positions', body.body);
                         return;
                     }
 
@@ -545,7 +542,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                     });
                 }
                 catch (e) {
-                    this._log.error(e, "Error processing JSON response ", resp);
+                    console.error('hitbtc', e, 'Error processing JSON response ', resp);
                 }
             });
     };

@@ -132,10 +132,7 @@ To ignore the output, execute the application in the background with `forever st
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect tribeca.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
-Another way to debug is to use some `if (log.debug())` blocks here and there, then execute it passing `debug` parameter after `tribeca.js`.
-
-Passing a config filename as a parameter after `tribeca.js` is also allowed.
-
+Passing a config filename as a parameter after `tribeca.js` is also allowed, like `nodejs tribeca.js Xibeca_party_time.json`.
 
 ### Unreleased Changelog:
 

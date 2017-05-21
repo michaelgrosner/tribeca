@@ -7,11 +7,8 @@ import Broker = require("./broker");
 import Web = require("./web");
 import QuotingEngine = require("./quoting-engine");
 import * as moment from "moment";
-import log from "./logging";
 
 export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
-    private _log = log("mt:broker");
-
     // TOOD: is this event needed?
     MarketTrade = new Utils.Evt<Models.MarketTrade>();
     public get marketTrades() { return this._marketTrades; }
