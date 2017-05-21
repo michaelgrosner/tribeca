@@ -253,11 +253,19 @@ export class QuotingEngine {
             unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
 
-        if (unrounded.askSz !== null)
+        if (unrounded.askSz !== null) {
+            if (unrounded.askSz > totalBasePosition)
+              unrounded.askSz = (unrounded.bidSz > totalBasePosition)
+                ? totalBasePosition : unrounded.bidSz;
             unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
+        }
 
-          if (unrounded.bidSz !== null)
+        if (unrounded.bidSz !== null) {
+            if (unrounded.bidSz > totalQuotePosition)
+              unrounded.bidSz = (unrounded.askSz > totalQuotePosition)
+                ? totalQuotePosition : unrounded.askSz;
             unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
+        }
 
         return unrounded;
     }
