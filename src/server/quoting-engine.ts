@@ -119,6 +119,8 @@ export class QuotingEngine {
         const latestPosition = this._positionBroker.latestReport;
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+        const _unroundedBidSz = unrounded.bidSz;
+        const _unroundedAskSz = unrounded.askSz;
         let sideAPR: string[] = [];
 
         let superTradesMultipliers = (params.superTrades &&
@@ -255,15 +257,15 @@ export class QuotingEngine {
 
         if (unrounded.askSz !== null) {
             if (unrounded.askSz > totalBasePosition)
-              unrounded.askSz = (unrounded.bidSz > totalBasePosition)
-                ? totalBasePosition : unrounded.bidSz;
+              unrounded.askSz = (!_unroundedBidSz || _unroundedBidSz > totalBasePosition)
+                ? totalBasePosition : _unroundedBidSz;
             unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
         }
 
         if (unrounded.bidSz !== null) {
             if (unrounded.bidSz > totalQuotePosition)
-              unrounded.bidSz = (unrounded.askSz > totalQuotePosition)
-                ? totalQuotePosition : unrounded.askSz;
+              unrounded.bidSz = (!_unroundedAskSz || _unroundedAskSz > totalQuotePosition)
+                ? totalQuotePosition : _unroundedAskSz;
             unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
         }
 
