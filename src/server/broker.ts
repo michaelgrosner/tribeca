@@ -537,8 +537,11 @@ export class PositionBroker implements Interfaces.IPositionBroker {
           : this._report.quoteAmount + this._report.quoteHeldAmount;
         var heldAmount = 0;
         qs.forEach((q) => {
-          amount -= q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
-          heldAmount += q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
+          let held = q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
+          if (amount>=held) {
+            amount -= held;
+            heldAmount += held;
+          }
         });
 
         this.onPositionUpdate(new Models.CurrencyPosition(
