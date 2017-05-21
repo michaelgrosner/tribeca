@@ -8,7 +8,6 @@ import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
 import moment = require("moment");
-import log from "./logging";
 import * as Promises from './promises';
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
@@ -41,8 +40,6 @@ export class OrderStateCache implements Interfaces.IOrderStateCache {
 }
 
 export class OrderBroker implements Interfaces.IOrderBroker {
-    private _log = log("oe:broker");
-
     async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
@@ -237,7 +234,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             // race condition! i cannot cancel an order before I get the exchangeId (oid); register it for deletion on the ack
             if (typeof rpt.exchangeId === "undefined") {
                 this._cancelsWaitingForExchangeOrderId[rpt.orderId] = cancel;
-                // this._log.info("Registered %s for late deletion", rpt.orderId);
+                // console.info('broker', 'Registered', rpt.orderId, 'for late deletion');
                 return;
             }
         }
@@ -370,7 +367,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         // cancel any open orders waiting for oid
         if (!this._oeGateway.cancelsByClientOrderId) {
           if (typeof o.exchangeId !== "undefined" && o.orderId in this._cancelsWaitingForExchangeOrderId) {
-            // this._log.info("Deleting %s late, oid: %s", o.exchangeId, o.orderId);
+            // console.info('broker', 'Deleting', o.exchangeId, 'late, oid:', o.orderId);
             const cancel = this._cancelsWaitingForExchangeOrderId[o.orderId];
             delete this._cancelsWaitingForExchangeOrderId[o.orderId];
             this.cancelOrder(cancel);
@@ -468,7 +465,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 this.sendOrder(order);
             }
             catch (e) {
-                this._log.error(e, "unhandled exception while submitting order", o);
+                console.error('broker', e, 'unhandled exception while submitting order', o);
             }
         });
 
@@ -481,14 +478,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _oeGateway.OrderUpdate.on(this.updateOrderState);
 
         // _oeGateway.ConnectChanged.on(s => {
-            // this._log.info("Gateway changed: " + Models.ConnectivityStatus[s]);
+            // console.info('broker', 'Gateway connectivity status changed', Models.ConnectivityStatus[s]);
         // });
     }
 }
 
 export class PositionBroker implements Interfaces.IPositionBroker {
-    private _log = log("pos:broker");
-
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
     private _report : Models.PositionReport = null;
@@ -567,8 +562,6 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 }
 
 export class ExchangeBroker implements Interfaces.IBroker {
-    private _log = log("ex:broker");
-
     public get hasSelfTradePrevention() {
         return this._baseGateway.hasSelfTradePrevention;
     }
@@ -619,8 +612,7 @@ export class ExchangeBroker implements Interfaces.IBroker {
         this._connectStatus = newStatus;
         this.ConnectChanged.trigger(newStatus);
 
-        // this._log.info("Connection status changed :: %s :: (md: %s) (oe: %s)", Models.ConnectivityStatus[this._connectStatus],
-            // Models.ConnectivityStatus[this.mdConnected], Models.ConnectivityStatus[this.oeConnected]);
+        // console.info('broker', 'Connection status changed ::', Models.ConnectivityStatus[this._connectStatus], ':: (md: ',Models.ConnectivityStatus[this.mdConnected],') (oe: ',Models.ConnectivityStatus[this.oeConnected],')');
         this._connectivityPublisher.publish(this.connectStatus);
     };
 

@@ -13,7 +13,6 @@ import {QuoteInput} from "./quoting-styles/helpers";
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import PingPong = require("./quoting-styles/ping-pong");
-import log from "./logging";
 
 const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => {
    if ((!o && n) || (o && !n)) return true;
@@ -39,8 +38,6 @@ const quotesChanged = (o: Models.TwoSidedQuote, n: Models.TwoSidedQuote, tick: n
 }
 
 export class QuotingEngine {
-    private _log = log("quotingengine");
-
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
     private _latest: Models.TwoSidedQuote = null;

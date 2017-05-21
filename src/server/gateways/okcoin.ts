@@ -10,7 +10,6 @@ import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
-import log from "../logging";
 import * as Promises from '../promises';
 
 interface OkCoinMessageIncomingMessage {
@@ -111,9 +110,9 @@ class OkCoinWebsocket {
               && errorcode != 10010 /* 10010=Insufficient funds */
               && errorcode != 10016 /* 10016=Insufficient coins balance */
               // errorcode != 10001 /* 10001=Request frequency too high */
-            ))) this._log.warn("Unsuccessful message %s received.", raw);
+            ))) console.warn('okcoin', 'Unsuccessful message received:', raw);
             else if (success && (channel == 'addChannel' || channel == 'login'))
-              return this._log.info("Successfully connected to %s", channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
+              return console.info('okcoin', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
             if (typeof errorcode !== "undefined" && (
               errorcode == 10050
               || errorcode == 10009
@@ -123,14 +122,14 @@ class OkCoinWebsocket {
             var handler = this._handlers[channel];
 
             if (typeof handler === "undefined") {
-                this._log.warn("Got message on unknown topic", msg);
+                console.warn('okcoin', 'Got message on unknown topic', msg);
                 return;
             }
 
             handler(new Models.Timestamped(msg.data, t));
         }
         catch (e) {
-            this._log.error(e, "Error parsing msg", raw);
+            console.error('okcoin', e, 'Error parsing msg', raw);
             throw e;
         }
     };
@@ -146,14 +145,13 @@ class OkCoinWebsocket {
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
     private _stillAlive: boolean = true;
-    private _log = log("tribeca:gateway:OkCoinWebsocket");
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
     constructor(config: Config.IConfigProvider) {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            this._log.info('OkCoin heartbeat lost, reconnecting...');
+            console.warn('okcoin', 'Heartbeat lost, reconnecting...');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
@@ -191,7 +189,6 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketData.trigger(mkt);
     };
 
-    private _log = log("tribeca:gateway:OkCoinMD");
     constructor(socket: OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {
         var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
         var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
@@ -280,7 +277,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         var orderId = order[0];
         if (typeof orderId === "undefined") {
-            this._log.error("got an order ack when there was no order queued!", util.format(ts.data));
+            console.error('okcoin', 'got an order ack when there was no order queued!', util.format(ts.data));
             return;
         }
 
@@ -384,7 +381,6 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     }
 
-    private _log = log("tribeca:gateway:OkCoinOE");
     constructor(
             private _http: OkCoinHttp,
             private _socket: OkCoinWebsocket,
@@ -457,7 +453,7 @@ class OkCoinHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
-                    this._log.error(err, "url: %s, err: %o, body: %o", actionUrl, err, body);
+                    console.error('okcoin', err, 'url:', actionUrl, 'err:', err, 'body:', body);
                     d.reject(e);
                 }
             }
@@ -466,7 +462,6 @@ class OkCoinHttp {
         return d.promise;
     };
 
-    private _log = log("tribeca:gateway:OkCoinHTTP");
     private _baseUrl : string;
     constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
@@ -489,7 +484,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     private trigger = () => {
         this._http.post("userinfo.do", {}).then(msg => {
             if (!(<any>msg.data).result)
-              this._log.error('Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+              console.error('okcoin', 'Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
 
             var free = (<any>msg.data).info.funds.free;
             var freezed = (<any>msg.data).info.funds.freezed;
@@ -505,7 +500,6 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
         });
     };
 
-    private _log = log("tribeca:gateway:OkCoinPG");
     constructor(private _http : OkCoinHttp) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 10);

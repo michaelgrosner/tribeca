@@ -5,7 +5,6 @@ import mongodb = require('mongodb');
 import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
-import log from "./logging";
 import * as Promises from './promises';
 
 export function loadDb(config: Config.IConfigProvider) {
@@ -38,8 +37,6 @@ export interface ILoadAll<T> extends IPersist<T> {
 }
 
 export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
-    private _log = log("tribeca:exchangebroker:repopersister");
-
     public loadDBSize = async (): Promise<T> => {
 
         var deferred = Promises.defer<T>();
@@ -86,10 +83,10 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         this.collection.then(coll => {
             if (this._dbName != 'trades')
               coll.deleteMany({ _id: { $exists:true } }, err => {
-                  if (err) this._log.error(err, "Unable to deleteMany", this._dbName, report);
+                  if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName, report);
               });
             coll.insertOne(this.converter(report), err => {
-                if (err) this._log.error(err, "Unable to insert", this._dbName, report);
+                if (err) console.error('persister', err, 'Unable to insert', this._dbName, report);
             });
         });
     };
@@ -116,8 +113,6 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
 }
 
 export class Persister<T extends Persistable> implements ILoadAll<T> {
-    private _log = log("persister");
-
     public loadAll = (limit?: number, query?: any): Promise<T[]> => {
         const selector: Object = { exchange: this._exchange, pair: this._pair };
         if (query && query.time && this._dbName == "trades") delete query.time;
@@ -148,11 +143,11 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     public repersist = (report: T, trade: Models.Trade) => {
         if (trade.Kqty<0)
           this.collection.deleteOne({ tradeId: trade.tradeId }, err => {
-              if (err) this._log.error(err, "Unable to deleteOne", this._dbName, report);
+              if (err) console.error('persister', err, 'Unable to deleteOne', this._dbName, report);
           });
         else
           this.collection.updateOne({ tradeId: trade.tradeId }, { $set: { time: trade.time, quantity : trade.quantity, value : trade.value, Ktime: trade.Ktime, Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
-              if (err) this._log.error(err, "Unable to repersist", this._dbName, report);
+              if (err) console.error('persister', err, 'Unable to repersist', this._dbName, report);
           });
     };
 
@@ -173,25 +168,23 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair
     ) {
-            this._log = log("persister:"+_dbName);
-
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;
 
                 if (this._dbName != 'trades')
                   collection.deleteMany({ time: { $exists:true } }, err => {
-                      if (err) this._log.error(err, "Unable to deleteMany", this._dbName);
+                      if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName);
                   });
                 // collection.insertOne(report, err => {
                     // if (err)
-                        // this._log.error(err, "Unable to insert", this._dbName, report);
+                        // console.error('persister', err, 'Unable to insert', this._dbName, report);
                 // });
                 collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
                     if (r.result.ok) {
                         this._persistQueue.length = 0;
                     }
                     else if (err)
-                        this._log.error(err, "Unable to insert", this._dbName, this._persistQueue);
+                        console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
                 }, );
             }, moment.duration(10, "seconds"));
     }

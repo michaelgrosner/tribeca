@@ -7,11 +7,8 @@ import _ = require("lodash");
 import Active = require("./active-state");
 import QuotingParameters = require("./quoting-parameters");
 import QuotingEngine = require("./quoting-engine");
-import log from "./logging";
 
 export class QuoteSender {
-    private _log = log("quotesender");
-
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
     public set latestStatus(val: Models.TwoSidedQuoteStatus) {
@@ -43,8 +40,7 @@ export class QuoteSender {
 
         let qs = this._quotingEngine.latestQuote[oppSide === Models.Side.Bid ? 'bid' : 'ask'];
         if (qs && doesQuoteCross(qs.price, px)) {
-            this._log.warn("crossing quote detected! gen quote at %d would crossed with %s quote at",
-                px, Models.Side[oppSide], qs);
+            console.warn('quotesender', 'crossing quote detected! gen quote at', px, 'would crossed with', Models.Side[oppSide], 'quote at', qs);
             return true;
         }
         return false;

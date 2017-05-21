@@ -5,7 +5,6 @@ import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
-import log from "./logging";
 
 export interface IComputeStatistics {
     latest: number;
@@ -47,8 +46,6 @@ export class EmptyEWMACalculator implements Interfaces.ICalculator {
 }
 
 export class ObservableEWMACalculator implements Interfaces.ICalculator {
-    private _log = log("ewma");
-
     constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
         this._alpha = _alpha || .095;
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
@@ -58,7 +55,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
         var fv = this._fv.latestFairValue;
 
         if (fv === null) {
-            this._log.info("Unable to compute EMWA value");
+            console.warn('ewma', 'Unable to compute value');
             return;
         }
 
@@ -80,7 +77,6 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
 }
 
 export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
-    private _log = log("stdev");
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
     private _lastFV: number[] = [];
@@ -103,7 +99,7 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         const fv = this._fv.latestFairValue;
         const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (fv === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
-            this._log.info("Unable to compute STDEV value");
+            console.warn('stdev', 'Unable to compute value');
             return;
         }
 

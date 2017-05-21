@@ -5,7 +5,6 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require('lodash');
-import log from "../logging";
 import * as Promises from '../promises';
 import Gdax = require("gdax");
 import uuid = require('node-uuid');
@@ -140,7 +139,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.reevalBook();
         if (typeof this._cachedBids.length && this._cachedAsks.length) {
             if (this._cachedBids[0].price > this._cachedAsks[0].price) {
-                this._log.warn("Crossed Coinbase market detected! bid:", this._cachedBids[0].price, "ask:", this._cachedAsks[0].price);
+                console.warn('coinbase', 'Crossed Coinbase market detected! bid:', this._cachedBids[0].price, 'ask:', this._cachedAsks[0].price);
                 (<any>this._client).changeState('error');
                 return;
             }
@@ -149,7 +148,6 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
     };
 
-    private _log = log("tribeca:gateway:CoinbaseMD");
     constructor(private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
         this._client.on("open", data => this.onStateChange());
         this._client.on("close", data => this.onStateChange());
@@ -236,7 +234,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             if (ack == null || typeof ack.id === "undefined") {
               if (ack==null || (ack.message && ack.message!='Insufficient funds'))
-                this._log.warn("WARNING FROM GATEWAY:", order.orderId, err, ack);
+                console.warn('coinbase', 'WARNING FROM GATEWAY:', order.orderId, err, ack);
             }
             var msg = null;
             if (err) {
@@ -376,7 +374,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private _fixedPrecision;
-    private _log = log("tribeca:gateway:CoinbaseOE");
+
     constructor(
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
@@ -392,7 +390,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 }
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    private _log = log("tribeca:gateway:CoinbasePG");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private onTick = () => {
@@ -406,10 +403,10 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
                     });
                 }
                 else {
-                    this._log.warn("Unable to get Coinbase positions", data)
+                    console.warn('coinbase', 'Unable to get Coinbase positions', data)
                 }
             } catch (error) {
-                this._log.error(error, "Exception while downloading Coinbase positions", data)
+                console.error('coinbase', error, 'Exception while downloading Coinbase positions', data)
             }
         });
     };

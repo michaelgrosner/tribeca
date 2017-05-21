@@ -39,7 +39,6 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Promises = require("./promises");
-import log from "./logging";
 
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
   widthPing:                      2,
@@ -85,30 +84,30 @@ let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
   Promises.timeout(2000, exitingEvent()).then(completed => {
-    log('main').info("All exiting event handlers have fired, exiting application.");
+    console.info('main', 'All exiting event handlers have fired, exiting application.');
     process.exit();
   }).catch(() => {
-    log('main').warn("Did not complete clean-up tasks successfully, still shutting down.");
+    console.warn('main', 'Did not complete clean-up tasks successfully, still shutting down.');
     process.exit(1);
   });
 };
 
 process.on("uncaughtException", err => {
-  log("main").error(err, "Unhandled exception!");
+  console.error('main', 'Unhandled exception!', err);
   performExit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
-  log("main").error(reason, "Unhandled promise rejection!", p);
+  console.error('main', 'Unhandled promise rejection!', reason, p);
   performExit();
 });
 
 process.on("exit", (code) => {
-  log("main").info("Exiting with code", code);
+  console.info('main', 'Exiting with code', code);
 });
 
 process.on("SIGINT", () => {
-  log("main").info("Handling SIGINT");
+  console.info('main', 'Handling SIGINT');
   performExit();
 });
 
@@ -172,7 +171,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     const username = config.GetString("WebClientUsername");
     const password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
-        log("main").info("Requiring authentication to web client");
+        console.info('main', 'Requiring authentication to web client');
         const basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
@@ -181,7 +180,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     app.use(express.static(path.join(__dirname, "..", "pub")));
 
     const webport = config.GetNumber("WebClientListenPort");
-    web_server.listen(webport, () => log("main").info('Listening to admins on *:', webport));
+    web_server.listen(webport, () => console.info('main', 'Listening to admins on *:', webport));
 
     app.get("/view/*", (req: express.Request, res: express.Response) => {
       try {
@@ -315,15 +314,15 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getPublisher(Models.Topics.ExchangeConnectivity)
     );
 
-    log("main").info({
-        exchange: broker.exchange,
+    console.info('main', 'Exchange details' ,{
+        exchange: Models.Exchange[broker.exchange()],
         pair: broker.pair.toString(),
         minTick: broker.minTickIncrement,
         minSize: broker.minSize,
         makeFee: broker.makeFee,
         takeFee: broker.takeFee,
         hasSelfTradePrevention: broker.hasSelfTradePrevention,
-    }, "using the following exchange details");
+    });
 
     const orderBroker = new Broker.OrderBroker(
       system.timeProvider,
@@ -469,7 +468,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
       const n = ms - interval;
       if (n > 121)
-        log("main").info("Event loop delay " + Utils.roundNearest(n, 100) + "ms");
+        console.info('main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
       start = process.hrtime();
     }, interval).unref();
 };

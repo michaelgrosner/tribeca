@@ -67,11 +67,6 @@
       "from": "@types/bson@*",
       "resolved": "https://registry.npmjs.org/@types/bson/-/bson-1.0.3.tgz"
     },
-    "@types/bunyan": {
-      "version": "0.0.36",
-      "from": "@types/bunyan@>=0.0.36 <0.0.37",
-      "resolved": "https://registry.npmjs.org/@types/bunyan/-/bunyan-0.0.36.tgz"
-    },
     "@types/express": {
       "version": "4.0.35",
       "from": "@types/express@>=4.0.35 <5.0.0",
@@ -952,11 +947,6 @@
       "from": "builtin-status-codes@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz"
     },
-    "bunyan": {
-      "version": "1.8.10",
-      "from": "bunyan@>=1.8.10 <2.0.0",
-      "resolved": "https://registry.npmjs.org/bunyan/-/bunyan-1.8.10.tgz"
-    },
     "bytes": {
       "version": "2.4.0",
       "from": "bytes@2.4.0",
@@ -1402,12 +1392,6 @@
       "version": "1.1.7",
       "from": "domain-browser@>=1.1.0 <1.2.0",
       "resolved": "https://registry.npmjs.org/domain-browser/-/domain-browser-1.1.7.tgz"
-    },
-    "dtrace-provider": {
-      "version": "0.8.1",
-      "from": "dtrace-provider@>=0.8.0 <0.9.0",
-      "resolved": "https://registry.npmjs.org/dtrace-provider/-/dtrace-provider-0.8.1.tgz",
-      "optional": true
     },
     "duplexer2": {
       "version": "0.1.4",
@@ -2605,18 +2589,6 @@
       "from": "mute-stream@>=0.0.4 <0.1.0",
       "resolved": "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.7.tgz"
     },
-    "mv": {
-      "version": "2.1.1",
-      "from": "mv@>=2.0.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/mv/-/mv-2.1.1.tgz",
-      "optional": true
-    },
-    "nan": {
-      "version": "2.6.2",
-      "from": "nan@>=2.3.3 <3.0.0",
-      "resolved": "https://registry.npmjs.org/nan/-/nan-2.6.2.tgz",
-      "optional": true
-    },
     "nconf": {
       "version": "0.6.9",
       "from": "nconf@>=0.6.9 <0.7.0",
@@ -2638,12 +2610,6 @@
           "resolved": "https://registry.npmjs.org/optimist/-/optimist-0.6.0.tgz"
         }
       }
-    },
-    "ncp": {
-      "version": "2.0.0",
-      "from": "ncp@>=2.0.0 <2.1.0",
-      "resolved": "https://registry.npmjs.org/ncp/-/ncp-2.0.0.tgz",
-      "optional": true
     },
     "negotiator": {
       "version": "0.6.1",
@@ -3156,12 +3122,6 @@
       "version": "5.0.1",
       "from": "safe-buffer@>=5.0.1 <6.0.0",
       "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.0.1.tgz"
-    },
-    "safe-json-stringify": {
-      "version": "1.0.4",
-      "from": "safe-json-stringify@>=1.0.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/safe-json-stringify/-/safe-json-stringify-1.0.4.tgz",
-      "optional": true
     },
     "semver": {
       "version": "5.3.0",

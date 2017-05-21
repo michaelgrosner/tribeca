@@ -6,7 +6,6 @@ import Publish = require("./publish");
 import moment = require('moment');
 import FairValue = require("./fair-value");
 import Persister = require("./persister");
-import log from "./logging";
 
 interface ITrade {
     price: number;
@@ -16,8 +15,6 @@ interface ITrade {
 
 export class SafetyCalculator {
     NewValue = new Utils.Evt();
-
-    private _log = log("safety");
 
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
