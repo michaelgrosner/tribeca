@@ -783,6 +783,11 @@
       "from": "binary-extensions@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/binary-extensions/-/binary-extensions-1.8.0.tgz"
     },
+    "bindings": {
+      "version": "1.2.1",
+      "from": "bindings@latest",
+      "resolved": "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz"
+    },
     "bintrees": {
       "version": "1.0.0",
       "from": "bintrees@1.0.0",
@@ -2588,6 +2593,11 @@
       "version": "0.0.7",
       "from": "mute-stream@>=0.0.4 <0.1.0",
       "resolved": "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.7.tgz"
+    },
+    "nan": {
+      "version": "2.6.2",
+      "from": "nan@latest",
+      "resolved": "https://registry.npmjs.org/nan/-/nan-2.6.2.tgz"
     },
     "nconf": {
       "version": "0.6.9",

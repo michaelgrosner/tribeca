@@ -9,6 +9,7 @@ import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
 import moment = require("moment");
 import * as Promises from './promises';
+var bindings = require('bindings')('tribeca.node');
 
 export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
@@ -169,7 +170,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     private roundPrice = (price: number, side: Models.Side) : number => {
-        return Utils.roundSide(price, this._baseBroker.minTickIncrement, side);
+        return bindings.roundSide(price, this._baseBroker.minTickIncrement, side);
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
