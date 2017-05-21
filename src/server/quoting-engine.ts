@@ -254,10 +254,10 @@ export class QuotingEngine {
         }
 
         if (unrounded.askSz !== null)
-            unrounded.askSz = Math.max(minSize, Utils.roundDown(unrounded.askSz, 1e-8));
+            unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
 
           if (unrounded.bidSz !== null)
-            unrounded.bidSz = Math.max(minSize, Utils.roundDown(unrounded.bidSz, 1e-8));
+            unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
 
         return unrounded;
     }
