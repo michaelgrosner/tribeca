@@ -130,7 +130,7 @@
     },
     "@types/node": {
       "version": "7.0.21",
-      "from": "@types/node@>=7.0.18 <8.0.0",
+      "from": "@types/node@>=7.0.21 <8.0.0",
       "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.21.tgz"
     },
     "@types/request": {
@@ -3528,7 +3528,7 @@
     },
     "uglify-js": {
       "version": "3.0.10",
-      "from": "uglify-js@>=3.0.9 <4.0.0",
+      "from": "uglify-js@>=3.0.10 <4.0.0",
       "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-3.0.10.tgz"
     },
     "uglify-to-browserify": {

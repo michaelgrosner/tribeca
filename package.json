@@ -22,7 +22,7 @@
     "@types/lodash": "^4.14.64",
     "@types/marked": "^0.0.28",
     "@types/mongodb": "^2.2.2",
-    "@types/node": "^7.0.18",
+    "@types/node": "^7.0.21",
     "@types/request": "0.0.43",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
@@ -62,7 +62,7 @@
     "socket.io-client": "^2.0.1",
     "ts-helpers": "^1.1.2",
     "typescript": "^2.3.2",
-    "uglify-js": "^3.0.9",
+    "uglify-js": "^3.0.10",
     "uws": "^0.14.5",
     "zone.js": "^0.8.11"
   },
