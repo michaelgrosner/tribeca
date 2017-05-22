@@ -5,7 +5,6 @@ import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
-var bindings = require('bindings')('tribeca.node');
 
 export interface IComputeStatistics {
     latest: number;
@@ -77,6 +76,27 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
     Updated = new Utils.Evt<any>();
 }
 
+
+export function computeStdev(sequence: number[], factor: number, minTick: number): number {
+  const n = sequence.length;
+  let sum = 0;
+  sequence.forEach((x) => sum += x);
+  const mean = sum / n;
+  let variance = 0.0;
+  let v1 = 0.0;
+  let v2 = 0.0;
+  if (n != 1) {
+      for (let i = 0; i<n; i++) {
+          v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
+          v2 = v2 + (sequence[i] - mean);
+      }
+      v2 = v2 * v2 / n;
+      variance = (v1 - v2) / (n-1);
+      if (variance < 0) variance = 0;
+  }
+  return Utils.roundNearest(Math.sqrt(variance) * factor, minTick);
+}
+
 export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
@@ -116,30 +136,10 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
         this._latest = <Models.IStdev>{
-          fv: this.computeStdev(this._lastFV),
-          tops: this.computeStdev(this._lastTops),
-          bid: this.computeStdev(this._lastBids),
-          ask: this.computeStdev(this._lastAsks)
+          fv: computeStdev(this._lastFV, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
+          tops: computeStdev(this._lastTops, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
+          bid: computeStdev(this._lastBids, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
+          ask: computeStdev(this._lastAsks, this._qlParamRepo.latest.widthStdevFactor, this._minTick)
         };
     };
-
-   private computeStdev(sequence: number[]): number {
-      const n = sequence.length;
-      let sum = 0;
-      sequence.forEach((x) => sum += x);
-      const mean = sum / n;
-      let variance = 0.0;
-      let v1 = 0.0;
-      let v2 = 0.0;
-      if (n != 1) {
-          for (let i = 0; i<n; i++) {
-              v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
-              v2 = v2 + (sequence[i] - mean);
-          }
-          v2 = v2 * v2 / n;
-          variance = (v1 - v2) / (n-1);
-          if (variance < 0) variance = 0;
-      }
-      return bindings.roundNearest(Math.sqrt(variance) * this._qlParamRepo.latest.widthStdevFactor, this._minTick);
-  };
 }

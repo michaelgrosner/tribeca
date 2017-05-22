@@ -39,7 +39,6 @@ import Statistics = require("./statistics");
 import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Promises = require("./promises");
-var bindings = require('bindings')('tribeca.node');
 
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
   widthPing:                      2,
@@ -469,7 +468,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
       const n = ms - interval;
       if (n > 121)
-        console.info('main', 'Event loop delay', bindings.roundNearest(n, 100) + 'ms');
+        console.info('main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
       start = process.hrtime();
     }, interval).unref();
 };

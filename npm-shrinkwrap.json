@@ -773,6 +773,12 @@
       "resolved": "https://registry.npmjs.org/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.1.tgz",
       "optional": true
     },
+    "benchmark": {
+      "version": "2.1.4",
+      "from": "benchmark@latest",
+      "resolved": "https://registry.npmjs.org/benchmark/-/benchmark-2.1.4.tgz",
+      "dev": true
+    },
     "better-assert": {
       "version": "1.0.2",
       "from": "better-assert@>=1.0.0 <1.1.0",
@@ -2830,6 +2836,12 @@
       "version": "0.3.1",
       "from": "pkginfo@>=0.3.0 <0.4.0",
       "resolved": "https://registry.npmjs.org/pkginfo/-/pkginfo-0.3.1.tgz"
+    },
+    "platform": {
+      "version": "1.3.4",
+      "from": "platform@>=1.3.3 <2.0.0",
+      "resolved": "https://registry.npmjs.org/platform/-/platform-1.3.4.tgz",
+      "dev": true
     },
     "preserve": {
       "version": "0.2.0",

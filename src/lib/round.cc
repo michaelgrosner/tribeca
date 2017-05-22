@@ -11,8 +11,8 @@ namespace tribeca {
   NAN_METHOD(Round::RoundUp) {
     if (!Round::Valid(info)) return;
 
-    double value = info[0]->NumberValue();
-    double minTick = info[1]->NumberValue();
+    float value = info[0]->NumberValue();
+    float minTick = info[1]->NumberValue();
 
     v8::Local<v8::Number> num = Nan::New(ceil(value / minTick) * minTick);
 
@@ -22,8 +22,8 @@ namespace tribeca {
   NAN_METHOD(Round::RoundDown) {
     if (!Round::Valid(info)) return;
 
-    double value = info[0]->NumberValue();
-    double minTick = info[1]->NumberValue();
+    float value = info[0]->NumberValue();
+    float minTick = info[1]->NumberValue();
 
     v8::Local<v8::Number> num = Nan::New(floor(value / minTick) * minTick);
 
@@ -33,14 +33,13 @@ namespace tribeca {
   NAN_METHOD(Round::RoundNearest) {
     if (!Round::Valid(info)) return;
 
-    double value = info[0]->NumberValue();
-    double minTick = info[1]->NumberValue();
+    float value = info[0]->NumberValue();
+    float minTick = info[1]->NumberValue();
 
     v8::Local<v8::Number> num = Nan::New(round(value / minTick) * minTick);
 
     info.GetReturnValue().Set(num);
   }
-
 
   NAN_METHOD(Round::RoundSide) {
     if (!Round::Valid(info)) return;
@@ -52,9 +51,11 @@ namespace tribeca {
 
     int side = info[2]->NumberValue();
 
-    if (!side) Round::RoundDown(info);
-    else if (side == 1) Round::RoundUp(info);
-    else Round::RoundNearest(info);
+    switch (side) {
+      case 0: Round::RoundDown(info); break;
+      case 1: Round::RoundUp(info); break;
+      default: Round::RoundNearest(info); break;
+    }
   }
 
   bool Round::Valid(const Nan::FunctionCallbackInfo<v8::Value>& info) {

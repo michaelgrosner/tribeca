@@ -3,7 +3,6 @@ import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import Config = require("../config");
 import _ = require("lodash");
-var bindings = require('bindings')('tribeca.node');
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
@@ -87,7 +86,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
         setInterval(() => this.MarketTrade.trigger(this.genMarketTrade()), 15000);
     }
 
-    private getPrice = (sign: number) => bindings.roundNearest(1000 + sign * 100 * Math.random(), this._minTick);
+    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), this._minTick);
 
     private genMarketTrade = () => {
         const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
