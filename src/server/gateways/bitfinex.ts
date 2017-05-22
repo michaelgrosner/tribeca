@@ -577,7 +577,8 @@ export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: 
         if (s.pair === symbol.symbol) {
             const tickerUrl = config.GetString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
-            return new Bitfinex(timeProvider, config, symbol, parseFloat('1e-'+symbolTicker.last_price.substr(0, symbolTicker.last_price.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
+            const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
+            return new Bitfinex(timeProvider, config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
         }
     }
 }
