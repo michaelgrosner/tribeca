@@ -12,7 +12,7 @@ namespace tribeca {
     v8::Local<v8::Float64Array> seqD = info[3].As<v8::Float64Array>();
 
     double factor = info[4]->NumberValue();
-    float minTick = info[5]->NumberValue();
+    double minTick = info[5]->NumberValue();
 
     v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 

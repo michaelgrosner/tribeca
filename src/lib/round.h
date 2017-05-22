@@ -17,8 +17,6 @@ namespace tribeca {
       static NAN_METHOD(RoundDown);
       static NAN_METHOD(RoundNearest);
       static NAN_METHOD(RoundSide);
-    private:
-      static bool Valid(const Nan::FunctionCallbackInfo<v8::Value>& info);
   };
 }
 

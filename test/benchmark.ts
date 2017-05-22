@@ -4,7 +4,7 @@ import Statistics = require("../src/server/statistics");
 var bindings = require('bindings')('tribeca.node');
 var Benchmark = require('benchmark');
 
-describe("C shared objects", () => {
+describe("Benchmark C shared objects", () => {
     it("JS round is faster", () => {
       var val = 1.23456;
       var min = 0.001;
