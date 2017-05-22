@@ -8,7 +8,6 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
-var bindings = require('bindings')('tribeca.node');
 
 export class PositionManager {
     private newWidth: Models.IStdev = null;
@@ -28,10 +27,10 @@ export class PositionManager {
       const minTick = this._details.minTickIncrement;
       this._ewmaPublisher.publish(new Models.EWMAChart(
         widthStdev,
-        this.newQuote?bindings.roundNearest(this.newQuote, minTick):null,
-        this.newShort?bindings.roundNearest(this.newShort, minTick):null,
-        this.newLong?bindings.roundNearest(this.newLong, minTick):null,
-        bindings.roundNearest(fv.price, minTick),
+        this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
+        this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+        this.newLong?Utils.roundNearest(this.newLong, minTick):null,
+        Utils.roundNearest(fv.price, minTick),
         this._timeProvider.utcNow()
       ));
     }
@@ -56,10 +55,10 @@ export class PositionManager {
         const minTick = this._details.minTickIncrement;
         _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
           this.newWidth,
-          this.newQuote?bindings.roundNearest(this.newQuote, minTick):null,
-          this.newShort?bindings.roundNearest(this.newShort, minTick):null,
-          this.newLong?bindings.roundNearest(this.newLong, minTick):null,
-          this.fairValue?bindings.roundNearest(this.fairValue, minTick):null,
+          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
+          this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+          this.newLong?Utils.roundNearest(this.newLong, minTick):null,
+          this.fairValue?Utils.roundNearest(this.fairValue, minTick):null,
           this._timeProvider.utcNow()
         ):null]);
         this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(10, 'minutes'));
@@ -91,10 +90,10 @@ export class PositionManager {
 
         this._ewmaPublisher.publish(new Models.EWMAChart(
           this.newWidth,
-          this.newQuote?bindings.roundNearest(this.newQuote, minTick):null,
-          bindings.roundNearest(this.newShort, minTick),
-          bindings.roundNearest(this.newLong, minTick),
-          bindings.roundNearest(fv.price, minTick),
+          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
+          Utils.roundNearest(this.newShort, minTick),
+          Utils.roundNearest(this.newLong, minTick),
+          Utils.roundNearest(fv.price, minTick),
           this._timeProvider.utcNow()
         ));
 

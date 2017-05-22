@@ -13,7 +13,6 @@ import {QuoteInput} from "./quoting-styles/helpers";
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import PingPong = require("./quoting-styles/ping-pong");
-var bindings = require('bindings')('tribeca.node');
 
 const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => {
    if ((!o && n) || (o && !n)) return true;
@@ -244,12 +243,12 @@ export class QuotingEngine {
         }
 
         if (unrounded.bidPx !== null) {
-            unrounded.bidPx = bindings.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
+            unrounded.bidPx = Utils.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
 
         if (unrounded.askPx !== null) {
-            unrounded.askPx = bindings.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
+            unrounded.askPx = Utils.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
             unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
 
@@ -257,14 +256,14 @@ export class QuotingEngine {
             if (unrounded.askSz > totalBasePosition)
               unrounded.askSz = (!_unroundedBidSz || _unroundedBidSz > totalBasePosition)
                 ? totalBasePosition : _unroundedBidSz;
-            unrounded.askSz = bindings.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
+            unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
         }
 
         if (unrounded.bidSz !== null) {
             if (unrounded.bidSz > totalQuotePosition)
               unrounded.bidSz = (!_unroundedAskSz || _unroundedAskSz > totalQuotePosition)
                 ? totalQuotePosition : _unroundedAskSz;
-            unrounded.bidSz = bindings.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
+            unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
         }
 
         return unrounded;
