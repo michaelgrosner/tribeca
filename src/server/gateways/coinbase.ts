@@ -162,8 +162,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelAllOpenOrders = () : Promise<number> => {
         var d = Promises.defer<number>();
         this._authClient.cancelAllOrders((err, resp) => {
-            if (err) d.reject(err);
-            else  {
+            if (!err) {
                 var t = this._timeProvider.utcNow();
                 _.forEach(JSON.parse(Object(resp).body), cxl_id => {
                     this.OrderUpdate.trigger({
