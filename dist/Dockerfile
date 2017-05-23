@@ -53,6 +53,7 @@ ENV OkCoinOrderDestination OkCoin
 
 ## Bitfinex
 ENV BitfinexHttpUrl https://api.bitfinex.com/v1
+ENV BitfinexWebsocketUrl wss://api.bitfinex.com/ws/2
 ENV BitfinexKey NULL
 ENV BitfinexSecret NULL
 ENV BitfinexOrderDestination Bitfinex
