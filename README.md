@@ -136,7 +136,7 @@ Passing a config filename as a parameter after `tribeca.js` is also allowed, lik
 
 ### Unreleased Changelog:
 
-Added nodejs7, typescript2, angular4 and reactivexjs.
+Added nodejs7, typescript2, angular4, reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
@@ -145,6 +145,8 @@ Added support for multiple instances/config files with nested matryoshka UI.
 Added npm scripts, david-dm, travis-ci, coveralls and codacy.
 
 Added historical charts to replace grafana.
+
+Added C++ math functions.
 
 Updated OKCoin API (since https://www.okcoin.com/t-354.html).
 
