@@ -136,7 +136,7 @@ Passing a config filename as a parameter after `tribeca.js` is also allowed, lik
 
 ### Unreleased Changelog:
 
-Added nodejs7, typescript2, angular4, reactivexjs.
+Added nodejs7, typescript2, angular4 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
