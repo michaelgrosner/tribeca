@@ -126,6 +126,8 @@ Feel free to run `npm test` anytime.
 
 To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
 
+To rebuild the C++ shared objects with your modifications, please run `node-gyp  rebuild`.
+
 To pipe the output to stdout, execute the application in the foreground with `nodejs tribeca.js`.
 
 To ignore the output, execute the application in the background with `forever start tribeca.js` or with the alias `npm start`.
