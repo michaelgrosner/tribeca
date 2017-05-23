@@ -32,7 +32,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
-            console.info('active', 'Changed saved quoting state to ', this._savedQuotingMode);
+            console.info('active', 'Changed saved quoting state to', this._savedQuotingMode);
             this.updateParameters();
         }
 
