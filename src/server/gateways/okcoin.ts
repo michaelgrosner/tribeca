@@ -210,7 +210,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    generateClientOrderId = (): string => parseInt((Math.random()+'').substr(-8), 10).toString();
+    private chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    generateClientOrderId = (): string => {
+      let id: string = '';
+      for(let i=8;i--;) id += this.chars.charAt(Math.floor(Math.random() * this.chars.length));
+      return id;
+    };
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
