@@ -478,7 +478,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     };
 
-    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);;
+    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);
 
     private _apiKey : string;
     private _secret : string;
