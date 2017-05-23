@@ -3,7 +3,7 @@
 #include "stdev.h"
 
 namespace tribeca {
-  NAN_MODULE_INIT(InitAll){
+  NAN_MODULE_INIT(InitAll) {
     Round::Init(target);
     Stdev::Init(target);
   }
