@@ -176,9 +176,9 @@ class DisplayOrder {
                                             <th>apr</th>
                                             <th>sop</th>
                                             <th>bw?</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth</th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -229,17 +229,29 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.bestWidth">
                                             </td>
-                                            <td style="width:169px;">
+                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPing">
                                             </td>
-                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                                   type="number" step="0.01" min="0.01" max="100"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
+                                            </td>
+                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1 && !pair.quotingParameters.display.percentageValues">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
+                                            </td>
+                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1 && pair.quotingParameters.display.percentageValues">
+                                                <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                                   type="number" step="0.01" min="0.01" max="100"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.widthPongPercentage">
                                             </td>
                                     </tbody>
                                 </table>

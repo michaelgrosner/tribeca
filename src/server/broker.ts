@@ -394,9 +394,12 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
             let tradePingPongType = 'Ping';
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+              var widthPong = (this._qlParamRepo.latest.percentageValues)
+                  ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
+                  : this._qlParamRepo.latest.widthPong;
               tradePingPongType = this._reTrade(this._trades.filter((x: Models.Trade) => (
-                (trade.side==Models.Side.Bid?(x.price > (trade.price + this._qlParamRepo.latest.widthPong)):(x.price < (trade.price - this._qlParamRepo.latest.widthPong)))
+                (trade.side==Models.Side.Bid?(x.price > (trade.price + widthPong)):(x.price < (trade.price - widthPong)))
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
               )).sort((a: Models.Trade, b: Models.Trade) => (
@@ -411,7 +414,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                     : (a.price<b.price?1:(a.price>b.price?-1:0))
                 )
               )), trade);
-            else {
+            } else {
               this._tradePublisher.publish(trade);
               this._tradePersister.persist(trade);
               this._trades.push(trade);

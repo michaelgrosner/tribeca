@@ -29,18 +29,22 @@ export class AK47QuoteStyle implements StyleHelpers.QuoteStyle {
 function computePingPongQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
+    var widthPing = (input.params.percentageValues)
+        ? input.params.widthPingPercentage * input.fv.price / 100
+        : input.params.widthPing;
+
     if (input.params.mode === Models.QuotingMode.PingPong && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;
     }
 
-    var minBid = input.fv.price - input.params.widthPing / 2.0;
+    var minBid = input.fv.price - widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (input.params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
         genQt.askPx -= input.minTickIncrement;
     }
 
-    var minAsk = input.fv.price + input.params.widthPing / 2.0;
+    var minAsk = input.fv.price + widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = input.params.buySize;
@@ -68,18 +72,22 @@ function computePingPongQuote(input: StyleHelpers.QuoteInput) {
 function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
+    var widthPing = (input.params.percentageValues)
+        ? input.params.widthPingPercentage * input.fv.price / 100
+        : input.params.widthPing;
+
     if (input.params.mode === Models.QuotingMode.Boomerang && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;
     }
 
-    var minBid = input.fv.price - input.params.widthPing / 2.0;
+    var minBid = input.fv.price - widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (input.params.mode === Models.QuotingMode.Boomerang && genQt.askSz > .2) {
         genQt.askPx -= input.minTickIncrement;
     }
 
-    var minAsk = input.fv.price + input.params.widthPing / 2.0;
+    var minAsk = input.fv.price + widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = input.params.buySize;
@@ -106,6 +114,10 @@ function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
 
 function computeAK47Quote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
+
+    var widthPing = (input.params.percentageValues)
+        ? input.params.widthPingPercentage * input.fv.price / 100
+        : input.params.widthPing;
 
     if (input.params.mode === Models.QuotingMode.AK47 && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;

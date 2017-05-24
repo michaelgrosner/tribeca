@@ -86,12 +86,14 @@ export class SafetyCalculator {
         var _sellPq = 0;
         var trades = this._broker._trades;
         var fv = this._fvEngine.latestFairValue;
-        var fvp = 0;
-        if (fv != null) {fvp = fv.price;}
+        if (!fv) return;
+        var widthPong = (settings.percentageValues)
+            ? settings.widthPongPercentage * fv.price / 100
+            : settings.widthPong;
         if (settings.pongAt == Models.PongAt.ShortPingFair || settings.pongAt == Models.PongAt.ShortPingAggressive) {
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price>b.price?1:(a.price<b.price?-1:0));
           for (var ti = 0;ti<trades.length;ti++) {
-            if ((!fvp || (fvp>trades[ti].price && fvp-settings.widthPong<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
+            if ((!fv.price || (fv.price>trades[ti].price && fv.price-settings.widthPong<trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
               _buyPq = Math.min(sellSize - buyPq, trades[ti].quantity);
               buyPing += trades[ti].price * _buyPq;
               buyPq += _buyPq;
@@ -102,7 +104,7 @@ export class SafetyCalculator {
         } else if (settings.pongAt == Models.PongAt.LongPingFair || settings.pongAt == Models.PongAt.LongPingAggressive)
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price>b.price?1:(a.price<b.price?-1:0));
         if (!buyPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
+          if ((!fv.price || fv.price>trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Bid && buyPq<sellSize) {
             _buyPq = Math.min(sellSize - buyPq, trades[ti].quantity);
             buyPing += trades[ti].price * _buyPq;
             buyPq += _buyPq;
@@ -112,7 +114,7 @@ export class SafetyCalculator {
         if (settings.pongAt == Models.PongAt.ShortPingFair || settings.pongAt == Models.PongAt.ShortPingAggressive) {
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price<b.price?1:(a.price>b.price?-1:0));
           for (var ti = 0;ti<trades.length;ti++) {
-            if ((!fvp || (fvp<trades[ti].price && fvp+settings.widthPong>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
+            if ((!fv.price || (fv.price<trades[ti].price && fv.price+settings.widthPong>trades[ti].price)) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
               _sellPq = Math.min(buySize - sellPq, trades[ti].quantity);
               sellPong += trades[ti].price * _sellPq;
               sellPq += _sellPq;
@@ -123,7 +125,7 @@ export class SafetyCalculator {
         } else if (settings.pongAt == Models.PongAt.LongPingFair || settings.pongAt == Models.PongAt.LongPingAggressive)
           trades.sort((a: Models.Trade, b: Models.Trade) => a.price<b.price?1:(a.price>b.price?-1:0));
         if (!sellPq) for (var ti = 0;ti<trades.length;ti++) {
-          if ((!fvp || fvp<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
+          if ((!fv.price || fv.price<trades[ti].price) && ((settings.mode !== Models.QuotingMode.Boomerang && settings.mode !== Models.QuotingMode.AK47) || trades[ti].Kqty<trades[ti].quantity) && trades[ti].side == Models.Side.Ask && sellPq<buySize) {
             _sellPq = Math.min(buySize - sellPq, trades[ti].quantity);
             sellPong += trades[ti].price * _sellPq;
             sellPq += _sellPq;
