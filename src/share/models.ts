@@ -354,6 +354,7 @@ export interface QuotingParameters {
     widthPingPercentage?: number;
     widthPong?: number;
     widthPongPercentage?: number;
+    widthPercentage?: boolean;
     bestWidth?: boolean;
     buySize?: number;
     buySizePercentage?: number;

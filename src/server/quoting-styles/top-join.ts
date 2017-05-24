@@ -37,7 +37,7 @@ export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
 function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
-    var widthPing = (input.params.percentageValues)
+    var widthPing = (input.params.widthPercentage)
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 
@@ -80,7 +80,7 @@ function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
 function computeInverseJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
-    var widthPing = (input.params.percentageValues)
+    var widthPing = (input.params.widthPercentage)
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 

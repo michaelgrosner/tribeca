@@ -67,7 +67,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 In the web UI, there are two rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
 
-* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages. And `width` or `widthPing` and `widthPong` will be a percentage related to the `fair value`; useful when calculating profits subtracting exchange's fees (that usually are percentages too).
+* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
 
 * `mode` - Sets the quoting mode
 
@@ -117,11 +117,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `LongPingAggresive` - Place new Pongs based on the highest margin Ping in history without respecting the `widthPong` from the `fair value`.
 
+* `bw?` - Enable Best Width to place orders avoiding "hollows" in the book, while accomodating new orders right near to existent orders in the book, without leaving "hollows" in between.
+
+* `%w?` - If enabled, the values of `width` or `widthPing` and `widthPong` will be a percentage related to the `fair value`; useful when calculating profits subtracting exchange's fees (that usually are percentages too).
+
 * `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
 
 * `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
-
-* `bw?` - Enable Best Width to place orders avoiding "hollows" in the book, while accomodating new orders right near to existent orders in the book, without leaving "hollows" in between.
 
 * `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
