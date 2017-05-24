@@ -25,11 +25,18 @@ export class MarketFiltration {
 
         if (mkt == null || !mkt.bids.length || !mkt.asks.length) {
             this.latestFilteredMarket = null;
+            console.trace('debug2', mkt);
             return;
         }
 
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
+
+        if (!bid.length || !ask.length) {
+            this.latestFilteredMarket = null;
+            console.trace('debug3', this._quoter.quotesSent(Models.Side.Bid).length, this._quoter.quotesSent(Models.Side.Ask).length, bid, ask, this._broker.currentBook.bids, this._broker.currentBook.asks);
+            return;
+        }
 
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
     };
