@@ -351,7 +351,9 @@ export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPR
 
 export interface QuotingParameters {
     widthPing?: number;
+    widthPingPercentage?: number;
     widthPong?: number;
+    widthPongPercentage?: number;
     bestWidth?: boolean;
     buySize?: number;
     buySizePercentage?: number;

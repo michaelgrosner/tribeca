@@ -37,18 +37,22 @@ export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
 function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
+    var widthPing = (input.params.percentageValues)
+        ? input.params.widthPingPercentage * input.fv.price / 100
+        : input.params.widthPing;
+
     if (input.params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;
     }
 
-    var minBid = input.fv.price - input.params.widthPing / 2.0;
+    var minBid = input.fv.price - widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (input.params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
         genQt.askPx -= input.minTickIncrement;
     }
 
-    var minAsk = input.fv.price + input.params.widthPing / 2.0;
+    var minAsk = input.fv.price + widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = input.params.buySize;
@@ -76,10 +80,14 @@ function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
 function computeInverseJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
+    var widthPing = (input.params.percentageValues)
+        ? input.params.widthPingPercentage * input.fv.price / 100
+        : input.params.widthPing;
+
     var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
-    if (mktWidth > input.params.widthPing) {
-        genQt.askPx += input.params.widthPing;
-        genQt.bidPx -= input.params.widthPing;
+    if (mktWidth > widthPing) {
+        genQt.askPx += widthPing;
+        genQt.bidPx -= widthPing;
     }
 
     if (input.params.mode === Models.QuotingMode.InverseTop) {
@@ -87,9 +95,9 @@ function computeInverseJoinQuote(input: StyleHelpers.QuoteInput) {
         if (genQt.askSz > .2) genQt.askPx -= input.minTickIncrement;
     }
 
-    if (mktWidth < (2.0 * input.params.widthPing / 3.0)) {
-        genQt.askPx += input.params.widthPing / 4.0;
-        genQt.bidPx -= input.params.widthPing / 4.0;
+    if (mktWidth < (2.0 * widthPing / 3.0)) {
+        genQt.askPx += widthPing / 4.0;
+        genQt.bidPx -= widthPing / 4.0;
     }
 
     genQt.bidSz = input.params.buySize;

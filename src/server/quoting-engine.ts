@@ -119,9 +119,14 @@ export class QuotingEngine {
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
         let sideAPR: string[] = [];
-
+        var widthPong = (params.percentageValues)
+            ? params.widthPongPercentage * fv.price / 100
+            : params.widthPong;
+        var widthPing = (params.percentageValues)
+            ? params.widthPingPercentage * fv.price / 100
+            : params.widthPing;
         let superTradesMultipliers = (params.superTrades &&
-          params.widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
+          widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
           (params.superTrades == Models.SOP.x2trades || params.superTrades == Models.SOP.x2tradesSize
             ? 2 : (params.superTrades == Models.SOP.x3trades || params.superTrades == Models.SOP.x3tradesSize
@@ -194,14 +199,14 @@ export class QuotingEngine {
             (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Sell')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
-            || unrounded.askPx < safety.buyPing + params.widthPong
-          )) unrounded.askPx = safety.buyPing + params.widthPong;
+            || unrounded.askPx < safety.buyPing + widthPong
+          )) unrounded.askPx = safety.buyPing + widthPong;
           if (unrounded.bidSz && safety.sellPong && (
             (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Buy')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
-            || unrounded.bidPx > safety.sellPong - params.widthPong
-          )) unrounded.bidPx = safety.sellPong - params.widthPong;
+            || unrounded.bidPx > safety.sellPong - widthPong
+          )) unrounded.bidPx = safety.sellPong - widthPong;
         }
 
         if (params.bestWidth) {

@@ -6,7 +6,9 @@ export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
-        var widthPing = input.params.widthPing;
+        var widthPing = (input.params.percentageValues)
+            ? input.params.widthPingPercentage * input.fv.price / 100
+            : input.params.widthPing;
 
         var bidPx = Math.max(input.fv.price - widthPing, 0);
         var askPx = input.fv.price + widthPing;
