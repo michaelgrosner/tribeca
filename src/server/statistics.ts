@@ -5,6 +5,7 @@ import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
+var bindings = require('bindings')('tribeca.node');
 
 export interface IComputeStatistics {
     latest: number;
@@ -135,11 +136,13 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
 
         if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
-        this._latest = <Models.IStdev>{
-          fv: computeStdev(this._lastFV, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
-          tops: computeStdev(this._lastTops, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
-          bid: computeStdev(this._lastBids, this._qlParamRepo.latest.widthStdevFactor, this._minTick),
-          ask: computeStdev(this._lastAsks, this._qlParamRepo.latest.widthStdevFactor, this._minTick)
-        };
+        this._latest = <Models.IStdev>bindings.computeStdevs(
+          new Float64Array(this._lastFV),
+          new Float64Array(this._lastTops),
+          new Float64Array(this._lastBids),
+          new Float64Array(this._lastAsks),
+          this._qlParamRepo.latest.widthStdevFactor,
+          this._minTick
+        );
     };
 }
