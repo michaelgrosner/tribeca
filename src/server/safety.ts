@@ -87,7 +87,7 @@ export class SafetyCalculator {
         var trades = this._broker._trades;
         var fv = this._fvEngine.latestFairValue;
         if (!fv) return;
-        var widthPong = (settings.percentageValues)
+        var widthPong = (settings.widthPercentage)
             ? settings.widthPongPercentage * fv.price / 100
             : settings.widthPong;
         if (settings.pongAt == Models.PongAt.ShortPingFair || settings.pongAt == Models.PongAt.ShortPingAggressive) {

@@ -119,10 +119,10 @@ export class QuotingEngine {
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
         let sideAPR: string[] = [];
-        var widthPong = (params.percentageValues)
+        var widthPong = (params.widthPercentage)
             ? params.widthPongPercentage * fv.price / 100
             : params.widthPong;
-        var widthPing = (params.percentageValues)
+        var widthPing = (params.widthPercentage)
             ? params.widthPingPercentage * fv.price / 100
             : params.widthPing;
         let superTradesMultipliers = (params.superTrades &&

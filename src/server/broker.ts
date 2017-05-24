@@ -395,7 +395,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             this.Trade.trigger(trade);
             let tradePingPongType = 'Ping';
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-              var widthPong = (this._qlParamRepo.latest.percentageValues)
+              var widthPong = (this._qlParamRepo.latest.widthPercentage)
                   ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
                   : this._qlParamRepo.latest.widthPong;
               tradePingPongType = this._reTrade(this._trades.filter((x: Models.Trade) => (

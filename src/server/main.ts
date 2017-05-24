@@ -45,6 +45,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   widthPingPercentage:            0.25,
   widthPong:                      2,
   widthPongPercentage:            0.25,
+  widthPercentage:                false,
   bestWidth:                      true,
   buySize:                        0.02,
   buySizePercentage:              7,

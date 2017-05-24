@@ -29,7 +29,7 @@ export class AK47QuoteStyle implements StyleHelpers.QuoteStyle {
 function computePingPongQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
-    var widthPing = (input.params.percentageValues)
+    var widthPing = (input.params.widthPercentage)
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 
@@ -72,7 +72,7 @@ function computePingPongQuote(input: StyleHelpers.QuoteInput) {
 function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
-    var widthPing = (input.params.percentageValues)
+    var widthPing = (input.params.widthPercentage)
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 
@@ -115,7 +115,7 @@ function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
 function computeAK47Quote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
-    var widthPing = (input.params.percentageValues)
+    var widthPing = (input.params.widthPercentage)
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 
