@@ -24,6 +24,7 @@ export interface Persistable {
 
 export interface IPersist<T> {
     persist(data: T): void;
+    clean(time: Date): void;
     repersist(report: T, trade: Models.Trade): void;
 }
 
@@ -78,6 +79,8 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
     };
 
     public repersist = (report: T, trade: Models.Trade) => { };
+
+    public clean = (time: Date) => { };
 
     public persist = (report: T) => {
         this.collection.then(coll => {
@@ -140,6 +143,12 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         this._persistQueue.push(report);
     };
 
+    public clean = (time: Date) => {
+        this.collection.deleteMany({ time: (this._dbName=='rfv'||this._dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
+            if (err) console.error('persister', err, 'Unable to clean', this._dbName);
+        });
+    };
+
     public repersist = (report: T, trade: Models.Trade) => {
         if (trade.Kqty<0)
           this.collection.deleteOne({ tradeId: trade.tradeId }, err => {
@@ -171,7 +180,7 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
             time.setInterval(() => {
                 if (this._persistQueue.length === 0) return;
 
-                if (this._dbName != 'trades')
+                if (this._dbName != 'trades'&&this._dbName!='rfv'&&this._dbName!='mkt')
                   collection.deleteMany({ time: { $exists:true } }, err => {
                       if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName);
                   });

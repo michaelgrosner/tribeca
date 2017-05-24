@@ -272,12 +272,16 @@ interface TradingSystem {
 
 var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
     const tradesPersister = await system.getPersister<Models.Trade>("trades");
+    const rfvPersister = await system.getPersister<Models.RegularFairValue>("rfv");
+    const marketDataPersister = await system.getPersister<Models.MarketStats>("mkt");
 
     const paramsPersister = system.getRepository<Models.QuotingParameters>(system.startingParameters, Models.Topics.QuotingParametersChange);
 
-    const [initParams, initTrades] = await Promise.all([
+    const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
       paramsPersister.loadLatest(),
-      tradesPersister.loadAll(10000)
+      tradesPersister.loadAll(10000),
+      rfvPersister.loadAll(10000),
+      marketDataPersister.loadAll(10000)
     ]);
     const orderCache = new Broker.OrderStateCache();
     const gateway = await system.getExchange(orderCache);
@@ -389,16 +393,19 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         fvEngine,
         filtration,
         broker.minTickIncrement,
-        paramsRepo
+        paramsRepo,
+        marketDataPersister,
+        initMkt
       ),
       new PositionManagement.TargetBasePositionManager(
         system.timeProvider,
         new PositionManagement.PositionManager(
           broker,
           system.timeProvider,
+          rfvPersister,
           fvEngine,
-          new Statistics.EwmaStatisticCalculator(initParams.shortEwma, null),
-          new Statistics.EwmaStatisticCalculator(initParams.longEwma, null),
+          new Statistics.EwmaStatisticCalculator(initParams.shortEwma, initRfv),
+          new Statistics.EwmaStatisticCalculator(initParams.longEwma, initRfv),
           system.getPublisher(Models.Topics.EWMAChart, monitor)
         ),
         paramsRepo,

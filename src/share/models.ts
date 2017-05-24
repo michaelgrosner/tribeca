@@ -85,6 +85,13 @@ export class Market implements ITimestamped {
     }
 }
 
+export class MarketStats implements ITimestamped {
+    constructor(public fv: number,
+                public bid: number,
+                public ask: number,
+                public time: Date) { }
+}
+
 export class MarketTrade implements ITimestamped {
     constructor(public exchange: Exchange,
                 public pair: CurrencyPair,

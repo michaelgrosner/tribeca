@@ -297,6 +297,8 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
 
     public repersist = (report: T, trade: Models.Trade) => { };
 
+    public clean = (time: Date) => { };
+
     public loadDBSize = (): Promise<T> => {
       return null;
       // return new Promise((resolve, reject) => { resolve(null); });

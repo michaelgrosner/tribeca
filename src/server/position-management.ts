@@ -47,6 +47,7 @@ export class PositionManager {
     constructor(
         private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
+        private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _shortEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics,
@@ -62,7 +63,7 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ):null]);
         this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(10, 'minutes'));
-        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(1, 'minutes'));
+        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(21, 'seconds'));
     }
 
     private updateEwmaValues = () => {
@@ -97,6 +98,7 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ));
 
+        this._persister.persist(rfv);
         this._data.push(rfv);
         this._data = this._data.slice(-7);
     };

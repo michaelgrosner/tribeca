@@ -4,6 +4,7 @@ import Interfaces = require("./interfaces");
 import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
+import Persister = require("./persister");
 import moment = require("moment");
 var bindings = require('bindings')('tribeca.node');
 
@@ -11,6 +12,12 @@ export interface IComputeStatistics {
     latest: number;
     initialize(seedData: number[]): void;
     addNewValue(value: number): number;
+}
+
+export interface IComputeStatisticsIncremental {
+    latest: number;
+    initialize(seedData: number[], mktBids: number[], mktAsks: number[]): void;
+    addNewValue(rfv: number[], mktBids: number[], mktAsks: number[]): Models.IStdev;
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
@@ -50,6 +57,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
     constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
         this._alpha = _alpha || .095;
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
+        _timeProvider.setTimeout(this.onTick, moment.duration(13, "seconds"));
     }
 
     private onTick = () => {
@@ -76,7 +84,6 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
 
     Updated = new Utils.Evt<any>();
 }
-
 
 export function computeStdev(sequence: number[], factor: number, minTick: number): number {
   const n = sequence.length;
@@ -112,10 +119,43 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
       private _fv: FairValue.FairValueEngine,
       private _filteredMarkets: MarketFiltration.MarketFiltration,
       private _minTick: number,
-      private _qlParamRepo: QuotingParameters.QuotingParametersRepository
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private persister: Persister.IPersist<Models.MarketStats>,
+      initMkt: Models.MarketStats[]
     ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
+        if (initMkt !== null) {
+          this.initialize(
+            initMkt.map((r: Models.MarketStats) => r.fv),
+            initMkt.map((r: Models.MarketStats) => r.bid),
+            initMkt.map((r: Models.MarketStats) => r.ask)
+          );
+        }
     }
+
+    private initialize(rfv: number[], mktBids: number[], mktAsks: number[]) {
+        for (let i = 0; i<mktBids.length||i<mktAsks.length;i++)
+          if (mktBids[i] && mktAsks[i]) this._lastTops.push(mktBids[i], mktAsks[i]);
+        this._lastFV = rfv.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.widthStdevPeriods * 2);
+        this._lastBids = mktBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastAsks = mktAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+
+        this.onSave();
+    };
+
+    private onSave = () => {
+        if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
+
+        this._latest = <Models.IStdev>bindings.computeStdevs(
+          new Float64Array(this._lastFV),
+          new Float64Array(this._lastTops),
+          new Float64Array(this._lastBids),
+          new Float64Array(this._lastAsks),
+          this._qlParamRepo.latest.widthStdevFactor,
+          this._minTick
+        );
+    };
 
     private onTick = () => {
         const fv = this._fv.latestFairValue;
@@ -134,15 +174,14 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
         this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
 
-        if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
+        this.onSave();
 
-        this._latest = <Models.IStdev>bindings.computeStdevs(
-          new Float64Array(this._lastFV),
-          new Float64Array(this._lastTops),
-          new Float64Array(this._lastBids),
-          new Float64Array(this._lastAsks),
-          this._qlParamRepo.latest.widthStdevFactor,
-          this._minTick
-        );
+        this.persister.persist(new Models.MarketStats(
+          fv.price,
+          filteredMkt.bids[0].price,
+          filteredMkt.asks[0].price,
+          new Date()
+        ));
+        this.persister.clean(new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.widthStdevPeriods));
     };
 }
