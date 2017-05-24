@@ -67,7 +67,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 In the web UI, there are two rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
 
-* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
+* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages. And `width` or `widthPing` and `widthPong` will be a percentage related to the `fair value`; useful when calculating profits subtracting exchange's fees (that usually are percentages too).
 
 * `mode` - Sets the quoting mode
 
