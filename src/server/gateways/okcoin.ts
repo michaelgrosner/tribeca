@@ -105,7 +105,8 @@ class OkCoinWebsocket {
             let errorcode: number = typeof msg.errorcode !== 'undefined' ? msg.errorcode : msg.data.error_code;
 
             if (!success && (typeof errorcode === "undefined" || (
-              errorcode != 10050 /* 10050=Can't cancel more than once */
+              errorcode != 20100 /* 20100=request time out */
+              && errorcode != 10050 /* 10050=Can't cancel more than once */
               && errorcode != 10009 /* 10009=Order does not exist */
               && errorcode != 10010 /* 10010=Insufficient funds */
               && errorcode != 10016 /* 10016=Insufficient coins balance */
@@ -114,7 +115,8 @@ class OkCoinWebsocket {
             else if (success && (channel == 'addChannel' || channel == 'login'))
               return console.info('okcoin', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
             if (typeof errorcode !== "undefined" && (
-              errorcode == 10050
+              errorcode == 20100
+              || errorcode == 10050
               || errorcode == 10009
               // || errorcode == '10001'
             ))  return;
