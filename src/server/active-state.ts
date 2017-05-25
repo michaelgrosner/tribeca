@@ -49,7 +49,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
         if (newMode !== this._latest) {
             this._latest = newMode;
-            console.info('active', 'Changed quoting mode to', this.latest);
+            console.trace('active', 'Changed quoting mode to', this.latest);
             this.NewParameters.trigger();
             this._pub.publish(this.latest);
         }
