@@ -326,8 +326,8 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         pair: broker.pair.toString(),
         minTick: broker.minTickIncrement,
         minSize: broker.minSize,
-        makeFee: broker.makeFee,
-        takeFee: broker.takeFee,
+        makeFee: broker.makeFee(),
+        takeFee: broker.takeFee(),
         hasSelfTradePrevention: broker.hasSelfTradePrevention,
     });
 
