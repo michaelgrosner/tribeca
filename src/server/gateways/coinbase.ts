@@ -137,15 +137,8 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private raiseMarketData = () => {
         this.reevalBook();
-        if (this._cachedBids.length && this._cachedAsks.length) {
-            if (this._cachedBids[0].price > this._cachedAsks[0].price) {
-                console.warn('coinbase', 'Crossed Coinbase market detected! bid:', this._cachedBids[0].price, 'ask:', this._cachedAsks[0].price);
-                (<any>this._client).changeState('error');
-                return;
-            }
-
+        if (this._cachedBids.length && this._cachedAsks.length)
             this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, this._timeProvider.utcNow()));
-        }
     };
 
     constructor(private _client: CoinbaseOrderEmitter, private _timeProvider: Utils.ITimeProvider) {
