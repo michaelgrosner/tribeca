@@ -137,7 +137,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private raiseMarketData = () => {
         this.reevalBook();
-        if (typeof this._cachedBids.length && this._cachedAsks.length) {
+        if (this._cachedBids.length && this._cachedAsks.length) {
             if (this._cachedBids[0].price > this._cachedAsks[0].price) {
                 console.warn('coinbase', 'Crossed Coinbase market detected! bid:', this._cachedBids[0].price, 'ask:', this._cachedAsks[0].price);
                 (<any>this._client).changeState('error');
