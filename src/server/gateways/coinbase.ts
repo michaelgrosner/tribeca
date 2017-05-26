@@ -50,9 +50,8 @@ _.assign(GdaxAuthenticatedClient.prototype, new function() {
       'method': method,
       'uri': self.makeAbsoluteURI(relativeURI)
     });
-
-    self.addHeaders(opts, self._getSignature(method, relativeURI, opts));
     opts.agent = keepaliveAgent;
+    self.addHeaders(opts, self._getSignature(method, relativeURI, opts));
     request(opts, self.makeRequestCallback(callback));
   };
 
@@ -63,7 +62,7 @@ _.assign(GdaxAuthenticatedClient.prototype, new function() {
       passphrase: this.passphrase
     };
     var sig = signRequest(auth, method, relativeURI, opts);
-    if (opts.body) {
+    if (opts.body && (typeof opts.body !== 'string')) {
       opts.body = JSON.stringify(opts.body);
     }
     return {
