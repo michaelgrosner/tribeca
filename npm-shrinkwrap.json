@@ -184,11 +184,6 @@
       "from": "ag-grid-angular@>=10.0.0 <11.0.0",
       "resolved": "https://registry.npmjs.org/ag-grid-angular/-/ag-grid-angular-10.0.0.tgz"
     },
-    "agentkeepalive": {
-      "version": "3.1.0",
-      "from": "agentkeepalive@>=3.1.0 <4.0.0",
-      "resolved": "https://registry.npmjs.org/agentkeepalive/-/agentkeepalive-3.1.0.tgz"
-    },
     "ajv": {
       "version": "4.11.8",
       "from": "ajv@>=4.9.1 <5.0.0",
@@ -1908,11 +1903,6 @@
       "version": "1.0.0",
       "from": "https-browserify@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/https-browserify/-/https-browserify-1.0.0.tgz"
-    },
-    "humanize-ms": {
-      "version": "1.2.1",
-      "from": "humanize-ms@>=1.2.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/humanize-ms/-/humanize-ms-1.2.1.tgz"
     },
     "i": {
       "version": "0.3.5",
