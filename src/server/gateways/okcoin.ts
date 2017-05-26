@@ -112,9 +112,9 @@ class OkCoinWebsocket {
               && errorcode != 10010 /* 10010=Insufficient funds */
               && errorcode != 10016 /* 10016=Insufficient coins balance */
               // errorcode != 10001 /* 10001=Request frequency too high */
-            ))) console.warn('okcoin', 'Unsuccessful message received:', raw);
+            ))) console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Unsuccessful message received:', raw);
             else if (success && (channel == 'addChannel' || channel == 'login'))
-              return console.info('okcoin', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
+              return console.info(new Date().toISOString().slice(11, -1), 'okcoin', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
             if (typeof errorcode !== "undefined" && (
               errorcode == 20100
               || errorcode == 10002
@@ -126,14 +126,14 @@ class OkCoinWebsocket {
             var handler = this._handlers[channel];
 
             if (typeof handler === "undefined") {
-                console.warn('okcoin', 'Got message on unknown topic', msg);
+                console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Got message on unknown topic', msg);
                 return;
             }
 
             handler(new Models.Timestamped(msg.data, t));
         }
         catch (e) {
-            console.error('okcoin', e, 'Error parsing msg', raw);
+            console.error(new Date().toISOString().slice(11, -1), 'okcoin', e, 'Error parsing msg', raw);
             throw e;
         }
     };
@@ -155,7 +155,7 @@ class OkCoinWebsocket {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            console.warn('okcoin', 'Heartbeat lost, reconnecting...');
+            console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Heartbeat lost, reconnecting...');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
@@ -286,7 +286,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         var orderId = order[0];
         if (typeof orderId === "undefined") {
-            console.error('okcoin', 'got an order ack when there was no order queued!', util.format(ts.data));
+            console.error(new Date().toISOString().slice(11, -1), 'okcoin', 'got an order ack when there was no order queued!', util.format(ts.data));
             return;
         }
 
@@ -462,7 +462,7 @@ class OkCoinHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
-                    console.error('okcoin', err, 'url:', actionUrl, 'err:', err, 'body:', body);
+                    console.error(new Date().toISOString().slice(11, -1), 'okcoin', err, 'url:', actionUrl, 'err:', err, 'body:', body);
                     d.reject(e);
                 }
             }
@@ -493,7 +493,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     private trigger = () => {
         this._http.post("userinfo.do", {}).then(msg => {
             if (!(<any>msg.data).result)
-              console.error('okcoin', 'Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+              console.error(new Date().toISOString().slice(11, -1), 'okcoin', 'Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
 
             var free = (<any>msg.data).info.funds.free;
             var freezed = (<any>msg.data).info.funds.freezed;

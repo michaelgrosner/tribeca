@@ -228,7 +228,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             if (ack == null || typeof ack.id === "undefined") {
               if (ack==null || (ack.message && ack.message!='Insufficient funds'))
-                console.warn('coinbase', 'WARNING FROM GATEWAY:', order.orderId, err, ack);
+                console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'WARNING FROM GATEWAY:', order.orderId, err, ack);
             }
             var msg = null;
             if (err) {
@@ -397,10 +397,10 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
                     });
                 }
                 else {
-                    console.warn('coinbase', 'Unable to get Coinbase positions', data)
+                    console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'Unable to get Coinbase positions', data)
                 }
             } catch (error) {
-                console.error('coinbase', error, 'Exception while downloading Coinbase positions', data)
+                console.error(new Date().toISOString().slice(11, -1), 'coinbase', error, 'Exception while downloading Coinbase positions', data)
             }
         });
     };

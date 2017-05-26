@@ -21,7 +21,6 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
         private _pub: Publish.IPublish<boolean>,
         private _rec: Publish.IReceive<boolean>) {
-        console.info('active', 'Starting saved quoting state', startQuoting);
         this._savedQuotingMode = startQuoting;
 
         _pub.registerSnapshot(() => [this.latest]);
@@ -32,7 +31,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
-            console.info('active', 'Changed saved quoting state to', this._savedQuotingMode);
+            console.info(new Date().toISOString().slice(11, -1), 'active', 'Changed saved quoting state to', this._savedQuotingMode);
             this.updateParameters();
         }
 
@@ -49,7 +48,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
         if (newMode !== this._latest) {
             this._latest = newMode;
-            console.trace('active', 'Changed quoting mode to', this.latest);
+            console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', this.latest);
             this.NewParameters.trigger();
             this._pub.publish(this.latest);
         }

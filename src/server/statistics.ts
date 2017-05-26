@@ -63,7 +63,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
         var fv = this._fv.latestFairValue;
 
         if (fv === null) {
-            console.warn('ewma', 'Unable to compute value');
+            console.warn(new Date().toISOString().slice(11, -1), 'ewma', 'Unable to compute value');
             return;
         }
 
@@ -160,7 +160,7 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         const fv = this._fv.latestFairValue;
         const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (fv === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
-            console.warn('stdev', 'Unable to compute value');
+            console.warn(new Date().toISOString().slice(11, -1), 'stdev', 'Unable to compute value');
             return;
         }
 

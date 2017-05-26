@@ -155,7 +155,7 @@ export class TargetBasePositionManager {
             );
             this.NewTargetPosition.trigger();
             this._wrapped.publish(this.latestTargetPosition);
-            console.info('tbp', 'recalculated', this.latestTargetPosition.data);
+            console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this.latestTargetPosition.data);
         }
     };
 }
