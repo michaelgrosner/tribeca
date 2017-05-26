@@ -78,8 +78,7 @@ export class PositionManager {
         this.newLong = this._longEwma.addNewValue(fv.price);
 
         const minTick = this._details.minTickIncrement;
-        const factor = 1/minTick;
-        let newTargetPosition = ((this.newShort * factor/ this.newLong) - factor) * 5;
+        let newTargetPosition = ((this.newShort * 100/ this.newLong) - 100) * 5;
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
