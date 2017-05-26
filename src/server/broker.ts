@@ -394,7 +394,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
             let tradePingPongType = 'Ping';
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
+            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
               var widthPong = (this._qlParamRepo.latest.widthPercentage)
                   ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
                   : this._qlParamRepo.latest.widthPong;
@@ -453,7 +453,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
                 private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
-        if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
+        if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setTimeout(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
