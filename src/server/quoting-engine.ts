@@ -284,7 +284,6 @@ export class QuotingEngine {
         const filteredMkt = this._filteredMarkets.latestFilteredMarket;
         if (filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             this.latestQuote = null;
-            console.trace('debug1', filteredMkt);
             return;
         }
 
