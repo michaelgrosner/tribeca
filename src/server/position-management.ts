@@ -63,7 +63,7 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ):null]);
         this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(10, 'minutes'));
-        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(21, 'seconds'));
+        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(1, 'seconds'));
     }
 
     private updateEwmaValues = () => {
