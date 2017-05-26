@@ -73,6 +73,7 @@ export class QuotingEngine {
           new PingPong.PingPongQuoteStyle(),
           new PingPong.BoomerangQuoteStyle(),
           new PingPong.AK47QuoteStyle(),
+          new PingPong.HamelinRatQuoteStyle(),
         ]);
 
         _filteredMarkets.FilteredMarketChanged.on(this.recalcQuote);
@@ -194,7 +195,7 @@ export class QuotingEngine {
             return null;
         }
 
-        if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
+        if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && (
             (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Sell')>-1)
             || params.pongAt == Models.PongAt.ShortPingAggressive
@@ -231,7 +232,7 @@ export class QuotingEngine {
         }
 
         if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0]) || (
-            (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+            (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
               || (totalQuotePosition>buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
         ))) {
@@ -239,7 +240,7 @@ export class QuotingEngine {
             unrounded.askSz = null;
         }
         if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0]) || (
-          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide || params.pingAt === Models.PingAt.DepletedBidSide
               || (totalBasePosition>sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))
         ))) {

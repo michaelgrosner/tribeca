@@ -90,10 +90,10 @@ class DisplayOrder {
                                             <th>mode</th>
                                             <th *ngIf="pair.quotingParameters.display.mode==7">bullets</th>
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
-                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxBidSize?</span></th>
-                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxAskSize?</span></th>
+                                            <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
+                                            <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
+                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxBidSize?</span></th>
+                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxAskSize?</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -120,13 +120,13 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
                                             </td>
-                                            <td style="min-width:142px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="min-width:142px;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
                                                    [(ngModel)]="pair.quotingParameters.display.pingAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
                                                    [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
@@ -177,9 +177,9 @@ class DisplayOrder {
                                             <th>sop</th>
                                             <th>bw?</th>
                                             <th>%w?</th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)==-1">width<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
-                                            <th *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                            <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)==-1">width<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                            <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                            <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -246,13 +246,13 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
                                             </td>
-                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1 && !pair.quotingParameters.display.widthPercentage">
+                                            <td style="width:169px;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && !pair.quotingParameters.display.widthPercentage">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
-                                            <td style="width:169px;" *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1 && pair.quotingParameters.display.widthPercentage">
+                                            <td style="width:169px;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && pair.quotingParameters.display.widthPercentage">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="0.01" min="0.01" max="100"
                                                    onClick="this.select()"
@@ -450,7 +450,7 @@ class DisplayOrder {
                                       <button type="button"
                                               class="btn btn-info navbar-btn"
                                               (click)="cleanAllClosedOrders()"
-                                              *ngIf="[6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                              *ngIf="[6,7,8].indexOf(pair.quotingParameters.display.mode)>-1"
                                               data-placement="bottom">Clean Pongs
                                       </button>
                                   </div>
@@ -458,7 +458,7 @@ class DisplayOrder {
                                       <button type="button"
                                               class="btn btn-danger navbar-btn"
                                               (click)="cleanAllOrders()"
-                                              *ngIf="[5,6,7].indexOf(pair.quotingParameters.display.mode)>-1"
+                                              *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1"
                                               data-placement="bottom">Clean Pings
                                       </button>
                                   </div>

@@ -87,6 +87,8 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade Tribeca will cancel all previous trades if those are worst.
 
+  * `HamelinRat` - Same as `Boomberang` for now (under development).
+
 * `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
 
 * `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
