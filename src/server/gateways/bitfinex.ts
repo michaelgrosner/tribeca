@@ -74,17 +74,17 @@ class BitfinexWebsocket {
             else if (typeof msg.event !== "undefined" && msg.event == "subscribed") {
                 this._handlers['c'+msg.chanId] = this._handlers[msg.channel];
                 delete this._handlers[msg.channel];
-                console.info('bitfinex', 'Successfully connected to', msg.channel);
+                console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Successfully connected to', msg.channel);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "auth") {
                 this._handlers['c'+msg.chanId] = this._handlers[msg.event];
                 delete this._handlers[msg.channel];
-                console.info('bitfinex', 'Authentication status:', msg.status);
+                console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Authentication status:', msg.status);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "info") {
-                console.info('bitfinex', 'Bitfinex info:', msg);
+                console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Bitfinex info:', msg);
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "ping") {
@@ -92,7 +92,7 @@ class BitfinexWebsocket {
                 return;
             }
             else if (typeof msg.event !== "undefined" && msg.event == "error") {
-                console.info('bitfinex', 'Error on Bitfinex API:', msg.code+':'+msg.msg);
+                console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Error on Bitfinex API:', msg.code+':'+msg.msg);
                 return;
             }
             if (msg[1] == 'hb' || (typeof msg.event !== "undefined" && msg.event == "pong")) {
@@ -100,14 +100,14 @@ class BitfinexWebsocket {
                 return;
             }
             else if (msg[1]=='n') {
-              console.info('bitfinex', 'Bitfinex notice:', msg[2][6], msg[2][7]);
+              console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Bitfinex notice:', msg[2][6], msg[2][7]);
               return;
             }
 
             var handler = this._handlers['c'+msg[0]];
 
             if (typeof handler === "undefined") {
-                console.warn('bitfinex', 'Got message on unknown topic', msg);
+                console.warn(new Date().toISOString().slice(11, -1), 'bitfinex', 'Got message on unknown topic', msg);
                 return;
             }
 
@@ -124,7 +124,7 @@ class BitfinexWebsocket {
             }
         }
         catch (e) {
-            console.error('bitfinex', e, 'Error parsing msg', raw);
+            console.error(new Date().toISOString().slice(11, -1), 'bitfinex', e, 'Error parsing msg', raw);
             throw e;
         }
     };
@@ -133,7 +133,7 @@ class BitfinexWebsocket {
         this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
-        this._ws.on("error", (x) => console.error('bitfinex', 'WS ERROR', x));
+        this._ws.on("error", (x) => console.error(new Date().toISOString().slice(11, -1), 'bitfinex', 'WS ERROR', x));
         this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
     };
 
@@ -147,7 +147,7 @@ class BitfinexWebsocket {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            console.warn('bitfinex', 'Heartbeat lost, reconnecting...');
+            console.warn(new Date().toISOString().slice(11, -1), 'bitfinex', 'Heartbeat lost, reconnecting...');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
@@ -437,7 +437,7 @@ class BitfinexHttp {
 
         request(msg, (err, resp, body) => {
             if (err) {
-                console.error('bitfinex', err, 'Error returned: url=', url, 'err=', err);
+                console.error(new Date().toISOString().slice(11, -1), 'bitfinex', err, 'Error returned: url=', url, 'err=', err);
                 d.reject(err);
             }
             else {
@@ -447,7 +447,7 @@ class BitfinexHttp {
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (err) {
-                    console.error('bitfinex', err, 'Error parsing JSON url=', url, 'err=', err, ', body=', body);
+                    console.error(new Date().toISOString().slice(11, -1), 'bitfinex', err, 'Error parsing JSON url=', url, 'err=', err, ', body=', body);
                     d.reject(err);
                 }
             }
@@ -467,7 +467,7 @@ class BitfinexHttp {
         this._secret = config.GetString("BitfinexSecret");
 
         this._nonce = new Date().valueOf();
-        console.info('bitfinex', 'Starting nonce:', this._nonce);
+        console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Starting nonce:', this._nonce);
         setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }

@@ -87,30 +87,30 @@ let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
   Promises.timeout(2000, exitingEvent()).then(completed => {
-    console.info('main', 'All exiting event handlers have fired, exiting application.');
+    console.info(new Date().toISOString().slice(11, -1), 'main', 'All exiting event handlers have fired, exiting application.');
     process.exit();
   }).catch(() => {
-    console.warn('main', 'Did not complete clean-up tasks successfully, still shutting down.');
+    console.warn(new Date().toISOString().slice(11, -1), 'main', 'Did not complete clean-up tasks successfully, still shutting down.');
     process.exit(1);
   });
 };
 
 process.on("uncaughtException", err => {
-  console.error('main', 'Unhandled exception!', err);
+  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err);
   performExit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
-  console.error('main', 'Unhandled promise rejection!', reason, p);
+  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled promise rejection!', reason, p);
   performExit();
 });
 
 process.on("exit", (code) => {
-  console.info('main', 'Exiting with code', code);
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exiting with code', code);
 });
 
 process.on("SIGINT", () => {
-  console.info('main', 'Handling SIGINT');
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Handling SIGINT');
   performExit();
 });
 
@@ -174,7 +174,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     const username = config.GetString("WebClientUsername");
     const password = config.GetString("WebClientPassword");
     if (username !== "NULL" && password !== "NULL") {
-        console.info('main', 'Requiring authentication to web client');
+        console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
         const basicAuth = require('basic-auth-connect');
         app.use(basicAuth((u, p) => u === username && p === password));
     }
@@ -183,7 +183,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     app.use(express.static(path.join(__dirname, "..", "pub")));
 
     const webport = config.GetNumber("WebClientListenPort");
-    web_server.listen(webport, () => console.info('main', 'Listening to admins on *:', webport));
+    web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
 
     app.get("/view/*", (req: express.Request, res: express.Response) => {
       try {
@@ -321,7 +321,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getPublisher(Models.Topics.ExchangeConnectivity)
     );
 
-    console.info('main', 'Exchange details' ,{
+    console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
         exchange: Models.Exchange[broker.exchange()],
         pair: broker.pair.toString(),
         minTick: broker.minTickIncrement,
@@ -478,7 +478,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
       const n = ms - interval;
       if (n > 121)
-        console.info('main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+        console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
       start = process.hrtime();
     }, interval).unref();
 };
