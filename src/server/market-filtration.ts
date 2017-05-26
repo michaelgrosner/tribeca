@@ -25,7 +25,6 @@ export class MarketFiltration {
 
         if (mkt == null || !mkt.bids.length || !mkt.asks.length) {
             this.latestFilteredMarket = null;
-            console.trace('debug2', mkt);
             return;
         }
 
@@ -34,7 +33,6 @@ export class MarketFiltration {
 
         if (!bid.length || !ask.length) {
             this.latestFilteredMarket = null;
-            console.trace('debug3', this._quoter.quotesSent(Models.Side.Bid).length, this._quoter.quotesSent(Models.Side.Ask).length, bid, ask, this._broker.currentBook.bids, this._broker.currentBook.asks);
             return;
         }
 
