@@ -28,8 +28,8 @@ import {SubscriberFactory} from './shared_directives';
       <tr class="active" *ngFor="let level of levels; let i = index">
         <td class="text-left">mkt{{ i }}</td>
         <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="level.bidSzClass">{{ level.bidSize | number:'1.4-4' }}</div></td>
-        <td [ngClass]="level.bidClass">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</td>
-        <td [ngClass]="level.askClass">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidModClass">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askModClass">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="level.askSzClass">{{ level.askSize | number:'1.4-4' }}</div></td>
       </tr>
     </table></div>`
@@ -133,7 +133,7 @@ export class MarketQuotingComponent implements OnInit {
           mod = this.levels[h].askSize!==update.data[1][i+1] ? 1 : 0;
           break;
         }
-      if (j >= this.levels.length) this.levels[j] = <any>{};
+      if (j >= this.levels.length) this.levels[j] = <any>{ bidModClass: 'bidsz'+j, askModClass: 'asksz'+j };
       this.levels[j] = Object.assign(this.levels[j], { askMod: mod, askPrice: update.data[1][i], askSize: update.data[1][++i] });
     }
 
@@ -205,11 +205,11 @@ export class MarketQuotingComponent implements OnInit {
       for (let i = 0; i < this.levels.length; i++) {
         let level = this.levels[i];
         if (highlight) {
-          level.bidSzClass = level.bidMod===1 ? 'buy' : '';
-          level.askSzClass = level.askMod===1 ? 'sell' : '';
+          level.bidSzClass = (level.bidMod===1 ? 'buy ' : '')+level.bidModClass;
+          level.askSzClass = (level.askMod===1 ? 'sell ' : '')+level.askModClass;
           if (level.bidMod===1||level.askMod===1) setTimeout(() => {level.bidSzClass=level.askSzClass='';}, 221);
-          if (level.bidMod===2) (<any>jQuery)('.bidlvl'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.bidlvl'+i).fadeTo(321, 1.0); });
-          if (level.askMod===2) (<any>jQuery)('.asklvl'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.asklvl'+i).fadeTo(321, 1.0); });
+          if (level.bidMod===2) (<any>jQuery)('.bidsz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.bidsz'+i).fadeTo(321, 1.0); });
+          if (level.askMod===2) (<any>jQuery)('.asksz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.asksz'+i).fadeTo(321, 1.0); });
         }
         level.bidClass = 'bidlvl'+i+' active';
         var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
