@@ -455,7 +455,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 initTrades : Models.Trade[]) {
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
-        _timeProvider.setTimeout(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
+        _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
         _.each(initTrades, t => this._trades.push(t));
         _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
