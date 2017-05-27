@@ -5,7 +5,7 @@ import * as bunyan from "bunyan";
 import * as moment from "moment";
 import log from "./logging";
 
-export class WebSocket {
+export default class WebSocket {
     private readonly _log : bunyan;
     private _ws : ws = null;
 
@@ -86,4 +86,16 @@ export class WebSocket {
             this.connect();
         }, interval);
     };
+
+    public send = (data: string, callback?: () => void) => {
+        if (this._ws !== null) {
+            this._ws.send(data, (e: Error) => { 
+                if (!e && callback) callback();
+                else if (e) this._log.error(e, "error during websocket send!");
+            });
+        }
+        else {
+            this._log.warn(data, "cannot send because socket is not connected!");
+        }
+    }
 }
