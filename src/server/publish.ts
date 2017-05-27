@@ -8,6 +8,7 @@ export interface IPublish<T> {
 
 export class Publisher<T> implements IPublish<T> {
     private _snapshot: () => T[] = null;
+    private _lastMarketData: number = new Date().getTime();
     constructor(private topic: string,
                 private _io: SocketIO.Server,
                 private _monitor: Monitor.ApplicationState,
@@ -19,7 +20,7 @@ export class Publisher<T> implements IPublish<T> {
                 if (this._snapshot !== null) {
                   let snap: T[] = this._snapshot();
                   if (this.topic === Models.Topics.MarketData)
-                    snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
+                      snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
                   else if (this.topic === Models.Topics.OrderStatusReports)
                     snap = this.compressSnapshot(this._snapshot(), this.compressOSRInc);
                   else if (this.topic === Models.Topics.Position)
@@ -37,9 +38,10 @@ export class Publisher<T> implements IPublish<T> {
     }
 
     public publish = (msg: T) => {
-      if (this.topic === Models.Topics.MarketData)
+      if (this.topic === Models.Topics.MarketData) {
+        if (this._lastMarketData+369>new Date().getTime()) return;
         msg = this.compressMarketDataInc(msg);
-      else if (this.topic === Models.Topics.OrderStatusReports)
+      } else if (this.topic === Models.Topics.OrderStatusReports)
         msg = this.compressOSRInc(msg);
       else if (this.topic === Models.Topics.Position)
         msg = this.compressPositionInc(msg);
@@ -64,6 +66,7 @@ export class Publisher<T> implements IPublish<T> {
       let ret: any = new Models.Timestamped([[],[]], data.time);
       data.bids.forEach(bid => ret.data[0].push(bid.price, bid.size));
       data.asks.forEach(ask => ret.data[1].push(ask.price, ask.size));
+      this._lastMarketData = new Date().getTime();
       return ret;
     };
 

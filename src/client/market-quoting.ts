@@ -53,7 +53,7 @@ export class MarketQuotingComponent implements OnInit {
   @Input() set connected(connected: boolean) {
     if (connected) return;
     this.clearQuote();
-    this.updateQuoteClass(false);
+    this.updateQuoteClass();
   }
 
   constructor(
@@ -126,6 +126,7 @@ export class MarketQuotingComponent implements OnInit {
       }
 
     var mod: number;
+    var _levels = [];
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
       mod = 2;
       for (let h: number = this.levels.length;h--;)
@@ -133,8 +134,8 @@ export class MarketQuotingComponent implements OnInit {
           mod = this.levels[h].askSize!==update.data[1][i+1] ? 1 : 0;
           break;
         }
-      if (j >= this.levels.length) this.levels[j] = <any>{ bidModClass: 'bidsz'+j, askModClass: 'asksz'+j };
-      this.levels[j] = Object.assign(this.levels[j], { askMod: mod, askPrice: update.data[1][i], askSize: update.data[1][++i] });
+      if (j >= _levels.length) _levels[j] = <any>{};
+      _levels[j] = Object.assign(_levels[j], { askMod: mod, askPrice: update.data[1][i], askSize: update.data[1][++i] });
     }
 
     if (bids.length) {
@@ -155,19 +156,19 @@ export class MarketQuotingComponent implements OnInit {
     }
 
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
-      if (j >= this.levels.length) this.levels[j] = <any>{};
       mod = 2;
       for (let h: number = this.levels.length;h--;)
         if (this.levels[h].bidPrice===update.data[0][i]) {
           mod = this.levels[h].bidSize!==update.data[0][i+1] ? 1 : 0;
           break;
         }
-      this.levels[j] = Object.assign(this.levels[j], { bidMod: mod, bidPrice: update.data[0][i], bidSize: update.data[0][++i] });
-      if (j==0) this.diffMD = this.levels[j].askPrice - this.levels[j].bidPrice;
+      if (j >= _levels.length) _levels[j] = <any>{};
+      _levels[j] = Object.assign(_levels[j], { bidMod: mod, bidPrice: update.data[0][i], bidSize: update.data[0][++i] });
+      if (j==0) this.diffMD = _levels[j].askPrice - _levels[j].bidPrice;
       else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
     }
 
-    this.updateQuoteClass(true);
+    this.updateQuoteClass(_levels);
   }
 
   private updateQuote = (o: Models.Timestamped<any[]>) => {
@@ -187,7 +188,7 @@ export class MarketQuotingComponent implements OnInit {
         price: o.data[3]
       });
 
-    this.updateQuoteClass(false);
+    this.updateQuoteClass();
   }
 
   private updateQuoteStatus = (status: Models.TwoSidedQuoteStatus) => {
@@ -200,29 +201,33 @@ export class MarketQuotingComponent implements OnInit {
     this.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
   }
 
-  private updateQuoteClass = (highlight: boolean) => {
+  private updateQuoteClass = (levels?: any[]) => {
+    if (levels && levels.length > 0) {
+      for (let i = 0; i < levels.length; i++) {
+        if (i >= this.levels.length) this.levels[i] = <any>{ bidModClass: 'bidsz'+i, askModClass: 'asksz'+i };
+        this.levels[i].bidSzClass = (levels[i].bidMod===1 ? 'buy ' : '')+this.levels[i].bidModClass;
+        this.levels[i].askSzClass = (levels[i].askMod===1 ? 'sell ' : '')+this.levels[i].askModClass;
+        if (levels[i].bidMod===1||levels[i].askMod===1) setTimeout(() => {this.levels[i].bidSzClass=this.levels[i].askSzClass='';}, 221);
+        if (levels[i].bidMod===2) (<any>jQuery)('.bidsz'+i).fadeTo(321, 0.3, () => { (<any>jQuery)('.bidsz'+i).fadeTo(1, 1.0, () => { this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize }); }); });
+        else this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize });
+        if (levels[i].askMod===2) (<any>jQuery)('.asksz'+i).fadeTo(321, 0.3, () => { (<any>jQuery)('.asksz'+i).fadeTo(1, 1.0, () => { this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize }); }); });
+        else this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize });
+      }
+    }
     if (this.levels && this.levels.length > 0) {
       for (let i = 0; i < this.levels.length; i++) {
-        let level = this.levels[i];
-        if (highlight) {
-          level.bidSzClass = (level.bidMod===1 ? 'buy ' : '')+level.bidModClass;
-          level.askSzClass = (level.askMod===1 ? 'sell ' : '')+level.askModClass;
-          if (level.bidMod===1||level.askMod===1) setTimeout(() => {level.bidSzClass=level.askSzClass='';}, 221);
-          if (level.bidMod===2) (<any>jQuery)('.bidsz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.bidsz'+i).fadeTo(321, 1.0); });
-          if (level.askMod===2) (<any>jQuery)('.asksz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.asksz'+i).fadeTo(321, 1.0); });
-        }
-        level.bidClass = 'active';
+        this.levels[i].bidClass = 'active';
         var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
         for (var j = 0; j < bids.length; j++)
-          if (bids[j].price === level.bidPrice)
-            level.bidClass = 'success buy';
-        level.bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.bidSize)/Math.log(2))*4,19),1)));
-        level.askClass = 'active';
+          if (bids[j].price === this.levels[i].bidPrice)
+            this.levels[i].bidClass = 'success buy';
+        this.levels[i].bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].bidSize)/Math.log(2))*4,19),1)));
+        this.levels[i].askClass = 'active';
         var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
         for (var j = 0; j < asks.length; j++)
-          if (asks[j].price === level.askPrice)
-            level.askClass = 'success sell';
-        level.askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.askSize)/Math.log(2))*4,19),1)));
+          if (asks[j].price === this.levels[i].askPrice)
+            this.levels[i].askClass = 'success sell';
+        this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
       }
     }
   }
