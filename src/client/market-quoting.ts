@@ -211,17 +211,17 @@ export class MarketQuotingComponent implements OnInit {
           if (level.bidMod===2) (<any>jQuery)('.bidsz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.bidsz'+i).fadeTo(321, 1.0); });
           if (level.askMod===2) (<any>jQuery)('.asksz'+i).fadeTo(1, 0.3, function() { (<any>jQuery)('.asksz'+i).fadeTo(321, 1.0); });
         }
-        level.bidClass = 'bidlvl'+i+' active';
+        level.bidClass = 'active';
         var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
         for (var j = 0; j < bids.length; j++)
           if (bids[j].price === level.bidPrice)
-            level.bidClass = 'bidlvl'+i+' success buy';
+            level.bidClass = 'success buy';
         level.bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.bidSize)/Math.log(2))*4,19),1)));
-        level.askClass = 'asklvl'+i+' active';
+        level.askClass = 'active';
         var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
         for (var j = 0; j < asks.length; j++)
           if (asks[j].price === level.askPrice)
-            level.askClass = 'asklvl'+i+' success sell';
+            level.askClass = 'success sell';
         level.askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(level.askSize)/Math.log(2))*4,19),1)));
       }
     }
