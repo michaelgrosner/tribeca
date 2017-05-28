@@ -42,7 +42,7 @@ See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerf
 
 Troubleshooting:
 
- * Create a [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) if the installation fails with error: virtual memory exhausted: Cannot allocate memory.
+ * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (delete it after install) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
  Optional:
 
