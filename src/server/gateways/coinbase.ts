@@ -2,12 +2,119 @@ import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
+import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require('lodash');
 import * as Promises from '../promises';
 import uuid = require('node-uuid');
 import Gdax = require('gdax');
+
+// import df = require('dateformat');
+// import events = require('events');
+// import quickfix = require('node-quickfix-wrap');
+// import path = require('path');
+
+// var initiator = quickfix.initiator;
+// var options = {
+  // credentials: {
+    // username: "xxxx",
+    // password: "xxx"
+  // },
+  // settings: `[DEFAULT]
+// ReconnectInterval=60
+// PersistMessages=Y
+// FileStorePath=${path.resolve('./node_modules/node-quickfix-wrap/quickfix')}
+// FileLogPath=${path.resolve('./node_modules/node-quickfix-wrap/quickfix')}
+// [SESSION]
+// ConnectionType=initiator
+// SenderCompID=NODEQUICKFIX
+// TargetCompID=ELECTRONIFIE
+// BeginString=FIX.4.4
+// StartTime=00:00:00
+// EndTime=23:59:59
+// HeartBtInt=30
+// SocketConnectPort=3223
+// SocketConnectHost=localhost
+// UseDataDictionary=Y
+// DataDictionary=${path.resolve('./node_modules/node-quickfix-wrap/quickfix/spec/FIX44.xml')}
+// ResetOnLogon=Y
+// CancelOrdersOnDisconnect=Y`
+// };
+// function stats(fixentity: any, sessionID: any, message?: string) {
+  // var sess = fixentity.getSession(sessionID);
+  // var ret = {
+    // sessionID: sessionID,
+    // senderSeqNum: sess.senderSeqNum,
+    // targetSeqNum: sess.targetSeqNum
+  // };
+  // if (message) ret = Object.assign(ret, { message: message });
+  // return ret;
+// }
+
+// function printStats(fixentity:any ) {
+  // var sessions = fixentity.getSessions();
+  // var sessionId = sessions[0];
+  // var sess = fixentity.getSession(sessionId);
+  // console.log('senderSeqNum', sess.senderSeqNum, 'targetSeqNum', sess.targetSeqNum);
+// }
+
+// util.inherits(initiator, events.EventEmitter);
+
+// var fixClient = new initiator(
+// {
+  // onCreate: function(sessionID) {
+    // fixClient.emit('onCreate', stats(fixClient, sessionID));
+  // },
+  // onLogon: function(sessionID) {
+    // fixClient.emit('onLogon', stats(fixClient, sessionID));
+  // },
+  // onLogout: function(sessionID) {
+    // fixClient.emit('onLogout', stats(fixClient, sessionID));
+  // },
+  // onLogonAttempt: function(message, sessionID) {
+    // fixClient.emit('onLogonAttempt', stats(fixClient, sessionID, message));
+  // },
+  // toAdmin: function(message, sessionID) {
+    // fixClient.emit('toAdmin', stats(fixClient, sessionID, message));
+  // },
+  // fromAdmin: function(message, sessionID) {
+    // fixClient.emit('fromAdmin', stats(fixClient, sessionID, message));
+  // },
+  // fromApp: function(message, sessionID) {
+    // fixClient.emit('fromApp', stats(fixClient, sessionID, message));
+  // }
+// }, options);
+
+// fixClient.start(function() {
+  // console.log("FIX Initiator Started");
+  // var order = {
+    // header: {
+      // 8: 'FIX.4.4',
+      // 35: 'D',
+      // 49: "NODEQUICKFIX",
+      // 56: "ELECTRONIFIE"
+    // },
+    // tags: {
+      // 11: "0E0Z86K00000",
+      // 48: "06051GDX4",
+      // 22: 1,
+      // 38: 200,
+      // 40: 2,
+      // 54: 1,
+      // 55: 'BAC',
+      // 218: 100,
+      // 60: df(new Date(), "yyyymmdd-HH:MM:ss.l"),
+      // 423: 6
+    // }
+  // };
+
+  // fixClient.send(order, function() {
+    // console.log("Order sent!");
+    // printStats(fixClient);
+    // process.stdin.resume();
+  // });
+// });
 
 interface CoinbaseOrderEmitter {
     on(event: string, cb: Function): CoinbaseOrderEmitter;
