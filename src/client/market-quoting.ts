@@ -207,11 +207,9 @@ export class MarketQuotingComponent implements OnInit {
         if (i >= this.levels.length) this.levels[i] = <any>{ bidModClass: 'bidsz'+i, askModClass: 'asksz'+i };
         this.levels[i].bidSzClass = (levels[i].bidMod===1 ? 'buy ' : '')+this.levels[i].bidModClass;
         this.levels[i].askSzClass = (levels[i].askMod===1 ? 'sell ' : '')+this.levels[i].askModClass;
-        if (levels[i].bidMod===1||levels[i].askMod===1) setTimeout(() => {this.levels[i].bidSzClass=this.levels[i].askSzClass='';}, 221);
-        if (levels[i].bidMod===2) (<any>jQuery)('.bidsz'+i).fadeTo(321, 0.3, () => { (<any>jQuery)('.bidsz'+i).fadeTo(1, 1.0, () => { this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize }); }); });
-        else this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize });
-        if (levels[i].askMod===2) (<any>jQuery)('.asksz'+i).fadeTo(321, 0.3, () => { (<any>jQuery)('.asksz'+i).fadeTo(1, 1.0, () => { this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize }); }); });
-        else this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize });
+        if (levels[i].bidMod===1||levels[i].askMod===1) setTimeout(() => { this.levels[i].bidSzClass=this.levels[i].askSzClass=''; }, 221);
+        (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 ); setTimeout(() => { (<any>jQuery)('.bidsz'+i).css( 'opacity', 1.0 ); this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize }); }, 221);
+        (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 ); setTimeout(() => { (<any>jQuery)('.asksz'+i).css( 'opacity', 1.0 ); this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize }); }, 221);
       }
     }
     if (this.levels && this.levels.length > 0) {
