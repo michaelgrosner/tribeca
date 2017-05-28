@@ -50,8 +50,8 @@ interface OrderCancel extends HitBtcPayload {
 }
 
 interface HitBtcOrderBook {
-    asks : Array<Array<string>>;
-    bids : Array<Array<string>>;
+    asks : [string, string][];
+    bids : [string, string][];
 }
 
 interface Update {
@@ -133,24 +133,26 @@ function getJSON<T>(url: string, qs?: any) : Promise<T> {
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.MarketSide>();
-    _marketDataWs : WebSocket;
+    private readonly _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
 
-    private static Eq(a : Models.MarketSide, b : Models.MarketSide) { return Math.abs(a.price - b.price) < 1e-4; }
+    private Eq(a : Models.MarketSide, b : Models.MarketSide) {
+        return Math.abs(a.price - b.price) < .1 * this._minTick;
+    }
 
-    private static AskCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
-        if (HitBtcMarketDataGateway.Eq(a, b)) return 0;
+    private AskCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
+        if (this.Eq(a, b)) return 0;
         return a.price > b.price ? 1 : -1;
     };
 
-    private static BidCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
-        if (HitBtcMarketDataGateway.Eq(a, b)) return 0;
+    private BidCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
+        if (this.Eq(a, b)) return 0;
         return a.price > b.price ? -1 : 1;
     };
 
-    private _lastBids = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.BidCmp);
-    private _lastAsks = new SortedArray([], HitBtcMarketDataGateway.Eq, HitBtcMarketDataGateway.AskCmp);
+    private readonly _lastBids = new SortedArray([], this.Eq, this.BidCmp);
+    private readonly _lastAsks = new SortedArray([], this.Eq, this.AskCmp);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -192,11 +194,9 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         return side.slice(0, 5);
     }
 
-    private onMessage = (raw : string) => {
-        var t : Date = new Date();
-
+    private onMessage = (raw : Models.Timestamped<string>) => {
         try {
-            var msg = JSON.parse(raw);
+            var msg = JSON.parse(raw.data);
         }
         catch (e) {
             console.error('hitbtc', e, 'Error parsing msg', raw);
@@ -204,10 +204,10 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         }
 
         if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
-            this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, t);
+            this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, raw.time);
         }
         else if (msg.hasOwnProperty("MarketDataSnapshotFullRefresh")) {
-            this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, t);
+            this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, raw.time);
         }
         else {
             console.info('hitbtc', 'unhandled message', msg);
@@ -216,7 +216,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private onConnectionStatusChange = () => {
-        if (this._marketDataWs.readyState === WebSocket.OPEN && (<any>this._tradesClient).connected) {
+        if (this._marketDataWs.OPEN && this._tradesClient.connected) {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         else {
@@ -238,7 +238,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _tradesClient : SocketIOClient.Socket;
 
-    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider) {
+    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
@@ -281,7 +281,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
-    _orderEntryWs : WebSocket;
+    private readonly _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
 
@@ -427,14 +427,12 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var v = {};
         v[msgType] = msg;
         var readyMsg = this.authMsg(v);
-        this._orderEntryWs.send(JSON.stringify(readyMsg), (e:Error) => {
-            if (!e && cb) cb();
-        });
+        this._orderEntryWs.send(JSON.stringify(readyMsg), cb);
     };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private onConnectionStatusChange = () => {
-        if (this._orderEntryWs.readyState === WebSocket.OPEN) {
+        if (this._orderEntryWs.OPEN) {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         else {
@@ -458,15 +456,15 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         throw err;
     };
 
-    private onMessage = (raw : string) => {
+    private onMessage = (raw : Models.Timestamped<string>) => {
         try {
             var t = new Date();
-            var msg = JSON.parse(raw);
+            var msg = JSON.parse(raw.data);
             if (msg.hasOwnProperty("ExecutionReport")) {
-                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, t));
+                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
             }
             else if (msg.hasOwnProperty("CancelReject")) {
-                this.onCancelReject(new Models.Timestamped(msg.CancelReject, t));
+                this.onCancelReject(new Models.Timestamped(msg.CancelReject, raw.time));
             }
             else {
                 console.info('hitbtc', 'unhandled message', msg);
@@ -488,8 +486,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
         this._orderEntryWs.on('open', this.onOpen);
         this._orderEntryWs.on('message', this.onMessage);
-        this._orderEntryWs.on("close", this.onClosed);
-        this._orderEntryWs.on("error", this.onError);
+        this._orderEntryWs.on('close', this.onConnectionStatusChange);
     }
 }
 
@@ -547,9 +544,9 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             });
     };
 
-    private _apiKey : string;
-    private _secret : string;
-    private _pullUrl : string;
+    private readonly _apiKey : string;
+    private readonly _secret : string;
+    private readonly _pullUrl : string;
     constructor(config : Config.IConfigProvider) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
@@ -605,7 +602,7 @@ class HitBtc extends Interfaces.CombinedGateway {
         }
 
         super(
-            new HitBtcMarketDataGateway(config, symbolProvider),
+            new HitBtcMarketDataGateway(config, symbolProvider, step),
             orderGateway,
             positionGateway,
             details);

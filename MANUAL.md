@@ -6,7 +6,7 @@ The strategy is appealing to traders because it doesn't require traders to take 
 
 ## An example
 
-Let's consider a simplified market. Let's say there are three traders: Alice, Bob, and Tim. Alice is looking to sell some of her Bitcoins and Bob is looking to convert some of his Bitcoin into USD. Neither one are savvy about markets or cryptocurrency - they use Bitcoin, but aren't going to lose sleep over trying to get the absolute best prices. Tim is operating Tribeca. Now lets say that the price BTC to USD is $100. Tim could configure Tribeca to send in a buy order for 1 BTC at $95 and a sell order for 1 BTC at $105. Tim would hope that Bob would come along and buy the offered sell order at $105 and Alice would come and sell BTC at $95 - netting Tim $10.
+Let's consider a simplified market. Let's say there are three traders: Alice, Bob, and Tim. Alice is looking to sell some of her Bitcoins and Bob is looking to convert some of his USD into Bitcoin. Neither one are savvy about markets or cryptocurrency - they use Bitcoin, but aren't going to lose sleep over trying to get the absolute best prices. Tim is operating Tribeca. Now lets say that the price BTC to USD is $100. Tim could configure Tribeca to send in a buy order for 1 BTC at $95 and a sell order for 1 BTC at $105. Tim would hope that Bob would come along and buy the offered sell order at $105 and Alice would come and sell BTC at $95 - netting Tim $10.
 
 But what if that doesn't happen? What if the price of BTC/USD jumps to $103? Now Tim's buy order seems really uncompetitive at $95 - Alice doesn't want to sell for that little. And Bob could get a pretty good deal by getting the BTC at only two extra dollars. To prevent this scenario, Tim's Tribeca would readjust the orders by cancelling the $95-$105 orders and placing a new set of orders - also known as making a market - at $98-$108.
 
@@ -89,6 +89,8 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `HamelinRat` - Same as `Boomberang` for now (under development).
 
+  * `Depth` - Use `width` as `depth`. Unlike all other modes, it does not calculate the quote spread based on fair value, instead it walks over all current open orders in the book and places the quote right after `depth` quantity, at both sides.
+
 * `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
 
 * `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
@@ -123,9 +125,9 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
 * `%w?` - If enabled, the values of `width` or `widthPing` and `widthPong` will be a percentage related to the `fair value`; useful when calculating profits subtracting exchange's fees (that usually are percentages too).
 
-* `width` and `widthPing` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
+* `width` and `widthPing` - Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
 
-* `widthPong` - Minimum width of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
+* `widthPong` - Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
 * `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
