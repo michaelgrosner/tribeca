@@ -54,7 +54,7 @@
     "moment": "^2.18.1",
     "mongodb": "^2.2.27",
     "nan": "^2.6.2",
-    "ng4-popover": "^0.0.21",
+    "ng4-popover": "^1.0.21",
     "node-quickfix-wrap": "^2.0.11",
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
