@@ -29,6 +29,7 @@ class Repository<T> implements Interfaces.IRepository<T> {
 
   public updateParameters = (newParams: T) => {
     if (this._validator(newParams) && this._paramsEqual(newParams, this._latest)) {
+      if ((<any>newParams).mode===Models.QuotingMode.Depth) (<any>newParams).widthPercentage = false;
       this._latest = newParams;
       this.NewParameters.trigger();
     }

@@ -13,6 +13,7 @@ import {QuoteInput} from "./quoting-styles/helpers";
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import PingPong = require("./quoting-styles/ping-pong");
+import Depth = require("./quoting-styles/depth");
 
 const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => {
    if ((!o && n) || (o && !n)) return true;
@@ -74,6 +75,7 @@ export class QuotingEngine {
           new PingPong.BoomerangQuoteStyle(),
           new PingPong.AK47QuoteStyle(),
           new PingPong.HamelinRatQuoteStyle(),
+          new Depth.DepthQuoteStyle()
         ]);
 
         _filteredMarkets.FilteredMarketChanged.on(this.recalcQuote);
