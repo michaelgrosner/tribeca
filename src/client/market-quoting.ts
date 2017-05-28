@@ -27,10 +27,10 @@ import {SubscriberFactory} from './shared_directives';
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
         <td class="text-left">mkt{{ i }}</td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual" style="position:absolute;">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div></td>
         <td [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual" style="position:absolute;">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
       </tr>
     </table></div>`
 })
