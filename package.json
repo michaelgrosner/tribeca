@@ -42,6 +42,7 @@
     "compression": "^1.6.2",
     "connect": "^3.6.2",
     "core-js": "^2.4.1",
+    "dateformat": "^2.0.0",
     "es6-shim": "^0.35.3",
     "eventemitter3": "^2.0.3",
     "express": "^4.15.3",
@@ -54,6 +55,7 @@
     "mongodb": "^2.2.27",
     "nan": "^2.6.2",
     "ng4-popover": "^0.0.21",
+    "node-quickfix-wrap": "^2.0.11",
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
     "rxjs": "^5.4.0",
@@ -77,7 +79,8 @@
   "gypfile": true,
   "main": "./tribeca.js",
   "config": {
-    "config": "tribeca.json"
+    "config": "tribeca.json",
+    "quickfix": "v.1.14.4"
   },
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run changelog",
@@ -85,11 +88,14 @@
     "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever restartall",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "changelog": "git --no-pager log --graph --oneline @..@{u}",
+    "preinstall": "npm run install-packages && sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db && npm run compile-quickfix",
     "postinstall": "npm run compile-server && npm run compile-client && npm run compile-public && npm run compile-bundle",
-    "compile-server": "tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts",
+    "install-packages": "test -n \"$(command -v apt-get)\" && sudo apt-get -y install g++ automake libtool libxml2 libxml2-dev $(test -n \"$(command -v mongo)\" || echo mongob) || (test -n \"$(command -v yum)\" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel $(test -n \"$(command -v mongo)\" || echo mongob))",
+    "compile-server": "node-gyp rebuild && tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts",
     "compile-client": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts",
     "compile-public": "cp -R src/pub/* app/pub/",
     "compile-bundle": "browserify -t [ babelify --presets [ babili es2015 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | uglifyjs > app/pub/js/client/bundle.min.js",
+    "compile-quickfix": "mkdir -p build && cd build && test -f /usr/local/lib/libquickfix.so || (rm -rf quickfix-v* *.tar.gz* && wget https://github.com/quickfix/quickfix/archive/$npm_package_config_quickfix.tar.gz && tar -zxvf v*.tar.gz && cd quickfix-v* && ./bootstrap && ./configure && make && sudo make install && sudo cp config.h /usr/local/include/quickfix/ && sudo ldconfig)",
     "list": "forever list",
     "restartall": "forever restartall",
     "stopall": "forever stopall",
