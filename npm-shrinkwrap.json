@@ -1785,6 +1785,11 @@
       "resolved": "https://registry.npmjs.org/growl/-/growl-1.9.2.tgz",
       "dev": true
     },
+    "hacktimer": {
+      "version": "1.1.2",
+      "from": "hacktimer@latest",
+      "resolved": "https://registry.npmjs.org/hacktimer/-/hacktimer-1.1.2.tgz"
+    },
     "handlebars": {
       "version": "4.0.10",
       "from": "handlebars@>=4.0.3 <5.0.0",
