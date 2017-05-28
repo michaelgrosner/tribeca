@@ -116,7 +116,7 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
  * Trades Complete
  * Target Position for BTC currency (TBP)
  * Target Position for Fiat currency
- * EWMA values for Quote Protection and APR
+ * STDEV and EWMA values for Quote Protection and APR
  * Amount available in wallet for buy
  * Amount held in open trades for buy
  * Amount available in wallet for sell
