@@ -27,10 +27,10 @@ import {SubscriberFactory} from './shared_directives';
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
         <td class="text-left">mkt{{ i }}</td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="level.bidSzClass">{{ level.bidSize | number:'1.4-4' }}</div></td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidModClass">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askModClass">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="level.askSzClass">{{ level.askSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
+        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
       </tr>
     </table></div>`
 })
@@ -125,17 +125,10 @@ export class MarketQuotingComponent implements OnInit {
         update.data[0] = update.data[0].slice(0, -2);
       }
 
-    var mod: number;
     var _levels = [];
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
-      mod = 2;
-      for (let h: number = this.levels.length;h--;)
-        if (this.levels[h].askPrice===update.data[1][i]) {
-          mod = this.levels[h].askSize!==update.data[1][i+1] ? 1 : 0;
-          break;
-        }
       if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { askMod: mod, askPrice: update.data[1][i], askSize: update.data[1][++i] });
+      _levels[j] = Object.assign(_levels[j], { askPrice: update.data[1][i], askSize: update.data[1][++i] });
     }
 
     if (bids.length) {
@@ -156,18 +149,39 @@ export class MarketQuotingComponent implements OnInit {
     }
 
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
-      mod = 2;
-      for (let h: number = this.levels.length;h--;)
-        if (this.levels[h].bidPrice===update.data[0][i]) {
-          mod = this.levels[h].bidSize!==update.data[0][i+1] ? 1 : 0;
-          break;
-        }
       if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { bidMod: mod, bidPrice: update.data[0][i], bidSize: update.data[0][++i] });
+      _levels[j] = Object.assign(_levels[j], { bidPrice: update.data[0][i], bidSize: update.data[0][++i] });
       if (j==0) this.diffMD = _levels[j].askPrice - _levels[j].bidPrice;
       else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
     }
 
+    var modAsk: number;
+    var modBid: number;
+    for (let i: number = this.levels.length;i--;) {
+      modAsk = 2;
+      modBid = 2;
+      for (let h: number = _levels.length;h--;) {
+        if (modAsk===2 && this.levels[i].askPrice===_levels[h].askPrice)
+          modAsk = this.levels[i].askSize!==_levels[h].askSize ? 1 : 0;
+        if (modBid===2 && this.levels[i].bidPrice===_levels[h].bidPrice)
+          modBid = this.levels[i].bidSize!==_levels[h].bidSize ? 1 : 0;
+        if (modBid!==2 && modAsk!==2) break;
+      }
+      _levels[i] = Object.assign(_levels[i], { bidMod: modBid, askMod: modAsk });
+    }
+    for (let h: number = _levels.length;h--;) {
+      modAsk = 0;
+      modBid = 0;
+      for (let i: number = this.levels.length;i--;) {
+        if (!modAsk && this.levels[i].askPrice===_levels[h].askPrice)
+          modAsk = 1;
+        if (!modBid && this.levels[i].bidPrice===_levels[h].bidPrice)
+          modBid = 1;
+        if (modBid && modAsk) break;
+      }
+      if (!modBid) _levels[h] = Object.assign(_levels[h], { bidMod: 1 });
+      if (!modAsk) _levels[h] = Object.assign(_levels[h], { askMod: 1 });
+    }
     this.updateQuoteClass(_levels);
   }
 
@@ -202,16 +216,6 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuoteClass = (levels?: any[]) => {
-    if (levels && levels.length > 0) {
-      for (let i = 0; i < levels.length; i++) {
-        if (i >= this.levels.length) this.levels[i] = <any>{ bidModClass: 'bidsz'+i, askModClass: 'asksz'+i };
-        this.levels[i].bidSzClass = (levels[i].bidMod===1 ? 'buy ' : '')+this.levels[i].bidModClass;
-        this.levels[i].askSzClass = (levels[i].askMod===1 ? 'sell ' : '')+this.levels[i].askModClass;
-        if (levels[i].bidMod===1||levels[i].askMod===1) setTimeout(() => { this.levels[i].bidSzClass=this.levels[i].askSzClass=''; }, 221);
-        (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 ); setTimeout(() => { (<any>jQuery)('.bidsz'+i).css( 'opacity', 1.0 ); this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize }); }, 221);
-        (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 ); setTimeout(() => { (<any>jQuery)('.asksz'+i).css( 'opacity', 1.0 ); this.levels[i] = Object.assign(this.levels[i], { askPrice: levels[i].askPrice, askSize: levels[i].askSize }); }, 221);
-      }
-    }
     if (this.levels && this.levels.length > 0) {
       for (let i = 0; i < this.levels.length; i++) {
         this.levels[i].bidClass = 'active';
@@ -226,6 +230,23 @@ export class MarketQuotingComponent implements OnInit {
           if (asks[j].price === this.levels[i].askPrice)
             this.levels[i].askClass = 'success sell';
         this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
+      }
+    }
+    if (levels && levels.length > 0) {
+      for (let i = 0; i < levels.length; i++) {
+        if (i >= this.levels.length) this.levels[i] = <any>{ };
+        if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').css( 'color', 'blue' );
+        if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').css( 'color', 'red' );
+        (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 );
+        (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 );
+        setTimeout(() => {
+          (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.0:1.0 );
+          (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.0:1.0 );
+          setTimeout(() => {
+            this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
+            setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').css( 'color', '' ); }, 1);
+          }, 0);
+        }, 221);
       }
     }
   }
