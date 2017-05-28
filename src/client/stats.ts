@@ -380,7 +380,7 @@ export class StatsComponent implements OnInit {
           point = chart.series[0].searchPoint(event, true);
           if (point) {
             point.onMouseOut();
-            chart.tooltip.hide(point);
+            chart.tooltip.hide();
             chart.xAxis[0].hideCrosshair();
           }
         }
