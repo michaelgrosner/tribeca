@@ -2637,9 +2637,9 @@
       "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-0.6.1.tgz"
     },
     "ng4-popover": {
-      "version": "0.0.21",
-      "from": "ng4-popover@>=0.0.21 <0.0.22",
-      "resolved": "https://registry.npmjs.org/ng4-popover/-/ng4-popover-0.0.21.tgz"
+      "version": "1.0.21",
+      "from": "ng4-popover@1.0.21",
+      "resolved": "https://registry.npmjs.org/ng4-popover/-/ng4-popover-1.0.21.tgz"
     },
     "nock": {
       "version": "3.6.0",
