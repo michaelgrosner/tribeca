@@ -2188,11 +2188,6 @@
       "from": "jquery@>=3.2.1 <4.0.0",
       "resolved": "https://registry.npmjs.org/jquery/-/jquery-3.2.1.tgz"
     },
-    "jquery-resizable": {
-      "version": "1.0.6",
-      "from": "jquery-resizable@latest",
-      "resolved": "https://registry.npmjs.org/jquery-resizable/-/jquery-resizable-1.0.6.tgz"
-    },
     "js-tokens": {
       "version": "3.0.1",
       "from": "js-tokens@>=3.0.0 <4.0.0",
