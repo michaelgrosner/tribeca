@@ -451,7 +451,7 @@ class DisplayOrder {
                                       <button type="button"
                                               class="btn btn-info navbar-btn"
                                               (click)="cleanAllClosedOrders()"
-                                              *ngIf="[6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1"
+                                              *ngIf="[6,7,8].indexOf(pair.quotingParameters.display.mode)>-1"
                                               data-placement="bottom">Clean Pongs
                                       </button>
                                   </div>
