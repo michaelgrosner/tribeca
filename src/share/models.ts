@@ -297,6 +297,8 @@ export class PositionReport {
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
+                public profitBase: number,
+                public profitQuote: number,
                 public time: Date) {}
 }
 
@@ -422,8 +424,6 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
-                public profitBase: number,
-                public profitQuote: number,
                 public time: Date) {}
 }
 
