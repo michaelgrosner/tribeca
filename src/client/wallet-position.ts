@@ -65,8 +65,7 @@ export class WalletPositionComponent implements OnInit {
     let now = new Date(o.time).getTime();
     this._lastPositions.push({ baseValue: o.data[4], quoteValue: o.data[5], time: now });
     this._lastPositions = this._lastPositions.filter(x => x.time+(this.profitHourInterval * 36e+5)>now);
-    let lastPosition = this._lastPositions[this._lastPositions.length-1];
-    this.profitBase = ((lastPosition.baseValue - o.data[4]) / lastPosition.baseValue) * 1e+2;
-    this.profitQuote = ((lastPosition.quoteValue - o.data[5]) / lastPosition.quoteValue) * 1e+2;
+    this.profitBase = ((o.data[4] - this._lastPositions[0].baseValue) / o.data[4]) * 1e+2;
+    this.profitQuote = ((o.data[5] - this._lastPositions[0].quoteValue) / o.data[5]) * 1e+2;
   }
 }
