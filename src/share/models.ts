@@ -297,8 +297,6 @@ export class PositionReport {
                 public quoteValue: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
-                public profitBase: number,
-                public profitQuote: number,
                 public time: Date) {}
 }
 
@@ -399,6 +397,7 @@ export interface QuotingParameters {
     sopWidthMultiplier?: number;
     cancelOrdersAuto?: boolean;
     stepOverSize?: number;
+    profitHourInterval?: number;
     delayUI?: number;
 }
 

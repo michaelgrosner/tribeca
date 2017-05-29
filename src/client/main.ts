@@ -272,6 +272,7 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.stdevProtection">periods</th>
                                             <th *ngIf="pair.quotingParameters.display.stdevProtection">factor</th>
                                             <th>cxl?</th>
+                                            <th>profit</th>
                                             <th>delayUI</th>
                                             <th>audio?</th>
                                             <th colspan="2">
@@ -336,6 +337,12 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px;">
                                                 <input class="form-control input-sm"
+                                                   type="number" step="0.01" min="0.01"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.profitHourInterval">
+                                            </td>
+                                            <td style="width:88px;">
+                                                <input class="form-control input-sm"
                                                    type="number" step="1" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.delayUI">
@@ -377,7 +384,7 @@ class DisplayOrder {
                                 <div *ngIf="pair.connectionMessage">
                                   <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
                                 </div>
-                                <wallet-position [product]="product"></wallet-position>
+                                <wallet-position [product]="product" [quotingParameters]="pair.quotingParameters.display"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, <a href="#" (click)="toggleStats()">Stats</a></div>
