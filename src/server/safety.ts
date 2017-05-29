@@ -33,6 +33,8 @@ export class SafetyCalculator {
     private _lastTotalBasePosition: number = 0;
     private _lastTotalQuotePosition: number = 0;
     private _lastProfitCalc: number = 0;
+    private _profitBase: number = 0;
+    private _profitQuote: number = 0;
     private _buys: ITrade[] = [];
     private _sells: ITrade[] = [];
     public latestTargetPosition: Models.TargetBasePositionValue = null;
@@ -78,8 +80,6 @@ export class SafetyCalculator {
         let sellSize: number = (settings.percentageValues && latestPosition != null)
               ? settings.sellSizePercentage * latestPosition.value / 100
               : settings.sellSize;
-        let profitBase: number = 0;
-        let profitQuote: number = 0;
         const tbp = this.latestTargetPosition;
         if (tbp !== null) {
           const targetBasePosition = tbp.data;
@@ -89,8 +89,8 @@ export class SafetyCalculator {
           if (settings.aggressivePositionRebalancing != Models.APR.Off && settings.sellSizeMax) sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
           if (this._lastProfitCalc+3600000<new Date().getTime()) {
             this._lastProfitCalc = new Date().getTime();
-            if (this._lastTotalBasePosition) profitBase = ((this._lastTotalBasePosition - totalBasePosition) / this._lastTotalBasePosition) * 100;
-            if (this._lastTotalQuotePosition) profitQuote = ((this._lastTotalQuotePosition - totalQuotePosition) / this._lastTotalQuotePosition) * 100;
+            if (this._lastTotalBasePosition) this._profitBase = ((this._lastTotalBasePosition - totalBasePosition) / this._lastTotalBasePosition) * 100;
+            if (this._lastTotalQuotePosition) this._profitQuote = ((this._lastTotalQuotePosition - totalQuotePosition) / this._lastTotalQuotePosition) * 100;
             this._lastTotalBasePosition = totalBasePosition;
             this._lastTotalQuotePosition = totalQuotePosition;
           }
@@ -186,8 +186,8 @@ export class SafetyCalculator {
           computeSafety(this._buys.concat(this._sells)),
           buyPing,
           sellPong,
-          profitBase,
-          profitQuote,
+          this._profitBase,
+          this._profitQuote,
           this._timeProvider.utcNow()
         );
     };
