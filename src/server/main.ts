@@ -80,6 +80,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,
   cancelOrdersAuto:               false,
+  profitHourInterval:             0.5,
   delayUI:                        7
 };
 

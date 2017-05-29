@@ -489,12 +489,6 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 export class PositionBroker implements Interfaces.IPositionBroker {
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
-    private _lastTotalBasePosition: number = 0;
-    private _lastTotalQuotePosition: number = 0;
-    private _lastProfitCalc: number = 0;
-    private _profitBase: number = 0;
-    private _profitQuote: number = 0;
-
     private _report : Models.PositionReport = null;
     public get latestReport() : Models.PositionReport {
         return this._report;
@@ -516,16 +510,9 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         const quoteAmount = quotePosition.amount;
         const baseValue = baseAmount + quoteAmount / fv.price + basePosition.heldAmount + quotePosition.heldAmount / fv.price;
         const quoteValue = baseAmount * fv.price + quoteAmount + basePosition.heldAmount * fv.price + quotePosition.heldAmount;
-        if (this._lastProfitCalc+3600000<new Date().getTime()) {
-          this._lastProfitCalc = new Date().getTime();
-          if (this._lastTotalBasePosition) this._profitBase = ((this._lastTotalBasePosition - baseValue) / this._lastTotalBasePosition) * 100;
-          if (this._lastTotalQuotePosition) this._profitQuote = ((this._lastTotalQuotePosition - quoteValue) / this._lastTotalQuotePosition) * 100;
-          this._lastTotalBasePosition = baseValue;
-          this._lastTotalQuotePosition = quoteValue;
-        }
+
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(),
-            this._profitBase, this._profitQuote, this._timeProvider.utcNow());
+            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
 
         if (this._report !== null &&
                 Math.abs(positionReport.value - this._report.value) < 2e-6 &&
@@ -533,9 +520,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
                 Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
                 Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
                 Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
-                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2 &&
-                Math.abs(positionReport.profitBase - this._report.profitBase) < 2e-2 &&
-                Math.abs(positionReport.profitQuote - this._report.profitQuote) < 2e-2)
+                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
             return;
 
         this._report = positionReport;
