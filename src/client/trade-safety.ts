@@ -13,6 +13,7 @@ import {SubscriberFactory} from './shared_directives';
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
       openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
+<span style="float:right;"><span title="{{ baseSymbol }} profit % since last hour" class="{{ profitBase ? \'text-danger\' : \'text-muted\' }}">{{ profitBase>=0?'+':'' }}{{ profitBase | number:'1.2-2' }}%</span>, <span title="{{ quoteSymbol }} profit % since last hour" class="{{ profitQuote ? \'text-danger\' : \'text-muted\' }}">{{ profitQuote>=0?'+':'' }}{{ profitQuote | number:'1.2-2' }}%</span></span>
     </div>
   </div>`
 })
@@ -20,10 +21,14 @@ export class TradeSafetyComponent implements OnInit {
 
   public fairValue: number;
   private buySafety: number;
+  public baseSymbol: string;
+  private quoteSymbol: string;
   private sellSafety: number;
   private buySizeSafety: number ;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
+  private profitBase: number;
+  private profitQuote: number;
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
 
@@ -51,6 +56,10 @@ export class TradeSafetyComponent implements OnInit {
     this.sellSafety = value.sell;
     this.buySizeSafety = value.buyPing;
     this.sellSizeSafety = value.sellPong;
+    this.profitBase = value.profitBase;
+    this.profitQuote = value.profitQuote;
+    if (!this.baseSymbol) this.baseSymbol = Models.Currency[this.product.advert.pair.base];
+    if (!this.quoteSymbol) this.quoteSymbol = Models.Currency[this.product.advert.pair.quote];
   }
 
   private updateFairValue = (fv: Models.FairValue) => {
@@ -72,5 +81,7 @@ export class TradeSafetyComponent implements OnInit {
     this.sellSafety = null;
     this.buySizeSafety = null;
     this.sellSizeSafety = null;
+    this.profitBase = null;
+    this.profitQuote = null;
   }
 }
