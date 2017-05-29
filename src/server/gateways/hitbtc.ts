@@ -151,8 +151,8 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         return a.price > b.price ? -1 : 1;
     };
 
-    private readonly _lastBids = new SortedArray([], this.Eq, this.BidCmp);
-    private readonly _lastAsks = new SortedArray([], this.Eq, this.AskCmp);
+    private readonly _lastBids;
+    private readonly _lastAsks;
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -167,21 +167,20 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Date) => {
-        var ordBids = HitBtcMarketDataGateway.applyIncrementals(bids, this._lastBids);
-        var ordAsks = HitBtcMarketDataGateway.applyIncrementals(asks, this._lastAsks);
+        const ordBids = this.applyIncrementals(bids, this._lastBids);
+        const ordAsks = this.applyIncrementals(asks, this._lastAsks);
 
         this.MarketData.trigger(new Models.Market(ordBids, ordAsks, t));
     };
 
-    private static applyIncrementals(incomingUpdates : Update[], side : any) {
-        for (var i = 0; i < incomingUpdates.length; i++) {
-            var u : Update = incomingUpdates[i];
-            var ms = new Models.MarketSide(parseFloat(<any>u.price), u.size / _lotMultiplier);
+    private applyIncrementals(incomingUpdates : Update[], side : any) {
+        for (let u of incomingUpdates) {
+            const ms = new Models.MarketSide(parseFloat(<any>u.price), u.size / _lotMultiplier);
             if (u.size == 0) {
                 side.delete(ms);
             }
             else {
-                var existing = side.get(ms);
+                let existing = side.get(ms);
                 if (existing !== undefined) {
                     existing.size = ms.size;
                 }
@@ -195,8 +194,9 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     }
 
     private onMessage = (raw : Models.Timestamped<string>) => {
+        let msg: any;
         try {
-            var msg = JSON.parse(raw.data);
+            msg = JSON.parse(raw.data);
         }
         catch (e) {
             console.error('hitbtc', e, 'Error parsing msg', raw);
@@ -225,10 +225,10 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onTrade = (t: MarketTrade) => {
-        var side : Models.Side = Models.Side.Unknown;
+        let side : Models.Side = Models.Side.Unknown;
         if (this._lastAsks.any() && this._lastBids.any()) {
-            var distance_from_bid = Math.abs(this._lastBids.max() - t.price);
-            var distance_from_ask = Math.abs(this._lastAsks.min() - t.price);
+            const distance_from_bid = Math.abs(this._lastBids.max() - t.price);
+            const distance_from_ask = Math.abs(this._lastAsks.min() - t.price);
             if (distance_from_bid < distance_from_ask) side = Models.Side.Bid;
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
@@ -269,9 +269,9 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
              qs: {from: 0, by: "trade_id", sort: 'desc', start_index: 0, max_results: 100}},
             (err, body, resp) => {
                 JSON.parse((<any>body).body).trades.forEach(t => {
-                    var price = parseFloat(t[1]);
-                    var size = parseFloat(t[2]);
-                    var time = new Date(t[3]);
+                    const price = parseFloat(t[1]);
+                    const size = parseFloat(t[2]);
+                    const time = new Date(t[3]);
 
                     this.MarketTrade.trigger(new Models.GatewayMarketTrade(price, size, time, true, null));
                 });
@@ -308,7 +308,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.OrderStatusReport) => {
-        var hitBtcOrder : NewOrder = {
+        const hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(order.side),
@@ -378,11 +378,11 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private onExecutionReport = (tsMsg : Models.Timestamped<ExecutionReport>) => {
-        var t = tsMsg.time;
-        var msg = tsMsg.data;
+        const t = tsMsg.time;
+        const msg = tsMsg.data;
 
-        var ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
-        var status : Models.OrderStatusUpdate = {
+        const ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
+        const status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
             orderStatus: ordStatus,
@@ -399,8 +399,8 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private onCancelReject = (tsMsg : Models.Timestamped<CancelReject>) => {
-        var msg = tsMsg.data;
-        var status : Models.OrderStatusUpdate = {
+        const msg = tsMsg.data;
+        const status : Models.OrderStatusUpdate = {
             orderId: msg.clientOrderId,
             rejectMessage: msg.rejectReasonText,
             orderStatus: Models.OrderStatus.Rejected,
@@ -411,10 +411,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private authMsg = <T>(payload : T) : AuthorizedHitBtcMessage<T> => {
-        var msg = {nonce: this._nonce, payload: payload};
+        const msg = {nonce: this._nonce, payload: payload};
         this._nonce += 1;
 
-        var signMsg = m => {
+        const signMsg = m => {
             return crypto.createHmac('sha512', this._secret)
                 .update(JSON.stringify(m))
                 .digest('base64');
@@ -424,9 +424,9 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private sendAuth = <T extends HitBtcPayload>(msgType : string, msg : T, cb?: () => void) => {
-        var v = {};
+        const v = {};
         v[msgType] = msg;
-        var readyMsg = this.authMsg(v);
+        const readyMsg = this.authMsg(v);
         this._orderEntryWs.send(JSON.stringify(readyMsg), cb);
     };
 
@@ -500,10 +500,10 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
     private getAuth = (uri : string) : any => {
-        var nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
-        var comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey});
+        const nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
+        const comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey});
 
-        var signature = crypto.createHmac('sha512', this._secret)
+        const signature = crypto.createHmac('sha512', this._secret)
                               .update(comb)
                               .digest('hex')
                               .toString()
@@ -520,21 +520,22 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             this.getAuth("/api/1/trading/balance"),
             (err, body, resp) => {
                 try {
-                    var rpts: Array<HitBtcPositionReport> = JSON.parse(resp).balance;
+                    const rpts: Array<HitBtcPositionReport> = JSON.parse(resp).balance;
                     if (typeof rpts === 'undefined' || err) {
                         console.warn('hitbtc', err, 'Error getting positions', body.body);
                         return;
                     }
 
                     rpts.forEach(r => {
+                        let currency: Models.Currency;
                         try {
-                            var currency = Models.toCurrency(r.currency_code);
+                            currency = Models.toCurrency(r.currency_code);
                         }
                         catch (e) {
                             return;
                         }
                         if (currency == null) return;
-                        var position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
+                        const position = new Models.CurrencyPosition(r.cash, r.reserved, currency);
                         this.PositionUpdate.trigger(position);
                     });
                 }
