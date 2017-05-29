@@ -21,13 +21,18 @@ export class SafetyCalculator {
     public set latest(val: Models.TradeSafety) {
         if (!this._latest || Math.abs(val.combined - this._latest.combined) > 1e-3
           || Math.abs(val.buyPing - this._latest.buyPing) >= 1e-2
-          || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
+          || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2
+          || Math.abs(val.profitBase - this._latest.profitBase) >= 1e-2
+          || Math.abs(val.profitQuote - this._latest.profitQuote) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
             this._publisher.publish(this.latest);
         }
     }
 
+    private _lastTotalBasePosition: number = 0;
+    private _lastTotalQuotePosition: number = 0;
+    private _lastProfitCalc: number = 0;
     private _buys: ITrade[] = [];
     private _sells: ITrade[] = [];
     public latestTargetPosition: Models.TargetBasePositionValue = null;
@@ -63,6 +68,8 @@ export class SafetyCalculator {
     }
 
     private computeQtyLimit = () => {
+        var fv = this._fvEngine.latestFairValue;
+        if (!fv) return;
         const settings = this._qlParams.latest;
         const latestPosition = this._positionBroker.latestReport;
         let buySize: number  = (settings.percentageValues && latestPosition != null)
@@ -71,12 +78,22 @@ export class SafetyCalculator {
         let sellSize: number = (settings.percentageValues && latestPosition != null)
               ? settings.sellSizePercentage * latestPosition.value / 100
               : settings.sellSize;
+        let profitBase: number = 0;
+        let profitQuote: number = 0;
         const tbp = this.latestTargetPosition;
         if (tbp !== null) {
           const targetBasePosition = tbp.data;
           const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+          const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
           if (settings.aggressivePositionRebalancing != Models.APR.Off && settings.buySizeMax) buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
           if (settings.aggressivePositionRebalancing != Models.APR.Off && settings.sellSizeMax) sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
+          if (this._lastProfitCalc+3600000<new Date().getTime()) {
+            this._lastProfitCalc = new Date().getTime();
+            if (this._lastTotalBasePosition) profitBase = ((this._lastTotalBasePosition - totalBasePosition) / this._lastTotalBasePosition) * 100;
+            if (this._lastTotalQuotePosition) profitQuote = ((this._lastTotalQuotePosition - totalQuotePosition) / this._lastTotalQuotePosition) * 100;
+            this._lastTotalBasePosition = totalBasePosition;
+            this._lastTotalQuotePosition = totalQuotePosition;
+          }
         }
         var buyPing = 0;
         var sellPong = 0;
@@ -85,8 +102,6 @@ export class SafetyCalculator {
         var _buyPq = 0;
         var _sellPq = 0;
         var trades = this._broker._trades;
-        var fv = this._fvEngine.latestFairValue;
-        if (!fv) return;
         var widthPong = (settings.widthPercentage)
             ? settings.widthPongPercentage * fv.price / 100
             : settings.widthPong;
@@ -171,6 +186,8 @@ export class SafetyCalculator {
           computeSafety(this._buys.concat(this._sells)),
           buyPing,
           sellPong,
+          profitBase,
+          profitQuote,
           this._timeProvider.utcNow()
         );
     };

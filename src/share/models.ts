@@ -422,6 +422,8 @@ export class TradeSafety {
                 public combined: number,
                 public buyPing: number,
                 public sellPong: number,
+                public profitBase: number,
+                public profitQuote: number,
                 public time: Date) {}
 }
 
