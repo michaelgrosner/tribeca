@@ -55,7 +55,7 @@ interface HitBtcOrderBook {
 }
 
 interface Update {
-    price : number;
+    price : string;
     size : number;
     timestamp : number;
 }
@@ -135,24 +135,52 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.MarketSide>();
     private readonly _marketDataWs : WebSocket;
 
-    private _hasProcessedSnapshot = false;
+    constructor(side: Models.Side) {
+        const compare = side === Models.Side.Bid ? 
+            ((a,b) => this._collator.compare(b,a)) : 
+            ((a,b) => this._collator.compare(a,b));
+        this._data = new SortedMap([], null, compare);
+    }
+
+    public update = (k: string, v: Models.MarketSide) : void => {
+        if (v.size === 0) {
+            this._data.delete(k);
+            return;
+        }
 
     private Eq(a : Models.MarketSide, b : Models.MarketSide) {
         return Math.abs(a.price - b.price) < .1 * this._minTick;
     }
 
-    private AskCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
-        if (this.Eq(a, b)) return 0;
-        return a.price > b.price ? 1 : -1;
+    public clear = () : void => this._data.clear();
+
+    public getBest = (n: number) : Models.MarketSide[] => {
+        const b = new Array<Models.MarketSide>();
+        const it = (<any>(this._data)).iterator();
+
+        while (b.length < n) {
+            let x : {done: boolean, value: {key: string, value: Models.MarketSide}} = it.next();
+            if (x.done) return b;
+            b.push(x.value.value);
+        }
+
+        return b;
     };
 
-    private BidCmp = (a : Models.MarketSide, b : Models.MarketSide) => {
-        if (this.Eq(a, b)) return 0;
-        return a.price > b.price ? -1 : 1;
-    };
+    public any = () : boolean => (<any>(this._data)).any();
+    public min = () : Models.MarketSide => (<any>(this._data)).min();
+    public max = () : Models.MarketSide => (<any>(this._data)).max();
+}
 
-    private readonly _lastBids;
-    private readonly _lastAsks;
+class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
+    MarketData = new Utils.Evt<Models.Market>();
+    MarketTrade = new Utils.Evt<Models.MarketSide>();
+    private readonly _marketDataWs : WebSocket;
+
+    private _hasProcessedSnapshot = false;
+
+    private readonly _lastBids = new SideMarketData(Models.Side.Bid);
+    private readonly _lastAsks = new SideMarketData(Models.Side.Ask);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -167,27 +195,16 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onMarketDataUpdate = (bids : Update[], asks : Update[], t : Date) => {
-        const ordBids = this.applyIncrementals(bids, this._lastBids);
-        const ordAsks = this.applyIncrementals(asks, this._lastAsks);
+        const ordBids = this.applyUpdates(bids, this._lastBids);
+        const ordAsks = this.applyUpdates(asks, this._lastAsks);
 
         this.MarketData.trigger(new Models.Market(ordBids, ordAsks, t));
     };
 
-    private applyIncrementals(incomingUpdates : Update[], side : any) {
+    private applyUpdates(incomingUpdates : Update[], side : SideMarketData) {
         for (let u of incomingUpdates) {
-            const ms = new Models.MarketSide(parseFloat(<any>u.price), u.size / _lotMultiplier);
-            if (u.size == 0) {
-                side.delete(ms);
-            }
-            else {
-                let existing = side.get(ms);
-                if (existing !== undefined) {
-                    existing.size = ms.size;
-                }
-                else {
-                    side.push(ms);
-                }
-            }
+            const ms = new Models.MarketSide(parseFloat(u.price), u.size / _lotMultiplier);            
+            side.update(u.price, ms);
         }
 
         return side.slice(0, 5);
@@ -227,8 +244,8 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onTrade = (t: MarketTrade) => {
         let side : Models.Side = Models.Side.Unknown;
         if (this._lastAsks.any() && this._lastBids.any()) {
-            const distance_from_bid = Math.abs(this._lastBids.max() - t.price);
-            const distance_from_ask = Math.abs(this._lastAsks.min() - t.price);
+            const distance_from_bid = Math.abs(this._lastBids.max().price - t.price);
+            const distance_from_ask = Math.abs(this._lastAsks.min().price - t.price);
             if (distance_from_bid < distance_from_ask) side = Models.Side.Bid;
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
