@@ -28,7 +28,7 @@ module.exports = function (grunt) {
 
         ts: {
             options: {
-                sourceMap: false,
+                sourceMap: true,
                 comments: false,               // same as !removeComments. [true | false (default)]
                 declaration: false,            // generate a declaration .d.ts file for every output js file. [true | false (default)]
                 fast: 'always'
