@@ -37,7 +37,7 @@
     "bindings": "^1.2.1",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
-    "browserify": "^14.3.0",
+    "browserify": "^14.4.0",
     "collections": "^5.0.6",
     "compression": "^1.6.2",
     "connect": "^3.6.2",
@@ -64,7 +64,7 @@
     "socket.io-client": "^2.0.1",
     "ts-helpers": "^1.1.2",
     "typescript": "^2.3.3",
-    "uglify-js": "^3.0.12",
+    "uglify-js": "^3.0.13",
     "uws": "^0.14.5",
     "zone.js": "^0.8.11"
   },
