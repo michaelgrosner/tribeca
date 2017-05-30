@@ -160,7 +160,7 @@ export class ExchangeQuoter {
             return Models.QuoteSent.UnsentDuplicate;
         }
 
-        var quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
+        const quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
           new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote)
         ).sentOrderClientId);
@@ -178,7 +178,7 @@ export class ExchangeQuoter {
         if (!this.activeQuote.length) {
             return Models.QuoteSent.UnsentDelete;
         }
-        var cxl = new Models.OrderCancel(this.activeQuote.shift().orderId, this._exchange, t);
+        const cxl = new Models.OrderCancel(this.activeQuote.shift().orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);
         this.activeQuote = this.activeQuote.filter(q => q.orderId !== cxl.origOrderId);
 
