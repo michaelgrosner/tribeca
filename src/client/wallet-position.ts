@@ -24,9 +24,7 @@ export class WalletPositionComponent implements OnInit {
   public quoteValue: number;
   private profitBase: number = 0;
   private profitQuote: number = 0;
-  private _lastPositions: any[] = [];
   @Input() product: Models.ProductState;
-  @Input() profitHourInterval: number;
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
@@ -60,12 +58,9 @@ export class WalletPositionComponent implements OnInit {
     this.quoteHeldPosition = o.data[3];
     this.value = o.data[4];
     this.quoteValue = o.data[5];
-    this.baseCurrency = Models.Currency[o.data[6]];
-    this.quoteCurrency = Models.Currency[o.data[7]];
-    let now = new Date(o.time).getTime();
-    this._lastPositions.push({ baseValue: o.data[4], quoteValue: o.data[5], time: now });
-    this._lastPositions = this._lastPositions.filter(x => x.time+(this.profitHourInterval * 36e+5)>now);
-    this.profitBase = ((o.data[4] - this._lastPositions[0].baseValue) / o.data[4]) * 1e+2;
-    this.profitQuote = ((o.data[5] - this._lastPositions[0].quoteValue) / o.data[5]) * 1e+2;
+    this.profitBase = o.data[6];
+    this.profitQuote = o.data[7];
+    this.baseCurrency = Models.Currency[o.data[8]];
+    this.quoteCurrency = Models.Currency[o.data[9]];
   }
 }

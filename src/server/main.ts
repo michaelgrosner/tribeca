@@ -368,6 +368,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
 
     const positionBroker = new Broker.PositionBroker(
       system.timeProvider,
+      paramsRepo,
       broker,
       orderBroker,
       quoter,

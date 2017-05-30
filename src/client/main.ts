@@ -384,7 +384,7 @@ class DisplayOrder {
                                 <div *ngIf="pair.connectionMessage">
                                   <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
                                 </div>
-                                <wallet-position [product]="product" [profitHourInterval]="pair.quotingParameters.display.profitHourInterval"></wallet-position>
+                                <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, <a href="#" (click)="toggleStats()">Stats</a></div>
