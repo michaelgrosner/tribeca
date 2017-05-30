@@ -104,6 +104,8 @@ export class Publisher<T> implements IPublish<T> {
         Math.round(data.quoteHeldAmount * 1e2) / 1e2,
         Math.round(data.value * 1e8) / 1e8,
         Math.round(data.quoteValue * 1e2) / 1e2,
+        Math.round(data.profitBase * 1e2) / 1e2,
+        Math.round(data.profitQuote * 1e2) / 1e2,
         data.pair.base,
         data.pair.quote
       ], data.time);

@@ -489,6 +489,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 export class PositionBroker implements Interfaces.IPositionBroker {
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
+    private _lastPositions: any[] = [];
     private _report : Models.PositionReport = null;
     public get latestReport() : Models.PositionReport {
         return this._report;
@@ -511,17 +512,26 @@ export class PositionBroker implements Interfaces.IPositionBroker {
         const baseValue = baseAmount + quoteAmount / fv.price + basePosition.heldAmount + quotePosition.heldAmount / fv.price;
         const quoteValue = baseAmount * fv.price + quoteAmount + basePosition.heldAmount * fv.price + quotePosition.heldAmount;
 
+        const timeNow = this._timeProvider.utcNow();
+        const now = timeNow.getTime();
+        this._lastPositions.push({ baseValue: baseValue, quoteValue: quoteValue, time: now });
+        this._lastPositions = this._lastPositions.filter(x => x.time+(this._qlParamRepo.latest.profitHourInterval * 36e+5)>now);
+        const profitBase = ((baseValue - this._lastPositions[0].baseValue) / baseValue) * 1e+2;
+        const profitQuote = ((quoteValue - this._lastPositions[0].quoteValue) / quoteValue) * 1e+2;
+
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, this._base.pair, this._base.exchange(), this._timeProvider.utcNow());
+            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._base.pair, this._base.exchange(), timeNow);
 
         if (this._report !== null &&
-                Math.abs(positionReport.value - this._report.value) < 2e-6 &&
-                Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
-                Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
-                Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
-                Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
-                Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2)
-            return;
+          Math.abs(positionReport.value - this._report.value) < 2e-6 &&
+          Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
+          Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
+          Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
+          Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
+          Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2 &&
+          Math.abs(positionReport.profitBase - this._report.profitBase) < 2e-2 &&
+          Math.abs(positionReport.profitQuote - this._report.profitQuote) < 2e-2
+        ) return;
 
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
@@ -551,6 +561,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
     };
 
     constructor(private _timeProvider: Utils.ITimeProvider,
+                private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _base : Interfaces.IBroker,
                 private _broker: Interfaces.IOrderBroker,
                 private _quoter: Quoter.Quoter,

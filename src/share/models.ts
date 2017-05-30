@@ -296,6 +296,8 @@ export class PositionReport {
                 public quoteHeldAmount: number,
                 public value: number,
                 public quoteValue: number,
+                public profitBase: number,
+                public profitQuote: number,
                 public pair: CurrencyPair,
                 public exchange: Exchange,
                 public time: Date) {}
