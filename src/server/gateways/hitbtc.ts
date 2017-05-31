@@ -11,7 +11,7 @@ import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
 import util = require("util");
-const SortedArray = require("collections/sorted-array");
+const SortedMap = require("collections/sorted-map");
 
 const _lotMultiplier = 100.0;
 
@@ -130,14 +130,13 @@ function getJSON<T>(url: string, qs?: any) : Promise<T> {
     });
 }
 
-class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
-    MarketData = new Utils.Evt<Models.Market>();
-    MarketTrade = new Utils.Evt<Models.MarketSide>();
-    private readonly _marketDataWs : WebSocket;
+class SideMarketData {
+    private readonly _data : Map<string, Models.MarketSide>;
+    private readonly _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
 
     constructor(side: Models.Side) {
-        const compare = side === Models.Side.Bid ? 
-            ((a,b) => this._collator.compare(b,a)) : 
+        const compare = side === Models.Side.Bid ?
+            ((a,b) => this._collator.compare(b,a)) :
             ((a,b) => this._collator.compare(a,b));
         this._data = new SortedMap([], null, compare);
     }
@@ -148,8 +147,13 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             return;
         }
 
-    private Eq(a : Models.MarketSide, b : Models.MarketSide) {
-        return Math.abs(a.price - b.price) < .1 * this._minTick;
+        const existing = this._data.get(k);
+        if (existing) {
+            existing.size = v.size;
+        }
+        else {
+            this._data.set(k, v);
+        }
     }
 
     public clear = () : void => this._data.clear();
@@ -203,11 +207,11 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private applyUpdates(incomingUpdates : Update[], side : SideMarketData) {
         for (let u of incomingUpdates) {
-            const ms = new Models.MarketSide(parseFloat(u.price), u.size / _lotMultiplier);            
+            const ms = new Models.MarketSide(parseFloat(u.price), u.size / _lotMultiplier);
             side.update(u.price, ms);
         }
 
-        return side.slice(0, 5);
+        return side.getBest(25);
     }
 
     private onMessage = (raw : Models.Timestamped<string>) => {
