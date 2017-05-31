@@ -96,7 +96,7 @@
     "compile-client": "tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts",
     "compile-public": "cp -R src/pub/* app/pub/",
     "compile-bundle": "browserify -t [ babelify --presets [ babili es2015 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | uglifyjs > app/pub/js/client/bundle.min.js",
-    "compile-quickfix": "mkdir -p build && cd build && (test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || (rm -rf quickfix-v* *.tar.gz* && wget https://github.com/quickfix/quickfix/archive/$npm_package_config_quickfix.tar.gz && tar -zxvf v*.tar.gz && cd quickfix-v* && ./bootstrap && ./configure && make && sudo make install && sudo cp config.h /usr/local/include/quickfix/ && (test -n \"$(command -v ldconfig)\" && sudo ldconfig))",
+    "compile-quickfix": "mkdir -p build && cd build && (test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || (rm -rf quickfix-v* *.tar.gz* && wget https://github.com/quickfix/quickfix/archive/$npm_package_config_quickfix.tar.gz && tar -zxvf v*.tar.gz && cd quickfix-v* && ./bootstrap && ./configure && make && sudo make install && sudo cp config.h /usr/local/include/quickfix/ && (test -n \"$(command -v ldconfig)\" && sudo ldconfig || :))",
     "list": "forever list",
     "restartall": "forever restartall",
     "stopall": "forever stopall",
