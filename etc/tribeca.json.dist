@@ -35,7 +35,7 @@
     "BitfinexSecret": "NULL",
     "BitfinexOrderDestination": "Bitfinex"
 
-    "KorbitHttpUrl": "https://api.korbit-test.com/v1",
+    "KorbitHttpUrl": "https://api.korbit.co.kr/v1",
     "KorbitKey": "NULL",
     "KorbitSecret": "NULL",
     "KorbitUsername": "NULL",
