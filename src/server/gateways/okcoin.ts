@@ -385,7 +385,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             var amount = parseFloat(free[currencyName]);
             var held = parseFloat(freezed[currencyName]);
 
-            var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
+            var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(currencyName));
             this.PositionUpdate.trigger(pos);
         }
     }
@@ -480,16 +480,6 @@ class OkCoinHttp {
 class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    public static convertCurrency(name : string) : Models.Currency {
-        switch (name.toLowerCase()) {
-            case "usd": return Models.Currency.USD;
-            case "ltc": return Models.Currency.LTC;
-            case "btc": return Models.Currency.BTC;
-            case "cny": return Models.Currency.CNY;
-            default: throw new Error("Unsupported currency " + name);
-        }
-    }
-
     private trigger = () => {
         this._http.post("userinfo.do", {}).then(msg => {
             if (!(<any>msg.data).result)
@@ -503,7 +493,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
                 var amount = parseFloat(free[currencyName]);
                 var held = parseFloat(freezed[currencyName]);
 
-                var pos = new Models.CurrencyPosition(amount, held, OkCoinPositionGateway.convertCurrency(currencyName));
+                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(currencyName));
                 this.PositionUpdate.trigger(pos);
             }
         });
