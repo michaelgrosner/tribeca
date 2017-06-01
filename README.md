@@ -30,7 +30,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 
 See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) section if you use winy or mac.
 
-This installation method is not heavily tested, please open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Docker%20installation%20issue).
+This installation method is not heavily tested, please open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Docker%20installation%20issue) in case is not working for you.
 
 ### Manual Installation
 
