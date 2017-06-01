@@ -39,6 +39,7 @@ interface SignedMessage {
     grant_type?: string;
     username?: string;
     password?: string;
+    currency_pair?: string;
 }
 
 interface TokenMessage {
@@ -383,29 +384,12 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.OrderUpdate.trigger(status);
     };
 
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
-    private onPosition = (ts: Models.Timestamped<any>) => {
-        var free = (<any>ts.data).info.free;
-        var freezed = (<any>ts.data).info.freezed;
-
-        for (var currencyName in free) {
-            if (!free.hasOwnProperty(currencyName)) continue;
-            var amount = parseFloat(free[currencyName]);
-            var held = parseFloat(freezed[currencyName]);
-
-            var pos = new Models.CurrencyPosition(amount, held, KorbitPositionGateway.convertCurrency(currencyName));
-            this.PositionUpdate.trigger(pos);
-        }
-    }
-
     constructor(
             private _http: KorbitHttp,
             private _symbolProvider: KorbitSymbolProvider) {
         // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
         // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
-        // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_userinfo", this.onPosition);
 
         // _socket.ConnectChanged.on(cs => {
             // this.ConnectChanged.trigger(cs);
@@ -518,36 +502,30 @@ class KorbitHttp {
 class KorbitPositionGateway implements Interfaces.IPositionGateway {
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    public static convertCurrency(name : string) : Models.Currency {
-        switch (name.toLowerCase()) {
-            case "usd": return Models.Currency.USD;
-            case "ltc": return Models.Currency.LTC;
-            case "btc": return Models.Currency.BTC;
-            case "cny": return Models.Currency.CNY;
-            default: throw new Error("Unsupported currency " + name);
-        }
-    }
-
     private trigger = () => {
-        this._http.post("userinfo.do", {}).then(msg => {
+        this._http.post("user/wallet", {currency_pair: this._symbolProvider.symbol}).then(msg => {
             if (!(<any>msg.data).result)
               console.error(new Date().toISOString().slice(11, -1), 'korbit', 'Please change the API Key or contact support team of Korbit, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
 
-            var free = (<any>msg.data).info.funds.free;
-            var freezed = (<any>msg.data).info.funds.freezed;
+            var free = (<any>msg.data).available;
+            var freezed = (<any>msg.data).pendingOrders;
+            var wallet = [];
+            free.forEach(x => { wallet[x.currency] = [x.currency, x.value]; });
+            freezed.forEach(x => { wallet[x.currency].push(x.value); });
+            wallet.forEach(x => {
+                var amount = parseFloat(free[x[1]]);
+                var held = parseFloat(x[2]);
 
-            for (var currencyName in free) {
-                if (!free.hasOwnProperty(currencyName)) continue;
-                var amount = parseFloat(free[currencyName]);
-                var held = parseFloat(freezed[currencyName]);
-
-                var pos = new Models.CurrencyPosition(amount, held, KorbitPositionGateway.convertCurrency(currencyName));
+                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(x[2]));
                 this.PositionUpdate.trigger(pos);
-            }
+            });
         });
     };
 
-    constructor(private _http : KorbitHttp) {
+    constructor(
+      private _http : KorbitHttp,
+      private _symbolProvider: KorbitSymbolProvider
+    ) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 10);
     }
@@ -593,8 +571,7 @@ class KorbitSymbolProvider {
 class Korbit extends Interfaces.CombinedGateway {
     constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new KorbitSymbolProvider(pair);
-        var signer = new KorbitMessageSigner(config);
-        var http = new KorbitHttp(config, signer);
+        var http = new KorbitHttp(config, new KorbitMessageSigner(config));
 
         var orderGateway = config.GetString("KorbitOrderDestination") == "Korbit"
             ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(http, symbol)
@@ -603,7 +580,7 @@ class Korbit extends Interfaces.CombinedGateway {
         super(
             new KorbitMarketDataGateway(http, symbol),
             orderGateway,
-            new KorbitPositionGateway(http),
+            new KorbitPositionGateway(http, symbol),
             new KorbitBaseGateway(parseFloat(
               Models.fromCurrency(pair.base)
                 .replace('BTC', '0.01')
