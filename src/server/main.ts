@@ -15,6 +15,7 @@ import HitBtc = require("./gateways/hitbtc");
 import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
 import OkCoin = require("./gateways/okcoin");
+import Korbit = require("./gateways/korbit");
 import Bitfinex = require("./gateways/bitfinex");
 import Utils = require("./utils");
 import Config = require("./config");
@@ -206,8 +207,9 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
         case "hitbtc": return Models.Exchange.HitBtc;
         case "coinbase": return Models.Exchange.Coinbase;
         case "okcoin": return Models.Exchange.OkCoin;
-        case "null": return Models.Exchange.Null;
         case "bitfinex": return Models.Exchange.Bitfinex;
+        case "korbit": return Models.Exchange.Korbit;
+        case "null": return Models.Exchange.Null;
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
       }
     })();
@@ -217,8 +219,9 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
         case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
         case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
         case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-        case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
         case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
+        case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+        case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
         default: throw new Error("no gateway provided for exchange " + exchange);
       }
     };
