@@ -9,8 +9,6 @@ To turn tribeca into a daemon, you may want to run the following command:
 ```
 Please make sure to correctly setup the value of `DAEMON_USER` and `DAEMON_TOPLEVEL_PATH` variables hardcoded into the script.
 
-Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
-
 ### Dockerfile
 To run tribeca under winy (or if you love Docker), make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):
 
