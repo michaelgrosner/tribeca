@@ -44,7 +44,7 @@ Docker installation method is not heavily tested, please open a [new issue](http
 
 Troubleshooting:
 
- * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (delete it after install) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
+ * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
  Optional:
 
