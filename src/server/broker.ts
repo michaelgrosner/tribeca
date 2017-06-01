@@ -502,6 +502,7 @@ export class PositionBroker implements Interfaces.IPositionBroker {
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (rpt !== null) this._currencies[rpt.currency] = rpt;
+        if (!this._currencies[this._base.pair.base] || !this._currencies[this._base.pair.quote]) return;
         var basePosition = this.getPosition(this._base.pair.base);
         var quotePosition = this.getPosition(this._base.pair.quote);
         var fv = this._fvEngine.latestFairValue;
