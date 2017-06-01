@@ -30,6 +30,8 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 
 See [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) section if you use winy or mac.
 
+This installation method is not heavily tested, please open a [new issue](https://github.com/ctubio/tribeca/issues/new?title=Docker%20installation%20issue).
+
 ### Manual Installation
 
 1. Ensure your target machine has installed node v6 or v7 (`nodejs -v`), mongodb and g++ will be installed automatically (to validate if mongodb server is running after install try `mongo --eval "print('OK')"`).
