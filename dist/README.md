@@ -12,7 +12,7 @@ Please make sure to correctly setup the value of `DAEMON_USER` and `DAEMON_TOPLE
 Log messages will be saved in `log/tribeca.log` (log files in `~/.forever/` will be instead piped to `/dev/null`).
 
 ### Dockerfile
-To run tribeca under winy or mac, make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):
+To run tribeca under winy (or if you love Docker), make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/tribeca/master/dist/Dockerfile):
 
 1. Please install [docker](https://www.docker.com/) for your system before proceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker or docker-machine is set up, depending on Docker version. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
