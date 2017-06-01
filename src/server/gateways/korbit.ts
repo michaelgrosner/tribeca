@@ -1,4 +1,3 @@
-import ws = require('uws');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
@@ -77,102 +76,6 @@ interface KorbitTradeRecord {
 }
 
 interface SubscriptionRequest extends SignedMessage { }
-
-class KorbitWebsocket {
-	send = <T>(channel : string, parameters: any, cb?: () => void) => {
-        var subsReq : any = {event: 'addChannel', channel: channel};
-
-        if (parameters !== null)
-            subsReq.parameters = parameters;
-
-        this._ws.send(JSON.stringify(subsReq), (e: Error) => {
-            if (!e && cb) cb();
-        });
-    }
-
-    setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
-        this._handlers[channel] = handler;
-    }
-
-    private onMessage = (raw : string) => {
-        var t = new Date();
-        try {
-            var msg : KorbitMessageIncomingMessage = JSON.parse(raw)[0];
-            if (typeof msg === "undefined") msg = JSON.parse(raw);
-            if (typeof msg === "undefined") throw new Error("Unkown message from Korbit socket: " + raw);
-
-            if (typeof msg.event !== "undefined" && msg.event == "ping") {
-                this._ws.send(this._serializedHeartbeat);
-                return;
-            }
-            if (typeof msg.event !== "undefined" && msg.event == "pong") {
-                this._stillAlive = true;
-                return;
-            }
-
-            let channel: string = typeof msg.channel !== 'undefined' ? msg.channel : msg.data.channel;
-            let success: boolean = typeof msg.success !== 'undefined' ? msg.success : (typeof msg.data !== 'undefined' && typeof msg.data.result !== 'undefined' ? msg.data.result : true);
-            let errorcode: number = typeof msg.errorcode !== 'undefined' ? msg.errorcode : msg.data.error_code;
-
-            if (!success && (typeof errorcode === "undefined" || (
-              errorcode != 20100 /* 20100=request time out */
-              && errorcode != 10002 /* 10002=System error */
-              && errorcode != 10050 /* 10050=Can't cancel more than once */
-              && errorcode != 10009 /* 10009=Order does not exist */
-              && errorcode != 10010 /* 10010=Insufficient funds */
-              && errorcode != 10016 /* 10016=Insufficient coins balance */
-              // errorcode != 10001 /* 10001=Request frequency too high */
-            ))) console.warn(new Date().toISOString().slice(11, -1), 'korbit', 'Unsuccessful message received:', raw);
-            else if (success && (channel == 'addChannel' || channel == 'login'))
-              return console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
-            if (typeof errorcode !== "undefined" && (
-              errorcode == 20100
-              || errorcode == 10002
-              || errorcode == 10050
-              || errorcode == 10009
-              // || errorcode == '10001'
-            ))  return;
-
-            var handler = this._handlers[channel];
-
-            if (typeof handler === "undefined") {
-                console.warn(new Date().toISOString().slice(11, -1), 'korbit', 'Got message on unknown topic', msg);
-                return;
-            }
-
-            handler(new Models.Timestamped(msg.data, t));
-        }
-        catch (e) {
-            console.error(new Date().toISOString().slice(11, -1), 'korbit', e, 'Error parsing msg', raw);
-            throw e;
-        }
-    };
-
-    private connectWS = (config: Config.IConfigProvider) => {
-        this._ws = new ws(config.GetString("KorbitWsUrl"));
-        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
-        this._ws.on("message", this.onMessage);
-        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
-    };
-
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    private _serializedHeartping = JSON.stringify({event: "ping"});
-    private _serializedHeartbeat = JSON.stringify({event: "pong"});
-    private _stillAlive: boolean = true;
-    private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
-    private _ws : ws;
-    constructor(config: Config.IConfigProvider) {
-        this.connectWS(config);
-        setInterval(() => {
-          if (!this._stillAlive) {
-            console.warn(new Date().toISOString().slice(11, -1), 'korbit', 'Heartbeat lost, reconnecting...');
-            this._stillAlive = true;
-            this.connectWS(config);
-          } else this._stillAlive = false;
-          this._ws.send(this._serializedHeartping);
-        }, 21000);
-    }
-}
 
 class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
