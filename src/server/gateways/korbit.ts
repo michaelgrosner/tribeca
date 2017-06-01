@@ -321,7 +321,7 @@ class KorbitMessageSigner {
         username: this._user,
         password: this._pass,
         grant_type: 'password'
-      }).then(msg => {
+      }, true).then(msg => {
         if ((<any>msg.data).access_token == "undefined")
           d.reject({msg:'Unable to get access_token'});
         d.resolve(msg);
@@ -338,7 +338,6 @@ class KorbitMessageSigner {
           this._token_time = now;
         }
 
-        var els : string[] = [];
         if (!m.hasOwnProperty("client_id"))
             m.client_id = this._client_id;
         if (!m.hasOwnProperty("client_secret"))
@@ -346,20 +345,24 @@ class KorbitMessageSigner {
         if (!m.hasOwnProperty("code"))
             m.code = this._token;
 
+        return this.toQueryString(m);
+    };
+
+    public toQueryString = (msg: SignedMessage) : string => {
+        var els : string[] = [];
         var keys = [];
-        for (var key in m) {
-            if (m.hasOwnProperty(key))
+        for (var key in msg) {
+            if (msg.hasOwnProperty(key))
                 keys.push(key);
         }
-
         for (var i = 0; i < keys.length; i++) {
             const k = keys[i];
-            if (m.hasOwnProperty(k))
-                els.push(k + "=" + m[k]);
+            if (msg.hasOwnProperty(k))
+                els.push(k + "=" + msg[k]);
         }
 
         return els.join("&");
-    };
+    }
 
     constructor(config : Config.IConfigProvider) {
         this._client_id = config.GetString("KorbitApiKey");
@@ -370,12 +373,12 @@ class KorbitMessageSigner {
 }
 
 class KorbitHttp {
-    post = <T>(actionUrl: string, msg : SignedMessage, rawMsg?: boolean) : Promise<Models.Timestamped<T>> => {
+    post = <T>(actionUrl: string, msg : SignedMessage, publicApi?: boolean) : Promise<Models.Timestamped<T>> => {
         var d = Promises.defer<Models.Timestamped<T>>();
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
-            body: querystring.stringify(rawMsg ? msg : this._signer.signMessage(this, msg)),
+            body: querystring.stringify(publicApi ? this._signer.toQueryString(msg) : this._signer.signMessage(this, msg)),
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             method: "POST"
         }, (err, resp, body) => {
@@ -476,6 +479,18 @@ class Korbit extends Interfaces.CombinedGateway {
         var symbol = new KorbitSymbolProvider(pair);
         var http = new KorbitHttp(config, new KorbitMessageSigner(config));
 
+        var d = Promises.defer<Models.Timestamped<TokenMessage>>();
+        http.post("constants", {}, true).then(msg => {
+          if ((<any>msg.data).minTradableLevel == "undefined")
+            d.reject({msg:'Unable to get mininum order'});
+          d.resolve(msg);
+        });
+        const constants = d.promise;
+        var minTick;
+        for (var constant in constants)
+          if (constant.toUpperCase()=='MIN'+pair.base+'ORDER') minTick = parseFloat(constants[constant]);
+        minTick = minTick || 0.01;
+
         var orderGateway = config.GetString("KorbitOrderDestination") == "Korbit"
             ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(http, symbol)
             : new NullGateway.NullOrderGateway();
@@ -484,11 +499,7 @@ class Korbit extends Interfaces.CombinedGateway {
             new KorbitMarketDataGateway(http, symbol),
             orderGateway,
             new KorbitPositionGateway(http, symbol),
-            new KorbitBaseGateway(parseFloat(
-              Models.fromCurrency(pair.base)
-                .replace('BTC', '0.01')
-                .replace('ETH', '0.01')
-            ) || 0.01, 0.01)
+            new KorbitBaseGateway(minTick, minTick)
         );
         }
 }
