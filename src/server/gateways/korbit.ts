@@ -54,8 +54,8 @@ interface Order extends SignedMessage {
 }
 
 interface Cancel extends SignedMessage {
-    order_id: string;
-    symbol: string;
+    id?: string;
+    currency_pair?: string;
 }
 
 interface KorbitTradeRecord {
