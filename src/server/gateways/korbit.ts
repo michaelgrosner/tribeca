@@ -137,12 +137,12 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
         var d = Promises.defer<number>();
-        this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
+        this._http.post("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
           if (typeof (<any>msg.data).orders == "undefined"
             || typeof (<any>msg.data).orders[0] == "undefined"
             || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
           (<any>msg.data).orders.map((o) => {
-              this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
+              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol }).then(msg => {
                   if (typeof (<any>msg.data).result == "undefined") return;
                   if ((<any>msg.data).result) {
                       this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
@@ -309,7 +309,7 @@ class KorbitMessageSigner {
     private _secretKey : string;
     private _user : string;
     private _pass : string;
-    private _token : string;
+    public token : string;
     private _token_refresh : string;
     private _token_time : number = 0;
 
@@ -333,7 +333,8 @@ class KorbitMessageSigner {
         const now = new Date().getTime();
         if (this._token_time+3e+6<now) {
           const newToken: any = this._refreshToken(_http);
-          this._token = newToken.data.access_token;
+          console.log(newToken);
+          this.token = newToken.data.access_token;
           this._token_refresh = newToken.data.refresh_token;
           this._token_time = now;
         }
@@ -343,7 +344,7 @@ class KorbitMessageSigner {
         if (!m.hasOwnProperty("client_secret"))
             m.client_secret = this._secretKey;
         if (!m.hasOwnProperty("code"))
-            m.code = this._token;
+            m.code = this.token;
 
         return this.toQueryString(m);
     };
@@ -379,7 +380,7 @@ class KorbitHttp {
         request({
             url: url.resolve(this._baseUrl, actionUrl),
             body: querystring.stringify(publicApi ? this._signer.toQueryString(msg) : this._signer.signMessage(this, msg)),
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            headers: Object.assign({"Content-Type": "application/x-www-form-urlencoded"}, publicApi?{}:{'Authorization': 'Bearer '+this._signer.token}),
             method: "POST"
         }, (err, resp, body) => {
             if (err) d.reject(err);
@@ -489,6 +490,7 @@ class Korbit extends Interfaces.CombinedGateway {
         var minTick;
         for (var constant in constants)
           if (constant.toUpperCase()=='MIN'+pair.base+'ORDER') minTick = parseFloat(constants[constant]);
+        console.log('minTick',minTick);
         minTick = minTick || 0.01;
 
         var orderGateway = config.GetString("KorbitOrderDestination") == "Korbit"
@@ -501,7 +503,7 @@ class Korbit extends Interfaces.CombinedGateway {
             new KorbitPositionGateway(http, symbol),
             new KorbitBaseGateway(minTick, minTick)
         );
-        }
+    }
 }
 export async function createKorbit(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     return new Korbit(config, pair);
