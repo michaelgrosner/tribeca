@@ -1,7 +1,7 @@
 import assert = require("assert");
 import Utils = require("../src/server/utils");
 import Statistics = require("../src/server/statistics");
-var bindings = require('bindings')('tribeca.node');
+var bindings = require('bindings')('ctubio.node');
 var Benchmark = require('benchmark');
 
 describe("Benchmark C shared objects", () => {

@@ -1,9 +1,9 @@
 {
   'targets': [
     {
-      'target_name': 'tribeca',
+      'target_name': 'ctubio',
       'sources': [
-        'src/lib/tribeca.cc',
+        'src/lib/ctubio.cc',
         'src/lib/round.cc',
         'src/lib/stdev.cc'
       ],
