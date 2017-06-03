@@ -99,69 +99,69 @@ class DisplayOrder {
                                     </thead>
                                     <tbody>
                                         <tr class="active">
-                                            <td style="width:25px;">
+                                            <td style="width:25px;border-bottom: 3px solid #8BE296;">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.percentageValues">
                                             </td>
-                                            <td style="min-width:121px;">
+                                            <td style="min-width:121px;border-bottom: 3px solid #DDE28B;">
                                                 <select class="form-control input-sm"
                                                   [(ngModel)]="pair.quotingParameters.display.mode">
                                                   <option *ngFor="let option of pair.quotingParameters.availableQuotingModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:78px;" *ngIf="pair.quotingParameters.display.mode==7">
+                                            <td style="width:78px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.mode==7">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.bullets">
                                             </td>
-                                            <td *ngIf="pair.quotingParameters.display.mode==7">
+                                            <td style="border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.mode==7">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
                                             </td>
-                                            <td style="min-width:142px;" *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="min-width:142px;border-bottom: 3px solid #8BE296;" *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
                                                    [(ngModel)]="pair.quotingParameters.display.pingAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="border-bottom: 3px solid #8BE296;" *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <select class="form-control input-sm"
                                                    [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySize">
                                             </td>
-                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
                                             </td>
-                                            <td *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                            <td style="border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                             </td>
-                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSize">
                                             </td>
-                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="1" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
                                             </td>
-                                            <td *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                            <td style="border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.sellSizeMax">
                                             </td>
@@ -188,93 +188,93 @@ class DisplayOrder {
                                     </thead>
                                     <tbody>
                                         <tr class="active">
-                                            <td style="min-width:121px;">
+                                            <td style="min-width:121px;border-bottom: 3px solid #8BE296;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.autoPositionMode">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.longEwmaPeridos">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.mediumEwmaPeridos">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.shortEwmaPeridos">
                                             </td>
-                                            <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
-                                            <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
                                             </td>
-                                            <td style="min-width:121px;">
+                                            <td style="min-width:121px;border-bottom: 3px solid #D64A4A;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.aggressivePositionRebalancing">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAggressivePositionRebalancings" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="min-width:121px;">
+                                            <td style="min-width:121px;border-bottom: 3px solid #DDE28B;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.superTrades">
                                                    <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:25px;">
+                                            <td style="width:25px;border-bottom: 3px solid #8BE296;">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.bestWidth">
                                             </td>
-                                            <td style="width:25px;" *ngIf="[9].indexOf(pair.quotingParameters.display.mode)==-1">
+                                            <td style="width:25px;border-bottom: 3px solid #8BE296;" *ngIf="[9].indexOf(pair.quotingParameters.display.mode)==-1">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPercentage">
                                             </td>
-                                            <td style="width:169px;" *ngIf="!pair.quotingParameters.display.widthPercentage || [9].indexOf(pair.quotingParameters.display.mode)>-1">
+                                            <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.widthPercentage || [9].indexOf(pair.quotingParameters.display.mode)>-1">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPing">
                                             </td>
-                                            <td style="width:169px;" *ngIf="pair.quotingParameters.display.widthPercentage && [9].indexOf(pair.quotingParameters.display.mode)==-1">
+                                            <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.widthPercentage && [9].indexOf(pair.quotingParameters.display.mode)==-1">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="0.01" min="0.01" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
                                             </td>
-                                            <td style="width:169px;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && !pair.quotingParameters.display.widthPercentage">
+                                            <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && !pair.quotingParameters.display.widthPercentage">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPong">
                                             </td>
-                                            <td style="width:169px;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && pair.quotingParameters.display.widthPercentage">
+                                            <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)>-1 && pair.quotingParameters.display.widthPercentage">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="0.01" min="0.01" max="100"
                                                    onClick="this.select()"
@@ -312,81 +312,81 @@ class DisplayOrder {
                                     </thead>
                                     <tbody>
                                         <tr class="active">
-                                            <td style="width:88px;">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.fvModel">
                                                    <option *ngFor="let option of pair.quotingParameters.availableFvModels" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:88px;">
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.1" min="0"
                                                    style="text-align:right;"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.tradesPerMinute">
                                             </td>
-                                            <td style="width:88px;">
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.tradeRateSeconds">
                                             </td>
-                                            <td>
+                                            <td style="border-bottom: 3px solid #F0A0A0;">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtection">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection">
+                                            <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeridos">
                                             </td>
-                                            <td style="width:121px;">
+                                            <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.quotingStdevProtection">
                                                    <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
+                                            <td style="width:88px;border-bottom: 3px solid #AF451E;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingStdevProtectionPeriods">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
+                                            <td style="width:88px;border-bottom: 3px solid #AF451E;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.1" min="0.1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingStdevProtectionFactor">
                                             </td>
-                                            <td>
+                                            <td style="border-bottom: 3px solid #A0A0A0;">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.cancelOrdersAuto">
                                             </td>
-                                            <td style="width:88px;">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.profitHourInterval">
                                             </td>
-                                            <td style="width:88px;">
+                                            <td style="width:88px;border-bottom: 3px solid #A0A0A0;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.delayUI">
                                             </td>
-                                            <td>
+                                            <td style="border-bottom: 3px solid #A0A0A0;">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.audio">
                                             </td>
-                                            <td>
+                                            <td style="border-bottom: 3px solid #A0A0A0;">
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:55px"
                                                     type="button"
                                                     (click)="pair.quotingParameters.reset()"
                                                     value="Reset" />
                                             </td>
-                                            <td>
+                                            <td style="border-bottom: 3px solid #A0A0A0;">
                                                 <input class="btn btn-default btn col-md-1 col-xs-6"
                                                     style="width:50px"
                                                     type="submit"
