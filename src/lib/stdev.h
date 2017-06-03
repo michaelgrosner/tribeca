@@ -1,10 +1,10 @@
-#ifndef TRIBECA_STDEV_
-#define TRIBECA_STDEV_
+#ifndef CTUBIO_STDEV_
+#define CTUBIO_STDEV_
 
 #include <nan.h>
 #include <math.h>
 
-namespace tribeca {
+namespace ctubio {
   using v8::Local;
   using v8::Value;
   using v8::Number;

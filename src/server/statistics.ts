@@ -6,7 +6,7 @@ import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import Persister = require("./persister");
 import moment = require("moment");
-var bindings = require('bindings')('tribeca.node');
+var bindings = require('bindings')('ctubio.node');
 
 export interface IComputeStatistics {
     latest: number;

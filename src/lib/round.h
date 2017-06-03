@@ -1,10 +1,10 @@
-#ifndef TRIBECA_ROUND_
-#define TRIBECA_ROUND_
+#ifndef CTUBIO_ROUND_
+#define CTUBIO_ROUND_
 
 #include <nan.h>
 #include <math.h>
 
-namespace tribeca {
+namespace ctubio {
   using v8::Local;
   using v8::Value;
   using v8::Number;

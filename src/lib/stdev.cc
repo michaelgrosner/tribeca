@@ -1,6 +1,6 @@
 #include "stdev.h"
 
-namespace tribeca {
+namespace ctubio {
   void Stdev::Init(Local<Object> target) {
     Nan::Export(target, "computeStdevs", Stdev::ComputeStdevs);
   }
