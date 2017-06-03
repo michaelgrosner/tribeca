@@ -495,8 +495,8 @@ export class StatsComponent implements OnInit {
 
   private updatePosition = (o: Models.Timestamped<any[]>) => {
     let time = new Date().getTime();
-    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[6]];
-    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[7]];
+    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[8]];
+    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[9]];
     this.positionData = o.data;
   }
 
