@@ -24,6 +24,7 @@ interface MarketQuotingScope extends ng.IScope {
     qBidSz: number;
     qBidPx: string;
     fairValue: string;
+    spreadValue: string;
     qAskPx: string;
     qAskSz: number;
     extVal: string;
@@ -38,6 +39,7 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         product: Shared.ProductState) => {
 
     var toPrice = (px: number) : string => px.toFixed(product.fixed);
+    var toPercent = (askPx: number, bidPx: number): string => ((askPx - bidPx) / askPx * 100).toFixed(2);
 
     var clearMarket = () => {
         $scope.levels = [];
@@ -54,9 +56,14 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
         $scope.qAskSz = null;
     };
 
+    var clearSpread = () => {
+        $scope.spreadValue = null;
+    }
+
     var clearQuote = () => {
         clearBid();
         clearAsk();
+        clearSpread();
     };
 
     var clearFairValue = () => {
@@ -111,6 +118,15 @@ var MarketQuotingController = ($scope: MarketQuotingScope,
             }
             else {
                 clearAsk();
+            }
+
+            if (quote.ask !== null && quote.bid !== null) {
+                const spreadAbsolutePrice = (quote.ask.price - quote.bid.price).toFixed(2);
+                const spreadPercent = toPercent(quote.ask.price, quote.bid.price);
+                $scope.spreadValue = `${spreadAbsolutePrice} / ${spreadPercent}%`;
+            }
+            else {
+                clearFairValue();
             }
         }
         else {
