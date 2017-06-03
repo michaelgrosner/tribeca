@@ -246,6 +246,7 @@ export class EWMAChart implements ITimestamped {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
                 public ewmaShort: number,
+                public ewmaMedium: number,
                 public ewmaLong: number,
                 public fairValue: number,
                 public time: Date) {}
@@ -347,7 +348,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth }
 export enum FairValueModel { BBO, wBBO }
-export enum AutoPositionMode { Manual, EwmaBasic }
+export enum AutoPositionMode { Manual, EWMA }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
@@ -381,16 +382,17 @@ export interface QuotingParameters {
     superTrades?: SOP;
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
-    ewmaProtection?: boolean;
-    stdevProtection?: STDEV;
+    quotingEwmaProtection?: boolean;
+    quotingStdevProtection?: STDEV;
     audio?: boolean;
     bullets?: number;
     range?: number;
-    longEwma?: number;
-    shortEwma?: number;
-    quotingEwma?: number;
-    widthStdevFactor?: number;
-    widthStdevPeriods?: number;
+    longEwmaPeridos?: number;
+    mediumEwmaPeridos?: number;
+    shortEwmaPeridos?: number;
+    quotingEwmaProtectionPeridos?: number;
+    quotingStdevProtectionFactor?: number;
+    quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     cancelOrdersAuto?: boolean;

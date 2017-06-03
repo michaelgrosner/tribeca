@@ -65,7 +65,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 # How do I control Tribeca's quotes?
 
-In the web UI, there are two rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
+In the web UI, there are three rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how Tribeca will trade.
 
 * `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
 
@@ -147,7 +147,13 @@ In the web UI, there are two rows of panels with cryptic looking names and edita
 
   * `Manual` - Tribeca will not try to automatically manage positions, instead you will need to manually set `tbp`.
 
-  * `EwmaBasic` - Tribeca will use a 200 minute and 100 minute exponential weighted moving average calculation to buy up BTC when the 100 minute line crosses over the 200 minute line, and sell BTC when the reverse happens. The values of 100mins and 200mins are currently exposed in the stats as `shortEwma` and `longEwma`.
+  * `EWMA ` - Tribeca will use a `long` minute and `short` minute exponential weighted moving average calculation to buy up BTC when the 100 minute line crosses over the 200 minute line, and sell BTC when the reverse happens. The EWMA values are currently exposed in the stats.
+
+* `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
+
+* `medium` - Not used yet. Sets the periods of EWMA Medium.
+
+* `short` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Short to automatically manage positions.
 
 * `tbp` - Only used when `apMode` is `Manual`. Sets a static "Target Base Position" for Tribeca to stay near. In manual position mode, Tribeca will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Manual`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 
@@ -176,7 +182,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of 100 minute EWMA smoothed line of the price to limit the price while sending new orders.
+* `ewma?` - Use a quote protection of `periods` smoothed line of the price to limit the price while sending new orders.
+
+* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewma?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
 
 * `stdev`
 
@@ -194,7 +202,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
   * `OnTopAPROff` - Same as `OnTop` when `apr` is `Off` or when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
 
-* `periods` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. After collect sequentially every 1 second the values of the `fair value`, `last bid` and also of the `last ask` from the market order book, and before place new orders, a limit will be always applied to the new orders price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
+* `periodsˢᵗᵈᶜᵛ` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. After collect sequentially every 1 second the values of the `fair value`, `last bid` and also of the `last ask` from the market order book, and before place new orders, a limit will be always applied to the new orders price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
 
 * `factor` - Multiplier used to increase or decrease the value of the selected `stdev` calculation, a `factor` of 1 does effectively nothing.
 
