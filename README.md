@@ -13,10 +13,10 @@
 [![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)](https://david-dm.org/ctubio/tribeca)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 
-[![Open Issues](https://img.shields.io/npm/dw/hacktimer.svg)](https://github.com/ctubio/tribeca)
-[![Open Issues](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/tribeca)
-[![Open Issues](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/tribeca)
-[![Open Issues](https://img.shields.io/npm/dt/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Total Downloads](https://img.shields.io/npm/dt/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Week Downloads](https://img.shields.io/npm/dw/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/tribeca)
 
 Runs on the latest node.js (v6 or v7 [but not v6.1]). Persistence is achieved using mongodb. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
