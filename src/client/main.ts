@@ -172,6 +172,9 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">long</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">medium</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">short</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
@@ -190,6 +193,24 @@ class DisplayOrder {
                                                     [(ngModel)]="pair.quotingParameters.display.autoPositionMode">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.longEwmaPeridos">
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.mediumEwmaPeridos">
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.shortEwmaPeridos">
                                             </td>
                                             <td style="width:88px;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
@@ -268,9 +289,11 @@ class DisplayOrder {
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
                                             <th>ewma?</th>
+                                            <th>ewma?</th>
+                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
                                             <th>stdev</th>
-                                            <th *ngIf="pair.quotingParameters.display.stdevProtection">periods</th>
-                                            <th *ngIf="pair.quotingParameters.display.stdevProtection">factor</th>
+                                            <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
+                                            <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
                                             <th>cxl?</th>
                                             <th>profit</th>
                                             <th>delayUI</th>
@@ -311,25 +334,31 @@ class DisplayOrder {
                                             </td>
                                             <td>
                                                 <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.ewmaProtection">
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtection">
                                             </td>
-                                            <td style="width:121px;">
-                                                <select class="form-control input-sm"
-                                                    [(ngModel)]="pair.quotingParameters.display.stdevProtection">
-                                                   <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.stdevProtection">
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.widthStdevPeriods">
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeridos">
                                             </td>
-                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.stdevProtection">
+                                            <td style="width:121px;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.quotingStdevProtection">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingStdevProtectionPeriods">
+                                            </td>
+                                            <td style="width:88px;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.1" min="0.1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.widthStdevFactor">
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingStdevProtectionFactor">
                                             </td>
                                             <td>
                                                 <input type="checkbox"

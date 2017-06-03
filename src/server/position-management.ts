@@ -13,6 +13,7 @@ export class PositionManager {
     private newWidth: Models.IStdev = null;
     private newQuote: number = null;
     private newShort: number = null;
+    private newMedium: number = null;
     private newLong: number = null;
     private fairValue: number = null;
     public set quoteEwma(quoteEwma: number) {
@@ -29,6 +30,7 @@ export class PositionManager {
         widthStdev,
         this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
         this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+        this.newMedium?Utils.roundNearest(this.newMedium, minTick):null,
         this.newLong?Utils.roundNearest(this.newLong, minTick):null,
         Utils.roundNearest(fv.price, minTick),
         this._timeProvider.utcNow()
@@ -50,6 +52,7 @@ export class PositionManager {
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _shortEwma: Statistics.IComputeStatistics,
+        private _mediumEwma: Statistics.IComputeStatistics,
         private _longEwma: Statistics.IComputeStatistics,
         private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>
     ) {
@@ -58,6 +61,7 @@ export class PositionManager {
           this.newWidth,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           this.newShort?Utils.roundNearest(this.newShort, minTick):null,
+          this.newMedium?Utils.roundNearest(this.newMedium, minTick):null,
           this.newLong?Utils.roundNearest(this.newLong, minTick):null,
           this.fairValue?Utils.roundNearest(this.fairValue, minTick):null,
           this._timeProvider.utcNow()
@@ -75,6 +79,7 @@ export class PositionManager {
         const rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
         this.newShort = this._shortEwma.addNewValue(fv.price);
+        this.newMedium = this._mediumEwma.addNewValue(fv.price);
         this.newLong = this._longEwma.addNewValue(fv.price);
 
         const minTick = this._details.minTickIncrement;
@@ -92,6 +97,7 @@ export class PositionManager {
           this.newWidth,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           Utils.roundNearest(this.newShort, minTick),
+          Utils.roundNearest(this.newMedium, minTick),
           Utils.roundNearest(this.newLong, minTick),
           Utils.roundNearest(fv.price, minTick),
           this._timeProvider.utcNow()
@@ -144,7 +150,7 @@ export class TargetBasePositionManager {
           ? params.targetBasePositionPercentage * latestPosition.value / 100
           : params.targetBasePosition;
 
-        if (params.autoPositionMode === Models.AutoPositionMode.EwmaBasic)
+        if (params.autoPositionMode === Models.AutoPositionMode.EWMA)
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
 
         if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {

@@ -105,7 +105,7 @@ export class QuotingEngine {
         if (unrounded === null)
             return null;
 
-        if (params.ewmaProtection && this._ewma.latest !== null) {
+        if (params.quotingEwmaProtection && this._ewma.latest !== null) {
             unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
             unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
         }
@@ -175,17 +175,17 @@ export class QuotingEngine {
             }
         }
 
-        if (params.stdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
-            if (unrounded.askPx && (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnTops || params.stdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Sell')===-1))
+        if (params.quotingStdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
+            if (unrounded.askPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Sell')===-1))
               unrounded.askPx = Math.max(fv.price + this._stdev.latest[
-                (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnFVAPROff)
-                  ? 'fv' : ((params.stdevProtection === Models.STDEV.OnTops || params.stdevProtection === Models.STDEV.OnTopsAPROff)
+                (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'ask' )
               ], unrounded.askPx);
-            if (unrounded.bidPx && (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnTops || params.stdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Bid')===-1))
+            if (unrounded.bidPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Bid')===-1))
               unrounded.bidPx = Math.min(fv.price - this._stdev.latest[
-                (params.stdevProtection === Models.STDEV.OnFV || params.stdevProtection === Models.STDEV.OnFVAPROff)
-                  ? 'fv' : ((params.stdevProtection === Models.STDEV.OnTops || params.stdevProtection === Models.STDEV.OnTopsAPROff)
+                (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'bid' )
               ], unrounded.bidPx);
         }

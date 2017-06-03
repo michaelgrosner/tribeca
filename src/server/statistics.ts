@@ -21,7 +21,7 @@ export interface IComputeStatisticsIncremental {
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
-    constructor(private _alpha: number, initRfv: Models.RegularFairValue[]) {
+    constructor(private _periods: number, initRfv: Models.RegularFairValue[]) {
       if (initRfv !== null)
         this.initialize(initRfv.map((r: Models.RegularFairValue) => r.value));
     }
@@ -34,13 +34,14 @@ export class EwmaStatisticCalculator implements IComputeStatistics {
     }
 
     addNewValue(value: number): number {
-        this.latest = computeEwma(value, this.latest, this._alpha);
+        this.latest = computeEwma(value, this.latest, this._periods);
         return this.latest;
     }
 }
 
-export function computeEwma(newValue: number, previous: number, alpha: number): number {
+export function computeEwma(newValue: number, previous: number, periods: number): number {
     if (previous !== null) {
+        const alpha = 2 / (periods + 1);
         return alpha * newValue + (1 - alpha) * previous;
     }
 
@@ -54,8 +55,7 @@ export class EmptyEWMACalculator implements Interfaces.ICalculator {
 }
 
 export class ObservableEWMACalculator implements Interfaces.ICalculator {
-    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _alpha?: number) {
-        this._alpha = _alpha || .095;
+    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _periods?: number) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
     }
 
@@ -67,7 +67,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
             return;
         }
 
-        var value = computeEwma(fv.price, this._latest, this._alpha);
+        var value = computeEwma(fv.price, this._latest, this._periods);
 
         this.setLatest(value);
     };
@@ -135,10 +135,10 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
     private initialize(rfv: number[], mktBids: number[], mktAsks: number[]) {
         for (let i = 0; i<mktBids.length||i<mktAsks.length;i++)
           if (mktBids[i] && mktAsks[i]) this._lastTops.push(mktBids[i], mktAsks[i]);
-        this._lastFV = rfv.slice(-this._qlParamRepo.latest.widthStdevPeriods);
-        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.widthStdevPeriods * 2);
-        this._lastBids = mktBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
-        this._lastAsks = mktAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastFV = rfv.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
+        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods * 2);
+        this._lastBids = mktBids.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
+        this._lastAsks = mktAsks.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
 
         this.onSave();
     };
@@ -151,7 +151,7 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
           new Float64Array(this._lastTops),
           new Float64Array(this._lastBids),
           new Float64Array(this._lastAsks),
-          this._qlParamRepo.latest.widthStdevFactor,
+          this._qlParamRepo.latest.quotingStdevProtectionFactor,
           this._minTick
         );
     };
@@ -168,10 +168,10 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
         this._lastTops.push(filteredMkt.bids[0].price, filteredMkt.asks[0].price);
         this._lastBids.push(filteredMkt.bids[0].price);
         this._lastAsks.push(filteredMkt.asks[0].price);
-        this._lastFV = this._lastFV.slice(-this._qlParamRepo.latest.widthStdevPeriods);
-        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.widthStdevPeriods * 2);
-        this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.widthStdevPeriods);
-        this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.widthStdevPeriods);
+        this._lastFV = this._lastFV.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
+        this._lastTops = this._lastTops.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods * 2);
+        this._lastBids = this._lastBids.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
+        this._lastAsks = this._lastAsks.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
 
         this.onSave();
 
@@ -181,6 +181,6 @@ export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
           filteredMkt.asks[0].price,
           new Date()
         ));
-        this.persister.clean(new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.widthStdevPeriods));
+        this.persister.clean(new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
     };
 }
