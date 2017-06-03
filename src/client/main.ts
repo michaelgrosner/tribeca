@@ -289,7 +289,6 @@ class DisplayOrder {
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
                                             <th>ewma?</th>
-                                            <th>ewma?</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
