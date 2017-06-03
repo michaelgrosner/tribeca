@@ -143,7 +143,7 @@ export class DisplayPair {
           this.connectionMessage = "Disconnected from exchange";
       }
       if (!this.connectedToServer) {
-          this.connectionMessage = "Disconnected from tribeca";
+          this.connectionMessage = "Disconnected from server";
       }
   }
 
