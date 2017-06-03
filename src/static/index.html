@@ -5,9 +5,9 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="/css/ui-grid.min.css">
-    
+
     <script src="/js/admin/bundle.min.js"></script>
-    
+
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <title>tribeca [{{ env }}]</title>
@@ -20,7 +20,7 @@
 
         .black { color: black }
         .red { color: red }
-        
+
         .row {
             margin-left: 0;
             margin-right: 0
@@ -41,6 +41,7 @@
             <th>bidSz</th>
             <th>bidPx</th>
             <th>FV</th>
+            <th>Spread</th>
             <th>askPx</th>
             <th>askSz</th>
         </tr>
@@ -49,6 +50,7 @@
             <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz|number:2 }}</td>
             <td ng-class="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx }}</td>
             <td>{{ fairValue }}</td>
+            <td>{{ spreadValue }}</td>
             <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx }}</td>
             <td ng-class="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz|number:2 }}</td>
         </tr>
@@ -56,6 +58,7 @@
             <td>mkt{{ $index }}</td>
             <td>{{ level.bidSize|number:2 }}</td>
             <td ng-class="level.bidClass">{{ level.bidPrice }}</td>
+            <td></td>
             <td></td>
             <td ng-class="level.askClass">{{ level.askPrice }}</td>
             <td>{{ level.askSize|number:2 }}</td>
@@ -155,7 +158,7 @@
                             </div>
 
                             <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
-                            
+
                             <position-grid></position-grid>
                         </div>
                     </div>
@@ -266,23 +269,23 @@
                                                 ng-model="pair.quotingParameters.display.tradeRateSeconds">
                                         </td>
                                         <td>
-                                            <input class="btn btn-default btn col-md-1 col-xs-6" 
+                                            <input class="btn btn-default btn col-md-1 col-xs-6"
                                                 style="width:55px"
-                                                type="button" 
-                                                ng-click="pair.quotingParameters.reset()" 
+                                                type="button"
+                                                ng-click="pair.quotingParameters.reset()"
                                                 value="Reset" />
                                         </td>
                                         <td>
                                             <input class="btn btn-default btn col-md-1 col-xs-6"
-                                                style="width:50px" 
-                                                type="submit" 
-                                                ng-click="pair.quotingParameters.submit()" 
+                                                style="width:50px"
+                                                type="submit"
+                                                ng-click="pair.quotingParameters.submit()"
                                                 ng-disabled="!pair.quotingParameters.connected"
                                                 value="Save" />
                                         </td>
                                     </tr>
                                 </tbody>
-                                
+
                             </table>
                         </div>
 
