@@ -5,13 +5,18 @@
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/tribeca/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/tribeca/master/COPYING)
 
-`tribeca.js` is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
+[`tribeca.js`](https://github.com/ctubio/tribeca) is a very low latency cryptocurrency [market making](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/tribeca#web-ui), [backtester](https://github.com/ctubio/tribeca/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/tribeca/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
 
 [![Build Status](https://img.shields.io/travis/ctubio/tribeca/master.svg?label=test%20build)](https://travis-ci.org/ctubio/tribeca)
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/tribeca/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/tribeca?branch=master)
 [![Quality Status](https://img.shields.io/codacy/grade/21564745dbb0449ca05912f77d484b0c/master.svg)](https://www.codacy.com/app/ctubio/tribeca)
 [![Dependency Status](https://img.shields.io/david/ctubio/tribeca.svg)](https://david-dm.org/ctubio/tribeca)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
+
+[![Open Issues](https://img.shields.io/npm/dw/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Open Issues](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Open Issues](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/tribeca)
+[![Open Issues](https://img.shields.io/npm/dt/hacktimer.svg)](https://github.com/ctubio/tribeca)
 
 Runs on the latest node.js (v6 or v7 [but not v6.1]). Persistence is achieved using mongodb. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
