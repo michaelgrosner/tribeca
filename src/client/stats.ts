@@ -136,25 +136,25 @@ export class StatsComponent implements OnInit {
       shape: 'circlepin',
       width: 16
     },{
-      name: 'Quote EWMA',
+      name: 'EWMA Quote',
       type: 'spline',
       color: '#ffff00',
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
-      name: 'Long EWMA',
+      name: 'EWMA Long',
       type: 'spline',
       colorIndex: 6,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
-      name: 'Medium EWMA',
+      name: 'EWMA Medium',
       type: 'spline',
       colorIndex: 6,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
-      name: 'Short EWMA',
+      name: 'EWMA Short',
       type: 'spline',
       colorIndex: 3,
       tooltip: {pointFormatter:this.pointFormatterBase},
