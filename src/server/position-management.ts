@@ -39,6 +39,7 @@ export class PositionManager {
 
     public NewTargetPosition = new Utils.Evt();
 
+    private _SMA3: number[] = [];
     private _latest: number = null;
     public get latestTargetPosition(): number {
         return this._latest;
@@ -49,6 +50,7 @@ export class PositionManager {
     constructor(
         private _details: Interfaces.IBroker,
         private _timeProvider: Utils.ITimeProvider,
+        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
         private _shortEwma: Statistics.IComputeStatistics,
@@ -78,16 +80,22 @@ export class PositionManager {
 
         const rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
 
+        this._SMA3.push(fv.price);
+        this._SMA3 = this._SMA3.slice(-3);
+        const SMA3 = this._SMA3.reduce((a,b) => a+b) / this._SMA3.length;
+
         this.newShort = this._shortEwma.addNewValue(fv.price);
         this.newMedium = this._mediumEwma.addNewValue(fv.price);
         this.newLong = this._longEwma.addNewValue(fv.price);
 
-        const minTick = this._details.minTickIncrement;
-        let newTargetPosition = ((this.newShort * 100/ this.newLong) - 100) * 5;
+        let newTrend = ((SMA3 * 100 / this.newLong) - 100);
+        let newEwmacrossing = ((this.newShort * 100 / this.newMedium) - 100);
+        let newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
 
+        const minTick = this._details.minTickIncrement;
         if (Math.abs(newTargetPosition - this._latest) > minTick) {
             this._latest = newTargetPosition;
             this.NewTargetPosition.trigger();
