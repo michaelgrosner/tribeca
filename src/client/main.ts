@@ -736,7 +736,7 @@ class ClientComponent implements OnInit {
       );
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
-    this.product.fixed = Math.floor(Math.log10(pa.minTick)) * -1;
+    this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
   }
 }
