@@ -161,17 +161,20 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             currency_pair: this._symbolProvider.symbol,
             nonce: new Date().getTime()
         }).then(msg => {
-          if (!(<any>msg.data).orderId)
+          if (!(<any>msg.data).orderId || ((<any>msg.data).status && (<any>msg.data).status != 'success')) {
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
               orderId: order.orderId,
               leavesQuantity: 0,
               time: (<any>msg.data).time,
               orderStatus: Models.OrderStatus.Cancelled
             });
+            if ((<any>msg.data).status)
+              console.info(new Date().toISOString().slice(11, -1), 'korbit', 'order error:', (<any>msg.data).status);
+          }
           else
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
               orderId: order.orderId,
-              computationalLatency: new Date().valueOf() - (<any>msg.data).time.valueOf(),
+              computationalLatency: new Date().valueOf() - (<any>msg.time).valueOf(),
               time: (<any>msg.data).time,
               exchangeId: (<any>msg.data).orderId,
               orderStatus: Models.OrderStatus.Working,
@@ -252,7 +255,7 @@ class KorbitMessageSigner {
           this.token = newToken.data.access_token;
           this._token_refresh = newToken.data.refresh_token;
           console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication successful, new token expires at '+(new Date(this._token_time).toISOString().slice(11, -1))+'.');
-        } else if (new Date().getTime()+21>this._token_time) {
+        } else if (new Date().getTime()+60>this._token_time) {
           d = new Promise((resolve, reject) => {
             _http.post('oauth2/access_token', {
               client_id: this._client_id,
@@ -267,7 +270,7 @@ class KorbitMessageSigner {
           this._token_time = (parseFloat(refreshToken.data.expires_in) * 1000 ) + new Date().getTime();
           this.token = refreshToken.data.access_token;
           this._token_refresh = refreshToken.data.refresh_token;
-          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication refresh successful, got new token.');
+          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication refresh successful, new token expires at '+(new Date(this._token_time).toISOString().slice(11, -1))+'.');
         }
 
         return m;
@@ -342,7 +345,7 @@ class KorbitHttp {
             else {
                 try {
                     var t = new Date();
-                    var data = JSON.parse(body);
+                    var data = body ? JSON.parse(body) : {};
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
@@ -366,8 +369,7 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 
     private trigger = () => {
         this._http.get("user/wallet", {currency_pair: this._symbolProvider.symbol}).then(msg => {
-            if (!(<any>msg.data).balance)
-              console.error(new Date().toISOString().slice(11, -1), 'korbit', 'Please change the API Key or contact support team of Korbit, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+            if (!(<any>msg.data).balance) return;
 
             var free = (<any>msg.data).available;
             var freezed = (<any>msg.data).pendingOrders;
@@ -450,11 +452,13 @@ class Korbit extends Interfaces.CombinedGateway {
 
 export async function createKorbit(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const constants = await getJSON<any[]>(config.GetString("KorbitHttpUrl")+"/constants");
-    let minTick = 0.01;
-    let minSize = 0.01;
+    let minTick = 500;
+    let minSize = 0.015;
     for (let constant in constants)
-      if (constant.toUpperCase()=='MIN'+Models.fromCurrency(pair.base)+'ORDER')
-          minSize = parseFloat(constants[constant]);
+      if (constant.toUpperCase()==Models.fromCurrency(pair.base)+'TICKSIZE')
+          minTick = parseFloat(constants[constant]);
+      // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(pair.base)+'ORDER')
+          // minSize = parseFloat(constants[constant]);
 
     return new Korbit(config, pair, minTick, minSize);
 }
