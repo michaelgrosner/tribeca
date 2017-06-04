@@ -57,6 +57,7 @@ interface SignedMessage {
     username?: string;
     password?: string;
     currency_pair?: string;
+    category?: string;
 }
 
 interface TokenMessage {
@@ -124,20 +125,20 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketData.trigger(mkt);
     };
 
-    constructor(_http : KorbitHttp, symbolProvider: KorbitSymbolProvider) {
-        // var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
-        // var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
-        // socket.setHandler(depthChannel, this.onDepth);
-        // socket.setHandler(tradesChannel, this.onTrade);
+    private trigger = () => {
+        this._http.get("orderbook", {currency_pair: this._symbolProvider.symbol, category: 'all'}, true).then(msg => {
+            if (!(<any>msg.data).timestamp) return;
+            this.MarketData.trigger(new Models.Market(
+              (<any>msg.data).bids.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
+              (<any>msg.data).asks.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
+              msg.time
+            ));
+        });
+    };
 
-        // socket.ConnectChanged.on(cs => {
-            // this.ConnectChanged.trigger(cs);
-
-            // if (cs == Models.ConnectivityStatus.Connected) {
-                // socket.send(depthChannel, null);
-                // socket.send(tradesChannel, null);
-            // }
-        // });
+    constructor(private _http : KorbitHttp, private _symbolProvider: KorbitSymbolProvider) {
+        setInterval(this.trigger, 1000);
+        setTimeout(this.trigger, 10);
     }
 }
 
@@ -145,35 +146,30 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    private chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    generateClientOrderId = (): string => {
-      let id: string = '';
-      for(let i=8;i--;) id += this.chars.charAt(Math.floor(Math.random() * this.chars.length));
-      return id;
-    };
+    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
         var d = Promises.defer<number>();
-        // this._http.post("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
-          // if (typeof (<any>msg.data).orders == "undefined"
-            // || typeof (<any>msg.data).orders[0] == "undefined"
-            // || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
-          // (<any>msg.data).orders.map((o) => {
-              // this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol }).then(msg => {
-                  // if (typeof (<any>msg.data).result == "undefined") return;
-                  // if ((<any>msg.data).result) {
-                      // this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                        // exchangeId: (<any>msg.data).order_id.toString(),
-                        // leavesQuantity: 0,
-                        // time: msg.time,
-                        // orderStatus: Models.OrderStatus.Cancelled
-                      // });
-                  // }
-              // });
-          // });
-          // d.resolve((<any>msg.data).orders.length);
-        // });
+        this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
+          if (typeof (<any>msg.data).orders == "undefined"
+            || typeof (<any>msg.data).orders[0] == "undefined"
+            || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
+          (<any>msg.data).orders.map((o) => {
+              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol }).then(msg => {
+                  if (typeof (<any>msg.data).result == "undefined") return;
+                  if ((<any>msg.data).result) {
+                      this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+                        exchangeId: (<any>msg.data).order_id.toString(),
+                        leavesQuantity: 0,
+                        time: msg.time,
+                        orderStatus: Models.OrderStatus.Cancelled
+                      });
+                  }
+              });
+          });
+          d.resolve((<any>msg.data).orders.length);
+        });
         return d.promise;
     };
 
@@ -447,7 +443,7 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 
     private trigger = () => {
         this._http.get("user/wallet", {currency_pair: this._symbolProvider.symbol}).then(msg => {
-            if (!(<any>msg.data).result)
+            if (!(<any>msg.data).balance)
               console.error(new Date().toISOString().slice(11, -1), 'korbit', 'Please change the API Key or contact support team of Korbit, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
 
             var free = (<any>msg.data).available;
