@@ -58,6 +58,7 @@ interface SignedMessage {
     password?: string;
     currency_pair?: string;
     category?: string;
+    time?: string;
 }
 
 interface TokenMessage {
@@ -100,13 +101,16 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
-    private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
-        trades.data.forEach(trade => { // [tid, price, amount, time, type]
-            var px = parseFloat(trade[1]);
-            var amt = parseFloat(trade[2]);
-            var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid;
-            var mt = new Models.GatewayMarketTrade(px, amt, trades.time, trades.data.length > 0, side);
-            this.MarketTrade.trigger(mt);
+    private triggerMarketTrades = () => {
+        this._http.get("transactions", {currency_pair: this._symbolProvider.symbol, time: 'minute'}, true).then(msg => {
+            if (!(<any>msg.data).length) return;
+            for (let i = (<any>msg.data).length;i--;) {
+              var px = parseFloat((<any>msg.data)[i].price);
+              var amt = parseFloat((<any>msg.data)[i].amount);
+              var side = Models.Side.Ask;
+              var mt = new Models.GatewayMarketTrade(px, amt, msg.time, false, side);
+              this.MarketTrade.trigger(mt);
+            }
         });
     };
 
@@ -115,17 +119,7 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     private static GetLevel = (n: [any, any]) : Models.MarketSide =>
         new Models.MarketSide(parseFloat(n[0]), parseFloat(n[1]));
 
-    private onDepth = (depth : Models.Timestamped<KorbitDepthMessage>) => {
-        var msg = depth.data;
-
-        var bids = msg.bids.slice(0,13).map(KorbitMarketDataGateway.GetLevel);
-        var asks = msg.asks.reverse().slice(0,13).map(KorbitMarketDataGateway.GetLevel);
-        var mkt = new Models.Market(bids, asks, depth.time);
-
-        this.MarketData.trigger(mkt);
-    };
-
-    private trigger = () => {
+    private triggerOrderBook = () => {
         this._http.get("orderbook", {currency_pair: this._symbolProvider.symbol, category: 'all'}, true).then(msg => {
             if (!(<any>msg.data).timestamp) return;
             this.MarketData.trigger(new Models.Market(
@@ -137,8 +131,10 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     constructor(private _http : KorbitHttp, private _symbolProvider: KorbitSymbolProvider) {
-        setInterval(this.trigger, 1000);
-        setTimeout(this.trigger, 10);
+        setInterval(this.triggerMarketTrades, 60000);
+        setInterval(this.triggerOrderBook, 1000);
+        setTimeout(this.triggerOrderBook, 10);
+        setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
 
@@ -304,17 +300,10 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(
             private _http: KorbitHttp,
             private _symbolProvider: KorbitSymbolProvider) {
+        setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
         // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
         // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
-
-        // _socket.ConnectChanged.on(cs => {
-            // this.ConnectChanged.trigger(cs);
-
-            // if (cs === Models.ConnectivityStatus.Connected) {
-                // _socket.send("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades");
-            // }
-        // });
     }
 }
 
@@ -451,13 +440,13 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
             var wallet = [];
             free.forEach(x => { wallet[x.currency] = [x.currency, x.value]; });
             freezed.forEach(x => { wallet[x.currency].push(x.value); });
-            wallet.forEach(x => {
-                var amount = parseFloat(free[x[1]]);
-                var held = parseFloat(x[2]);
+            for (let x in wallet) {
+                var amount = parseFloat(wallet[x][1]);
+                var held = parseFloat(wallet[x][2]);
 
-                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(x[2]));
+                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(wallet[x][0]));
                 this.PositionUpdate.trigger(pos);
-            });
+            }
         });
     };
 
