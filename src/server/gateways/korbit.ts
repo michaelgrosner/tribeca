@@ -148,20 +148,16 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelAllOpenOrders = () : Promise<number> => {
         var d = Promises.defer<number>();
         this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
-          if (typeof (<any>msg.data).orders == "undefined"
-            || typeof (<any>msg.data).orders[0] == "undefined"
-            || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
-          (<any>msg.data).orders.map((o) => {
+          if (!(<any>msg.data).length) { d.resolve(0); return; }
+          (<any>msg.data).map((o) => {
               this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol }).then(msg => {
-                  if (typeof (<any>msg.data).result == "undefined") return;
-                  if ((<any>msg.data).result) {
-                      this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                        exchangeId: (<any>msg.data).order_id.toString(),
-                        leavesQuantity: 0,
-                        time: msg.time,
-                        orderStatus: Models.OrderStatus.Cancelled
-                      });
-                  }
+                  if (!(<any>msg.data).length) return;
+                  this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+                    exchangeId: (<any>msg.data).order_id.toString(),
+                    leavesQuantity: 0,
+                    time: msg.time,
+                    orderStatus: Models.OrderStatus.Cancelled
+                  });
               });
           });
           d.resolve((<any>msg.data).orders.length);
@@ -228,34 +224,15 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        // var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
-        // this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_cancel_order", c, () => {
-            // this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                // orderId: cancel.orderId,
-                // leavesQuantity: 0,
-                // time: cancel.time,
-                // orderStatus: Models.OrderStatus.Cancelled
-            // });
-        // });
-    };
-
-    private onCancel = (ts: Models.Timestamped<OrderAck>) => {
-        if (typeof ts.data.order_id == "undefined") return;
-        var osr : Models.OrderStatusUpdate = {
-          exchangeId: ts.data.order_id.toString(),
-          time: ts.time,
-          leavesQuantity: 0
-        };
-
-        if (ts.data.result) {
-            osr.orderStatus = Models.OrderStatus.Cancelled;
-        }
-        else {
-            osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected = true;
-        }
-
-        this.OrderUpdate.trigger(osr);
+        this._http.post("user/orders/cancel", <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol }).then(msg => {
+            if (!(<any>msg.data).length!) return;
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+              orderId: cancel.orderId,
+              leavesQuantity: 0,
+              time: cancel.time,
+              orderStatus: Models.OrderStatus.Cancelled
+            });
+        });
     };
 
     replaceOrder = (replace : Models.OrderStatusReport) => {
@@ -303,7 +280,6 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
         // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
         // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
-        // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
     }
 }
 
