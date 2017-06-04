@@ -105,9 +105,9 @@
       "integrity": "sha1-Pt0keTbC/bThy+ymoK/+yfpla1Y="
     },
     "@types/node": {
-      "version": "7.0.26",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.26.tgz",
-      "integrity": "sha512-9kypLFzRLUj2zoYI5XbaDZLz9oHz9Ang2Oiy0GCJzsP+kynstEoim8bjb+50hTu2wg54Fv+PtMMss52fmKcvOA=="
+      "version": "7.0.27",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-7.0.27.tgz",
+      "integrity": "sha512-2QMiuVOEye2yKmMwE1V96C9HSShmT0WSm6dv2WjacvePEjQNNJGAerTO5hdYhj5lpdK5MW+FVxmyzDhr4omIdw=="
     },
     "@types/request": {
       "version": "https://registry.npmjs.org/@types/request/-/request-0.0.43.tgz",
