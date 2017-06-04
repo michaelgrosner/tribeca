@@ -54,6 +54,7 @@ interface SignedMessage {
     client_secret?: string;
     refresh_token?: string;
     price?: string;
+    nonce?: number;
     type?: string;
     coin_amount?: string;
     grant_type?: string;
@@ -135,7 +136,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
           if (!(<any>msg.data).length) { d.resolve(0); return; }
           (<any>msg.data).map((o) => {
-              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol }).then(msg => {
+              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
                   if (!(<any>msg.data).length) return;
                   this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                     exchangeId: (<any>msg.data).order_id.toString(),
@@ -157,7 +158,8 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             type: order.type === Models.OrderType.Market ? 'market' : 'limit',
             price: order.price.toString(),
             coin_amount: order.quantity.toString(),
-            currency_pair: this._symbolProvider.symbol
+            currency_pair: this._symbolProvider.symbol,
+            nonce: new Date().getTime()
         }).then(msg => {
           if (!(<any>msg.data).orderId)
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
@@ -179,7 +181,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        this._http.post('user/orders/cancel', <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol }).then(msg => {
+        this._http.post('user/orders/cancel', <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
             if (!(<any>msg.data).length!) return;
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
               orderId: cancel.orderId,
@@ -249,7 +251,7 @@ class KorbitMessageSigner {
           this._token_time = (parseFloat(newToken.data.expires_in) * 1000 ) + new Date().getTime();
           this.token = newToken.data.access_token;
           this._token_refresh = newToken.data.refresh_token;
-          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication successful, got new token.');
+          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication successful, new token expires at '+(new Date(this._token_time).toISOString().slice(11, -1))+'.');
         } else if (new Date().getTime()+21>this._token_time) {
           d = new Promise((resolve, reject) => {
             _http.post('oauth2/access_token', {
@@ -302,22 +304,17 @@ class KorbitHttp {
       forceUnsigned?: boolean
     ) : Promise<Models.Timestamped<T>> => {
         var d = Promises.defer<Models.Timestamped<T>>();
-        let query = this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg));
-        let _url = url.resolve(this._baseUrl+'/', actionUrl);
-        let head = Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token});
-        console.log(_url, query, head);
         request({
-            url: _url,
-            body: query,
-            headers: head,
+            url: url.resolve(this._baseUrl+'/', actionUrl),
+            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg)),
+            headers: Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token}),
             method: 'POST'
         }, (err, resp, body) => {
             if (err) d.reject(err);
             else {
                 try {
                     var t = new Date();
-                    console.log('ANS',body);
-                    var data = JSON.parse(body);
+                    var data = body ? JSON.parse(body) : {};
                     d.resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
