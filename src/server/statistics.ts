@@ -21,7 +21,11 @@ export interface IComputeStatisticsIncremental {
 }
 
 export class EwmaStatisticCalculator implements IComputeStatistics {
-    constructor(private _periods: number, initRfv: Models.RegularFairValue[]) {
+    constructor(
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _periodsAttribute: string,
+      initRfv: Models.RegularFairValue[]
+    ) {
       if (initRfv !== null)
         this.initialize(initRfv.map((r: Models.RegularFairValue) => r.value));
     }
@@ -34,7 +38,7 @@ export class EwmaStatisticCalculator implements IComputeStatistics {
     }
 
     addNewValue(value: number): number {
-        this.latest = computeEwma(value, this.latest, this._periods);
+        this.latest = computeEwma(value, this.latest, this._qlParamRepo.latest[this._periodsAttribute]);
         return this.latest;
     }
 }
@@ -55,7 +59,11 @@ export class EmptyEWMACalculator implements Interfaces.ICalculator {
 }
 
 export class ObservableEWMACalculator implements Interfaces.ICalculator {
-    constructor(private _timeProvider: Utils.ITimeProvider, private _fv: FairValue.FairValueEngine, private _periods?: number) {
+    constructor(
+      private _timeProvider: Utils.ITimeProvider,
+      private _fv: FairValue.FairValueEngine,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository
+    ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
     }
 
@@ -67,7 +75,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
             return;
         }
 
-        var value = computeEwma(fv.price, this._latest, this._periods);
+        var value = computeEwma(fv.price, this._latest, this._qlParamRepo.latest.quotingEwmaProtectionPeridos);
 
         this.setLatest(value);
     };

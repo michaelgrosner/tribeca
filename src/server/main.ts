@@ -65,7 +65,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   positionDivergence:             0.9,
   positionDivergencePercentage:   21,
   percentageValues:               false,
-  autoPositionMode:               Models.AutoPositionMode.EWMA,
+  autoPositionMode:               Models.AutoPositionMode.EWMA_LS,
   aggressivePositionRebalancing:  Models.APR.Off,
   superTrades:                    Models.SOP.Off,
   tradesPerMinute:                0.9,
@@ -393,7 +393,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       new Statistics.ObservableEWMACalculator(
         system.timeProvider,
         fvEngine,
-        initParams.quotingEwmaProtectionPeridos
+        paramsRepo
       ),
       new Statistics.ObservableSTDEVCalculator(
         system.timeProvider,
@@ -412,9 +412,9 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
           paramsRepo,
           rfvPersister,
           fvEngine,
-          new Statistics.EwmaStatisticCalculator(initParams.shortEwmaPeridos, initRfv),
-          new Statistics.EwmaStatisticCalculator(initParams.mediumEwmaPeridos, initRfv),
-          new Statistics.EwmaStatisticCalculator(initParams.longEwmaPeridos, initRfv),
+          new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
+          new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
+          new Statistics.EwmaStatisticCalculator(paramsRepo, 'longEwmaPeridos', initRfv),
           system.getPublisher(Models.Topics.EWMAChart, monitor)
         ),
         paramsRepo,

@@ -88,9 +88,14 @@ export class PositionManager {
         this.newMedium = this._mediumEwma.addNewValue(fv.price);
         this.newLong = this._longEwma.addNewValue(fv.price);
 
-        let newTrend = ((SMA3 * 100 / this.newLong) - 100);
-        let newEwmacrossing = ((this.newShort * 100 / this.newMedium) - 100);
-        let newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
+        let newTargetPosition: number;
+        if (this._qlParamRepo.latest.autoPositionMode === Models.AutoPositionMode.EWMA_LMS) {
+          let newTrend = ((SMA3 * 100 / this.newLong) - 100);
+          let newEwmacrossing = ((this.newShort * 100 / this.newMedium) - 100);
+          newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
+        } else {
+          newTargetPosition = ((this.newShort * 100/ this.newLong) - 100) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
+        }
 
         if (newTargetPosition > 1) newTargetPosition = 1;
         if (newTargetPosition < -1) newTargetPosition = -1;
@@ -158,7 +163,7 @@ export class TargetBasePositionManager {
           ? params.targetBasePositionPercentage * latestPosition.value / 100
           : params.targetBasePosition;
 
-        if (params.autoPositionMode === Models.AutoPositionMode.EWMA)
+        if (params.autoPositionMode !== Models.AutoPositionMode.Manual)
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
 
         if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
