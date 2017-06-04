@@ -147,7 +147,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `Manual` - Tribeca will not try to automatically manage positions, instead you will need to manually set `tbp`.
 
-  * `EWMA ` - Tribeca will use a `long` minute and `short` minute exponential weighted moving average calculation to buy up BTC when the 100 minute line crosses over the 200 minute line, and sell BTC when the reverse happens. The EWMA values are currently exposed in the stats.
+  * `EWMA_LS` - Tribeca will use a `long` minute and `short` minute exponential weighted moving average calculation to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens. The EWMA values are currently exposed in the stats.
+
+  * `EWMA_LMS` - Tribeca will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
 
 * `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
 

@@ -17,8 +17,8 @@ class Repository<T> implements Interfaces.IRepository<T> {
     private _rec: Publish.IReceive<T>,
     private _pub: Publish.IPublish<T>
   ) {
-    _pub.registerSnapshot(() => [this.latest]);
-    _rec.registerReceiver(this.updateParameters);
+    if (_pub) _pub.registerSnapshot(() => [this.latest]);
+    if (_rec) _rec.registerReceiver(this.updateParameters);
     this._latest = defaultParameter;
   }
 
