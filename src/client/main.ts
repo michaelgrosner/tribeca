@@ -93,6 +93,7 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.mode==7">range</th>
                                             <th *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">pingAt</th>
                                             <th *ngIf="[5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1">pongAt</th>
+                                            <th>sop</th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && [5,6,7,8,9].indexOf(pair.quotingParameters.display.mode)>-1" style="float:right;">maxAskSize?</span></th>
                                         </tr>
@@ -131,6 +132,12 @@ class DisplayOrder {
                                                 <select class="form-control input-sm"
                                                    [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                    <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="min-width:121px;border-bottom: 3px solid #DDE28B;">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.superTrades">
+                                                   <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
                                             <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
@@ -175,10 +182,10 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">long</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">medium</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">short</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==1">sensibility</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode==0">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
-                                            <th>sop</th>
                                             <th>bw?</th>
                                             <th *ngIf="[9].indexOf(pair.quotingParameters.display.mode)==-1">%w?</th>
                                             <th *ngIf="[5,6,7,8].indexOf(pair.quotingParameters.display.mode)==-1"><span *ngIf="[9].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[9].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [9].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
@@ -212,6 +219,12 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.shortEwmaPeridos">
                                             </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==1">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.01" min="0.01" max="1.00"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.ewmaSensiblityPercentage">
+                                            </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
@@ -240,12 +253,6 @@ class DisplayOrder {
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.aggressivePositionRebalancing">
                                                    <option *ngFor="let option of pair.quotingParameters.availableAggressivePositionRebalancings" [ngValue]="option.val">{{option.str}}</option>
-                                                </select>
-                                            </td>
-                                            <td style="min-width:121px;border-bottom: 3px solid #DDE28B;">
-                                                <select class="form-control input-sm"
-                                                    [(ngModel)]="pair.quotingParameters.display.superTrades">
-                                                   <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
                                             <td style="width:25px;border-bottom: 3px solid #8BE296;">

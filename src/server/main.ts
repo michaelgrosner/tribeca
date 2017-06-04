@@ -75,6 +75,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   quotingStdevProtection:         Models.STDEV.Off,
   quotingStdevProtectionFactor:   1,
   quotingStdevProtectionPeriods:  1200,
+  ewmaSensiblityPercentage:       0.5,
   longEwmaPeridos:                200,
   mediumEwmaPeridos:              100,
   shortEwmaPeridos:               50,
@@ -408,6 +409,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         new PositionManagement.PositionManager(
           broker,
           system.timeProvider,
+          paramsRepo,
           rfvPersister,
           fvEngine,
           new Statistics.EwmaStatisticCalculator(initParams.shortEwmaPeridos, initRfv),
