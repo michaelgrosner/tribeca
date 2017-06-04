@@ -52,7 +52,10 @@ interface OrderAck {
 interface SignedMessage {
     client_id?: string;
     client_secret?: string;
-    code?: string;
+    refresh_token?: string;
+    price?: string;
+    type?: string;
+    coin_amount?: string;
     grant_type?: string;
     username?: string;
     password?: string;
@@ -76,23 +79,6 @@ interface Order extends SignedMessage {
 interface Cancel extends SignedMessage {
     id?: string;
     currency_pair?: string;
-}
-
-interface KorbitTradeRecord {
-    averagePrice: string;
-    completedTradeAmount: string;
-    createdDate: string;
-    id: string;
-    orderId: string;
-    sigTradeAmount: string;
-    sigTradePrice: string;
-    status: number;
-    symbol: string;
-    tradeAmount: string;
-    tradePrice: string;
-    tradeType: string;
-    tradeUnitPrice: string;
-    unTrade: string;
 }
 
 interface SubscriptionRequest extends SignedMessage { }
@@ -133,7 +119,6 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     constructor(private _http : KorbitHttp, private _symbolProvider: KorbitSymbolProvider) {
         setInterval(this.triggerMarketTrades, 60000);
         setInterval(this.triggerOrderBook, 1000);
-        setTimeout(this.triggerOrderBook, 10);
         setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     }
 }
@@ -167,64 +152,34 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     public cancelsByClientOrderId = false;
 
-    private static GetOrderType(side: Models.Side, type: Models.OrderType) : string {
-        if (side === Models.Side.Bid) {
-            if (type === Models.OrderType.Limit) return "buy";
-            if (type === Models.OrderType.Market) return "buy_market";
-        }
-        if (side === Models.Side.Ask) {
-            if (type === Models.OrderType.Limit) return "sell";
-            if (type === Models.OrderType.Market) return "sell_market";
-        }
-        throw new Error("unable to convert " + Models.Side[side] + " and " + Models.OrderType[type]);
-    }
-
-    // let's really hope there's no race conditions on their end -- we're assuming here that orders sent first
-    // will be acked first, so we can match up orders and their acks
-    private _ordersWaitingForAckQueue = [];
-
     sendOrder = (order : Models.OrderStatusReport) => {
-        var o : Order = {
-            symbol: this._symbolProvider.symbol,
-            type: KorbitOrderEntryGateway.GetOrderType(order.side, order.type),
+        this._http.post('user/orders/'+(order.side==Models.Side.Bid?'buy':'sell'), {
+            type: order.type === Models.OrderType.Market ? 'market' : 'limit',
             price: order.price.toString(),
-            amount: order.quantity.toString()};
-
-        // this._ordersWaitingForAckQueue.push([order.orderId, order.quantity]);
-
-        // this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", o, () => {
-            // this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                // orderId: order.orderId,
-                // computationalLatency: new Date().valueOf() - order.time.valueOf()
-            // });
-        // });
-    };
-
-    private onOrderAck = (ts: Models.Timestamped<OrderAck>) => {
-        var order = this._ordersWaitingForAckQueue.shift();
-
-        var orderId = order[0];
-        if (typeof orderId === "undefined") {
-            console.error(new Date().toISOString().slice(11, -1), 'korbit', 'got an order ack when there was no order queued!', util.format(ts.data));
-            return;
-        }
-
-        var osr : Models.OrderStatusUpdate = { orderId: orderId, time: ts.time };
-
-        if (typeof ts.data !== "undefined" && ts.data.result) {
-            osr.exchangeId = ts.data.order_id.toString();
-            osr.orderStatus = Models.OrderStatus.Working;
-            osr.leavesQuantity = order[1];
-        }
-        else {
-            osr.orderStatus = Models.OrderStatus.Rejected;
-        }
-
-        this.OrderUpdate.trigger(osr);
+            coin_amount: order.quantity.toString(),
+            currency_pair: this._symbolProvider.symbol
+        }).then(msg => {
+          if (!(<any>msg.data).orderId)
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+              orderId: order.orderId,
+              leavesQuantity: 0,
+              time: (<any>msg.data).time,
+              orderStatus: Models.OrderStatus.Cancelled
+            });
+          else
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+              orderId: order.orderId,
+              computationalLatency: new Date().valueOf() - (<any>msg.data).time.valueOf(),
+              time: (<any>msg.data).time,
+              exchangeId: (<any>msg.data).orderId,
+              orderStatus: Models.OrderStatus.Working,
+              leavesQuantity: order[1]
+            });
+        });
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        this._http.post("user/orders/cancel", <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol }).then(msg => {
+        this._http.post('user/orders/cancel', <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol }).then(msg => {
             if (!(<any>msg.data).length!) return;
             this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
               orderId: cancel.orderId,
@@ -240,46 +195,31 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this.sendOrder(replace);
     };
 
-    private static getStatus(status: number) : Models.OrderStatus {
-        // status: -1: cancelled, 0: pending, 1: partially filled, 2: fully filled, 4: cancel request in process
-        switch (status) {
-            case -1: return Models.OrderStatus.Cancelled;
-            case 0: return Models.OrderStatus.Working;
-            case 1: return Models.OrderStatus.Working;
-            case 2: return Models.OrderStatus.Complete;
-            case 4: return Models.OrderStatus.Working;
-            default: return Models.OrderStatus.Other;
-        }
-    }
-
-    private onTrade = (tsMsg : Models.Timestamped<KorbitTradeRecord>) => {
-        var t = tsMsg.time;
-        var msg : KorbitTradeRecord = tsMsg.data;
-        var avgPx = parseFloat(msg.averagePrice);
-        var lastQty = parseFloat(msg.sigTradeAmount);
-        var lastPx = parseFloat(msg.sigTradePrice);
-
-        var status : Models.OrderStatusUpdate = {
-            exchangeId: msg.orderId.toString(),
-            orderStatus: KorbitOrderEntryGateway.getStatus(msg.status),
-            time: t,
-            side: msg.tradeType.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
-            lastQuantity: lastQty > 0 ? lastQty : undefined,
-            lastPrice: lastPx > 0 ? lastPx : undefined,
-            averagePrice: avgPx > 0 ? avgPx : undefined,
-            pendingCancel: msg.status === 4,
-            partiallyFilled: msg.status === 1
-        };
-
-        this.OrderUpdate.trigger(status);
+    private triggerUserTades = () => {
+        this._http.get('user/transactions', {currency_pair: this._symbolProvider.symbol, category: 'fills'}).then(msg => {
+            if (!(<any>msg.data).length) return;
+            for (let i = (<any>msg.data).length;i--;) {
+              var px = parseFloat((<any>msg.data)[i].price);
+              var trade : any = (<any>msg.data)[i];
+              var status : Models.OrderStatusUpdate = {
+                  exchangeId: trade.orderId.toString(),
+                  orderStatus: Models.OrderStatus.Complete,
+                  time: new Date(trade.timestamp),
+                  side: trade.type.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
+                  lastQuantity: trade.fillsDetail.amount.value,
+                  lastPrice: trade.fillsDetail.price.value,
+                  averagePrice: trade.fillsDetail.price.value
+              };
+              this.OrderUpdate.trigger(status);
+            }
+        });
     };
 
     constructor(
             private _http: KorbitHttp,
             private _symbolProvider: KorbitSymbolProvider) {
+        setInterval(this.triggerUserTades, 10000);
         setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
-        // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
-        // _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
     }
 }
 
@@ -293,10 +233,9 @@ class KorbitMessageSigner {
     private _token_time : number = 0;
 
     public signMessage = async (_http: KorbitHttp, m : SignedMessage) : Promise<SignedMessage> => {
-        const now: number = new Date().getTime();
-        if (this._token_time+3e+6<now) {
+        if (!this._token_time) {
           var d = new Promise((resolve, reject) => {
-            _http.post("oauth2/access_token", {
+            _http.post('oauth2/access_token', {
               client_id: this._client_id,
               client_secret: this._secretKey,
               username: this._user,
@@ -307,9 +246,26 @@ class KorbitMessageSigner {
             });
           });
           const newToken: any = await d;
-          this._token_time = now;
+          this._token_time = (parseFloat(newToken.data.expires_in) * 1000 ) + new Date().getTime();
           this.token = newToken.data.access_token;
           this._token_refresh = newToken.data.refresh_token;
+          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication successful, got new token.');
+        } else if (new Date().getTime()+21>this._token_time) {
+          d = new Promise((resolve, reject) => {
+            _http.post('oauth2/access_token', {
+              client_id: this._client_id,
+              client_secret: this._secretKey,
+              refresh_token: this._token_refresh,
+              grant_type: 'refresh_token'
+            }, false, true).then(refreshToken => {
+              resolve(refreshToken);
+            });
+          });
+          const refreshToken: any = await d;
+          this._token_time = (parseFloat(refreshToken.data.expires_in) * 1000 ) + new Date().getTime();
+          this.token = refreshToken.data.access_token;
+          this._token_refresh = refreshToken.data.refresh_token;
+          console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication refresh successful, got new token.');
         }
 
         return m;
@@ -346,16 +302,21 @@ class KorbitHttp {
       forceUnsigned?: boolean
     ) : Promise<Models.Timestamped<T>> => {
         var d = Promises.defer<Models.Timestamped<T>>();
+        let query = this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg));
+        let _url = url.resolve(this._baseUrl+'/', actionUrl);
+        let head = Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token});
+        console.log(_url, query, head);
         request({
-            url: url.resolve(this._baseUrl+'/', actionUrl),
-            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg)),
-            headers: Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token}),
-            method: "POST"
+            url: _url,
+            body: query,
+            headers: head,
+            method: 'POST'
         }, (err, resp, body) => {
             if (err) d.reject(err);
             else {
                 try {
                     var t = new Date();
+                    console.log('ANS',body);
                     var data = JSON.parse(body);
                     d.resolve(new Models.Timestamped(data, t));
                 }
@@ -378,7 +339,7 @@ class KorbitHttp {
         request({
             url: url.resolve(this._baseUrl+'/', actionUrl+'?'+ this._signer.toQueryString(publicApi ? msg : await this._signer.signMessage(this, msg))),
             headers: (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token},
-            method: "GET"
+            method: 'GET'
         }, (err, resp, body) => {
             if (err) d.reject(err);
             else {
@@ -431,7 +392,7 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
       private _symbolProvider: KorbitSymbolProvider
     ) {
         setInterval(this.trigger, 15000);
-        setTimeout(this.trigger, 10);
+        setTimeout(this.trigger, 3000);
     }
 }
 
