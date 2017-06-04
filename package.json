@@ -21,7 +21,7 @@
     "@types/lodash": "^4.14.65",
     "@types/marked": "^0.0.28",
     "@types/mongodb": "^2.2.2",
-    "@types/node": "^7.0.26",
+    "@types/node": "^7.0.27",
     "@types/request": "0.0.43",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
