@@ -49,27 +49,27 @@ export class QuoteSender {
     private sendQuote = (): void => {
         var quote = this._quotingEngine.latestQuote;
 
-        var askStatus = Models.QuoteStatus.Held;
-        var bidStatus = Models.QuoteStatus.Held;
+        let askStatus = Models.QuoteStatus.Held;
+        let bidStatus = Models.QuoteStatus.Held;
 
         if (quote !== null) {
           if (this._activeRepo.latest) {
-              if (quote.ask !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
-                  askStatus = Models.QuoteStatus.Live;
+            if (quote.ask !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
+              askStatus = Models.QuoteStatus.Live;
 
-              if (quote.bid !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
-                  bidStatus = Models.QuoteStatus.Live;
+            if (quote.bid !== null && (this._details.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
+              bidStatus = Models.QuoteStatus.Live;
           }
 
-          if (askStatus === Models.QuoteStatus.Live) {
-              this._quoter.updateQuote(new Models.Timestamped(quote.ask, this._timeProvider.utcNow()), Models.Side.Ask);
-          } else if (this._quoter.quotesSent(Models.Side.Ask).filter(o => (quote.ask !== null && this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)?quote.ask.price === o.quote.price:true).length)
-              this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, this._timeProvider.utcNow()));
+          if (askStatus === Models.QuoteStatus.Live)
+            this._quoter.updateQuote(new Models.Timestamped(quote.ask, this._timeProvider.utcNow()), Models.Side.Ask);
+          else
+            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, this._timeProvider.utcNow()));
 
-          if (bidStatus === Models.QuoteStatus.Live) {
-              this._quoter.updateQuote(new Models.Timestamped(quote.bid, this._timeProvider.utcNow()), Models.Side.Bid);
-          } else if (this._quoter.quotesSent(Models.Side.Bid).filter(o => (quote.bid !== null && this._qlParamRepo.latest.mode === Models.QuotingMode.AK47)?quote.bid.price === o.quote.price:true).length)
-              this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, this._timeProvider.utcNow()));
+          if (bidStatus === Models.QuoteStatus.Live)
+            this._quoter.updateQuote(new Models.Timestamped(quote.bid, this._timeProvider.utcNow()), Models.Side.Bid);
+          else
+            this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, this._timeProvider.utcNow()));
         }
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
