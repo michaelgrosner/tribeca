@@ -51,6 +51,8 @@ Troubleshooting:
 
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
+ * Use `smallfiles=true` in your `/etc/mongodb.conf` if your `/var/lib/mongodb/journal/*` files are too big (see [more info](https://stackoverflow.com/questions/19533019/is-it-safe-to-delete-the-journal-file-of-mongodb)).
+
  Optional:
 
  * Install the system daemon script `dist/tribeca-init.sh` (to make use of `service tribeca start` from anywhere instead of `cd path/to/tribeca && npm start`) see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder.
