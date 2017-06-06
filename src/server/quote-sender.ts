@@ -26,7 +26,7 @@ export class QuoteSender {
             private _quoter: Quoter.Quoter,
             private _details: Interfaces.IBroker,
             private _activeRepo: Active.ActiveRepository) {
-        _activeRepo.NewParameters.on(this.sendQuote);
+        _activeRepo.ExchangeConnectivity.on(this.sendQuote);
         _quotingEngine.QuoteChanged.on(this.sendQuote);
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }

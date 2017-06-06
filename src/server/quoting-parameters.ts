@@ -1,12 +1,16 @@
 import Models = require("../share/models");
-import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import Publish = require("./publish");
 import _ = require("lodash");
 import Utils = require("./utils");
 
-export class QuotingParametersRepository implements Interfaces.IRepository<Models.QuotingParameters> {
+export class QuotingParametersRepository {
   NewParameters = new Utils.Evt();
+
+  private _latest: Models.QuotingParameters;
+  public get latest(): Models.QuotingParameters {
+    return this._latest;
+  }
 
   constructor(
     private _paramsPersister: Persister.IPersist<Models.QuotingParameters>,
@@ -19,26 +23,17 @@ export class QuotingParametersRepository implements Interfaces.IRepository<Model
     this._latest = initParams;
   }
 
-  private _validator: (a: Models.QuotingParameters) => boolean = (p: Models.QuotingParameters) => p.buySize > 0 || p.sellSize > 0 || p.buySizePercentage > 0 || p.sellSizePercentage > 0 || p.widthPing > 0 || p.widthPong > 0 || p.widthPingPercentage > 0 || p.widthPongPercentage > 0;
+  public updateParameters = (p: Models.QuotingParameters) => {
+    if (p.buySize > 0 || p.sellSize > 0 || p.buySizePercentage > 0 || p.sellSizePercentage > 0 || p.widthPing > 0 || p.widthPong > 0 || p.widthPingPercentage > 0 || p.widthPongPercentage > 0) {
 
-  private _paramsEqual: (a: Models.QuotingParameters, b: Models.QuotingParameters) => boolean = (a: Models.QuotingParameters, b: Models.QuotingParameters) => !_.isEqual(a, b);
+      if (p.mode===Models.QuotingMode.Depth)
+        p.widthPercentage = false;
 
-  private _latest: Models.QuotingParameters;
-  public get latest(): Models.QuotingParameters {
-    return this._latest;
-  }
-
-  public updateParameters = (newParams: Models.QuotingParameters) => {
-    if (this._validator(newParams) && this._paramsEqual(newParams, this._latest)) {
-
-      if (newParams.mode===Models.QuotingMode.Depth)
-        newParams.widthPercentage = false;
-
-      this._latest = newParams;
-      this._paramsPersister.persist(newParams)
+      this._latest = p;
+      this._paramsPersister.persist(p)
       this.NewParameters.trigger();
     }
 
-    this._pub.publish(this.latest);
+    this._pub.publish(this._latest);
   };
 }

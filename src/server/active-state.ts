@@ -3,9 +3,9 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 
-export class ActiveRepository implements Interfaces.IRepository<boolean> {
+export class ActiveRepository {
 
-    NewParameters = new Utils.Evt();
+    ExchangeConnectivity = new Utils.Evt();
 
     private _savedQuotingMode: boolean = false;
     public get savedQuotingMode(): boolean {
@@ -25,14 +25,14 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
         _pub.registerSnapshot(() => [this.latest]);
         _rec.registerReceiver(this.handleNewQuotingModeChangeRequest);
-        _exchangeConnectivity.ConnectChanged.on(() => this.updateParameters());
+        _exchangeConnectivity.ConnectChanged.on(() => this.updateConnectivity());
     }
 
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
             console.info(new Date().toISOString().slice(11, -1), 'active', 'Changed saved quoting state to', this._savedQuotingMode);
-            this.updateParameters();
+            this.updateConnectivity();
         }
 
         this._pub.publish(this.latest);
@@ -43,13 +43,13 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         return this._savedQuotingMode;
     };
 
-    private updateParameters = () => {
+    private updateConnectivity = () => {
         var newMode = this.reevaluateQuotingMode();
 
         if (newMode !== this._latest) {
             this._latest = newMode;
             console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', this.latest);
-            this.NewParameters.trigger();
+            this.ExchangeConnectivity.trigger();
             this._pub.publish(this.latest);
         }
     };
