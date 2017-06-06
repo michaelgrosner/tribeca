@@ -302,10 +302,10 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       )]);
 
     const paramsRepo = new QuotingParameters.QuotingParametersRepository(
+      paramsPersister,
       system.getPublisher(Models.Topics.QuotingParametersChange),
       system.getReceiver(Models.Topics.QuotingParametersChange),
-      initParams,
-      paramsPersister
+      initParams
     );
 
     const monitor = new Monitor.ApplicationState(
