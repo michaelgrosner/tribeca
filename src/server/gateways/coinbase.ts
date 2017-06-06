@@ -287,7 +287,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
         this._authClient.cancelOrder(cancel.exchangeId, (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
-            var status: Models.OrderStatusUpdate;
             var t = this._timeProvider.utcNow();
 
             var msg = null;
@@ -299,30 +298,19 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 if (ack.error) msg = ack.error;
             }
             if (msg !== null) {
-                status = {
+                this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                     orderId: cancel.orderId,
                     rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Rejected,
                     cancelRejected: true,
                     time: t,
                     leavesQuantity: 0
-                };
-                this.OrderUpdate.trigger(status);
+                });
 
                 if (msg === "You have exceeded your request rate of 5 r/s." || msg === "BadRequest") {
                     this._timeProvider.setTimeout(() => this.cancelOrder(cancel), moment.duration(500));
                 }
-
             }
-            else {
-                status = {
-                    orderId: cancel.orderId,
-                    orderStatus: Models.OrderStatus.Cancelled,
-                    time: t,
-                    leavesQuantity: 0
-                };
-            }
-
         });
     };
 
