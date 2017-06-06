@@ -189,11 +189,10 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                         // console.error('persister', err, 'Unable to insert', this._dbName, report);
                 // });
                 collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
-                    if (r.result.ok) {
-                        this._persistQueue.length = 0;
-                    }
-                    else if (err)
+                    if (err)
                         console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
+                    else if (r.result && r.result.ok)
+                        this._persistQueue.length = 0;
                 }, );
             }, moment.duration(10, "seconds"));
     }
