@@ -6,6 +6,7 @@ import Publish = require("./publish");
 import moment = require('moment');
 import FairValue = require("./fair-value");
 import Persister = require("./persister");
+import QuotingParameters = require("./quoting-parameters");
 
 interface ITrade {
     price: number;
@@ -35,7 +36,7 @@ export class SafetyCalculator {
     constructor(
         private _timeProvider: Utils.ITimeProvider,
         private _fvEngine: FairValue.FairValueEngine,
-        private _qlParams: Interfaces.IRepository<Models.QuotingParameters>,
+        private _qlParams: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Interfaces.IPositionBroker,
         private _broker: Broker.OrderBroker,
         private _publisher: Publish.IPublish<Models.TradeSafety>) {

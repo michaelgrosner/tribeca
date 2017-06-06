@@ -105,11 +105,6 @@ export interface ISilentCalculator {
     latest: any;
 }
 
-export interface IRepository<T> {
-    NewParameters: Utils.Evt<any>;
-    latest: T;
-}
-
 export interface IPublishMessages {
     publish(text: string): void;
 }
