@@ -51,8 +51,6 @@ export class Quoter {
 // wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
     public activeQuote: QuoteOrder[] = [];
-
-    private _quotesSent: QuoteOrder[] = [];
     private _exchange: Models.Exchange;
 
     constructor(private _broker: Interfaces.IOrderBroker,
@@ -69,7 +67,6 @@ export class ExchangeQuoter {
             case Models.OrderStatus.Complete:
             case Models.OrderStatus.Rejected:
                 this.activeQuote = this.activeQuote.filter(q => q.orderId !== o.orderId);
-                this._quotesSent = this._quotesSent.filter(q => q.orderId !== o.orderId);
         }
     };
 
@@ -84,7 +81,7 @@ export class ExchangeQuoter {
           ? (dupe ? Models.QuoteSent.UnsentDuplicate : this.modify(q))
           : this.start(q);
 
-      if (this._quotesSent.length >= this._qlParamRepo.latest.bullets)
+      if (this.activeQuote.length >= this._qlParamRepo.latest.bullets)
         return dupe ? Models.QuoteSent.UnsentDuplicate : this.modify(q);
 
       return this.start(q);
@@ -124,7 +121,7 @@ export class ExchangeQuoter {
           && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
         ).length) {
           if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-            if (this._quotesSent.length<this._qlParamRepo.latest.bullets) {
+            if (this.activeQuote.length<this._qlParamRepo.latest.bullets) {
               let incPrice: number = (this._qlParamRepo.latest.range * (this._side === Models.Side.Bid ? -1 : 1 ));
               let oldPrice:number = 0;
               let len:number  = 0;
@@ -156,7 +153,6 @@ export class ExchangeQuoter {
             price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote)
         ).sentOrderClientId);
 
-        this._quotesSent.push(quoteOrder);
         this.activeQuote.push(quoteOrder);
         if (this._side === Models.Side.Bid)
           this.activeQuote.sort(function(a,b){return a.quote.price<b.quote.price?1:(a.quote.price>b.quote.price?-1:0);});
