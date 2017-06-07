@@ -33,7 +33,7 @@
     "BitfinexWebsocketUrl": "wss://api.bitfinex.com/ws/2",
     "BitfinexKey": "NULL",
     "BitfinexSecret": "NULL",
-    "BitfinexOrderDestination": "Bitfinex"
+    "BitfinexOrderDestination": "Bitfinex",
 
     "KorbitHttpUrl": "https://api.korbit.co.kr/v1",
     "KorbitApiKey": "NULL",
