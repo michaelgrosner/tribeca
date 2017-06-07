@@ -216,22 +216,6 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuoteClass = (levels?: any[]) => {
-    if (this.levels && this.levels.length > 0) {
-      for (let i = 0; i < this.levels.length; i++) {
-        this.levels[i].bidClass = 'active';
-        var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
-        for (var j = 0; j < bids.length; j++)
-          if (bids[j].price === this.levels[i].bidPrice)
-            this.levels[i].bidClass = 'success buy';
-        this.levels[i].bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].bidSize)/Math.log(2))*4,19),1)));
-        this.levels[i].askClass = 'active';
-        var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
-        for (var j = 0; j < asks.length; j++)
-          if (asks[j].price === this.levels[i].askPrice)
-            this.levels[i].askClass = 'success sell';
-        this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
-      }
-    }
     if (levels && levels.length > 0) {
       for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
@@ -244,6 +228,18 @@ export class MarketQuotingComponent implements OnInit {
           (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.0:1.0 );
           setTimeout(() => {
             this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
+            this.levels[i].bidClass = 'active';
+            var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
+            for (var j = 0; j < bids.length; j++)
+              if (bids[j].price === this.levels[i].bidPrice)
+                this.levels[i].bidClass = 'success buy';
+            this.levels[i].bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].bidSize)/Math.log(2))*4,19),1)));
+            this.levels[i].askClass = 'active';
+            var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
+            for (var j = 0; j < asks.length; j++)
+              if (asks[j].price === this.levels[i].askPrice)
+                this.levels[i].askClass = 'success sell';
+            this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
             setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').css( 'color', '' ); }, 1);
           }, 0);
         }, 221);
