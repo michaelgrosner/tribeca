@@ -216,6 +216,7 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuoteClass = (levels?: any[]) => {
+    if (document.body.className != "visible") return;
     if (levels && levels.length > 0) {
       for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
