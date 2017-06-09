@@ -113,7 +113,7 @@ export class TradesComponent implements OnInit {
     if (t.Kqty<0) {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (node.data.tradeId==t.tradeId)
-          this.gridOptions.api.removeItems([node]);
+          this.gridOptions.api.updateRowData({remove:[node.data]});
       });
     } else {
       let exists: boolean = false;
@@ -149,7 +149,7 @@ export class TradesComponent implements OnInit {
       });
       if (!exists) {
         if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
-        this.gridOptions.api.addItems([{
+        this.gridOptions.api.updateRowData({add:[{
           tradeId: t.tradeId,
           time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
           price: t.price,
@@ -164,7 +164,7 @@ export class TradesComponent implements OnInit {
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
           quoteSymbol: Models.Currency[t.pair.quote],
           productFixed: this.product.fixed
-        }]);
+        }]});
         if (t.loadedFromDB === false && this.audio) {
           var audio = new Audio('/audio/boom.mp3');
           audio.volume = 0.5;
