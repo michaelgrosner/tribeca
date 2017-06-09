@@ -91,7 +91,7 @@ export class OrdersComponent implements OnInit {
       orderId: $event.data.orderId,
       exchange: $event.data.exchange
     });
-    this.gridOptions.api.removeItems([$event.node]);
+    this.gridOptions.api.updateRowData({remove:[$event.data]});
   }
 
   private addRowData = (o: Models.Timestamped<any[]>) => {
@@ -107,7 +107,7 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.data[0]) {
         exists = true;
-        if (isClosed) this.gridOptions.api.removeItems([node]);
+        if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
             time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
@@ -122,7 +122,7 @@ export class OrdersComponent implements OnInit {
     });
     this.gridOptions.api.refreshView();
     if (!exists && !isClosed)
-      this.gridOptions.api.addItems([{
+      this.gridOptions.api.updateRowData({add:[{
         orderId: o.data[0],
         exchange: o.data[2],
         time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
@@ -135,7 +135,7 @@ export class OrdersComponent implements OnInit {
         lvQty: o.data[9],
         quoteSymbol: Models.Currency[o.data[10]],
         productFixed: this.product.fixed
-      }]);
+      }]});
   }
 }
 

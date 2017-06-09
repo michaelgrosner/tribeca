@@ -1,6 +1,9 @@
 ag-grid-angular {
   display: inline-block;
 }
+ag-grid-ng2 {
+  display: inline-block;
+}
 .ag-rtl {
   direction: rtl;
 }
@@ -25,6 +28,9 @@ ag-grid-angular {
 /* was getting some 'should be there' scrolls, this sorts it out */
   overflow: hidden;
 }
+.ag-layout-normal .ag-root {
+  height: 100%;
+}
 .ag-font-style {
   cursor: default;
 /* disable user mouse selection */
@@ -33,11 +39,11 @@ ag-grid-angular {
   -ms-user-select: none;
   user-select: none;
 }
-.ag-no-scrolls {
+.ag-layout-for-print {
   white-space: nowrap;
   display: inline-block;
 }
-.ag-scrolls {
+.ag-layout-normal {
   height: 100%;
 }
 .ag-popup-backdrop {
@@ -48,15 +54,17 @@ ag-grid-angular {
   height: 100%;
 }
 .ag-header {
-  position: absolute;
-  top: 0px;
-  left: 0px;
   white-space: nowrap;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
   width: 100%;
+}
+.ag-layout-normal .ag-header {
+  position: absolute;
+  top: 0px;
+  left: 0px;
 }
 .ag-pinned-left-header {
   float: left;
@@ -83,10 +91,10 @@ ag-grid-angular {
   overflow: hidden;
   height: 100%;
 }
-.ag-scrolls .ag-header-row {
+.ag-layout-normal .ag-header-row {
   position: absolute;
 }
-.ag-scrolls .ag-header-container {
+.ag-layout-normal .ag-header-container {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -94,7 +102,18 @@ ag-grid-angular {
   white-space: nowrap;
   height: 100%;
 }
-.ag-no-scrolls .ag-header-container {
+.ag-layout-auto-height .ag-header-row {
+  position: absolute;
+}
+.ag-layout-auto-height .ag-header-container {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  position: relative;
+  white-space: nowrap;
+  height: 100%;
+}
+.ag-layout-for-print .ag-header-container {
   white-space: nowrap;
 }
 .ag-header-overlay {
@@ -110,6 +129,45 @@ ag-grid-angular {
   display: inline-block;
   height: 100%;
   position: absolute;
+}
+.ag-floating-filter {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  position: absolute;
+  display: inline-block;
+}
+.ag-floating-filter-body {
+  margin-right: 25px;
+  height: 20px;
+}
+.ag-floating-filter-full-body {
+  width: 100%;
+  height: 20px;
+}
+.ag-floating-filter-button {
+  width: 25px;
+  height: 20px;
+  float: right;
+  margin-top: -20px;
+}
+.ag-floating-filter-button button {
+  width: 25px;
+  height: 19px;
+  padding: 0;
+}
+.ag-floating-filter-input {
+  width: 100%;
+}
+.ag-floating-filter-input:read-only {
+  background-color: #eee;
+}
+.ag-floating-filter-menu {
+  position: absolute;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .ag-dnd-ghost {
   font-size: 14px;
@@ -178,6 +236,12 @@ ag-grid-angular {
 .ag-rtl .ag-pinned-left-header .ag-header-cell-resize {
   float: right;
 }
+.ag-ltr .ag-header-select-all {
+  float: left;
+}
+.ag-rtl .ag-header-select-all {
+  float: right;
+}
 .ag-header-expand-icon {
   padding-left: 4px;
 }
@@ -208,13 +272,17 @@ ag-grid-angular {
   overflow: auto;
   position: relative;
 }
+.ag-bl-west {
+  float: left;
+}
 .ag-bl-full-height-west {
   height: 100%;
-  float: left;
+}
+.ag-bl-east {
+  float: right;
 }
 .ag-bl-full-height-east {
   height: 100%;
-  float: right;
 }
 .ag-bl-full-height-center {
   height: 100%;
@@ -242,22 +310,26 @@ ag-grid-angular {
   position: relative;
 }
 .ag-body {
-  height: 100%;
   width: 100%;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+}
+.ag-layout-normal .ag-body {
+  height: 100%;
   position: absolute;
 }
 .ag-floating-top {
-  position: absolute;
-  left: 0px;
   width: 100%;
   white-space: nowrap;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
+}
+.ag-layout-normal .ag-floating-top {
+  position: absolute;
+  left: 0px;
 }
 .ag-pinned-left-floating-top {
   float: left;
@@ -266,8 +338,10 @@ ag-grid-angular {
   box-sizing: border-box;
   display: inline-block;
   overflow: hidden;
-  height: 100%;
   position: relative;
+}
+.ag-layout-normal .ag-pinned-left-floating-top {
+  height: 100%;
 }
 .ag-pinned-right-floating-top {
   float: right;
@@ -276,14 +350,18 @@ ag-grid-angular {
   box-sizing: border-box;
   display: inline-block;
   overflow: hidden;
-  height: 100%;
   position: relative;
+}
+.ag-layout-normal .ag-pinned-right-floating-top {
+  height: 100%;
 }
 .ag-floating-top-viewport {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
+}
+.ag-layout-normal .ag-floating-top-viewport {
   height: 100%;
 }
 .ag-floating-top-container {
@@ -294,14 +372,16 @@ ag-grid-angular {
   white-space: nowrap;
 }
 .ag-floating-bottom {
-  position: absolute;
-  left: 0px;
   width: 100%;
   white-space: nowrap;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
+}
+.ag-layout-normal .ag-floating-bottom {
+  position: absolute;
+  left: 0px;
 }
 .ag-pinned-left-floating-bottom {
   float: left;
@@ -310,8 +390,10 @@ ag-grid-angular {
   box-sizing: border-box;
   display: inline-block;
   overflow: hidden;
-  height: 100%;
   position: relative;
+}
+.ag-layout-normal .ag-pinned-left-floating-bottom {
+  height: 100%;
 }
 .ag-pinned-right-floating-bottom {
   float: right;
@@ -320,14 +402,18 @@ ag-grid-angular {
   box-sizing: border-box;
   display: inline-block;
   overflow: hidden;
-  height: 100%;
   position: relative;
+}
+.ag-layout-normal .ag-pinned-right-floating-bottom {
+  height: 100%;
 }
 .ag-floating-bottom-viewport {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
+}
+.ag-layout-normal .ag-floating-bottom-viewport {
   height: 100%;
 }
 .ag-floating-bottom-container {
@@ -365,12 +451,14 @@ ag-grid-angular {
   display: inline-block;
   position: relative;
 }
-.ag-body-viewport-wrapper {
+.ag-layout-normal .ag-body-viewport-wrapper {
   height: 100%;
 }
 .ag-body-viewport {
   overflow-x: auto;
   overflow-y: auto;
+}
+.ag-layout-normal .ag-body-viewport {
   height: 100%;
 }
 .ag-full-width-viewport {
@@ -415,7 +503,11 @@ ag-grid-angular {
   pointer-events: all;
   overflow: hidden;
 }
-.ag-scrolls .ag-body-container {
+.ag-layout-normal .ag-body-container {
+  position: relative;
+  display: inline-block;
+}
+.ag-layout-auto-height .ag-body-container {
   position: relative;
   display: inline-block;
 }
@@ -433,13 +525,44 @@ ag-grid-angular {
   -ms-transition: background-color 0.1s;
   transition: background-color 0.1s;
 }
-.ag-scrolls .ag-row {
+.ag-row {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.ag-layout-normal .ag-row {
   white-space: nowrap;
   position: absolute;
   width: 100%;
 }
-.ag-no-scrolls .ag-row {
+.ag-layout-auto-height .ag-row {
+  white-space: nowrap;
   position: relative;
+  width: 100%;
+}
+.ag-layout-for-print .ag-row {
+  position: relative;
+}
+.ag-column-moving .ag-cell {
+  -webkit-transition: left 0.2s;
+  -moz-transition: left 0.2s;
+  -o-transition: left 0.2s;
+  -ms-transition: left 0.2s;
+  transition: left 0.2s;
+}
+.ag-column-moving .ag-header-cell {
+  -webkit-transition: left 0.2s;
+  -moz-transition: left 0.2s;
+  -o-transition: left 0.2s;
+  -ms-transition: left 0.2s;
+  transition: left 0.2s;
+}
+.ag-column-moving .ag-header-group-cell {
+  -webkit-transition: left 0.2s, width 0.2s;
+  -moz-transition: left 0.2s, width 0.2s;
+  -o-transition: left 0.2s, width 0.2s;
+  -ms-transition: left 0.2s, width 0.2s;
+  transition: left 0.2s, width 0.2s;
 }
 .ag-column-drop {
   width: 100%;
@@ -597,6 +720,9 @@ ag-grid-angular {
 .ag-rich-select {
   outline: none;
 }
+.ag-rich-select-row {
+  white-space: nowrap;
+}
 .ag-rich-select-list {
   width: 200px;
   height: 200px;
@@ -619,21 +745,19 @@ ag-grid-angular {
   width: 170px;
   margin: 4px;
 }
+.ag-floating-filter-body input {
+  width: 100%;
+  margin: 0;
+  height: 19px;
+}
+.ag-floating-filter-full-body input {
+  width: 100%;
+  margin: 0;
+  height: 19px;
+}
 .ag-filter-select {
   width: 110px;
   margin: 4px 4px 0px 4px;
-}
-.ag-no-vertical-scroll .ag-scrolls {
-  height: unset;
-}
-.ag-no-vertical-scroll .ag-body {
-  height: unset;
-}
-.ag-no-vertical-scroll .ag-body-viewport-wrapper {
-  height: unset;
-}
-.ag-no-vertical-scroll .ag-body-viewport {
-  height: unset;
 }
 .ag-list-selection {
   -webkit-user-select: none;
@@ -649,11 +773,13 @@ ag-grid-angular {
   -ms-user-select: none;
   user-select: none;
   cursor: default;
-  height: 100%;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: auto;
+}
+.ag-layout-normal .ag-tool-panel {
+  height: 100%;
 }
 .ag-column-select-indent {
   display: inline-block;
@@ -671,7 +797,10 @@ ag-grid-angular {
   white-space: nowrap;
 }
 .ag-hidden {
-  display: none;
+  display: none !important;
+}
+.ag-visibility-hidden {
+  visibility: hidden !important;
 }
 .ag-faded {
   opacity: 0.3;

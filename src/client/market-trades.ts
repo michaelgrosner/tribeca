@@ -72,7 +72,7 @@ export class MarketTradesComponent implements OnInit {
   private addRowData = (trade: Models.MarketTrade) => {
     if (!this.gridOptions.api) return;
     if (trade != null)
-      this.gridOptions.api.addItems([{
+      this.gridOptions.api.updateRowData({add:[{
         price: trade.price,
         size: trade.size,
         time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
@@ -88,11 +88,11 @@ export class MarketTradesComponent implements OnInit {
         make_side: Models.Side[trade.make_side],
         quoteSymbol: Models.Currency[trade.pair.quote],
         productFixed: this.product.fixed
-      }]);
+      }]});
 
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 3600000)
-        this.gridOptions.api.removeItems([node]);
+        this.gridOptions.api.updateRowData({remove:[node.data]});
       else if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 7000)
         node.setData(Object.assign(node.data, {recent: false}));
     });
