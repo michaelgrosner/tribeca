@@ -13,13 +13,10 @@ export class ConfigProvider implements IConfigProvider {
     constructor() {
         this.inBacktestMode = (process.env["TRIBECA_BACKTEST_MODE"] || "false") === "true";
 
-        let configFile = process.env["TRIBECA_CONFIG_FILE"] || ('./etc/'+
-          process.argv.filter(arg => arg.substr(-5)==='.json').concat('tribeca.json')[0]
-        );
+        let configFile = './etc/'+process.argv.filter(arg => arg.substr(-5)==='.json').concat('tribeca.json')[0];
 
-        if (fs.existsSync(configFile)) {
+        if (fs.existsSync(configFile))
             this._config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-        }
     }
 
     public GetNumber = (configKey: string): number => {
