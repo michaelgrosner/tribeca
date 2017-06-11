@@ -69,6 +69,8 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
     - BTU
     - MAID
     - AMP
+    - XRP
+    - KRW
 
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
 
