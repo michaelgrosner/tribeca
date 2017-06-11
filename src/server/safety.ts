@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import Publish = require("./publish");
 import moment = require('moment');
@@ -37,7 +36,7 @@ export class SafetyCalculator {
         private _timeProvider: Utils.ITimeProvider,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParams: QuotingParameters.QuotingParametersRepository,
-        private _positionBroker: Interfaces.IPositionBroker,
+        private _positionBroker: Broker.PositionBroker,
         private _broker: Broker.OrderBroker,
         private _publisher: Publish.IPublish<Models.TradeSafety>) {
         _publisher.registerSnapshot(() => [this.latest]);

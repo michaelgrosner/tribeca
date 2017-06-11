@@ -1,5 +1,5 @@
-import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
+import Broker = require("../broker");
 
 export class GeneratedQuote {
   constructor(public bidPx: number, public bidSz: number, public askPx: number, public askSz: number) { }
@@ -10,7 +10,7 @@ export class QuoteInput {
         public market: Models.Market,
         public fv: Models.FairValue,
         public params: Models.QuotingParameters,
-        public position: Interfaces.IPositionBroker,
+        public position: Broker.PositionBroker,
         public latestTargetPosition: Models.TargetBasePositionValue,
         public minTickIncrement: number,
         public minSizeIncrement: number = 0.01) {}

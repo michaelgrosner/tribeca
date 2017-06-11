@@ -486,7 +486,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 }
 
-export class PositionBroker implements Interfaces.IPositionBroker {
+export class PositionBroker {
     public NewReport = new Utils.Evt<Models.PositionReport>();
 
     private _lastPositions: any[] = [];

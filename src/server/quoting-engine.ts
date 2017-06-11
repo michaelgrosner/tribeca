@@ -7,6 +7,7 @@ import FairValue = require("./fair-value");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
+import Broker = require("./broker");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
@@ -59,7 +60,7 @@ export class QuotingEngine {
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _orderBroker: Interfaces.IOrderBroker,
-        private _positionBroker: Interfaces.IPositionBroker,
+        private _positionBroker: Broker.PositionBroker,
         private _details: Interfaces.IBroker,
         private _ewma: Interfaces.ICalculator,
         private _stdev: Interfaces.ISilentCalculator,
