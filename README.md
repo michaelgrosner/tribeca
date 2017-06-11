@@ -167,6 +167,10 @@ Updated OKCoin API (since https://www.okcoin.com/t-354.html).
 
 Added Bitfinex API v2.
 
+Added GDAX FIX API with stunnel.
+
+Added Korbit API.
+
 ### Release 2.0 Changelog:.
 
 Added new quoting styles PingPong, Boomerang, AK-47.

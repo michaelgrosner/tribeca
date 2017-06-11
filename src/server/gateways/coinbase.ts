@@ -6,115 +6,15 @@ import util = require("util");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require('lodash');
+import fs = require('fs');
 import * as Promises from '../promises';
 import uuid = require('node-uuid');
 import Gdax = require('gdax');
-
-// import df = require('dateformat');
-// import events = require('events');
-// import quickfix = require('node-quickfix-wrap');
-// import path = require('path');
-
-// var initiator = quickfix.initiator;
-// var options = {
-  // credentials: {
-    // username: "xxxx",
-    // password: "xxx"
-  // },
-  // settings: `[DEFAULT]
-// ReconnectInterval=60
-// PersistMessages=Y
-// FileStorePath=${path.resolve('./node_modules/node-quickfix-wrap/quickfix')}
-// FileLogPath=${path.resolve('./node_modules/node-quickfix-wrap/quickfix')}
-// [SESSION]
-// ConnectionType=initiator
-// SenderCompID=NODEQUICKFIX
-// TargetCompID=ELECTRONIFIE
-// BeginString=FIX.4.4
-// StartTime=00:00:00
-// EndTime=23:59:59
-// HeartBtInt=30
-// SocketConnectPort=3223
-// SocketConnectHost=localhost
-// UseDataDictionary=Y
-// DataDictionary=${path.resolve('./node_modules/node-quickfix-wrap/quickfix/spec/FIX44.xml')}
-// ResetOnLogon=Y
-// CancelOrdersOnDisconnect=Y`
-// };
-// function stats(fixentity: any, sessionID: any, message?: string) {
-  // var sess = fixentity.getSession(sessionID);
-  // var ret = {
-    // sessionID: sessionID,
-    // senderSeqNum: sess.senderSeqNum,
-    // targetSeqNum: sess.targetSeqNum
-  // };
-  // if (message) ret = Object.assign(ret, { message: message });
-  // return ret;
-// }
-
-// function printStats(fixentity:any ) {
-  // var sessions = fixentity.getSessions();
-  // var sessionId = sessions[0];
-  // var sess = fixentity.getSession(sessionId);
-  // console.log('senderSeqNum', sess.senderSeqNum, 'targetSeqNum', sess.targetSeqNum);
-// }
-
-// util.inherits(initiator, events.EventEmitter);
-
-// var fixClient = new initiator(
-// {
-  // onCreate: function(sessionID) {
-    // fixClient.emit('onCreate', stats(fixClient, sessionID));
-  // },
-  // onLogon: function(sessionID) {
-    // fixClient.emit('onLogon', stats(fixClient, sessionID));
-  // },
-  // onLogout: function(sessionID) {
-    // fixClient.emit('onLogout', stats(fixClient, sessionID));
-  // },
-  // onLogonAttempt: function(message, sessionID) {
-    // fixClient.emit('onLogonAttempt', stats(fixClient, sessionID, message));
-  // },
-  // toAdmin: function(message, sessionID) {
-    // fixClient.emit('toAdmin', stats(fixClient, sessionID, message));
-  // },
-  // fromAdmin: function(message, sessionID) {
-    // fixClient.emit('fromAdmin', stats(fixClient, sessionID, message));
-  // },
-  // fromApp: function(message, sessionID) {
-    // fixClient.emit('fromApp', stats(fixClient, sessionID, message));
-  // }
-// }, options);
-
-// fixClient.start(function() {
-  // console.log("FIX Initiator Started");
-  // var order = {
-    // header: {
-      // 8: 'FIX.4.4',
-      // 35: 'D',
-      // 49: "NODEQUICKFIX",
-      // 56: "ELECTRONIFIE"
-    // },
-    // tags: {
-      // 11: "0E0Z86K00000",
-      // 48: "06051GDX4",
-      // 22: 1,
-      // 38: 200,
-      // 40: 2,
-      // 54: 1,
-      // 55: 'BAC',
-      // 218: 100,
-      // 60: df(new Date(), "yyyymmdd-HH:MM:ss.l"),
-      // 423: 6
-    // }
-  // };
-
-  // fixClient.send(order, function() {
-    // console.log("Order sent!");
-    // printStats(fixClient);
-    // process.stdin.resume();
-  // });
-// });
+import events = require('events');
+import quickfix = require('node-quickfix-wrap');
+import df = require('dateformat');
+import path = require('path');
+import crypto = require('crypto');
 
 interface CoinbaseOrderEmitter {
     on(event: string, cb: Function): CoinbaseOrderEmitter;
@@ -281,11 +181,11 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return d.promise;
     };
 
-    generateClientOrderId = (): string => {
-        return uuid();
-    }
+    generateClientOrderId = (): string => { return uuid(); }
 
     cancelOrder = (cancel: Models.OrderStatusReport) => {
+        if (this._FIXHeader) return this.cancelFIXOrder(cancel);
+
         this._authClient.cancelOrder(cancel.exchangeId, (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             var t = this._timeProvider.utcNow();
 
@@ -314,12 +214,26 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         });
     };
 
+    private cancelFIXOrder = (cancel: Models.OrderStatusReport) => {
+      this._FIXClient.send({
+        header: this._FIXHeader,
+        tags: {
+          11: cancel.orderId,
+          37: cancel.exchangeId,
+          41: cancel.orderId,
+          55: this._symbolProvider.symbol,
+          35: 'F'
+        }
+      });
+    };
+
     replaceOrder = (replace: Models.OrderStatusReport) => {
         this.cancelOrder(replace);
         this.sendOrder(replace);
     };
-
     sendOrder = (order: Models.OrderStatusReport) => {
+        if (this._FIXHeader) return this.sendFIXOrder(order);
+
         var cb = (err?: Error, resp?: any, ack?: CoinbaseOrderAck) => {
             if (ack == null || typeof ack.id === "undefined") {
               if (ack==null || (ack.message && ack.message!='Insufficient funds'))
@@ -385,12 +299,60 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         });
     };
 
+    private sendFIXOrder = (order: Models.OrderStatusReport) => {
+        var o = {
+          header: this._FIXHeader,
+          tags: {
+            21: 1,
+            11: order.orderId,
+            38: order.quantity.toFixed(8),
+            54: (order.side === Models.Side.Bid) ? 1 : 2,
+            55: this._symbolProvider.symbol,
+            35: 'D',
+            7928: 'D'
+          }
+        };
+
+        if (order.type === Models.OrderType.Limit) {
+            o.tags[40] = 2;
+            o.tags[44] = order.price.toFixed(this._fixedPrecision);
+
+            if (order.preferPostOnly)
+                o.tags[59] = 'P';
+
+            switch (order.timeInForce) {
+                case Models.TimeInForce.GTC:
+                    break;
+                case Models.TimeInForce.FOK:
+                    o.tags[59] = 4;
+                    break;
+                case Models.TimeInForce.IOC:
+                    o.tags[59] = 3;
+                    break;
+            }
+        }
+        else if (order.type === Models.OrderType.Market) {
+            o.tags[40] = 1;
+        }
+        this._FIXClient.send(o, () => {
+          this.OrderUpdate.trigger({
+              orderId: order.orderId,
+              computationalLatency: (new Date()).getTime() - order.time.getTime()
+          });
+        });
+    };
+
     public cancelsByClientOrderId = false;
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     private onStateChange = () => {
-        this.ConnectChanged.trigger(this._client.socket ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected);
+      let state = Models.ConnectivityStatus.Disconnected;
+      if (this._FIXHeader) {
+        if (this._FIXClient.isLoggedOn()) state = Models.ConnectivityStatus.Connected;
+        console.log(new Date().toISOString().slice(11, -1), 'coinbase', 'FIX Logon', Models.ConnectivityStatus[state])
+      } else if (this._client.socket) state = Models.ConnectivityStatus.Connected;
+      this.ConnectChanged.trigger(state);
     };
 
     private onMessage = (data: CoinbaseOrder) => {
@@ -462,19 +424,125 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       this.OrderUpdate.trigger(status);
     };
 
-    private _fixedPrecision;
+    private onFIXMessage = (tags) => {
+      let status: Models.OrderStatusUpdate;
+      const orderId = tags[11] ? tags[11] : this._orderData.exchIdsToClientIds.get(tags[37]);
+      if (typeof orderId === "undefined") return;
+      if (tags[150] == '0') {
+        status = {
+            exchangeId: tags[37],
+            orderId: orderId,
+            orderStatus: Models.OrderStatus.Working,
+            time: this._timeProvider.utcNow(),
+            leavesQuantity: parseFloat(tags[38])
+        };
+      } else if (tags[150] == 'D') {
+        status = {
+            orderId: orderId,
+            orderStatus: Models.OrderStatus.Working,
+            time: this._timeProvider.utcNow(),
+            quantity: parseFloat(tags[38])
+        };
+
+      } else if (tags[150] == '1') {
+        status = {
+            orderId: orderId,
+            orderStatus: Models.OrderStatus.Working,
+            time: this._timeProvider.utcNow(),
+            lastQuantity: parseFloat(tags[32]),
+            lastPrice: parseFloat(tags[44]),
+            liquidity: Models.Liquidity.Make
+        };
+      } else if (['3','4','7','8'].indexOf(tags[150])>-1) {
+        status = {
+            orderId: orderId,
+            orderStatus: tags[150] == '3'
+              ? Models.OrderStatus.Complete
+              : Models.OrderStatus.Cancelled,
+            time: this._timeProvider.utcNow(),
+            leavesQuantity: tags[151] ? parseFloat(tags[151]) : 0
+        };
+      }
+
+      this.OrderUpdate.trigger(status);
+    };
+
+    private _fixedPrecision: number = 0;
+    private _FIXClient: any = null;
+    private _FIXHeader:any = null;
 
     constructor(
+        config: Config.IConfigProvider,
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
         private _client: CoinbaseOrderEmitter,
         private _authClient: CoinbaseAuthenticatedClient,
-        private _symbolProvider: CoinbaseSymbolProvider) {
+        private _symbolProvider: CoinbaseSymbolProvider
+    ) {
         this._fixedPrecision = -Math.floor(Math.log10(minTick));
-        this._client.on("open", data => this.onStateChange());
-        this._client.on("close", data => this.onStateChange());
-        this._client.on("message", data => this.onMessage(data));
+        var initiator = quickfix.initiator;
+        if (typeof initiator !== 'undefined') {
+          this._FIXHeader = {
+            8: 'FIX.4.2',
+            49: config.GetString("CoinbaseApiKey"),
+            56: config.GetString("CoinbaseOrderDestination")
+          };
+          util.inherits(initiator, events.EventEmitter);
+          let now;
+          this._FIXClient = new initiator({
+            onLogon: (sessionID) => this.onStateChange(),
+            onLogout: (sessionID) => this.onStateChange(),
+            fromApp: (message, sessionID) => {
+              if (message.header[35]=='8') this.onFIXMessage(message.tags);
+            }
+          }, {
+            credentials: {
+              username: '',
+              password: config.GetString("CoinbasePassphrase"),
+              rawdata: ((what, secret) => crypto.createHmac('sha256', new Buffer(secret, 'base64')).update(what).digest('base64'))([
+                now=df(new Date(), "yyyymmdd-HH:MM:ss.l"), 'A', '1',
+                config.GetString("CoinbaseApiKey"),
+                config.GetString("CoinbaseOrderDestination"),
+                config.GetString("CoinbasePassphrase")
+              ].join('\x01'), config.GetString("CoinbaseSecret")),
+              sendingtime: now
+            },
+            settings: `[DEFAULT]
+ReconnectInterval=21
+PersistMessages=N
+FileStorePath=/var/tmp/quickfix/store
+FileLogPath=/var/tmp/quickfix/log
+[SESSION]
+ConnectionType=initiator
+EncryptMethod=0
+SenderCompID=${config.GetString("CoinbaseApiKey")}
+TargetCompID=${config.GetString("CoinbaseOrderDestination")}
+BeginString=FIX.4.2
+StartTime=00:00:00
+EndTime=23:59:59
+HeartBtInt=30
+SocketConnectPort=4199
+SocketConnectHost=127.0.0.1
+UseDataDictionary=N
+ResetOnLogon=Y
+CancelOrdersOnDisconnect=Y`
+          });
+          this._FIXClient.start(() => {
+            console.log(new Date().toISOString().slice(11, -1), 'coinbase', 'FIX Initiator Start');
+            setTimeout(() => ((path) => {
+              if (path.indexOf('/var/tmp/quickfix/log')===0 && fs.existsSync(path))
+                fs.readdirSync(path).forEach(function(file,index) {
+                  const curPath = path + "/" + file;
+                  if(!fs.lstatSync(curPath).isDirectory() && curPath.indexOf('/var/tmp/quickfix/log')===0) fs.unlinkSync(curPath);
+                });
+            })(path.resolve('/var/tmp/quickfix/log')), 21000);
+          });
+        } else {
+          this._client.on("open", data => this.onStateChange());
+          this._client.on("close", data => this.onStateChange());
+          this._client.on("message", data => this.onMessage(data));
+        }
     }
 }
 
@@ -548,7 +616,7 @@ class Coinbase extends Interfaces.CombinedGateway {
         const orderEventEmitter = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
 
         const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
