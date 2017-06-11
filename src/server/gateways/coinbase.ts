@@ -506,7 +506,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 config.GetString("CoinbaseOrderDestination"),
                 config.GetString("CoinbasePassphrase")
               ].join('\x01'), config.GetString("CoinbaseSecret")),
-              sendingtime: now
+              sendingtime: now,
+              cancelordersondisconnect: 'Y'
             },
             settings: `[DEFAULT]
 ReconnectInterval=21
@@ -525,8 +526,7 @@ HeartBtInt=30
 SocketConnectPort=4199
 SocketConnectHost=127.0.0.1
 UseDataDictionary=N
-ResetOnLogon=Y
-CancelOrdersOnDisconnect=Y`
+ResetOnLogon=Y`
           });
           this._FIXClient.start(() => {
             console.log(new Date().toISOString().slice(11, -1), 'coinbase', 'FIX Initiator Start');
