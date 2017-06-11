@@ -12,15 +12,17 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
   * EXCHANGE
 
-    1. `coinbase` - uses the WebSocket API. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
+    1. `coinbase` - REST + WebSocket + FIX Protocol. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
 
-    2. `hitbtc` - WebSocket + socket.io API. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
+    2. `hitbtc` - REST + WebSocket. Ensure the HitBtc-specific properties have been set with your correct account information if you are using the dev or prod environment.
 
-    3. `okcoin` - Websocket.Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
+    3. `okcoin` - REST + Websocket. Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
 
-    4. `bitfinex` REST API only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+    4. `bitfinex` REST + WebSocket. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
 
-    5. `null` - Test in-memory exchange. No exchange-specific config needed.
+    5. `korbit` REST only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+
+    6. `null` - Test in-memory exchange. No exchange-specific config needed.
 
   * TRIBECA_MODE - Any value is valid, and optionally can be prefixed with `auto` to start trading on boot, for example:
 
