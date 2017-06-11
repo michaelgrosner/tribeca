@@ -110,6 +110,8 @@
     "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --timeout 42000 test/*.ts",
     "send-cov": "cd test && cat coverage/lcov.info | codacy-coverage && istanbul-coveralls"
   },
+  "homepage": "https://github.com/ctubio/tribeca",
+  "bugs": "https://github.com/ctubio/tribeca/issues",
   "repository": {
     "type": "git",
     "url": "git@github.com:ctubio/tribeca.git"
@@ -120,5 +122,9 @@
       "name": "Carles Tubio"
     }
   ],
-  "license": "ISC"
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "license": "(ISC OR MIT)"
 }
