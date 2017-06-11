@@ -38,7 +38,7 @@ export class ConfigProvider implements IConfigProvider {
         if (this._config.hasOwnProperty(configKey))
             return this._config[configKey];
 
-        throw Error('Config does not have property ' + configKey + ', please add ' + configKey + ' to your config file (see https://github.com/ctubio/tribeca/blob/master/etc/tribeca.json.dist).');
+        throw Error('Config does not have property ' + configKey + ', please add ' + configKey + ' to your config file (see original file etc/tribeca.json.dist).');
     };
 
     inBacktestMode: boolean = false;
