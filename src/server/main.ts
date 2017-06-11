@@ -167,8 +167,8 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     let web_server;
     try {
       web_server = https.createServer({
-        key: fs.readFileSync('./etc/sslcert/server.key', 'utf8'),
-        cert: fs.readFileSync('./etc/sslcert/server.crt', 'utf8')
+        key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
+        cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
       }, app);
     } catch (e) {
       web_server = http.createServer(app)
