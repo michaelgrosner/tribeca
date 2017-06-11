@@ -57,7 +57,7 @@ Troubleshooting:
 
  * Install the system daemon script `dist/tribeca-init.sh` (to make use of `service tribeca start` from anywhere instead of `cd path/to/tribeca && npm start`) see [dist](https://github.com/ctubio/tribeca/tree/master/dist) folder.
 
- * Replace the certificate at `etc/sslcert` folder with your own, see [web ui](https://github.com/ctubio/tribeca#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
+ * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/tribeca#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
  * Set environment variable TRIBECA_CONFIG_FILE to full path of `tribeca.json` if you run the app manually from other locations with `nodejs path/to/tribeca.js`. The environment variable is not needed if the working directory is the root folder where `tribeca.js` is located.
 
@@ -111,7 +111,7 @@ Once `tribeca` is up and running, visit HTTPS port `3000` (or value of `WebClien
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
-In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
+In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `dist/sslcert` folder.
 
 ### REST API
 

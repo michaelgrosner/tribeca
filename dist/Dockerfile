@@ -9,7 +9,7 @@ RUN git clone -b master https://github.com/ctubio/tribeca.git
 WORKDIR tribeca
 
 # Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
-#RUN rm -rf etc/sslcert
+#RUN rm -rf dist/sslcert
 
 RUN npm install --unsafe-perm
 
