@@ -6,12 +6,11 @@ export class DepthQuoteStyle implements StyleHelpers.QuoteStyle {
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
         const depth = input.params.widthPing;
-        const latestPosition = input.position.latestReport;
-        const buySize: number = (input.params.percentageValues && latestPosition != null)
-            ? input.params.buySizePercentage * latestPosition.value / 100
+        const buySize: number = (input.params.percentageValues && input.latestPosition != null)
+            ? input.params.buySizePercentage * input.latestPosition.value / 100
             : input.params.buySize;
-        const sellSize: number = (input.params.percentageValues && latestPosition != null)
-            ? input.params.sellSizePercentage * latestPosition.value / 100
+        const sellSize: number = (input.params.percentageValues && input.latestPosition != null)
+            ? input.params.sellSizePercentage * input.latestPosition.value / 100
             : input.params.sellSize;
 
         let bidPx = input.market.bids[0].price;
