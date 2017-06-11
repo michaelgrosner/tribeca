@@ -6,7 +6,7 @@ export class ConfigProvider {
     inBacktestMode: boolean = false;
 
     constructor() {
-      this.inBacktestMode = (process.env["TRIBECA_BACKTEST_MODE"] || "false") === "true";
+      this.inBacktestMode = (process.env["BACKTEST_MODE"] || "false") === "true";
 
       let configFile = './etc/'+process.argv.filter(arg => arg.substr(-5)==='.json').concat('tribeca.json')[0];
 
