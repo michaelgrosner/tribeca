@@ -3,11 +3,7 @@ import fs = require("fs");
 export class ConfigProvider {
     private _config: { [key: string]: string } = {};
 
-    inBacktestMode: boolean = false;
-
     constructor() {
-      this.inBacktestMode = (process.env["BACKTEST_MODE"] || "false") === "true";
-
       let configFile = './etc/'+process.argv.filter(arg => arg.substr(-5)==='.json').concat('tribeca.json')[0];
 
       if (fs.existsSync(configFile))

@@ -159,7 +159,7 @@ const backTestSimulationSetup = (
     };
 };
 
-const liveTradingSetup = (config: Config.ConfigProvider) => {
+const liveTradingSetup = () => {
     const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
     const app = express();
@@ -175,6 +175,8 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     }
 
     const io = socket_io(web_server);
+
+    const config = new Config.ConfigProvider();
 
     const username = config.GetString("WebClientUsername");
     const password = config.GetString("WebClientPassword");
@@ -456,7 +458,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       broker
     );
 
-    if (system.config.inBacktestMode) {
+    if (process.env["BACKTEST_MODE"]) {
       const t = new Date();
       console.log("starting backtest");
       try {
@@ -495,8 +497,8 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
 };
 
 (async (): Promise<any> => {
-  const config = new Config.ConfigProvider();
-  if (!config.inBacktestMode) return runTradingSystem(liveTradingSetup(config));
+  if (!process.env["BACKTEST_MODE"])
+    return runTradingSystem(liveTradingSetup());
 
   console.log("enter backtest mode");
 
