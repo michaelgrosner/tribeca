@@ -58,6 +58,7 @@ ENV BitfinexKey NULL
 ENV BitfinexSecret NULL
 ENV BitfinexOrderDestination Bitfinex
 
+## Korbit
 ENV KorbitHttpUrl https://api.korbit.co.kr/v1
 ENV KorbitApiKey NULL
 ENV KorbitSecretKey NULL
