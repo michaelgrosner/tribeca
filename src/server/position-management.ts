@@ -8,6 +8,7 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
+import Broker = require("./broker");
 
 export class PositionManager {
     private newWidth: Models.IStdev = null;
@@ -144,7 +145,7 @@ export class TargetBasePositionManager {
         private _timeProvider: Utils.ITimeProvider,
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
-        private _positionBroker: Interfaces.IPositionBroker,
+        private _positionBroker: Broker.PositionBroker,
         private _wrapped: Publish.IPublish<Models.TargetBasePositionValue>) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());

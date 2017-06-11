@@ -70,12 +70,6 @@ export interface IOrderBroker {
     cancelOpenOrders(): void;
 }
 
-export interface IPositionBroker {
-    getPosition(currency: Models.Currency): Models.CurrencyPosition;
-    latestReport: Models.PositionReport;
-    NewReport: Utils.Evt<Models.PositionReport>;
-}
-
 export interface IOrderStateCache {
     allOrders: Map<string, Models.OrderStatusReport>;
     exchIdsToClientIds: Map<string, string>;
