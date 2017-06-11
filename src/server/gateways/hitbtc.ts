@@ -259,7 +259,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _tradesClient : SocketIOClient.Socket;
 
-    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
+    constructor(config : Config.ConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
         this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
@@ -501,7 +501,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private _apiKey : string;
     private _secret : string;
-    constructor(config : Config.IConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
+    constructor(config : Config.ConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
@@ -569,7 +569,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     private readonly _apiKey : string;
     private readonly _secret : string;
     private readonly _pullUrl : string;
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.ConfigProvider) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._pullUrl = config.GetString("HitBtcPullUrl");
@@ -611,7 +611,7 @@ class HitBtcSymbolProvider {
 }
 
 class HitBtc extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, minSize: number, pair: Models.CurrencyPair) {
+    constructor(config : Config.ConfigProvider, symbolProvider: HitBtcSymbolProvider, step: number, minSize: number, pair: Models.CurrencyPair) {
         const details = new HitBtcBaseGateway(step, minSize);
         const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(config, symbolProvider, details)
@@ -641,7 +641,7 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createHitBtc(config : Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const symbolsUrl = config.GetString("HitBtcPullUrl") + "/api/1/public/symbols";
     const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
     const symbolProvider = new HitBtcSymbolProvider(pair);

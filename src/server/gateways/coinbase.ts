@@ -472,7 +472,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _FIXHeader:any = null;
 
     constructor(
-        config: Config.IConfigProvider,
+        config: Config.ConfigProvider,
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
         private _orderData: Interfaces.IOrderStateCache,
@@ -609,7 +609,7 @@ class CoinbaseSymbolProvider {
 }
 
 class Coinbase extends Interfaces.CombinedGateway {
-    constructor(authClient: CoinbaseAuthenticatedClient, config: Config.IConfigProvider,
+    constructor(authClient: CoinbaseAuthenticatedClient, config: Config.ConfigProvider,
         orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider,
         symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number, minSize: number) {
 
@@ -630,7 +630,7 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(config: Config.IConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(config: Config.ConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const authClient : CoinbaseAuthenticatedClient = new Gdax.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 

@@ -138,7 +138,7 @@ class OkCoinWebsocket {
         }
     };
 
-    private connectWS = (config: Config.IConfigProvider) => {
+    private connectWS = (config: Config.ConfigProvider) => {
         this._ws = new ws(config.GetString("OkCoinWsUrl"));
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
@@ -151,7 +151,7 @@ class OkCoinWebsocket {
     private _stillAlive: boolean = true;
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(config: Config.IConfigProvider) {
+    constructor(config: Config.ConfigProvider) {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
@@ -438,7 +438,7 @@ class OkCoinMessageSigner {
         return m;
     };
 
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.ConfigProvider) {
         this._api_key = config.GetString("OkCoinApiKey");
         this._secretKey = config.GetString("OkCoinSecretKey");
     }
@@ -472,7 +472,7 @@ class OkCoinHttp {
     };
 
     private _baseUrl : string;
-    constructor(config : Config.IConfigProvider, private _signer: OkCoinMessageSigner) {
+    constructor(config : Config.ConfigProvider, private _signer: OkCoinMessageSigner) {
         this._baseUrl = config.GetString("OkCoinHttpUrl")
     }
 }
@@ -545,7 +545,7 @@ class OkCoinSymbolProvider {
 }
 
 class OkCoin extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair) {
+    constructor(config : Config.ConfigProvider, pair: Models.CurrencyPair) {
         var symbol = new OkCoinSymbolProvider(pair);
         var signer = new OkCoinMessageSigner(config);
         var http = new OkCoinHttp(config, signer);
@@ -567,6 +567,6 @@ class OkCoin extends Interfaces.CombinedGateway {
         );
         }
 }
-export async function createOkCoin(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createOkCoin(config : Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     return new OkCoin(config, pair);
 }
