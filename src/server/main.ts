@@ -187,7 +187,7 @@ const liveTradingSetup = (config: Config.ConfigProvider) => {
     app.use(compression());
     app.use(express.static(path.join(__dirname, "..", "pub")));
 
-    const webport = config.GetNumber("WebClientListenPort");
+    const webport = parseFloat(config.GetString("WebClientListenPort"));
     web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
 
     app.get("/view/*", (req: express.Request, res: express.Response) => {

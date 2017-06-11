@@ -129,7 +129,7 @@ class BitfinexWebsocket {
         }
     };
 
-    private connectWS = (config: Config.IConfigProvider) => {
+    private connectWS = (config: Config.ConfigProvider) => {
         this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
         this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
@@ -143,7 +143,7 @@ class BitfinexWebsocket {
     private _stillAlive: boolean = true;
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.ConfigProvider) {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
@@ -374,7 +374,7 @@ class BitfinexMessageSigner {
         return m;
     };
 
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.ConfigProvider) {
         this._api_key = config.GetString("BitfinexKey");
         this._secretKey = config.GetString("BitfinexSecret");
     }
@@ -461,7 +461,7 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
 
-    constructor(config: Config.IConfigProvider) {
+    constructor(config: Config.ConfigProvider) {
         this._baseUrl = config.GetString("BitfinexHttpUrl");
         this._apiKey = config.GetString("BitfinexKey");
         this._secret = config.GetString("BitfinexSecret");
@@ -533,7 +533,7 @@ class BitfinexSymbolProvider {
 }
 
 class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
+    constructor(timeProvider: Utils.ITimeProvider, config: Config.ConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
         const http = new BitfinexHttp(config);
         const signer = new BitfinexMessageSigner(config);
         const socket = new BitfinexWebsocket(config);
@@ -571,7 +571,7 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);

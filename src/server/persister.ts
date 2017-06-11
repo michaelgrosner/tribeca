@@ -7,7 +7,7 @@ import Interfaces = require("./interfaces");
 import Config = require("./config");
 import * as Promises from './promises';
 
-export function loadDb(config: Config.IConfigProvider) {
+export function loadDb(config: Config.ConfigProvider) {
     var deferred = Promises.defer<mongodb.Db>();
     mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
         if (err) deferred.reject(err);

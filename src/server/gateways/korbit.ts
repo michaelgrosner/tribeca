@@ -291,7 +291,7 @@ class KorbitMessageSigner {
         return els.join("&");
     }
 
-    constructor(config : Config.IConfigProvider) {
+    constructor(config : Config.ConfigProvider) {
         this._client_id = config.GetString("KorbitApiKey");
         this._secretKey = config.GetString("KorbitSecretKey");
         this._user = config.GetString("KorbitUsername");
@@ -359,7 +359,7 @@ class KorbitHttp {
     };
 
     private _baseUrl : string;
-    constructor(config : Config.IConfigProvider, private _signer: KorbitMessageSigner) {
+    constructor(config : Config.ConfigProvider, private _signer: KorbitMessageSigner) {
         this._baseUrl = config.GetString("KorbitHttpUrl")
     }
 }
@@ -433,7 +433,7 @@ class KorbitSymbolProvider {
 }
 
 class Korbit extends Interfaces.CombinedGateway {
-    constructor(config : Config.IConfigProvider, pair: Models.CurrencyPair, minTick: number, minSize: number) {
+    constructor(config : Config.ConfigProvider, pair: Models.CurrencyPair, minTick: number, minSize: number) {
         var symbol = new KorbitSymbolProvider(pair);
         var http = new KorbitHttp(config, new KorbitMessageSigner(config));
 
@@ -450,7 +450,7 @@ class Korbit extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createKorbit(config : Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createKorbit(config : Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const constants = await getJSON<any[]>(config.GetString("KorbitHttpUrl")+"/constants");
     let minTick = 500;
     let minSize = 0.015;

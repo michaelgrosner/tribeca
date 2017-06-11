@@ -131,8 +131,8 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 }
 
 class NullGateway extends Interfaces.CombinedGateway {
-    constructor(config: Config.IConfigProvider, pair: Models.CurrencyPair) {
-        const minTick = .01; // config.GetNumber("NullGatewayTick");
+    constructor(config: Config.ConfigProvider, pair: Models.CurrencyPair) {
+        const minTick = .01;
         super(
             new NullMarketDataGateway(minTick),
             new NullOrderGateway(),
@@ -141,6 +141,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createNullGateway(config: Config.IConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createNullGateway(config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     return new NullGateway(config, pair);
 }
