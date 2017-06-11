@@ -1,5 +1,4 @@
 import StyleHelpers = require("./helpers");
-import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 
 export class PingPongQuoteStyle implements StyleHelpers.QuoteStyle {
@@ -57,17 +56,16 @@ function computePingPongQuote(input: StyleHelpers.QuoteInput) {
 
     genQt.bidSz = input.params.buySize;
     genQt.askSz = input.params.sellSize;
-    const latestPosition = input.position.latestReport;
-    genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.buySizePercentage * latestPosition.value / 100
+    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.buySizePercentage * input.latestPosition.value / 100
         : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.sellSizePercentage * latestPosition.value / 100
+    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.sellSizePercentage * input.latestPosition.value / 100
         : input.params.sellSize;
     const tbp = input.latestTargetPosition;
     if (tbp !== null) {
       const targetBasePosition = tbp.data;
-      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
         genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
@@ -100,17 +98,16 @@ function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
 
     genQt.bidSz = input.params.buySize;
     genQt.askSz = input.params.sellSize;
-    const latestPosition = input.position.latestReport;
-    genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.buySizePercentage * latestPosition.value / 100
+    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.buySizePercentage * input.latestPosition.value / 100
         : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.sellSizePercentage * latestPosition.value / 100
+    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.sellSizePercentage * input.latestPosition.value / 100
         : input.params.sellSize;
     const tbp = input.latestTargetPosition;
     if (tbp !== null) {
       const targetBasePosition = tbp.data;
-      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
         genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
@@ -143,17 +140,16 @@ function computeHamelinRatQuote(input: StyleHelpers.QuoteInput) {
 
     genQt.bidSz = input.params.buySize;
     genQt.askSz = input.params.sellSize;
-    const latestPosition = input.position.latestReport;
-    genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.buySizePercentage * latestPosition.value / 100
+    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.buySizePercentage * input.latestPosition.value / 100
         : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.sellSizePercentage * latestPosition.value / 100
+    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.sellSizePercentage * input.latestPosition.value / 100
         : input.params.sellSize;
     const tbp = input.latestTargetPosition;
     if (tbp !== null) {
       const targetBasePosition = tbp.data;
-      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
         genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
@@ -186,17 +182,16 @@ function computeAK47Quote(input: StyleHelpers.QuoteInput) {
 
     genQt.bidSz = input.params.buySize;
     genQt.askSz = input.params.sellSize;
-    const latestPosition = input.position.latestReport;
-    genQt.bidSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.buySizePercentage * latestPosition.value / 100
+    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.buySizePercentage * input.latestPosition.value / 100
         : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && latestPosition != null)
-        ? input.params.sellSizePercentage * latestPosition.value / 100
+    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
+        ? input.params.sellSizePercentage * input.latestPosition.value / 100
         : input.params.sellSize;
     const tbp = input.latestTargetPosition;
     if (tbp !== null) {
       const targetBasePosition = tbp.data;
-      const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
+      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
         genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
       if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
