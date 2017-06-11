@@ -1,5 +1,6 @@
 import './promises';
 require('events').EventEmitter.prototype._maxListeners = 30;
+var packageConfig = require("./../../package.json");
 import path = require("path");
 import express = require('express');
 import util = require('util');
@@ -298,6 +299,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         system.pair,
         system.config.GetString("TRIBECA_MODE").replace('auto',''),
         system.config.GetString("MatryoshkaUrl"),
+        packageConfig.homepage,
         gateway.base.minTickIncrement
       )]);
 
