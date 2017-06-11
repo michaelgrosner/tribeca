@@ -72,7 +72,7 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
     - XRP
     - KRW
 
-  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, no the web client will not require authentication (Not recommended at all!!)
+  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, the web client will not require authentication (not recommended)
 
   * MatryoshkaUrl - The URL of the next instance, it can be used to link one after another all running instances (see [Multiple instances party time](https://github.com/ctubio/tribeca#multiple-instances-party-time)); it will only autofill the prompt to avoid to type it everytime.
 
