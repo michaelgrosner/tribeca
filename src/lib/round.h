@@ -1,5 +1,5 @@
-#ifndef CTUBIO_ROUND_
-#define CTUBIO_ROUND_
+#ifndef CTUBIO_ROUND_H_
+#define CTUBIO_ROUND_H_
 
 #include <nan.h>
 #include <math.h>

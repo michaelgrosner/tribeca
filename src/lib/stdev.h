@@ -1,5 +1,5 @@
-#ifndef CTUBIO_STDEV_
-#define CTUBIO_STDEV_
+#ifndef CTUBIO_STDEV_H_
+#define CTUBIO_STDEV_H_
 
 #include <nan.h>
 #include <math.h>
