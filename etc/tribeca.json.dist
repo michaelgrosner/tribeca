@@ -40,5 +40,7 @@
     "KorbitSecretKey": "NULL",
     "KorbitUsername": "NULL",
     "KorbitPassword": "NULL",
-    "KorbitOrderDestination": "Korbit"
+    "KorbitOrderDestination": "Korbit",
+
+    "delayUI": 3
 }

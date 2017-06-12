@@ -66,4 +66,7 @@ ENV KorbitUsername NULL
 ENV KorbitPassword NULL
 ENV KorbitOrderDestination Korbit
 
+## Quoting Parameters
+ENV delayUI 3
+
 CMD ["node_modules/.bin/forever", "tribeca.js"]
