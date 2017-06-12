@@ -33,7 +33,7 @@ export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     };
 }
 
-function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
+export function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
     var widthPing = (input.params.widthPercentage)
