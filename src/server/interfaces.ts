@@ -15,11 +15,6 @@ export interface IGateway {
     ConnectChanged: Utils.Evt<Models.ConnectivityStatus>;
 }
 
-export interface IBrokerConnectivity {
-    connectStatus: Models.ConnectivityStatus;
-    ConnectChanged: Utils.Evt<Models.ConnectivityStatus>;
-}
-
 export interface IMarketDataGateway extends IGateway {
     MarketData: Utils.Evt<Models.Market>;
     MarketTrade: Utils.Evt<Models.GatewayMarketTrade>;
@@ -59,16 +54,4 @@ export interface IMarketTradeBroker {
 export interface IMarketDataBroker {
     MarketData: Utils.Evt<Models.Market>;
     currentBook: Models.Market;
-}
-
-export interface IBroker extends IBrokerConnectivity {
-    makeFee(): number;
-    takeFee(): number;
-    exchange(): Models.Exchange;
-
-    minTickIncrement: number;
-    minSize: number;
-    pair: Models.CurrencyPair;
-
-    hasSelfTradePrevention: boolean;
 }

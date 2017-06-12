@@ -1,7 +1,7 @@
 import Models = require("../share/models");
-import Interfaces = require("./interfaces");
 import Publish = require("./publish");
 import Utils = require("./utils");
+import Broker = require("./broker");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 
@@ -20,7 +20,7 @@ export class FairValueEngine {
   }
 
   constructor(
-    private _details: Interfaces.IBroker,
+    private _details: Broker.ExchangeBroker,
     private _timeProvider: Utils.ITimeProvider,
     private _filtration: MarketFiltration.MarketFiltration,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,

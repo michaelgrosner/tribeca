@@ -62,7 +62,7 @@ export class QuotingEngine {
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _orderBroker: Broker.OrderBroker,
         private _positionBroker: Broker.PositionBroker,
-        private _details: Interfaces.IBroker,
+        private _details: Broker.ExchangeBroker,
         private _ewma: Statistics.ObservableEWMACalculator,
         private _stdev: Statistics.ObservableSTDEVCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,

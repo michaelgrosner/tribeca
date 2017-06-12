@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Broker = require("./broker");
-import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
 
@@ -15,7 +14,7 @@ export class Quoter {
 
     constructor(private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         broker: Broker.OrderBroker,
-        exchBroker: Interfaces.IBroker) {
+        exchBroker: Broker.ExchangeBroker) {
         this._bidQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Bid, this._qlParamRepo);
         this._askQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Ask, this._qlParamRepo);
     }
@@ -53,7 +52,7 @@ export class ExchangeQuoter {
     private _exchange: Models.Exchange;
 
     constructor(private _broker: Broker.OrderBroker,
-        private _exchBroker: Interfaces.IBroker,
+        private _exchBroker: Broker.ExchangeBroker,
         private _side: Models.Side,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository) {
         this._exchange = _exchBroker.exchange();
