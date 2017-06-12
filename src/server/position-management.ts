@@ -54,9 +54,9 @@ export class PositionManager {
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _persister: Persister.IPersist<Models.RegularFairValue>,
         private _fvAgent: FairValue.FairValueEngine,
-        private _shortEwma: Statistics.IComputeStatistics,
-        private _mediumEwma: Statistics.IComputeStatistics,
-        private _longEwma: Statistics.IComputeStatistics,
+        private _shortEwma: Statistics.EwmaStatisticCalculator,
+        private _mediumEwma: Statistics.EwmaStatisticCalculator,
+        private _longEwma: Statistics.EwmaStatisticCalculator,
         private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>
     ) {
         const minTick = this._details.minTickIncrement;
