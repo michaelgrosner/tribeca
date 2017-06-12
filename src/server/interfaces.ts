@@ -72,7 +72,3 @@ export interface IBroker extends IBrokerConnectivity {
 
     hasSelfTradePrevention: boolean;
 }
-
-export interface IPublishMessages {
-    publish(text: string): void;
-}
