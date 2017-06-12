@@ -1,6 +1,7 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
+import Broker = require("./broker");
 import Quoter = require("./quoter");
 
 export class MarketFiltration {
@@ -14,7 +15,7 @@ export class MarketFiltration {
     }
 
     constructor(
-        private _details: Interfaces.IBroker,
+        private _details: Broker.ExchangeBroker,
         private _quoter: Quoter.Quoter,
         private _broker: Interfaces.IMarketDataBroker) {
         _broker.MarketData.on(this.filterFullMarket);

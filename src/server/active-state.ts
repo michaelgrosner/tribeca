@@ -1,7 +1,7 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
+import Broker = require("./broker");
 
 export class ActiveRepository {
 
@@ -18,7 +18,7 @@ export class ActiveRepository {
     }
 
     constructor(startQuoting: boolean,
-        private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
+        private _exchangeConnectivity: Broker.ExchangeBroker,
         private _pub: Publish.IPublish<boolean>,
         private _rec: Publish.IReceive<boolean>) {
         this._savedQuotingMode = startQuoting;

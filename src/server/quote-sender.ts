@@ -1,7 +1,7 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
+import Broker = require("./broker");
 import Quoter = require("./quoter");
 import _ = require("lodash");
 import Active = require("./active-state");
@@ -24,7 +24,7 @@ export class QuoteSender {
             private _quotingEngine: QuotingEngine.QuotingEngine,
             private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,
-            private _details: Interfaces.IBroker,
+            private _details: Broker.ExchangeBroker,
             private _activeRepo: Active.ActiveRepository) {
         _activeRepo.ExchangeConnectivity.on(this.sendQuote);
         _quotingEngine.QuoteChanged.on(this.sendQuote);

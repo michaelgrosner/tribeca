@@ -6,7 +6,6 @@ import _ = require("lodash");
 import Persister = require("./persister");
 import FairValue = require("./fair-value");
 import moment = require("moment");
-import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import Broker = require("./broker");
 
@@ -49,7 +48,7 @@ export class PositionManager {
     private _data: Models.RegularFairValue[] = [];
 
     constructor(
-        private _details: Interfaces.IBroker,
+        private _details: Broker.ExchangeBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _persister: Persister.IPersist<Models.RegularFairValue>,

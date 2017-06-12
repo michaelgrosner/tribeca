@@ -439,7 +439,7 @@ export class OrderBroker {
 
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-                private _baseBroker : Interfaces.IBroker,
+                private _baseBroker : ExchangeBroker,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _tradePersister : Persister.IPersist<Models.Trade>,
                 private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
@@ -563,7 +563,7 @@ export class PositionBroker {
 
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-                private _base : Interfaces.IBroker,
+                private _base: ExchangeBroker,
                 private _broker: OrderBroker,
                 private _quoter: Quoter.Quoter,
                 private _fvEngine: FairValue.FairValueEngine,
@@ -577,7 +577,7 @@ export class PositionBroker {
     }
 }
 
-export class ExchangeBroker implements Interfaces.IBroker {
+export class ExchangeBroker {
     public get hasSelfTradePrevention() {
         return this._baseGateway.hasSelfTradePrevention;
     }
