@@ -40,14 +40,14 @@ export function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
         ? input.params.widthPingPercentage * input.fv.price / 100
         : input.params.widthPing;
 
-    if (input.params.mode === Models.QuotingMode.Top && genQt.bidSz > .2) {
+    if (input.params.mode !== Models.QuotingMode.Join && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;
     }
 
     var minBid = input.fv.price - widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
-    if (input.params.mode === Models.QuotingMode.Top && genQt.askSz > .2) {
+    if (input.params.mode !== Models.QuotingMode.Join && genQt.askSz > .2) {
         genQt.askPx -= input.minTickIncrement;
     }
 
