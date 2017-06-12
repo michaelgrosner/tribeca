@@ -14,12 +14,6 @@ export interface IComputeStatistics {
     addNewValue(value: number): number;
 }
 
-export interface IComputeStatisticsIncremental {
-    latest: number;
-    initialize(seedData: number[], mktBids: number[], mktAsks: number[]): void;
-    addNewValue(rfv: number[], mktBids: number[], mktAsks: number[]): Models.IStdev;
-}
-
 export class EwmaStatisticCalculator implements IComputeStatistics {
     constructor(
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
