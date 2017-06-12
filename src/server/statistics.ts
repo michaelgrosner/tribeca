@@ -52,12 +52,6 @@ export function computeEwma(newValue: number, previous: number, periods: number)
     return newValue;
 }
 
-export class EmptyEWMACalculator implements Interfaces.ICalculator {
-    constructor() { }
-    latest: number = null;
-    Updated = new Utils.Evt<any>();
-}
-
 export class ObservableEWMACalculator implements Interfaces.ICalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
