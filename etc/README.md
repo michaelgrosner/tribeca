@@ -10,7 +10,7 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
 ### Configuration options
 
-  * EXCHANGE
+  * EXCHANGE - must be one of:
 
     1. `coinbase` - REST + WebSocket + FIX Protocol. Ensure the Coinbase-specific properties have been set with your correct account information if you are using the sandbox or live-trading environment.
 
@@ -18,9 +18,9 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
 
     3. `okcoin` - REST + Websocket. Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
 
-    4. `bitfinex` REST + WebSocket. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+    4. `bitfinex` - REST + WebSocket. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
 
-    5. `korbit` REST only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+    5. `korbit` - REST only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
 
     6. `null` - Test in-memory exchange. No exchange-specific config needed.
 
