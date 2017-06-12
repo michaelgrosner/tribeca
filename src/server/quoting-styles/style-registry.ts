@@ -1,6 +1,5 @@
 import StyleHelpers = require("./helpers");
 import Models = require("../../share/models");
-import _ = require("lodash");
 import MidMarket = require("./mid-market");
 import TopJoin = require("./top-join");
 import PingPong = require("./ping-pong");

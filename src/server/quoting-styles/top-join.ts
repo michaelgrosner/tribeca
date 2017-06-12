@@ -37,21 +37,21 @@ export function computeTopJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
     var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
+        ? input.params.widthPingPercentage * input.fvPrice / 100
         : input.params.widthPing;
 
     if (input.params.mode !== Models.QuotingMode.Join && genQt.bidSz > .2) {
         genQt.bidPx += input.minTickIncrement;
     }
 
-    var minBid = input.fv.price - widthPing / 2.0;
+    var minBid = input.fvPrice - widthPing / 2.0;
     genQt.bidPx = Math.min(minBid, genQt.bidPx);
 
     if (input.params.mode !== Models.QuotingMode.Join && genQt.askSz > .2) {
         genQt.askPx -= input.minTickIncrement;
     }
 
-    var minAsk = input.fv.price + widthPing / 2.0;
+    var minAsk = input.fvPrice + widthPing / 2.0;
     genQt.askPx = Math.max(minAsk, genQt.askPx);
 
     genQt.bidSz = input.params.buySize;
@@ -79,7 +79,7 @@ function computeInverseJoinQuote(input: StyleHelpers.QuoteInput) {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
     var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
+        ? input.params.widthPingPercentage * input.fvPrice / 100
         : input.params.widthPing;
 
     var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
