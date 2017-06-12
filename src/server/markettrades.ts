@@ -2,13 +2,11 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Persister = require("./persister");
 import Broker = require("./broker");
-import Web = require("./web");
 import QuotingEngine = require("./quoting-engine");
 import * as moment from "moment";
 
-export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
+export class MarketTradeBroker {
     // TOOD: is this event needed?
     MarketTrade = new Utils.Evt<Models.MarketTrade>();
     public get marketTrades() { return this._marketTrades; }
@@ -47,7 +45,7 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
     constructor(
       private _mdGateway: Interfaces.IMarketDataGateway,
       private _marketTradePublisher: Publish.IPublish<Models.MarketTrade>,
-      private _mdBroker: Interfaces.IMarketDataBroker,
+      private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker
     ) {

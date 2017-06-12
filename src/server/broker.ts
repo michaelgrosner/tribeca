@@ -10,7 +10,7 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 import * as Promises from './promises';
 
-export class MarketDataBroker implements Interfaces.IMarketDataBroker {
+export class MarketDataBroker {
     MarketData = new Utils.Evt<Models.Market>();
     public get currentBook(): Models.Market { return this._currentBook; }
 
