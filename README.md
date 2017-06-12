@@ -113,7 +113,7 @@ In case you really want to use plain HTTP, remove the files `server.crt` and `se
 
 ### REST API
 
-Tribeca also exposes a REST API of all it's data. It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
+It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
 
 ### Charts
 
