@@ -84,4 +84,4 @@ If you set in your exchange the `OrderDestination` value as `Null`, all API call
 
 These options are also valid environment variables for the [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) file.
 
-As additional options, all quoting parameters can be added to the config file too (see [defaultQuotingParameters](https://github.com/ctubio/tribeca/blob/master/src/server/main.ts#L45)). (Once parameters are saved into the database, the database values will be used instead of these default options).
+As additional options, all quoting parameters (or some of them) can be added to the config file too (see [defaultQuotingParameters](https://github.com/ctubio/tribeca/blob/master/src/server/main.ts#L45)). Once parameters are saved into the database, the database values will be used instead of these default options.
