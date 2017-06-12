@@ -60,7 +60,7 @@ export class QuotingEngine {
         private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _orderBroker: Interfaces.IOrderBroker,
+        private _orderBroker: Broker.OrderBroker,
         private _positionBroker: Broker.PositionBroker,
         private _details: Interfaces.IBroker,
         private _ewma: Statistics.ObservableEWMACalculator,

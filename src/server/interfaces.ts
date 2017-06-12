@@ -61,15 +61,6 @@ export interface IMarketDataBroker {
     currentBook: Models.Market;
 }
 
-export interface IOrderBroker {
-    Trade: Utils.Evt<Models.Trade>;
-    sendOrder(order: Models.SubmitNewOrder): Models.SentOrder;
-    cancelOrder(cancel: Models.OrderCancel);
-    replaceOrder(replace: Models.CancelReplaceOrder): Models.SentOrder;
-    OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
-    cancelOpenOrders(): void;
-}
-
 export interface IBroker extends IBrokerConnectivity {
     makeFee(): number;
     takeFee(): number;
