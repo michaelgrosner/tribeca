@@ -4,6 +4,26 @@ import Statistics = require("../src/server/statistics");
 var bindings = require('bindings')('ctubio.node');
 var Benchmark = require('benchmark');
 
+// function computeStdev(sequence: number[], factor: number, minTick: number): number {
+  // const n = sequence.length;
+  // let sum = 0;
+  // sequence.forEach((x) => sum += x);
+  // const mean = sum / n;
+  // let variance = 0.0;
+  // let v1 = 0.0;
+  // let v2 = 0.0;
+  // if (n != 1) {
+      // for (let i = 0; i<n; i++) {
+          // v1 = v1 + (sequence[i] - mean) * (sequence[i] - mean);
+          // v2 = v2 + (sequence[i] - mean);
+      // }
+      // v2 = v2 * v2 / n;
+      // variance = (v1 - v2) / (n-1);
+      // if (variance < 0) variance = 0;
+  // }
+  // return Utils.roundNearest(Math.sqrt(variance) * factor, minTick);
+// }
+
 describe("Benchmark C shared objects", () => {
     it("JS round is faster", () => {
       // var val = 1.23456;
