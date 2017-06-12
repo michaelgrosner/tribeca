@@ -1,5 +1,4 @@
 import StyleHelpers = require("./helpers");
-import Interfaces = require("../interfaces");
 import Models = require("../../share/models");
 import _ = require("lodash");
 

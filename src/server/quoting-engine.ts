@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import _ = require("lodash");
 import FairValue = require("./fair-value");

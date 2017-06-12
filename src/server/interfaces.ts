@@ -1,16 +1,6 @@
 import Utils = require("./utils");
 import Models = require("../share/models");
 
-export interface IExchangeDetailsGateway {
-    name(): string;
-    makeFee(): number;
-    takeFee(): number;
-    exchange(): Models.Exchange;
-    minTickIncrement: number;
-    minSize: number;
-    hasSelfTradePrevention: boolean;
-}
-
 export interface IGateway {
     ConnectChanged: Utils.Evt<Models.ConnectivityStatus>;
 }
@@ -36,6 +26,16 @@ export interface IOrderEntryGateway extends IGateway {
 
 export interface IPositionGateway {
     PositionUpdate: Utils.Evt<Models.CurrencyPosition>;
+}
+
+export interface IExchangeDetailsGateway {
+    name(): string;
+    makeFee(): number;
+    takeFee(): number;
+    exchange(): Models.Exchange;
+    minTickIncrement: number;
+    minSize: number;
+    hasSelfTradePrevention: boolean;
 }
 
 export class CombinedGateway {
