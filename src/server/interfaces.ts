@@ -87,15 +87,6 @@ export interface IBroker extends IBrokerConnectivity {
     hasSelfTradePrevention: boolean;
 }
 
-export interface ICalculator {
-    latest: number;
-    Updated: Utils.Evt<any>;
-}
-
-export interface ISilentCalculator {
-    latest: any;
-}
-
 export interface IPublishMessages {
     publish(text: string): void;
 }

@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Interfaces = require("./interfaces");
 import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
@@ -40,7 +39,7 @@ export class EwmaStatisticCalculator {
     }
 }
 
-export class ObservableEWMACalculator implements Interfaces.ICalculator {
+export class ObservableEWMACalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
@@ -74,7 +73,7 @@ export class ObservableEWMACalculator implements Interfaces.ICalculator {
     Updated = new Utils.Evt<any>();
 }
 
-export class ObservableSTDEVCalculator implements Interfaces.ISilentCalculator {
+export class ObservableSTDEVCalculator {
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
     private _lastFV: number[] = [];
