@@ -39,7 +39,7 @@ export class OrderStateCache {
     public exchIdsToClientIds = new Map<string, string>();
 }
 
-export class OrderBroker implements Interfaces.IOrderBroker {
+export class OrderBroker {
     async cancelOpenOrders() : Promise<number> {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
@@ -564,7 +564,7 @@ export class PositionBroker {
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _base : Interfaces.IBroker,
-                private _broker: Interfaces.IOrderBroker,
+                private _broker: OrderBroker,
                 private _quoter: Quoter.Quoter,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,

@@ -1,5 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
+import Broker = require("./broker");
 import Interfaces = require("./interfaces");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
@@ -8,13 +9,12 @@ class QuoteOrder {
     constructor(public quote: Models.Quote, public orderId: string) { }
 }
 
-// aggregator for quoting
 export class Quoter {
     private _bidQuoter: ExchangeQuoter;
     private _askQuoter: ExchangeQuoter;
 
     constructor(private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        broker: Interfaces.IOrderBroker,
+        broker: Broker.OrderBroker,
         exchBroker: Interfaces.IBroker) {
         this._bidQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Bid, this._qlParamRepo);
         this._askQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Ask, this._qlParamRepo);
@@ -48,12 +48,11 @@ export class Quoter {
     };
 }
 
-// wraps a single broker to make orders behave like quotes
 export class ExchangeQuoter {
     public activeQuote: QuoteOrder[] = [];
     private _exchange: Models.Exchange;
 
-    constructor(private _broker: Interfaces.IOrderBroker,
+    constructor(private _broker: Broker.OrderBroker,
         private _exchBroker: Interfaces.IBroker,
         private _side: Models.Side,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository) {
