@@ -8,6 +8,7 @@ import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import Broker = require("./broker");
+import Statistics = require("./statistics");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
@@ -62,8 +63,8 @@ export class QuotingEngine {
         private _orderBroker: Interfaces.IOrderBroker,
         private _positionBroker: Broker.PositionBroker,
         private _details: Interfaces.IBroker,
-        private _ewma: Interfaces.ICalculator,
-        private _stdev: Interfaces.ISilentCalculator,
+        private _ewma: Statistics.ObservableEWMACalculator,
+        private _stdev: Statistics.ObservableSTDEVCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
         this._registry = new QuotingStyleRegistry.QuotingStyleRegistry([
