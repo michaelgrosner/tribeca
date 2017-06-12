@@ -254,7 +254,7 @@ const liveTradingSetup = () => {
         config: config,
         pair: pair,
         exchange: exchange,
-        startingActive: config.GetString("TRIBECA_MODE").indexOf('auto')>-1,
+        startingActive: config.GetString("BotIdentifier").indexOf('auto')>-1,
         startingParameters: defaultQuotingParameters,
         timeProvider: timeProvider,
         getExchange: getExchange,
@@ -299,7 +299,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       .registerSnapshot(() => [new Models.ProductAdvertisement(
         system.exchange,
         system.pair,
-        system.config.GetString("TRIBECA_MODE").replace('auto',''),
+        system.config.GetString("BotIdentifier").replace('auto',''),
         system.config.GetString("MatryoshkaUrl"),
         packageConfig.homepage,
         gateway.base.minTickIncrement

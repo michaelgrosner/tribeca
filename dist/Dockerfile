@@ -9,14 +9,14 @@ RUN git clone -b master https://github.com/ctubio/tribeca.git
 WORKDIR tribeca
 
 # Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
-#RUN rm -rf dist/sslcert
+#RUN rm -rf etc/sslcert
 
 RUN npm install --unsafe-perm
 
 EXPOSE 3000 5000
 
 # General config properties. Replace with your own exchange account information:
-ENV TRIBECA_MODE dev
+ENV BotIdentifier dev
 ENV EXCHANGE NULL
 ENV TradedPair BTC/USD
 ENV WebClientUsername NULL

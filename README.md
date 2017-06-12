@@ -87,7 +87,7 @@ To run multiple instances using a collection of config files:
 
     2. Edit the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have a unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
 
-    3. Edit the values of `TRIBECA_MODE`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+    3. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
 2. Run the new instance with `npm start --tribeca:config=Xibeca_party_time.json`, also the commands `npm stop` and `npm restart` allow the parameter `--tribeca:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
