@@ -17,6 +17,9 @@ export class ConfigProvider {
       if (this._config.hasOwnProperty(configKey))
         return this._config[configKey];
 
+      if (configKey === 'BotIdentifier' && this._config.hasOwnProperty('TRIBECA_MODE'))
+        return this._config['TRIBECA_MODE']; /* delete this shit only after January 2018 */
+
       throw Error('Config does not have property ' + configKey + ', please add ' + configKey + ' to your config file (see original file etc/tribeca.json.dist).');
     };
 }
