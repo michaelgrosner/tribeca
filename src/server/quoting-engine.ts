@@ -11,10 +11,6 @@ import Statistics = require("./statistics");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
-import MidMarket = require("./quoting-styles/mid-market");
-import TopJoin = require("./quoting-styles/top-join");
-import PingPong = require("./quoting-styles/ping-pong");
-import Depth = require("./quoting-styles/depth");
 
 const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => {
    if ((!o && n) || (o && !n)) return true;
@@ -66,18 +62,7 @@ export class QuotingEngine {
         private _stdev: Statistics.ObservableSTDEVCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
-        this._registry = new QuotingStyleRegistry.QuotingStyleRegistry([
-          new MidMarket.MidMarketQuoteStyle(),
-          new TopJoin.InverseJoinQuoteStyle(),
-          new TopJoin.InverseTopOfTheMarketQuoteStyle(),
-          new TopJoin.JoinQuoteStyle(),
-          new TopJoin.TopOfTheMarketQuoteStyle(),
-          new PingPong.PingPongQuoteStyle(),
-          new PingPong.BoomerangQuoteStyle(),
-          new PingPong.AK47QuoteStyle(),
-          new PingPong.HamelinRatQuoteStyle(),
-          new Depth.DepthQuoteStyle()
-        ]);
+        this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
 
         _filteredMarkets.FilteredMarketChanged.on(this.recalcQuote);
         _qlParamRepo.NewParameters.on(this.recalcQuote);
