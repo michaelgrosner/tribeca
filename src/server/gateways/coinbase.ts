@@ -3,6 +3,7 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
+import Broker = require("../broker");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require('lodash');
@@ -475,7 +476,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         config: Config.ConfigProvider,
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
-        private _orderData: Interfaces.IOrderStateCache,
+        private _orderData: Broker.OrderStateCache,
         private _client: CoinbaseOrderEmitter,
         private _authClient: CoinbaseAuthenticatedClient,
         private _symbolProvider: CoinbaseSymbolProvider
@@ -610,7 +611,7 @@ class CoinbaseSymbolProvider {
 
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(authClient: CoinbaseAuthenticatedClient, config: Config.ConfigProvider,
-        orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider,
+        orders: Broker.OrderStateCache, timeProvider: Utils.ITimeProvider,
         symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number, minSize: number) {
 
         const orderEventEmitter = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
@@ -630,7 +631,7 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(config: Config.ConfigProvider, orders: Interfaces.IOrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(config: Config.ConfigProvider, orders: Broker.OrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const authClient : CoinbaseAuthenticatedClient = new Gdax.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
