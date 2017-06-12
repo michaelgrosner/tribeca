@@ -85,7 +85,7 @@ export class QuotingEngine {
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
         const minSize = this._details.minSize;
-        const input = new QuoteInput(filteredMkt, fv, params, this._positionBroker.latestReport, this._targetPosition.latestTargetPosition, minTick);
+        const input = new QuoteInput(filteredMkt, fv.price, params, this._positionBroker.latestReport, this._targetPosition.latestTargetPosition, minTick);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
 
         if (unrounded === null)

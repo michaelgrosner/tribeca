@@ -4,13 +4,13 @@ import Models = require("../../share/models");
 export class MidMarketQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Mid;
 
-    GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
+    GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
         const widthPing = (input.params.percentageValues)
-            ? input.params.widthPingPercentage * input.fv.price / 100
+            ? input.params.widthPingPercentage * input.fvPrice / 100
             : input.params.widthPing;
 
-        const bidPx = Math.max(input.fv.price - widthPing, 0);
-        const askPx = input.fv.price + widthPing;
+        const bidPx = Math.max(input.fvPrice - widthPing, 0);
+        const askPx = input.fvPrice + widthPing;
 
         let buySize: number = (input.params.percentageValues && input.latestPosition != null)
             ? input.params.buySizePercentage * input.latestPosition.value / 100
