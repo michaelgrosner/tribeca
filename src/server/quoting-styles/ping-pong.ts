@@ -1,11 +1,12 @@
 import StyleHelpers = require("./helpers");
 import Models = require("../../share/models");
+import TopJoin = require("./top-join");
 
 export class PingPongQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.PingPong;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
-        return computePingPongQuote(input);
+        return TopJoin.computeTopJoinQuote(input);
     };
 }
 
@@ -13,7 +14,7 @@ export class BoomerangQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.Boomerang;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
-        return computeBoomerangQuote(input);
+        return TopJoin.computeTopJoinQuote(input);
     };
 }
 
@@ -21,7 +22,7 @@ export class AK47QuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.AK47;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
-        return computeAK47Quote(input);
+        return TopJoin.computeTopJoinQuote(input);
     };
 }
 
@@ -29,174 +30,6 @@ export class HamelinRatQuoteStyle implements StyleHelpers.QuoteStyle {
     Mode = Models.QuotingMode.HamelinRat;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
-        return computeHamelinRatQuote(input);
+        return TopJoin.computeTopJoinQuote(input);
     };
-}
-
-function computePingPongQuote(input: StyleHelpers.QuoteInput) {
-    var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
-
-    var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
-        : input.params.widthPing;
-
-    if (input.params.mode === Models.QuotingMode.PingPong && genQt.bidSz > .2) {
-        genQt.bidPx += input.minTickIncrement;
-    }
-
-    var minBid = input.fv.price - widthPing / 2.0;
-    genQt.bidPx = Math.min(minBid, genQt.bidPx);
-
-    if (input.params.mode === Models.QuotingMode.PingPong && genQt.askSz > .2) {
-        genQt.askPx -= input.minTickIncrement;
-    }
-
-    var minAsk = input.fv.price + widthPing / 2.0;
-    genQt.askPx = Math.max(minAsk, genQt.askPx);
-
-    genQt.bidSz = input.params.buySize;
-    genQt.askSz = input.params.sellSize;
-    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.buySizePercentage * input.latestPosition.value / 100
-        : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.sellSizePercentage * input.latestPosition.value / 100
-        : input.params.sellSize;
-    const tbp = input.latestTargetPosition;
-    if (tbp !== null) {
-      const targetBasePosition = tbp.data;
-      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
-        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
-        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
-    }
-
-    return genQt;
-}
-
-function computeBoomerangQuote(input: StyleHelpers.QuoteInput) {
-    var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
-
-    var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
-        : input.params.widthPing;
-
-    if (input.params.mode === Models.QuotingMode.Boomerang && genQt.bidSz > .2) {
-        genQt.bidPx += input.minTickIncrement;
-    }
-
-    var minBid = input.fv.price - widthPing / 2.0;
-    genQt.bidPx = Math.min(minBid, genQt.bidPx);
-
-    if (input.params.mode === Models.QuotingMode.Boomerang && genQt.askSz > .2) {
-        genQt.askPx -= input.minTickIncrement;
-    }
-
-    var minAsk = input.fv.price + widthPing / 2.0;
-    genQt.askPx = Math.max(minAsk, genQt.askPx);
-
-    genQt.bidSz = input.params.buySize;
-    genQt.askSz = input.params.sellSize;
-    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.buySizePercentage * input.latestPosition.value / 100
-        : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.sellSizePercentage * input.latestPosition.value / 100
-        : input.params.sellSize;
-    const tbp = input.latestTargetPosition;
-    if (tbp !== null) {
-      const targetBasePosition = tbp.data;
-      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
-        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
-        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
-    }
-
-    return genQt;
-}
-
-function computeHamelinRatQuote(input: StyleHelpers.QuoteInput) {
-    var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
-
-    var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
-        : input.params.widthPing;
-
-    if (input.params.mode === Models.QuotingMode.HamelinRat && genQt.bidSz > .2) {
-        genQt.bidPx += input.minTickIncrement;
-    }
-
-    var minBid = input.fv.price - widthPing / 2.0;
-    genQt.bidPx = Math.min(minBid, genQt.bidPx);
-
-    if (input.params.mode === Models.QuotingMode.HamelinRat && genQt.askSz > .2) {
-        genQt.askPx -= input.minTickIncrement;
-    }
-
-    var minAsk = input.fv.price + widthPing / 2.0;
-    genQt.askPx = Math.max(minAsk, genQt.askPx);
-
-    genQt.bidSz = input.params.buySize;
-    genQt.askSz = input.params.sellSize;
-    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.buySizePercentage * input.latestPosition.value / 100
-        : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.sellSizePercentage * input.latestPosition.value / 100
-        : input.params.sellSize;
-    const tbp = input.latestTargetPosition;
-    if (tbp !== null) {
-      const targetBasePosition = tbp.data;
-      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
-        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
-        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
-    }
-
-    return genQt;
-}
-
-function computeAK47Quote(input: StyleHelpers.QuoteInput) {
-    var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
-
-    var widthPing = (input.params.widthPercentage)
-        ? input.params.widthPingPercentage * input.fv.price / 100
-        : input.params.widthPing;
-
-    if (input.params.mode === Models.QuotingMode.AK47 && genQt.bidSz > .2) {
-        genQt.bidPx += input.minTickIncrement;
-    }
-
-    var minBid = input.fv.price - input.params.widthPing / 2.0;
-    genQt.bidPx = Math.min(minBid, genQt.bidPx);
-
-    if (input.params.mode === Models.QuotingMode.AK47 && genQt.askSz > .2) {
-        genQt.askPx -= input.minTickIncrement;
-    }
-
-    var minAsk = input.fv.price + input.params.widthPing / 2.0;
-    genQt.askPx = Math.max(minAsk, genQt.askPx);
-
-    genQt.bidSz = input.params.buySize;
-    genQt.askSz = input.params.sellSize;
-    genQt.bidSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.buySizePercentage * input.latestPosition.value / 100
-        : input.params.buySize;
-    genQt.askSz = (input.params.percentageValues && input.latestPosition != null)
-        ? input.params.sellSizePercentage * input.latestPosition.value / 100
-        : input.params.sellSize;
-    const tbp = input.latestTargetPosition;
-    if (tbp !== null) {
-      const targetBasePosition = tbp.data;
-      const totalBasePosition = input.latestPosition.baseAmount + input.latestPosition.baseHeldAmount;
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.buySizeMax)
-        genQt.bidSz = Math.max(genQt.bidSz, targetBasePosition - totalBasePosition);
-      if (input.params.aggressivePositionRebalancing != Models.APR.Off && input.params.sellSizeMax)
-        genQt.askSz = Math.max(genQt.askSz, totalBasePosition - targetBasePosition);
-    }
-
-    return genQt;
 }
