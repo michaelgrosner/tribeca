@@ -8,13 +8,7 @@ import Persister = require("./persister");
 import moment = require("moment");
 var bindings = require('bindings')('ctubio.node');
 
-export interface IComputeStatistics {
-    latest: number;
-    initialize(seedData: number[]): void;
-    addNewValue(value: number): number;
-}
-
-export class EwmaStatisticCalculator implements IComputeStatistics {
+export class EwmaStatisticCalculator {
     constructor(
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _periodsAttribute: string,
