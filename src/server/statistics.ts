@@ -8,6 +8,15 @@ import Persister = require("./persister");
 import moment = require("moment");
 var bindings = require('bindings')('ctubio.node');
 
+function computeEwma(newValue: number, previous: number, periods: number): number {
+    if (previous !== null) {
+        const alpha = 2 / (periods + 1);
+        return alpha * newValue + (1 - alpha) * previous;
+    }
+
+    return newValue;
+}
+
 export class EwmaStatisticCalculator {
     constructor(
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
@@ -29,15 +38,6 @@ export class EwmaStatisticCalculator {
         this.latest = computeEwma(value, this.latest, this._qlParamRepo.latest[this._periodsAttribute]);
         return this.latest;
     }
-}
-
-export function computeEwma(newValue: number, previous: number, periods: number): number {
-    if (previous !== null) {
-        const alpha = 2 / (periods + 1);
-        return alpha * newValue + (1 - alpha) * previous;
-    }
-
-    return newValue;
 }
 
 export class ObservableEWMACalculator implements Interfaces.ICalculator {
