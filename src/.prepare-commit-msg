@@ -3,6 +3,7 @@
 SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 
 printf "$(cat <<\CARLESGITTIP
+
 Free Software Free Society
 
 To support commits by ctubio,
