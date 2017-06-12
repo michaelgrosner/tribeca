@@ -11,6 +11,10 @@ export class ConfigProvider {
     }
 
     public GetString = (configKey: string): string => {
+      return this.GetDefaultString(configKey, true);
+    };
+
+    public GetDefaultString = (configKey: string, isMandatory?: boolean): string => {
       if (process.env.hasOwnProperty(configKey))
         return process.env[configKey];
 
@@ -20,6 +24,9 @@ export class ConfigProvider {
       if (configKey === 'BotIdentifier' && this._config.hasOwnProperty('TRIBECA_MODE'))
         return this._config['TRIBECA_MODE']; /* delete this shit only after January 2018 */
 
-      throw Error('Config does not have property ' + configKey + ', please add ' + configKey + ' to your config file (see original file etc/tribeca.json.dist).');
+      if (isMandatory)
+        throw Error('Config does not have property ' + configKey + ', please add ' + configKey + ' to your config file (see original file etc/tribeca.json.dist).');
+
+      return null;
     };
 }

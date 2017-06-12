@@ -250,6 +250,10 @@ const liveTradingSetup = () => {
     const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
         new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
 
+    for (const param in defaultQuotingParameters)
+      if (config.GetDefaultString(param) !== null)
+        defaultQuotingParameters[param] = config.GetDefaultString(param);
+
     return {
         config: config,
         pair: pair,
