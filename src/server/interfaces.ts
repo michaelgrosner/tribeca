@@ -70,11 +70,6 @@ export interface IOrderBroker {
     cancelOpenOrders(): void;
 }
 
-export interface IOrderStateCache {
-    allOrders: Map<string, Models.OrderStatusReport>;
-    exchIdsToClientIds: Map<string, string>;
-}
-
 export interface IBroker extends IBrokerConnectivity {
     makeFee(): number;
     takeFee(): number;

@@ -34,7 +34,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
     }
 }
 
-export class OrderStateCache implements Interfaces.IOrderStateCache {
+export class OrderStateCache {
     public allOrders = new Map<string, Models.OrderStatusReport>();
     public exchIdsToClientIds = new Map<string, string>();
 }
