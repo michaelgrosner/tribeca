@@ -21,11 +21,6 @@ export class QuoteInput {
   ) {}
 }
 
-export interface QuoteStyle {
-  Mode: Models.QuotingMode;
-  GenerateQuote(input: QuoteInput): GeneratedQuote;
-}
-
 export function getQuoteAtTopOfMarket(input: QuoteInput): GeneratedQuote {
   let topBid = input.market.bids[0].size > input.minTickIncrement ? input.market.bids[0] : input.market.bids[1];
   let topAsk = input.market.asks[0].size > input.minTickIncrement ? input.market.asks[0] : input.market.asks[1];

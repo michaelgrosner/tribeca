@@ -1,11 +1,9 @@
 import StyleHelpers = require("./helpers");
-import Models = require("../../share/models");
 import MidMarket = require("./mid-market");
 import TopJoin = require("./top-join");
-import PingPong = require("./ping-pong");
 import Depth = require("./depth");
 
-class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
+class NullQuoteGenerator {
   Mode = null;
 
   GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
@@ -14,8 +12,8 @@ class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
 }
 
 export class QuotingStyleRegistry {
-  private _mapQuoteGenerators: StyleHelpers.QuoteStyle[];
-  private _nullQuoteGenerator: StyleHelpers.QuoteStyle;
+  private _mapQuoteGenerators;
+  private _nullQuoteGenerator;
 
   constructor() {
     this._nullQuoteGenerator = new NullQuoteGenerator();
@@ -25,10 +23,10 @@ export class QuotingStyleRegistry {
       new TopJoin.InverseTopOfTheMarketQuoteStyle(),
       new TopJoin.JoinQuoteStyle(),
       new TopJoin.TopOfTheMarketQuoteStyle(),
-      new PingPong.PingPongQuoteStyle(),
-      new PingPong.BoomerangQuoteStyle(),
-      new PingPong.AK47QuoteStyle(),
-      new PingPong.HamelinRatQuoteStyle(),
+      new TopJoin.PingPongQuoteStyle(),
+      new TopJoin.BoomerangQuoteStyle(),
+      new TopJoin.AK47QuoteStyle(),
+      new TopJoin.HamelinRatQuoteStyle(),
       new Depth.DepthQuoteStyle()
     ].sort((a,b) => a.Mode > b.Mode ? 1 : (a.Mode < b.Mode ? -1 : 0));
   }
