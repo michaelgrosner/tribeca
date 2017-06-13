@@ -329,12 +329,24 @@ import express = require('express');
 import util = require("util");
 
 var backtestServer = () => {
-    ["uncaughtException", "exit", "SIGINT", "SIGTERM"].forEach(reason => {
-        process.on(reason, (e?) => {
-            console.log(util.format("Terminating!", reason, e, (typeof e !== "undefined" ? e.stack : undefined)));
+    process.on("uncaughtException", err => {
+      console.error(new Date().toISOString().slice(11, -1), 'backtest', 'Unhandled exception!', err);
+      process.exit(1);
+    });
 
-            process.exit(1);
-        });
+    process.on("unhandledRejection", (reason, p) => {
+      console.error(new Date().toISOString().slice(11, -1), 'backtest', 'Unhandled promise rejection!', reason, p);
+      process.exit(1);
+    });
+
+    process.on("exit", () => {
+      console.info(new Date().toISOString().slice(11, -1), 'backtest', 'Exiting with code', 1);
+      process.exit(1);
+    });
+
+    process.on("SIGINT", () => {
+      console.info(new Date().toISOString().slice(11, -1), 'backtest', 'Handling SIGINT');
+      process.exit(1);
     });
 
     var mdFile = process.env['MD_FILE'];
