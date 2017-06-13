@@ -1,12 +1,12 @@
-### tribeca.json.dist
+### K.json.dist
 Sample configuration file, must be located inside `etc` folder, to initialize your configurations:
 ```
- $ cd /path/to/tribeca
- $ cp etc/tribeca.json.dist etc/tribeca.json
- $ vim etc/tribeca.json
+ $ cd /path/to/K
+ $ cp etc/K.json.dist etc/K.json
+ $ vim etc/K.json
 ```
 
-You must end up with a customized `etc/tribeca.json` file, see all option details bellow.
+You must end up with a customized `etc/K.json` file, see all option details bellow.
 
 ### Configuration options
 
@@ -35,7 +35,7 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
     4. `autoMy Bot` - Shows `My Bot` in the title and auto start trading on boot.
 
 
-  * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
+  * MongoDbUrl - If you are on OS X, change "K-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
 
   * TradedPair - Any combination of the following currencies are supported, if the target EXCHANGE supports trading the currency pair:
 
@@ -74,14 +74,14 @@ You must end up with a customized `etc/tribeca.json` file, see all option detail
     - XRP
     - KRW
 
-  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/tribeca#web-ui) access. If kept as `NULL`, the web client will not require authentication (not recommended)
+  * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/Krypto-trading-bot#web-ui) access. If kept as `NULL`, the web client will not require authentication (not recommended)
 
-  * MatryoshkaUrl - The URL of the next instance, it can be used to link one after another all running instances (see [Multiple instances party time](https://github.com/ctubio/tribeca#multiple-instances-party-time)); it will only autofill the prompt to avoid to type it everytime.
+  * MatryoshkaUrl - The URL of the next instance, it can be used to link one after another all running instances (see [Multiple instances party time](https://github.com/ctubio/Krypto-trading-bot#multiple-instances-party-time)); it will only autofill the prompt to avoid to type it everytime.
 
 Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on (Coinbase GDAX needs one single different API key for each different market, because users of FIX Protocol can't have multiple sessions opened at the same time [so just use multiple API keys]).
 
 If you set in your exchange the `OrderDestination` value as `Null`, all API calls will be redirect to NullGateway (testing mode).
 
-These options are also valid environment variables for the [dist/Dockerfile](https://github.com/ctubio/tribeca/tree/master/dist#dockerfile) file.
+These options are also valid environment variables for the [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) file.
 
-As additional non-mandatory options, all quoting parameters (or some of them) can be added to the config file too (in case you need to preconfigure multiple instances, or if you have database issues, or simply if you want to easily persist your desired quoting parameters [see the valid option names at [defaultQuotingParameters](https://github.com/ctubio/tribeca/blob/master/src/server/main.ts#L45)]). Once parameters are saved into the database, the database values will be used instead of these default options.
+As additional non-mandatory options, all quoting parameters (or some of them) can be added to the config file too (in case you need to preconfigure multiple instances, or if you have database issues, or simply if you want to easily persist your desired quoting parameters [see the valid option names at [defaultQuotingParameters](https://github.com/ctubio/Krypto-trading-bot/blob/master/src/server/main.ts#L45)]). Once parameters are saved into the database, the database values will be used instead of these default options.
