@@ -33,7 +33,6 @@ import compression = require("compression");
 import Persister = require("./persister");
 import Active = require("./active-state");
 import FairValue = require("./fair-value");
-import Web = require("./web");
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
@@ -134,7 +133,7 @@ const backTestSimulationSetup = (
       )
     );
 
-    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
         return new Publish.NullPublisher<T>();
     };
 
@@ -231,11 +230,9 @@ const liveTradingSetup = () => {
       }
     };
 
-    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T> => {
+    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
       if (monitor && !monitor.io) monitor.io = io;
-      const socketIoPublisher = new Publish.Publisher<T>(topic, io, monitor, null);
-      if (persister) return new Web.StandaloneHttpPublisher<T>(socketIoPublisher, topic, app, persister);
-      else return socketIoPublisher;
+      return new Publish.Publisher<T>(topic, io, monitor, null);
     };
 
     const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
@@ -280,7 +277,7 @@ interface TradingSystem {
     getReceiver<T>(topic: string): Publish.IReceive<T>;
     getPersister<T extends Persister.Persistable>(collectionName: string): Promise<Persister.ILoadAll<T>>;
     getRepository<T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
-    getPublisher<T>(topic: string, monitor?: Monitor.ApplicationState, persister?: Persister.ILoadAll<T>): Publish.IPublish<T>;
+    getPublisher<T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T>;
 }
 
 var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
@@ -352,7 +349,7 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       gateway.oe,
       tradesPersister,
       system.getPublisher(Models.Topics.OrderStatusReports, monitor),
-      system.getPublisher(Models.Topics.Trades, null, tradesPersister),
+      system.getPublisher(Models.Topics.Trades),
       system.getPublisher(Models.Topics.TradesChart),
       system.getReceiver(Models.Topics.SubmitNewOrder),
       system.getReceiver(Models.Topics.CancelOrder),

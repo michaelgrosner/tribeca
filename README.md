@@ -111,10 +111,6 @@ If you want to generate your own certificate see [SSL for internal usage](http:/
 
 In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `dist/sslcert` folder.
 
-### REST API
-
-It's all the same data you would get via the Web UI, just a bit easier to connect up to via other applications. Visit `http://localhost:3000/data/md` for the current market data, for instance.
-
 ### Charts
 
 The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
