@@ -459,7 +459,7 @@ class DisplayOrder {
                                                 </tr>
                                                 <tr>
                                                     <td><label>Price:&nbsp;</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" [(ngModel)]="order.price" /></td>
+                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
                                                     <td><label>Size:</label></td>
