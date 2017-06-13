@@ -301,6 +301,7 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
                                             <th>cxl?</th>
                                             <th>profit</th>
+                                            <th>Kmemory</th>
                                             <th>delayUI</th>
                                             <th>audio?</th>
                                             <th colspan="2">
@@ -369,11 +370,17 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.cancelOrdersAuto">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #8BE296;">
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                                                 <input class="form-control input-sm"
                                                    type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.profitHourInterval">
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.cleanPongsAuto">
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #A0A0A0;">
                                                 <input class="form-control input-sm"

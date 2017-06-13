@@ -295,7 +295,7 @@ export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.IL
 
     public persist = (report: T) => { };
 
-    public repersist = (report: T, trade: Models.Trade) => { };
+    public repersist = (report: T) => { };
 
     public clean = (time: Date) => { };
 

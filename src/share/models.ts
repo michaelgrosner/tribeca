@@ -397,6 +397,7 @@ export interface QuotingParameters {
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     cancelOrdersAuto?: boolean;
+    cleanPongsAuto?: number;
     stepOverSize?: number;
     profitHourInterval?: number;
     delayUI?: number;

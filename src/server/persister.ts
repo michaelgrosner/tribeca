@@ -24,7 +24,7 @@ export interface Persistable {
 export interface IPersist<T> {
     persist(data: T): void;
     clean(time: Date): void;
-    repersist(report: T, trade: Models.Trade): void;
+    repersist(report: T): void;
 }
 
 export interface ILoadLatest<T> extends IPersist<T> {
@@ -77,7 +77,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         return this.converter(v);
     };
 
-    public repersist = (report: T, trade: Models.Trade) => { };
+    public repersist = (report: T) => { };
 
     public clean = (time: Date) => { };
 
@@ -148,13 +148,13 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         });
     };
 
-    public repersist = (report: T, trade: Models.Trade) => {
-        if (trade.Kqty<0)
-          this.collection.deleteOne({ tradeId: trade.tradeId }, err => {
+    public repersist = (report: T) => {
+        if ((<any>report).Kqty<0)
+          this.collection.deleteOne({ tradeId: (<any>report).tradeId }, err => {
               if (err) console.error('persister', err, 'Unable to deleteOne', this._dbName, report);
           });
         else
-          this.collection.updateOne({ tradeId: trade.tradeId }, { $set: { time: trade.time, quantity : trade.quantity, value : trade.value, Ktime: trade.Ktime, Kqty : trade.Kqty, Kprice : trade.Kprice, Kvalue : trade.Kvalue, Kdiff : trade.Kdiff } }, err => {
+          this.collection.updateOne({ tradeId: (<any>report).tradeId }, { $set: { time: (<any>report).time, quantity : (<any>report).quantity, value : (<any>report).value, Ktime: (<any>report).Ktime, Kqty : (<any>report).Kqty, Kprice : (<any>report).Kprice, Kvalue : (<any>report).Kvalue, Kdiff : (<any>report).Kdiff } }, err => {
               if (err) console.error('persister', err, 'Unable to repersist', this._dbName, report);
           });
     };
