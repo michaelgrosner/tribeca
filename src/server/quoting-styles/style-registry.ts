@@ -8,16 +8,18 @@ import Depth = require("./depth");
 class NullQuoteGenerator implements StyleHelpers.QuoteStyle {
   Mode = null;
 
-    GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote|null => {
+  GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
     return null;
   };
 }
 
 export class QuotingStyleRegistry {
-  private _mapping : StyleHelpers.QuoteStyle[];
+  private _mapQuoteGenerators: StyleHelpers.QuoteStyle[];
+  private _nullQuoteGenerator: StyleHelpers.QuoteStyle;
 
   constructor() {
-    this._mapping = [
+    this._nullQuoteGenerator = new NullQuoteGenerator();
+    this._mapQuoteGenerators = [
       new MidMarket.MidMarketQuoteStyle(),
       new TopJoin.InverseJoinQuoteStyle(),
       new TopJoin.InverseTopOfTheMarketQuoteStyle(),
@@ -31,9 +33,7 @@ export class QuotingStyleRegistry {
     ].sort((a,b) => a.Mode > b.Mode ? 1 : (a.Mode < b.Mode ? -1 : 0));
   }
 
-  private static NullQuoteGenerator : StyleHelpers.QuoteStyle = new NullQuoteGenerator();
-
-  public Get = (mode: Models.QuotingMode): StyleHelpers.QuoteStyle => {
-    return this._mapping[mode] || QuotingStyleRegistry.NullQuoteGenerator;
+  public GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
+    return (this._mapQuoteGenerators[input.mode] || this._nullQuoteGenerator).GenerateQuote(input);
   };
 }

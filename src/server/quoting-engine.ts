@@ -82,38 +82,39 @@ export class QuotingEngine {
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
+        if (this._targetPosition.latestTargetPosition === null) return null;
+        const targetBasePosition = this._targetPosition.latestTargetPosition.data;
+
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
         const minSize = this._details.minSize;
-        const input = new QuoteInput(filteredMkt, fv.price, params, this._positionBroker.latestReport, this._targetPosition.latestTargetPosition, minTick);
-        const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
-
-        if (unrounded === null)
-            return null;
-
-        if (params.quotingEwmaProtection && this._ewma.latest !== null) {
-            unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
-            unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
-        }
-
-        const tbp = this._targetPosition.latestTargetPosition;
-        if (tbp === null) {
-            return null;
-        }
-        const targetBasePosition = tbp.data;
-
+        const widthPing = (params.widthPercentage)
+          ? params.widthPingPercentage * fv.price / 100
+          : params.widthPing;
+        const widthPong = (params.widthPercentage)
+          ? params.widthPongPercentage * fv.price / 100
+          : params.widthPong;
         const latestPosition = this._positionBroker.latestReport;
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+        let buySize: number = params.percentageValues
+             ? params.buySizePercentage * latestPosition.value / 100
+             : params.buySize;
+        if (params.aggressivePositionRebalancing != Models.APR.Off && params.buySizeMax)
+          buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
+        let sellSize: number = params.percentageValues
+            ? params.sellSizePercentage * latestPosition.value / 100
+            : params.sellSize;
+        if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
+          sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
+
+        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv.price, widthPing, buySize, sellSize, params.mode, minTick));
+
+        if (unrounded === null) return null;
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
+
         let sideAPR: string[] = [];
-        var widthPong = (params.widthPercentage)
-            ? params.widthPongPercentage * fv.price / 100
-            : params.widthPong;
-        var widthPing = (params.widthPercentage)
-            ? params.widthPingPercentage * fv.price / 100
-            : params.widthPing;
         let superTradesMultipliers = (params.superTrades &&
           widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
@@ -125,16 +126,6 @@ export class QuotingEngine {
               ? 3 : 1))
         ] : [1, 1];
 
-        let buySize: number = params.percentageValues
-             ? params.buySizePercentage * latestPosition.value / 100
-             : params.buySize;
-        if (params.aggressivePositionRebalancing != Models.APR.Off && params.buySizeMax)
-          buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
-        let sellSize: number = params.percentageValues
-            ? params.sellSizePercentage * latestPosition.value / 100
-            : params.sellSize
-        if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
-          sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
         let pDiv: number  = (params.percentageValues)
           ? params.positionDivergencePercentage * latestPosition.value / 100
           : params.positionDivergence;
@@ -142,6 +133,11 @@ export class QuotingEngine {
         if (superTradesMultipliers[1] > 1) {
           if (!params.buySizeMax) unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv.price) / 2);
           if (!params.sellSizeMax) unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
+        }
+
+        if (params.quotingEwmaProtection && this._ewma.latest !== null) {
+            unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
+            unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
         }
 
         if (totalBasePosition < targetBasePosition - pDiv) {
