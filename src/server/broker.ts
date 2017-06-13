@@ -91,7 +91,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._tradePersister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -124,7 +124,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._tradePersister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -155,7 +155,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i], this._trades[i]);
+              this._tradePersister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -271,7 +271,7 @@ export class OrderBroker {
             this._trades[i].loadedFromDB = false;
             tradePingPongType = 'Pong';
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i], this._trades[i]);
+            this._tradePersister.repersist(this._trades[i]);
             break;
           }
         }
@@ -286,7 +286,7 @@ export class OrderBroker {
             this._trades[i].value += trade.value;
             this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i], this._trades[i]);
+            this._tradePersister.repersist(this._trades[i]);
             break;
           }
         }
@@ -421,6 +421,25 @@ export class OrderBroker {
             }
 
             this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, tradePingPongType, o.time));
+
+            if (this._qlParamRepo.latest.cleanPongsAuto>0) {
+              const cleanTime = o.time.getTime() - (this._qlParamRepo.latest.cleanPongsAuto * 864e5);
+              var cleanTrades = this._trades.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time.getTime() < cleanTime);
+              var goWhile = true;
+              while (goWhile && cleanTrades.length) {
+                var cleanTrade = cleanTrades.shift();
+                goWhile = false;
+                for(let i = this._trades.length;i--;) {
+                  goWhile = true;
+                  if (this._trades[i].tradeId==cleanTrade.tradeId) {
+                    this._trades[i].Kqty = -1;
+                    this._tradePublisher.publish(this._trades[i]);
+                    this._tradePersister.repersist(this._trades[i]);
+                    this._trades.splice(i, 1);
+                  }
+                }
+              }
+            }
         }
 
         return o;
