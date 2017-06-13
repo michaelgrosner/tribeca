@@ -1,7 +1,7 @@
 import StyleHelpers = require("./helpers");
 import Models = require("../../share/models");
 
-export class DepthQuoteStyle implements StyleHelpers.QuoteStyle {
+export class DepthQuoteStyle {
     Mode = Models.QuotingMode.Depth;
 
     GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
