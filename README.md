@@ -41,11 +41,21 @@ Docker installation method is not heavily tested, please open a [new issue](http
 
 1. Ensure your target machine has installed node v6 or v7 (`nodejs -v`), mongodb and g++ will be installed automatically (to validate if mongodb server is running after install try `mongo --eval "print('OK')"`).
 
-2. Run `git clone ssh://git@github.com/ctubio/Krypto-trading-bot K` in any location that you wish.
+2. Run in any location that you wish:
+```
+$ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
+$ cd K
+$ cp etc/K.json.dist etc/K.json
+$ vim etc/K.json
+```
 
-3. Copy `K/etc/K.json.dist` to `K/etc/K.json` and modify the configuration options, see [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/K`).
+3. Edit the configuration options, see [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/K`).
 
-4. Run `npm start` in the toplevel path of the git cloned repository. This will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
+4. Finally run in the toplevel path of the git cloned repository:
+```
+$ npm start
+```
+This will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
 
 Troubleshooting:
 
@@ -148,7 +158,7 @@ none
 
 ### Release 3.0 Changelog:
 
-Updated project name to K because of Kira.
+Updated application name to K because of Kira.
 
 Added nodejs7, typescript2, angular4 and reactivexjs.
 
