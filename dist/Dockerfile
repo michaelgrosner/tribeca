@@ -4,9 +4,9 @@ RUN apt-get update
 RUN apt-get install -y git sudo
 
 # Feel free to choose the branch you want to build:
-RUN git clone -b master https://github.com/ctubio/tribeca.git
+RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git K
 
-WORKDIR tribeca
+WORKDIR K
 
 # Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
 #RUN rm -rf dist/sslcert
@@ -22,7 +22,7 @@ ENV TradedPair BTC/USD
 ENV WebClientUsername NULL
 ENV WebClientPassword NULL
 ENV WebClientListenPort 3000
-ENV MongoDbUrl mongodb://tribeca-mongo:27017/tribeca
+ENV MongoDbUrl mongodb://K-mongo:27017/K
 ENV MatryoshkaUrl https://
 
 # Set options only for your desired EXCHANGE:
@@ -69,4 +69,4 @@ ENV KorbitOrderDestination Korbit
 ## Quoting Parameters
 ENV delayUI 3
 
-CMD ["node_modules/.bin/forever", "tribeca.js"]
+CMD ["node_modules/.bin/forever", "K.js"]
