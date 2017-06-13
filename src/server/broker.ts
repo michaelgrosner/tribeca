@@ -430,8 +430,8 @@ export class OrderBroker {
                 var cleanTrade = cleanTrades.shift();
                 goWhile = false;
                 for(let i = this._trades.length;i--;) {
-                  goWhile = true;
                   if (this._trades[i].tradeId==cleanTrade.tradeId) {
+                    goWhile = true;
                     this._trades[i].Kqty = -1;
                     this._tradePublisher.publish(this._trades[i]);
                     this._tradePersister.repersist(this._trades[i]);
