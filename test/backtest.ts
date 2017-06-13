@@ -125,9 +125,9 @@ describe("BacktestGatewayTests", () => {
             }
         });
 
-        /*gateway.PositionUpdate.on(p => {
-            console.log(Models.Currency[p.currency], p.amount, p.heldAmount);
-        });*/
+        // gateway.PositionUpdate.on(p => {
+            // console.log(Models.Currency[p.currency], p.amount, p.heldAmount);
+        // });
 
         gateway.run();
 
