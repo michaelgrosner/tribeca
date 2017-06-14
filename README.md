@@ -49,15 +49,12 @@ $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
 $ cd K
 $ cp etc/K.json.dist etc/K.json
 $ vim etc/K.json
-```
-
-3. Edit the configuration options, see [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section.
-
-4. Finally run in the toplevel path of the git cloned repository:
-```
 $ npm start
 ```
-This will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
+
+See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options.
+
+`npm` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
 
 Troubleshooting:
 
