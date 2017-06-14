@@ -24,7 +24,7 @@ docker build -t k .
 docker run -p 3000:3000 --link K-mongo:mongo --name K -d k
 ```
 
-If you run `docker ps`, you should see Kjs and mongo containers running.
+If you run `docker ps`, you should see K.js and mongodb containers running.
 
 ### fix.gdax.com.conf
 To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
