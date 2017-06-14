@@ -163,6 +163,8 @@ Added nodejs7, typescript2, angular4 and reactivexjs.
 
 Added cleanup of bandwidth, source code, dependencies and installation steps.
 
+Added many quoting parameters thanks to Camille92 genius suggestions.
+
 Added support for multiple instances/config files with nested matryoshka UI.
 
 Added npm scripts, david-dm, travis-ci, coveralls and codacy.
