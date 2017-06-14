@@ -35,7 +35,7 @@ You must end up with a customized `etc/K.json` file, see all option details bell
     4. `autoMy Bot` - Shows `My Bot` in the title and auto start trading on boot.
 
 
-  * MongoDbUrl - If you are on OS X, change "K-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
+  * MongoDbUrl - If you are on macOS, change "K-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB server, replace the URL with the existing server's URL. If you are running from a Linux machine, you should not have to modify anything (usually is just `mongodb://localhost:27017/K`).
 
   * TradedPair - Any combination of the following currencies are supported, if the target EXCHANGE supports trading the currency pair:
 
