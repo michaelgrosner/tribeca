@@ -55,7 +55,7 @@ export class OrdersComponent implements OnInit {
   private createColumnDefs = (): ColDef[] => {
     return [
       { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
-        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" class="glyphicon glyphicon-remove"></span></button>';
+        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
       { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
           return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';

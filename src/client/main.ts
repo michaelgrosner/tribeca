@@ -422,9 +422,7 @@ class DisplayOrder {
                                 <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" [disabled]="!pair.active.connected" (click)="pair.active.submit()">
                                     {{ exchange_name }}<br/>{{ pair_name.join('/') }}
                                 </button>
-                                <div *ngIf="pair.connectionMessage">
-                                  <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
-                                </div>
+                                <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                                 <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
