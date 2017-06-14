@@ -571,7 +571,7 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(timeProvider: Utils.ITimeProvider, config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(config: Config.ConfigProvider, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);

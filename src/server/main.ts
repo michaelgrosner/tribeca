@@ -206,8 +206,7 @@ const liveTradingSetup = () => {
       return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
     })(config.GetString("TradedPair"));
 
-    const exchange = ((): Models.Exchange => {
-      let ex: string = config.GetString("EXCHANGE").toLowerCase();
+    const exchange = ((ex: string): Models.Exchange => {
       switch (ex) {
         case "hitbtc": return Models.Exchange.HitBtc;
         case "coinbase": return Models.Exchange.Coinbase;
@@ -217,14 +216,14 @@ const liveTradingSetup = () => {
         case "null": return Models.Exchange.Null;
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
       }
-    })();
+    })(config.GetString("EXCHANGE").toLowerCase());
 
     const getExchange = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
       switch (exchange) {
         case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-        case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, orderCache, timeProvider, pair);
+        case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
         case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-        case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
+        case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
         case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
         case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
         default: throw new Error("no gateway provided for exchange " + exchange);

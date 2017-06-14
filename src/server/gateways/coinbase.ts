@@ -3,7 +3,6 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
-import Broker = require("../broker");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import _ = require('lodash');
@@ -359,18 +358,13 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onMessage = (data: CoinbaseOrder) => {
       let status: Models.OrderStatusUpdate;
       if (data.type == 'open') {
-        let orderId = this._orderData.exchIdsToClientIds.get(data.order_id);
-        if (typeof orderId === "undefined") return;
-
         status = {
-            orderId: orderId,
+            exchangeId: data.order_id,
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             leavesQuantity: parseFloat(data.remaining_size)
         };
       } else if (data.type == 'received') {
-        if (typeof data.client_oid === "undefined" || !this._orderData.allOrders.has(data.client_oid)) return;
-
         status = {
             exchangeId: data.order_id,
             orderId: data.client_oid,
@@ -379,41 +373,28 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             leavesQuantity: parseFloat(data.size)
         };
       } else if (data.type == 'change') {
-        let orderId = this._orderData.exchIdsToClientIds.get(data.order_id);
-        if (typeof orderId === "undefined") return;
-
         status = {
-            orderId: orderId,
+            exchangeId: data.order_id,
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             quantity: parseFloat(data.new_size)
         };
 
       } else if (data.type == 'match') {
-        let liq: Models.Liquidity = Models.Liquidity.Make;
-        let client_oid = this._orderData.exchIdsToClientIds.get(data.maker_order_id);
-
-        if (typeof client_oid === "undefined") {
-            liq = Models.Liquidity.Take;
-            client_oid = this._orderData.exchIdsToClientIds.get(data.taker_order_id);
-        }
-
-        if (typeof client_oid === "undefined") return;
-
         status = {
-            orderId: client_oid,
+            exchangeId: data.maker_order_id,
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             lastQuantity: parseFloat(data.size),
             lastPrice: parseFloat(data.price),
-            liquidity: liq
+            liquidity: Models.Liquidity.Make
         };
+        this.OrderUpdate.trigger(status);
+        status.exchangeId = data.taker_order_id;
+        status.liquidity = Models.Liquidity.Take;
       } else if (data.type == 'done') {
-        let orderId = this._orderData.exchIdsToClientIds.get(data.order_id);
-        if (typeof orderId === "undefined") return;
-
         status = {
-            orderId: orderId,
+            exchangeId: data.order_id,
             orderStatus: data.reason === "filled"
               ? Models.OrderStatus.Complete
               : Models.OrderStatus.Cancelled,
@@ -427,19 +408,17 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onFIXMessage = (tags) => {
       let status: Models.OrderStatusUpdate;
-      const orderId = tags[11] ? tags[11] : this._orderData.exchIdsToClientIds.get(tags[37]);
-      if (typeof orderId === "undefined") return;
       if (tags[150] == '0') {
         status = {
             exchangeId: tags[37],
-            orderId: orderId,
+            orderId: tags[11],
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             leavesQuantity: parseFloat(tags[38])
         };
       } else if (tags[150] == 'D') {
         status = {
-            orderId: orderId,
+            exchangeId: tags[37],
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             quantity: parseFloat(tags[38])
@@ -447,7 +426,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
       } else if (tags[150] == '1') {
         status = {
-            orderId: orderId,
+            exchangeId: tags[37],
             orderStatus: Models.OrderStatus.Working,
             time: this._timeProvider.utcNow(),
             lastQuantity: parseFloat(tags[32]),
@@ -456,7 +435,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
       } else if (['3','4','7','8'].indexOf(tags[150])>-1) {
         status = {
-            orderId: orderId,
+            exchangeId: tags[37],
             orderStatus: tags[150] == '3'
               ? Models.OrderStatus.Complete
               : Models.OrderStatus.Cancelled,
@@ -476,7 +455,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         config: Config.ConfigProvider,
         minTick: number,
         private _timeProvider: Utils.ITimeProvider,
-        private _orderData: Broker.OrderStateCache,
         private _client: CoinbaseOrderEmitter,
         private _authClient: CoinbaseAuthenticatedClient,
         private _symbolProvider: CoinbaseSymbolProvider
@@ -610,14 +588,19 @@ class CoinbaseSymbolProvider {
 }
 
 class Coinbase extends Interfaces.CombinedGateway {
-    constructor(authClient: CoinbaseAuthenticatedClient, config: Config.ConfigProvider,
-        orders: Broker.OrderStateCache, timeProvider: Utils.ITimeProvider,
-        symbolProvider: CoinbaseSymbolProvider, quoteIncrement: number, minSize: number) {
+    constructor(
+      authClient: CoinbaseAuthenticatedClient,
+      config: Config.ConfigProvider,
+      timeProvider: Utils.ITimeProvider,
+      symbolProvider: CoinbaseSymbolProvider,
+      quoteIncrement: number,
+      minSize: number
+    ) {
 
         const orderEventEmitter = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
 
         const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, timeProvider, orders, orderEventEmitter, authClient, symbolProvider)
+            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, timeProvider, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         const positionGateway = new CoinbasePositionGateway(timeProvider, authClient);
@@ -631,7 +614,7 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(config: Config.ConfigProvider, orders: Broker.OrderStateCache, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(config: Config.ConfigProvider, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const authClient : CoinbaseAuthenticatedClient = new Gdax.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
@@ -646,7 +629,7 @@ export async function createCoinbase(config: Config.ConfigProvider, orders: Brok
 
     for (let p of products) {
         if (p.id === symbolProvider.symbol)
-            return new Coinbase(authClient, config, orders, timeProvider, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size));
+            return new Coinbase(authClient, config, timeProvider, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size));
     }
 
     throw new Error("unable to match pair to a coinbase symbol " + pair.toString());
