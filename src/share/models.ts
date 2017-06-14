@@ -138,7 +138,8 @@ export enum Currency {
     MAID,
     AMP,
     XRP,
-    KRW
+    KRW,
+    IOT
 }
 
 export function toCurrency(c: string) : Currency|undefined {
