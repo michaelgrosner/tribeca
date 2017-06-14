@@ -216,7 +216,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `Kmemory` - Timeout in days for completed Pongs (K trades) to remain in memory, a value of `0` keeps K records in memory forever.
 
-* `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of K with the exchange tends to be higher than the latency of K with your browser).
+* `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of K.js with the exchange tends to be higher than the latency of K.js with your browser).
 
 
 # How can I make up my own trading strategies?
