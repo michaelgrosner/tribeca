@@ -51,7 +51,7 @@ $ cp etc/K.json.dist etc/K.json
 $ vim etc/K.json
 ```
 
-3. Edit the configuration options, see [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section. Point the instance towards the running mongoDB instance (usually just `mongodb://localhost:27017/K`).
+3. Edit the configuration options, see [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section. Point the instance towards the running mongodb server (usually just `mongodb://localhost:27017/K`).
 
 4. Finally run in the toplevel path of the git cloned repository:
 ```
