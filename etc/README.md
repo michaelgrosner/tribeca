@@ -79,7 +79,7 @@ You must end up with a customized `etc/K.json` file, see all option details bell
 
   * MatryoshkaUrl - The URL of the next instance, it can be used to link one after another all running instances (see [Multiple instances party time](https://github.com/ctubio/Krypto-trading-bot#multiple-instances-party-time)); it will only autofill the prompt to avoid to type it everytime.
 
-Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on (Coinbase GDAX needs one single different API key for each different market, because users of FIX Protocol can't have multiple sessions opened at the same time [so just use multiple API keys]).
+Input your exchange connectivity information, account information, and API keys in the config properties for the exchange you intend on trading on (Coinbase GDAX needs one single different API key for each different market, because users of FIX Protocol can't have multiple sessions opened at the same time [so just use multiple API keys if you run multiple instances of K.js against GDAX]).
 
 If you set in your exchange the `OrderDestination` value as `Null`, all API calls will be redirect to NullGateway (testing mode).
 

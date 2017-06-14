@@ -45,11 +45,11 @@ Docker installation method is not heavily tested, please open a [new issue](http
 
 2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```
-$ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
-$ cd K
-$ cp etc/K.json.dist etc/K.json
-$ vim etc/K.json
-$ npm start
+ $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
+ $ cd K
+ $ cp etc/K.json.dist etc/K.json
+ $ vim etc/K.json
+ $ npm start
 ```
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
