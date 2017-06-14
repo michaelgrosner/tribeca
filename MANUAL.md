@@ -55,7 +55,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 * Market Trades - Trades done by all participants in the market. "ms" is the side that was the make side (provided liquidity). The columns starting with "q" are your quotes at the time of the trade, the columns starting with "m" are the best bid and offer information at the time of the trade.
 
-* Quoting Parameters - All of the parameters needed to generate a quote. See the section "How do I control K.js's quotes?" for each field's description.
+* Quoting Parameters - All of the parameters needed to generate a quote. See the section "How do I control K.js' quotes?" for each field's description.
 
 * Positions - Shows holdings of each currency pair you are using.
 
@@ -63,7 +63,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
   * "Cxl" - clicking the red button will attempt to cancel the order.
 
-# How do I control K.js's quotes?
+# How do I control K.js' quotes?
 
 In the web UI, there are three rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how K.js will trade.
 
