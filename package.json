@@ -105,7 +105,7 @@
     "stop": "forever stop -a -l /dev/null $npm_package_config_config || :",
     "start": "npm run test-compile && forever start --uid $npm_package_config_config -a -l /dev/null K.js $npm_package_config_config && exec npm run test-stunnel",
     "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install",
-    "test-stunnel": "test -z \"$SKIP_STUNNEL$(ps axu | grep stunnel | grep -v grep)\" && exec stunnel dist/fix.gdax.com.conf || :",
+    "test-stunnel": "test -z \"$SKIP_STUNNEL$(ps axu | grep stunnel | grep -v grep)\" && exec stunnel dist/K-stunnel.conf || :",
     "test": "mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts",
     "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --timeout 42000 test/*.ts",
     "send-cov": "cd test && cat coverage/lcov.info | codacy-coverage && istanbul-coveralls"
