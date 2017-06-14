@@ -43,7 +43,7 @@ Docker installation method is not heavily tested, please open a [new issue](http
 
 1. Ensure your target machine has installed node v6 or v7 (`nodejs -v`), mongodb and g++ will be installed automatically (to validate if mongodb server is running after install try `mongo --eval "print('OK')"`).
 
-2. Run in any location that you wish:
+2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```
 $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
 $ cd K
