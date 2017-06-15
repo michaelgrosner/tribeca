@@ -1,7 +1,7 @@
 {
   "name": "K.js",
   "version": "3.0.0",
-  "description": "Self-hosted high frequency automated market making cryptocurrency trading platform",
+  "description": "Self-hosted high frequency automated market making cryptocurrency trading platform in node.js, angular, typescript and c++",
   "dependencies": {
     "@angular/common": "^4.2.2",
     "@angular/compiler": "^4.2.2",
