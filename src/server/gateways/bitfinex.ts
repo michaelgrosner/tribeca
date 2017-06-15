@@ -485,10 +485,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
             _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
                 var amt = parseFloat(p.available);
-                var cur = Models.toCurrency(p.currency);
-                var held = parseFloat(p.amount) - amt;
-                var rpt = new Models.CurrencyPosition(amt, held, cur);
-                this.PositionUpdate.trigger(rpt);
+                this.PositionUpdate.trigger(new Models.CurrencyPosition(amt, parseFloat(p.amount) - amt, Models.toCurrency(p.currency)));
             });
         });
     }

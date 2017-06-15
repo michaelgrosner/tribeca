@@ -532,11 +532,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
             try {
               if (Array.isArray(data)) {
-                    _.forEach(data, d => {
-                        var c = Models.toCurrency(d.currency);
-                        var rpt = new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), c);
-                        this.PositionUpdate.trigger(rpt);
-                    });
+                    _.forEach(data, d => this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), Models.toCurrency(d.currency))));
                 }
                 else {
                     console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'Unable to get Coinbase positions', data)
