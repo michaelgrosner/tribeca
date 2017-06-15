@@ -556,7 +556,7 @@ class PoloniexSymbolProvider {
     public symbol: string;
 
     constructor(pair: Models.CurrencyPair) {
-        this.symbol = Models.fromCurrency(pair.quote).toLowerCase() + "_" + Models.fromCurrency(pair.base).toLowerCase();
+        this.symbol = Models.fromCurrency(pair.quote) + "_" + Models.fromCurrency(pair.base);
     }
 }
 
@@ -572,14 +572,13 @@ class Poloniex extends Interfaces.CombinedGateway {
             // ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, socket, signer, symbol)
             // :
             new NullGateway.NullOrderGateway();
+
         var minTick = 0.01;
         var minSize = 0.01;
         http.get('Ticker').then(msg => {
-            console.log('msg',msg);
-            if (!msg[symbol.symbol]) return;
-            const precisePrice = parseFloat(msg[symbol.symbol].last).toPrecision(5).toString();
+            if (!(<any>msg.data)[symbol.symbol]) return;
+            const precisePrice = parseFloat((<any>msg.data)[symbol.symbol].last).toPrecision(6).toString();
             minTick = parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length);
-            console.log('minTick',minTick);
         });
 
         super(
