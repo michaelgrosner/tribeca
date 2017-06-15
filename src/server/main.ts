@@ -125,7 +125,7 @@ const backTestSimulationSetup = (
 ) => {
     const timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(inputData.slice(0,1).pop().time), moment(inputData.slice(-1).pop().time));
 
-    const getExchange = async (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
+    const getExchange = async (): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
       new Backtest.BacktestGateway(
         inputData,
         parameters.startingBasePosition,
@@ -218,7 +218,7 @@ const liveTradingSetup = () => {
       }
     })(config.GetString("EXCHANGE").toLowerCase());
 
-    const getExchange = (orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway> => {
+    const getExchange = (): Promise<Interfaces.CombinedGateway> => {
       switch (exchange) {
         case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
         case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
@@ -273,7 +273,7 @@ interface TradingSystem {
     startingActive: boolean;
     startingParameters: Models.QuotingParameters;
     timeProvider: Utils.ITimeProvider;
-    getExchange(orderCache: Broker.OrderStateCache): Promise<Interfaces.CombinedGateway>;
+    getExchange(): Promise<Interfaces.CombinedGateway>;
     getReceiver<T>(topic: string): Publish.IReceive<T>;
     getPersister<T extends Persister.Persistable>(collectionName: string): Promise<Persister.ILoadAll<T>>;
     getRepository<T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
@@ -293,8 +293,8 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       rfvPersister.loadAll(10000),
       marketDataPersister.loadAll(10000)
     ]);
-    const orderCache = new Broker.OrderStateCache();
-    const gateway = await system.getExchange(orderCache);
+
+    const gateway = await system.getExchange();
 
     system.getPublisher(Models.Topics.ProductAdvertisement)
       .registerSnapshot(() => [new Models.ProductAdvertisement(
@@ -357,7 +357,6 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       system.getReceiver(Models.Topics.CleanAllClosedOrders),
       system.getReceiver(Models.Topics.CleanAllOrders),
       system.getReceiver(Models.Topics.CleanTrade),
-      orderCache,
       initTrades
     );
 

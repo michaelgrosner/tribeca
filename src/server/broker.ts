@@ -34,7 +34,7 @@ export class MarketDataBroker {
     }
 }
 
-export class OrderStateCache {
+class OrderStateCache {
     public allOrders = new Map<string, Models.OrderStatusReport>();
     public exchIdsToClientIds = new Map<string, string>();
 }
@@ -456,6 +456,8 @@ export class OrderBroker {
         }
     };
 
+    private _orderCache: OrderStateCache;
+
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _baseBroker : ExchangeBroker,
@@ -470,8 +472,8 @@ export class OrderBroker {
                 private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
                 private _cleanAllOrdersReciever : Publish.IReceive<object>,
                 private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
-                private _orderCache : OrderStateCache,
                 initTrades : Models.Trade[]) {
+        this._orderCache = new OrderStateCache();
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
