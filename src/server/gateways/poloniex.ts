@@ -2,7 +2,6 @@ import ws = require('uws');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
-import querystring = require("querystring");
 import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
@@ -33,8 +32,8 @@ interface OrderAck {
 }
 
 interface SignedMessage {
-    api_key?: string;
-    sign?: string;
+    command?: string;
+    nonce?: number;
 }
 
 interface Order extends SignedMessage {
@@ -408,187 +407,181 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     // }
 // }
 
-// class PoloniexMessageSigner {
-    // private _secretKey : string;
-    // private _api_key : string;
+class PoloniexMessageSigner {
+  private _secretKey : string;
+  private _api_key : string;
 
-    // public signMessage = (m : SignedMessage) : SignedMessage => {
-        // var els : string[] = [];
+  public signMessage = (baseUrl: string, actionUrl: string, m : SignedMessage) : any => {
+    var els : string[] = [];
 
-        // if (!m.hasOwnProperty("api_key"))
-            // m.api_key = this._api_key;
+    m.command = 'return'+actionUrl;
+    m.nonce = Date.now();
 
-        // var keys = [];
-        // for (var key in m) {
-            // if (m.hasOwnProperty(key))
-                // keys.push(key);
-        // }
-        // keys.sort();
+    var keys = [];
+    for (var key in m) {
+      if (m.hasOwnProperty(key))
+        keys.push(key);
+    }
+    keys.sort();
 
-        // for (var i = 0; i < keys.length; i++) {
-            // const k = keys[i];
-            // if (m.hasOwnProperty(k))
-                // els.push(k + "=" + m[k]);
-        // }
+    for (var i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      if (m.hasOwnProperty(k))
+        els.push(k + "=" + m[k]);
+    }
 
-        // var sig = els.join("&") + "&secret_key=" + this._secretKey;
-        // m.sign = crypto.createHash('md5').update(sig).digest("hex").toString().toUpperCase();
-        // return m;
-    // };
+    return {
+      url: url.resolve(baseUrl, 'tradingApi'),
+      body: els.join("&"),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Key": this._api_key,
+        "Sign": crypto.createHmac("sha512", this._secretKey).update(els.join("&")).digest("hex")
+      },
+      method: "POST"
+    };
+  };
 
-    // constructor(config : Config.ConfigProvider) {
-        // this._api_key = config.GetString("PoloniexApiKey");
-        // this._secretKey = config.GetString("PoloniexSecretKey");
-    // }
-// }
+  constructor(config : Config.ConfigProvider) {
+    this._api_key = config.GetString("PoloniexApiKey");
+    this._secretKey = config.GetString("PoloniexSecretKey");
+  }
+}
 
 class PoloniexHttp {
-    post = <T>(actionUrl: string, msg : SignedMessage) : Promise<Models.Timestamped<T>> => {
-        var d = Promises.defer<Models.Timestamped<T>>();
+  post = <T>(actionUrl: string, msg : SignedMessage) : Promise<Models.Timestamped<T>> => {
+    var d = Promises.defer<Models.Timestamped<T>>();
 
-        request({
-            url: url.resolve(this._baseUrl, actionUrl),
-            // body: querystring.stringify(this._signer.signMessage(msg)),
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            method: "POST"
-        }, (err, resp, body) => {
-            if (err) d.reject(err);
-            else {
-                try {
-                    var t = new Date();
-                    var data = JSON.parse(body);
-                    d.resolve(new Models.Timestamped(data, t));
-                }
-                catch (e) {
-                    console.error(new Date().toISOString().slice(11, -1), 'poloniex', err, 'url:', actionUrl, 'err:', err, 'body:', body);
-                    d.reject(e);
-                }
-            }
-        });
+    request(this._signer.signMessage(this._baseUrl, actionUrl, msg), (err, resp, body) => {
+      if (err) d.reject(err);
+      else {
+        try {
+          var t = new Date();
+          var data = JSON.parse(body);
+          d.resolve(new Models.Timestamped(data, t));
+        }
+        catch (e) {
+          console.error(new Date().toISOString().slice(11, -1), 'poloniex', err, 'url:', actionUrl, 'err:', err, 'body:', body);
+          d.reject(e);
+        }
+      }
+    });
 
-        return d.promise;
-    };
+    return d.promise;
+  };
 
-    get = <T>(actionUrl: string) : Promise<Models.Timestamped<T>> => {
-        var d = Promises.defer<Models.Timestamped<T>>();
+  get = <T>(actionUrl: string) : Promise<Models.Timestamped<T>> => {
+    var d = Promises.defer<Models.Timestamped<T>>();
 
-        request({
-            url: url.resolve(this._baseUrl, 'public?command=return'+actionUrl),
-            headers: {},
-            method: "GET"
-        }, (err, resp, body) => {
-            if (err) d.reject(err);
-            else {
-                try {
-                    var t = new Date();
-                    var data = JSON.parse(body);
-                    d.resolve(new Models.Timestamped(data, t));
-                }
-                catch (e) {
-                    console.error(new Date().toISOString().slice(11, -1), 'poloniex', err, 'url:', actionUrl, 'err:', err, 'body:', body);
-                    d.reject(e);
-                }
-            }
-        });
+    request({
+      url: url.resolve(this._baseUrl, 'public?command=return'+actionUrl),
+      headers: {},
+      method: "GET"
+    }, (err, resp, body) => {
+      if (err) d.reject(err);
+      else {
+        try {
+          var t = new Date();
+          var data = JSON.parse(body);
+          d.resolve(new Models.Timestamped(data, t));
+        }
+        catch (e) {
+          console.error(new Date().toISOString().slice(11, -1), 'poloniex', err, 'url:', actionUrl, 'err:', err, 'body:', body);
+          d.reject(e);
+        }
+      }
+    });
 
-        return d.promise;
-    };
+    return d.promise;
+  };
 
-    private _baseUrl : string;
-    constructor(config : Config.ConfigProvider/*, private _signer: PoloniexMessageSigner*/) {
-        this._baseUrl = config.GetString("PoloniexHttpUrl")
-    }
+  private _baseUrl : string;
+  constructor(config : Config.ConfigProvider, private _signer: PoloniexMessageSigner) {
+    this._baseUrl = config.GetString("PoloniexHttpUrl");
+  }
 }
 
 class PoloniexPositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+  PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-    private trigger = () => {
-        // this._http.post("userinfo.do", {}).then(msg => {
-            // if (!(<any>msg.data).result)
-              // console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Please change the API Key or contact support team of Poloniex, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+  private trigger = () => {
+    this._http.post("CompleteBalances", {}).then(msg => {
+      const symbols: string[] = this._symbolProvider.symbol.split('_');
+      for (var i = symbols.length;i--;) {
+        if (!(<any>msg.data) || !(<any>msg.data)[symbols[i]])
+          console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Please change the API Key or contact support team of Poloniex, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
+        this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat((<any>msg.data)[symbols[i]].available), parseFloat((<any>msg.data)[symbols[i]].onOrders), Models.toCurrency(symbols[i])));
+      }
+    });
+  };
 
-            // var free = (<any>msg.data).info.funds.free;
-            // var freezed = (<any>msg.data).info.funds.freezed;
-
-            // for (var currencyName in free) {
-                // if (!free.hasOwnProperty(currencyName)) continue;
-                // var amount = parseFloat(free[currencyName]);
-                // var held = parseFloat(freezed[currencyName]);
-
-                // var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(currencyName));
-                // this.PositionUpdate.trigger(pos);
-            // }
-        // });
-    };
-
-    constructor(private _http : PoloniexHttp) {
-        // setInterval(this.trigger, 15000);
-        // setTimeout(this.trigger, 10);
-    }
+  constructor(private _http : PoloniexHttp, private _symbolProvider: PoloniexSymbolProvider) {
+    setInterval(this.trigger, 15000);
+    setTimeout(this.trigger, 10);
+  }
 }
 
 class PoloniexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
+  public get hasSelfTradePrevention() {
+    return false;
+  }
 
-    name() : string {
-        return "Poloniex";
-    }
+  name() : string {
+    return "Poloniex";
+  }
 
-    makeFee() : number {
-        return 0.001;
-    }
+  makeFee() : number {
+    return 0.001;
+  }
 
-    takeFee() : number {
-        return 0.002;
-    }
+  takeFee() : number {
+    return 0.002;
+  }
 
-    exchange() : Models.Exchange {
-        return Models.Exchange.Poloniex;
-    }
+  exchange() : Models.Exchange {
+    return Models.Exchange.Poloniex;
+  }
 
-    constructor(public minTickIncrement: number, public minSize: number) {}
+  constructor(public minTickIncrement: number, public minSize: number) {}
 }
 
 class PoloniexSymbolProvider {
-    public symbol: string;
+  public symbol: string;
 
-    constructor(pair: Models.CurrencyPair) {
-        this.symbol = Models.fromCurrency(pair.quote) + "_" + Models.fromCurrency(pair.base);
-    }
+  constructor(pair: Models.CurrencyPair) {
+    this.symbol = Models.fromCurrency(pair.quote) + "_" + Models.fromCurrency(pair.base);
+  }
 }
 
 class Poloniex extends Interfaces.CombinedGateway {
-    constructor(config : Config.ConfigProvider, pair: Models.CurrencyPair) {
-        var symbol = new PoloniexSymbolProvider(pair);
-        // var signer = new PoloniexMessageSigner(config);
-        var http = new PoloniexHttp(config/*, signer*/);
-        // var socket = new PoloniexWebsocket(config);
+  constructor(config : Config.ConfigProvider, pair: Models.CurrencyPair) {
+    var symbol = new PoloniexSymbolProvider(pair);
+    var signer = new PoloniexMessageSigner(config);
+    var http = new PoloniexHttp(config, signer);
+    // var socket = new PoloniexWebsocket(config);
 
-        var orderGateway =
-        // config.GetString("PoloniexOrderDestination") == "Poloniex"
-            // ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, socket, signer, symbol)
-            // :
-            new NullGateway.NullOrderGateway();
+    var orderGateway =
+    // config.GetString("PoloniexOrderDestination") == "Poloniex"
+      // ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, socket, signer, symbol)
+      // :
+      new NullGateway.NullOrderGateway();
 
-        var minTick = 0.01;
-        var minSize = 0.01;
-        http.get('Ticker').then(msg => {
-            if (!(<any>msg.data)[symbol.symbol]) return;
-            const precisePrice = parseFloat((<any>msg.data)[symbol.symbol].last).toPrecision(6).toString();
-            minTick = parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length);
-        });
+    var minTick = 0.01;
+    var minSize = 0.01;
+    http.get('Ticker').then(msg => {
+      if (!(<any>msg.data)[symbol.symbol]) return;
+      const precisePrice = parseFloat((<any>msg.data)[symbol.symbol].last).toPrecision(6).toString();
+      minTick = parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length);
+    });
 
-        super(
-            new PoloniexMarketDataGateway(/*socket,*/ symbol),
-            orderGateway,
-            new PoloniexPositionGateway(http),
-            new PoloniexBaseGateway(minTick, minSize)
-        );
-    }
+    super(
+      new PoloniexMarketDataGateway(/*socket,*/ symbol),
+      orderGateway,
+      new PoloniexPositionGateway(http, symbol),
+      new PoloniexBaseGateway(minTick, minSize)
+    );
+  }
 }
 export async function createPoloniex(config: Config.ConfigProvider, pair: Models.CurrencyPair): Promise<Interfaces.CombinedGateway> {
-    return new Poloniex(config, pair);
+  return new Poloniex(config, pair);
 }

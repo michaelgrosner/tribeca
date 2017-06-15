@@ -488,11 +488,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
             for (var currencyName in free) {
                 if (!free.hasOwnProperty(currencyName)) continue;
-                var amount = parseFloat(free[currencyName]);
-                var held = parseFloat(freezed[currencyName]);
-
-                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(currencyName));
-                this.PositionUpdate.trigger(pos);
+                this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat(free[currencyName]), parseFloat(freezed[currencyName]), Models.toCurrency(currencyName)));
             }
         });
     };
