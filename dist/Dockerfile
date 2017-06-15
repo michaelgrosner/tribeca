@@ -27,15 +27,6 @@ ENV MatryoshkaUrl https://
 
 # Set options only for your desired EXCHANGE:
 
-## HitBtc
-ENV HitBtcPullUrl http://demo-api.hitbtc.com
-ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
-ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
-ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
-ENV HitBtcApiKey NULL
-ENV HitBtcSecret NULL
-ENV HitBtcOrderDestination HitBtc
-
 ## Coinbase (GDAX keys)
 ENV CoinbaseRestUrl https://api-public.sandbox.gdax.com
 ENV CoinbaseWebsocketUrl wss://ws-feed-public.sandbox.gdax.com
@@ -58,6 +49,13 @@ ENV BitfinexKey NULL
 ENV BitfinexSecret NULL
 ENV BitfinexOrderDestination Bitfinex
 
+## Poloniex
+ENV PoloniexHttpUrl https://poloniex.com
+ENV PoloniexWebsocketUrl wss://api.poloniex.com
+ENV PoloniexApiKey NULL
+ENV PoloniexSecretKey NULL
+ENV PoloniexOrderDestination Poloniex
+
 ## Korbit
 ENV KorbitHttpUrl https://api.korbit.co.kr/v1
 ENV KorbitApiKey NULL
@@ -65,6 +63,15 @@ ENV KorbitSecretKey NULL
 ENV KorbitUsername NULL
 ENV KorbitPassword NULL
 ENV KorbitOrderDestination Korbit
+
+## HitBtc
+ENV HitBtcPullUrl http://demo-api.hitbtc.com
+ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
+ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
+ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
+ENV HitBtcApiKey NULL
+ENV HitBtcSecret NULL
+ENV HitBtcOrderDestination HitBtc
 
 ## Quoting Parameters
 ENV delayUI 3

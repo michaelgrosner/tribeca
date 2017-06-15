@@ -2,7 +2,6 @@ import ws = require('uws');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
-import querystring = require("querystring");
 import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");

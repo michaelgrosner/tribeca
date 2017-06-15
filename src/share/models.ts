@@ -105,41 +105,12 @@ export class MarketTrade implements ITimestamped {
 }
 
 export enum Currency {
-    USD,
-    BTC,
-    LTC,
-    EUR,
-    GBP,
-    CNY,
-    CAD,
-    ETH,
-    ETC,
-    BFX,
-    RRT,
-    ZEC,
-    BCN,
-    DASH,
-    DOGE,
-    DSH,
-    EMC,
-    FCN,
-    LSK,
-    NXT,
-    QCN,
-    SDB,
-    SCB,
-    STEEM,
-    XDN,
-    XEM,
-    XMR,
-    ARDR,
-    WAVES,
-    BTU,
-    MAID,
-    AMP,
-    XRP,
-    KRW,
-    IOT
+    BTC, LTC, EUR, GBP, CNY, CAD, ETH, ETC, BFX, RRT, ZEC, BCN, DASH, DOGE,
+    DSH, EMC, FCN, LSK, NXT, QCN, SDB, SCB, STEEM, XDN, XEM, XMR, ARDR, WAVES,
+    BTU, MAID, AMP, XRP, KRW, IOT, BCY, BELA, BLK, BTCD, BTM, BTS, BURST, CLAM,
+    DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT,
+    NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD,
+    SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT
 }
 
 export function toCurrency(c: string) : Currency|undefined {
@@ -154,7 +125,7 @@ export function fromCurrency(c: Currency) : string|undefined {
 
 export enum GatewayType { MarketData, OrderEntry, Position }
 export enum ConnectivityStatus { Connected, Disconnected }
-export enum Exchange { Null, HitBtc, OkCoin, AtlasAts, BtcChina, Coinbase, Bitfinex, Korbit }
+export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }

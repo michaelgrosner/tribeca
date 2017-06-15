@@ -29,6 +29,7 @@
     "ag-grid": "^10.1.0",
     "ag-grid-angular": "^10.1.0",
     "angular2-highcharts": "^0.5.5",
+    "autobahn": "^17.5.2",
     "babel-preset-babili": "0.0.12",
     "babel-preset-es2015": "^6.24.1",
     "babelify": "^7.3.0",

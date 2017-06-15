@@ -66,8 +66,6 @@ interface OkCoinTradeRecord {
     unTrade: string;
 }
 
-interface SubscriptionRequest extends SignedMessage { }
-
 class OkCoinWebsocket {
 	send = <T>(channel : string, parameters: any, cb?: () => void) => {
         var subsReq : any = {event: 'addChannel', channel: channel};
