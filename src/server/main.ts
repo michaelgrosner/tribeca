@@ -12,12 +12,13 @@ import https = require('https');
 import socket_io = require('socket.io');
 import marked = require('marked');
 
-import HitBtc = require("./gateways/hitbtc");
-import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
+import Coinbase = require("./gateways/coinbase");
 import OkCoin = require("./gateways/okcoin");
-import Korbit = require("./gateways/korbit");
 import Bitfinex = require("./gateways/bitfinex");
+import Poloniex = require("./gateways/poloniex");
+import Korbit = require("./gateways/korbit");
+import HitBtc = require("./gateways/hitbtc");
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
@@ -208,11 +209,12 @@ const liveTradingSetup = () => {
 
     const exchange = ((ex: string): Models.Exchange => {
       switch (ex) {
-        case "hitbtc": return Models.Exchange.HitBtc;
         case "coinbase": return Models.Exchange.Coinbase;
         case "okcoin": return Models.Exchange.OkCoin;
         case "bitfinex": return Models.Exchange.Bitfinex;
+        case "poloniex": return Models.Exchange.Poloniex;
         case "korbit": return Models.Exchange.Korbit;
+        case "hitbtc": return Models.Exchange.HitBtc;
         case "null": return Models.Exchange.Null;
         default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
       }
@@ -220,11 +222,12 @@ const liveTradingSetup = () => {
 
     const getExchange = (): Promise<Interfaces.CombinedGateway> => {
       switch (exchange) {
-        case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
         case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
         case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
         case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
+        case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
         case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+        case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
         case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
         default: throw new Error("no gateway provided for exchange " + exchange);
       }

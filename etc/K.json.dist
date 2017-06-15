@@ -8,14 +8,6 @@
     "WebClientListenPort": "3000",
     "MatryoshkaUrl": "https://",
 
-    "HitBtcPullUrl": "http://api.hitbtc.com",
-    "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
-    "HitBtcMarketDataUrl": "ws://api.hitbtc.com:80",
-    "HitBtcSocketIoUrl": "https://api.hitbtc.com:8081",
-    "HitBtcApiKey": "NULL",
-    "HitBtcSecret": "NULL",
-    "HitBtcOrderDestination": "HitBtc",
-
     "CoinbaseRestUrl": "https://api.gdax.com",
     "CoinbaseWebsocketUrl": "wss://ws-feed.gdax.com",
     "CoinbasePassphrase": "NULL",
@@ -35,12 +27,26 @@
     "BitfinexSecret": "NULL",
     "BitfinexOrderDestination": "Bitfinex",
 
+    "PoloniexHttpUrl": "https://poloniex.com",
+    "PoloniexWebsocketUrl": "wss://api.poloniex.com",
+    "PoloniexApiKey": "NULL",
+    "PoloniexSecretKey": "NULL",
+    "PoloniexOrderDestination": "Poloniex",
+
     "KorbitHttpUrl": "https://api.korbit.co.kr/v1",
     "KorbitApiKey": "NULL",
     "KorbitSecretKey": "NULL",
     "KorbitUsername": "NULL",
     "KorbitPassword": "NULL",
     "KorbitOrderDestination": "Korbit",
+
+    "HitBtcPullUrl": "http://api.hitbtc.com",
+    "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
+    "HitBtcMarketDataUrl": "ws://api.hitbtc.com:80",
+    "HitBtcSocketIoUrl": "https://api.hitbtc.com:8081",
+    "HitBtcApiKey": "NULL",
+    "HitBtcSecret": "NULL",
+    "HitBtcOrderDestination": "HitBtc",
 
     "delayUI": 3
 }
