@@ -1,6 +1,6 @@
 #include "round.h"
 
-namespace ctubio {
+namespace K {
   void Round::Init(Local<Object> target) {
     Nan::Export(target, "roundUp", Round::RoundUp);
     Nan::Export(target, "roundDown", Round::RoundDown);

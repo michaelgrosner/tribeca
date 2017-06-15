@@ -1,9 +1,9 @@
 {
   'targets': [
     {
-      'target_name': 'ctubio',
+      'target_name': 'K',
       'sources': [
-        'src/lib/ctubio.cc',
+        'src/lib/K.cc',
         'src/lib/round.cc',
         'src/lib/stdev.cc'
       ],

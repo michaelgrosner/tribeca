@@ -1,10 +1,10 @@
-#ifndef CTUBIO_ROUND_H_
-#define CTUBIO_ROUND_H_
+#ifndef K_ROUND_H_
+#define K_ROUND_H_
 
 #include <nan.h>
 #include <math.h>
 
-namespace ctubio {
+namespace K {
   using v8::Local;
   using v8::Value;
   using v8::Number;

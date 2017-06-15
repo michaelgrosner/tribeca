@@ -582,6 +582,7 @@ class Poloniex extends Interfaces.CombinedGateway {
     );
   }
 }
+
 export async function createPoloniex(config: Config.ConfigProvider, pair: Models.CurrencyPair): Promise<Interfaces.CombinedGateway> {
   return new Poloniex(config, pair);
 }

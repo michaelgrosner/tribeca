@@ -1,10 +1,10 @@
-#ifndef CTUBIO_STDEV_H_
-#define CTUBIO_STDEV_H_
+#ifndef K_STDEV_H_
+#define K_STDEV_H_
 
 #include <nan.h>
 #include <math.h>
 
-namespace ctubio {
+namespace K {
   using v8::Local;
   using v8::Value;
   using v8::Number;

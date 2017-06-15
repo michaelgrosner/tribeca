@@ -5,7 +5,7 @@ import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import Persister = require("./persister");
 import moment = require("moment");
-var bindings = require('bindings')('ctubio.node');
+var bindings = require('bindings')('K.node');
 
 function computeEwma(newValue: number, previous: number, periods: number): number {
     if (previous !== null) {
