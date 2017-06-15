@@ -1,7 +1,7 @@
 import assert = require("assert");
 import Utils = require("../src/server/utils");
 import Statistics = require("../src/server/statistics");
-var bindings = require('bindings')('ctubio.node');
+var bindings = require('bindings')('K.node');
 var Benchmark = require('benchmark');
 
 // function computeStdev(sequence: number[], factor: number, minTick: number): number {

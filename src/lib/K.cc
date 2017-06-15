@@ -2,11 +2,11 @@
 #include "round.h"
 #include "stdev.h"
 
-namespace ctubio {
+namespace K {
   NAN_MODULE_INIT(InitAll) {
     Round::Init(target);
     Stdev::Init(target);
   }
 
-  NODE_MODULE(ctubio, InitAll)
+  NODE_MODULE(K, InitAll)
 }

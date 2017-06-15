@@ -561,6 +561,7 @@ class OkCoin extends Interfaces.CombinedGateway {
         );
         }
 }
+
 export async function createOkCoin(config : Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     return new OkCoin(config, pair);
 }
