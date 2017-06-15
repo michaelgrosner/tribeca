@@ -9,7 +9,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import moment = require("moment");
 import * as Promises from '../promises';
 
 interface OkCoinMessageIncomingMessage {

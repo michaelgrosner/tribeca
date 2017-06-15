@@ -1,4 +1,4 @@
-import ws = require('uws');
+import autobahn = require('autobahn');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
@@ -8,7 +8,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import moment = require("moment");
 import * as Promises from '../promises';
 
 interface PoloniexMessageIncomingMessage {
@@ -65,101 +64,102 @@ interface PoloniexTradeRecord {
     unTrade: string;
 }
 
-// class PoloniexWebsocket {
-	// send = <T>(channel : string, parameters: any, cb?: () => void) => {
-        // var subsReq : any = {event: 'addChannel', channel: channel};
+class PoloniexWebsocket {
 
-        // if (parameters !== null)
-            // subsReq.parameters = parameters;
+	send = <T>(channel : string, parameters: any, cb?: () => void) => {
+        var subsReq : any = {event: 'addChannel', channel: channel};
 
-        // this._ws.send(JSON.stringify(subsReq), (e: Error) => {
-            // if (!e && cb) cb();
-        // });
-    // }
+        if (parameters !== null)
+            subsReq.parameters = parameters;
 
-    // setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
-        // this._handlers[channel] = handler;
-    // }
+        this._ws.send(JSON.stringify(subsReq), (e: Error) => {
+            if (!e && cb) cb();
+        });
+    }
 
-    // private onMessage = (raw : string) => {
-        // var t = new Date();
-        // try {
-            // var msg : PoloniexMessageIncomingMessage = JSON.parse(raw)[0];
-            // if (typeof msg === "undefined") msg = JSON.parse(raw);
-            // if (typeof msg === "undefined") throw new Error("Unkown message from Poloniex socket: " + raw);
+    setHandler = <T>(channel : string, handler: (newMsg : Models.Timestamped<T>) => void) => {
+        this._handlers[channel] = handler;
+    }
 
-            // if (typeof msg.event !== "undefined" && msg.event == "ping") {
-                // this._ws.send(this._serializedHeartbeat);
-                // return;
-            // }
-            // if (typeof msg.event !== "undefined" && msg.event == "pong") {
-                // this._stillAlive = true;
-                // return;
-            // }
+    private onMessage = (raw : string) => {
+        var t = new Date();
+        try {
+            var msg : PoloniexMessageIncomingMessage = JSON.parse(raw)[0];
+            if (typeof msg === "undefined") msg = JSON.parse(raw);
+            if (typeof msg === "undefined") throw new Error("Unkown message from Poloniex socket: " + raw);
 
-            // let channel: string = typeof msg.channel !== 'undefined' ? msg.channel : msg.data.channel;
-            // let success: boolean = typeof msg.success !== 'undefined' ? msg.success : (typeof msg.data !== 'undefined' && typeof msg.data.result !== 'undefined' ? msg.data.result : true);
-            // let errorcode: number = typeof msg.errorcode !== 'undefined' ? msg.errorcode : msg.data.error_code;
+            if (typeof msg.event !== "undefined" && msg.event == "pong") {
+                this._stillAlive = true;
+                return;
+            }
 
-            // if (!success && (typeof errorcode === "undefined" || (
-              // errorcode != 20100 /* 20100=request time out */
-              // && errorcode != 10002 /* 10002=System error */
-              // && errorcode != 10050 /* 10050=Can't cancel more than once */
-              // && errorcode != 10009 /* 10009=Order does not exist */
-              // && errorcode != 10010 /* 10010=Insufficient funds */
-              // && errorcode != 10016 /* 10016=Insufficient coins balance */
-              // // errorcode != 10001 /* 10001=Request frequency too high */
-            // ))) console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Unsuccessful message received:', raw);
-            // else if (success && (channel == 'addChannel' || channel == 'login'))
-              // return console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
-            // if (typeof errorcode !== "undefined" && (
-              // errorcode == 20100
-              // || errorcode == 10002
-              // || errorcode == 10050
-              // || errorcode == 10009
-              // // || errorcode == '10001'
-            // ))  return;
+            let channel: string = typeof msg.channel !== 'undefined' ? msg.channel : msg.data.channel;
+            let success: boolean = typeof msg.success !== 'undefined' ? msg.success : (typeof msg.data !== 'undefined' && typeof msg.data.result !== 'undefined' ? msg.data.result : true);
+            let errorcode: number = typeof msg.errorcode !== 'undefined' ? msg.errorcode : msg.data.error_code;
 
-            // var handler = this._handlers[channel];
+            if (!success && (typeof errorcode === "undefined" || (
+              errorcode != 20100 /* 20100=request time out */
+              && errorcode != 10002 /* 10002=System error */
+              && errorcode != 10050 /* 10050=Can't cancel more than once */
+              && errorcode != 10009 /* 10009=Order does not exist */
+              && errorcode != 10010 /* 10010=Insufficient funds */
+              && errorcode != 10016 /* 10016=Insufficient coins balance */
+              // errorcode != 10001 /* 10001=Request frequency too high */
+            ))) console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Unsuccessful message received:', raw);
+            else if (success && (channel == 'addChannel' || channel == 'login'))
+              return console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'Successfully connected to', channel + (typeof msg.data.channel !== 'undefined' ? ': '+msg.data.channel : ''));
+            if (typeof errorcode !== "undefined" && (
+              errorcode == 20100
+              || errorcode == 10002
+              || errorcode == 10050
+              || errorcode == 10009
+              // || errorcode == '10001'
+            ))  return;
 
-            // if (typeof handler === "undefined") {
-                // console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Got message on unknown topic', msg);
-                // return;
-            // }
+            var handler = this._handlers[channel];
 
-            // handler(new Models.Timestamped(msg.data, t));
-        // }
-        // catch (e) {
-            // console.error(new Date().toISOString().slice(11, -1), 'poloniex', e, 'Error parsing msg', raw);
-            // throw e;
-        // }
-    // };
+            if (typeof handler === "undefined") {
+                console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Got message on unknown topic', msg);
+                return;
+            }
 
-    // private connectWS = (config: Config.ConfigProvider) => {
-        // this._ws = new ws(config.GetString("PoloniexWebsocketUrl"));
-        // this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
-        // this._ws.on("message", this.onMessage);
-        // this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
-    // };
+            handler(new Models.Timestamped(msg.data, t));
+        }
+        catch (e) {
+            console.error(new Date().toISOString().slice(11, -1), 'poloniex', e, 'Error parsing msg', raw);
+            throw e;
+        }
+    };
 
-    // ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    // private _serializedHeartping = JSON.stringify({event: "ping"});
-    // private _serializedHeartbeat = JSON.stringify({event: "pong"});
-    // private _stillAlive: boolean = true;
-    // private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
-    // private _ws : ws;
-    // constructor(config: Config.ConfigProvider) {
-        // this.connectWS(config);
-        // setInterval(() => {
-          // if (!this._stillAlive) {
-            // console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Heartbeat lost, reconnecting...');
-            // this._stillAlive = true;
-            // this.connectWS(config);
-          // } else this._stillAlive = false;
-          // this._ws.send(this._serializedHeartping);
-        // }, 21000);
-    // }
-// }
+    private connectWS = (config: Config.ConfigProvider) => {
+        this._ws = new autobahn.Connection({ url: config.GetString("PoloniexWebsocketUrl"), realm: "realm1" });
+        this._ws.onclose = () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+        this._ws.onopen = (session: any) => {
+          session.subscribe(this.symbolProvider.symbol, (args, kwargs) => {
+            console.log(args);
+            // this.onMessage(args);
+          });
+          this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+          console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'Successfully connected to Poloniex', this.symbolProvider.symbol);
+        };
+        this._ws.open();
+    };
+
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    private _stillAlive: boolean = true;
+    private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
+    private _ws : autobahn.Connection;
+    constructor(config: Config.ConfigProvider, private symbolProvider: PoloniexSymbolProvider) {
+        this.connectWS(config);
+        setInterval(() => {
+          if (!this._stillAlive) {
+            console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'Heartbeat lost, reconnecting...');
+            this._stillAlive = true;
+            this.connectWS(config);
+          } else this._stillAlive = false;
+        }, 21000);
+    }
+}
 
 class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
@@ -190,20 +190,15 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
         // this.MarketData.trigger(mkt);
     };
 
-    constructor(/*socket: PoloniexWebsocket,*/ symbolProvider: PoloniexSymbolProvider) {
+    constructor(socket: PoloniexWebsocket, symbolProvider: PoloniexSymbolProvider) {
         // var depthChannel = "ok_sub_spot" + symbolProvider.symbol + "_depth_20";
         // var tradesChannel = "ok_sub_spot" + symbolProvider.symbol + "_trades";
         // socket.setHandler(depthChannel, this.onDepth);
         // socket.setHandler(tradesChannel, this.onTrade);
 
-        // socket.ConnectChanged.on(cs => {
-            // this.ConnectChanged.trigger(cs);
-
-            // if (cs == Models.ConnectivityStatus.Connected) {
-                // socket.send(depthChannel, null);
-                // socket.send(tradesChannel, null);
-            // }
-        // });
+        socket.ConnectChanged.on(cs => {
+            this.ConnectChanged.trigger(cs);
+        });
     }
 }
 
@@ -389,7 +384,6 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     // constructor(
             // private _http: PoloniexHttp,
-            // private _socket: PoloniexWebsocket,
             // private _signer: PoloniexMessageSigner,
             // private _symbolProvider: PoloniexSymbolProvider) {
         // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbol + "_trades", this.onTrade);
@@ -558,11 +552,11 @@ class Poloniex extends Interfaces.CombinedGateway {
     var symbol = new PoloniexSymbolProvider(pair);
     var signer = new PoloniexMessageSigner(config);
     var http = new PoloniexHttp(config, signer);
-    // var socket = new PoloniexWebsocket(config);
+    var socket = new PoloniexWebsocket(config, symbol);
 
     var orderGateway =
     // config.GetString("PoloniexOrderDestination") == "Poloniex"
-      // ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, socket, signer, symbol)
+      // ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, signer, symbol)
       // :
       new NullGateway.NullOrderGateway();
 
@@ -575,7 +569,7 @@ class Poloniex extends Interfaces.CombinedGateway {
     });
 
     super(
-      new PoloniexMarketDataGateway(/*socket,*/ symbol),
+      new PoloniexMarketDataGateway(socket, symbol),
       orderGateway,
       new PoloniexPositionGateway(http, symbol),
       new PoloniexBaseGateway(minTick, minSize)
