@@ -152,7 +152,7 @@ class OkCoinWebsocket {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Heartbeat lost, reconnecting...');
+            console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Heartbeat lost, reconnecting..');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
@@ -166,12 +166,14 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
-        trades.data.forEach(trade => { // [tid, price, amount, time, type]
-            var px = parseFloat(trade[1]);
-            var amt = parseFloat(trade[2]);
-            var side = trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid;
-            var mt = new Models.GatewayMarketTrade(px, amt, trades.time, trades.data.length > 0, side);
-            this.MarketTrade.trigger(mt);
+        trades.data.forEach(trade => {
+          this.MarketTrade.trigger(new Models.GatewayMarketTrade(
+            parseFloat(trade[1]),
+            parseFloat(trade[2]),
+            trades.time,
+            trades.data.length > 0,
+            trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid
+          ));
         });
     };
 
@@ -185,9 +187,8 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
 
         var bids = msg.bids.slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
         var asks = msg.asks.reverse().slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
-        var mkt = new Models.Market(bids, asks, depth.time);
 
-        this.MarketData.trigger(mkt);
+        this.MarketData.trigger(new Models.Market(bids, asks, depth.time));
     };
 
     constructor(socket: OkCoinWebsocket, symbolProvider: OkCoinSymbolProvider) {

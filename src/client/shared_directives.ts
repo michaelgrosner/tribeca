@@ -71,7 +71,7 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
   agInit(params:any):void {
     this.params = params;
     if ('quoteSymbol' in params.node.data)
-      this.quoteSymbol = params.node.data.quoteSymbol;
+      this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
     if ('productFixed' in params.node.data)
       this.productFixed = params.node.data.productFixed;
   }
