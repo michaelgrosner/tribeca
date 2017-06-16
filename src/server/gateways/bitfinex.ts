@@ -146,7 +146,7 @@ class BitfinexWebsocket {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
-            console.warn(new Date().toISOString().slice(11, -1), 'bitfinex', 'Heartbeat lost, reconnecting...');
+            console.warn(new Date().toISOString().slice(11, -1), 'bitfinex', 'Heartbeat lost, reconnecting..');
             this._stillAlive = true;
             this.connectWS(config);
           } else this._stillAlive = false;
