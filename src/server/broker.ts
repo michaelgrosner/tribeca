@@ -648,7 +648,7 @@ export class ExchangeBroker {
         this._connectStatus = newStatus;
         this.ConnectChanged.trigger(newStatus);
 
-        console.info('broker', 'Connection status changed ::', Models.ConnectivityStatus[this._connectStatus], ':: (md: ',Models.ConnectivityStatus[this.mdConnected],') (oe: ',Models.ConnectivityStatus[this.oeConnected],')');
+        // console.info('broker', 'Connection status changed ::', Models.ConnectivityStatus[this._connectStatus], ':: (md:',Models.ConnectivityStatus[this.mdConnected],') (oe:',Models.ConnectivityStatus[this.oeConnected],')');
         this._connectivityPublisher.publish(this.connectStatus);
     };
 

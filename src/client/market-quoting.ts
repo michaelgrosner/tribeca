@@ -158,6 +158,10 @@ export class MarketQuotingComponent implements OnInit {
     var modAsk: number;
     var modBid: number;
     for (let i: number = this.levels.length;i--;) {
+      if (i >= _levels.length) {
+        _levels[i] = <any>{};
+        continue;
+      }
       modAsk = 2;
       modBid = 2;
       for (let h: number = _levels.length;h--;) {
