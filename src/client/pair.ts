@@ -139,12 +139,11 @@ export class DisplayPair {
           this.connectionMessage = null;
           return;
       }
-      if (!this.connectedToExchange) {
+      this.connectionMessage = '';
+      if (!this.connectedToExchange)
           this.connectionMessage = "Disconnected from exchange";
-      }
-      if (!this.connectedToServer) {
-          this.connectionMessage = "Disconnected from server";
-      }
+      if (!this.connectedToServer)
+          this.connectionMessage = (this.connectionMessage ? '/' : "Disconnected from ")+'server';
   }
 
   private setExchangeStatus = (cs: Models.ConnectivityStatus) => {
