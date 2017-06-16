@@ -1,4 +1,4 @@
-var autobahn = require('autobahn');
+import autobahn = require('autobahn');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
