@@ -226,7 +226,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
           if (typeof (<any>msg.data).orders == "undefined"
             || typeof (<any>msg.data).orders[0] == "undefined"
             || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
-          (<any>msg.data).orders.map((o) => {
+          (<any>msg.data).orders.forEach((o) => {
               this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
                   if (typeof (<any>msg.data).result == "undefined") return;
                   if ((<any>msg.data).result) {

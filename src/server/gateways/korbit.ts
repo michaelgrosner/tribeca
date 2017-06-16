@@ -134,7 +134,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var d = Promises.defer<number>();
         this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
           if (!(<any>msg.data).length) { d.resolve(0); return; }
-          (<any>msg.data).map((o) => {
+          (<any>msg.data).forEach((o) => {
               this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
                   if (!(<any>msg.data).length) return;
                   this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
