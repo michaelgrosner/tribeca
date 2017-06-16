@@ -83,16 +83,16 @@ class PoloniexWebsocket {
 
   public connectWS = () => {
       var ws = new autobahn.Connection({ url: this.config.GetString("PoloniexWebsocketUrl"), realm: "realm1" });
+      ws.onclose = (reason, details) => {
+        this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+        console.info(new Date().toISOString().slice(11, -1), 'poloniex', this.symbolProvider.symbol, reason);
+      };
       ws.onopen = (session: any) => {
         session.subscribe(this.symbolProvider.symbol, (args, kwargs) => {
           if (args.length) args.forEach(x => this.onMessage(x));
         });
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'Successfully connected to', this.symbolProvider.symbol);
-      };
-      ws.onclose = (reason, details) => {
-        this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
-        console.info(new Date().toISOString().slice(11, -1), 'poloniex', this.symbolProvider.symbol, reason);
       };
       ws.open();
   };
@@ -130,9 +130,6 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     MarketData = new Utils.Evt<Models.Market>();
 
-    private static GetLevel = (n: [any, any]) : Models.MarketSide =>
-        new Models.MarketSide(parseFloat(n[0]), parseFloat(n[1]));
-
     private mkt = new Models.Market([], [], null);
 
     private onDepth = (depth: Models.Timestamped<any>) => {
@@ -152,7 +149,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
       config: Config.ConfigProvider,
       symbol: PoloniexSymbolProvider
     ) {
-        const socket = new PoloniexWebsocket(config, symbol);
+        var socket = new PoloniexWebsocket(config, symbol);
         socket.setHandler('newTrade', this.onTrade);
         socket.setHandler('orderBookModify', this.onDepth);
         socket.setHandler('orderBookRemove', this.onDepth);
@@ -329,7 +326,7 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _http: PoloniexHttp,
     private _symbolProvider: PoloniexSymbolProvider
   ) {
-    this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+    setTimeout(()=>this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
     // _socket.setHandler("ok_sub_spot" + _symbolProvider.symbol + "_trades", this.onTrade);
     // _socket.setHandler("ok_spot" + _symbolProvider.symbol + "_trade", this.onOrderAck);
     // _socket.setHandler("ok_spot" + _symbolProvider.symbol + "_cancel_order", this.onCancel);
