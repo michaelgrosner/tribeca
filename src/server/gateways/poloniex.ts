@@ -125,25 +125,25 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
   supportsCancelAllOpenOrders = () : boolean => { return false; };
   cancelAllOpenOrders = () : Promise<number> => {
-      var d = Promises.defer<number>();
-      this._http.post("returnOpenOrders", {currencyPair: this._symbolProvider.symbol }).then(msg => {
-        if (!msg.data || !(<any>msg.data).length) { d.resolve(0); return; }
-        (<any>msg.data).forEach((o) => {
-            this._http.post("cancelOrder", {orderNumber: o.orderNumber }).then(msg => {
-                if (typeof (<any>msg.data).success == "undefined") return;
-                if ((<any>msg.data).success=='1') {
-                  this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                    exchangeId: o.orderNumber,
-                    leavesQuantity: 0,
-                    time: msg.time,
-                    orderStatus: Models.OrderStatus.Cancelled
-                  });
-                }
+    var d = Promises.defer<number>();
+    this._http.post("returnOpenOrders", {currencyPair: this._symbolProvider.symbol }).then(msg => {
+      if (!msg.data || !(<any>msg.data).length) { d.resolve(0); return; }
+      (<any>msg.data).forEach((o) => {
+        this._http.post("cancelOrder", {orderNumber: o.orderNumber }).then(msg => {
+          if (typeof (<any>msg.data).success == "undefined") return;
+          if ((<any>msg.data).success=='1') {
+            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+              exchangeId: o.orderNumber,
+              leavesQuantity: 0,
+              time: msg.time,
+              orderStatus: Models.OrderStatus.Cancelled
             });
+          }
         });
-        d.resolve((<any>msg.data).length);
       });
-      return d.promise;
+      d.resolve((<any>msg.data).length);
+    });
+    return d.promise;
   };
 
   public cancelsByClientOrderId = false;
@@ -205,34 +205,17 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
   };
 
   cancelOrder = (cancel : Models.OrderStatusReport) => {
-      // var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
-      // this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbol + "_cancel_order", this._signer.signMessage(c), () => {
-          // this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-              // orderId: cancel.orderId,
-              // leavesQuantity: 0,
-              // time: cancel.time,
-              // orderStatus: Models.OrderStatus.Cancelled
-          // });
-      // });
-  };
-
-  private onCancel = (ts: Models.Timestamped<OrderAck>) => {
-      // if (typeof ts.data.order_id == "undefined") return;
-      // var osr : Models.OrderStatusUpdate = {
-        // exchangeId: ts.data.order_id.toString(),
-        // time: ts.time,
-        // leavesQuantity: 0
-      // };
-
-      // if (ts.data.result) {
-          // osr.orderStatus = Models.OrderStatus.Cancelled;
-      // }
-      // else {
-          // osr.orderStatus = Models.OrderStatus.Rejected;
-          // osr.cancelRejected = true;
-      // }
-
-      // this.OrderUpdate.trigger(osr);
+    this._http.post("cancelOrder", {orderNumber: cancel.exchangeId }).then(msg => {
+      if (typeof (<any>msg.data).success == "undefined") return;
+      if ((<any>msg.data).success=='1') {
+        this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+          exchangeId: cancel.exchangeId,
+          leavesQuantity: 0,
+          time: msg.time,
+          orderStatus: Models.OrderStatus.Cancelled
+        });
+      }
+    });
   };
 
   replaceOrder = (replace : Models.OrderStatusReport) => {
@@ -284,7 +267,6 @@ class PoloniexMessageSigner {
       if (m.hasOwnProperty(k))
         els.push(k + "=" + m[k]);
     }
-    console.log(els);
 
     return {
       url: url.resolve(baseUrl, 'tradingApi'),
