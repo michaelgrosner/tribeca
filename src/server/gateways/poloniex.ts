@@ -139,8 +139,8 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
         const side = depth.data.type+'s';
         this.mkt[side] = this.mkt[side].filter(a => a.price != parseFloat(depth.data.rate));
         if (depth.data.amount) this.mkt[side].push(new Models.MarketSide(parseFloat(depth.data.rate), parseFloat(depth.data.amount)));
-        this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 21);
-        this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 21);
+        this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
+        this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
         const _bids = this.mkt.bids.slice(0, 13);
         const _asks = this.mkt.asks.slice(0, 13);
         if (_bids.length && _asks.length)
@@ -438,8 +438,8 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
       const symbols: string[] = this._symbolProvider.symbol.split('_');
       for (var i = symbols.length;i--;) {
         if (!(<any>msg.data) || !(<any>msg.data)[symbols[i]])
-          console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Please change the API Key or contact support team of Poloniex, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
-        this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat((<any>msg.data)[symbols[i]].available), parseFloat((<any>msg.data)[symbols[i]].onOrders), Models.toCurrency(symbols[i])));
+          console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Missing symbol', symbols[i]);
+        else this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat((<any>msg.data)[symbols[i]].available), parseFloat((<any>msg.data)[symbols[i]].onOrders), Models.toCurrency(symbols[i])));
       }
     });
   };
