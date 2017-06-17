@@ -65,13 +65,13 @@ class PoloniexWebsocket {
   public seqQueueMsg = (args, kwargs) => {
     if (!args.length) return;
     if (kwargs < this.seq) console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'obsolete message received');
-    else if (this.seq && this.seq + 1 < kwargs) this.queue[kwargs] = args;
+    while (typeof this.queue[this.seq+1] !== 'undefined') {
+      this.queue[this.seq+1].forEach(x => this.onMessage(x));
+      delete this.queue[this.seq+1];
+      this.seq++;
+    }
+    if (this.seq && this.seq + 1 < kwargs) {this.queue[kwargs] = args;}
     else {
-      while (typeof this.queue[this.seq+1] !== 'undefined') {
-        this.queue[this.seq+1].forEach(x => this.onMessage(x));
-        delete this.queue[this.seq+1];
-        this.seq++;
-      }
       this.seq = kwargs;
       args.forEach(x => this.onMessage(x));
     }
