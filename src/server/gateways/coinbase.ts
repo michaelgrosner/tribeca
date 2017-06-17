@@ -91,7 +91,7 @@ interface CoinbaseAuthenticatedClient {
 
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
-    MarketTrade = new Utils.Evt<Models.MarketSide>();
+    MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
     private onMessage = (data: CoinbaseOrder) => {

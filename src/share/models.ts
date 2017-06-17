@@ -185,6 +185,7 @@ export interface OrderStatusReport {
     timeInForce : TimeInForce;
     orderId : any;
     exchangeId : any;
+    exchangeTradeId : any;
     orderStatus : OrderStatus;
     rejectMessage : string;
     time : Date;
@@ -373,6 +374,9 @@ export interface QuotingParameters {
     stepOverSize?: number;
     profitHourInterval?: number;
     delayUI?: number;
+    time?: Date;
+    pair?: CurrencyPair;
+    exchange?: Exchange;
 }
 
 export class ExchangePairMessage<T> {

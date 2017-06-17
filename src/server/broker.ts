@@ -37,6 +37,7 @@ export class MarketDataBroker {
 class OrderStateCache {
     public allOrders = new Map<string, Models.OrderStatusReport>();
     public exchIdsToClientIds = new Map<string, string>();
+    public exchTradeIdsToClientIds = new Map<string, string>();
 }
 
 export class OrderBroker {
@@ -300,20 +301,26 @@ export class OrderBroker {
     };
 
     public updateOrderState = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
-        let orig : Models.OrderStatusUpdate;
+        let orig: Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
         } else {
             orig = this._orderCache.allOrders.get(osr.orderId);
-
             if (typeof orig === "undefined") {
-                const secondChance = this._orderCache.exchIdsToClientIds.get(osr.exchangeId);
-                if (typeof secondChance !== "undefined") {
-                    osr.orderId = secondChance;
-                    orig = this._orderCache.allOrders.get(secondChance);
+                if (osr.exchangeId) {
+                  const secondChance = this._orderCache.exchIdsToClientIds.get(osr.exchangeId);
+                  if (typeof secondChance !== "undefined") {
+                      osr.orderId = secondChance;
+                      orig = this._orderCache.allOrders.get(secondChance);
+                  }
+                } else if (osr.exchangeTradeId) {
+                  const thirdChance = this._orderCache.exchTradeIdsToClientIds.get(osr.exchangeTradeId);
+                  if (typeof thirdChance !== "undefined") {
+                      osr.orderId = thirdChance;
+                      orig = this._orderCache.allOrders.get(thirdChance);
+                  }
                 }
             }
-
             if (typeof orig === "undefined") {
               return;
             }
@@ -333,7 +340,7 @@ export class OrderBroker {
 
         const partiallyFilled = cumQuantity > 0 && cumQuantity !== quantity;
 
-        const o : Models.OrderStatusReport = {
+        const o: Models.OrderStatusReport = {
           pair: getOrFallback(osr.pair, orig.pair),
           side: getOrFallback(osr.side, orig.side),
           quantity: quantity,
@@ -342,6 +349,7 @@ export class OrderBroker {
           timeInForce: getOrFallback(osr.timeInForce, orig.timeInForce),
           orderId: getOrFallback(osr.orderId, orig.orderId),
           exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
+          exchangeTradeId: getOrFallback(osr.exchangeTradeId, orig.exchangeTradeId),
           orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
           rejectMessage: osr.rejectMessage,
           time: getOrFallback(osr.time, this._timeProvider.utcNow()),
@@ -448,9 +456,11 @@ export class OrderBroker {
     private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete && osr.orderStatus != Models.OrderStatus.Rejected) {
           this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+          if (osr.exchangeTradeId) this._orderCache.exchTradeIdsToClientIds.set(osr.exchangeTradeId, osr.orderId);
           this._orderCache.allOrders.set(osr.orderId, osr);
         } else {
           this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          if (osr.exchangeTradeId) this._orderCache.exchTradeIdsToClientIds.delete(osr.exchangeTradeId);
           this._orderCache.allOrders.delete(osr.orderId);
         }
     };
