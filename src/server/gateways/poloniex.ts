@@ -45,36 +45,36 @@ class PoloniexWebsocket {
     }
   };
 
-  public seq = 0;
   public connectWS = () => {
       const ws = new autobahn.Connection({ url: this.config.GetString("PoloniexWebsocketUrl"), realm: "realm1" });
-      var queue = {};
+
       ws.onclose = (reason, details) => {
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
         console.info(new Date().toISOString().slice(11, -1), 'poloniex', this.symbolProvider.symbol, reason);
       };
       ws.onopen = (session: any) => {
-        session.subscribe(this.symbolProvider.symbol, (args, kwargs) => {
-          if (args.length) {
-            if (kwargs < this.seq)
-              console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'obsolete message received');
-            else if (this.seq && this.seq + 1 < kwargs) {
-              queue[kwargs] = args;
-            } else {
-              while (typeof queue[this.seq+1] !== 'undefined') {
-                queue[this.seq+1].forEach(x => this.onMessage(x));
-                delete queue[this.seq+1];
-                this.seq++;
-              }
-              this.seq = kwargs;
-              args.forEach(x => this.onMessage(x));
-            }
-          }
-        });
+        session.subscribe(this.symbolProvider.symbol, this.seqQueueMsg);
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'Successfully connected to', this.symbolProvider.symbol);
       };
       ws.open();
+  };
+
+  public seq = 0;
+  public queue = {};
+  public seqQueueMsg = (args, kwargs) => {
+    if (!args.length) return;
+    if (kwargs < this.seq) console.info(new Date().toISOString().slice(11, -1), 'poloniex', 'obsolete message received');
+    else if (this.seq && this.seq + 1 < kwargs) this.queue[kwargs] = args;
+    else {
+      while (typeof this.queue[this.seq+1] !== 'undefined') {
+        this.queue[this.seq+1].forEach(x => this.onMessage(x));
+        delete this.queue[this.seq+1];
+        this.seq++;
+      }
+      this.seq = kwargs;
+      args.forEach(x => this.onMessage(x));
+    }
   };
 
   ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
@@ -91,6 +91,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
   MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
   private onTrade = (trade: Models.Timestamped<any>) => {
+    console.log('trade', trade.data.rate, trade.data.amount);
     this.MarketTrade.trigger(new Models.GatewayMarketTrade(
       parseFloat(trade.data.rate),
       parseFloat(trade.data.amount),
@@ -101,11 +102,14 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
   };
 
   MarketData = new Utils.Evt<Models.Market>();
+  private mkt: Models.Market = new Models.Market([], [], null);
 
   private onDepth = (depth: Models.Timestamped<any>) => {
     const side = depth.data.type+'s';
+    console.log(side, depth.data.rate, depth.data.amount);
     this.mkt[side] = this.mkt[side].filter(a => a.price != parseFloat(depth.data.rate));
-    if (depth.data.amount) this.mkt[side].push(new Models.MarketSide(parseFloat(depth.data.rate), parseFloat(depth.data.amount)));
+    if (typeof depth.data.amount !== 'undefined')
+      this.mkt[side].push(new Models.MarketSide(parseFloat(depth.data.rate), parseFloat(depth.data.amount)));
     this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
     this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
     const _bids = this.mkt.bids.slice(0, 13);
@@ -114,21 +118,38 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
       this.MarketData.trigger(new Models.Market(_bids, _asks, depth.time));
   };
 
+  private onDepthSnapshot = (mkt: Models.Timestamped<any>) => {
+    this.mkt = mkt.data;
+    const _bids = this.mkt.bids.slice(0, 13);
+    const _asks = this.mkt.asks.slice(0, 13);
+    if (_bids.length && _asks.length)
+      this.MarketData.trigger(new Models.Market(_bids, _asks, mkt.time));
+  };
+
   constructor(
     socket: PoloniexWebsocket,
-    symbol: PoloniexSymbolProvider,
-    private mkt: Models.Market
+    http: PoloniexHttp,
+    symbol: PoloniexSymbolProvider
   ) {
     socket.setHandler('newTrade', this.onTrade);
     socket.setHandler('orderBookModify', this.onDepth);
     socket.setHandler('orderBookRemove', this.onDepth);
-    socket.ConnectChanged.on(cs => this.ConnectChanged.trigger(cs));
-    setTimeout(()=>{
-      const _bids = this.mkt.bids.slice(0, 13);
-      const _asks = this.mkt.asks.slice(0, 13);
-      this.MarketData.trigger(new Models.Market(_bids, _asks, mkt.time));
-    }, 10);
-
+    socket.setHandler('orderBookSnapshot', this.onDepthSnapshot);
+    socket.ConnectChanged.on(cs => {
+      this.ConnectChanged.trigger(cs);
+      if (cs === Models.ConnectivityStatus.Disconnected) return;
+      http.get('returnOrderBook&depth=21&currencyPair='+symbol.symbol).then(msg => {
+        if (!(<any>msg.data).seq) return;
+        var kwargs = parseFloat((<any>msg.data).seq);
+        const _mkt = new Models.Market([], [], msg.time);
+        (<any>msg.data).bids.forEach(x => _mkt.bids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
+        (<any>msg.data).asks.forEach(x => _mkt.asks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
+        _mkt.bids = _mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
+        _mkt.asks = _mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
+        var args = [{type:'orderBookSnapshot',data:_mkt}];
+        socket.seqQueueMsg(args, kwargs);
+      });
+    });
   }
 }
 
@@ -218,8 +239,8 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       time: trade.time,
       side: trade.data.type === "sell" ? Models.Side.Ask : Models.Side.Bid,
       lastQuantity: parseFloat(trade.data.amount),
-      lastPrice: parseFloat(trade.data.price),
-      averagePrice: parseFloat(trade.data.price)
+      lastPrice: parseFloat(trade.data.rate),
+      averagePrice: parseFloat(trade.data.rate)
     });
   };
 
@@ -388,12 +409,11 @@ class Poloniex extends Interfaces.CombinedGateway {
     config: Config.ConfigProvider,
     symbol: PoloniexSymbolProvider,
     http: PoloniexHttp,
-    socket: PoloniexWebsocket,
-    mkt: Models.Market,
     minTick: number
   ) {
+    const socket = new PoloniexWebsocket(config, symbol);
     super(
-      new PoloniexMarketDataGateway(socket, symbol, mkt),
+      new PoloniexMarketDataGateway(socket, http, symbol),
       config.GetString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(http, symbol, socket)
         : new NullGateway.NullOrderGateway(),
@@ -408,7 +428,6 @@ export async function createPoloniex(config: Config.ConfigProvider, pair: Models
   const symbol = new PoloniexSymbolProvider(pair);
   const signer = new PoloniexMessageSigner(config);
   const http = new PoloniexHttp(config, signer);
-  const socket = new PoloniexWebsocket(config, symbol);
 
   const minTick = await new Promise<number>((resolve, reject) => {
     http.get('returnTicker').then(msg => {
@@ -419,17 +438,5 @@ export async function createPoloniex(config: Config.ConfigProvider, pair: Models
     });
   });
 
-  const mkt = await new Promise<Models.Market>((resolve, reject) => {
-    http.get('returnOrderBook&depth=21&currencyPair='+symbol.symbol).then(msg => {
-      if (!(<any>msg.data).seq) return reject('Unable to get Poloniex OrderBook for symbol '+symbol.symbol);
-      const _mkt = new Models.Market([], [], msg.time);
-      (<any>msg.data).bids.forEach(x => _mkt.bids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
-      (<any>msg.data).asks.forEach(x => _mkt.asks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
-      _mkt.bids = _mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
-      _mkt.asks = _mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
-      socket.seq = parseFloat((<any>msg.data).seq);
-      resolve(_mkt);
-    });
-  });
-  return new Poloniex(config, symbol, http, socket, mkt, minTick);
+  return new Poloniex(config, symbol, http, minTick);
 }
