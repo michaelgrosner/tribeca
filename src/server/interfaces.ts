@@ -15,7 +15,7 @@ export interface IOrderEntryGateway extends IGateway {
     cancelOrder(cancel: Models.OrderStatusReport): void;
     replaceOrder(replace: Models.OrderStatusReport): void;
 
-    OrderUpdate: Utils.Evt<Models.OrderStatusReport>;
+    OrderUpdate: Utils.Evt<Models.OrderStatusUpdate>;
 
     cancelsByClientOrderId: boolean;
     generateClientOrderId(): string|number;
