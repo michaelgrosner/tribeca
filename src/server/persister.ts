@@ -176,14 +176,13 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
 
     private collection: Promise<mongodb.Collection>;
     constructor(
-        timeProvider: Utils.ITimeProvider,
         private db: Promise<mongodb.Db>,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair
     ) {
       this.collection = db.then(db => db.collection(this._dbName));
-      timeProvider.setInterval(() => {
+      setInterval(() => {
           if (this._persistQueue.length === 0) return;
           this.collection.then(coll => {
             if (this._dbName != 'trades'&&this._dbName!='rfv'&&this._dbName!='mkt')

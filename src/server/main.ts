@@ -178,9 +178,9 @@ const exchange = ((ex: string): Models.Exchange => {
 const db = Persister.loadDb(config);
 
 (async (): Promise<void> => {
-  const tradesPersister = await new Persister.Persister<Models.Trade>(timeProvider, db, 'trades', exchange, pair);
-  const rfvPersister = await new Persister.Persister<Models.RegularFairValue>(timeProvider, db, 'rfv', exchange, pair);
-  const marketDataPersister = await new Persister.Persister<Models.MarketStats>(timeProvider, db, 'mkt', exchange, pair);
+  const tradesPersister = await new Persister.Persister<Models.Trade>(db, 'trades', exchange, pair);
+  const rfvPersister = await new Persister.Persister<Models.RegularFairValue>(db, 'rfv', exchange, pair);
+  const marketDataPersister = await new Persister.Persister<Models.MarketStats>(db, 'mkt', exchange, pair);
 
   const paramsPersister = new Persister.RepositoryPersister<Models.QuotingParameters>(db, defaultQuotingParameters, Models.Topics.QuotingParametersChange, exchange, pair);
 
