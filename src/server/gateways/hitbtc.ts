@@ -354,16 +354,15 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 return Models.OrderStatus.Working;
             case "canceled":
             case "expired":
-                return Models.OrderStatus.Cancelled;
             case "rejected":
-                return Models.OrderStatus.Rejected;
+                return Models.OrderStatus.Cancelled;
             case "trade":
                 if (m.orderStatus == "filled")
                     return Models.OrderStatus.Complete;
                 else
                     return Models.OrderStatus.Working;
             default:
-                return Models.OrderStatus.Other;
+                return Models.OrderStatus.Cancelled;
         }
     }
 
@@ -424,8 +423,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         const status : Models.OrderStatusUpdate = {
             orderId: msg.clientOrderId,
             rejectMessage: msg.rejectReasonText,
-            orderStatus: Models.OrderStatus.Rejected,
-            cancelRejected: true,
+            orderStatus: Models.OrderStatus.Cancelled,
             time: tsMsg.time
         };
         this.OrderUpdate.trigger(status);

@@ -11,32 +11,32 @@ import moment = require("moment");
 import * as Promises from './promises';
 
 export class MarketDataBroker {
-    MarketData = new Utils.Evt<Models.Market>();
-    public get currentBook(): Models.Market { return this._currentBook; }
+  MarketData = new Utils.Evt<Models.Market>();
+  public get currentBook(): Models.Market { return this._currentBook; }
 
-    private _currentBook: Models.Market = null;
-    private handleMarketData = (book: Models.Market) => {
-        this._currentBook = book;
-        this.MarketData.trigger(this.currentBook);
-        this._marketPublisher.publish(this.currentBook);
-    };
+  private _currentBook: Models.Market = null;
+  private handleMarketData = (book: Models.Market) => {
+      this._currentBook = book;
+      this.MarketData.trigger(this.currentBook);
+      this._marketPublisher.publish(this.currentBook);
+  };
 
-    constructor(
-      private _mdGateway: Interfaces.IMarketDataGateway,
-      private _marketPublisher: Publish.IPublish<Models.Market>
-    ) {
-      _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
+  constructor(
+    private _mdGateway: Interfaces.IMarketDataGateway,
+    private _marketPublisher: Publish.IPublish<Models.Market>
+  ) {
+    _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
 
-      this._mdGateway.MarketData.on(this.handleMarketData);
-      this._mdGateway.ConnectChanged.on(s => {
-        if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
-      });
-    }
+    this._mdGateway.MarketData.on(this.handleMarketData);
+    this._mdGateway.ConnectChanged.on(s => {
+      if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
+    });
+  }
 }
 
 class OrderStateCache {
-    public allOrders = new Map<string, Models.OrderStatusReport>();
-    public exchIdsToClientIds = new Map<string, string>();
+  public allOrders = new Map<string, Models.OrderStatusReport>();
+  public exchIdsToClientIds = new Map<string, string>();
 }
 
 export class OrderBroker {
@@ -49,14 +49,14 @@ export class OrderBroker {
 
         const orderUpdate = (o : Models.OrderStatusReport) => {
             const p = promiseMap.get(o.orderId);
-            if (p && (o.orderStatus == Models.OrderStatus.Complete || o.orderStatus == Models.OrderStatus.Cancelled || o.orderStatus == Models.OrderStatus.Rejected))
+            if (p && (o.orderStatus == Models.OrderStatus.Complete || o.orderStatus == Models.OrderStatus.Cancelled))
                 p.resolve(null);
         };
 
         this.OrderUpdate.on(orderUpdate);
 
         for (let e of this._orderCache.allOrders.values()) {
-            if (e.pendingCancel || e.orderStatus == Models.OrderStatus.Complete || e.orderStatus == Models.OrderStatus.Cancelled || e.orderStatus == Models.OrderStatus.Rejected)
+            if (e.pendingCancel || e.orderStatus == Models.OrderStatus.Complete || e.orderStatus == Models.OrderStatus.Cancelled)
                 continue;
 
             this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
@@ -297,7 +297,7 @@ export class OrderBroker {
       }
     };
 
-    public updateOrderState = (osr : Models.OrderStatusUpdate) : Models.OrderStatusReport => {
+    public updateOrderState = (osr: Models.OrderStatusUpdate): Models.OrderStatusReport => {
         let orig: Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
@@ -310,9 +310,7 @@ export class OrderBroker {
                     orig = this._orderCache.allOrders.get(secondChance);
                 }
             }
-            if (typeof orig === "undefined") {
-              return;
-            }
+            if (typeof orig === "undefined") return;
         }
 
         const getOrFallback = <T>(n: T, o: T) => typeof n !== "undefined" ? n : o;
@@ -354,7 +352,6 @@ export class OrderBroker {
           partiallyFilled: partiallyFilled,
           pendingCancel: osr.pendingCancel,
           pendingReplace: osr.pendingReplace,
-          cancelRejected: osr.cancelRejected,
           preferPostOnly: getOrFallback(osr.preferPostOnly, orig.preferPostOnly),
           source: getOrFallback(osr.source, orig.source)
         };
@@ -442,7 +439,7 @@ export class OrderBroker {
     };
 
     private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
-        if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete && osr.orderStatus != Models.OrderStatus.Rejected) {
+        if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete) {
           this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
           this._orderCache.allOrders.set(osr.orderId, osr);
         } else {
@@ -453,21 +450,23 @@ export class OrderBroker {
 
     private _orderCache: OrderStateCache;
 
-    constructor(private _timeProvider: Utils.ITimeProvider,
-                private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-                private _baseBroker : ExchangeBroker,
-                private _oeGateway : Interfaces.IOrderEntryGateway,
-                private _tradePersister : Persister.IPersist<Models.Trade>,
-                private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
-                private _tradePublisher : Publish.IPublish<Models.Trade>,
-                private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
-                private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
-                private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
-                private _cancelAllOrdersReciever : Publish.IReceive<object>,
-                private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
-                private _cleanAllOrdersReciever : Publish.IReceive<object>,
-                private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
-                initTrades : Models.Trade[]) {
+    constructor(
+      private _timeProvider: Utils.ITimeProvider,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _baseBroker : ExchangeBroker,
+      private _oeGateway : Interfaces.IOrderEntryGateway,
+      private _tradePersister : Persister.IPersist<Models.Trade>,
+      private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
+      private _tradePublisher : Publish.IPublish<Models.Trade>,
+      private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
+      private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
+      private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
+      private _cancelAllOrdersReciever : Publish.IReceive<object>,
+      private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
+      private _cleanAllOrdersReciever : Publish.IReceive<object>,
+      private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
+      initTrades : Models.Trade[]
+    ) {
         this._orderCache = new OrderStateCache();
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
@@ -479,12 +478,21 @@ export class OrderBroker {
 
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
-                const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], false, this._baseBroker.exchange(), this._timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
-                this.sendOrder(order);
+              this.sendOrder(new Models.SubmitNewOrder(
+                Models.Side[o.side],
+                o.quantity,
+                Models.OrderType[o.orderType],
+                o.price,
+                Models.TimeInForce[o.timeInForce],
+                false,
+                this._baseBroker.exchange(),
+                this._timeProvider.utcNow(),
+                false,
+                Models.OrderSource.OrderTicket
+              ));
             }
             catch (e) {
-                console.error('broker', e, 'unhandled exception while submitting order', o);
+              console.error('broker', e, 'unhandled exception while submitting order', o);
             }
         });
 
@@ -495,10 +503,6 @@ export class OrderBroker {
         _cleanTradeReciever.registerReceiver(t => this.cleanTrade(t.tradeId));
 
         _oeGateway.OrderUpdate.on(this.updateOrderState);
-
-        // _oeGateway.ConnectChanged.on(s => {
-            // console.info('broker', 'Gateway connectivity status changed', Models.ConnectivityStatus[s]);
-        // });
     }
 }
 

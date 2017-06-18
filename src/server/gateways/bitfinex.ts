@@ -307,7 +307,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
           case 'EXECUTED': return Models.OrderStatus.Complete;
           case 'PARTIALLY': return Models.OrderStatus.Working;
           case 'CANCELED': return Models.OrderStatus.Cancelled;
-          default: return Models.OrderStatus.Other;
+          default: return Models.OrderStatus.Cancelled;
         }
     }
 
