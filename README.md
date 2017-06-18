@@ -37,8 +37,6 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 
 See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
-Docker installation method is not heavily tested, please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Docker%20installation%20issue) in case is not working for you.
-
 ### Manual Installation
 
 1. Ensure your target machine has installed node v6 or v7 (`nodejs -v`), mongodb and g++ will be installed automatically (to validate if mongodb server is running after install try `mongo --eval "print('OK')"`).
