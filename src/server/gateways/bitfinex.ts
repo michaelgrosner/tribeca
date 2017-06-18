@@ -7,7 +7,6 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
-import moment = require("moment");
 import _ = require("lodash");
 import * as Promises from '../promises';
 
@@ -191,7 +190,6 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     constructor(
-        timeProvider: Utils.ITimeProvider,
         private _socket: BitfinexWebsocket,
         private _symbolProvider: BitfinexSymbolProvider) {
         var depthChannel = "book";
@@ -312,7 +310,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     constructor(
-        timeProvider: Utils.ITimeProvider,
         private _details: BitfinexBaseGateway,
         private _http: BitfinexHttp,
         private _socket: BitfinexWebsocket,
@@ -322,7 +319,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
-          if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], timeProvider.utcNow());
+          if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], new Date());
         });
 
         _socket.ConnectChanged.on(cs => {
@@ -490,8 +487,8 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
         });
     }
 
-    constructor(timeProvider: Utils.ITimeProvider, private _http: BitfinexHttp) {
-        timeProvider.setInterval(this.onRefreshPositions, moment.duration(15, "seconds"));
+    constructor(private _http: BitfinexHttp) {
+        setInterval(this.onRefreshPositions, 15000);
         this.onRefreshPositions();
     }
 }
@@ -529,20 +526,20 @@ class BitfinexSymbolProvider {
 }
 
 class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(timeProvider: Utils.ITimeProvider, config: Config.ConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
+    constructor(config: Config.ConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
         const http = new BitfinexHttp(config);
         const signer = new BitfinexMessageSigner(config);
         const socket = new BitfinexWebsocket(config);
         const details = new BitfinexBaseGateway(pricePrecision, minSize);
 
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(timeProvider, details, http, socket, signer, symbol)
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(details, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway();
 
         super(
-            new BitfinexMarketDataGateway(timeProvider, socket, symbol),
+            new BitfinexMarketDataGateway(socket, symbol),
             orderGateway,
-            new BitfinexPositionGateway(timeProvider, http),
+            new BitfinexPositionGateway(http),
             details);
     }
 }
@@ -567,7 +564,7 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(config: Config.ConfigProvider, timeProvider: Utils.ITimeProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);
@@ -577,7 +574,7 @@ export async function createBitfinex(config: Config.ConfigProvider, timeProvider
             const tickerUrl = config.GetString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
             const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            return new Bitfinex(timeProvider, config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
+            return new Bitfinex(config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
         }
     }
 }

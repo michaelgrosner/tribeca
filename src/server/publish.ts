@@ -9,11 +9,12 @@ export interface IPublish<T> {
 export class Publisher<T> implements IPublish<T> {
     private _snapshot: () => T[] = null;
     private _lastMarketData: number = new Date().getTime();
-    constructor(private topic: string,
-                private _io: SocketIO.Server,
-                private _monitor: Monitor.ApplicationState,
-                private snapshot: () => T[]) {
-        this.registerSnapshot(snapshot || null);
+    constructor(
+      private topic: string,
+      private _io: SocketIO.Server,
+      private _monitor?: Monitor.ApplicationState
+    ) {
+        this.registerSnapshot(null);
 
         var onConnection = s => {
             s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
@@ -45,7 +46,7 @@ export class Publisher<T> implements IPublish<T> {
         msg = this.compressOSRInc(msg);
       else if (this.topic === Models.Topics.Position)
         msg = this.compressPositionInc(msg);
-      if (this._monitor && this._monitor.io)
+      if (this._monitor)
         this._monitor.delay(Models.Prefixes.MESSAGE, this.topic, msg)
       else this._io.emit(Models.Prefixes.MESSAGE + this.topic, msg);
     };
