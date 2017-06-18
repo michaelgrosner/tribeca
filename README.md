@@ -62,6 +62,8 @@ Troubleshooting:
 
  * Use `smallfiles=true` in your `/etc/mongodb.conf` if your `/var/lib/mongodb/journal/*` files are too big (see [more info](https://stackoverflow.com/questions/19533019/is-it-safe-to-delete-the-journal-file-of-mongodb)).
 
+ * Run `rm -rf node_modules` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
+
  Optional:
 
  * Install the system daemon script `dist/K-init.sh` (to make use of `service K start` from anywhere instead of `cd path/to/K && npm start`) see [dist](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist) folder.
