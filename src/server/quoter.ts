@@ -51,12 +51,14 @@ export class ExchangeQuoter {
     public activeQuote: QuoteOrder[] = [];
     private _exchange: Models.Exchange;
 
-    constructor(private _broker: Broker.OrderBroker,
-        private _exchBroker: Broker.ExchangeBroker,
-        private _side: Models.Side,
-        private _qlParamRepo: QuotingParameters.QuotingParametersRepository) {
-        this._exchange = _exchBroker.exchange();
-        this._broker.OrderUpdate.on(this.handleOrderUpdate);
+    constructor(
+      private _broker: Broker.OrderBroker,
+      private _exchBroker: Broker.ExchangeBroker,
+      private _side: Models.Side,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository
+    ) {
+      this._exchange = _exchBroker.exchange();
+      this._broker.OrderUpdate.on(this.handleOrderUpdate);
     }
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
@@ -113,9 +115,10 @@ export class ExchangeQuoter {
 
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         let price: number = q.data.price;
-        if (this.activeQuote.filter(o =>
-          (price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
-          && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price
+        if (this.activeQuote.filter(o => price == o.quote.price
+          || (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47 &&
+               ((price + (this._qlParamRepo.latest.range - 1e-2)) >= o.quote.price
+               && (price - (this._qlParamRepo.latest.range - 1e-2)) <= o.quote.price))
         ).length) {
           if (this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
             if (this.activeQuote.length<this._qlParamRepo.latest.bullets) {
