@@ -185,7 +185,6 @@ export interface OrderStatusReport {
     timeInForce : TimeInForce;
     orderId : any;
     exchangeId : any;
-    exchangeTradeId : any;
     orderStatus : OrderStatus;
     rejectMessage : string;
     time : Date;
