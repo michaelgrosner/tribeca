@@ -20,8 +20,8 @@ To run K.js under winy (or if you love Docker), make use of the [Dockerfile](htt
 ```
  $ cd path/to/Dockerfile
  $ docker run -p 27017:27017 --name K-mongo -d mongo
- $ docker build -t k .
- $ docker run -p 3000:3000 --link K-mongo:mongo --name K -d k
+ $ docker build -t kjs .
+ $ docker run -p 3000:3000 --link K-mongo:mongo --name Kjs -d kjs
 ```
 
 If you run `docker ps`, you should see K.js and mongodb containers running.
