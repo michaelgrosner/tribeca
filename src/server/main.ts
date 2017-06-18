@@ -115,303 +115,289 @@ process.on("SIGINT", () => {
   performExit();
 });
 
-(async (system): Promise<void> => {
-    const tradesPersister = await system.getPersister<Models.Trade>("trades");
-    const rfvPersister = await system.getPersister<Models.RegularFairValue>("rfv");
-    const marketDataPersister = await system.getPersister<Models.MarketStats>("mkt");
+const app = express();
 
-    const paramsPersister = system.getRepository<Models.QuotingParameters>(system.startingParameters, Models.Topics.QuotingParametersChange);
+let web_server;
+try {
+  web_server = https.createServer({
+    key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
+    cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
+  }, app);
+} catch (e) {
+  web_server = http.createServer(app)
+}
 
-    const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
-      paramsPersister.loadLatest(),
-      tradesPersister.loadAll(10000),
-      rfvPersister.loadAll(10000),
-      marketDataPersister.loadAll(10000)
-    ]);
+const io = socket_io(web_server);
 
-    const gateway = await system.getExchange();
+const config = new Config.ConfigProvider();
 
-    system.getPublisher(Models.Topics.ProductAdvertisement)
-      .registerSnapshot(() => [new Models.ProductAdvertisement(
-        system.exchange,
-        system.pair,
-        system.config.GetString("BotIdentifier").replace('auto',''),
-        system.config.GetString("MatryoshkaUrl"),
-        packageConfig.homepage,
-        gateway.base.minTickIncrement
-      )]);
+const username = config.GetString("WebClientUsername");
+const password = config.GetString("WebClientPassword");
+if (username !== "NULL" && password !== "NULL") {
+    console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
+    const basicAuth = require('basic-auth-connect');
+    app.use(basicAuth((u, p) => u === username && p === password));
+}
 
-    const paramsRepo = new QuotingParameters.QuotingParametersRepository(
-      paramsPersister,
-      system.getPublisher(Models.Topics.QuotingParametersChange),
-      system.getReceiver(Models.Topics.QuotingParametersChange),
-      initParams
-    );
+app.use(compression());
+app.use(express.static(path.join(__dirname, "..", "pub")));
 
-    const monitor = new Monitor.ApplicationState(
-      system.timeProvider,
-      paramsRepo,
-      system.getPublisher(Models.Topics.ApplicationState),
-      system.getPublisher(Models.Topics.Notepad),
-      system.getReceiver(Models.Topics.Notepad),
-      system.getPublisher(Models.Topics.ToggleConfigs),
-      system.getReceiver(Models.Topics.ToggleConfigs),
-      system.getRepository(0, 'dataSize')
-    );
+const webport = parseFloat(config.GetString("WebClientListenPort"));
+web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
 
-    const broker = new Broker.ExchangeBroker(
-      system.pair,
-      gateway.md,
-      gateway.base,
-      gateway.oe,
-      system.getPublisher(Models.Topics.ExchangeConnectivity)
-    );
+app.get("/view/*", (req: express.Request, res: express.Response) => {
+  try {
+    res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
+  } catch (e) {
+    res.send('Document Not Found, but today is a beautiful day.');
+  }
+});
 
-    console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
-        exchange: Models.Exchange[broker.exchange()],
-        pair: broker.pair.toString(),
-        minTick: broker.minTickIncrement,
-        minSize: broker.minSize,
-        makeFee: broker.makeFee(),
-        takeFee: broker.takeFee(),
-        hasSelfTradePrevention: broker.hasSelfTradePrevention,
-    });
+const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
-    const orderBroker = new Broker.OrderBroker(
-      system.timeProvider,
-      paramsRepo,
-      broker,
-      gateway.oe,
-      tradesPersister,
-      system.getPublisher(Models.Topics.OrderStatusReports, monitor),
-      system.getPublisher(Models.Topics.Trades),
-      system.getPublisher(Models.Topics.TradesChart),
-      system.getReceiver(Models.Topics.SubmitNewOrder),
-      system.getReceiver(Models.Topics.CancelOrder),
-      system.getReceiver(Models.Topics.CancelAllOrders),
-      system.getReceiver(Models.Topics.CleanAllClosedOrders),
-      system.getReceiver(Models.Topics.CleanAllOrders),
-      system.getReceiver(Models.Topics.CleanTrade),
-      initTrades
-    );
+const pair = ((raw: string): Models.CurrencyPair => {
+  const split = raw.split("/");
+  if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
+  return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+})(config.GetString("TradedPair"));
 
-    const marketDataBroker = new Broker.MarketDataBroker(
-      gateway.md,
-      system.getPublisher(Models.Topics.MarketData, monitor)
-    );
+const exchange = ((ex: string): Models.Exchange => {
+  switch (ex) {
+    case "coinbase": return Models.Exchange.Coinbase;
+    case "okcoin": return Models.Exchange.OkCoin;
+    case "bitfinex": return Models.Exchange.Bitfinex;
+    case "poloniex": return Models.Exchange.Poloniex;
+    case "korbit": return Models.Exchange.Korbit;
+    case "hitbtc": return Models.Exchange.HitBtc;
+    case "null": return Models.Exchange.Null;
+    default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+  }
+})(config.GetString("EXCHANGE").toLowerCase());
 
-    const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
-    const filtration = new MarketFiltration.MarketFiltration(broker, quoter, marketDataBroker);
-    const fvEngine = new FairValue.FairValueEngine(
-      broker,
-      system.timeProvider,
-      filtration,
-      paramsRepo,
-      system.getPublisher(Models.Topics.FairValue, monitor)
-    );
+const getExchange = (): Promise<Interfaces.CombinedGateway> => {
+  switch (exchange) {
+    case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
+    case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+    case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
+    case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
+    case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+    case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+    case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+    default: throw new Error("no gateway provided for exchange " + exchange);
+  }
+};
 
-    const positionBroker = new Broker.PositionBroker(
-      system.timeProvider,
-      paramsRepo,
-      broker,
-      orderBroker,
-      quoter,
+const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
+  if (monitor && !monitor.io) monitor.io = io;
+  return new Publish.Publisher<T>(topic, io, monitor, null);
+};
+
+const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
+
+const db = Persister.loadDb(config)
+
+const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
+    const coll = (await (await db).collection(collectionName));
+    return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
+};
+
+const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
+    new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
+
+for (const param in defaultQuotingParameters)
+  if (config.GetDefaultString(param) !== null)
+    defaultQuotingParameters[param] = config.GetDefaultString(param);
+
+(async (): Promise<void> => {
+  const tradesPersister = await getPersister<Models.Trade>("trades");
+  const rfvPersister = await getPersister<Models.RegularFairValue>("rfv");
+  const marketDataPersister = await getPersister<Models.MarketStats>("mkt");
+
+  const paramsPersister = getRepository<Models.QuotingParameters>(defaultQuotingParameters, Models.Topics.QuotingParametersChange);
+
+  const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
+    paramsPersister.loadLatest(),
+    tradesPersister.loadAll(10000),
+    rfvPersister.loadAll(10000),
+    marketDataPersister.loadAll(10000)
+  ]);
+
+  const gateway = await getExchange();
+
+  getPublisher(Models.Topics.ProductAdvertisement)
+    .registerSnapshot(() => [new Models.ProductAdvertisement(
+      exchange,
+      pair,
+      config.GetString("BotIdentifier").replace('auto',''),
+      config.GetString("MatryoshkaUrl"),
+      packageConfig.homepage,
+      gateway.base.minTickIncrement
+    )]);
+
+  const paramsRepo = new QuotingParameters.QuotingParametersRepository(
+    paramsPersister,
+    getPublisher(Models.Topics.QuotingParametersChange),
+    getReceiver(Models.Topics.QuotingParametersChange),
+    initParams
+  );
+
+  const monitor = new Monitor.ApplicationState(
+    timeProvider,
+    paramsRepo,
+    getPublisher(Models.Topics.ApplicationState),
+    getPublisher(Models.Topics.Notepad),
+    getReceiver(Models.Topics.Notepad),
+    getPublisher(Models.Topics.ToggleConfigs),
+    getReceiver(Models.Topics.ToggleConfigs),
+    getRepository(0, 'dataSize')
+  );
+
+  const broker = new Broker.ExchangeBroker(
+    pair,
+    gateway.md,
+    gateway.base,
+    gateway.oe,
+    getPublisher(Models.Topics.ExchangeConnectivity)
+  );
+
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
+      exchange: Models.Exchange[broker.exchange()],
+      pair: broker.pair.toString(),
+      minTick: broker.minTickIncrement,
+      minSize: broker.minSize,
+      makeFee: broker.makeFee(),
+      takeFee: broker.takeFee(),
+      hasSelfTradePrevention: broker.hasSelfTradePrevention,
+  });
+
+  const orderBroker = new Broker.OrderBroker(
+    timeProvider,
+    paramsRepo,
+    broker,
+    gateway.oe,
+    tradesPersister,
+    getPublisher(Models.Topics.OrderStatusReports, monitor),
+    getPublisher(Models.Topics.Trades),
+    getPublisher(Models.Topics.TradesChart),
+    getReceiver(Models.Topics.SubmitNewOrder),
+    getReceiver(Models.Topics.CancelOrder),
+    getReceiver(Models.Topics.CancelAllOrders),
+    getReceiver(Models.Topics.CleanAllClosedOrders),
+    getReceiver(Models.Topics.CleanAllOrders),
+    getReceiver(Models.Topics.CleanTrade),
+    initTrades
+  );
+
+  const marketDataBroker = new Broker.MarketDataBroker(
+    gateway.md,
+    getPublisher(Models.Topics.MarketData, monitor)
+  );
+
+  const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
+  const filtration = new MarketFiltration.MarketFiltration(broker, quoter, marketDataBroker);
+  const fvEngine = new FairValue.FairValueEngine(
+    broker,
+    timeProvider,
+    filtration,
+    paramsRepo,
+    getPublisher(Models.Topics.FairValue, monitor)
+  );
+
+  const positionBroker = new Broker.PositionBroker(
+    timeProvider,
+    paramsRepo,
+    broker,
+    orderBroker,
+    quoter,
+    fvEngine,
+    gateway.pg,
+    getPublisher(Models.Topics.Position, monitor)
+  );
+
+  const quotingEngine = new QuotingEngine.QuotingEngine(
+    timeProvider,
+    filtration,
+    fvEngine,
+    paramsRepo,
+    orderBroker,
+    positionBroker,
+    broker,
+    new Statistics.ObservableEWMACalculator(
+      timeProvider,
       fvEngine,
-      gateway.pg,
-      system.getPublisher(Models.Topics.Position, monitor)
-    );
-
-    const quotingEngine = new QuotingEngine.QuotingEngine(
-      system.timeProvider,
-      filtration,
+      paramsRepo
+    ),
+    new Statistics.ObservableSTDEVCalculator(
+      timeProvider,
       fvEngine,
+      filtration,
+      broker.minTickIncrement,
       paramsRepo,
-      orderBroker,
-      positionBroker,
-      broker,
-      new Statistics.ObservableEWMACalculator(
-        system.timeProvider,
-        fvEngine,
-        paramsRepo
-      ),
-      new Statistics.ObservableSTDEVCalculator(
-        system.timeProvider,
-        fvEngine,
-        filtration,
-        broker.minTickIncrement,
-        paramsRepo,
-        marketDataPersister,
-        initMkt
-      ),
-      new PositionManagement.TargetBasePositionManager(
-        system.timeProvider,
-        new PositionManagement.PositionManager(
-          broker,
-          system.timeProvider,
-          paramsRepo,
-          rfvPersister,
-          fvEngine,
-          new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
-          new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
-          new Statistics.EwmaStatisticCalculator(paramsRepo, 'longEwmaPeridos', initRfv),
-          system.getPublisher(Models.Topics.EWMAChart, monitor)
-        ),
-        paramsRepo,
-        positionBroker,
-        system.getPublisher(Models.Topics.TargetBasePosition, monitor)
-      ),
-      new Safety.SafetyCalculator(
-        system.timeProvider,
-        fvEngine,
-        paramsRepo,
-        positionBroker,
-        orderBroker,
-        system.getPublisher(Models.Topics.TradeSafetyValue, monitor)
-      )
-    );
-
-    new QuoteSender.QuoteSender(
-      system.timeProvider,
-      paramsRepo,
-      quotingEngine,
-      system.getPublisher(Models.Topics.QuoteStatus, monitor),
-      quoter,
-      broker,
-      new Active.ActiveRepository(
-        system.startingActive,
+      marketDataPersister,
+      initMkt
+    ),
+    new PositionManagement.TargetBasePositionManager(
+      timeProvider,
+      new PositionManagement.PositionManager(
         broker,
-        system.getPublisher(Models.Topics.ActiveChange),
-        system.getReceiver(Models.Topics.ActiveChange)
-      )
-    );
+        timeProvider,
+        paramsRepo,
+        rfvPersister,
+        fvEngine,
+        new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
+        new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
+        new Statistics.EwmaStatisticCalculator(paramsRepo, 'longEwmaPeridos', initRfv),
+        getPublisher(Models.Topics.EWMAChart, monitor)
+      ),
+      paramsRepo,
+      positionBroker,
+      getPublisher(Models.Topics.TargetBasePosition, monitor)
+    ),
+    new Safety.SafetyCalculator(
+      timeProvider,
+      fvEngine,
+      paramsRepo,
+      positionBroker,
+      orderBroker,
+      getPublisher(Models.Topics.TradeSafetyValue, monitor)
+    )
+  );
 
-    new MarketTrades.MarketTradeBroker(
-      gateway.md,
-      system.getPublisher(Models.Topics.MarketTrade),
-      marketDataBroker,
-      quotingEngine,
-      broker
-    );
+  new QuoteSender.QuoteSender(
+    timeProvider,
+    paramsRepo,
+    quotingEngine,
+    getPublisher(Models.Topics.QuoteStatus, monitor),
+    quoter,
+    broker,
+    new Active.ActiveRepository(
+      config.GetString("BotIdentifier").indexOf('auto')>-1,
+      broker,
+      getPublisher(Models.Topics.ActiveChange),
+      getReceiver(Models.Topics.ActiveChange)
+    )
+  );
 
-    exitingEvent = () => {
-      return orderBroker.cancelOpenOrders();
-    };
+  new MarketTrades.MarketTradeBroker(
+    gateway.md,
+    getPublisher(Models.Topics.MarketTrade),
+    marketDataBroker,
+    quotingEngine,
+    broker
+  );
 
-    let start = process.hrtime();
-    const interval = 500;
-    setInterval(() => {
-      const delta = process.hrtime(start);
-      const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
-      const n = ms - interval;
-      if (n > 121)
-        console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
-      start = process.hrtime();
-    }, interval).unref();
-})((() => {
-    const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
+  exitingEvent = () => {
+    return orderBroker.cancelOpenOrders();
+  };
 
-    const app = express();
-
-    let web_server;
-    try {
-      web_server = https.createServer({
-        key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-        cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-      }, app);
-    } catch (e) {
-      web_server = http.createServer(app)
-    }
-
-    const io = socket_io(web_server);
-
-    const config = new Config.ConfigProvider();
-
-    const username = config.GetString("WebClientUsername");
-    const password = config.GetString("WebClientPassword");
-    if (username !== "NULL" && password !== "NULL") {
-        console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-        const basicAuth = require('basic-auth-connect');
-        app.use(basicAuth((u, p) => u === username && p === password));
-    }
-
-    app.use(compression());
-    app.use(express.static(path.join(__dirname, "..", "pub")));
-
-    const webport = parseFloat(config.GetString("WebClientListenPort"));
-    web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
-
-    app.get("/view/*", (req: express.Request, res: express.Response) => {
-      try {
-        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
-      } catch (e) {
-        res.send('Document Not Found, but today is a beautiful day.');
-      }
-    });
-
-    let pair = ((raw: string): Models.CurrencyPair => {
-      const split = raw.split("/");
-      if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
-      return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-    })(config.GetString("TradedPair"));
-
-    const exchange = ((ex: string): Models.Exchange => {
-      switch (ex) {
-        case "coinbase": return Models.Exchange.Coinbase;
-        case "okcoin": return Models.Exchange.OkCoin;
-        case "bitfinex": return Models.Exchange.Bitfinex;
-        case "poloniex": return Models.Exchange.Poloniex;
-        case "korbit": return Models.Exchange.Korbit;
-        case "hitbtc": return Models.Exchange.HitBtc;
-        case "null": return Models.Exchange.Null;
-        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
-      }
-    })(config.GetString("EXCHANGE").toLowerCase());
-
-    const getExchange = (): Promise<Interfaces.CombinedGateway> => {
-      switch (exchange) {
-        case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
-        case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-        case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
-        case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
-        case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
-        case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-        case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
-        default: throw new Error("no gateway provided for exchange " + exchange);
-      }
-    };
-
-    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
-      if (monitor && !monitor.io) monitor.io = io;
-      return new Publish.Publisher<T>(topic, io, monitor, null);
-    };
-
-    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
-
-    const db = Persister.loadDb(config)
-
-    const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
-        const coll = (await (await db).collection(collectionName));
-        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
-    };
-
-    const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
-        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
-
-    for (const param in defaultQuotingParameters)
-      if (config.GetDefaultString(param) !== null)
-        defaultQuotingParameters[param] = config.GetDefaultString(param);
-
-    return {
-        config: config,
-        pair: pair,
-        exchange: exchange,
-        startingActive: config.GetString("BotIdentifier").indexOf('auto')>-1,
-        startingParameters: defaultQuotingParameters,
-        timeProvider: timeProvider,
-        getExchange: getExchange,
-        getReceiver: getReceiver,
-        getPersister: getPersister,
-        getRepository: getRepository,
-        getPublisher: getPublisher
-    };
-})());
+  let start = process.hrtime();
+  const interval = 500;
+  setInterval(() => {
+    const delta = process.hrtime(start);
+    const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
+    const n = ms - interval;
+    if (n > 121)
+      console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+    start = process.hrtime();
+  }, interval).unref();
+})();
