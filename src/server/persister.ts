@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
-import moment = require('moment');
 import Config = require("./config");
 import * as Promises from './promises';
 
@@ -194,6 +193,6 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
                 if (err) console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
             }, );
           });
-      }, moment.duration(10, "seconds"));
+      }, 10000);
     }
 }
