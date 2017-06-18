@@ -5,7 +5,6 @@ import moment = require("moment");
 import _ = require('lodash');
 import fs = require("fs");
 import Persister = require("./persister");
-import stream = require("stream");
 
 enum TimedType {
     Interval,
