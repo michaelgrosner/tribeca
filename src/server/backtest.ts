@@ -4,7 +4,6 @@ import Interfaces = require("./interfaces");
 import moment = require("moment");
 import _ = require('lodash');
 import fs = require("fs");
-import Persister = require("./persister");
 
 enum TimedType {
     Interval,
@@ -272,46 +271,6 @@ export class BacktestParameters {
     startingQuotePosition: number;
     quotingParameters: Models.QuotingParameters;
     id: string;
-}
-
-export class BacktestPersister<T> implements Persister.ILoadAll<T>, Persister.ILoadLatest<T> {
-    public load = (exchange: Models.Exchange, pair: Models.CurrencyPair, limit?: number): Promise<T[]> => {
-        return this.loadAll(limit);
-    };
-
-    public loadAll = (limit?: number): Promise<T[]> => {
-      return null;
-      // if (this.initialData) {
-        // if (limit) {
-          // return new Promise((resolve, reject) => { resolve(this.initialData.slice(limit * -1)); });
-        // }
-        // else {
-          // return new Promise((resolve, reject) => { resolve(this.initialData); });
-        // }
-      // }
-      // return new Promise((resolve, reject) => { resolve([]); });
-    };
-
-    public persist = (report: T) => { };
-
-    public repersist = (report: T) => { };
-
-    public clean = (time: Date) => { };
-
-    public loadDBSize = (): Promise<T> => {
-      return null;
-      // return new Promise((resolve, reject) => { resolve(null); });
-    };
-
-    public loadLatest = (): Promise<T> => {
-      return null;
-      // if (this.initialData)
-          // return new Promise((resolve, reject) => { resolve(_.last(this.initialData)); });
-    };
-
-    constructor(private initialData?: T[]) {
-        this.initialData = initialData || null;
-    }
 }
 
 export class BacktestExchange extends Interfaces.CombinedGateway {
