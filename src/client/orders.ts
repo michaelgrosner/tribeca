@@ -22,7 +22,7 @@ export class OrdersComponent implements OnInit {
     if (connected) return;
     if (!this.gridOptions.api) return;
     this.gridOptions.api.setRowData([]);
-    this.gridOptions.api.refreshView();
+    setTimeout(()=>this.gridOptions.api.refreshView(),0);
   }
 
   constructor(
@@ -62,7 +62,9 @@ export class OrdersComponent implements OnInit {
         },
         cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
       },
-      { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
+      { width: 40, field: 'side', headerName: 'side' , cellRenderer:(params) => {
+          return (params.data.pong ? '&#8315;' : '&#8331;') + params.value;
+      }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }},
@@ -120,7 +122,7 @@ export class OrdersComponent implements OnInit {
         }
       }
     });
-    this.gridOptions.api.refreshView();
+    setTimeout(()=>this.gridOptions.api.refreshView(),0);
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
         orderId: o.data[0],
@@ -133,7 +135,8 @@ export class OrdersComponent implements OnInit {
         tif: Models.TimeInForce[o.data[7]],
         lat: o.data[8]+'ms',
         lvQty: o.data[9],
-        quoteSymbol: Models.Currency[o.data[10]],
+        pong: o.data[10],
+        quoteSymbol: Models.Currency[o.data[11]],
         productFixed: this.product.fixed
       }]});
   }
