@@ -123,10 +123,11 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     private loadInternal = async (selector: Object, limit?: number) : Promise<T[]> => {
-        let query = this.collection.find(selector, {_id: 0});
+        const coll = await this.collection;
+        let query = coll.find(selector, {_id: 0});
 
         if (limit !== null) {
-            const count = await this.collection.count(selector);
+            const count = await coll.count(selector);
             query = query.limit(limit);
             if (count !== 0)
                 query = query.skip(Math.max(count - limit, 0));
@@ -143,20 +144,24 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
     };
 
     public clean = (time: Date) => {
-        this.collection.deleteMany({ time: (this._dbName=='rfv'||this._dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
-            if (err) console.error('persister', err, 'Unable to clean', this._dbName);
+        this.collection.then(coll => {
+          coll.deleteMany({ time: (this._dbName=='rfv'||this._dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
+              if (err) console.error('persister', err, 'Unable to clean', this._dbName);
+          });
         });
     };
 
     public repersist = (report: T) => {
-        if ((<any>report).Kqty<0)
-          this.collection.deleteOne({ tradeId: (<any>report).tradeId }, err => {
-              if (err) console.error('persister', err, 'Unable to deleteOne', this._dbName, report);
-          });
-        else
-          this.collection.updateOne({ tradeId: (<any>report).tradeId }, { $set: { time: (<any>report).time, quantity : (<any>report).quantity, value : (<any>report).value, Ktime: (<any>report).Ktime, Kqty : (<any>report).Kqty, Kprice : (<any>report).Kprice, Kvalue : (<any>report).Kvalue, Kdiff : (<any>report).Kdiff } }, err => {
-              if (err) console.error('persister', err, 'Unable to repersist', this._dbName, report);
-          });
+        this.collection.then(coll => {
+          if ((<any>report).Kqty<0)
+            coll.deleteOne({ tradeId: (<any>report).tradeId }, err => {
+                if (err) console.error('persister', err, 'Unable to deleteOne', this._dbName, report);
+            });
+          else
+            coll.updateOne({ tradeId: (<any>report).tradeId }, { $set: { time: (<any>report).time, quantity : (<any>report).quantity, value : (<any>report).value, Ktime: (<any>report).Ktime, Kqty : (<any>report).Kqty, Kprice : (<any>report).Kprice, Kvalue : (<any>report).Kvalue, Kdiff : (<any>report).Kdiff } }, err => {
+                if (err) console.error('persister', err, 'Unable to repersist', this._dbName, report);
+            });
+        });
     };
 
     private converter = (x: T) : T => {
@@ -169,28 +174,27 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         return x;
     };
 
+    private collection: Promise<mongodb.Collection>;
     constructor(
-        time: Utils.ITimeProvider,
-        private collection: mongodb.Collection,
+        timeProvider: Utils.ITimeProvider,
+        private db: Promise<mongodb.Db>,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair
     ) {
-            time.setInterval(() => {
-                if (this._persistQueue.length === 0) return;
-
-                if (this._dbName != 'trades'&&this._dbName!='rfv'&&this._dbName!='mkt')
-                  collection.deleteMany({ time: { $exists:true } }, err => {
-                      if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName);
-                  });
-                // collection.insertOne(report, err => {
-                    // if (err)
-                        // console.error('persister', err, 'Unable to insert', this._dbName, report);
-                // });
-                collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
-                    if (r.result && r.result.ok) this._persistQueue.length = 0;
-                    if (err) console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
-                }, );
-            }, moment.duration(10, "seconds"));
+      this.collection = db.then(db => db.collection(this._dbName));
+      timeProvider.setInterval(() => {
+          if (this._persistQueue.length === 0) return;
+          this.collection.then(coll => {
+            if (this._dbName != 'trades'&&this._dbName!='rfv'&&this._dbName!='mkt')
+              coll.deleteMany({ time: { $exists:true } }, err => {
+                  if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName);
+              });
+            coll.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
+                if (r.result && r.result.ok) this._persistQueue.length = 0;
+                if (err) console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
+            }, );
+          });
+      }, moment.duration(10, "seconds"));
     }
 }

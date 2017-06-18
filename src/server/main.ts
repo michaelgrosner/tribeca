@@ -84,6 +84,12 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   delayUI:                        7
 };
 
+const config = new Config.ConfigProvider();
+
+for (const param in defaultQuotingParameters)
+  if (config.GetDefaultString(param) !== null)
+    defaultQuotingParameters[param] = config.GetDefaultString(param);
+
 let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
@@ -117,33 +123,28 @@ process.on("SIGINT", () => {
 
 const app = express();
 
-let web_server;
-try {
-  web_server = https.createServer({
-    key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-    cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-  }, app);
-} catch (e) {
-  web_server = http.createServer(app)
-}
+const io = socket_io(((() => {
+  try {
+    return https.createServer({
+      key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
+      cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
+    }, app);
+  } catch (e) {
+    return http.createServer(app);
+  }
+})()).listen(
+  parseFloat(config.GetString("WebClientListenPort")),
+  () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on port', parseFloat(config.GetString("WebClientListenPort")))
+));
 
-const io = socket_io(web_server);
-
-const config = new Config.ConfigProvider();
-
-const username = config.GetString("WebClientUsername");
-const password = config.GetString("WebClientPassword");
-if (username !== "NULL" && password !== "NULL") {
-    console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-    const basicAuth = require('basic-auth-connect');
-    app.use(basicAuth((u, p) => u === username && p === password));
+if (config.GetString("WebClientUsername") !== "NULL" && config.GetString("WebClientPassword") !== "NULL") {
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
+  const basicAuth = require('basic-auth-connect');
+  app.use(basicAuth((u, p) => u === config.GetString("WebClientUsername") && p === config.GetString("WebClientPassword")));
 }
 
 app.use(compression());
 app.use(express.static(path.join(__dirname, "..", "pub")));
-
-const webport = parseFloat(config.GetString("WebClientListenPort"));
-web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
 
 app.get("/view/*", (req: express.Request, res: express.Response) => {
   try {
@@ -174,46 +175,14 @@ const exchange = ((ex: string): Models.Exchange => {
   }
 })(config.GetString("EXCHANGE").toLowerCase());
 
-const getExchange = (): Promise<Interfaces.CombinedGateway> => {
-  switch (exchange) {
-    case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
-    case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-    case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
-    case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
-    case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
-    case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-    case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
-    default: throw new Error("no gateway provided for exchange " + exchange);
-  }
-};
-
-const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
-  if (monitor && !monitor.io) monitor.io = io;
-  return new Publish.Publisher<T>(topic, io, monitor, null);
-};
-
-const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
-
-const db = Persister.loadDb(config)
-
-const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
-    const coll = (await (await db).collection(collectionName));
-    return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
-};
-
-const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
-    new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
-
-for (const param in defaultQuotingParameters)
-  if (config.GetDefaultString(param) !== null)
-    defaultQuotingParameters[param] = config.GetDefaultString(param);
+const db = Persister.loadDb(config);
 
 (async (): Promise<void> => {
-  const tradesPersister = await getPersister<Models.Trade>("trades");
-  const rfvPersister = await getPersister<Models.RegularFairValue>("rfv");
-  const marketDataPersister = await getPersister<Models.MarketStats>("mkt");
+  const tradesPersister = await new Persister.Persister<Models.Trade>(timeProvider, db, 'trades', exchange, pair);
+  const rfvPersister = await new Persister.Persister<Models.RegularFairValue>(timeProvider, db, 'rfv', exchange, pair);
+  const marketDataPersister = await new Persister.Persister<Models.MarketStats>(timeProvider, db, 'mkt', exchange, pair);
 
-  const paramsPersister = getRepository<Models.QuotingParameters>(defaultQuotingParameters, Models.Topics.QuotingParametersChange);
+  const paramsPersister = new Persister.RepositoryPersister<Models.QuotingParameters>(db, defaultQuotingParameters, Models.Topics.QuotingParametersChange, exchange, pair);
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
     paramsPersister.loadLatest(),
@@ -222,9 +191,20 @@ for (const param in defaultQuotingParameters)
     marketDataPersister.loadAll(10000)
   ]);
 
-  const gateway = await getExchange();
+  const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
+    switch (exchange) {
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+      case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+      default: throw new Error("no gateway provided for exchange " + exchange);
+    }
+  })();
 
-  getPublisher(Models.Topics.ProductAdvertisement)
+  new Publish.Publisher(Models.Topics.ProductAdvertisement, io)
     .registerSnapshot(() => [new Models.ProductAdvertisement(
       exchange,
       pair,
@@ -236,20 +216,21 @@ for (const param in defaultQuotingParameters)
 
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
     paramsPersister,
-    getPublisher(Models.Topics.QuotingParametersChange),
-    getReceiver(Models.Topics.QuotingParametersChange),
+    new Publish.Publisher(Models.Topics.QuotingParametersChange, io),
+    new Publish.Receiver(Models.Topics.QuotingParametersChange, io),
     initParams
   );
 
   const monitor = new Monitor.ApplicationState(
     timeProvider,
     paramsRepo,
-    getPublisher(Models.Topics.ApplicationState),
-    getPublisher(Models.Topics.Notepad),
-    getReceiver(Models.Topics.Notepad),
-    getPublisher(Models.Topics.ToggleConfigs),
-    getReceiver(Models.Topics.ToggleConfigs),
-    getRepository(0, 'dataSize')
+    new Publish.Publisher(Models.Topics.ApplicationState, io),
+    new Publish.Publisher(Models.Topics.Notepad, io),
+    new Publish.Receiver(Models.Topics.Notepad, io),
+    new Publish.Publisher(Models.Topics.ToggleConfigs, io),
+    new Publish.Receiver(Models.Topics.ToggleConfigs, io),
+    new Persister.RepositoryPersister<number>(db, 0, 'dataSize', exchange, pair),
+    io
   );
 
   const broker = new Broker.ExchangeBroker(
@@ -257,7 +238,7 @@ for (const param in defaultQuotingParameters)
     gateway.md,
     gateway.base,
     gateway.oe,
-    getPublisher(Models.Topics.ExchangeConnectivity)
+    new Publish.Publisher(Models.Topics.ExchangeConnectivity, io)
   );
 
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
@@ -276,21 +257,21 @@ for (const param in defaultQuotingParameters)
     broker,
     gateway.oe,
     tradesPersister,
-    getPublisher(Models.Topics.OrderStatusReports, monitor),
-    getPublisher(Models.Topics.Trades),
-    getPublisher(Models.Topics.TradesChart),
-    getReceiver(Models.Topics.SubmitNewOrder),
-    getReceiver(Models.Topics.CancelOrder),
-    getReceiver(Models.Topics.CancelAllOrders),
-    getReceiver(Models.Topics.CleanAllClosedOrders),
-    getReceiver(Models.Topics.CleanAllOrders),
-    getReceiver(Models.Topics.CleanTrade),
+    new Publish.Publisher(Models.Topics.OrderStatusReports, io, monitor),
+    new Publish.Publisher(Models.Topics.Trades, io),
+    new Publish.Publisher(Models.Topics.TradesChart, io),
+    new Publish.Receiver(Models.Topics.SubmitNewOrder, io),
+    new Publish.Receiver(Models.Topics.CancelOrder, io),
+    new Publish.Receiver(Models.Topics.CancelAllOrders, io),
+    new Publish.Receiver(Models.Topics.CleanAllClosedOrders, io),
+    new Publish.Receiver(Models.Topics.CleanAllOrders, io),
+    new Publish.Receiver(Models.Topics.CleanTrade, io),
     initTrades
   );
 
   const marketDataBroker = new Broker.MarketDataBroker(
     gateway.md,
-    getPublisher(Models.Topics.MarketData, monitor)
+    new Publish.Publisher(Models.Topics.MarketData, io, monitor)
   );
 
   const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
@@ -300,7 +281,7 @@ for (const param in defaultQuotingParameters)
     timeProvider,
     filtration,
     paramsRepo,
-    getPublisher(Models.Topics.FairValue, monitor)
+    new Publish.Publisher(Models.Topics.FairValue, io, monitor)
   );
 
   const positionBroker = new Broker.PositionBroker(
@@ -311,7 +292,7 @@ for (const param in defaultQuotingParameters)
     quoter,
     fvEngine,
     gateway.pg,
-    getPublisher(Models.Topics.Position, monitor)
+    new Publish.Publisher(Models.Topics.Position, io, monitor)
   );
 
   const quotingEngine = new QuotingEngine.QuotingEngine(
@@ -347,11 +328,11 @@ for (const param in defaultQuotingParameters)
         new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
         new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
         new Statistics.EwmaStatisticCalculator(paramsRepo, 'longEwmaPeridos', initRfv),
-        getPublisher(Models.Topics.EWMAChart, monitor)
+        new Publish.Publisher(Models.Topics.EWMAChart, io, monitor)
       ),
       paramsRepo,
       positionBroker,
-      getPublisher(Models.Topics.TargetBasePosition, monitor)
+      new Publish.Publisher(Models.Topics.TargetBasePosition, io, monitor)
     ),
     new Safety.SafetyCalculator(
       timeProvider,
@@ -359,7 +340,7 @@ for (const param in defaultQuotingParameters)
       paramsRepo,
       positionBroker,
       orderBroker,
-      getPublisher(Models.Topics.TradeSafetyValue, monitor)
+      new Publish.Publisher(Models.Topics.TradeSafetyValue, io, monitor)
     )
   );
 
@@ -367,20 +348,20 @@ for (const param in defaultQuotingParameters)
     timeProvider,
     paramsRepo,
     quotingEngine,
-    getPublisher(Models.Topics.QuoteStatus, monitor),
+    new Publish.Publisher(Models.Topics.QuoteStatus, io, monitor),
     quoter,
     broker,
     new Active.ActiveRepository(
       config.GetString("BotIdentifier").indexOf('auto')>-1,
       broker,
-      getPublisher(Models.Topics.ActiveChange),
-      getReceiver(Models.Topics.ActiveChange)
+      new Publish.Publisher(Models.Topics.ActiveChange, io),
+      new Publish.Receiver(Models.Topics.ActiveChange, io)
     )
   );
 
   new MarketTrades.MarketTradeBroker(
     gateway.md,
-    getPublisher(Models.Topics.MarketTrade),
+    new Publish.Publisher(Models.Topics.MarketTrade, io),
     marketDataBroker,
     quotingEngine,
     broker

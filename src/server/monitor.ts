@@ -7,7 +7,6 @@ import * as moment from "moment";
 
 export class ApplicationState {
 
-  public io: SocketIO.Server;
   private _delayed: any[] = [];
   private _app_state: Models.ApplicationState = null;
   private _notepad: string = null;
@@ -34,17 +33,17 @@ export class ApplicationState {
   private onDelay = () => {
     this._tick += this._ioDelay;
     if (this._tick>=6e1) this.onTick();
-    if (this.io === null) return;
+    if (this._io === null) return;
     let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
-    this._delayed.forEach(x => this.io.emit(x[0], x[1]));
+    this._delayed.forEach(x => this._io.emit(x[0], x[1]));
     this._delayed = orders;
   };
 
   public delay = (prefix: string, topic: string, msg: any) => {
     let isOSR: boolean = topic === Models.Topics.OrderStatusReports;
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._tradesMinute;
-    if (!this._ioDelay) return this.io ? this.io.emit(prefix + topic, msg) : null;
+    if (!this._ioDelay) return this._io ? this._io.emit(prefix + topic, msg) : null;
     this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
     if (!isOSR || msg.data[1] === Models.OrderStatus.Working) this._delayed.push([prefix+topic, msg]);
   };
@@ -72,7 +71,8 @@ export class ApplicationState {
     private _changeNotepadReciever : Publish.IReceive<string>,
     private _toggleConfigsPublisher : Publish.IPublish<boolean>,
     private _toggleConfigsReciever : Publish.IReceive<boolean>,
-    private _dbSizePersister : Persister.ILoadLatest<number>
+    private _dbSizePersister : Persister.ILoadLatest<number>,
+    private _io: SocketIO.Server
   ) {
     this.setDelay();
     this.setTick();
