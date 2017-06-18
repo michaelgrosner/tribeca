@@ -63,7 +63,6 @@ export class ExchangeQuoter {
         switch (o.orderStatus) {
             case Models.OrderStatus.Cancelled:
             case Models.OrderStatus.Complete:
-            case Models.OrderStatus.Rejected:
                 this.activeQuote = this.activeQuote.filter(q => q.orderId !== o.orderId);
         }
     };

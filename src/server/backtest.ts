@@ -112,7 +112,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             if (cancel.side === Models.Side.Bid) {
                 var existing = this._openBidOrders[cancel.orderId];
                 if (typeof existing === "undefined") {
-                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Rejected});
+                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Cancelled});
                     return;
                 }
                 this._quoteHeld -= existing.price * existing.quantity;
@@ -122,7 +122,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             else {
                 var existing = this._openAskOrders[cancel.orderId];
                 if (typeof existing === "undefined") {
-                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Rejected});
+                    this.OrderUpdate.trigger({orderId: cancel.orderId, orderStatus: Models.OrderStatus.Cancelled});
                     return;
                 }
                 this._baseHeld -= existing.quantity;

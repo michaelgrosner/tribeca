@@ -201,8 +201,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
                     orderId: cancel.orderId,
                     rejectMessage: msg,
-                    orderStatus: Models.OrderStatus.Rejected,
-                    cancelRejected: true,
+                    orderStatus: Models.OrderStatus.Cancelled,
                     time: t,
                     leavesQuantity: 0
                 });
@@ -255,7 +254,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               this.OrderUpdate.trigger({
                   orderId: order.orderId,
                   rejectMessage: msg,
-                  orderStatus: Models.OrderStatus.Rejected,
+                  orderStatus: Models.OrderStatus.Cancelled,
                   time: this._timeProvider.utcNow()
               });
             }

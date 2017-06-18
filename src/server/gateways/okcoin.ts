@@ -296,7 +296,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             osr.leavesQuantity = order[1];
         }
         else {
-            osr.orderStatus = Models.OrderStatus.Rejected;
+            osr.orderStatus = Models.OrderStatus.Cancelled;
         }
 
         this.OrderUpdate.trigger(osr);
@@ -316,21 +316,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onCancel = (ts: Models.Timestamped<OrderAck>) => {
         if (typeof ts.data.order_id == "undefined") return;
-        var osr : Models.OrderStatusUpdate = {
+        this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
           exchangeId: ts.data.order_id.toString(),
+          orderStatus: Models.OrderStatus.Cancelled,
           time: ts.time,
           leavesQuantity: 0
-        };
-
-        if (ts.data.result) {
-            osr.orderStatus = Models.OrderStatus.Cancelled;
-        }
-        else {
-            osr.orderStatus = Models.OrderStatus.Rejected;
-            osr.cancelRejected = true;
-        }
-
-        this.OrderUpdate.trigger(osr);
+        });
     };
 
     replaceOrder = (replace : Models.OrderStatusReport) => {
@@ -346,7 +337,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             case 1: return Models.OrderStatus.Working;
             case 2: return Models.OrderStatus.Complete;
             case 4: return Models.OrderStatus.Working;
-            default: return Models.OrderStatus.Other;
+            default: return Models.OrderStatus.Cancelled;
         }
     }
 

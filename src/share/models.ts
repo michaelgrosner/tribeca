@@ -129,7 +129,7 @@ export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Polonie
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
-export enum OrderStatus { New, Working, Complete, Cancelled, Rejected, Other }
+export enum OrderStatus { New, Working, Complete, Cancelled }
 export enum Liquidity { Make, Take }
 
 export interface ProductState {
@@ -204,7 +204,6 @@ export interface OrderStatusReport {
     partiallyFilled : boolean;
     pendingCancel : boolean;
     pendingReplace : boolean;
-    cancelRejected : boolean;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }

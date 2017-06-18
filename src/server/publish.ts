@@ -73,8 +73,7 @@ export class Publisher<T> implements IPublish<T> {
     private compressOSRInc = (data: any): T => {
       return <any>new Models.Timestamped(
         (data.orderStatus == Models.OrderStatus.Cancelled
-        || data.orderStatus == Models.OrderStatus.Complete
-        || data.orderStatus == Models.OrderStatus.Rejected)
+        || data.orderStatus == Models.OrderStatus.Complete)
       ? [
         data.orderId,
         data.orderStatus,
