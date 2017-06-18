@@ -1,4 +1,3 @@
-import './promises';
 require('events').EventEmitter.prototype._maxListeners = 30;
 var packageConfig = require("./../../package.json");
 import path = require("path");
@@ -38,7 +37,6 @@ import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
-import Backtest = require("./backtest");
 import QuotingEngine = require("./quoting-engine");
 import Promises = require("./promises");
 
@@ -120,170 +118,7 @@ process.on("SIGINT", () => {
   performExit();
 });
 
-const backTestSimulationSetup = (
-  inputData: (Models.Market | Models.MarketTrade)[],
-  parameters: Backtest.BacktestParameters
-) => {
-    const timeProvider: Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(inputData.slice(0,1).pop().time), moment(inputData.slice(-1).pop().time));
-
-    const getExchange = async (): Promise<Interfaces.CombinedGateway> => new Backtest.BacktestExchange(
-      new Backtest.BacktestGateway(
-        inputData,
-        parameters.startingBasePosition,
-        parameters.startingQuotePosition,
-        <Backtest.BacktestTimeProvider>timeProvider
-      )
-    );
-
-    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
-        return new Publish.NullPublisher<T>();
-    };
-
-    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.NullReceiver<T>();
-
-    const getPersister = <T>(collectionName: string): Promise<Persister.ILoadAll<T>> => new Promise((cb) => cb(new Backtest.BacktestPersister<T>()));
-
-    const getRepository = <T>(defValue: T, collectionName: string): Persister.ILoadLatest<T> => new Backtest.BacktestPersister<T>([defValue]);
-
-    return {
-        config: null,
-        pair: null,
-        exchange: Models.Exchange.Null,
-        startingActive: true,
-        startingParameters: parameters.quotingParameters,
-        timeProvider: timeProvider,
-        getExchange: getExchange,
-        getReceiver: getReceiver,
-        getPersister: getPersister,
-        getRepository: getRepository,
-        getPublisher: getPublisher
-    };
-};
-
-const liveTradingSetup = () => {
-    const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
-
-    const app = express();
-
-    let web_server;
-    try {
-      web_server = https.createServer({
-        key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-        cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-      }, app);
-    } catch (e) {
-      web_server = http.createServer(app)
-    }
-
-    const io = socket_io(web_server);
-
-    const config = new Config.ConfigProvider();
-
-    const username = config.GetString("WebClientUsername");
-    const password = config.GetString("WebClientPassword");
-    if (username !== "NULL" && password !== "NULL") {
-        console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-        const basicAuth = require('basic-auth-connect');
-        app.use(basicAuth((u, p) => u === username && p === password));
-    }
-
-    app.use(compression());
-    app.use(express.static(path.join(__dirname, "..", "pub")));
-
-    const webport = parseFloat(config.GetString("WebClientListenPort"));
-    web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
-
-    app.get("/view/*", (req: express.Request, res: express.Response) => {
-      try {
-        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
-      } catch (e) {
-        res.send('Document Not Found, but today is a beautiful day.');
-      }
-    });
-
-    let pair = ((raw: string): Models.CurrencyPair => {
-      const split = raw.split("/");
-      if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
-      return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-    })(config.GetString("TradedPair"));
-
-    const exchange = ((ex: string): Models.Exchange => {
-      switch (ex) {
-        case "coinbase": return Models.Exchange.Coinbase;
-        case "okcoin": return Models.Exchange.OkCoin;
-        case "bitfinex": return Models.Exchange.Bitfinex;
-        case "poloniex": return Models.Exchange.Poloniex;
-        case "korbit": return Models.Exchange.Korbit;
-        case "hitbtc": return Models.Exchange.HitBtc;
-        case "null": return Models.Exchange.Null;
-        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
-      }
-    })(config.GetString("EXCHANGE").toLowerCase());
-
-    const getExchange = (): Promise<Interfaces.CombinedGateway> => {
-      switch (exchange) {
-        case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
-        case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-        case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
-        case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
-        case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
-        case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-        case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
-        default: throw new Error("no gateway provided for exchange " + exchange);
-      }
-    };
-
-    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
-      if (monitor && !monitor.io) monitor.io = io;
-      return new Publish.Publisher<T>(topic, io, monitor, null);
-    };
-
-    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
-
-    const db = Persister.loadDb(config)
-
-    const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
-        const coll = (await (await db).collection(collectionName));
-        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
-    };
-
-    const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
-        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
-
-    for (const param in defaultQuotingParameters)
-      if (config.GetDefaultString(param) !== null)
-        defaultQuotingParameters[param] = config.GetDefaultString(param);
-
-    return {
-        config: config,
-        pair: pair,
-        exchange: exchange,
-        startingActive: config.GetString("BotIdentifier").indexOf('auto')>-1,
-        startingParameters: defaultQuotingParameters,
-        timeProvider: timeProvider,
-        getExchange: getExchange,
-        getReceiver: getReceiver,
-        getPersister: getPersister,
-        getRepository: getRepository,
-        getPublisher: getPublisher
-    };
-};
-
-interface TradingSystem {
-    config: Config.ConfigProvider;
-    pair: Models.CurrencyPair;
-    exchange: Models.Exchange;
-    startingActive: boolean;
-    startingParameters: Models.QuotingParameters;
-    timeProvider: Utils.ITimeProvider;
-    getExchange(): Promise<Interfaces.CombinedGateway>;
-    getReceiver<T>(topic: string): Publish.IReceive<T>;
-    getPersister<T extends Persister.Persistable>(collectionName: string): Promise<Persister.ILoadAll<T>>;
-    getRepository<T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T>;
-    getPublisher<T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T>;
-}
-
-var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
+(async (system): Promise<void> => {
     const tradesPersister = await system.getPersister<Models.Trade>("trades");
     const rfvPersister = await system.getPersister<Models.RegularFairValue>("rfv");
     const marketDataPersister = await system.getPersister<Models.MarketStats>("mkt");
@@ -461,28 +296,6 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
       broker
     );
 
-    if (process.env["BACKTEST_MODE"]) {
-      const t = new Date();
-      console.log("starting backtest");
-      try {
-        (<Backtest.BacktestExchange>gateway).run();
-      }
-      catch (err) {
-        console.error("exception while running backtest!", err.message, err.stack);
-        throw err;
-      }
-
-      const results = [paramsRepo.latest, positionBroker.latestReport, {
-        trades: orderBroker._trades.map(t => [t.time.valueOf(), t.price, t.quantity, t.side]),
-        volume: orderBroker._trades.reduce((p, c) => p + c.quantity, 0)
-      }];
-      console.log("sending back results, took: ", moment(new Date()).diff(t, "seconds"));
-
-      request({url: ('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/result",
-         method: 'POST',
-         json: results}, (err, resp, body) => { });
-    }
-
     exitingEvent = () => {
       return orderBroker.cancelOpenOrders();
     };
@@ -497,43 +310,111 @@ var runTradingSystem = async (system: TradingSystem) : Promise<void> => {
         console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
       start = process.hrtime();
     }, interval).unref();
-};
+})((() => {
+    const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
-(async (): Promise<any> => {
-  if (!process.env["BACKTEST_MODE"])
-    return runTradingSystem(liveTradingSetup());
+    const app = express();
 
-  console.log("enter backtest mode");
-
-  const getFromBacktestServer = (ep: string) : Promise<any> => {
-    return new Promise((resolve, reject) => {
-      request.get(('BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001")+"/"+ep, (err, resp, body) => {
-        if (err) reject(err);
-        else resolve(body);
-      });
-    });
-  };
-
-  const input = await getFromBacktestServer("inputData").then(body => {
-    const inp: Array<Models.Market | Models.MarketTrade> = (typeof body ==="string") ? eval(body) : body;
-
-    for (let i = 0; i < inp.length; i++) {
-      const d = inp[i];
-      d.time = new Date(d.time);
+    let web_server;
+    try {
+      web_server = https.createServer({
+        key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
+        cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
+      }, app);
+    } catch (e) {
+      web_server = http.createServer(app)
     }
 
-    return inp;
-  });
+    const io = socket_io(web_server);
 
-  const nextParameters = () : Promise<Backtest.BacktestParameters> => getFromBacktestServer("nextParameters").then(body => {
-    const p = (typeof body ==="string") ? <string|Backtest.BacktestParameters>JSON.parse(body) : body;
-    console.log("Recv'd parameters", util.inspect(p));
-    return (typeof p === "string") ? null : p;
-  });
+    const config = new Config.ConfigProvider();
 
- while (true) {
-    const next = await nextParameters();
-    if (!next) break;
-    runTradingSystem(backTestSimulationSetup(input, next));
-  }
-})();
+    const username = config.GetString("WebClientUsername");
+    const password = config.GetString("WebClientPassword");
+    if (username !== "NULL" && password !== "NULL") {
+        console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
+        const basicAuth = require('basic-auth-connect');
+        app.use(basicAuth((u, p) => u === username && p === password));
+    }
+
+    app.use(compression());
+    app.use(express.static(path.join(__dirname, "..", "pub")));
+
+    const webport = parseFloat(config.GetString("WebClientListenPort"));
+    web_server.listen(webport, () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on *:', webport));
+
+    app.get("/view/*", (req: express.Request, res: express.Response) => {
+      try {
+        res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
+      } catch (e) {
+        res.send('Document Not Found, but today is a beautiful day.');
+      }
+    });
+
+    let pair = ((raw: string): Models.CurrencyPair => {
+      const split = raw.split("/");
+      if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
+      return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+    })(config.GetString("TradedPair"));
+
+    const exchange = ((ex: string): Models.Exchange => {
+      switch (ex) {
+        case "coinbase": return Models.Exchange.Coinbase;
+        case "okcoin": return Models.Exchange.OkCoin;
+        case "bitfinex": return Models.Exchange.Bitfinex;
+        case "poloniex": return Models.Exchange.Poloniex;
+        case "korbit": return Models.Exchange.Korbit;
+        case "hitbtc": return Models.Exchange.HitBtc;
+        case "null": return Models.Exchange.Null;
+        default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+      }
+    })(config.GetString("EXCHANGE").toLowerCase());
+
+    const getExchange = (): Promise<Interfaces.CombinedGateway> => {
+      switch (exchange) {
+        case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, timeProvider, pair);
+        case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+        case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, timeProvider, pair);
+        case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
+        case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+        case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+        case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+        default: throw new Error("no gateway provided for exchange " + exchange);
+      }
+    };
+
+    const getPublisher = <T>(topic: string, monitor?: Monitor.ApplicationState): Publish.IPublish<T> => {
+      if (monitor && !monitor.io) monitor.io = io;
+      return new Publish.Publisher<T>(topic, io, monitor, null);
+    };
+
+    const getReceiver = <T>(topic: string): Publish.IReceive<T> => new Publish.Receiver<T>(topic, io);
+
+    const db = Persister.loadDb(config)
+
+    const getPersister = async <T extends Persister.Persistable>(collectionName: string) : Promise<Persister.ILoadAll<T>> => {
+        const coll = (await (await db).collection(collectionName));
+        return new Persister.Persister<T>(timeProvider, coll, collectionName, exchange, pair);
+    };
+
+    const getRepository = <T extends Persister.Persistable>(defValue: T, collectionName: string): Persister.ILoadLatest<T> =>
+        new Persister.RepositoryPersister<T>(db, defValue, collectionName, exchange, pair);
+
+    for (const param in defaultQuotingParameters)
+      if (config.GetDefaultString(param) !== null)
+        defaultQuotingParameters[param] = config.GetDefaultString(param);
+
+    return {
+        config: config,
+        pair: pair,
+        exchange: exchange,
+        startingActive: config.GetString("BotIdentifier").indexOf('auto')>-1,
+        startingParameters: defaultQuotingParameters,
+        timeProvider: timeProvider,
+        getExchange: getExchange,
+        getReceiver: getReceiver,
+        getPersister: getPersister,
+        getRepository: getRepository,
+        getPublisher: getPublisher
+    };
+})());
