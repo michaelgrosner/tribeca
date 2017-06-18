@@ -148,7 +148,7 @@ export class ExchangeQuoter {
 
         const quoteOrder = new QuoteOrder(q.data, this._broker.sendOrder(
           new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
-            price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote)
+            price, Models.TimeInForce.GTC, q.data.isPong, this._exchange, q.time, true, Models.OrderSource.Quote)
         ).sentOrderClientId);
 
         this.activeQuote.push(quoteOrder);

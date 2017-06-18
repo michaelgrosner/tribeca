@@ -247,6 +247,7 @@ export class QuotingEngine {
               unrounded.askSz = (!_unroundedBidSz || _unroundedBidSz > totalBasePosition)
                 ? totalBasePosition : _unroundedBidSz;
             unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
+            unrounded.isAskPong = (safety.buyPing && unrounded.askPx && unrounded.askPx >= safety.buyPing + widthPong);
         }
 
         if (unrounded.bidSz !== null) {
@@ -254,6 +255,7 @@ export class QuotingEngine {
               unrounded.bidSz = (!_unroundedAskSz || _unroundedAskSz > totalQuotePosition)
                 ? totalQuotePosition : _unroundedAskSz;
             unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
+            unrounded.isBidPong = (safety.sellPong && unrounded.bidPx && unrounded.bidPx <= safety.sellPong - widthPong);
         }
 
         return unrounded;
@@ -280,8 +282,8 @@ export class QuotingEngine {
         }
 
         this.latestQuote = new Models.TwoSidedQuote(
-            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, Models.Side.Bid),
-            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, Models.Side.Ask),
+            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz, genQt.isBidPong), this.latestQuote, Models.Side.Bid),
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz, genQt.isAskPong), this.latestQuote, Models.Side.Ask),
             this._timeProvider.utcNow()
         );
     };

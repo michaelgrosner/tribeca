@@ -5,7 +5,9 @@ export class GeneratedQuote {
     public bidPx: number,
     public bidSz: number,
     public askPx: number,
-    public askSz: number
+    public askSz: number,
+    public isBidPong?: boolean,
+    public isAskPong?: boolean
   ) { }
 }
 

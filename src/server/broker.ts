@@ -188,6 +188,7 @@ export class OrderBroker {
             quantity: order.quantity,
             leavesQuantity: order.quantity,
             type: order.type,
+            isPong: order.isPong,
             price: this.roundPrice(order.price, order.side),
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
@@ -345,6 +346,7 @@ export class OrderBroker {
           time: getOrFallback(osr.time, this._timeProvider.utcNow()),
           lastQuantity: osr.lastQuantity,
           lastPrice: osr.lastPrice,
+          isPong: getOrFallback(osr.isPong, orig.isPong),
           leavesQuantity: getOrFallback(osr.leavesQuantity, orig.leavesQuantity),
           cumQuantity: cumQuantity,
           averagePrice: cumQuantity > 0 ? osr.averagePrice || orig.averagePrice : undefined,
@@ -482,7 +484,7 @@ export class OrderBroker {
         _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
             try {
                 const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
-                    o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), this._timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
+                    o.price, Models.TimeInForce[o.timeInForce], false, this._baseBroker.exchange(), this._timeProvider.utcNow(), false, Models.OrderSource.OrderTicket);
                 this.sendOrder(order);
             }
             catch (e) {

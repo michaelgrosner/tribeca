@@ -92,6 +92,7 @@ export class Publisher<T> implements IPublish<T> {
         data.timeInForce,
         data.computationalLatency,
         data.leavesQuantity,
+        data.isPong,
         data.pair.quote
       ], data.time);
     };
