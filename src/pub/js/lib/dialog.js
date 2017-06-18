@@ -5,7 +5,7 @@
 (function(a, b) {
 
   a.setDialog = function(uniqueId, set, config) {
-    if (set == "open") {
+    if (set === "open") {
       var div = b.createElement('div');
         div.className = 'dialog-box';
         div.id = uniqueId;
@@ -22,7 +22,7 @@
       left: false
     };
 
-    for (var i in config) { defaults[i] = (typeof(config[i])) ? config[i] : defaults[i]; }
+    for (var i in config) { defaults[i] = (typeof config[i] !== 'undefined') ? config[i] : defaults[i]; }
 
     function _drag_init(e, el) {
       for (var i=0;i<b.getElementsByClassName('dialog-box').length;i++) b.getElementsByClassName('dialog-box')[i].style.zIndex = 9999;
@@ -45,8 +45,8 @@
     }
 
     dialog.className =  'dialog-box fixed-dialog-box';
-    dialog.style.visibility = (set == "open") ? "visible" : "hidden";
-    dialog.style.opacity = (set == "open") ? 1 : 0;
+    dialog.style.visibility = (set === "open") ? "visible" : "hidden";
+    dialog.style.opacity = (set === "open") ? 1 : 0;
     dialog.style.width = defaults.width + 'px';
     dialog.style.height = defaults.height + 'px';
     dialog.style.top = (!defaults.top) ? "50%" : '0px';
@@ -58,7 +58,7 @@
     dialog.children[1].onmousedown = function(e) { if ((e.target || e.srcElement)===this) _drag_init(e, this.parentNode); };
     dialog.children[1].children[0].onclick = function() { a.setDialog(uniqueId, "close", {content:""}); };
     b.onmouseup = function() { b.onmousemove = function() {}; };
-    if (set == "close") dialog.remove();
+    if (set === "close") dialog.remove();
   };
 
 })(window, document);
