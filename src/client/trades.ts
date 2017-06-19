@@ -120,7 +120,7 @@ export class TradesComponent implements OnInit {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (!exists && node.data.tradeId==t.tradeId) {
           exists = true;
-          let merged = (node.data.quantity != t.quantity);
+          const merged = (node.data.quantity != t.quantity);
           if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
           node.setData(Object.assign(node.data, {
             time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
@@ -140,7 +140,7 @@ export class TradesComponent implements OnInit {
               setTimeout(()=>this.gridOptions.api.refreshView(),0);
             }, 269);
             if (this.audio) {
-              var audio = new Audio('/audio/'+(merged?'boom':'erang')+'.mp3');
+              var audio = new Audio('/audio/'+(merged?'0':'1')+'.mp3');
               audio.volume = 0.5;
               audio.play();
             }
@@ -166,7 +166,7 @@ export class TradesComponent implements OnInit {
           productFixed: this.product.fixed
         }]});
         if (t.loadedFromDB === false && this.audio) {
-          var audio = new Audio('/audio/boom.mp3');
+          var audio = new Audio('/audio/0.mp3');
           audio.volume = 0.5;
           audio.play();
         }
