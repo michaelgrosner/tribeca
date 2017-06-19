@@ -63,7 +63,7 @@ export class OrdersComponent implements OnInit {
         cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
       },
       { width: 40, field: 'side', headerName: 'side' , cellRenderer:(params) => {
-          return (params.data.pong ? '&#8315;' : '&#8331;') + params.value;
+          return (params.data.pong ? '¯' : '_') + params.value;
       }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
