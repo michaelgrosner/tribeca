@@ -134,18 +134,19 @@ export class Repository {
 
     setInterval(() => {
       for (let dbName in this._persistQueue) {
-        if (this._persistQueue[dbName].length === 0) return;
-        if (typeof this.collection[dbName] !== 'undefined') {
-          this.collection[dbName].then(coll => {
-            if (dbName != 'trades' && dbName!='rfv' && dbName!='mkt')
-              coll.deleteMany({ time: { $exists:true } }, err => {
-                  if (err) console.error('persister', err, 'Unable to deleteMany', dbName);
-              });
-            coll.insertMany(_.map(this._persistQueue[dbName], this.converter), (err, r) => {
-                if (r.result && r.result.ok) this._persistQueue[dbName].length = 0;
-                if (err) console.error('persister', err, 'Unable to insert', dbName, this._persistQueue[dbName]);
-            }, );
-          });
+        if (this._persistQueue[dbName].length) {
+          if (typeof this.collection[dbName] !== 'undefined') {
+            this.collection[dbName].then(coll => {
+              if (dbName != 'trades' && dbName!='rfv' && dbName!='mkt')
+                coll.deleteMany({ time: { $exists:true } }, err => {
+                    if (err) console.error('persister', err, 'Unable to deleteMany', dbName);
+                });
+              coll.insertMany(_.map(this._persistQueue[dbName], this.converter), (err, r) => {
+                  if (r.result && r.result.ok) this._persistQueue[dbName].length = 0;
+                  if (err) console.error('persister', err, 'Unable to insert', dbName, this._persistQueue[dbName]);
+              }, );
+            });
+          }
         }
       }
     }, 13000);
