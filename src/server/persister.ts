@@ -5,194 +5,149 @@ import mongodb = require('mongodb');
 import Config = require("./config");
 import * as Promises from './promises';
 
-export function loadDb(config: Config.ConfigProvider) {
-    var deferred = Promises.defer<mongodb.Db>();
-    mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
-        if (err) deferred.reject(err);
-        else deferred.resolve(db);
-    });
-    return deferred.promise;
-}
+export class Repository {
+  public loadDBSize = async (): Promise<number> => {
 
-export interface Persistable {
-    time?: Date;
-    pair?: Models.CurrencyPair;
-    exchange?: Models.Exchange;
-}
+      var deferred = Promises.defer<number>();
 
-export interface IPersist<T> {
-    persist(data: T): void;
-    clean(time: Date): void;
-    repersist(report: T): void;
-}
+      this.db.then(db => {
+        db.stats((err, arr) => {
+          if (err) {
+            deferred.reject(err);
+          }
+          else if (arr == null) {
+            deferred.resolve(this._defaultParameter);
+          }
+          else {
+            var v = <number>_.defaults(arr.dataSize, this._defaultParameter);
+            deferred.resolve(v);
+          }
+        });
+      });
 
-export interface ILoadLatest<T> extends IPersist<T> {
-    loadLatest(): Promise<T>;
-    loadDBSize(): Promise<T>;
-}
+      return deferred.promise;
+  };
 
-export interface ILoadAll<T> extends IPersist<T> {
-    loadAll(limit?: number, query?: Object): Promise<T[]>;
-}
 
-export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
-    public loadDBSize = async (): Promise<T> => {
+  public loadLatest = async (dbName: string): Promise<any> => {
+      const coll = await this.collection[dbName];
 
-        var deferred = Promises.defer<T>();
+      const selector = { exchange: this._exchange, pair: this._pair };
+      const docs = await coll.find(selector)
+              .limit(1)
+              .project({ _id: 0 })
+              .sort({ $natural: -1 })
+              .toArray();
 
-        this.db.then(db => {
-          db.stats((err, arr) => {
-            if (err) {
-              deferred.reject(err);
-            }
-            else if (arr == null) {
-              deferred.resolve(this._defaultParameter);
-            }
-            else {
-              var v = <T>_.defaults(arr.dataSize, this._defaultParameter);
-              deferred.resolve(v);
-            }
+      if (docs.length === 0) return this._defaultParameter[dbName];
+
+      var v = <any>_.defaults(docs[0], this._defaultParameter[dbName]);
+      return this.converter(v);
+  };
+
+  private converter = (x: any):any => {
+      if (typeof x.time === "undefined")
+          x.time = new Date();
+      if (typeof x.exchange === "undefined")
+          x.exchange = this._exchange;
+      if (typeof x.pair === "undefined")
+          x.pair = this._pair;
+      return x;
+  };
+
+  public loadAll = (dbName: string, limit?: number, query?: any): Promise<any[]> => {
+      const selector: Object = { exchange: this._exchange, pair: this._pair };
+      if (query && query.time && dbName == "trades") delete query.time;
+      _.assign(selector, query);
+      return this.loadInternal(dbName, selector, limit);
+  };
+
+  private loadInternal = async (dbName: string, selector: Object, limit?: number) : Promise<any[]> => {
+      const coll = await this.collection[dbName];
+      let query = coll.find(selector, {_id: 0});
+
+      if (limit !== null) {
+          const count = await coll.count(selector);
+          query = query.limit(limit);
+          if (count !== 0)
+              query = query.skip(Math.max(count - limit, 0));
+      }
+
+      const loaded = _.map(await query.toArray(), this.converter);
+
+      return loaded;
+  };
+
+  private _persistQueue: any = {};
+  public persist = (dbName: string, report: any) => {
+      if (typeof this._persistQueue[dbName] === 'undefined')
+        this._persistQueue[dbName] = [];
+      this._persistQueue[dbName].push(report);
+  };
+
+  public reclean = (dbName: string, time: Date) => {
+      this.collection[dbName].then(coll => {
+        coll.deleteMany({ time: (dbName=='rfv'||dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
+            if (err) console.error('persister', err, 'Unable to clean', dbName);
+        });
+      });
+  };
+
+  public repersist = (report: any) => {
+      this.collection['trades'].then(coll => {
+        if ((<any>report).Kqty<0)
+          coll.deleteOne({ tradeId: (<any>report).tradeId }, err => {
+              if (err) console.error('persister', err, 'Unable to deleteOne', 'trades', report);
           });
-        });
-
-        return deferred.promise;
-    };
-
-
-    public loadLatest = async (): Promise<T> => {
-        const coll = await this.collection;
-
-        const selector = { exchange: this._exchange, pair: this._pair };
-        const docs = await coll.find(selector)
-                .limit(1)
-                .project({ _id: 0 })
-                .sort({ $natural: -1 })
-                .toArray();
-
-        if (docs.length === 0)
-            return this._defaultParameter;
-
-        var v = <T>_.defaults(docs[0], this._defaultParameter);
-        return this.converter(v);
-    };
-
-    public repersist = (report: T) => { };
-
-    public clean = (time: Date) => { };
-
-    public persist = (report: T) => {
-        this.collection.then(coll => {
-            if (this._dbName != 'trades')
-              coll.deleteMany({ _id: { $exists:true } }, err => {
-                  if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName, report);
-              });
-            coll.insertOne(this.converter(report), err => {
-                if (err) console.error('persister', err, 'Unable to insert', this._dbName, report);
-            });
-        });
-    };
-
-    private converter = (x: T) : T => {
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-        return x;
-    };
-
-    collection: Promise<mongodb.Collection>;
-    constructor(
-        private db: Promise<mongodb.Db>,
-        private _defaultParameter: T,
-        private _dbName: string,
-        private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair
-    ) {
-        if (this._dbName != 'dataSize')
-          this.collection = db.then(db => db.collection(this._dbName));
-    }
-}
-
-export class Persister<T extends Persistable> implements ILoadAll<T> {
-    public loadAll = (limit?: number, query?: any): Promise<T[]> => {
-        const selector: Object = { exchange: this._exchange, pair: this._pair };
-        if (query && query.time && this._dbName == "trades") delete query.time;
-        _.assign(selector, query);
-        return this.loadInternal(selector, limit);
-    };
-
-    private loadInternal = async (selector: Object, limit?: number) : Promise<T[]> => {
-        const coll = await this.collection;
-        let query = coll.find(selector, {_id: 0});
-
-        if (limit !== null) {
-            const count = await coll.count(selector);
-            query = query.limit(limit);
-            if (count !== 0)
-                query = query.skip(Math.max(count - limit, 0));
-        }
-
-        const loaded = _.map(await query.toArray(), this.converter);
-
-        return loaded;
-    };
-
-    private _persistQueue : T[] = [];
-    public persist = (report: T) => {
-        this._persistQueue.push(report);
-    };
-
-    public clean = (time: Date) => {
-        this.collection.then(coll => {
-          coll.deleteMany({ time: (this._dbName=='rfv'||this._dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
-              if (err) console.error('persister', err, 'Unable to clean', this._dbName);
+        else
+          coll.updateOne({ tradeId: (<any>report).tradeId }, { $set: { time: (<any>report).time, quantity : (<any>report).quantity, value : (<any>report).value, Ktime: (<any>report).Ktime, Kqty : (<any>report).Kqty, Kprice : (<any>report).Kprice, Kvalue : (<any>report).Kvalue, Kdiff : (<any>report).Kdiff } }, err => {
+              if (err) console.error('persister', err, 'Unable to repersist', 'trades', report);
           });
-        });
-    };
+      });
+  };
 
-    public repersist = (report: T) => {
-        this.collection.then(coll => {
-          if ((<any>report).Kqty<0)
-            coll.deleteOne({ tradeId: (<any>report).tradeId }, err => {
-                if (err) console.error('persister', err, 'Unable to deleteOne', this._dbName, report);
-            });
-          else
-            coll.updateOne({ tradeId: (<any>report).tradeId }, { $set: { time: (<any>report).time, quantity : (<any>report).quantity, value : (<any>report).value, Ktime: (<any>report).Ktime, Kqty : (<any>report).Kqty, Kprice : (<any>report).Kprice, Kvalue : (<any>report).Kvalue, Kdiff : (<any>report).Kdiff } }, err => {
-                if (err) console.error('persister', err, 'Unable to repersist', this._dbName, report);
-            });
-        });
-    };
+  private loadDb = (url: string) => {
+      var deferred = Promises.defer<mongodb.Db>();
+      mongodb.MongoClient.connect(url, (err, db) => {
+          if (err) deferred.reject(err);
+          else deferred.resolve(db);
+      });
+      return deferred.promise;
+  };
 
-    private converter = (x: T) : T => {
-        if (typeof x.time === "undefined")
-            x.time = new Date();
-        if (typeof x.exchange === "undefined")
-            x.exchange = this._exchange;
-        if (typeof x.pair === "undefined")
-            x.pair = this._pair;
-        return x;
-    };
+  private db: Promise<mongodb.Db>;
+  private _defaultParameter: any[] = [];
+  private collection: Promise<mongodb.Collection>[] = [];
 
-    private collection: Promise<mongodb.Collection>;
-    constructor(
-        private db: Promise<mongodb.Db>,
-        private _dbName: string,
-        private _exchange: Models.Exchange,
-        private _pair: Models.CurrencyPair
-    ) {
-      this.collection = db.then(db => db.collection(this._dbName));
-      setInterval(() => {
-          if (this._persistQueue.length === 0) return;
-          this.collection.then(coll => {
-            if (this._dbName != 'trades'&&this._dbName!='rfv'&&this._dbName!='mkt')
+  public loadCollection = (dbName: string, defaultParameter?: any) => {
+    this._defaultParameter[dbName] = defaultParameter;
+    if (dbName != 'dataSize')
+      this.collection[dbName] = this.db.then(db => db.collection(dbName));
+  }
+
+  constructor(
+    config: Config.ConfigProvider,
+    private _exchange: Models.Exchange,
+    private _pair: Models.CurrencyPair
+  ) {
+    this.db = this.loadDb(config.GetString("MongoDbUrl"));
+
+    setInterval(() => {
+      for (let dbName in this._persistQueue) {
+        if (this._persistQueue[dbName].length === 0) return;
+        if (typeof this.collection[dbName] !== 'undefined') {
+          this.collection[dbName].then(coll => {
+            if (dbName != 'trades' && dbName!='rfv' && dbName!='mkt')
               coll.deleteMany({ time: { $exists:true } }, err => {
-                  if (err) console.error('persister', err, 'Unable to deleteMany', this._dbName);
+                  if (err) console.error('persister', err, 'Unable to deleteMany', dbName);
               });
-            coll.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
-                if (r.result && r.result.ok) this._persistQueue.length = 0;
-                if (err) console.error('persister', err, 'Unable to insert', this._dbName, this._persistQueue);
+            coll.insertMany(_.map(this._persistQueue[dbName], this.converter), (err, r) => {
+                if (r.result && r.result.ok) this._persistQueue[dbName].length = 0;
+                if (err) console.error('persister', err, 'Unable to insert', dbName, this._persistQueue[dbName]);
             }, );
           });
-      }, 10000);
-    }
+        }
+      }
+    }, 13000);
+  }
 }

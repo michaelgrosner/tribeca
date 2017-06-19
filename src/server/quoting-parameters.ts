@@ -13,7 +13,7 @@ export class QuotingParametersRepository {
   }
 
   constructor(
-    private _paramsPersister: Persister.IPersist<Models.QuotingParameters>,
+    private _persister: Persister.Repository,
     private _pub: Publish.IPublish<Models.QuotingParameters>,
     rec: Publish.IReceive<Models.QuotingParameters>,
     initParams: Models.QuotingParameters,
@@ -30,7 +30,7 @@ export class QuotingParametersRepository {
         p.widthPercentage = false;
 
       this._latest = p;
-      this._paramsPersister.persist(p)
+      this._persister.persist(Models.Topics.QuotingParametersChange, p)
       this.NewParameters.trigger();
     }
 

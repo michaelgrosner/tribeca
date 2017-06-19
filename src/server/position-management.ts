@@ -51,7 +51,7 @@ export class PositionManager {
         private _details: Broker.ExchangeBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _persister: Persister.IPersist<Models.RegularFairValue>,
+        private _persister: Persister.Repository,
         private _fvAgent: FairValue.FairValueEngine,
         private _shortEwma: Statistics.EwmaStatisticCalculator,
         private _mediumEwma: Statistics.EwmaStatisticCalculator,
@@ -116,9 +116,10 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ));
 
-        this._persister.persist(rfv);
+        this._persister.persist('rfv', rfv);
         this._data.push(rfv);
-        this._data = this._data.slice(-7);
+        this._data = this._data.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
+        this._persister.reclean('rfv', new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
     };
 }
 
