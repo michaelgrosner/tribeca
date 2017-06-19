@@ -18,7 +18,7 @@ export class ApplicationState {
 
   private onTick = () => {
     this._tick = 0;
-    this._dbSizePersister.loadDBSize().then(dbSize => {
+    this._persister.loadDBSize().then(dbSize => {
       this._app_state = new Models.ApplicationState(
         process.memoryUsage().rss,
         (new Date()).getHours(),
@@ -66,12 +66,12 @@ export class ApplicationState {
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _appStatePublisher : Publish.IPublish<Models.ApplicationState>,
-    private _notepadPublisher : Publish.IPublish<string>,
-    private _changeNotepadReciever : Publish.IReceive<string>,
-    private _toggleConfigsPublisher : Publish.IPublish<boolean>,
-    private _toggleConfigsReciever : Publish.IReceive<boolean>,
-    private _dbSizePersister : Persister.ILoadLatest<number>,
+    private _appStatePublisher: Publish.IPublish<Models.ApplicationState>,
+    private _notepadPublisher: Publish.IPublish<string>,
+    private _changeNotepadReciever: Publish.IReceive<string>,
+    private _toggleConfigsPublisher: Publish.IPublish<boolean>,
+    private _toggleConfigsReciever: Publish.IReceive<boolean>,
+    private _persister: Persister.Repository,
     private _io: SocketIO.Server
   ) {
     this.setDelay();

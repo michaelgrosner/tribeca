@@ -88,7 +88,7 @@ export class ObservableSTDEVCalculator {
       private _filteredMarkets: MarketFiltration.MarketFiltration,
       private _minTick: number,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-      private persister: Persister.IPersist<Models.MarketStats>,
+      private _persister: Persister.Repository,
       initMkt: Models.MarketStats[]
     ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
@@ -144,12 +144,12 @@ export class ObservableSTDEVCalculator {
 
         this.onSave();
 
-        this.persister.persist(new Models.MarketStats(
+        this._persister.persist('mkt', new Models.MarketStats(
           fv.price,
           filteredMkt.bids[0].price,
           filteredMkt.asks[0].price,
           new Date()
         ));
-        this.persister.clean(new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
+        this._persister.reclean('mkt', new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
     };
 }

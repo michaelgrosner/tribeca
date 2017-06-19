@@ -91,7 +91,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i]);
+              this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -124,7 +124,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i]);
+              this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -155,7 +155,7 @@ export class OrderBroker {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
               this._tradePublisher.publish(this._trades[i]);
-              this._tradePersister.repersist(this._trades[i]);
+              this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
             }
@@ -270,7 +270,7 @@ export class OrderBroker {
               this._trades[i].Kdiff = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
             this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i]);
+            this._persister.repersist(this._trades[i]);
             break;
           }
         }
@@ -285,13 +285,13 @@ export class OrderBroker {
             this._trades[i].value += trade.value;
             this._trades[i].loadedFromDB = false;
             this._tradePublisher.publish(this._trades[i]);
-            this._tradePersister.repersist(this._trades[i]);
+            this._persister.repersist(this._trades[i]);
             break;
           }
         }
         if (!exists) {
           this._tradePublisher.publish(trade);
-          this._tradePersister.persist(trade);
+          this._persister.persist('trades', trade);
           this._trades.push(trade);
         }
       }
@@ -409,7 +409,7 @@ export class OrderBroker {
               )), trade);
             } else {
               this._tradePublisher.publish(trade);
-              this._tradePersister.persist(trade);
+              this._persister.persist('trades', trade);
               this._trades.push(trade);
             }
 
@@ -427,7 +427,7 @@ export class OrderBroker {
                     goWhile = true;
                     this._trades[i].Kqty = -1;
                     this._tradePublisher.publish(this._trades[i]);
-                    this._tradePersister.repersist(this._trades[i]);
+                    this._persister.repersist(this._trades[i]);
                     this._trades.splice(i, 1);
                   }
                 }
@@ -455,7 +455,7 @@ export class OrderBroker {
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
-      private _tradePersister : Persister.IPersist<Models.Trade>,
+      private _persister : Persister.Repository,
       private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
       private _tradePublisher : Publish.IPublish<Models.Trade>,
       private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,

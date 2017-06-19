@@ -4,7 +4,6 @@ import Broker = require("./broker");
 import Publish = require("./publish");
 import moment = require('moment');
 import FairValue = require("./fair-value");
-import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
 
 interface ITrade {

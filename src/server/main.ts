@@ -139,8 +139,7 @@ const io = socket_io(((() => {
 
 if (config.GetString("WebClientUsername") !== "NULL" && config.GetString("WebClientPassword") !== "NULL") {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-  const basicAuth = require('basic-auth-connect');
-  app.use(basicAuth((u, p) => u === config.GetString("WebClientUsername") && p === config.GetString("WebClientPassword")));
+  app.use(require('basic-auth-connect')((u, p) => u === config.GetString("WebClientUsername") && p === config.GetString("WebClientPassword")));
 }
 
 app.use(compression());
@@ -175,20 +174,20 @@ const exchange = ((ex: string): Models.Exchange => {
   }
 })(config.GetString("EXCHANGE").toLowerCase());
 
-const db = Persister.loadDb(config);
 
 (async (): Promise<void> => {
-  const tradesPersister = await new Persister.Persister<Models.Trade>(db, 'trades', exchange, pair);
-  const rfvPersister = await new Persister.Persister<Models.RegularFairValue>(db, 'rfv', exchange, pair);
-  const marketDataPersister = await new Persister.Persister<Models.MarketStats>(db, 'mkt', exchange, pair);
-
-  const paramsPersister = new Persister.RepositoryPersister<Models.QuotingParameters>(db, defaultQuotingParameters, Models.Topics.QuotingParametersChange, exchange, pair);
+  const persister = new Persister.Repository(config, exchange, pair);
+  persister.loadCollection('trades');
+  persister.loadCollection('rfv');
+  persister.loadCollection('mkt');
+  persister.loadCollection(Models.Topics.QuotingParametersChange, defaultQuotingParameters);
+  persister.loadCollection('dataSize', 0);
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
-    paramsPersister.loadLatest(),
-    tradesPersister.loadAll(10000),
-    rfvPersister.loadAll(10000),
-    marketDataPersister.loadAll(10000)
+    persister.loadLatest(Models.Topics.QuotingParametersChange),
+    persister.loadAll('trades', 10000),
+    persister.loadAll('rfv', 10000),
+    persister.loadAll('mkt', 10000)
   ]);
 
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
@@ -215,7 +214,7 @@ const db = Persister.loadDb(config);
     )]);
 
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
-    paramsPersister,
+    persister,
     new Publish.Publisher(Models.Topics.QuotingParametersChange, io),
     new Publish.Receiver(Models.Topics.QuotingParametersChange, io),
     initParams
@@ -229,7 +228,7 @@ const db = Persister.loadDb(config);
     new Publish.Receiver(Models.Topics.Notepad, io),
     new Publish.Publisher(Models.Topics.ToggleConfigs, io),
     new Publish.Receiver(Models.Topics.ToggleConfigs, io),
-    new Persister.RepositoryPersister<number>(db, 0, 'dataSize', exchange, pair),
+    persister,
     io
   );
 
@@ -256,7 +255,7 @@ const db = Persister.loadDb(config);
     paramsRepo,
     broker,
     gateway.oe,
-    tradesPersister,
+    persister,
     new Publish.Publisher(Models.Topics.OrderStatusReports, io, monitor),
     new Publish.Publisher(Models.Topics.Trades, io),
     new Publish.Publisher(Models.Topics.TradesChart, io),
@@ -314,7 +313,7 @@ const db = Persister.loadDb(config);
       filtration,
       broker.minTickIncrement,
       paramsRepo,
-      marketDataPersister,
+      persister,
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
@@ -323,7 +322,7 @@ const db = Persister.loadDb(config);
         broker,
         timeProvider,
         paramsRepo,
-        rfvPersister,
+        persister,
         fvEngine,
         new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
         new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
