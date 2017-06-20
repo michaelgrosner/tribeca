@@ -29,20 +29,37 @@ export class Repository {
   };
 
 
-  public loadLatest = async (dbName: string): Promise<any> => {
-      const coll = await this.collection[dbName];
+  public loadLatest = async (dbName: string, defaults: any): Promise<any> => {
+    const coll = await this.loadCollection(dbName);
 
-      const selector = { exchange: this._exchange, pair: this._pair };
-      const docs = await coll.find(selector)
-              .limit(1)
-              .project({ _id: 0 })
-              .sort({ $natural: -1 })
-              .toArray();
+    const selector = { exchange: this._exchange, pair: this._pair };
+    const docs = await coll.find(selector)
+            .limit(1)
+            .project({ _id: 0 })
+            .sort({ $natural: -1 })
+            .toArray();
 
-      if (docs.length === 0) return this._defaultParameter[dbName];
+    if (docs.length === 0) return defaults;
 
-      var v = <any>_.defaults(docs[0], this._defaultParameter[dbName]);
-      return this.converter(v);
+    var v = <any>_.defaults(docs[0], defaults);
+    return this.converter(v);
+  };
+
+  public loadAll = async (dbName: string, limit?: number): Promise<any[]> => {
+    const selector: Object = { exchange: this._exchange, pair: this._pair };
+    const coll = await this.loadCollection(dbName);
+    let query = coll.find(selector, {_id: 0});
+
+    if (limit !== null) {
+      const count = await coll.count(selector);
+      query = query.limit(limit);
+      if (count !== 0)
+        query = query.skip(Math.max(count - limit, 0));
+    }
+
+    const loaded = _.map(await query.toArray(), this.converter);
+
+    return loaded;
   };
 
   private converter = (x: any):any => {
@@ -55,29 +72,6 @@ export class Repository {
       return x;
   };
 
-  public loadAll = (dbName: string, limit?: number, query?: any): Promise<any[]> => {
-      const selector: Object = { exchange: this._exchange, pair: this._pair };
-      if (query && query.time && dbName == "trades") delete query.time;
-      _.assign(selector, query);
-      return this.loadInternal(dbName, selector, limit);
-  };
-
-  private loadInternal = async (dbName: string, selector: Object, limit?: number) : Promise<any[]> => {
-      const coll = await this.collection[dbName];
-      let query = coll.find(selector, {_id: 0});
-
-      if (limit !== null) {
-          const count = await coll.count(selector);
-          query = query.limit(limit);
-          if (count !== 0)
-              query = query.skip(Math.max(count - limit, 0));
-      }
-
-      const loaded = _.map(await query.toArray(), this.converter);
-
-      return loaded;
-  };
-
   private _persistQueue: any = {};
   public persist = (dbName: string, report: any) => {
       if (typeof this._persistQueue[dbName] === 'undefined')
@@ -86,7 +80,7 @@ export class Repository {
   };
 
   public reclean = (dbName: string, time: Date) => {
-      this.collection[dbName].then(coll => {
+      this.loadCollection(dbName).then(coll => {
         coll.deleteMany({ time: (dbName=='rfv'||dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
             if (err) console.error('persister', err, 'Unable to clean', dbName);
         });
@@ -94,7 +88,7 @@ export class Repository {
   };
 
   public repersist = (report: any) => {
-      this.collection['trades'].then(coll => {
+      this.loadCollection('trades').then(coll => {
         if ((<any>report).Kqty<0)
           coll.deleteOne({ tradeId: (<any>report).tradeId }, err => {
               if (err) console.error('persister', err, 'Unable to deleteOne', 'trades', report);
@@ -106,6 +100,8 @@ export class Repository {
       });
   };
 
+  private db: Promise<mongodb.Db>;
+
   private loadDb = (url: string) => {
       var deferred = Promises.defer<mongodb.Db>();
       mongodb.MongoClient.connect(url, (err, db) => {
@@ -115,13 +111,12 @@ export class Repository {
       return deferred.promise;
   };
 
-  private db: Promise<mongodb.Db>;
-  private _defaultParameter: any[] = [];
   private collection: Promise<mongodb.Collection>[] = [];
 
-  public loadCollection = (dbName: string, defaultParameter?: any) => {
-    this._defaultParameter[dbName] = defaultParameter;
-    this.collection[dbName] = this.db.then(db => db.collection(dbName));
+  private loadCollection = (dbName: string) => {
+    if (typeof this.collection[dbName] === 'undefined')
+      this.collection[dbName] = this.db.then(db => db.collection(dbName));
+    return this.collection[dbName];
   }
 
   constructor(

@@ -1,5 +1,5 @@
 require('events').EventEmitter.prototype._maxListeners = 30;
-var packageConfig = require("./../../package.json");
+const packageConfig = require("./../../package.json");
 import path = require("path");
 import express = require('express');
 import fs = require("fs");
@@ -177,13 +177,9 @@ const exchange = ((ex: string): Models.Exchange => {
 
 (async (): Promise<void> => {
   const persister = new Persister.Repository(config, exchange, pair);
-  persister.loadCollection(Models.Topics.QuotingParametersChange, defaultQuotingParameters);
-  persister.loadCollection('trades');
-  persister.loadCollection('rfv');
-  persister.loadCollection('mkt');
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
-    persister.loadLatest(Models.Topics.QuotingParametersChange),
+    persister.loadLatest(Models.Topics.QuotingParametersChange, defaultQuotingParameters),
     persister.loadAll('trades', 10000),
     persister.loadAll('rfv', 10000),
     persister.loadAll('mkt', 10000)
