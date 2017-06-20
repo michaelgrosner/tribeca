@@ -338,7 +338,6 @@ const exchange = ((ex: string): Models.Exchange => {
 
   new QuoteSender.QuoteSender(
     timeProvider,
-    paramsRepo,
     quotingEngine,
     new Publish.Publisher(Models.Topics.QuoteStatus, io, monitor),
     quoter,

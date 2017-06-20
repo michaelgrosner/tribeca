@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Persister = require("./persister");
 import Publish = require("./publish");
-import _ = require("lodash");
 import Utils = require("./utils");
 
 export class QuotingParametersRepository {

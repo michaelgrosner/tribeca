@@ -99,7 +99,7 @@ export class MarketQuotingComponent implements OnInit {
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
     this.targetBasePosition = value.data;
-    this.sideAPRSafety = value.sideAPR.length ? value.sideAPR.join(', ') : 'Off';
+    this.sideAPRSafety = value.sideAPR || 'Off';
   }
 
   private updateMarket = (update: Models.Timestamped<any[]>) => {

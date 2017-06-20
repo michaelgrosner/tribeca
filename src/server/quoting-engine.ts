@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
-import _ = require("lodash");
 import FairValue = require("./fair-value");
 import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
@@ -114,7 +113,7 @@ export class QuotingEngine {
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
 
-        let sideAPR: string[] = [];
+        let sideAPR: string;
         let superTradesMultipliers = (params.superTrades &&
           widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
@@ -144,27 +143,27 @@ export class QuotingEngine {
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
-              sideAPR.push('Bid');
+              sideAPR = 'Bid';
               if (!params.buySizeMax) unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
             }
         }
-        if (totalBasePosition > targetBasePosition + pDiv) {
+        else if (totalBasePosition > targetBasePosition + pDiv) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
-              sideAPR.push('Sell');
+              sideAPR = 'Sell';
               if (!params.sellSizeMax) unrounded.askSz = Math.min(params.aprMultiplier*sellSize, totalBasePosition - targetBasePosition, latestPosition.baseAmount / 2);
             }
         }
 
         if (params.quotingStdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
-            if (unrounded.askPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Sell')===-1))
+            if (unrounded.askPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR !== 'Sell'))
               unrounded.askPx = Math.max(fv.price + this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'ask' )
               ], unrounded.askPx);
-            if (unrounded.bidPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR.indexOf('Bid')===-1))
+            if (unrounded.bidPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR !== 'Bid'))
               unrounded.bidPx = Math.min(fv.price - this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
@@ -181,13 +180,13 @@ export class QuotingEngine {
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && (
-            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Sell')>-1)
+            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR === 'Sell')
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
             || unrounded.askPx < safety.buyPing + widthPong
           )) unrounded.askPx = safety.buyPing + widthPong;
           if (unrounded.bidSz && safety.sellPong && (
-            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR.indexOf('Buy')>-1)
+            (params.aggressivePositionRebalancing === Models.APR.SizeWidth && sideAPR === 'Buy')
             || params.pongAt == Models.PongAt.ShortPingAggressive
             || params.pongAt == Models.PongAt.LongPingAggressive
             || unrounded.bidPx > safety.sellPong - widthPong

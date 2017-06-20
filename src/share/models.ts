@@ -408,7 +408,7 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(
       public data: number,
-      public sideAPR: string[],
+      public sideAPR: string,
       public time: Date
     ) {}
 }
