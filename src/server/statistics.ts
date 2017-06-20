@@ -19,23 +19,35 @@ function computeEwma(newValue: number, previous: number, periods: number): numbe
 export class EwmaStatisticCalculator {
     constructor(
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-      private _periodsAttribute: string,
       initRfv: Models.RegularFairValue[]
     ) {
       if (initRfv !== null)
         this.initialize(initRfv.map((r: Models.RegularFairValue) => r.value));
     }
 
-    public latest: number = null;
+    private latestShort: number = null;
+    private latestMedium: number = null;
+    private latestLong: number = null;
 
     initialize(seedData: number[]) {
-        for (var i = 0; i < seedData.length; i++)
-            this.addNewValue(seedData[i]);
+        for (var i = 0; i < seedData.length; i++) {
+          this.addNewShortValue(seedData[i]);
+          this.addNewMediumValue(seedData[i]);
+          this.addNewLongValue(seedData[i]);
+        }
     }
 
-    addNewValue(value: number): number {
-        this.latest = computeEwma(value, this.latest, this._qlParamRepo.latest[this._periodsAttribute]);
-        return this.latest;
+    addNewShortValue(value: number): number {
+        this.latestShort = computeEwma(value, this.latestShort, this._qlParamRepo.latest.shortEwmaPeridos);
+        return this.latestShort;
+    }
+    addNewMediumValue(value: number): number {
+        this.latestMedium = computeEwma(value, this.latestMedium, this._qlParamRepo.latest.mediumEwmaPeridos);
+        return this.latestMedium;
+    }
+    addNewLongValue(value: number): number {
+        this.latestLong = computeEwma(value, this.latestLong, this._qlParamRepo.latest.longEwmaPeridos);
+        return this.latestLong;
     }
 }
 
