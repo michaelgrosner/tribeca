@@ -53,9 +53,7 @@ export class PositionManager {
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _persister: Persister.Repository,
         private _fvAgent: FairValue.FairValueEngine,
-        private _shortEwma: Statistics.EwmaStatisticCalculator,
-        private _mediumEwma: Statistics.EwmaStatisticCalculator,
-        private _longEwma: Statistics.EwmaStatisticCalculator,
+        private _ewma: Statistics.EwmaStatisticCalculator,
         private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>
     ) {
         const minTick = this._details.minTickIncrement;
@@ -84,9 +82,9 @@ export class PositionManager {
         this._SMA3 = this._SMA3.slice(-3);
         const SMA3 = this._SMA3.reduce((a,b) => a+b) / this._SMA3.length;
 
-        this.newShort = this._shortEwma.addNewValue(fv.price);
-        this.newMedium = this._mediumEwma.addNewValue(fv.price);
-        this.newLong = this._longEwma.addNewValue(fv.price);
+        this.newShort = this._ewma.addNewShortValue(fv.price);
+        this.newMedium = this._ewma.addNewMediumValue(fv.price);
+        this.newLong = this._ewma.addNewLongValue(fv.price);
 
         let newTargetPosition: number;
         if (this._qlParamRepo.latest.autoPositionMode === Models.AutoPositionMode.EWMA_LMS) {

@@ -324,9 +324,7 @@ const exchange = ((ex: string): Models.Exchange => {
         paramsRepo,
         persister,
         fvEngine,
-        new Statistics.EwmaStatisticCalculator(paramsRepo, 'shortEwmaPeridos', initRfv),
-        new Statistics.EwmaStatisticCalculator(paramsRepo, 'mediumEwmaPeridos', initRfv),
-        new Statistics.EwmaStatisticCalculator(paramsRepo, 'longEwmaPeridos', initRfv),
+        new Statistics.EwmaStatisticCalculator(paramsRepo, initRfv),
         new Publish.Publisher(Models.Topics.EWMAChart, io, monitor)
       ),
       paramsRepo,
