@@ -177,11 +177,10 @@ const exchange = ((ex: string): Models.Exchange => {
 
 (async (): Promise<void> => {
   const persister = new Persister.Repository(config, exchange, pair);
+  persister.loadCollection(Models.Topics.QuotingParametersChange, defaultQuotingParameters);
   persister.loadCollection('trades');
   persister.loadCollection('rfv');
   persister.loadCollection('mkt');
-  persister.loadCollection(Models.Topics.QuotingParametersChange, defaultQuotingParameters);
-  persister.loadCollection('dataSize', 0);
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
     persister.loadLatest(Models.Topics.QuotingParametersChange),

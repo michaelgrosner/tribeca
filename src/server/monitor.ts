@@ -74,6 +74,8 @@ export class ApplicationState {
     private _persister: Persister.Repository,
     private _io: SocketIO.Server
   ) {
+    _persister.loadCollection('dataSize', 0);
+
     this.setDelay();
     this.setTick();
     _qlParamRepo.NewParameters.on(() => {
