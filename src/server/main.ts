@@ -176,7 +176,7 @@ const exchange = ((ex: string): Models.Exchange => {
 
 
 (async (): Promise<void> => {
-  const persister = new Persister.Repository(config, exchange, pair);
+  const persister = new Persister.Repository(config.GetString("MongoDbUrl"), exchange, pair);
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
     persister.loadLatest(Models.Topics.QuotingParametersChange, defaultQuotingParameters),
