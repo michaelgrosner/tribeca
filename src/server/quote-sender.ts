@@ -3,16 +3,14 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import Quoter = require("./quoter");
-import _ = require("lodash");
 import Active = require("./active-state");
-import QuotingParameters = require("./quoting-parameters");
 import QuotingEngine = require("./quoting-engine");
 
 export class QuoteSender {
     private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
     public get latestStatus() { return this._latest; }
     public set latestStatus(val: Models.TwoSidedQuoteStatus) {
-        if (_.isEqual(val, this._latest)) return;
+        if (val.bidStatus === this._latest.bidStatus && val.askStatus === this._latest.askStatus) return;
 
         this._latest = val;
         this._statusPublisher.publish(this._latest);
@@ -20,7 +18,6 @@ export class QuoteSender {
 
     constructor(
             private _timeProvider: Utils.ITimeProvider,
-            private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
             private _quotingEngine: QuotingEngine.QuotingEngine,
             private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
             private _quoter: Quoter.Quoter,

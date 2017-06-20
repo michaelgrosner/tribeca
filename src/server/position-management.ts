@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
-import _ = require("lodash");
 import Persister = require("./persister");
 import FairValue = require("./fair-value");
 import moment = require("moment");
@@ -124,7 +123,7 @@ export class PositionManager {
 export class TargetBasePositionManager {
     public NewTargetPosition = new Utils.Evt();
 
-    public sideAPR: string[] = [];
+    public sideAPR: string;
 
     private _latest: Models.TargetBasePositionValue = null;
     public get latestTargetPosition(): Models.TargetBasePositionValue {
@@ -165,7 +164,7 @@ export class TargetBasePositionManager {
         if (params.autoPositionMode !== Models.AutoPositionMode.Manual)
             targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
 
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || !_.isEqual(this.sideAPR, this._latest.sideAPR)) {
+        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || this.sideAPR !== this._latest.sideAPR) {
             this._latest = new Models.TargetBasePositionValue(
               targetBasePosition,
               this.sideAPR,
