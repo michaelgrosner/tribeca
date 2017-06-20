@@ -16,10 +16,10 @@ export class Repository {
             deferred.reject(err);
           }
           else if (arr == null) {
-            deferred.resolve(this._defaultParameter);
+            deferred.resolve(0);
           }
           else {
-            var v = <number>_.defaults(arr.dataSize, this._defaultParameter);
+            var v = <number>_.defaults(arr.dataSize, 0);
             deferred.resolve(v);
           }
         });
@@ -121,8 +121,7 @@ export class Repository {
 
   public loadCollection = (dbName: string, defaultParameter?: any) => {
     this._defaultParameter[dbName] = defaultParameter;
-    if (dbName != 'dataSize')
-      this.collection[dbName] = this.db.then(db => db.collection(dbName));
+    this.collection[dbName] = this.db.then(db => db.collection(dbName));
   }
 
   constructor(
