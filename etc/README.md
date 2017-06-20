@@ -18,11 +18,11 @@ You must end up with a customized `etc/K.json` file, see all option details bell
 
     3. `okcoin` - REST + Websocket. Ensure the OKCoin-specific properties have been set with your correct account information. Production environment only.
 
-    4. `bitfinex` - REST + WebSocket. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+    4. `bitfinex` - REST + WebSocket. Ensure the Bitfinex-specific properties have been set with your correct account information. Production environment only.
 
-    5. `korbit` - REST only. Ensure the Bitfinex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production and Sandbox environments.
+    5. `korbit` - REST only. Ensure the Bitfinex-specific properties have been filled out. Placing orders with REST API is not suitable to millisecond latency trading. Production and Sandbox environments.
 
-    6. `poloniex` - REST only (WebSocket is currently not used because data is outdated several hours). Ensure the Poloniex-specific properties have been filled out. REST API is not suitable to millisecond latency trading. Production environment only.
+    6. `poloniex` - REST only (WebSocket is currently not used because data is outdated several hours). Ensure the Poloniex-specific properties have been filled out. Placing orders with REST API is not suitable to millisecond latency trading. Production environment only.
 
     7. `null` - Test in-memory exchange. No exchange-specific config needed.
 
