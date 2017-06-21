@@ -23,7 +23,7 @@ export class MarketDataBroker {
 
   constructor(
     private _mdGateway: Interfaces.IMarketDataGateway,
-    private _marketPublisher: Publish.IPublish<Models.Market>
+    private _marketPublisher: Publish.Publisher
   ) {
     _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
 
@@ -456,27 +456,23 @@ export class OrderBroker {
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _persister : Persister.Repository,
-      private _orderStatusPublisher : Publish.IPublish<Models.OrderStatusReport>,
-      private _tradePublisher : Publish.IPublish<Models.Trade>,
-      private _tradeChartPublisher : Publish.IPublish<Models.TradeChart>,
-      private _submittedOrderReciever : Publish.IReceive<Models.OrderRequestFromUI>,
-      private _cancelOrderReciever : Publish.IReceive<Models.OrderStatusReport>,
-      private _cancelAllOrdersReciever : Publish.IReceive<object>,
-      private _cleanAllClosedOrdersReciever : Publish.IReceive<object>,
-      private _cleanAllOrdersReciever : Publish.IReceive<object>,
-      private _cleanTradeReciever : Publish.IReceive<Models.Trade>,
+      private _orderStatusPublisher : Publish.Publisher,
+      private _tradePublisher : Publish.Publisher,
+      private _tradeChartPublisher : Publish.Publisher,
+      private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]
     ) {
         this._orderCache = new OrderStateCache();
+        _.each(initTrades, t => this._trades.push(t));
+
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
-        _.each(initTrades, t => this._trades.push(t));
         _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _tradePublisher.registerSnapshot(() => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
-        _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
+        _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
               this.sendOrder(new Models.SubmitNewOrder(
                 Models.Side[o.side],
@@ -496,11 +492,11 @@ export class OrderBroker {
             }
         });
 
-        _cancelOrderReciever.registerReceiver(o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
-        _cancelAllOrdersReciever.registerReceiver(() => this.cancelOpenOrders());
-        _cleanAllClosedOrdersReciever.registerReceiver(() => this.cleanClosedOrders());
-        _cleanAllOrdersReciever.registerReceiver(() => this.cleanOrders());
-        _cleanTradeReciever.registerReceiver(t => this.cleanTrade(t.tradeId));
+        _reciever.registerReceiver(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
+        _reciever.registerReceiver(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
+        _reciever.registerReceiver(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
+        _reciever.registerReceiver(Models.Topics.CleanAllOrders, () => this.cleanOrders());
+        _reciever.registerReceiver(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
 
         _oeGateway.OrderUpdate.on(this.updateOrderState);
     }
@@ -588,7 +584,7 @@ export class PositionBroker {
                 private _quoter: Quoter.Quoter,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Publish.IPublish<Models.PositionReport>) {
+                private _positionPublisher : Publish.Publisher) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
         this._fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
@@ -661,7 +657,7 @@ export class ExchangeBroker {
       private _mdGateway: Interfaces.IMarketDataGateway,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
-      private _connectivityPublisher: Publish.IPublish<Models.ConnectivityStatus>
+      private _connectivityPublisher: Publish.Publisher
     ) {
       this._mdGateway.ConnectChanged.on(s => {
         this.onConnect(Models.GatewayType.MarketData, s);

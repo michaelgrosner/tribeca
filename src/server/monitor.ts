@@ -66,11 +66,10 @@ export class ApplicationState {
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _appStatePublisher: Publish.IPublish<Models.ApplicationState>,
-    private _notepadPublisher: Publish.IPublish<string>,
-    private _changeNotepadReciever: Publish.IReceive<string>,
-    private _toggleConfigsPublisher: Publish.IPublish<boolean>,
-    private _toggleConfigsReciever: Publish.IReceive<boolean>,
+    private _appStatePublisher: Publish.Publisher,
+    private _notepadPublisher: Publish.Publisher,
+    private _toggleConfigsPublisher: Publish.Publisher,
+    private _reciever: Publish.Receiver,
     private _persister: Persister.Repository,
     private _io: SocketIO.Server
   ) {
@@ -87,11 +86,11 @@ export class ApplicationState {
 
     _toggleConfigsPublisher.registerSnapshot(() => [this._toggleConfigs]);
 
-    _changeNotepadReciever.registerReceiver((notepad: string) => {
+    _reciever.registerReceiver(Models.Topics.Notepad, (notepad: string) => {
       this._notepad = notepad;
     });
 
-    _toggleConfigsReciever.registerReceiver((toggleConfigs: boolean) => {
+    _reciever.registerReceiver(Models.Topics.ToggleConfigs, (toggleConfigs: boolean) => {
       this._toggleConfigs = toggleConfigs;
     });
   }

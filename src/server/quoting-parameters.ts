@@ -13,12 +13,12 @@ export class QuotingParametersRepository {
 
   constructor(
     private _persister: Persister.Repository,
-    private _pub: Publish.IPublish<Models.QuotingParameters>,
-    rec: Publish.IReceive<Models.QuotingParameters>,
+    private _pub: Publish.Publisher,
+    rec: Publish.Receiver,
     initParams: Models.QuotingParameters
   ) {
     if (_pub) _pub.registerSnapshot(() => [this.latest]);
-    if (rec) rec.registerReceiver(this.updateParameters);
+    if (rec) rec.registerReceiver(Models.Topics.QuotingParametersChange, this.updateParameters);
     this._latest = initParams;
   }
 

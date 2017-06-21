@@ -53,7 +53,7 @@ export class PositionManager {
         private _persister: Persister.Repository,
         private _fvAgent: FairValue.FairValueEngine,
         private _ewma: Statistics.EwmaStatisticCalculator,
-        private _ewmaPublisher : Publish.IPublish<Models.EWMAChart>
+        private _ewmaPublisher : Publish.Publisher
     ) {
         const minTick = this._details.minTickIncrement;
         _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
@@ -143,7 +143,7 @@ export class TargetBasePositionManager {
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Broker.PositionBroker,
-        private _wrapped: Publish.IPublish<Models.TargetBasePositionValue>) {
+        private _wrapped: Publish.Publisher) {
         _wrapped.registerSnapshot(() => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
