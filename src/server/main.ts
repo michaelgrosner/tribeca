@@ -262,11 +262,15 @@ for (const param in defaultQuotingParameters)
   );
 
   const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
-  const filtration = new MarketFiltration.MarketFiltration(broker, quoter, marketDataBroker);
+
   const fvEngine = new FairValue.FairValueEngine(
+    new MarketFiltration.MarketFiltration(
+      broker,
+      quoter,
+      marketDataBroker
+    ),
     broker,
     timeProvider,
-    filtration,
     paramsRepo,
     publisher
   );
@@ -284,7 +288,6 @@ for (const param in defaultQuotingParameters)
 
   const quotingEngine = new QuotingEngine.QuotingEngine(
     timeProvider,
-    filtration,
     fvEngine,
     paramsRepo,
     orderBroker,
@@ -298,7 +301,6 @@ for (const param in defaultQuotingParameters)
     new Statistics.ObservableSTDEVCalculator(
       timeProvider,
       fvEngine,
-      filtration,
       broker.minTickIncrement,
       paramsRepo,
       persister,
