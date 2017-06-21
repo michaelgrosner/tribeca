@@ -20,14 +20,14 @@ export class FairValueEngine {
   }
 
   constructor(
+    public filtration: MarketFiltration.MarketFiltration,
     private _details: Broker.ExchangeBroker,
     private _timeProvider: Utils.ITimeProvider,
-    private _filtration: MarketFiltration.MarketFiltration,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher
   ) {
-    _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
-    _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
+    filtration.FilteredMarketChanged.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
+    _qlParamRepo.NewParameters.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
     _publisher.registerSnapshot(Models.Topics.FairValue, () => this.latestFairValue ? [this.latestFairValue] : []);
   }
 

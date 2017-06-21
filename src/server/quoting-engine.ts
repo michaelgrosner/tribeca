@@ -51,7 +51,6 @@ export class QuotingEngine {
 
     constructor(
         private _timeProvider: Utils.ITimeProvider,
-        private _filteredMarkets: MarketFiltration.MarketFiltration,
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _orderBroker: Broker.OrderBroker,
@@ -63,7 +62,7 @@ export class QuotingEngine {
         private _safeties: Safety.SafetyCalculator) {
         this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
 
-        _filteredMarkets.FilteredMarketChanged.on(this.recalcQuote);
+        _fvEngine.filtration.FilteredMarketChanged.on(this.recalcQuote);
         _qlParamRepo.NewParameters.on(this.recalcQuote);
         _orderBroker.Trade.on(this.recalcQuote);
         _ewma.Updated.on(() => {
@@ -267,7 +266,7 @@ export class QuotingEngine {
             return;
         }
 
-        const filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        const filteredMkt = this._fvEngine.filtration.latestFilteredMarket;
         if (filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             this.latestQuote = null;
             return;

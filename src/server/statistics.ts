@@ -97,7 +97,6 @@ export class ObservableSTDEVCalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
-      private _filteredMarkets: MarketFiltration.MarketFiltration,
       private _minTick: number,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _persister: Persister.Repository,
@@ -139,7 +138,7 @@ export class ObservableSTDEVCalculator {
 
     private onTick = () => {
         const fv = this._fv.latestFairValue;
-        const filteredMkt = this._filteredMarkets.latestFilteredMarket;
+        const filteredMkt = this._fv.filtration.latestFilteredMarket;
         if (fv === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             console.warn(new Date().toISOString().slice(11, -1), 'stdev', 'Unable to compute value');
             return;
