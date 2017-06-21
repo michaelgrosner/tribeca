@@ -18,35 +18,21 @@ export class Repository {
 
   public loadLatest = async (dbName: string, defaults: any): Promise<any> => {
     const coll = await this.loadCollection(dbName);
-
     const selector = { exchange: this._exchange, pair: this._pair };
-    const docs = await coll.find(selector)
-            .limit(1)
-            .project({ _id: 0 })
-            .sort({ $natural: -1 })
-            .toArray();
-
-    if (docs.length === 0) return defaults;
-
-    var v = Object.assign(defaults, docs[0]);
-    return this.converter(v);
+    const rows = await coll.find(selector).limit(1).project({ _id: 0 }).sort({ $natural: -1 }).toArray();
+    return rows.length === 0
+      ? defaults
+      : this.converter(Object.assign(defaults, rows[0]));
   };
 
-  public loadAll = async (dbName: string, limit?: number): Promise<any[]> => {
+  public loadAll = async (dbName: string): Promise<any[]> => {
     const selector: Object = { exchange: this._exchange, pair: this._pair };
     const coll = await this.loadCollection(dbName);
     let query = coll.find(selector, {_id: 0});
-
-    if (limit !== null) {
-      const count = await coll.count(selector);
-      query = query.limit(limit);
-      if (count !== 0)
-        query = query.skip(Math.max(count - limit, 0));
-    }
-
-    const loaded = (await query.toArray()).map(this.converter);
-
-    return loaded;
+    const count = await coll.count(selector);
+    query = query.limit(10000);
+    if (count !== 0) query = query.skip(Math.max(count - 10000, 0));
+    return (await query.toArray()).map(this.converter);
   };
 
   private converter = (x: any):any => {
