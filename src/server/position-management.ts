@@ -33,7 +33,7 @@ export class PositionManager {
         this.newLong?Utils.roundNearest(this.newLong, minTick):null,
         Utils.roundNearest(fv.price, minTick),
         this._timeProvider.utcNow()
-      ));
+      ), true);
     }
 
     public NewTargetPosition = new Utils.Evt();
