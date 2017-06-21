@@ -19,12 +19,12 @@ export class ActiveRepository {
 
     constructor(startQuoting: boolean,
         private _exchangeConnectivity: Broker.ExchangeBroker,
-        private _pub: Publish.IPublish<boolean>,
-        private _rec: Publish.IReceive<boolean>) {
+        private _pub: Publish.Publisher,
+        private _reciever: Publish.Receiver) {
         this._savedQuotingMode = startQuoting;
 
         _pub.registerSnapshot(() => [this.latest]);
-        _rec.registerReceiver(this.handleNewQuotingModeChangeRequest);
+        _reciever.registerReceiver(Models.Topics.ActiveChange, this.handleNewQuotingModeChangeRequest);
         _exchangeConnectivity.ConnectChanged.on(() => this.updateConnectivity());
     }
 

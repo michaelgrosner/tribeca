@@ -37,7 +37,7 @@ export class SafetyCalculator {
         private _qlParams: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Broker.PositionBroker,
         private _broker: Broker.OrderBroker,
-        private _publisher: Publish.IPublish<Models.TradeSafety>) {
+        private _publisher: Publish.Publisher) {
         _publisher.registerSnapshot(() => [this.latest]);
         _qlParams.NewParameters.on(this.computeQtyLimit);
         _broker.Trade.on(this.onTrade);

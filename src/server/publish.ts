@@ -1,13 +1,8 @@
 import Models = require("../share/models");
 import Monitor = require("./monitor");
 
-export interface IPublish<T> {
-    publish: (msg: T) => void;
-    registerSnapshot: (generator: () => T[]) => IPublish<T>;
-}
-
-export class Publisher<T> implements IPublish<T> {
-    private _snapshot: () => T[] = null;
+export class Publisher {
+    private _snapshot: () => any[] = null;
     private _lastMarketData: number = new Date().getTime();
     constructor(
       private topic: string,
@@ -19,7 +14,7 @@ export class Publisher<T> implements IPublish<T> {
         var onConnection = s => {
             s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
                 if (this._snapshot !== null) {
-                  let snap: T[] = this._snapshot();
+                  let snap: any[] = this._snapshot();
                   if (this.topic === Models.Topics.MarketData)
                       snap = this.compressSnapshot(this._snapshot(), this.compressMarketDataInc);
                   else if (this.topic === Models.Topics.OrderStatusReports)
@@ -38,7 +33,7 @@ export class Publisher<T> implements IPublish<T> {
         });
     }
 
-    public publish = (msg: T) => {
+    public publish = (msg: any) => {
       if (this.topic === Models.Topics.MarketData) {
         if (this._lastMarketData+369>new Date().getTime()) return;
         msg = this.compressMarketDataInc(msg);
@@ -51,19 +46,19 @@ export class Publisher<T> implements IPublish<T> {
       else this._io.emit(Models.Prefixes.MESSAGE + this.topic, msg);
     };
 
-    public registerSnapshot = (generator: () => T[]) => {
+    public registerSnapshot = (generator: () => any[]) => {
         if (this._snapshot === null) this._snapshot = generator;
         else throw new Error("already registered snapshot generator for topic " + this.topic);
         return this;
     }
 
-    private compressSnapshot = (data: T[], compressIncremental:(data: any) => T): T[] => {
-      let ret: T[] = [];
+    private compressSnapshot = (data: any[], compressIncremental:(data: any) => any): any[] => {
+      let ret: any[] = [];
       data.forEach(x => ret.push(compressIncremental(x)));
       return ret;
     };
 
-    private compressMarketDataInc = (data: any): T => {
+    private compressMarketDataInc = (data: any): any => {
       let ret: any = new Models.Timestamped([[],[]], data.time);
       data.bids.forEach(bid => ret.data[0].push(bid.price, bid.size));
       data.asks.forEach(ask => ret.data[1].push(ask.price, ask.size));
@@ -71,7 +66,7 @@ export class Publisher<T> implements IPublish<T> {
       return ret;
     };
 
-    private compressOSRInc = (data: any): T => {
+    private compressOSRInc = (data: any): any => {
       return <any>new Models.Timestamped(
         (data.orderStatus == Models.OrderStatus.Cancelled
         || data.orderStatus == Models.OrderStatus.Complete)
@@ -97,7 +92,7 @@ export class Publisher<T> implements IPublish<T> {
       ], data.time);
     };
 
-    private compressPositionInc = (data: any): T => {
+    private compressPositionInc = (data: any): any => {
       return <any>new Models.Timestamped([
         data.baseAmount,
         data.quoteAmount,
@@ -113,46 +108,24 @@ export class Publisher<T> implements IPublish<T> {
     };
 }
 
-export class NullPublisher<T> implements IPublish<T> {
-  public publish = (msg: T) => {};
-  public registerSnapshot = (generator: () => T[]) => this;
-}
+export class Receiver {
+    private _handler: boolean[] = [];
 
-
-export interface IReceive<T> {
-    registerReceiver(handler: (msg: T) => void) : void;
-}
-
-export class NullReceiver<T> implements IReceive<T> {
-    registerReceiver = (handler: (msg: T) => void) => {};
-}
-
-export class Receiver<T> implements IReceive<T> {
-    private _handler: (msg: T) => void = null;
-    constructor(private topic: string, io: SocketIO.Server) {
-        var onConnection = (s: SocketIO.Socket) => {
-            // this._log("socket", s.id, "connected for Receiver", topic);
-            s.on(Models.Prefixes.MESSAGE + this.topic, msg => {
-                if (this._handler !== null)
-                    this._handler(msg);
-            });
-            // s.on("error", e => {
-                // _log("error in Receiver", e.stack, e.message);
-            // });
-        };
-
-        io.on("connection", onConnection);
-        Object.keys(io.sockets.connected).forEach(s => {
-            onConnection(io.sockets.connected[s]);
-        });
+    constructor(
+      private _io: SocketIO.Server
+    ) {
     }
 
-    registerReceiver = (handler : (msg : T) => void) => {
-        if (this._handler === null) {
-            this._handler = handler;
-        }
-        else {
-            throw new Error("already registered receive handler for topic " + this.topic);
-        }
+    public registerReceiver = (topic: string, handler : (msg : any) => void) => {
+      if (typeof this._handler[topic] !== 'undefined')
+        throw new Error("already registered receive handler for topic " + topic);
+
+      this._handler[topic] = true;
+
+      this._io.on("connection", (s: SocketIO.Socket) => {
+        s.on(Models.Prefixes.MESSAGE + topic, msg => {
+            handler(msg);
+        });
+      });
     };
 }

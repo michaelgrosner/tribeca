@@ -207,10 +207,12 @@ for (const param in defaultQuotingParameters)
       gateway.base.minTickIncrement
     )]);
 
+  const receiver = new Publish.Receiver(io);
+
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
     persister,
     new Publish.Publisher(Models.Topics.QuotingParametersChange, io),
-    new Publish.Receiver(Models.Topics.QuotingParametersChange, io),
+    receiver,
     initParams
   );
 
@@ -219,9 +221,8 @@ for (const param in defaultQuotingParameters)
     paramsRepo,
     new Publish.Publisher(Models.Topics.ApplicationState, io),
     new Publish.Publisher(Models.Topics.Notepad, io),
-    new Publish.Receiver(Models.Topics.Notepad, io),
     new Publish.Publisher(Models.Topics.ToggleConfigs, io),
-    new Publish.Receiver(Models.Topics.ToggleConfigs, io),
+    receiver,
     persister,
     io
   );
@@ -253,12 +254,7 @@ for (const param in defaultQuotingParameters)
     new Publish.Publisher(Models.Topics.OrderStatusReports, io, monitor),
     new Publish.Publisher(Models.Topics.Trades, io),
     new Publish.Publisher(Models.Topics.TradesChart, io),
-    new Publish.Receiver(Models.Topics.SubmitNewOrder, io),
-    new Publish.Receiver(Models.Topics.CancelOrder, io),
-    new Publish.Receiver(Models.Topics.CancelAllOrders, io),
-    new Publish.Receiver(Models.Topics.CleanAllClosedOrders, io),
-    new Publish.Receiver(Models.Topics.CleanAllOrders, io),
-    new Publish.Receiver(Models.Topics.CleanTrade, io),
+    receiver,
     initTrades
   );
 
@@ -345,7 +341,7 @@ for (const param in defaultQuotingParameters)
       config.GetString("BotIdentifier").indexOf('auto')>-1,
       broker,
       new Publish.Publisher(Models.Topics.ActiveChange, io),
-      new Publish.Receiver(Models.Topics.ActiveChange, io)
+      receiver
     )
   );
 

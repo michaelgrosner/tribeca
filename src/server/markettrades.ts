@@ -44,7 +44,7 @@ export class MarketTradeBroker {
 
     constructor(
       private _mdGateway: Interfaces.IMarketDataGateway,
-      private _marketTradePublisher: Publish.IPublish<Models.MarketTrade>,
+      private _marketTradePublisher: Publish.Publisher,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker

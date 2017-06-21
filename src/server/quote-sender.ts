@@ -19,7 +19,7 @@ export class QuoteSender {
     constructor(
             private _timeProvider: Utils.ITimeProvider,
             private _quotingEngine: QuotingEngine.QuotingEngine,
-            private _statusPublisher: Publish.IPublish<Models.TwoSidedQuoteStatus>,
+            private _statusPublisher: Publish.Publisher,
             private _quoter: Quoter.Quoter,
             private _details: Broker.ExchangeBroker,
             private _activeRepo: Active.ActiveRepository) {
