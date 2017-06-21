@@ -18,14 +18,14 @@ export class MarketDataBroker {
   private handleMarketData = (book: Models.Market) => {
       this._currentBook = book;
       this.MarketData.trigger(this.currentBook);
-      this._marketPublisher.publish(this.currentBook);
+      this._publisher.publish(Models.Topics.MarketData, this.currentBook, true);
   };
 
   constructor(
     private _mdGateway: Interfaces.IMarketDataGateway,
-    private _marketPublisher: Publish.Publisher
+    private _publisher: Publish.Publisher
   ) {
-    _marketPublisher.registerSnapshot(() => this.currentBook === null ? []: [this.currentBook]);
+    _publisher.registerSnapshot(Models.Topics.MarketData, () => this.currentBook === null ? []: [this.currentBook]);
 
     this._mdGateway.MarketData.on(this.handleMarketData);
     this._mdGateway.ConnectChanged.on(s => {
@@ -90,7 +90,7 @@ export class OrderBroker {
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
-              this._tradePublisher.publish(this._trades[i]);
+              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
               this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
@@ -123,7 +123,7 @@ export class OrderBroker {
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
-              this._tradePublisher.publish(this._trades[i]);
+              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
               this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
@@ -154,7 +154,7 @@ export class OrderBroker {
           for(var i = 0;i<this._trades.length;i++) {
             if (k == this._trades[i].tradeId) {
               this._trades[i].Kqty = -1;
-              this._tradePublisher.publish(this._trades[i]);
+              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
               this._persister.repersist(this._trades[i]);
               this._trades.splice(i, 1);
               break;
@@ -269,7 +269,7 @@ export class OrderBroker {
             if (this._trades[i].quantity<=this._trades[i].Kqty)
               this._trades[i].Kdiff = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
             this._trades[i].loadedFromDB = false;
-            this._tradePublisher.publish(this._trades[i]);
+            this._publisher.publish(Models.Topics.Trades, this._trades[i]);
             this._persister.repersist(this._trades[i]);
             break;
           }
@@ -284,13 +284,13 @@ export class OrderBroker {
             this._trades[i].quantity += trade.quantity;
             this._trades[i].value += trade.value;
             this._trades[i].loadedFromDB = false;
-            this._tradePublisher.publish(this._trades[i]);
+            this._publisher.publish(Models.Topics.Trades, this._trades[i]);
             this._persister.repersist(this._trades[i]);
             break;
           }
         }
         if (!exists) {
-          this._tradePublisher.publish(trade);
+          this._publisher.publish(Models.Topics.Trades, trade);
           this._persister.persist('trades', trade);
           this._trades.push(trade);
         }
@@ -370,7 +370,7 @@ export class OrderBroker {
         }
 
         this.OrderUpdate.trigger(o);
-        this._orderStatusPublisher.publish(o);
+        this._publisher.publish(Models.Topics.OrderStatusReports, o, true);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
@@ -408,12 +408,12 @@ export class OrderBroker {
                 )
               )), trade);
             } else {
-              this._tradePublisher.publish(trade);
+              this._publisher.publish(Models.Topics.Trades, trade);
               this._persister.persist('trades', trade);
               this._trades.push(trade);
             }
 
-            this._tradeChartPublisher.publish(new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
+            this._publisher.publish(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
 
             if (this._qlParamRepo.latest.cleanPongsAuto>0) {
               const cleanTime = o.time.getTime() - (this._qlParamRepo.latest.cleanPongsAuto * 864e5);
@@ -426,7 +426,7 @@ export class OrderBroker {
                   if (this._trades[i].tradeId==cleanTrade.tradeId) {
                     goWhile = true;
                     this._trades[i].Kqty = -1;
-                    this._tradePublisher.publish(this._trades[i]);
+                    this._publisher.publish(Models.Topics.Trades, this._trades[i]);
                     this._persister.repersist(this._trades[i]);
                     this._trades.splice(i, 1);
                   }
@@ -456,9 +456,7 @@ export class OrderBroker {
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _persister : Persister.Repository,
-      private _orderStatusPublisher : Publish.Publisher,
-      private _tradePublisher : Publish.Publisher,
-      private _tradeChartPublisher : Publish.Publisher,
+      private _publisher : Publish.Publisher,
       private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]
     ) {
@@ -469,8 +467,8 @@ export class OrderBroker {
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
-        _orderStatusPublisher.registerSnapshot(() => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
-        _tradePublisher.registerSnapshot(() => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
+        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _publisher.registerSnapshot(Models.Topics.Trades, () => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
@@ -552,7 +550,7 @@ export class PositionBroker {
 
         this._report = positionReport;
         this.NewReport.trigger(positionReport);
-        this._positionPublisher.publish(positionReport);
+        this._publisher.publish(Models.Topics.Position, positionReport, true);
     };
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
@@ -584,12 +582,12 @@ export class PositionBroker {
                 private _quoter: Quoter.Quoter,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
-                private _positionPublisher : Publish.Publisher) {
+                private _publisher : Publish.Publisher) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
         this._broker.OrderUpdate.on(this.handleOrderUpdate);
         this._fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
 
-        this._positionPublisher.registerSnapshot(() => (this._report === null ? [] : [this._report]));
+        this._publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
     }
 }
 
@@ -645,7 +643,7 @@ export class ExchangeBroker {
         this.ConnectChanged.trigger(newStatus);
 
         // console.info('broker', 'Connection status changed ::', Models.ConnectivityStatus[this._connectStatus], ':: (md:',Models.ConnectivityStatus[this.mdConnected],') (oe:',Models.ConnectivityStatus[this.oeConnected],')');
-        this._connectivityPublisher.publish(this.connectStatus);
+        this._publisher.publish(Models.Topics.ExchangeConnectivity, this.connectStatus);
     };
 
     public get connectStatus(): Models.ConnectivityStatus {
@@ -657,7 +655,7 @@ export class ExchangeBroker {
       private _mdGateway: Interfaces.IMarketDataGateway,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
-      private _connectivityPublisher: Publish.Publisher
+      private _publisher: Publish.Publisher
     ) {
       this._mdGateway.ConnectChanged.on(s => {
         this.onConnect(Models.GatewayType.MarketData, s);
@@ -667,6 +665,6 @@ export class ExchangeBroker {
         this.onConnect(Models.GatewayType.OrderEntry, s)
       });
 
-      this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
+      this._publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
     }
 }

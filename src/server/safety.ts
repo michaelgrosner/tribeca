@@ -23,7 +23,7 @@ export class SafetyCalculator {
           || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
             this._latest = val;
             this.NewValue.trigger(this.latest);
-            this._publisher.publish(this.latest);
+            this._publisher.publish(Models.Topics.TradeSafetyValue, this.latest, true);
         }
     }
 
@@ -38,7 +38,7 @@ export class SafetyCalculator {
         private _positionBroker: Broker.PositionBroker,
         private _broker: Broker.OrderBroker,
         private _publisher: Publish.Publisher) {
-        _publisher.registerSnapshot(() => [this.latest]);
+        _publisher.registerSnapshot(Models.Topics.TradeSafetyValue, () => [this.latest]);
         _qlParams.NewParameters.on(this.computeQtyLimit);
         _broker.Trade.on(this.onTrade);
 

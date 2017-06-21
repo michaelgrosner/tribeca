@@ -16,7 +16,7 @@ export class FairValueEngine {
 
     this._latest = val;
     this.FairValueChanged.trigger();
-    this._fvPublisher.publish(this._latest);
+    this._publisher.publish(Models.Topics.FairValue, this._latest, true);
   }
 
   constructor(
@@ -24,11 +24,11 @@ export class FairValueEngine {
     private _timeProvider: Utils.ITimeProvider,
     private _filtration: MarketFiltration.MarketFiltration,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _fvPublisher: Publish.Publisher
+    private _publisher: Publish.Publisher
   ) {
     _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
     _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(_filtration.latestFilteredMarket));
-    _fvPublisher.registerSnapshot(() => this.latestFairValue ? [this.latestFairValue] : []);
+    _publisher.registerSnapshot(Models.Topics.FairValue, () => this.latestFairValue ? [this.latestFairValue] : []);
   }
 
   private recalcFairValue = (mkt: Models.Market) => {
