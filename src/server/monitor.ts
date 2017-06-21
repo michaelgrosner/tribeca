@@ -78,8 +78,6 @@ export class ApplicationState {
       this.setTick();
     });
 
-    _publisher.monitor = this;
-
     _publisher.registerSnapshot(Models.Topics.ApplicationState, () => [this._app_state]);
 
     _publisher.registerSnapshot(Models.Topics.Notepad, () => [this._notepad]);

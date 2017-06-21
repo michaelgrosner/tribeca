@@ -218,7 +218,7 @@ for (const param in defaultQuotingParameters)
     initParams
   );
 
-  const monitor = new Monitor.ApplicationState(
+  publisher.monitor = new Monitor.ApplicationState(
     timeProvider,
     paramsRepo,
     publisher,
