@@ -84,12 +84,6 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   delayUI:                        7
 };
 
-const config = new Config.ConfigProvider();
-
-for (const param in defaultQuotingParameters)
-  if (config.GetDefaultString(param) !== null)
-    defaultQuotingParameters[param] = config.GetDefaultString(param);
-
 let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
@@ -120,6 +114,10 @@ process.on("SIGINT", () => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Handling SIGINT');
   performExit();
 });
+
+const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
+
+const config = new Config.ConfigProvider();
 
 const app = express();
 
@@ -153,8 +151,6 @@ app.get("/view/*", (req: express.Request, res: express.Response) => {
   }
 });
 
-const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
-
 const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
   if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
@@ -170,19 +166,22 @@ const exchange = ((ex: string): Models.Exchange => {
     case "korbit": return Models.Exchange.Korbit;
     case "hitbtc": return Models.Exchange.HitBtc;
     case "null": return Models.Exchange.Null;
-    default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
+    default: throw new Error("Invalid configuration value EXCHANGE: " + ex);
   }
 })(config.GetString("EXCHANGE").toLowerCase());
 
+for (const param in defaultQuotingParameters)
+  if (config.GetDefaultString(param) !== null)
+    defaultQuotingParameters[param] = config.GetDefaultString(param);
 
 (async (): Promise<void> => {
   const persister = new Persister.Repository(config.GetString("MongoDbUrl"), exchange, pair);
 
   const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
     persister.loadLatest(Models.Topics.QuotingParametersChange, defaultQuotingParameters),
-    persister.loadAll('trades', 10000),
-    persister.loadAll('rfv', 10000),
-    persister.loadAll('mkt', 10000)
+    persister.loadAll('trades'),
+    persister.loadAll('rfv'),
+    persister.loadAll('mkt')
   ]);
 
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
