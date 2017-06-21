@@ -197,8 +197,12 @@ for (const param in defaultQuotingParameters)
     }
   })();
 
-  new Publish.Publisher(Models.Topics.ProductAdvertisement, io)
-    .registerSnapshot(() => [new Models.ProductAdvertisement(
+  const receiver = new Publish.Receiver(io);
+
+  const publisher = new Publish.Publisher(io);
+
+  publisher
+    .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
       exchange,
       pair,
       config.GetString("BotIdentifier").replace('auto',''),
@@ -207,11 +211,9 @@ for (const param in defaultQuotingParameters)
       gateway.base.minTickIncrement
     )]);
 
-  const receiver = new Publish.Receiver(io);
-
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
     persister,
-    new Publish.Publisher(Models.Topics.QuotingParametersChange, io),
+    publisher,
     receiver,
     initParams
   );
@@ -219,9 +221,7 @@ for (const param in defaultQuotingParameters)
   const monitor = new Monitor.ApplicationState(
     timeProvider,
     paramsRepo,
-    new Publish.Publisher(Models.Topics.ApplicationState, io),
-    new Publish.Publisher(Models.Topics.Notepad, io),
-    new Publish.Publisher(Models.Topics.ToggleConfigs, io),
+    publisher,
     receiver,
     persister,
     io
@@ -232,7 +232,7 @@ for (const param in defaultQuotingParameters)
     gateway.md,
     gateway.base,
     gateway.oe,
-    new Publish.Publisher(Models.Topics.ExchangeConnectivity, io)
+    publisher
   );
 
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
@@ -251,16 +251,14 @@ for (const param in defaultQuotingParameters)
     broker,
     gateway.oe,
     persister,
-    new Publish.Publisher(Models.Topics.OrderStatusReports, io, monitor),
-    new Publish.Publisher(Models.Topics.Trades, io),
-    new Publish.Publisher(Models.Topics.TradesChart, io),
+    publisher,
     receiver,
     initTrades
   );
 
   const marketDataBroker = new Broker.MarketDataBroker(
     gateway.md,
-    new Publish.Publisher(Models.Topics.MarketData, io, monitor)
+    publisher
   );
 
   const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
@@ -270,7 +268,7 @@ for (const param in defaultQuotingParameters)
     timeProvider,
     filtration,
     paramsRepo,
-    new Publish.Publisher(Models.Topics.FairValue, io, monitor)
+    publisher
   );
 
   const positionBroker = new Broker.PositionBroker(
@@ -281,7 +279,7 @@ for (const param in defaultQuotingParameters)
     quoter,
     fvEngine,
     gateway.pg,
-    new Publish.Publisher(Models.Topics.Position, io, monitor)
+    publisher
   );
 
   const quotingEngine = new QuotingEngine.QuotingEngine(
@@ -315,11 +313,11 @@ for (const param in defaultQuotingParameters)
         persister,
         fvEngine,
         new Statistics.EwmaStatisticCalculator(paramsRepo, initRfv),
-        new Publish.Publisher(Models.Topics.EWMAChart, io, monitor)
+        publisher
       ),
       paramsRepo,
       positionBroker,
-      new Publish.Publisher(Models.Topics.TargetBasePosition, io, monitor)
+      publisher
     ),
     new Safety.SafetyCalculator(
       timeProvider,
@@ -327,27 +325,27 @@ for (const param in defaultQuotingParameters)
       paramsRepo,
       positionBroker,
       orderBroker,
-      new Publish.Publisher(Models.Topics.TradeSafetyValue, io, monitor)
+      publisher
     )
   );
 
   new QuoteSender.QuoteSender(
     timeProvider,
     quotingEngine,
-    new Publish.Publisher(Models.Topics.QuoteStatus, io, monitor),
+    publisher,
     quoter,
     broker,
     new Active.ActiveRepository(
       config.GetString("BotIdentifier").indexOf('auto')>-1,
       broker,
-      new Publish.Publisher(Models.Topics.ActiveChange, io),
+      publisher,
       receiver
     )
   );
 
   new MarketTrades.MarketTradeBroker(
     gateway.md,
-    new Publish.Publisher(Models.Topics.MarketTrade, io),
+    publisher,
     marketDataBroker,
     quotingEngine,
     broker

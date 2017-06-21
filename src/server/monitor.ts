@@ -26,7 +26,7 @@ export class ApplicationState {
         dbSize
       );
       this._tradesMinute = 0;
-      this._appStatePublisher.publish(this._app_state);
+      this._publisher.publish(Models.Topics.ApplicationState, this._app_state);
     });
   };
 
@@ -66,9 +66,7 @@ export class ApplicationState {
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _appStatePublisher: Publish.Publisher,
-    private _notepadPublisher: Publish.Publisher,
-    private _toggleConfigsPublisher: Publish.Publisher,
+    private _publisher: Publish.Publisher,
     private _reciever: Publish.Receiver,
     private _persister: Persister.Repository,
     private _io: SocketIO.Server
@@ -80,11 +78,13 @@ export class ApplicationState {
       this.setTick();
     });
 
-    _appStatePublisher.registerSnapshot(() => [this._app_state]);
+    _publisher.monitor = this;
 
-    _notepadPublisher.registerSnapshot(() => [this._notepad]);
+    _publisher.registerSnapshot(Models.Topics.ApplicationState, () => [this._app_state]);
 
-    _toggleConfigsPublisher.registerSnapshot(() => [this._toggleConfigs]);
+    _publisher.registerSnapshot(Models.Topics.Notepad, () => [this._notepad]);
+
+    _publisher.registerSnapshot(Models.Topics.ToggleConfigs, () => [this._toggleConfigs]);
 
     _reciever.registerReceiver(Models.Topics.Notepad, (notepad: string) => {
       this._notepad = notepad;

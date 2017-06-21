@@ -13,12 +13,12 @@ export class QuotingParametersRepository {
 
   constructor(
     private _persister: Persister.Repository,
-    private _pub: Publish.Publisher,
-    rec: Publish.Receiver,
+    private _publisher: Publish.Publisher,
+    reciever: Publish.Receiver,
     initParams: Models.QuotingParameters
   ) {
-    if (_pub) _pub.registerSnapshot(() => [this.latest]);
-    if (rec) rec.registerReceiver(Models.Topics.QuotingParametersChange, this.updateParameters);
+    if (_publisher) _publisher.registerSnapshot(Models.Topics.QuotingParametersChange, () => [this.latest]);
+    if (reciever) reciever.registerReceiver(Models.Topics.QuotingParametersChange, this.updateParameters);
     this._latest = initParams;
   }
 
@@ -33,6 +33,6 @@ export class QuotingParametersRepository {
       this.NewParameters.trigger();
     }
 
-    this._pub.publish(this._latest);
+    this._publisher.publish(Models.Topics.QuotingParametersChange, this._latest);
   };
 }

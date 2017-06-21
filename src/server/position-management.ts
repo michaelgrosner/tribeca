@@ -25,7 +25,7 @@ export class PositionManager {
       this.fairValue = fv.price;
       this.newWidth = widthStdev;
       const minTick = this._details.minTickIncrement;
-      this._ewmaPublisher.publish(new Models.EWMAChart(
+      this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
         widthStdev,
         this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
         this.newShort?Utils.roundNearest(this.newShort, minTick):null,
@@ -53,10 +53,10 @@ export class PositionManager {
         private _persister: Persister.Repository,
         private _fvAgent: FairValue.FairValueEngine,
         private _ewma: Statistics.EwmaStatisticCalculator,
-        private _ewmaPublisher : Publish.Publisher
+        private _publisher : Publish.Publisher
     ) {
         const minTick = this._details.minTickIncrement;
-        _ewmaPublisher.registerSnapshot(() => [this.fairValue?new Models.EWMAChart(
+        _publisher.registerSnapshot(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
           this.newWidth,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           this.newShort?Utils.roundNearest(this.newShort, minTick):null,
@@ -103,7 +103,7 @@ export class PositionManager {
             this.NewTargetPosition.trigger();
         }
 
-        this._ewmaPublisher.publish(new Models.EWMAChart(
+        this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
           this.newWidth,
           this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
           Utils.roundNearest(this.newShort, minTick),
@@ -111,7 +111,7 @@ export class PositionManager {
           Utils.roundNearest(this.newLong, minTick),
           Utils.roundNearest(fv.price, minTick),
           this._timeProvider.utcNow()
-        ));
+        ), true);
 
         this._persister.persist('rfv', rfv);
         this._data.push(rfv);
@@ -143,8 +143,8 @@ export class TargetBasePositionManager {
         private _positionManager: PositionManager,
         private _params: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Broker.PositionBroker,
-        private _wrapped: Publish.Publisher) {
-        _wrapped.registerSnapshot(() => [this._latest]);
+        private _publisher: Publish.Publisher) {
+        _publisher.registerSnapshot(Models.Topics.TargetBasePosition, () => [this._latest]);
         _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
         _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
         _positionManager.NewTargetPosition.on(() => this.recomputeTargetPosition());
@@ -171,7 +171,7 @@ export class TargetBasePositionManager {
               this._timeProvider.utcNow()
             );
             this.NewTargetPosition.trigger();
-            this._wrapped.publish(this.latestTargetPosition);
+            this._publisher.publish(Models.Topics.TargetBasePosition, this.latestTargetPosition, true);
             console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this.latestTargetPosition.data);
         }
     };

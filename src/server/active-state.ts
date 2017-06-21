@@ -19,11 +19,11 @@ export class ActiveRepository {
 
     constructor(startQuoting: boolean,
         private _exchangeConnectivity: Broker.ExchangeBroker,
-        private _pub: Publish.Publisher,
+        private _publisher: Publish.Publisher,
         private _reciever: Publish.Receiver) {
         this._savedQuotingMode = startQuoting;
 
-        _pub.registerSnapshot(() => [this.latest]);
+        _publisher.registerSnapshot(Models.Topics.ActiveChange, () => [this.latest]);
         _reciever.registerReceiver(Models.Topics.ActiveChange, this.handleNewQuotingModeChangeRequest);
         _exchangeConnectivity.ConnectChanged.on(() => this.updateConnectivity());
     }
@@ -31,11 +31,10 @@ export class ActiveRepository {
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
-            console.info(new Date().toISOString().slice(11, -1), 'active', 'Changed saved quoting state to', this._savedQuotingMode);
             this.updateConnectivity();
         }
 
-        this._pub.publish(this.latest);
+        this._publisher.publish(Models.Topics.ActiveChange, this.latest);
     };
 
     private reevaluateQuotingMode = (): boolean => {
@@ -50,7 +49,7 @@ export class ActiveRepository {
             this._latest = newMode;
             console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', this.latest);
             this.ExchangeConnectivity.trigger();
-            this._pub.publish(this.latest);
+            this._publisher.publish(Models.Topics.ActiveChange, this.latest);
         }
     };
 }

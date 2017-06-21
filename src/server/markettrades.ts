@@ -39,17 +39,17 @@ export class MarketTradeBroker {
         this.marketTrades.push(t);
 
         this.MarketTrade.trigger(t);
-        this._marketTradePublisher.publish(t);
+        this._publisher.publish(Models.Topics.MarketTrade, t);
     };
 
     constructor(
       private _mdGateway: Interfaces.IMarketDataGateway,
-      private _marketTradePublisher: Publish.Publisher,
+      private _publisher: Publish.Publisher,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker
     ) {
-      _marketTradePublisher.registerSnapshot(() => this.marketTrades.slice(-69));
+      _publisher.registerSnapshot(Models.Topics.MarketTrade, () => this.marketTrades.slice(-69));
       this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
     }
 }

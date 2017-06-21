@@ -13,19 +13,19 @@ export class QuoteSender {
         if (val.bidStatus === this._latest.bidStatus && val.askStatus === this._latest.askStatus) return;
 
         this._latest = val;
-        this._statusPublisher.publish(this._latest);
+        this._publisher.publish(Models.Topics.QuoteStatus, this._latest, true);
     }
 
     constructor(
             private _timeProvider: Utils.ITimeProvider,
             private _quotingEngine: QuotingEngine.QuotingEngine,
-            private _statusPublisher: Publish.Publisher,
+            private _publisher: Publish.Publisher,
             private _quoter: Quoter.Quoter,
             private _details: Broker.ExchangeBroker,
             private _activeRepo: Active.ActiveRepository) {
         _activeRepo.ExchangeConnectivity.on(this.sendQuote);
         _quotingEngine.QuoteChanged.on(this.sendQuote);
-        _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
+        _publisher.registerSnapshot(Models.Topics.QuoteStatus, () => this.latestStatus === null ? [] : [this.latestStatus]);
     }
 
     private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
