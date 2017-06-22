@@ -97,9 +97,9 @@ export class ObservableSTDEVCalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
-      private _minTick: number,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _persister: Persister.Repository,
+      private _minTick: number,
       initMkt: Models.MarketStats[]
     ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));

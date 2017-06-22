@@ -36,11 +36,11 @@ export class SafetyCalculator {
         private _fvEngine: FairValue.FairValueEngine,
         private _qlParams: QuotingParameters.QuotingParametersRepository,
         private _positionBroker: Broker.PositionBroker,
-        private _broker: Broker.OrderBroker,
+        private _orderBroker: Broker.OrderBroker,
         private _publisher: Publish.Publisher) {
         _publisher.registerSnapshot(Models.Topics.TradeSafetyValue, () => [this.latest]);
         _qlParams.NewParameters.on(this.computeQtyLimit);
-        _broker.Trade.on(this.onTrade);
+        _orderBroker.Trade.on(this.onTrade);
 
         _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
@@ -85,7 +85,7 @@ export class SafetyCalculator {
         var sellPq = 0;
         var _buyPq = 0;
         var _sellPq = 0;
-        var trades = this._broker._trades;
+        var trades = this._orderBroker._trades;
         var widthPong = (settings.widthPercentage)
             ? settings.widthPongPercentage * fv.price / 100
             : settings.widthPong;

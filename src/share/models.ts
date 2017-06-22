@@ -173,10 +173,6 @@ export class OrderCancel {
                 public generatedTime: Date) {}
 }
 
-export class SentOrder {
-    constructor(public sentOrderClientId: string) {}
-}
-
 export interface OrderStatusReport {
     pair : CurrencyPair;
     side : Side;
@@ -288,9 +284,6 @@ export class OrderRequestFromUI {
 export class FairValue implements ITimestamped {
     constructor(public price: number, public time: Date) {}
 }
-
-export enum QuoteAction { New, Cancel }
-export enum QuoteSent { First, Modify, UnsentDuplicate, Delete, UnsentDelete, UnableToSend }
 
 export class Quote {
     constructor(public price: number,
