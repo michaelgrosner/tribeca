@@ -519,9 +519,9 @@ export class PositionBroker {
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (rpt !== null) this._currencies[rpt.currency] = rpt;
-        if (!this._currencies[this._base.pair.base] || !this._currencies[this._base.pair.quote]) return;
-        var basePosition = this.getPosition(this._base.pair.base);
-        var quotePosition = this.getPosition(this._base.pair.quote);
+        if (!this._currencies[this._broker.pair.base] || !this._currencies[this._broker.pair.quote]) return;
+        var basePosition = this.getPosition(this._broker.pair.base);
+        var quotePosition = this.getPosition(this._broker.pair.quote);
         var fv = this._fvEngine.latestFairValue;
         if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || fv === null) return;
 
@@ -538,7 +538,7 @@ export class PositionBroker {
         const profitQuote = ((quoteValue - this._lastPositions[0].quoteValue) / quoteValue) * 1e+2;
 
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._base.pair, this._base.exchange(), timeNow);
+            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._broker.pair, this._broker.exchange(), timeNow);
 
         if (this._report !== null &&
           Math.abs(positionReport.value - this._report.value) < 2e-6 &&
@@ -579,7 +579,7 @@ export class PositionBroker {
 
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-                private _base: ExchangeBroker,
+                private _broker: ExchangeBroker,
                 private _orderBroker: OrderBroker,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,

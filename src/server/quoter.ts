@@ -26,7 +26,7 @@ export class Quoter {
   };
 }
 
-export class ExchangeQuoter {
+class ExchangeQuoter {
   private _exchange: Models.Exchange;
 
   constructor(
