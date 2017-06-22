@@ -463,7 +463,14 @@ export class OrderBroker {
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
-        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => Array.from(this.orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
+          let orderCache = [];
+          this.orderCache.allOrders.forEach(x => {
+            if (x.orderStatus === Models.OrderStatus.New || x.orderStatus === Models.OrderStatus.Working)
+              orderCache.push(x);
+          });
+          return orderCache;
+        });
         _publisher.registerSnapshot(Models.Topics.Trades, () => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
