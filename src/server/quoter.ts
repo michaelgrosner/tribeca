@@ -39,7 +39,10 @@ export class ExchangeQuoter {
   }
 
   private orderCacheSide = (sort?: boolean) => {
-    let orderSide = Array.from(this._orderBroker.orderCache.allOrders.values()).filter(x => this._side === x.side);
+    let orderSide = [];
+    this._orderBroker.orderCache.allOrders.forEach(x => {
+      if (this._side === x.side) orderSide.push(x);
+    });
     if (sort) {
       if (this._side === Models.Side.Bid)
         orderSide.sort(function(a,b){return a.price<b.price?1:(a.price>b.price?-1:0);});
