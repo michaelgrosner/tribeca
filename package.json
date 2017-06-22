@@ -67,7 +67,6 @@
     "typescript": "^2.3.4",
     "uglify-js": "^3.0.19",
     "uws": "^8.14.0",
-    "ws": "^3.0.0",
     "zone.js": "^0.8.12"
   },
   "devDependencies": {
