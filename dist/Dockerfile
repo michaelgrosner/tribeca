@@ -4,7 +4,7 @@ RUN apt-get update
 RUN apt-get install -y git sudo
 
 # Feel free to choose the branch you want to build:
-RUN git clone -b master https://github.com/samuelhug/Krypto-trading-bot.git K
+RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git K
 
 WORKDIR K
 
