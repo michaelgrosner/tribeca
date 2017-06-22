@@ -55,7 +55,7 @@ export class OrderBroker {
 
         this.OrderUpdate.on(orderUpdate);
 
-        for (let e of this._orderCache.allOrders.values()) {
+        for (let e of this.orderCache.allOrders.values()) {
             if (e.pendingCancel || e.orderStatus == Models.OrderStatus.Complete || e.orderStatus == Models.OrderStatus.Cancelled)
                 continue;
 
@@ -178,7 +178,7 @@ export class OrderBroker {
     Trade = new Utils.Evt<Models.Trade>();
     _trades : Models.Trade[] = [];
 
-    sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
+    sendOrder = (order : Models.SubmitNewOrder) => {
         const orderId = this._oeGateway.generateClientOrderId();
 
         const rpt : Models.OrderStatusUpdate = {
@@ -199,12 +199,10 @@ export class OrderBroker {
         };
 
         this._oeGateway.sendOrder(this.updateOrderState(rpt));
-
-        return new Models.SentOrder(rpt.orderId);
     };
 
-    replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
-        const rpt = this._orderCache.allOrders.get(replace.origOrderId);
+    replaceOrder = (replace : Models.CancelReplaceOrder) => {
+        const rpt = this.orderCache.allOrders.get(replace.origOrderId);
         if (!rpt) throw new Error("Unknown order, cannot replace " + replace.origOrderId);
 
         const report : Models.OrderStatusUpdate = {
@@ -216,12 +214,10 @@ export class OrderBroker {
         };
 
         this._oeGateway.replaceOrder(this.updateOrderState(rpt));
-
-        return new Models.SentOrder(report.orderId);
     };
 
     cancelOrder = (cancel: Models.OrderCancel) => {
-        const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
+        const rpt = this.orderCache.allOrders.get(cancel.origOrderId);
         if (!rpt) {
           this.updateOrderState(<Models.OrderStatusUpdate>{
               orderId: cancel.origOrderId,
@@ -302,12 +298,12 @@ export class OrderBroker {
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
         } else {
-            orig = this._orderCache.allOrders.get(osr.orderId);
+            orig = this.orderCache.allOrders.get(osr.orderId);
             if (typeof orig === "undefined" && osr.exchangeId) {
-                const secondChance = this._orderCache.exchIdsToClientIds.get(osr.exchangeId);
+                const secondChance = this.orderCache.exchIdsToClientIds.get(osr.exchangeId);
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
-                    orig = this._orderCache.allOrders.get(secondChance);
+                    orig = this.orderCache.allOrders.get(secondChance);
                 }
             }
             if (typeof orig === "undefined") return;
@@ -440,15 +436,15 @@ export class OrderBroker {
 
     private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete) {
-          this._orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
-          this._orderCache.allOrders.set(osr.orderId, osr);
+          this.orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+          this.orderCache.allOrders.set(osr.orderId, osr);
         } else {
-          this._orderCache.exchIdsToClientIds.delete(osr.exchangeId);
-          this._orderCache.allOrders.delete(osr.orderId);
+          this.orderCache.exchIdsToClientIds.delete(osr.exchangeId);
+          this.orderCache.allOrders.delete(osr.orderId);
         }
     };
 
-    private _orderCache: OrderStateCache;
+    public orderCache: OrderStateCache;
 
     constructor(
       private _timeProvider: Utils.ITimeProvider,
@@ -460,14 +456,14 @@ export class OrderBroker {
       private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]
     ) {
-        this._orderCache = new OrderStateCache();
+        this.orderCache = new OrderStateCache();
         _.each(initTrades, t => this._trades.push(t));
 
         if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
           _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
-        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => Array.from(this._orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
+        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => Array.from(this.orderCache.allOrders.values()).filter(o => o.orderStatus === Models.OrderStatus.New || o.orderStatus === Models.OrderStatus.Working));
         _publisher.registerSnapshot(Models.Topics.Trades, () => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
@@ -554,20 +550,19 @@ export class PositionBroker {
     };
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
-        const qs = this._quoter.quotesActive(o.side);
-        if (!qs.length || !this._report) return;
+        if (!this._report) return;
+        var heldAmount = 0;
         var amount = o.side == Models.Side.Ask
           ? this._report.baseAmount + this._report.baseHeldAmount
           : this._report.quoteAmount + this._report.quoteHeldAmount;
-        var heldAmount = 0;
-        qs.forEach((q) => {
-          let held = q.quote.size * (o.side == Models.Side.Bid ? q.quote.price : 1);
+        this._orderBroker.orderCache.allOrders.forEach(x => {
+          if (x.side !== o.side) return;
+          let held = x.quantity * (x.side == Models.Side.Bid ? x.price : 1);
           if (amount>=held) {
             amount -= held;
             heldAmount += held;
           }
         });
-
         this.onPositionUpdate(new Models.CurrencyPosition(
           amount,
           heldAmount,
@@ -578,13 +573,12 @@ export class PositionBroker {
     constructor(private _timeProvider: Utils.ITimeProvider,
                 private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
                 private _base: ExchangeBroker,
-                private _broker: OrderBroker,
-                private _quoter: Quoter.Quoter,
+                private _orderBroker: OrderBroker,
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _publisher : Publish.Publisher) {
         this._posGateway.PositionUpdate.on(this.onPositionUpdate);
-        this._broker.OrderUpdate.on(this.handleOrderUpdate);
+        this._orderBroker.OrderUpdate.on(this.handleOrderUpdate);
         this._fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
 
         this._publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
@@ -666,5 +660,15 @@ export class ExchangeBroker {
       });
 
       this._publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
+
+      console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details' ,{
+          exchange: Models.Exchange[this.exchange()],
+          pair: this.pair.toString(),
+          minTick: this.minTickIncrement,
+          minSize: this.minSize,
+          makeFee: this.makeFee(),
+          takeFee: this.takeFee(),
+          hasSelfTradePrevention: this.hasSelfTradePrevention,
+      });
     }
 }

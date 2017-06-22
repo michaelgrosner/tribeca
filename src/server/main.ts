@@ -235,16 +235,6 @@ for (const param in defaultQuotingParameters)
     publisher
   );
 
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exchange details' ,{
-      exchange: Models.Exchange[broker.exchange()],
-      pair: broker.pair.toString(),
-      minTick: broker.minTickIncrement,
-      minSize: broker.minSize,
-      makeFee: broker.makeFee(),
-      takeFee: broker.takeFee(),
-      hasSelfTradePrevention: broker.hasSelfTradePrevention,
-  });
-
   const orderBroker = new Broker.OrderBroker(
     timeProvider,
     paramsRepo,
@@ -256,18 +246,16 @@ for (const param in defaultQuotingParameters)
     initTrades
   );
 
-  const marketDataBroker = new Broker.MarketDataBroker(
+  const marketBroker = new Broker.MarketDataBroker(
     gateway.md,
     publisher
   );
 
-  const quoter = new Quoter.Quoter(paramsRepo, orderBroker, broker);
-
   const fvEngine = new FairValue.FairValueEngine(
     new MarketFiltration.MarketFiltration(
-      broker,
-      quoter,
-      marketDataBroker
+      broker.minTickIncrement,
+      orderBroker,
+      marketBroker
     ),
     broker,
     timeProvider,
@@ -280,7 +268,6 @@ for (const param in defaultQuotingParameters)
     paramsRepo,
     broker,
     orderBroker,
-    quoter,
     fvEngine,
     gateway.pg,
     publisher
@@ -293,17 +280,13 @@ for (const param in defaultQuotingParameters)
     orderBroker,
     positionBroker,
     broker,
-    new Statistics.ObservableEWMACalculator(
-      timeProvider,
-      fvEngine,
-      paramsRepo
-    ),
+    new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, paramsRepo),
     new Statistics.ObservableSTDEVCalculator(
       timeProvider,
       fvEngine,
-      broker.minTickIncrement,
       paramsRepo,
       persister,
+      broker.minTickIncrement,
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
@@ -335,7 +318,7 @@ for (const param in defaultQuotingParameters)
     timeProvider,
     quotingEngine,
     publisher,
-    quoter,
+    new Quoter.Quoter(broker, orderBroker, paramsRepo),
     broker,
     new Active.ActiveRepository(
       config.GetString("BotIdentifier").indexOf('auto')>-1,
@@ -348,7 +331,7 @@ for (const param in defaultQuotingParameters)
   new MarketTrades.MarketTradeBroker(
     gateway.md,
     publisher,
-    marketDataBroker,
+    marketBroker,
     quotingEngine,
     broker
   );
