@@ -2,35 +2,55 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
-import Active = require("./active-state");
 import QuotingEngine = require("./quoting-engine");
 import QuotingParameters = require("./quoting-parameters");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
-  private _latest = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
-  public get latestStatus() { return this._latest; }
-  public set latestStatus(val: Models.TwoSidedQuoteStatus) {
-    if (val.bidStatus === this._latest.bidStatus && val.askStatus === this._latest.askStatus) return;
-
-    this._latest = val;
-    this._publisher.publish(Models.Topics.QuoteStatus, this._latest, true);
-  }
+  private _savedQuotingMode: boolean = false;
+  private _latestState: boolean = false;
+  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _quotingEngine: QuotingEngine.QuotingEngine,
-    private _publisher: Publish.Publisher,
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _activeRepo: Active.ActiveRepository
+    private _publisher: Publish.Publisher,
+    private _reciever: Publish.Receiver,
+    startQuoting: boolean,
   ) {
     this._exchange = _broker.exchange();
-    _activeRepo.ExchangeConnectivity.on(this.sendQuote);
+    this._savedQuotingMode = startQuoting;
+
+    _broker.ConnectChanged.on(this.updateConnectivity);
     _quotingEngine.QuoteChanged.on(this.sendQuote);
-    _publisher.registerSnapshot(Models.Topics.QuoteStatus, () => this.latestStatus === null ? [] : [this.latestStatus]);
+    _publisher.registerSnapshot(Models.Topics.QuoteStatus, () => [this._latestStatus]);
+    _publisher.registerSnapshot(Models.Topics.ActiveState, () => [this._latestState]);
+    _reciever.registerReceiver(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
   }
+
+  private handleNewQuotingModeChangeRequest = (v: boolean) => {
+    if (v !== this._savedQuotingMode) {
+      this._savedQuotingMode = v;
+      this.updateConnectivity();
+    }
+
+    this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+  };
+
+  private updateConnectivity = () => {
+    var newMode = (this._broker.connectStatus !== Models.ConnectivityStatus.Connected)
+      ? false : this._savedQuotingMode;
+
+    if (newMode !== this._latestState) {
+      this._latestState = newMode;
+      console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', !!this._latestState);
+      this.sendQuote();
+      this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+    }
+  };
 
   private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
     var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
@@ -54,7 +74,7 @@ export class QuoteSender {
     let bidStatus = Models.QuoteStatus.Held;
 
     if (quote !== null && this._broker.connectStatus === Models.ConnectivityStatus.Connected) {
-      if (this._activeRepo.latest) {
+      if (this._latestState) {
         if (quote.ask !== null && (this._broker.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
           askStatus = Models.QuoteStatus.Live;
 
@@ -71,7 +91,10 @@ export class QuoteSender {
       else this.stopAllQuotes(Models.Side.Bid);
     }
 
-    this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
+    if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus) return;
+
+    this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
+    this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus, true);
   };
 
   private updateQuote = (q: Models.Quote, side: Models.Side) => {

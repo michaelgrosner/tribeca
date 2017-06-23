@@ -27,7 +27,6 @@ import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import compression = require("compression");
 import Persister = require("./persister");
-import Active = require("./active-state");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
@@ -316,16 +315,12 @@ for (const param in defaultQuotingParameters)
   new QuoteSender.QuoteSender(
     timeProvider,
     quotingEngine,
-    publisher,
     broker,
     orderBroker,
     paramsRepo,
-    new Active.ActiveRepository(
-      config.GetString("BotIdentifier").indexOf('auto')>-1,
-      broker,
-      publisher,
-      receiver
-    )
+    publisher,
+    receiver,
+    config.GetString("BotIdentifier").indexOf('auto')>-1
   );
 
   new MarketTrades.MarketTradeBroker(
