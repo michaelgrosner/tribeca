@@ -80,7 +80,7 @@ export class OrdersComponent implements OnInit {
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 45, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
-      { width: 35, field: 'lat', headerName: 'lat'},
+      { width: 45, field: 'lat', headerName: 'lat'},
       { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
           return (params.value) ? params.value.toString().split('-')[0] : '';
         }}
