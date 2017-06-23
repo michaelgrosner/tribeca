@@ -56,7 +56,7 @@ See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc
 
 Troubleshooting:
 
- * Do not install or execute the application as root; if you really want to install as root do it with `npm install --unsafe-perm`.
+ * Do not install or execute the application as root; if you really want to install as root use `npm install --unsafe-perm`.
 
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
