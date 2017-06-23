@@ -119,9 +119,9 @@ export class DisplayPair {
 
     this.active = new QuotingButtonViewModel(
       subscriberFactory
-        .getSubscriber(zone, Models.Topics.ActiveChange),
+        .getSubscriber(zone, Models.Topics.ActiveState),
       fireFactory
-        .getFire(Models.Topics.ActiveChange)
+        .getFire(Models.Topics.ActiveState)
     );
 
     this.quotingParameters = new DisplayQuotingParameters(

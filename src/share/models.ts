@@ -23,7 +23,7 @@ export var Topics = {
   FairValue: 'a',
   Quote: 'b',
   ActiveSubscription: 'c',
-  ActiveChange: 'd',
+  ActiveState: 'd',
   MarketData: 'e',
   QuotingParametersChange: 'f',
   SafetySettings: 'g',
