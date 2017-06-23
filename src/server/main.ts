@@ -230,7 +230,9 @@ for (const param in defaultQuotingParameters)
     gateway.md,
     gateway.base,
     gateway.oe,
-    publisher
+    publisher,
+    receiver,
+    config.GetString("BotIdentifier").indexOf('auto')>-1
   );
 
   const orderBroker = new Broker.OrderBroker(
@@ -318,9 +320,7 @@ for (const param in defaultQuotingParameters)
     broker,
     orderBroker,
     paramsRepo,
-    publisher,
-    receiver,
-    config.GetString("BotIdentifier").indexOf('auto')>-1
+    publisher
   );
 
   new MarketTrades.MarketTradeBroker(
