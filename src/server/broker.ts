@@ -642,7 +642,7 @@ export class ExchangeBroker {
         this._connectStatus = newStatus;
         this.ConnectChanged.trigger(newStatus);
 
-        // console.info('broker', 'Connection status changed ::', Models.ConnectivityStatus[this._connectStatus], ':: (md:',Models.ConnectivityStatus[this.mdConnected],') (oe:',Models.ConnectivityStatus[this.oeConnected],')');
+        this.updateConnectivity();
         this._publisher.publish(Models.Topics.ExchangeConnectivity, this.connectStatus);
     };
 
@@ -655,17 +655,23 @@ export class ExchangeBroker {
       private _mdGateway: Interfaces.IMarketDataGateway,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
-      private _publisher: Publish.Publisher
+      private _publisher: Publish.Publisher,
+      private _reciever: Publish.Receiver,
+      startQuoting: boolean
     ) {
-      this._mdGateway.ConnectChanged.on(s => {
+      this._savedQuotingMode = startQuoting;
+
+      _mdGateway.ConnectChanged.on(s => {
         this.onConnect(Models.GatewayType.MarketData, s);
       });
 
-      this._oeGateway.ConnectChanged.on(s => {
+      _oeGateway.ConnectChanged.on(s => {
         this.onConnect(Models.GatewayType.OrderEntry, s)
       });
 
-      this._publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
+      _publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
+      _publisher.registerSnapshot(Models.Topics.ActiveState, () => [this._latestState]);
+      _reciever.registerReceiver(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
       console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details' ,{
           exchange: Models.Exchange[this.exchange()],
@@ -677,4 +683,31 @@ export class ExchangeBroker {
           hasSelfTradePrevention: this.hasSelfTradePrevention,
       });
     }
+
+  private _savedQuotingMode: boolean = false;
+
+  private _latestState: boolean = false;
+  public get latestState() {
+      return this._latestState;
+  }
+
+  private handleNewQuotingModeChangeRequest = (v: boolean) => {
+    if (v !== this._savedQuotingMode) {
+      this._savedQuotingMode = v;
+      this.updateConnectivity();
+    }
+
+    this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+  };
+
+  private updateConnectivity = () => {
+    var newMode = (this.connectStatus !== Models.ConnectivityStatus.Connected)
+      ? false : this._savedQuotingMode;
+
+    if (newMode !== this._latestState) {
+      this._latestState = newMode;
+      console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', !!this._latestState);
+      this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+    }
+  };
 }
