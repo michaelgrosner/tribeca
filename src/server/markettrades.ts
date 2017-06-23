@@ -7,7 +7,7 @@ import QuotingEngine = require("./quoting-engine");
 import * as moment from "moment";
 
 export class MarketTradeBroker {
-    // TOOD: is this event needed?
+    // TOOD: is this event needed? (nobody listens to MarketTrade yet)
     MarketTrade = new Utils.Evt<Models.MarketTrade>();
     public get marketTrades() { return this._marketTrades; }
 
