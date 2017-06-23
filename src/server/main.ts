@@ -24,7 +24,6 @@ import MarketTrades = require("./markettrades");
 import Publish = require("./publish");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
-import Quoter = require("./quoter");
 import Safety = require("./safety");
 import compression = require("compression");
 import Persister = require("./persister");
@@ -318,8 +317,9 @@ for (const param in defaultQuotingParameters)
     timeProvider,
     quotingEngine,
     publisher,
-    new Quoter.Quoter(broker, orderBroker, paramsRepo),
     broker,
+    orderBroker,
+    paramsRepo,
     new Active.ActiveRepository(
       config.GetString("BotIdentifier").indexOf('auto')>-1,
       broker,

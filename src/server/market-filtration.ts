@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Broker = require("./broker");
-import Quoter = require("./quoter");
 
 export class MarketFiltration {
   private _latest: Models.Market = null;
