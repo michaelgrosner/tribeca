@@ -60,7 +60,7 @@ Troubleshooting:
 
  * Use `smallfiles=true` in your `/etc/mongodb.conf` if your `/var/lib/mongodb/journal/*` files are too big (see [more info](https://stackoverflow.com/questions/19533019/is-it-safe-to-delete-the-journal-file-of-mongodb)).
 
- * Run `rm -rf node_modules` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
+ * Run `rm -rf node_modules && npm install` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
 
  Optional:
 
