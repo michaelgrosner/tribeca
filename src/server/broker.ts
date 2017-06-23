@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import _ = require("lodash");
-import Quoter = require("./quoter");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
