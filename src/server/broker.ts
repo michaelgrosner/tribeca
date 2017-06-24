@@ -456,7 +456,7 @@ export class OrderBroker {
       initTrades : Models.Trade[]
     ) {
         this.orderCache = new OrderStateCache();
-        _.each(initTrades, t => this._trades.push(t));
+        this._trades = initTrades;
 
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
