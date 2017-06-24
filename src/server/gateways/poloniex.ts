@@ -339,8 +339,11 @@ class PoloniexHttp {
           try {
             var t = new Date();
             var data = JSON.parse(body);
-            if (typeof data.error !== 'undefined')
-              console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Error', actionUrl, data.error);
+            if (typeof data.error !== 'undefined') {
+              if (data.error.indexOf('Nonce must be greater than')>-1) {
+                resolve(this.post(actionUrl, msg));
+              } else console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Error', actionUrl, data.error);
+            }
             else resolve(new Models.Timestamped(data, t));
           }
           catch (e) {
