@@ -458,8 +458,6 @@ export class OrderBroker {
         this.orderCache = new OrderStateCache();
         _.each(initTrades, t => this._trades.push(t));
 
-        if (_qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || _qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || _qlParamRepo.latest.mode === Models.QuotingMode.AK47)
-          _oeGateway.cancelAllOpenOrders();
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
         _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
