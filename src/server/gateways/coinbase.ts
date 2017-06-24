@@ -23,7 +23,7 @@ interface CoinbaseOrderEmitter {
 
     socket: any;
     connect: any;
-    books: any;
+    book: any;
 }
 
 interface CoinbaseOrder {
@@ -114,14 +114,14 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private reevalBook = () => {
         this._cachedBids = [];
         this._cachedAsks = [];
-        const bidsIterator = this._client.books[this._symbolProvider.symbol]._bids.iterator();
+        const bidsIterator = this._client.book._bids.iterator();
         let item;
         while((item = bidsIterator.prev()) !== null && this._cachedBids.length < 13) {
             let size = 0;
             item.orders.forEach(x => size += parseFloat(x.size));
             this._cachedBids.push(new Models.MarketSide(parseFloat(item.price), size));
         };
-        const asksIterator = this._client.books[this._symbolProvider.symbol]._asks.iterator();
+        const asksIterator = this._client.book._asks.iterator();
         while((item = asksIterator.next()) !== null && this._cachedAsks.length < 13) {
             let size = 0;
             item.orders.forEach(x => size += parseFloat(x.size));
@@ -149,10 +149,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, new Date()));
     };
 
-    constructor(
-      private _client: CoinbaseOrderEmitter,
-      private _symbolProvider: CoinbaseSymbolProvider
-    ) {
+    constructor(private _client: CoinbaseOrderEmitter) {
         this._client.on("open", data => this.onStateChange());
         this._client.on("close", data => this.onStateChange());
         this._client.on("message", data => this.onMessage(data));
@@ -588,14 +585,14 @@ class Coinbase extends Interfaces.CombinedGateway {
       minSize: number
     ) {
 
-        const orderEventEmitter = new Gdax.OrderbookSync([symbolProvider.symbol], config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
+        const orderEventEmitter = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
 
         const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
             <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
             : new NullGateway.NullOrderGateway();
 
         const positionGateway = new CoinbasePositionGateway(authClient);
-        const mdGateway = new CoinbaseMarketDataGateway(orderEventEmitter, symbolProvider);
+        const mdGateway = new CoinbaseMarketDataGateway(orderEventEmitter);
 
         super(
             mdGateway,
