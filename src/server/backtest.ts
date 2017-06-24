@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import moment = require("moment");
-import _ = require('lodash');
 import fs = require("fs");
 
 enum TimedType {
@@ -55,7 +54,7 @@ export class BacktestTimeProvider implements Utils.IBacktestingTimeProvider {
             this._immediates.pop()();
         }
 
-        while (this._timeouts.length > 0 && _.first(this._timeouts).time.toDate().getTime() - time.toDate().getTime() < 0) {
+        while (this._timeouts.length > 0 && this._timeouts[0].time.toDate().getTime() - time.toDate().getTime() < 0) {
             var evt : Timed = this._timeouts.shift();
             this._internalTime = evt.time;
             evt.action();
@@ -138,20 +137,24 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
 
     private onMarketData = (market : Models.Market) => {
-        this._openAskOrders = this.tryToMatch(<any>_.values(this._openAskOrders), market.bids, Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch(<any>_.values(this._openBidOrders), market.asks, Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch((<any>Object).values(this._openAskOrders), market.bids, Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch((<any>Object).values(this._openBidOrders), market.asks, Models.Side.Bid);
 
         this.MarketData.trigger(market);
     };
 
 
     private tryToMatch = (orders: Models.OrderStatusReport[], marketSides: Models.MarketSide[], side: Models.Side) => {
-        if (orders.length === 0 || marketSides.length === 0)
-            return _.keyBy(orders, k => k.orderId);
+        if (orders.length === 0 || marketSides.length === 0) {
+            var O = {};
+            for(var i = Object.keys(orders).length;i--;)
+            O[(<any>Object).values(orders)[i].orderId] = (<any>Object).values(orders)[i];
+            return O;
+        }
 
         var cmp = side === Models.Side.Ask ? (m, o) => o < m : (m, o) => o > m;
-        _.forEach(orders, order => {
-            _.forEach(marketSides, mkt => {
+        orders.forEach(order => {
+            marketSides.forEach(mkt => {
                 if ((cmp(mkt.price, order.price) || order.type === Models.OrderType.Market) && order.quantity > 0) {
 
                     var px = order.price;
@@ -184,17 +187,20 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
             });
         });
 
-        var liveOrders = _.filter(orders, o => o.quantity > 0);
+        var liveOrders = orders.filter(o => o.quantity > 0);
 
         if (liveOrders.length > 5)
             console.warn("more than 5 outstanding " + Models.Side[side] + " orders open");
 
-        return _.keyBy(liveOrders, k => k.orderId);
+        var O = {};
+        for(var i = Object.keys(liveOrders).length;i--;)
+        O[(<any>Object).values(liveOrders)[i].orderId] = (<any>Object).values(liveOrders)[i];
+        return O;
     };
 
     private onMarketTrade = (trade : Models.MarketTrade) => {
-        this._openAskOrders = this.tryToMatch(<any>_.values(this._openAskOrders), [trade], Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch(<any>_.values(this._openBidOrders), [trade], Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch((<any>Object).values(this._openAskOrders), [trade], Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch((<any>Object).values(this._openBidOrders), [trade], Models.Side.Bid);
 
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
@@ -344,7 +350,7 @@ var backtestServer = () => {
     });
 
     app.get("/nextParameters", (req, res) => {
-        if (_.some(parameters)) {
+        if ((<any>Object).values(parameters).map(function(a){return !!a;}).indexOf(true)!==-1) {
             var id = parameters.length;
             var served = parameters.shift();
             if (typeof served["id"] === "undefined")
@@ -354,7 +360,7 @@ var backtestServer = () => {
             res.json(served);
             fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
 
-            if (!_.some(parameters)) {
+            if ((<any>Object).values(parameters).map(function(a){return !!a;}).indexOf(true)===-1) {
                 console.log("Done serving parameters");
             }
         }
