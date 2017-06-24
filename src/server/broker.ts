@@ -74,9 +74,9 @@ export class OrderBroker {
         var deferred = Promises.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].Kqty+0.0001 >= this._trades[i].quantity) {
-            lateCleans[this._trades[i].tradeId] = true;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (this.tradesMemory[i].Kqty+0.0001 >= this.tradesMemory[i].quantity) {
+            lateCleans[this.tradesMemory[i].tradeId] = true;
           }
         }
 
@@ -86,12 +86,12 @@ export class OrderBroker {
 
         for (var k in lateCleans) {
           if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this._trades.length;i++) {
-            if (k == this._trades[i].tradeId) {
-              this._trades[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-              this._persister.repersist(this._trades[i]);
-              this._trades.splice(i, 1);
+          for(var i = 0;i<this.tradesMemory.length;i++) {
+            if (k == this.tradesMemory[i].tradeId) {
+              this.tradesMemory[i].Kqty = -1;
+              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+              this._persister.repersist(this.tradesMemory[i]);
+              this.tradesMemory.splice(i, 1);
               break;
             }
           }
@@ -107,9 +107,9 @@ export class OrderBroker {
         var deferred = Promises.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].tradeId == tradeId) {
-            lateCleans[this._trades[i].tradeId] = true;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (this.tradesMemory[i].tradeId == tradeId) {
+            lateCleans[this.tradesMemory[i].tradeId] = true;
           }
         }
 
@@ -119,12 +119,12 @@ export class OrderBroker {
 
         for (var k in lateCleans) {
           if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this._trades.length;i++) {
-            if (k == this._trades[i].tradeId) {
-              this._trades[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-              this._persister.repersist(this._trades[i]);
-              this._trades.splice(i, 1);
+          for(var i = 0;i<this.tradesMemory.length;i++) {
+            if (k == this.tradesMemory[i].tradeId) {
+              this.tradesMemory[i].Kqty = -1;
+              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+              this._persister.repersist(this.tradesMemory[i]);
+              this.tradesMemory.splice(i, 1);
               break;
             }
           }
@@ -140,8 +140,8 @@ export class OrderBroker {
         var deferred = Promises.defer<number>();
 
         var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this._trades.length;i++) {
-          lateCleans[this._trades[i].tradeId] = true;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          lateCleans[this.tradesMemory[i].tradeId] = true;
         }
 
         if (_.isEmpty(_.keys(lateCleans))) {
@@ -150,12 +150,12 @@ export class OrderBroker {
 
         for (var k in lateCleans) {
           if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this._trades.length;i++) {
-            if (k == this._trades[i].tradeId) {
-              this._trades[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-              this._persister.repersist(this._trades[i]);
-              this._trades.splice(i, 1);
+          for(var i = 0;i<this.tradesMemory.length;i++) {
+            if (k == this.tradesMemory[i].tradeId) {
+              this.tradesMemory[i].Kqty = -1;
+              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+              this._persister.repersist(this.tradesMemory[i]);
+              this.tradesMemory.splice(i, 1);
               break;
             }
           }
@@ -175,7 +175,7 @@ export class OrderBroker {
     private _cancelsWaitingForExchangeOrderId: {[clId : string]: Models.OrderCancel} = {};
 
     Trade = new Utils.Evt<Models.Trade>();
-    _trades : Models.Trade[] = [];
+    tradesMemory : Models.Trade[] = [];
 
     sendOrder = (order : Models.SubmitNewOrder) => {
         const orderId = this._oeGateway.generateClientOrderId();
@@ -251,43 +251,43 @@ export class OrderBroker {
       while (gowhile && trade.quantity>0 && reTrades!=null && reTrades.length) {
         var reTrade = reTrades.shift();
         gowhile = false;
-        for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].tradeId==reTrade.tradeId) {
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (this.tradesMemory[i].tradeId==reTrade.tradeId) {
             gowhile = true;
-            var Kqty = Math.min(trade.quantity, this._trades[i].quantity - this._trades[i].Kqty);
-            this._trades[i].Ktime = trade.time;
-            this._trades[i].Kprice = ((Kqty*trade.price) + (this._trades[i].Kqty*this._trades[i].Kprice)) / (this._trades[i].Kqty+Kqty);
-            this._trades[i].Kqty += Kqty;
-            this._trades[i].Kvalue = Math.abs(this._trades[i].Kprice*this._trades[i].Kqty);
+            var Kqty = Math.min(trade.quantity, this.tradesMemory[i].quantity - this.tradesMemory[i].Kqty);
+            this.tradesMemory[i].Ktime = trade.time;
+            this.tradesMemory[i].Kprice = ((Kqty*trade.price) + (this.tradesMemory[i].Kqty*this.tradesMemory[i].Kprice)) / (this.tradesMemory[i].Kqty+Kqty);
+            this.tradesMemory[i].Kqty += Kqty;
+            this.tradesMemory[i].Kvalue = Math.abs(this.tradesMemory[i].Kprice*this.tradesMemory[i].Kqty);
             trade.quantity -= Kqty;
             trade.value = Math.abs(trade.price*trade.quantity);
-            if (this._trades[i].quantity<=this._trades[i].Kqty)
-              this._trades[i].Kdiff = Math.abs((this._trades[i].quantity*this._trades[i].price)-(this._trades[i].Kqty*this._trades[i].Kprice));
-            this._trades[i].loadedFromDB = false;
-            this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-            this._persister.repersist(this._trades[i]);
+            if (this.tradesMemory[i].quantity<=this.tradesMemory[i].Kqty)
+              this.tradesMemory[i].Kdiff = Math.abs((this.tradesMemory[i].quantity*this.tradesMemory[i].price)-(this.tradesMemory[i].Kqty*this.tradesMemory[i].Kprice));
+            this.tradesMemory[i].loadedFromDB = false;
+            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._persister.repersist(this.tradesMemory[i]);
             break;
           }
         }
       }
       if (trade.quantity>0) {
         var exists = false;
-        for(var i = 0;i<this._trades.length;i++) {
-          if (this._trades[i].price==trade.price && this._trades[i].side==trade.side && this._trades[i].quantity>this._trades[i].Kqty) {
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (this.tradesMemory[i].price==trade.price && this.tradesMemory[i].side==trade.side && this.tradesMemory[i].quantity>this.tradesMemory[i].Kqty) {
             exists = true;
-            this._trades[i].time = trade.time;
-            this._trades[i].quantity += trade.quantity;
-            this._trades[i].value += trade.value;
-            this._trades[i].loadedFromDB = false;
-            this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-            this._persister.repersist(this._trades[i]);
+            this.tradesMemory[i].time = trade.time;
+            this.tradesMemory[i].quantity += trade.quantity;
+            this.tradesMemory[i].value += trade.value;
+            this.tradesMemory[i].loadedFromDB = false;
+            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._persister.repersist(this.tradesMemory[i]);
             break;
           }
         }
         if (!exists) {
           this._publisher.publish(Models.Topics.Trades, trade);
           this._persister.persist('trades', trade);
-          this._trades.push(trade);
+          this.tradesMemory.push(trade);
         }
       }
     };
@@ -386,7 +386,7 @@ export class OrderBroker {
               var widthPong = (this._qlParamRepo.latest.widthPercentage)
                   ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
                   : this._qlParamRepo.latest.widthPong;
-              this._reTrade(this._trades.filter((x: Models.Trade) => (
+              this._reTrade(this.tradesMemory.filter((x: Models.Trade) => (
                 (trade.side==Models.Side.Bid?(x.price > (trade.price + widthPong)):(x.price < (trade.price - widthPong)))
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
@@ -405,25 +405,25 @@ export class OrderBroker {
             } else {
               this._publisher.publish(Models.Topics.Trades, trade);
               this._persister.persist('trades', trade);
-              this._trades.push(trade);
+              this.tradesMemory.push(trade);
             }
 
             this._publisher.publish(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
 
             if (this._qlParamRepo.latest.cleanPongsAuto>0) {
               const cleanTime = o.time.getTime() - (this._qlParamRepo.latest.cleanPongsAuto * 864e5);
-              var cleanTrades = this._trades.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time.getTime() < cleanTime);
+              var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time.getTime() < cleanTime);
               var goWhile = true;
               while (goWhile && cleanTrades.length) {
                 var cleanTrade = cleanTrades.shift();
                 goWhile = false;
-                for(let i = this._trades.length;i--;) {
-                  if (this._trades[i].tradeId==cleanTrade.tradeId) {
+                for(let i = this.tradesMemory.length;i--;) {
+                  if (this.tradesMemory[i].tradeId==cleanTrade.tradeId) {
                     goWhile = true;
-                    this._trades[i].Kqty = -1;
-                    this._publisher.publish(Models.Topics.Trades, this._trades[i]);
-                    this._persister.repersist(this._trades[i]);
-                    this._trades.splice(i, 1);
+                    this.tradesMemory[i].Kqty = -1;
+                    this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+                    this._persister.repersist(this.tradesMemory[i]);
+                    this.tradesMemory.splice(i, 1);
                   }
                 }
               }
@@ -455,20 +455,17 @@ export class OrderBroker {
       private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]
     ) {
+        this.tradesMemory = initTrades;
         this.orderCache = new OrderStateCache();
-        this._trades = initTrades;
 
         _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
+        _publisher.registerSnapshot(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
         _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
           let orderCache = [];
-          this.orderCache.allOrders.forEach(x => {
-            if (x.orderStatus === Models.OrderStatus.New || x.orderStatus === Models.OrderStatus.Working)
-              orderCache.push(x);
-          });
+          this.orderCache.allOrders.forEach(x => { if (x.orderStatus === Models.OrderStatus.Working) orderCache.push(x); });
           return orderCache;
         });
-        _publisher.registerSnapshot(Models.Topics.Trades, () => this._trades.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
 
         _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
