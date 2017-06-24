@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
-import _ = require("lodash");
 import Interfaces = require("./interfaces");
 import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
@@ -80,7 +79,7 @@ export class OrderBroker {
           }
         }
 
-        if (_.isEmpty(_.keys(lateCleans))) {
+        if (!Object.keys(lateCleans).length) {
             deferred.resolve(0);
         }
 
@@ -97,8 +96,8 @@ export class OrderBroker {
           }
         }
 
-        if (_.every(_.values(lateCleans)))
-            deferred.resolve(_.size(lateCleans));
+        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+            deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;
     }
@@ -113,7 +112,7 @@ export class OrderBroker {
           }
         }
 
-        if (_.isEmpty(_.keys(lateCleans))) {
+        if (!Object.keys(lateCleans).length) {
             deferred.resolve(0);
         }
 
@@ -130,8 +129,8 @@ export class OrderBroker {
           }
         }
 
-        if (_.every(_.values(lateCleans)))
-            deferred.resolve(_.size(lateCleans));
+        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+            deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;
     }
@@ -144,7 +143,7 @@ export class OrderBroker {
           lateCleans[this.tradesMemory[i].tradeId] = true;
         }
 
-        if (_.isEmpty(_.keys(lateCleans))) {
+        if (!Object.keys(lateCleans).length) {
             deferred.resolve(0);
         }
 
@@ -161,8 +160,8 @@ export class OrderBroker {
           }
         }
 
-        if (_.every(_.values(lateCleans)))
-            deferred.resolve(_.size(lateCleans));
+        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+            deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;
     }
