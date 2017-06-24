@@ -11,7 +11,7 @@ export class ApplicationState {
   private _app_state: Models.ApplicationState = null;
   private _notepad: string = null;
   private _toggleConfigs: boolean = true;
-  private _tradesMinute: number = 0;
+  private _newOrderMinute: number = 0;
   private _tick: number = 0;
   private _ioDelay: number = 0;
   private _interval = null;
@@ -22,10 +22,10 @@ export class ApplicationState {
       this._app_state = new Models.ApplicationState(
         process.memoryUsage().rss,
         (new Date()).getHours(),
-        this._tradesMinute,
+        this._newOrderMinute,
         dbSize
       );
-      this._tradesMinute = 0;
+      this._newOrderMinute = 0;
       this._publisher.publish(Models.Topics.ApplicationState, this._app_state);
     });
   };
@@ -42,7 +42,7 @@ export class ApplicationState {
 
   public delay = (prefix: string, topic: string, msg: any) => {
     let isOSR: boolean = topic === Models.Topics.OrderStatusReports;
-    if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._tradesMinute;
+    if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
     if (!this._ioDelay) return this._io ? this._io.emit(prefix + topic, msg) : null;
     this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
     if (!isOSR || msg.data[1] === Models.OrderStatus.Working) this._delayed.push([prefix+topic, msg]);
