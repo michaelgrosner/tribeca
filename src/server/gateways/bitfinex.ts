@@ -7,7 +7,6 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
-import _ = require("lodash");
 import * as Promises from '../promises';
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
@@ -224,7 +223,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._http
             .post<any, any[]>("orders", {})
             .then(resps => {
-                _.forEach(resps.data, t => {
+                resps.data.forEach(t => {
                     this._http
                         .post<any, any>("order/cancel", { order_id: t.id })
                         .then(resp => {
@@ -396,10 +395,10 @@ class BitfinexHttp {
     // Bitfinex seems to have a race condition where nonces are processed out of order when rapidly placing orders
     // Retry here - look to mitigate in the future by batching orders?
     post = <TRequest, TResponse>(actionUrl: string, msg: TRequest): Promise<Models.Timestamped<TResponse>> => {
-        return this.postOnce<TRequest, TResponse>(actionUrl, _.clone(msg)).then(resp => {
+        return this.postOnce<TRequest, TResponse>(actionUrl, JSON.parse(JSON.stringify(msg))).then(resp => {
             var rejectMsg: string = (<any>(resp.data)).message;
             if (typeof rejectMsg !== "undefined" && rejectMsg.indexOf("Nonce is too small") > -1)
-                return this.post<TRequest, TResponse>(actionUrl, _.clone(msg));
+                return this.post<TRequest, TResponse>(actionUrl, JSON.parse(JSON.stringify(msg)));
             else
                 return resp;
         });
@@ -480,7 +479,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 
     private onRefreshPositions = () => {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
-            _.forEach(_.filter(res.data, x => x.type === "exchange"), p => {
+            res.data.filter(x => x.type === "exchange").forEach(p => {
                 var amt = parseFloat(p.available);
                 this.PositionUpdate.trigger(new Models.CurrencyPosition(amt, parseFloat(p.amount) - amt, Models.toCurrency(p.currency)));
             });
