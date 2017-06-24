@@ -7,7 +7,7 @@ import Interfaces = require("../interfaces");
 import _ = require('lodash');
 import fs = require('fs');
 import * as Promises from '../promises';
-import uuid = require('node-uuid');
+import uuid = require('uuid');
 import Gdax = require('gdax');
 import events = require('events');
 import quickfix = require('node-quickfix-wrap');
