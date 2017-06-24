@@ -2,7 +2,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import Config = require("../config");
-import _ = require("lodash");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
@@ -99,8 +98,9 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     private readonly Depth: number = 25;
     private generateMarketData = () => {
        const genSide = (sign: number) => {
-           const s = _.times(this.Depth, _ => this.genSingleLevel(sign));
-           return _.sortBy(s, i => sign*i.price);
+          var s = [];
+          for (var i = this.Depth;i--;) s.push(this.genSingleLevel(sign));
+          return s.sort((a, b) => sign*a.price<sign*b.price?1:(sign*a.price>sign*b.price?-1:0));
        };
        return new Models.Market(genSide(-1), genSide(1), new Date());
     };
