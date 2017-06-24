@@ -4,7 +4,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import _ = require('lodash');
 import fs = require('fs');
 import * as Promises from '../promises';
 import uuid = require('uuid');
@@ -80,12 +79,12 @@ interface Product {
 }
 
 interface CoinbaseAuthenticatedClient {
-    getProducts(cb: (err?: Error, response?: any, ack?: Product[]) => void);
-    buy(order: CoinbaseOrder, cb: (err?: Error, response?: any, ack?: CoinbaseOrderAck) => void);
-    sell(order: CoinbaseOrder, cb: (err?: Error, response?: any, ack?: CoinbaseOrderAck) => void);
-    cancelOrder(id: string, cb: (err?: Error, response?: any) => void);
-    cancelAllOrders(cb: (err?: Error, response?: string[]) => void);
-    getAccounts(cb: (err?: Error, response?: any, info?: CoinbaseAccountInformation[]) => void);
+    getProducts(cb: (err: Error, response: any, ack: Product[]) => void);
+    buy(order: CoinbaseOrder, cb: (err: Error, response: any, ack: CoinbaseOrderAck) => void);
+    sell(order: CoinbaseOrder, cb: (err: Error, response: any, ack: CoinbaseOrderAck) => void);
+    cancelOrder(id: string, cb: (err: Error, response: any) => void);
+    cancelAllOrders(cb: (err: Error, response: string[], data: number[]) => void);
+    getAccounts(cb: (err: Error, response: any, info: CoinbaseAccountInformation[]) => void);
 }
 
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
@@ -162,19 +161,17 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
         var d = Promises.defer<number>();
-        this._authClient.cancelAllOrders((err, resp) => {
-            if (!err) {
-                _.forEach(JSON.parse(Object(resp).body), cxl_id => {
-                    this.OrderUpdate.trigger({
-                        exchangeId: cxl_id,
-                        time: new Date(),
-                        orderStatus: Models.OrderStatus.Cancelled,
-                        leavesQuantity: 0
-                    });
+        this._authClient.cancelAllOrders((err, resp, data) => {
+            data.forEach(cxl_id => {
+                this.OrderUpdate.trigger({
+                    exchangeId: cxl_id,
+                    time: new Date(),
+                    orderStatus: Models.OrderStatus.Cancelled,
+                    leavesQuantity: 0
                 });
+            });
 
-                d.resolve(resp.length);
-            };
+            d.resolve(data.length);
         });
         return d.promise;
     };
@@ -526,13 +523,15 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
             try {
               if (Array.isArray(data)) {
-                    _.forEach(data, d => this.PositionUpdate.trigger(new Models.CurrencyPosition(parseFloat(d.available), parseFloat(d.hold), Models.toCurrency(d.currency))));
+                    data.forEach(d => this.PositionUpdate.trigger(new Models.CurrencyPosition(
+                      parseFloat(d.available),
+                      parseFloat(d.hold),
+                      Models.toCurrency(d.currency)
+                    )));
                 }
-                else {
-                    console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'Unable to get Coinbase positions', data)
-                }
+                else console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'Unable to read Coinbase positions', data);
             } catch (error) {
-                console.error(new Date().toISOString().slice(11, -1), 'coinbase', error, 'Exception while downloading Coinbase positions', data)
+                console.error(new Date().toISOString().slice(11, -1), 'coinbase', error, 'Exception while reading Coinbase positions', data)
             }
         });
     };
@@ -607,9 +606,9 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
             config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
 
     const d = Promises.defer<Product[]>();
-    authClient.getProducts((err, _, p) => {
+    authClient.getProducts((err, res, data) => {
         if (err) d.reject(err);
-        else d.resolve(p);
+        else d.resolve(data);
     });
     const products = await d.promise;
 
