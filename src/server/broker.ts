@@ -96,7 +96,7 @@ export class OrderBroker {
           }
         }
 
-        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
             deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;
@@ -129,7 +129,7 @@ export class OrderBroker {
           }
         }
 
-        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
             deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;
@@ -160,7 +160,7 @@ export class OrderBroker {
           }
         }
 
-        if ((<any>Object).values(lateCleans).map(a => !!a).indexOf(false)===-1)
+        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
             deferred.resolve(Object.keys(lateCleans).length);
 
         return deferred.promise;

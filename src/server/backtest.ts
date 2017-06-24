@@ -137,8 +137,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
 
     private onMarketData = (market : Models.Market) => {
-        this._openAskOrders = this.tryToMatch((<any>Object).values(this._openAskOrders), market.bids, Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch((<any>Object).values(this._openBidOrders), market.asks, Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch(Object.keys(this._openAskOrders).map(k => this._openAskOrders[k]), market.bids, Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(Object.keys(this._openBidOrders).map(k => this._openBidOrders[k]), market.asks, Models.Side.Bid);
 
         this.MarketData.trigger(market);
     };
@@ -148,7 +148,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         if (orders.length === 0 || marketSides.length === 0) {
             var O = {};
             for(var i = Object.keys(orders).length;i--;)
-              O[(<any>Object).values(orders)[i].orderId] = (<any>Object).values(orders)[i];
+              O[Object.keys(orders).map(k => orders[k])[i].orderId] = Object.keys(orders).map(k => orders[k])[i];
             return O;
         }
 
@@ -194,13 +194,13 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
         var O = {};
         for(var i = Object.keys(liveOrders).length;i--;)
-          O[(<any>Object).values(liveOrders)[i].orderId] = (<any>Object).values(liveOrders)[i];
+          O[Object.keys(liveOrders).map(k => liveOrders[k])[i].orderId] = Object.keys(liveOrders).map(k => liveOrders[k])[i];
         return O;
     };
 
     private onMarketTrade = (trade : Models.MarketTrade) => {
-        this._openAskOrders = this.tryToMatch((<any>Object).values(this._openAskOrders), [trade], Models.Side.Ask);
-        this._openBidOrders = this.tryToMatch((<any>Object).values(this._openBidOrders), [trade], Models.Side.Bid);
+        this._openAskOrders = this.tryToMatch(Object.keys(this._openAskOrders).map(k => this._openAskOrders[k]), [trade], Models.Side.Ask);
+        this._openBidOrders = this.tryToMatch(Object.keys(this._openBidOrders).map(k => this._openBidOrders[k]), [trade], Models.Side.Bid);
 
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.size, trade.time, false, trade.make_side));
     };
@@ -350,7 +350,7 @@ var backtestServer = () => {
     });
 
     app.get("/nextParameters", (req, res) => {
-        if ((<any>Object).values(parameters).map(function(a){return !!a;}).indexOf(true)!==-1) {
+        if (Object.keys(parameters).map(k => !!parameters[k]).indexOf(true)!==-1) {
             var id = parameters.length;
             var served = parameters.shift();
             if (typeof served["id"] === "undefined")
@@ -360,7 +360,7 @@ var backtestServer = () => {
             res.json(served);
             fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
 
-            if ((<any>Object).values(parameters).map(function(a){return !!a;}).indexOf(true)===-1) {
+            if (Object.keys(parameters).map(k => !!parameters[k]).indexOf(true)===-1) {
                 console.log("Done serving parameters");
             }
         }
