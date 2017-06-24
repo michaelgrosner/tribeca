@@ -148,7 +148,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
         if (orders.length === 0 || marketSides.length === 0) {
             var O = {};
             for(var i = Object.keys(orders).length;i--;)
-            O[(<any>Object).values(orders)[i].orderId] = (<any>Object).values(orders)[i];
+              O[(<any>Object).values(orders)[i].orderId] = (<any>Object).values(orders)[i];
             return O;
         }
 
@@ -194,7 +194,7 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
 
         var O = {};
         for(var i = Object.keys(liveOrders).length;i--;)
-        O[(<any>Object).values(liveOrders)[i].orderId] = (<any>Object).values(liveOrders)[i];
+          O[(<any>Object).values(liveOrders)[i].orderId] = (<any>Object).values(liveOrders)[i];
         return O;
     };
 
