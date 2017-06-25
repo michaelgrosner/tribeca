@@ -78,15 +78,6 @@ interface Product {
     quote_increment: string,
 }
 
-interface CoinbaseAuthenticatedClient {
-    getProducts(cb: (err: Error, response: any, ack: Product[]) => void);
-    buy(order: CoinbaseOrder, cb: (err: Error, response: any, ack: CoinbaseOrderAck) => void);
-    sell(order: CoinbaseOrder, cb: (err: Error, response: any, ack: CoinbaseOrderAck) => void);
-    cancelOrder(id: string, cb: (err: Error, response: any) => void);
-    cancelAllOrders(cb: (err: Error, response: string[], data: number[]) => void);
-    getAccounts(cb: (err: Error, response: any, info: CoinbaseAccountInformation[]) => void);
-}
-
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
@@ -447,7 +438,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         config: Config.ConfigProvider,
         minTick: number,
         private _client: CoinbaseOrderEmitter,
-        private _authClient: CoinbaseAuthenticatedClient,
+        private _authClient: Gdax.AuthenticatedClient,
         private _symbolProvider: CoinbaseSymbolProvider
     ) {
         this._fixedPrecision = -Math.floor(Math.log10(minTick));
@@ -537,7 +528,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     };
 
     constructor(
-        private _authClient: CoinbaseAuthenticatedClient) {
+        private _authClient: Gdax.AuthenticatedClient) {
         setInterval(this.onTick, 7500);
         this.onTick();
     }
@@ -577,7 +568,7 @@ class CoinbaseSymbolProvider {
 
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(
-      authClient: CoinbaseAuthenticatedClient,
+      authClient: Gdax.AuthenticatedClient,
       config: Config.ConfigProvider,
       symbolProvider: CoinbaseSymbolProvider,
       quoteIncrement: number,
@@ -601,9 +592,13 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
-    const authClient : CoinbaseAuthenticatedClient = new Gdax.AuthenticatedClient(config.GetString("CoinbaseApiKey"),
-            config.GetString("CoinbaseSecret"), config.GetString("CoinbasePassphrase"), config.GetString("CoinbaseRestUrl"));
+export async function createCoinbase(config: Config.ConfigProvider, pair: Models.CurrencyPair): Promise<Interfaces.CombinedGateway> {
+    const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
+      config.GetString("CoinbaseApiKey"),
+      config.GetString("CoinbaseSecret"),
+      config.GetString("CoinbasePassphrase"),
+      config.GetString("CoinbaseRestUrl")
+    );
 
     const d = Promises.defer<Product[]>();
     authClient.getProducts((err, res, data) => {
