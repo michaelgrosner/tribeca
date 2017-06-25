@@ -33,19 +33,19 @@ export class ApplicationState {
   private onDelay = () => {
     this._tick += this._ioDelay;
     if (this._tick>=6e1) this.onTick();
-    if (this._io === null) return;
-    let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
+    const orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
+    this._delayed = this._delayed.filter(x => x[0]!==Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
     this._delayed.forEach(x => this._io.emit(x[0], x[1]));
-    this._delayed = orders;
+    this._delayed = [];
   };
 
   public delay = (prefix: string, topic: string, msg: any) => {
-    let isOSR: boolean = topic === Models.Topics.OrderStatusReports;
+    const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
-    if (!this._ioDelay) return this._io ? this._io.emit(prefix + topic, msg) : null;
+    if (!this._ioDelay) return this._io.emit(prefix + topic, msg);
     this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
-    if (!isOSR || msg.data[1] === Models.OrderStatus.Working) this._delayed.push([prefix+topic, msg]);
+    this._delayed.push([prefix+topic, msg]);
   };
 
   private setDelay = () => {
