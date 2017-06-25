@@ -52,7 +52,7 @@ export class PositionManager {
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
         private _persister: Persister.Repository,
         private _fvAgent: FairValue.FairValueEngine,
-        private _ewma: Statistics.EwmaStatisticCalculator,
+        private _ewma: Statistics.EWMATargetPositionCalculator,
         private _publisher : Publish.Publisher
     ) {
         const minTick = this._details.minTickIncrement;

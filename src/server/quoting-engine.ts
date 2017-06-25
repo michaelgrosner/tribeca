@@ -56,8 +56,8 @@ export class QuotingEngine {
         private _orderBroker: Broker.OrderBroker,
         private _positionBroker: Broker.PositionBroker,
         private _details: Broker.ExchangeBroker,
-        private _ewma: Statistics.ObservableEWMACalculator,
-        private _stdev: Statistics.ObservableSTDEVCalculator,
+        private _ewma: Statistics.EWMAProtectionCalculator,
+        private _stdev: Statistics.STDEVProtectionCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
         this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
