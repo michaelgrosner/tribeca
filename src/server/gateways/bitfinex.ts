@@ -435,6 +435,10 @@ class BitfinexHttp {
                 console.error(new Date().toISOString().slice(11, -1), 'bitfinex', err, 'Error returned: url=', url, 'err=', err);
                 d.reject(err);
             }
+            else if (typeof body === 'string' && body.length && body[0]==='<') {
+                console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Invalid JSON response received, seems like HTML.');
+                d.resolve(new Models.Timestamped([], t));
+            }
             else {
                 try {
                     var t = new Date();
