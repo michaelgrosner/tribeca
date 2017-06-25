@@ -16,7 +16,7 @@ function computeEwma(newValue: number, previous: number, periods: number): numbe
     return newValue;
 }
 
-export class EwmaStatisticCalculator {
+export class EWMATargetPositionCalculator {
     constructor(
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       initRfv: Models.RegularFairValue[]
@@ -51,7 +51,7 @@ export class EwmaStatisticCalculator {
     }
 }
 
-export class ObservableEWMACalculator {
+export class EWMAProtectionCalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
@@ -85,7 +85,7 @@ export class ObservableEWMACalculator {
     Updated = new Utils.Evt<any>();
 }
 
-export class ObservableSTDEVCalculator {
+export class STDEVProtectionCalculator {
     private _lastBids: number[] = [];
     private _lastAsks: number[] = [];
     private _lastFV: number[] = [];

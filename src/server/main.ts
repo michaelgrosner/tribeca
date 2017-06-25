@@ -280,8 +280,8 @@ for (const param in defaultQuotingParameters)
     orderBroker,
     positionBroker,
     broker,
-    new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, paramsRepo),
-    new Statistics.ObservableSTDEVCalculator(
+    new Statistics.EWMAProtectionCalculator(timeProvider, fvEngine, paramsRepo),
+    new Statistics.STDEVProtectionCalculator(
       timeProvider,
       fvEngine,
       paramsRepo,
@@ -296,7 +296,7 @@ for (const param in defaultQuotingParameters)
         paramsRepo,
         persister,
         fvEngine,
-        new Statistics.EwmaStatisticCalculator(paramsRepo, initRfv),
+        new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
         publisher
       ),
       paramsRepo,
