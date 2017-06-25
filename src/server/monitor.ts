@@ -22,7 +22,7 @@ export class ApplicationState {
       this._app_state = new Models.ApplicationState(
         process.memoryUsage().rss,
         (new Date()).getHours(),
-        this._newOrderMinute,
+        this._newOrderMinute / 2,
         dbSize
       );
       this._newOrderMinute = 0;
@@ -33,11 +33,11 @@ export class ApplicationState {
   private onDelay = () => {
     this._tick += this._ioDelay;
     if (this._tick>=6e1) this.onTick();
-    const orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
+    let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     this._delayed = this._delayed.filter(x => x[0]!==Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
     this._delayed.forEach(x => this._io.emit(x[0], x[1]));
-    this._delayed = [];
+    this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
   };
 
   public delay = (prefix: string, topic: string, msg: any) => {
