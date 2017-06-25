@@ -99,7 +99,6 @@ export class ObservableSTDEVCalculator {
       private _fv: FairValue.FairValueEngine,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _persister: Persister.Repository,
-      private _minTick: number,
       initMkt: Models.MarketStats[]
     ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
@@ -131,8 +130,7 @@ export class ObservableSTDEVCalculator {
           new Float64Array(this._lastTops),
           new Float64Array(this._lastBids),
           new Float64Array(this._lastAsks),
-          this._qlParamRepo.latest.quotingStdevProtectionFactor,
-          this._minTick
+          this._qlParamRepo.latest.quotingStdevProtectionFactor
         );
     };
 

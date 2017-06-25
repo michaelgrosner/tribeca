@@ -12,19 +12,18 @@ namespace K {
     v8::Local<v8::Float64Array> seqD = info[3].As<v8::Float64Array>();
 
     double factor = info[4]->NumberValue();
-    double minTick = info[5]->NumberValue();
 
     v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 
-    obj->Set(Nan::New("fv").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, minTick)));
-    obj->Set(Nan::New("tops").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, minTick)));
-    obj->Set(Nan::New("bid").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, minTick)));
-    obj->Set(Nan::New("ask").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, minTick)));
+    obj->Set(Nan::New("fv").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor)));
+    obj->Set(Nan::New("tops").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor)));
+    obj->Set(Nan::New("bid").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor)));
+    obj->Set(Nan::New("ask").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor)));
 
     info.GetReturnValue().Set(obj);
   }
 
-  double Stdev::ComputeStdev(double a[], int n, double f, double m) {
+  double Stdev::ComputeStdev(double a[], int n, double f) {
     if(n == 0)
         return 0.0;
     double sum = 0;
@@ -37,6 +36,6 @@ namespace K {
        sq_diff_sum += diff * diff;
     }
     double variance = sq_diff_sum / n;
-    return round((sqrt(variance) * f) / m) * m;
+    return sqrt(variance) * f;
   }
 }

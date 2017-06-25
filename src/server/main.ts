@@ -286,7 +286,6 @@ for (const param in defaultQuotingParameters)
       fvEngine,
       paramsRepo,
       persister,
-      broker.minTickIncrement,
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(

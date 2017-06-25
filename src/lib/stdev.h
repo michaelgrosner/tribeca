@@ -16,7 +16,7 @@ namespace K {
       static void Init(v8::Local<v8::Object> target);
       static NAN_METHOD(ComputeStdevs);
     private:
-      static double ComputeStdev(double[], int, double, double);
+      static double ComputeStdev(double[], int, double);
   };
 }
 
