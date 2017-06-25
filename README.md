@@ -155,7 +155,8 @@ To debug the server code with chrome-devtools, attach the node debugger with `no
 Passing a config filename as a parameter after `K.js` is also allowed, like `nodejs K.js X.json`.
 
 ### Unreleased Changelog:
-none
+
+Added Poloniex API.
 
 ### Release 3.0 Changelog:
 
