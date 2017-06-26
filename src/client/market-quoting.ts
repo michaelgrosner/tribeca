@@ -9,7 +9,7 @@ import {SubscriberFactory} from './shared_directives';
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
       Market Width: <span class="{{ diffMD ? \'text-danger\' : \'text-muted\' }}">{{ diffMD | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
       Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>
-      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
+      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span>, openOrders: <span class="{{ quotesInMemory ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemory }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-responsive text-center">
       <tr class="active">
         <td>bidSize&nbsp;</td>
@@ -44,6 +44,7 @@ export class MarketQuotingComponent implements OnInit {
   public orderAsks: any[];
   public bidStatus: string;
   public askStatus: string;
+  public quotesInMemory: number;
   public diffMD: number;
   public diffPx: number;
   public noBidReason: string;
@@ -97,6 +98,7 @@ export class MarketQuotingComponent implements OnInit {
   private clearQuoteStatus = () => {
     this.bidStatus = Models.QuoteStatus[1];
     this.askStatus = Models.QuoteStatus[1];
+    this.quotesInMemory = 0;
   }
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
@@ -218,6 +220,7 @@ export class MarketQuotingComponent implements OnInit {
 
     this.bidStatus = Models.QuoteStatus[status.bidStatus];
     this.askStatus = Models.QuoteStatus[status.askStatus];
+    this.quotesInMemory = status.quotesInMemory;
   }
 
   private updateQuoteClass = (levels?: any[]) => {
