@@ -52,12 +52,9 @@ export class Repository {
       this._persistQueue[dbName].push(report);
   };
 
+  private _cleanQueue: any = {};
   public reclean = (dbName: string, time: Date) => {
-      this.loadCollection(dbName).then(coll => {
-        coll.deleteMany({ time: (dbName=='rfv'||dbName=='mkt')?{ $lt: time }:{ $exists:true } }, err => {
-            if (err) console.error('persister', err, 'Unable to clean', dbName);
-        });
-      });
+      this._cleanQueue[dbName] = time;
   };
 
   public repersist = (report: any) => {
@@ -104,11 +101,16 @@ export class Repository {
         if (this._persistQueue[dbName].length) {
           if (typeof this.collection[dbName] !== 'undefined') {
             this.collection[dbName].then(coll => {
+              if (typeof this._cleanQueue[dbName] !== 'undefined')
+                coll.deleteMany({ time: (dbName=='rfv'||dbName=='mkt')?{ $lt: this._cleanQueue[dbName] }:{ $exists:true } }, err => {
+                    if (err) console.error('persister', err, 'Unable to clean', dbName);
+                    else delete this._cleanQueue[dbName];
+                });
               if (dbName != 'trades' && dbName!='rfv' && dbName!='mkt')
                 coll.deleteMany({ time: { $exists:true } }, err => {
                     if (err) console.error('persister', err, 'Unable to deleteMany', dbName);
                 });
-              coll.insertMany(this._persistQueue[dbName].map(this.converter), (err, r) => {
+              coll.insertMany(this._persistQueue[dbName].map(this.converter).filter(x => x.exchange === this._exchange), (err, r) => {
                   if (r.result && r.result.ok) this._persistQueue[dbName].length = 0;
                   if (err) console.error('persister', err, 'Unable to insert', dbName, this._persistQueue[dbName]);
               }, );
