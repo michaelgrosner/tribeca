@@ -119,7 +119,6 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onStateChange = () => {
         this.ConnectChanged.trigger(this._client.socket ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected);
         this.raiseMarketData();
-        // if (!this._client.socket) setTimeout(() => this._client.connect(), 5000);
     };
 
     private reevalPublicBook = async () => {

@@ -15,24 +15,30 @@ namespace K {
 
     v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 
-    obj->Set(Nan::New("fv").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor)));
-    obj->Set(Nan::New("tops").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor)));
-    obj->Set(Nan::New("bid").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor)));
-    obj->Set(Nan::New("ask").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor)));
+    double mean;
+
+    obj->Set(Nan::New("fv").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
+    obj->Set(Nan::New("fvMean").ToLocalChecked(), Nan::New(mean));
+    obj->Set(Nan::New("tops").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, &mean)));
+    obj->Set(Nan::New("topsMean").ToLocalChecked(), Nan::New(mean));
+    obj->Set(Nan::New("bid").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, &mean)));
+    obj->Set(Nan::New("bidMean").ToLocalChecked(), Nan::New(mean));
+    obj->Set(Nan::New("ask").ToLocalChecked(), Nan::New(Stdev::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, &mean)));
+    obj->Set(Nan::New("askMean").ToLocalChecked(), Nan::New(mean));
 
     info.GetReturnValue().Set(obj);
   }
 
-  double Stdev::ComputeStdev(double a[], int n, double f) {
+  double Stdev::ComputeStdev(double a[], int n, double f, double *mean) {
     if(n == 0)
         return 0.0;
     double sum = 0;
     for(int i = 0; i < n; ++i)
        sum += a[i];
-    double mean = sum / n;
+    *mean = sum / n;
     double sq_diff_sum = 0;
     for(int i = 0; i < n; ++i) {
-       double diff = a[i] - mean;
+       double diff = a[i] - *mean;
        sq_diff_sum += diff * diff;
     }
     double variance = sq_diff_sum / n;
