@@ -111,8 +111,8 @@ export class Repository {
                     if (err) console.error('persister', err, 'Unable to deleteMany', dbName);
                 });
               coll.insertMany(this._persistQueue[dbName].map(this.converter).filter(x => x.exchange === this._exchange), (err, r) => {
-                  if (r.result && r.result.ok) this._persistQueue[dbName].length = 0;
                   if (err) console.error('persister', err, 'Unable to insert', dbName, this._persistQueue[dbName]);
+                  this._persistQueue[dbName].length = 0;
               }, );
             });
           }
