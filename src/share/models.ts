@@ -296,7 +296,7 @@ export class TwoSidedQuote implements ITimestamped {
     constructor(public bid: Quote, public ask: Quote, public time: Date) {}
 }
 
-export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesMinute, WaitingPing, DepletedFunds, Crossed }
+export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
 
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemory: number) {}
