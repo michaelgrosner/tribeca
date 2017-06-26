@@ -14,17 +14,6 @@ import df = require('dateformat');
 import path = require('path');
 import crypto = require('crypto');
 
-interface CoinbaseOrderEmitter {
-    on(event: string, cb: Function): CoinbaseOrderEmitter;
-    on(event: 'open', cd: () => void): CoinbaseOrderEmitter;
-    on(event: 'close', cd: () => void): CoinbaseOrderEmitter;
-    on(event: 'message', cd: (data: CoinbaseOrder) => void): CoinbaseOrderEmitter;
-
-    socket: any;
-    connect: any;
-    book: any;
-}
-
 interface CoinbaseOrder {
     client_oid?: string;
     price?: string;
@@ -133,13 +122,35 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
         // if (!this._client.socket) setTimeout(() => this._client.connect(), 5000);
     };
 
+    private reevalPublicBook = async () => {
+        const d = Promises.defer<boolean>();
+        this._authClient.getProductOrderBook({level:2}, this._client.productID, (err, res, data) => {
+            if (err) this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+            else {
+              this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+              this._cachedBids = [];
+              this._cachedAsks = [];
+              data.bids.slice(0,13).forEach(x => this._cachedBids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
+              data.asks.slice(0,13).forEach(x => this._cachedAsks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
+            }
+            if (!this._client.socket) setTimeout(this.raiseMarketData, 1210);
+            d.resolve(true);
+        });
+        return await d.promise;
+    };
+
     private raiseMarketData = () => {
-        this.reevalBook();
+        if (this._client.socket)
+          this.reevalBook();
+        else this.reevalPublicBook();
         if (this._cachedBids.length && this._cachedAsks.length)
             this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, new Date()));
     };
 
-    constructor(private _client: CoinbaseOrderEmitter) {
+    constructor(
+      private _client: Gdax.OrderbookSync,
+      private _authClient: Gdax.AuthenticatedClient
+    ) {
         this._client.on("open", data => this.onStateChange());
         this._client.on("close", data => this.onStateChange());
         this._client.on("message", data => this.onMessage(data));
@@ -437,7 +448,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(
         config: Config.ConfigProvider,
         minTick: number,
-        private _client: CoinbaseOrderEmitter,
+        private _client: Gdax.OrderbookSync,
         private _authClient: Gdax.AuthenticatedClient,
         private _symbolProvider: CoinbaseSymbolProvider
     ) {
@@ -574,20 +585,14 @@ class Coinbase extends Interfaces.CombinedGateway {
       quoteIncrement: number,
       minSize: number
     ) {
-
-        const orderEventEmitter = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
-
-        const orderGateway = config.GetString("CoinbaseOrderDestination") == "Coinbase" ?
-            <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
-            : new NullGateway.NullOrderGateway();
-
-        const positionGateway = new CoinbasePositionGateway(authClient);
-        const mdGateway = new CoinbaseMarketDataGateway(orderEventEmitter);
+        const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
 
         super(
-            mdGateway,
-            orderGateway,
-            positionGateway,
+            new CoinbaseMarketDataGateway(orderEventEmitter, authClient),
+            config.GetString("CoinbaseOrderDestination") == "Coinbase"
+              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
+              : new NullGateway.NullOrderGateway(),
+            new CoinbasePositionGateway(authClient),
             new CoinbaseBaseGateway(quoteIncrement, minSize));
     }
 };
