@@ -8,7 +8,7 @@ import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrency
 
 @Component({
   selector: 'order-list',
-  template: `<ag-grid-angular #orderList class="ag-fresh ag-dark" style="height: 150px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
+  template: `<ag-grid-angular #orderList class="ag-fresh ag-dark" style="height: 135px;width: 99.99%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class OrdersComponent implements OnInit {
 
