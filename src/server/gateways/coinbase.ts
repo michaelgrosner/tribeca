@@ -426,7 +426,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             lastPrice: parseFloat(tags[44]),
             liquidity: Models.Liquidity.Make
         };
-      } else if (['3','4','7','8'].indexOf(tags[150])>-1) {
+      } else if (['3','4','7','8'].indexOf(tags[150])>-1 || tags[434]) {
         status = {
             exchangeId: tags[37],
             orderStatus: tags[150] == '3'
@@ -465,7 +465,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             onLogon: (sessionID) => this.onStateChange(),
             onLogout: (sessionID) => this.onStateChange(),
             fromApp: (message, sessionID) => {
-              if (message.header[35]=='8') this.onFIXMessage(message.tags);
+              if (['8','9'].indexOf(message.header[35])>-1) this.onFIXMessage(message.tags);
+              else if (message.header[35]=='3') console.log(new Date().toISOString().slice(11, -1), 'coinbase', 'FIX message rejected:', message);
             }
           }, {
             credentials: {
