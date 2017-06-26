@@ -8,7 +8,9 @@ html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:1
 address{font-style:normal;line-height:1.42857143}.highcharts-navigator-xaxis, .highcharts-range-selector-buttons,.highcharts-input-group,.highcharts-axis-title {display:none;}
 .highcharts-navigator-outline {stroke:transparent!important;}.absolute-charts {z-index:3;height:0px!important;min-height:0px!important;}.relative-charts {height:354px;}
 address {margin-bottom:0px;}input:invalid { border:1px #ff8e7a solid; }
-
+.img-rounded {
+    border-radius: 6px;
+}
 /* Skin for Simple Dialog Box Plugin */
 .dialog-box {
   width:300px;
