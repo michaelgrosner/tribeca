@@ -6,27 +6,24 @@ import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-quoting',
-  template: `<div class="tradeSafety2 img-rounded" style="padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
+  template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
       Market Width: <span class="{{ diffMD ? \'text-danger\' : \'text-muted\' }}">{{ diffMD | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
-      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>,&nbsp;
-      <span style="z-index:1;position:absolute;white-space:pre;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span></span>
+      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>
+      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-responsive text-center">
       <tr class="active">
-        <th style="width:62px;">apr<span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></th>
-        <th>bidSize&nbsp;</th>
-        <th>bidPrice</th>
-        <th>askPrice</th>
-        <th>askSize&nbsp;</th>
+        <td>bidSize&nbsp;</td>
+        <td>bidPrice</td>
+        <td>askPrice</td>
+        <td>askSize&nbsp;</td>
       </tr>
       <tr class="info">
-        <td class="text-left">quote</td>
-        <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.4-4' }}</td>
-        <td [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</td>
-        <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</td>
-        <td [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.4-4' }}</td>
+        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.4-4' }}</th>
+        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+        <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+        <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.4-4' }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
-        <td class="text-left">mkt{{ i }}</td>
         <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual" style="position:absolute;">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div></td>
         <td [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
