@@ -18,16 +18,18 @@ import {SubscriberFactory} from './shared_directives';
         <td>askSize&nbsp;</td>
       </tr>
       <tr class="info">
-        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.4-4' }}<span *ngIf="!qBidSz">&nbsp;</span></th>
-        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
-        <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
-        <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.4-4' }}</th>
+        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz | number:'1.4-4' }}</th>
+        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+        <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger">bidStatus{{ bidStatus }}</th>
+        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz | number:'1.4-4' }}</th>
+        <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger">askStatus{{ askStatus }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
-        <td [ngClass]="level.bidClass"><div [ngClass]="level.bidClassVisual" style="position:absolute;">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
         <td [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div [ngClass]="level.askClassVisual" style="position:absolute;">&nbsp;</div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
+        <td [ngClass]="level.askClass"><div style="float:left;"><div [ngClass]="level.askClassVisual">&nbsp;</div></div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
       </tr>
     </table></div>`
 })
@@ -39,10 +41,12 @@ export class MarketQuotingComponent implements OnInit {
   public qAskPx: number;
   public qAskSz: number;
   public order_classes: any[];
-  public bidIsLive: boolean;
-  public askIsLive: boolean;
+  public bidStatus: string;
+  public askStatus: string;
   public diffMD: number;
   public diffPx: number;
+  public noBidReason: string;
+  public noAskReason: string;
   private targetBasePosition: number;
   private sideAPRSafety: string;
   @Input() product: Models.ProductState;
@@ -89,8 +93,8 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private clearQuoteStatus = () => {
-    this.bidIsLive = false;
-    this.askIsLive = false;
+    this.bidStatus = Models.QuoteStatus[1];
+    this.askStatus = Models.QuoteStatus[1];
   }
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
@@ -211,8 +215,8 @@ export class MarketQuotingComponent implements OnInit {
       return;
     }
 
-    this.bidIsLive = (status.bidStatus === Models.QuoteStatus.Live);
-    this.askIsLive = (status.askStatus === Models.QuoteStatus.Live);
+    this.bidStatus = Models.QuoteStatus[status.bidStatus];
+    this.askStatus = Models.QuoteStatus[status.askStatus];
   }
 
   private updateQuoteClass = (levels?: any[]) => {
