@@ -342,7 +342,6 @@ export class OrderBroker {
           liquidity: getOrFallback(osr.liquidity, orig.liquidity),
           exchange: getOrFallback(osr.exchange, orig.exchange),
           computationalLatency: getOrFallback(osr.computationalLatency, 0) + getOrFallback(orig.computationalLatency, 0),
-          version: (typeof orig.version === "undefined") ? 0 : orig.version + 1,
           partiallyFilled: partiallyFilled,
           pendingCancel: osr.pendingCancel,
           pendingReplace: osr.pendingReplace,
@@ -378,7 +377,7 @@ export class OrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
-            const trade = new Models.Trade(o.orderId+"."+o.version, o.time, o.exchange, o.pair,
+            const trade = new Models.Trade(this._timeProvider.utcNow().getTime().toString(), o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this.Trade.trigger(trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {

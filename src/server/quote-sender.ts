@@ -7,7 +7,7 @@ import QuotingParameters = require("./quoting-parameters");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
-  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.Held, Models.QuoteStatus.Held);
+  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData);
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
@@ -25,6 +25,8 @@ export class QuoteSender {
   }
 
   private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
+    if (this._broker.hasSelfTradePrevention) return false;
+
     var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
 
     var doesQuoteCross = oppSide === Models.Side.Bid
@@ -42,16 +44,23 @@ export class QuoteSender {
   private sendQuote = (): void => {
     var quote = this._quotingEngine.latestQuote;
 
-    let askStatus = Models.QuoteStatus.Held;
-    let bidStatus = Models.QuoteStatus.Held;
+    let askStatus = this._quotingEngine.latestQuoteAskStatus;
+    let bidStatus = this._quotingEngine.latestQuoteBidStatus;
 
     if (quote !== null && this._broker.connectStatus === Models.ConnectivityStatus.Connected) {
       if (this._broker.latestState) {
-        if (quote.ask !== null && (this._broker.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)))
-          askStatus = Models.QuoteStatus.Live;
+        if (quote.ask !== null)
+          askStatus = !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)
+            ? Models.QuoteStatus.Live
+            : Models.QuoteStatus.Crossed;
 
-        if (quote.bid !== null && (this._broker.hasSelfTradePrevention || !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)))
-          bidStatus = Models.QuoteStatus.Live;
+        if (quote.bid !== null)
+          bidStatus = !this.checkCrossedQuotes(Models.Side.Bid, quote.bid.price)
+            ? Models.QuoteStatus.Live
+            : Models.QuoteStatus.Crossed;
+      } else {
+        askStatus = Models.QuoteStatus.DisabledQuotes;
+        bidStatus = Models.QuoteStatus.DisabledQuotes;
       }
 
       if (askStatus === Models.QuoteStatus.Live)
@@ -61,12 +70,15 @@ export class QuoteSender {
       if (bidStatus === Models.QuoteStatus.Live)
         this.updateQuote(quote.bid, Models.Side.Bid);
       else this.stopAllQuotes(Models.Side.Bid);
+    } else {
+      askStatus = Models.QuoteStatus.Disconnected;
+      bidStatus = Models.QuoteStatus.Disconnected;
     }
 
     if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus) return;
 
     this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
-    this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus, true);
+    this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus);
   };
 
   private updateQuote = (q: Models.Quote, side: Models.Side) => {

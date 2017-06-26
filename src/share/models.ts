@@ -194,7 +194,6 @@ export interface OrderStatusReport {
     liquidity : Liquidity;
     exchange : Exchange;
     computationalLatency : number;
-    version : number;
     isPong : boolean;
     preferPostOnly: boolean;
     source: OrderSource;
@@ -300,7 +299,7 @@ export class TwoSidedQuote implements ITimestamped {
     constructor(public bid: Quote, public ask: Quote, public time: Date) {}
 }
 
-export enum QuoteStatus { Live, Held }
+export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesMinute, WaitingPing, DepletedFunds, Crossed }
 
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus) {}

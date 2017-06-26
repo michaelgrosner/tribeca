@@ -38,6 +38,8 @@ export class QuotingEngine {
     public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
 
     private _latest: Models.TwoSidedQuote = null;
+    public latestQuoteAskStatus: Models.QuoteStatus;
+    public latestQuoteBidStatus: Models.QuoteStatus;
     public get latestQuote() { return this._latest; }
     public set latestQuote(val: Models.TwoSidedQuote) {
         if (!quotesChanged(this._latest, val, this._details.minTickIncrement))
@@ -112,6 +114,14 @@ export class QuotingEngine {
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
 
+        const safety = this._safeties.latest;
+        if (safety === null) {
+            return null;
+        }
+
+        this.latestQuoteAskStatus = Models.QuoteStatus.UnknownHeld;
+        this.latestQuoteBidStatus = Models.QuoteStatus.UnknownHeld;
+
         let sideAPR: string;
         let superTradesMultipliers = (params.superTrades &&
           widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
@@ -139,6 +149,7 @@ export class QuotingEngine {
         }
 
         if (totalBasePosition < targetBasePosition - pDiv) {
+            this.latestQuoteAskStatus = Models.QuoteStatus.TBPHeld;
             unrounded.askPx = null;
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
@@ -147,6 +158,7 @@ export class QuotingEngine {
             }
         }
         else if (totalBasePosition > targetBasePosition + pDiv) {
+            this.latestQuoteBidStatus = Models.QuoteStatus.TBPHeld;
             unrounded.bidPx = null;
             unrounded.bidSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
@@ -171,11 +183,6 @@ export class QuotingEngine {
         }
 
         this._targetPosition.sideAPR = sideAPR;
-
-        const safety = this._safeties.latest;
-        if (safety === null) {
-            return null;
-        }
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && (
@@ -213,19 +220,34 @@ export class QuotingEngine {
               }
         }
 
-        if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0]) || (
-            (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
-            && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
-              || (totalQuotePosition>buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
-        ))) {
+        if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0])) {
+            this.latestQuoteAskStatus = Models.QuoteStatus.MaxTradesMinute;
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
-        if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0]) || (
-          (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+        if ((params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
+            && !safety.buyPing && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.BidSide || params.pingAt === Models.PingAt.DepletedAskSide
+              || (totalQuotePosition>buySize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedBidSide))
+        )) {
+            this.latestQuoteAskStatus = !safety.buyPing
+              ? Models.QuoteStatus.WaitingPing
+              : Models.QuoteStatus.DepletedFunds;
+            unrounded.askPx = null;
+            unrounded.askSz = null;
+        }
+
+        if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0])) {
+            this.latestQuoteBidStatus = Models.QuoteStatus.MaxTradesMinute;
+            unrounded.bidPx = null;
+            unrounded.bidSz = null;
+        }
+        if ((params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47)
             && !safety.sellPong && (params.pingAt === Models.PingAt.StopPings || params.pingAt === Models.PingAt.AskSide || params.pingAt === Models.PingAt.DepletedBidSide
               || (totalBasePosition>sellSize && (params.pingAt === Models.PingAt.DepletedSide || params.pingAt === Models.PingAt.DepletedAskSide))
-        ))) {
+        )) {
+            this.latestQuoteBidStatus = !safety.sellPong
+              ? Models.QuoteStatus.WaitingPing
+              : Models.QuoteStatus.DepletedFunds;
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
@@ -260,6 +282,9 @@ export class QuotingEngine {
     }
 
     private recalcQuote = () => {
+        this.latestQuoteAskStatus = Models.QuoteStatus.MissingData;
+        this.latestQuoteBidStatus = Models.QuoteStatus.MissingData;
+
         const fv = this._fvEngine.latestFairValue;
         if (fv == null) {
             this.latestQuote = null;
