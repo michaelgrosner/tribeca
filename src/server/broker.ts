@@ -677,6 +677,7 @@ export class ExchangeBroker {
     if (v !== this._savedQuotingMode) {
       this._savedQuotingMode = v;
       this.updateConnectivity();
+      this.ConnectChanged.trigger(this._connectStatus);
     }
 
     this._publisher.publish(Models.Topics.ActiveState, this._latestState);
