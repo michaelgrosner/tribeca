@@ -221,7 +221,7 @@ export class QuotingEngine {
         }
 
         if (safety.sell > (params.tradesPerMinute * superTradesMultipliers[0])) {
-            this.latestQuoteAskStatus = Models.QuoteStatus.MaxTradesMinute;
+            this.latestQuoteAskStatus = Models.QuoteStatus.MaxTradesSeconds;
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
@@ -237,7 +237,7 @@ export class QuotingEngine {
         }
 
         if (safety.buy > (params.tradesPerMinute * superTradesMultipliers[0])) {
-            this.latestQuoteBidStatus = Models.QuoteStatus.MaxTradesMinute;
+            this.latestQuoteBidStatus = Models.QuoteStatus.MaxTradesSeconds;
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
