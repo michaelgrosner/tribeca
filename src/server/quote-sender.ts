@@ -7,7 +7,7 @@ import QuotingParameters = require("./quoting-parameters");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
-  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0);
+  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0, 0, 0);
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
@@ -75,9 +75,17 @@ export class QuoteSender {
       bidStatus = Models.QuoteStatus.Disconnected;
     }
 
-    if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && this._orderBroker.orderCache.allOrders.size === this._latestStatus.quotesInMemory) return;
+    var quotesInMemoryNew = 0;
+    var quotesInMemoryWorking = 0;
+    var quotesInMemoryDone = 0;
+    this._orderBroker.orderCache.allOrders.forEach(x => {
+      if (x.orderStatus === Models.OrderStatus.New) ++quotesInMemoryNew;
+      else if (x.orderStatus === Models.OrderStatus.Working) ++quotesInMemoryWorking;
+      else ++quotesInMemoryDone;
+    });
+    if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && quotesInMemoryNew === this._latestStatus.quotesInMemoryNew && quotesInMemoryWorking === this._latestStatus.quotesInMemoryWorking && quotesInMemoryDone === this._latestStatus.quotesInMemoryDone) return;
 
-    this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus, this._orderBroker.orderCache.allOrders.size);
+    this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
     this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus);
   };
 

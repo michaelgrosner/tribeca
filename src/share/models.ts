@@ -299,7 +299,7 @@ export class TwoSidedQuote implements ITimestamped {
 export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
 
 export class TwoSidedQuoteStatus {
-    constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemory: number) {}
+    constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
 }
 
 export class CurrencyPair {
