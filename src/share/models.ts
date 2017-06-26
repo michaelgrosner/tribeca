@@ -197,9 +197,6 @@ export interface OrderStatusReport {
     isPong : boolean;
     preferPostOnly: boolean;
     source: OrderSource;
-    partiallyFilled : boolean;
-    pendingCancel : boolean;
-    pendingReplace : boolean;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
