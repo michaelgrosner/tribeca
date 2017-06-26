@@ -18,7 +18,7 @@ import {SubscriberFactory} from './shared_directives';
         <td>askSize&nbsp;</td>
       </tr>
       <tr class="info">
-        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.4-4' }}</th>
+        <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidSz | number:'1.4-4' }}<span *ngIf="!qBidSz">&nbsp;</span></th>
         <th [ngClass]="bidIsLive ? 'text-danger' : 'text-muted'">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
         <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
         <th [ngClass]="askIsLive ? 'text-danger' : 'text-muted'">{{ qAskSz | number:'1.4-4' }}</th>
@@ -220,8 +220,8 @@ export class MarketQuotingComponent implements OnInit {
     if (levels && levels.length > 0) {
       for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
-        if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').css( 'color', 'blue' );
-        if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').css( 'color', 'red' );
+        if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').addClass('buy');
+        if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').addClass('sell');
         (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 );
         (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 );
         setTimeout(() => {
@@ -241,7 +241,7 @@ export class MarketQuotingComponent implements OnInit {
               if (asks[j].price === this.levels[i].askPrice)
                 this.levels[i].askClass = 'success sell';
             this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
-            setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').css( 'color', '' ); }, 1);
+            setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').removeClass('sell').removeClass('buy'); }, 1);
           }, 0);
         }, 221);
       }
