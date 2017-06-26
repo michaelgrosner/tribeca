@@ -167,7 +167,6 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
                         update.lastQuantity = order.quantity;
                     }
                     else {
-                        update.partiallyFilled = true;
                         update.orderStatus = Models.OrderStatus.Working;
                         update.lastQuantity = mkt.size;
                     }

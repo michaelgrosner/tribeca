@@ -355,9 +355,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: msg.tradeType.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
             lastQuantity: lastQty > 0 ? lastQty : undefined,
             lastPrice: lastPx > 0 ? lastPx : undefined,
-            averagePrice: avgPx > 0 ? avgPx : undefined,
-            pendingCancel: msg.status === 4,
-            partiallyFilled: msg.status === 1
+            averagePrice: avgPx > 0 ? avgPx : undefined
         };
 
         this.OrderUpdate.trigger(status);

@@ -612,6 +612,9 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
     });
     const products = await d.promise;
 
+    if (!products)
+      throw new Error("Unable to connect to Coinbase, seems currently offline. Please retry once is online.");
+
     const symbolProvider = new CoinbaseSymbolProvider(pair);
 
     for (let p of products) {
@@ -619,5 +622,5 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
             return new Coinbase(authClient, config, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size));
     }
 
-    throw new Error("unable to match pair to a coinbase symbol " + pair.toString());
+    throw new Error("Unable to match pair to a coinbase symbol " + pair.toString());
 }
