@@ -7,7 +7,7 @@ import QuotingParameters = require("./quoting-parameters");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
-  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData);
+  private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0);
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
@@ -75,9 +75,9 @@ export class QuoteSender {
       bidStatus = Models.QuoteStatus.Disconnected;
     }
 
-    if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus) return;
+    if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && this._orderBroker.orderCache.allOrders.size === this._latestStatus.quotesInMemory) return;
 
-    this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
+    this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus, this._orderBroker.orderCache.allOrders.size);
     this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus);
   };
 
