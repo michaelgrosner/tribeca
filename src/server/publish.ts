@@ -72,10 +72,10 @@ export class Publisher {
     ] : [
       data.orderId,
       data.orderStatus,
+      data.side,
       data.exchange,
       data.price,
       data.quantity,
-      data.side,
       data.type,
       data.timeInForce,
       data.computationalLatency,

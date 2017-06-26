@@ -18,11 +18,11 @@ import {SubscriberFactory} from './shared_directives';
         <td>askSize&nbsp;</td>
       </tr>
       <tr class="info">
-        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz | number:'1.4-4' }}</th>
+        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz | number:'1.4-4' }}<span *ngIf="!qBidSz">&nbsp;</span></th>
         <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
         <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger">bidStatus{{ bidStatus }}</th>
         <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
-        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz | number:'1.4-4' }}</th>
+        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz | number:'1.4-4' }}<span *ngIf="!qAskSz">&nbsp;</span></th>
         <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger">askStatus{{ askStatus }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
@@ -40,7 +40,8 @@ export class MarketQuotingComponent implements OnInit {
   public qBidPx: number;
   public qAskPx: number;
   public qAskSz: number;
-  public order_classes: any[];
+  public orderBids: any[];
+  public orderAsks: any[];
   public bidStatus: string;
   public askStatus: string;
   public diffMD: number;
@@ -89,7 +90,8 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private clearQuote = () => {
-    this.order_classes = [];
+    this.orderBids = [];
+    this.orderAsks = [];
   }
 
   private clearQuoteStatus = () => {
@@ -109,20 +111,18 @@ export class MarketQuotingComponent implements OnInit {
       return;
     }
 
-    var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
-    var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
-    for (let i: number = 0; i < asks.length; i++)
-      if (!update.data[1].filter(x => x===asks[i].price).length) {
+    for (let i: number = 0; i < this.orderAsks.length; i++)
+      if (!update.data[1].filter(x => x===this.orderAsks[i].price).length) {
         for (var j: number = 0; j < update.data[1].length;j++)
-          if (update.data[1][j++]>asks[i].price) break;
-        update.data[1].splice(j-(j==update.data[1].length?0:1), 0, asks[i].price, asks[i].quantity);
+          if (update.data[1][j++]>this.orderAsks[i].price) break;
+        update.data[1].splice(j-(j==update.data[1].length?0:1), 0, this.orderAsks[i].price, this.orderAsks[i].quantity);
         update.data[1] = update.data[1].slice(0, -2);
       }
-    for (let i: number = 0; i < bids.length; i++)
-      if (!update.data[0].filter(x => x===bids[i].price).length) {
+    for (let i: number = 0; i < this.orderBids.length; i++)
+      if (!update.data[0].filter(x => x===this.orderBids[i].price).length) {
         for (var j: number = 0; j < update.data[0].length;j++)
-          if (update.data[0][j++]<bids[i].price) break;
-        update.data[0].splice(j-(j==update.data[0].length?0:1), 0, bids[i].price, bids[i].quantity);
+          if (update.data[0][j++]<this.orderBids[i].price) break;
+        update.data[0].splice(j-(j==update.data[0].length?0:1), 0, this.orderBids[i].price, this.orderBids[i].quantity);
         update.data[0] = update.data[0].slice(0, -2);
       }
 
@@ -130,23 +130,6 @@ export class MarketQuotingComponent implements OnInit {
     for (let i: number = 0, j: number = 0; i < update.data[1].length; i++, j++) {
       if (j >= _levels.length) _levels[j] = <any>{};
       _levels[j] = Object.assign(_levels[j], { askPrice: update.data[1][i], askSize: update.data[1][++i] });
-    }
-
-    if (bids.length) {
-      var bid = bids.reduce(function(a,b){return a.price>b.price?a:b;});
-      this.qBidPx = bid.price;
-      this.qBidSz = bid.quantity;
-    } else {
-      this.qBidPx = null;
-      this.qBidSz = null;
-    }
-    if (asks.length) {
-      var ask = asks.reduce(function(a,b){return a.price<b.price?a:b;});
-      this.qAskPx = ask.price;
-      this.qAskSz = ask.quantity;
-    } else {
-      this.qAskPx = null;
-      this.qAskSz = null;
     }
 
     for (let i: number = 0, j: number = 0; i < update.data[0].length; i++, j++) {
@@ -195,16 +178,34 @@ export class MarketQuotingComponent implements OnInit {
       this.clearQuote();
       return o.data.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
+    const orderSide = o.data[2] === Models.Side.Bid ? 'orderBids' : 'orderAsks';
     if (o.data[1] == Models.OrderStatus.Cancelled
       || o.data[1] == Models.OrderStatus.Complete
-    ) this.order_classes = this.order_classes.filter(x => x.orderId !== o.data[0]);
-    else if (!this.order_classes.filter(x => x.orderId === o.data[0]).length)
-      this.order_classes.push({
+    ) this[orderSide] = this[orderSide].filter(x => x.orderId !== o.data[0]);
+    else if (!this[orderSide].filter(x => x.orderId === o.data[0]).length)
+      this[orderSide].push({
         orderId: o.data[0],
-        side: o.data[5],
-        quantity: o.data[4],
-        price: o.data[3]
+        side: o.data[2],
+        quantity: o.data[5],
+        price: o.data[4]
       });
+
+    if (this.orderBids.length) {
+      var bid = this.orderBids.reduce((a,b)=>a.price>b.price?a:b);
+      this.qBidPx = bid.price;
+      this.qBidSz = bid.quantity;
+    } else {
+      this.qBidPx = null;
+      this.qBidSz = null;
+    }
+    if (this.orderAsks.length) {
+      var ask = this.orderAsks.reduce((a,b)=>a.price<b.price?a:b);
+      this.qAskPx = ask.price;
+      this.qAskSz = ask.quantity;
+    } else {
+      this.qAskPx = null;
+      this.qAskSz = null;
+    }
 
     this.updateQuoteClass();
   }
@@ -234,15 +235,13 @@ export class MarketQuotingComponent implements OnInit {
           setTimeout(() => {
             this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
             this.levels[i].bidClass = 'active';
-            var bids = this.order_classes.filter(o => o.side === Models.Side.Bid);
-            for (var j = 0; j < bids.length; j++)
-              if (bids[j].price === this.levels[i].bidPrice)
+            for (var j = 0; j < this.orderBids.length; j++)
+              if (this.orderBids[j].price === this.levels[i].bidPrice)
                 this.levels[i].bidClass = 'success buy';
             this.levels[i].bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].bidSize)/Math.log(2))*4,19),1)));
             this.levels[i].askClass = 'active';
-            var asks = this.order_classes.filter(o => o.side === Models.Side.Ask);
-            for (var j = 0; j < asks.length; j++)
-              if (asks[j].price === this.levels[i].askPrice)
+            for (var j = 0; j < this.orderAsks.length; j++)
+              if (this.orderAsks[j].price === this.levels[i].askPrice)
                 this.levels[i].askClass = 'success sell';
             this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
             setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').removeClass('sell').removeClass('buy'); }, 1);

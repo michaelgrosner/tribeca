@@ -112,8 +112,8 @@ export class OrdersComponent implements OnInit {
         else {
           node.setData(Object.assign(node.data, {
             time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-            price: o.data[3],
-            value: Math.round(o.data[3] * o.data[4] * 100) / 100,
+            price: o.data[4],
+            value: Math.round(o.data[4] * o.data[5] * 100) / 100,
             tif: Models.TimeInForce[o.data[7]],
             lat: o.data[8]+'ms',
             lvQty: o.data[9]
@@ -125,11 +125,11 @@ export class OrdersComponent implements OnInit {
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
         orderId: o.data[0],
-        exchange: o.data[2],
+        side: Models.Side[o.data[2]],
+        exchange: o.data[3],
         time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-        price: o.data[3],
-        value: Math.round(o.data[3] * o.data[4] * 100) / 100,
-        side: Models.Side[o.data[5]],
+        price: o.data[4],
+        value: Math.round(o.data[4] * o.data[5] * 100) / 100,
         type: Models.OrderType[o.data[6]],
         tif: Models.TimeInForce[o.data[7]],
         lat: o.data[8]+'ms',
