@@ -207,9 +207,13 @@ export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
 
 export interface IStdev {
     fv: number;
+    fvMean: number;
     tops: number;
+    topsMean: number;
     bid: number;
+    bidMean: number;
     ask: number;
+    askMean: number;
 }
 
 export class EWMAChart implements ITimestamped {
