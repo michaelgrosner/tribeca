@@ -428,6 +428,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
       } else if (['3','4','7','8'].indexOf(tags[150])>-1 || tags[434]) {
         status = {
+            orderId: tags[11],
             exchangeId: tags[37],
             orderStatus: tags[150] == '3'
               ? Models.OrderStatus.Complete
