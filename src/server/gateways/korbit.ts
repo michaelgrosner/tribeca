@@ -8,7 +8,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import * as Promises from '../promises';
 
 function getJSON<T>(url: string, qs?: any) : Promise<T> {
     return new Promise((resolve, reject) => {
@@ -131,9 +130,9 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
-        var d = Promises.defer<number>();
+      return new Promise<number>((resolve, reject) => {
         this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
-          if (!(<any>msg.data).length) { d.resolve(0); return; }
+          if (!(<any>msg.data).length) { resolve(0); return; }
           (<any>msg.data).forEach((o) => {
               this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
                   if (!(<any>msg.data).length) return;
@@ -145,9 +144,9 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                   });
               });
           });
-          d.resolve((<any>msg.data).orders.length);
+          resolve((<any>msg.data).orders.length);
         });
-        return d.promise;
+      });
     };
 
     public cancelsByClientOrderId = false;
@@ -205,8 +204,9 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             for (let i = (<any>msg.data).length;i--;) {
               var px = parseFloat((<any>msg.data)[i].price);
               var trade : any = (<any>msg.data)[i];
+              if (['buy','sell'].indexOf(trade.type)===-1) continue;
               var status : Models.OrderStatusUpdate = {
-                  exchangeId: trade.orderId.toString(),
+                  exchangeId: trade.fillsDetail.orderId,
                   orderStatus: Models.OrderStatus.Complete,
                   time: new Date(trade.timestamp),
                   side: trade.type.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
@@ -305,28 +305,27 @@ class KorbitHttp {
       publicApi?: boolean,
       forceUnsigned?: boolean
     ) : Promise<Models.Timestamped<T>> => {
-        var d = Promises.defer<Models.Timestamped<T>>();
+      return new Promise<Models.Timestamped<T>>((resolve, reject) => {
         request({
             url: url.resolve(this._baseUrl+'/', actionUrl),
-            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg)),
+            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg: this._signer.signMessage(this, msg)),
             headers: Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token}),
             method: 'POST'
         }, (err, resp, body) => {
-            if (err) d.reject(err);
+            if (err) reject(err);
             else {
                 try {
                     var t = new Date();
                     var data = body ? JSON.parse(body) : {};
-                    d.resolve(new Models.Timestamped(data, t));
+                    resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
                     console.error(new Date().toISOString().slice(11, -1), 'korbit', err, 'url:', actionUrl, 'err:', err, 'body:', body);
-                    d.reject(e);
+                    reject(e);
                 }
             }
         });
-
-        return d.promise;
+      });
     };
 
     get = async <T>(
@@ -334,27 +333,26 @@ class KorbitHttp {
       msg : SignedMessage,
       publicApi?: boolean
     ) : Promise<Models.Timestamped<T>> => {
-        var d = Promises.defer<Models.Timestamped<T>>();
+      return new Promise<Models.Timestamped<T>>((resolve, reject) => {
         request({
-            url: url.resolve(this._baseUrl+'/', actionUrl+'?'+ this._signer.toQueryString(publicApi ? msg : await this._signer.signMessage(this, msg))),
+            url: url.resolve(this._baseUrl+'/', actionUrl+'?'+ this._signer.toQueryString(publicApi ? msg : this._signer.signMessage(this, msg))),
             headers: (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token},
             method: 'GET'
         }, (err, resp, body) => {
-            if (err) d.reject(err);
+            if (err) reject(err);
             else {
                 try {
                     var t = new Date();
                     var data = body ? JSON.parse(body) : {};
-                    d.resolve(new Models.Timestamped(data, t));
+                    resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
                     console.error(new Date().toISOString().slice(11, -1), 'korbit', err, 'url:', actionUrl, 'err:', err, 'body:', body);
-                    d.reject(e);
+                    reject(e);
                 }
             }
         });
-
-        return d.promise;
+      });
     };
 
     private _baseUrl : string;
