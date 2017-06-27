@@ -236,7 +236,7 @@ class KorbitMessageSigner {
     private _token_refresh : string;
     private _token_time : number = 0;
 
-    public signMessage = async (_http: KorbitHttp, m : SignedMessage) : Promise<SignedMessage> => {
+    public signMessage = async (_http: KorbitHttp, m: SignedMessage): Promise<SignedMessage> => {
         if (!this._token_time) {
           var d = new Promise((resolve, reject) => {
             _http.post('oauth2/access_token', {
@@ -272,7 +272,7 @@ class KorbitMessageSigner {
           console.info(new Date().toISOString().slice(11, -1), 'korbit', 'Authentication refresh successful, new token expires at '+(new Date(this._token_time).toISOString().slice(11, -1))+'.');
         }
 
-        return m;
+        return Promise.resolve(m);
     };
 
     public toQueryString = (msg: SignedMessage) : string => {
@@ -305,10 +305,10 @@ class KorbitHttp {
       publicApi?: boolean,
       forceUnsigned?: boolean
     ) : Promise<Models.Timestamped<T>> => {
-      return new Promise<Models.Timestamped<T>>((resolve, reject) => {
+      return new Promise<Models.Timestamped<T>>(async (resolve, reject) => {
         request({
             url: url.resolve(this._baseUrl+'/', actionUrl),
-            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg: this._signer.signMessage(this, msg)),
+            body: this._signer.toQueryString((publicApi || forceUnsigned) ? msg : await this._signer.signMessage(this, msg)),
             headers: Object.assign(publicApi?{}:{"Content-Type": "application/x-www-form-urlencoded"}, (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token}),
             method: 'POST'
         }, (err, resp, body) => {
@@ -333,9 +333,9 @@ class KorbitHttp {
       msg : SignedMessage,
       publicApi?: boolean
     ) : Promise<Models.Timestamped<T>> => {
-      return new Promise<Models.Timestamped<T>>((resolve, reject) => {
+      return new Promise<Models.Timestamped<T>>(async (resolve, reject) => {
         request({
-            url: url.resolve(this._baseUrl+'/', actionUrl+'?'+ this._signer.toQueryString(publicApi ? msg : this._signer.signMessage(this, msg))),
+            url: url.resolve(this._baseUrl+'/', actionUrl+'?'+ this._signer.toQueryString(publicApi ? msg : await this._signer.signMessage(this, msg))),
             headers: (publicApi || !this._signer.token)?{}:{'Authorization': 'Bearer '+this._signer.token},
             method: 'GET'
         }, (err, resp, body) => {
