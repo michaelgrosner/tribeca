@@ -2,6 +2,7 @@ require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
 import path = require("path");
 import express = require('express');
+import request = require('request');
 import fs = require("fs");
 import http = require("http");
 import https = require('https');
@@ -33,7 +34,6 @@ import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import QuotingEngine = require("./quoting-engine");
-import Promises = require("./promises");
 
 let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
   widthPing:                      2,
@@ -83,16 +83,11 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   delayUI:                        7
 };
 
-let exitingEvent: () => Promise<number> = () => new Promise(() => 0);
+let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
 
 const performExit = () => {
-  Promises.timeout(2000, exitingEvent()).then(completed => {
-    console.info(new Date().toISOString().slice(11, -1), 'main', 'All exiting event handlers have fired, exiting application.');
-    process.exit();
-  }).catch(() => {
-    console.warn(new Date().toISOString().slice(11, -1), 'main', 'Did not complete clean-up tasks successfully, still shutting down.');
-    process.exit(1);
-  });
+  happyEnding();
+  setTimeout(process.exit, 2000);
 };
 
 process.on("uncaughtException", err => {
@@ -101,17 +96,21 @@ process.on("uncaughtException", err => {
 });
 
 process.on("unhandledRejection", (reason, p) => {
-  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled promise rejection!', reason, p);
+  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p);
   performExit();
-});
-
-process.on("exit", (code) => {
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exiting with code', code);
 });
 
 process.on("SIGINT", () => {
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Handling SIGINT');
-  performExit();
+  process.stdout.write("\n"+new Date().toISOString().slice(11, -1)+' main Excellent decision! ');
+  request({url: 'https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]',json: true,timeout:3000}, (err, resp, body) => {
+    if (!err && resp.statusCode === 200) process.stdout.write(body.value.joke);
+    process.stdout.write("\n");
+    performExit();
+  });
+});
+
+process.on("exit", (code) => {
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
 const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
@@ -331,18 +330,16 @@ for (const param in defaultQuotingParameters)
     broker
   );
 
-  exitingEvent = () => {
-    return orderBroker.cancelOpenOrders();
+  happyEnding = () => {
+    orderBroker.cancelOpenOrders();
+    console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
   };
 
-  let start = process.hrtime();
-  const interval = 500;
+  let highTime = process.hrtime();
   setInterval(() => {
-    const delta = process.hrtime(start);
-    const ms = (delta[0] * 1e9 + delta[1]) / 1e6;
-    const n = ms - interval;
-    if (n > 121)
-      console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
-    start = process.hrtime();
-  }, interval).unref();
+    const diff = process.hrtime(highTime);
+    const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
+    if (n > 121) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+    highTime = process.hrtime();
+  }, 500).unref();
 })();
