@@ -8,7 +8,7 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'market-stats',
   template: `<div class="col-md-6 col-xs-6">
   <table><tr><td>
-    <chart style="position:relative;top:5px;height:335px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    <chart style="position:relative;top:5px;height:340px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
   </td><td>
     <chart style="position:relative;top:10px;height:167px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
     <chart style="position:relative;top:11px;height:167px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
@@ -55,16 +55,18 @@ export class StatsComponent implements OnInit {
     title: 'fair value',
     chart: {
         width: 700,
-        height: 335,
-        zoomType: 'x',
+        height: 340,
+        zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
     },
+    navigator: {enabled: false},
+    rangeSelector:{enabled: false,height:0},
     scrollbar: {enabled: false},
     credits: {enabled: false},
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {setExtremes: this.syncExtremes},
+      // events: {setExtremes: this.syncExtremes},
       labels: {enabled: false},
       gridLineWidth: 0,
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
@@ -79,7 +81,18 @@ export class StatsComponent implements OnInit {
       opposite: true,
       gridLineWidth: 0
     }],
-    legend: {enabled: false},
+    legend: {
+      enabled:true,
+      itemStyle: {
+        color: 'lightgray'
+      },
+      itemHoverStyle: {
+        color: 'gray'
+      },
+      itemHiddenStyle: {
+        color: 'black'
+      }
+    },
     tooltip: {
         shared: true,
         useHTML: true,
@@ -227,7 +240,7 @@ export class StatsComponent implements OnInit {
     chart: {
         width: 700,
         height: 167,
-        zoomType: 'x',
+        zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
@@ -246,7 +259,7 @@ export class StatsComponent implements OnInit {
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {setExtremes: this.syncExtremes},
+      // events: {setExtremes: this.syncExtremes},
       labels: {enabled: true},
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
@@ -297,7 +310,7 @@ export class StatsComponent implements OnInit {
     chart: {
         width: 700,
         height: 167,
-        zoomType: 'x',
+        zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
     },
@@ -316,7 +329,7 @@ export class StatsComponent implements OnInit {
     xAxis: {
       type: 'datetime',
       crosshair: true,
-      events: {setExtremes: this.syncExtremes},
+      // events: {setExtremes: this.syncExtremes},
       labels: {enabled: false},
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
