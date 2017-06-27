@@ -5,7 +5,6 @@ import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
 import fs = require('fs');
-import * as Promises from '../promises';
 import uuid = require('uuid');
 import Gdax = require('gdax');
 import events = require('events');
@@ -122,7 +121,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private reevalPublicBook = async () => {
-        const d = Promises.defer<boolean>();
+      return await new Promise<boolean>((resolve, reject) => {
         this._authClient.getProductOrderBook({level:2}, this._client.productID, (err, res, data) => {
             if (err) this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
             else {
@@ -133,9 +132,9 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
               data.asks.slice(0,13).forEach(x => this._cachedAsks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
             }
             if (!this._client.socket) setTimeout(this.raiseMarketData, 1210);
-            d.resolve(true);
+            resolve(true);
         });
-        return await d.promise;
+      });
     };
 
     private raiseMarketData = () => {
@@ -161,7 +160,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
-        var d = Promises.defer<number>();
+      return new Promise<number>((resolve, reject) => {
         this._authClient.cancelAllOrders((err, resp, data) => {
             data.forEach(cxl_id => {
                 this.OrderUpdate.trigger({
@@ -172,9 +171,9 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 });
             });
 
-            d.resolve(data.length);
+            resolve(data.length);
         });
-        return d.promise;
+      });
     };
 
     generateClientOrderId = (): string => { return uuid(); }
@@ -327,6 +326,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         else if (order.type === Models.OrderType.Market) {
             o.tags[40] = 1;
         }
+
         this._FIXClient.send(o, () => {
           this.OrderUpdate.trigger({
               orderId: order.orderId,
@@ -605,12 +605,12 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
       config.GetString("CoinbaseRestUrl")
     );
 
-    const d = Promises.defer<Product[]>();
-    authClient.getProducts((err, res, data) => {
-        if (err) d.reject(err);
-        else d.resolve(data);
+    const products = await new Promise<Product[]>((resolve, reject) => {
+      authClient.getProducts((err, res, data) => {
+          if (err) reject(err);
+          else resolve(data);
+      });
     });
-    const products = await d.promise;
 
     if (!products)
       throw new Error("Unable to connect to Coinbase, seems currently offline. Please retry once is online.");

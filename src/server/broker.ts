@@ -6,7 +6,6 @@ import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
 import moment = require("moment");
-import * as Promises from './promises';
 
 export class MarketDataBroker {
   MarketData = new Utils.Evt<Models.Market>();
@@ -38,136 +37,79 @@ class OrderStateCache {
 }
 
 export class OrderBroker {
-    async cancelOpenOrders() : Promise<number> {
+    cancelOpenOrders() {
         if (this._oeGateway.supportsCancelAllOpenOrders()) {
             return this._oeGateway.cancelAllOpenOrders();
         }
 
-        const promiseMap = new Map<string, Promises.Deferred<void>>();
-
-        const orderUpdate = (o : Models.OrderStatusReport) => {
-            const p = promiseMap.get(o.orderId);
-            if (p && (o.orderStatus == Models.OrderStatus.Complete || o.orderStatus == Models.OrderStatus.Cancelled))
-                p.resolve(null);
-        };
-
-        this.OrderUpdate.on(orderUpdate);
-
         for (let e of this.orderCache.allOrders.values()) {
-            if (e.orderStatus == Models.OrderStatus.Complete || e.orderStatus == Models.OrderStatus.Cancelled)
-                continue;
-
-            this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
-            promiseMap.set(e.orderId, Promises.defer<void>());
+            if (e.orderStatus == Models.OrderStatus.New || e.orderStatus == Models.OrderStatus.Working)
+              this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
         }
-
-        const promises = Array.from(promiseMap.values());
-        await Promise.all(promises);
-
-        this.OrderUpdate.off(orderUpdate);
-
-        return promises.length;
     }
 
-    cleanClosedOrders() : Promise<number> {
-        var deferred = Promises.defer<number>();
-
-        var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this.tradesMemory.length;i++) {
-          if (this.tradesMemory[i].Kqty+0.0001 >= this.tradesMemory[i].quantity) {
-            lateCleans[this.tradesMemory[i].tradeId] = true;
-          }
-        }
-
-        if (!Object.keys(lateCleans).length) {
-            deferred.resolve(0);
-        }
-
-        for (var k in lateCleans) {
-          if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this.tradesMemory.length;i++) {
-            if (k == this.tradesMemory[i].tradeId) {
-              this.tradesMemory[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-              this._persister.repersist(this.tradesMemory[i]);
-              this.tradesMemory.splice(i, 1);
-              break;
-            }
-          }
-        }
-
-        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
-            deferred.resolve(Object.keys(lateCleans).length);
-
-        return deferred.promise;
-    }
-
-    cleanTrade(tradeId: string) : Promise<number> {
-        var deferred = Promises.defer<number>();
-
-        var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this.tradesMemory.length;i++) {
-          if (this.tradesMemory[i].tradeId == tradeId) {
-            lateCleans[this.tradesMemory[i].tradeId] = true;
-          }
-        }
-
-        if (!Object.keys(lateCleans).length) {
-            deferred.resolve(0);
-        }
-
-        for (var k in lateCleans) {
-          if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this.tradesMemory.length;i++) {
-            if (k == this.tradesMemory[i].tradeId) {
-              this.tradesMemory[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-              this._persister.repersist(this.tradesMemory[i]);
-              this.tradesMemory.splice(i, 1);
-              break;
-            }
-          }
-        }
-
-        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
-            deferred.resolve(Object.keys(lateCleans).length);
-
-        return deferred.promise;
-    }
-
-    cleanOrders() : Promise<number> {
-        var deferred = Promises.defer<number>();
-
-        var lateCleans : {[id: string] : boolean} = {};
-        for(var i = 0;i<this.tradesMemory.length;i++) {
+    cleanClosedOrders() {
+      var lateCleans : {[id: string] : boolean} = {};
+      for(var i = 0;i<this.tradesMemory.length;i++) {
+        if (this.tradesMemory[i].Kqty+0.0001 >= this.tradesMemory[i].quantity) {
           lateCleans[this.tradesMemory[i].tradeId] = true;
         }
+      }
 
-        if (!Object.keys(lateCleans).length) {
-            deferred.resolve(0);
-        }
-
-        for (var k in lateCleans) {
-          if (!(k in lateCleans)) continue;
-          for(var i = 0;i<this.tradesMemory.length;i++) {
-            if (k == this.tradesMemory[i].tradeId) {
-              this.tradesMemory[i].Kqty = -1;
-              this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-              this._persister.repersist(this.tradesMemory[i]);
-              this.tradesMemory.splice(i, 1);
-              break;
-            }
+      for (var k in lateCleans) {
+        if (!(k in lateCleans)) continue;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (k == this.tradesMemory[i].tradeId) {
+            this.tradesMemory[i].Kqty = -1;
+            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._persister.repersist(this.tradesMemory[i]);
+            this.tradesMemory.splice(i, 1);
+            break;
           }
         }
-
-        if (Object.keys(lateCleans).map(k => !!lateCleans[k]).indexOf(false)===-1)
-            deferred.resolve(Object.keys(lateCleans).length);
-
-        return deferred.promise;
+      }
     }
 
-    private roundPrice = (price: number, side: Models.Side) : number => {
-        return Utils.roundSide(price, this._baseBroker.minTickIncrement, side);
+    cleanTrade(tradeId: string) {
+      var lateCleans : {[id: string] : boolean} = {};
+      for(var i = 0;i<this.tradesMemory.length;i++) {
+        if (this.tradesMemory[i].tradeId == tradeId) {
+          lateCleans[this.tradesMemory[i].tradeId] = true;
+        }
+      }
+
+      for (var k in lateCleans) {
+        if (!(k in lateCleans)) continue;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (k == this.tradesMemory[i].tradeId) {
+            this.tradesMemory[i].Kqty = -1;
+            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._persister.repersist(this.tradesMemory[i]);
+            this.tradesMemory.splice(i, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    cleanOrders() {
+      var lateCleans : {[id: string] : boolean} = {};
+      for(var i = 0;i<this.tradesMemory.length;i++) {
+        lateCleans[this.tradesMemory[i].tradeId] = true;
+      }
+
+      for (var k in lateCleans) {
+        if (!(k in lateCleans)) continue;
+        for(var i = 0;i<this.tradesMemory.length;i++) {
+          if (k == this.tradesMemory[i].tradeId) {
+            this.tradesMemory[i].Kqty = -1;
+            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._persister.repersist(this.tradesMemory[i]);
+            this.tradesMemory.splice(i, 1);
+            break;
+          }
+        }
+      }
     }
 
     OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
@@ -187,7 +129,7 @@ export class OrderBroker {
             leavesQuantity: order.quantity,
             type: order.type,
             isPong: order.isPong,
-            price: this.roundPrice(order.price, order.side),
+            price: Utils.roundSide(order.price, this._baseBroker.minTickIncrement, order.side),
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
@@ -206,7 +148,7 @@ export class OrderBroker {
         const report : Models.OrderStatusUpdate = {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
-            price: this.roundPrice(replace.price, rpt.side),
+            price: Utils.roundSide(replace.price, this._baseBroker.minTickIncrement, rpt.side),
             quantity: replace.quantity
         };
 

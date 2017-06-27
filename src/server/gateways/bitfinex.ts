@@ -7,7 +7,6 @@ import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
-import * as Promises from '../promises';
 
 function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
     if (type === Models.OrderType.Market) {
@@ -219,7 +218,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
-        var d = Promises.defer<number>();
+      return new Promise<number>((resolve, reject) => {
         this._http
             .post<any, any[]>("orders", {})
             .then(resps => {
@@ -237,9 +236,9 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                             });
                         });
                 });
-                d.resolve(resps.data.length);
+                resolve(resps.data.length);
             });
-        return d.promise;
+      });
     };
 
     generateClientOrderId = (): number => parseInt(new Date().valueOf().toString().substr(-9), 10);
@@ -428,12 +427,11 @@ class BitfinexHttp {
     };
 
     private doRequest = <TResponse>(msg: request.Options, url: string): Promise<Models.Timestamped<TResponse>> => {
-        var d = Promises.defer<Models.Timestamped<TResponse>>();
-
+      return new Promise<Models.Timestamped<any>>((resolve, reject) => {
         request(msg, (err, resp, body) => {
             if (err) {
                 console.error(new Date().toISOString().slice(11, -1), 'bitfinex', err, 'Error returned: url=', url, 'err=', err);
-                d.reject(err);
+                reject(err);
             }
             else {
                 try {
@@ -442,16 +440,15 @@ class BitfinexHttp {
                     if (typeof body === 'string' && body.length && body[0]==='<') {
                         console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Invalid JSON response received, seems like HTML.');
                     } else data = JSON.parse(body);
-                    d.resolve(new Models.Timestamped(data, t));
+                    resolve(new Models.Timestamped(data, t));
                 }
                 catch (err) {
                     console.error(new Date().toISOString().slice(11, -1), 'bitfinex', err, 'Error parsing JSON url=', url, 'err=', err, ', body=', body);
-                    d.reject(err);
+                    reject(err);
                 }
             }
         });
-
-        return d.promise;
+      });
     };
 
     private _baseUrl: string;

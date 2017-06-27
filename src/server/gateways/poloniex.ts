@@ -8,7 +8,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import * as Promises from '../promises';
 
 interface SignedMessage {
     command?: string;
@@ -164,28 +163,28 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
   supportsCancelAllOpenOrders = () : boolean => { return false; };
   cancelAllOpenOrders = () : Promise<number> => {
-    var d = Promises.defer<number>();
-    this._http.post("returnOpenOrders", {currencyPair: this._symbolProvider.symbol }).then(msg => {
-      if (!msg.data || !(<any>msg.data).length) { d.resolve(0); return; }
-      (<any>msg.data).forEach(async (o) => {
-        await new Promise<number>(async (resolve, reject) => {
-          this._http.post("cancelOrder", {orderNumber: o.orderNumber }).then(msg => {
-            if (typeof (<any>msg.data).success == "undefined") return reject(0);
-            if ((<any>msg.data).success=='1') {
-              this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
-                exchangeId: o.orderNumber,
-                leavesQuantity: 0,
-                time: msg.time,
-                orderStatus: Models.OrderStatus.Cancelled
-              });
-            }
-            resolve(1);
+    return new Promise<number>((resolve, reject) => {
+      this._http.post("returnOpenOrders", {currencyPair: this._symbolProvider.symbol }).then(msg => {
+        if (!msg.data || !(<any>msg.data).length) { resolve(0); return; }
+        (<any>msg.data).forEach(async (o) => {
+          await new Promise<number>(async (_resolve, _reject) => {
+            this._http.post("cancelOrder", {orderNumber: o.orderNumber }).then(msg => {
+              if (typeof (<any>msg.data).success == "undefined") return _reject(0);
+              if ((<any>msg.data).success=='1') {
+                this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+                  exchangeId: o.orderNumber,
+                  leavesQuantity: 0,
+                  time: msg.time,
+                  orderStatus: Models.OrderStatus.Cancelled
+                });
+              }
+              _resolve(1);
+            });
           });
         });
+        resolve((<any>msg.data).length);
       });
-      d.resolve((<any>msg.data).length);
     });
-    return d.promise;
   };
 
   public cancelsByClientOrderId = false;
