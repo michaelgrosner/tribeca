@@ -9,7 +9,6 @@ import Models = require("../../share/models");
 import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
-import * as Promises from '../promises';
 
 interface OkCoinMessageIncomingMessage {
     channel: string;
@@ -221,11 +220,11 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
-        var d = Promises.defer<number>();
+      return new Promise<number>((resolve, reject) => {
         this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
           if (typeof (<any>msg.data).orders == "undefined"
             || typeof (<any>msg.data).orders[0] == "undefined"
-            || typeof (<any>msg.data).orders[0].order_id == "undefined") { d.resolve(0); return; }
+            || typeof (<any>msg.data).orders[0].order_id == "undefined") { resolve(0); return; }
           (<any>msg.data).orders.forEach((o) => {
               this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
                   if (typeof (<any>msg.data).result == "undefined") return;
@@ -239,9 +238,9 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                   }
               });
           });
-          d.resolve((<any>msg.data).orders.length);
+          resolve((<any>msg.data).orders.length);
         });
-        return d.promise;
+      });
     };
 
     public cancelsByClientOrderId = false;
@@ -433,29 +432,27 @@ class OkCoinMessageSigner {
 
 class OkCoinHttp {
     post = <T>(actionUrl: string, msg : SignedMessage) : Promise<Models.Timestamped<T>> => {
-        var d = Promises.defer<Models.Timestamped<T>>();
-
+      return new Promise<Models.Timestamped<T>>((resolve, reject) => {
         request({
             url: url.resolve(this._baseUrl, actionUrl),
             body: querystring.stringify(this._signer.signMessage(msg)),
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             method: "POST"
         }, (err, resp, body) => {
-            if (err) d.reject(err);
+            if (err) reject(err);
             else {
                 try {
                     var t = new Date();
                     var data = JSON.parse(body);
-                    d.resolve(new Models.Timestamped(data, t));
+                    resolve(new Models.Timestamped(data, t));
                 }
                 catch (e) {
                     console.error(new Date().toISOString().slice(11, -1), 'okcoin', err, 'url:', actionUrl, 'err:', err, 'body:', body);
-                    d.reject(e);
+                    reject(e);
                 }
             }
         });
-
-        return d.promise;
+      });
     };
 
     private _baseUrl : string;
