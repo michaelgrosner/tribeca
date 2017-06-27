@@ -352,6 +352,7 @@ export interface QuotingParameters {
     tradeRateSeconds?: number;
     quotingEwmaProtection?: boolean;
     quotingStdevProtection?: STDEV;
+    quotingStdevBollingerBands?: boolean;
     audio?: boolean;
     bullets?: number;
     range?: number;

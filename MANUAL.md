@@ -141,8 +141,6 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
 
-* `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
-
 * `apMode`
 
   * `Manual` - K.js will not try to automatically manage positions, instead you will need to manually set `tbp`.
@@ -210,13 +208,17 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `factor` - Multiplier used to increase or decrease the value of the selected `stdev` calculation, a `factor` of 1 does effectively nothing.
 
-* `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
+* `BB?` - Enable Bollinger Bands with upper and lower bands calculated from the result of the selected `stdev` above or below its own moving average of `periods`.
+
+* `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
 * `profit` - Interval in hours to recalculate the display of Profit (under wallet values), for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both.
 
 * `Kmemory` - Timeout in days for completed Pongs (K trades) to remain in memory, a value of `0` keeps K records in memory forever.
 
 * `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of K.js with the exchange tends to be higher than the latency of K.js with your browser).
+
+* `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
 
 
 # How can I make up my own trading strategies?

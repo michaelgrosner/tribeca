@@ -169,13 +169,21 @@ export class QuotingEngine {
 
         if (params.quotingStdevProtection !== Models.STDEV.Off && this._stdev.latest !== null) {
             if (unrounded.askPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR !== 'Sell'))
-              unrounded.askPx = Math.max(fv.price + this._stdev.latest[
+              unrounded.askPx = Math.max((params.quotingStdevBollingerBands ? this._stdev.latest[
+                (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fvMean' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
+                    ? 'topsMean' : 'askMean' )
+              ]: fv.price) + this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'ask' )
               ], unrounded.askPx);
             if (unrounded.bidPx && (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTop || sideAPR !== 'Bid'))
-              unrounded.bidPx = Math.min(fv.price - this._stdev.latest[
+              unrounded.bidPx = Math.min((params.quotingStdevBollingerBands ? this._stdev.latest[
+                (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
+                  ? 'fvMean' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
+                    ? 'topsMean' : 'bidMean' )
+              ]  : fv.price) - this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'bid' )
