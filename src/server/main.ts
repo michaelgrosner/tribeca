@@ -67,6 +67,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   quotingEwmaProtection:          true,
   quotingEwmaProtectionPeridos:   200,
   quotingStdevProtection:         Models.STDEV.Off,
+  quotingStdevBollingerBands:     false,
   quotingStdevProtectionFactor:   1,
   quotingStdevProtectionPeriods:  1200,
   ewmaSensiblityPercentage:       0.5,
