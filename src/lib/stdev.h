@@ -9,7 +9,7 @@ namespace K {
   using v8::Value;
   using v8::Number;
   using v8::Object;
-  using v8::Float32Array;
+  using v8::Float64Array;
 
   class Stdev {
     public:
