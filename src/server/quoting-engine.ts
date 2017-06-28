@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
 import FairValue = require("./fair-value");
-import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import Broker = require("./broker");
