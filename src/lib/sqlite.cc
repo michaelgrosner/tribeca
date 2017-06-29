@@ -62,7 +62,7 @@ namespace K {
     );
     if (json[strlen(json.data()) - 1] == ',') json.pop_back();
     json.append("]");
-    if (zErrMsg) printf(string("sqlite error: ").append(zErrMsg).data());
+    if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
     JSON Json;
     MaybeLocal<Value> array = Json.Parse(New(json.data()).ToLocalChecked());
@@ -95,7 +95,7 @@ namespace K {
         .append(",'").append(*Nan::Utf8String(row.ToLocalChecked())).append("');").data(),
         NULL, NULL, &zErrMsg
       );
-      if (zErrMsg) printf(string("sqlite error: ").append(zErrMsg).data());
+      if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
       sqlite3_free(zErrMsg);
     }
   }
