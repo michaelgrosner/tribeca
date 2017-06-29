@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
-import Persister = require("./persister");
 import QuotingParameters = require("./quoting-parameters");
 import FairValue = require("./fair-value");
 import moment = require("moment");
@@ -62,7 +61,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._persister.repersist(this.tradesMemory[i]);
+            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -84,7 +83,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._persister.repersist(this.tradesMemory[i]);
+            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -104,7 +103,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._persister.repersist(this.tradesMemory[i]);
+            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -200,7 +199,7 @@ export class OrderBroker {
               this.tradesMemory[i].Kdiff = Math.abs((this.tradesMemory[i].quantity*this.tradesMemory[i].price)-(this.tradesMemory[i].Kqty*this.tradesMemory[i].Kprice));
             this.tradesMemory[i].loadedFromDB = false;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._persister.repersist(this.tradesMemory[i]);
+            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
         }
@@ -215,13 +214,13 @@ export class OrderBroker {
             this.tradesMemory[i].value += trade.value;
             this.tradesMemory[i].loadedFromDB = false;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._persister.repersist(this.tradesMemory[i]);
+            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
         }
         if (!exists) {
           this._publisher.publish(Models.Topics.Trades, trade);
-          this._persister.persist('trades', trade);
+          this._sqlite.insert(Models.Topics.Trades, trade, false, trade.tradeId);
           this.tradesMemory.push(trade);
         }
       }
@@ -333,7 +332,7 @@ export class OrderBroker {
               )), trade);
             } else {
               this._publisher.publish(Models.Topics.Trades, trade);
-              this._persister.persist('trades', trade);
+              this._sqlite.insert(Models.Topics.Trades, trade, false, trade.tradeId);
               this.tradesMemory.push(trade);
             }
 
@@ -351,7 +350,7 @@ export class OrderBroker {
                     goWhile = true;
                     this.tradesMemory[i].Kqty = -1;
                     this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-                    this._persister.repersist(this.tradesMemory[i]);
+                    this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
                     this.tradesMemory.splice(i, 1);
                   }
                 }
@@ -379,7 +378,7 @@ export class OrderBroker {
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
-      private _persister : Persister.Repository,
+      private _sqlite,
       private _publisher : Publish.Publisher,
       private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]

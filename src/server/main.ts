@@ -1,5 +1,6 @@
 require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
+const bindings = require('bindings')('K.node');
 import path = require("path");
 import express = require('express');
 import request = require('request');
@@ -27,7 +28,6 @@ import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import compression = require("compression");
-import Persister = require("./persister");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
@@ -85,19 +85,19 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
 
 let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
 
-const performExit = () => {
+const processExit = () => {
   happyEnding();
   setTimeout(process.exit, 2000);
 };
 
 process.on("uncaughtException", err => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err);
-  performExit();
+  processExit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p);
-  performExit();
+  processExit();
 });
 
 process.on("SIGINT", () => {
@@ -105,7 +105,7 @@ process.on("SIGINT", () => {
   request({url: 'https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]',json: true,timeout:3000}, (err, resp, body) => {
     if (!err && resp.statusCode === 200) process.stdout.write(body.value.joke);
     process.stdout.write("\n");
-    performExit();
+    processExit();
   });
 });
 
@@ -173,14 +173,12 @@ for (const param in defaultQuotingParameters)
     defaultQuotingParameters[param] = config.GetDefaultString(param);
 
 (async (): Promise<void> => {
-  const persister = new Persister.Repository(config.GetString("MongoDbUrl"), exchange, pair);
+  const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
 
-  const [initParams, initTrades, initRfv, initMkt] = await Promise.all([
-    persister.loadLatest(Models.Topics.QuotingParametersChange, defaultQuotingParameters),
-    persister.loadAll('trades'),
-    persister.loadAll('rfv'),
-    persister.loadAll('mkt')
-  ]);
+  const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
+  const initTrades = sqlite.load(Models.Topics.Trades);
+  const initRfv = sqlite.load(Models.Topics.FairValue);
+  const initMkt = sqlite.load(Models.Topics.MarketData);
 
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (exchange) {
@@ -210,7 +208,7 @@ for (const param in defaultQuotingParameters)
     )]);
 
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
-    persister,
+    sqlite,
     publisher,
     receiver,
     initParams
@@ -221,7 +219,7 @@ for (const param in defaultQuotingParameters)
     paramsRepo,
     publisher,
     receiver,
-    persister,
+    '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     io
   );
 
@@ -240,7 +238,7 @@ for (const param in defaultQuotingParameters)
     paramsRepo,
     broker,
     gateway.oe,
-    persister,
+    sqlite,
     publisher,
     receiver,
     initTrades
@@ -285,7 +283,8 @@ for (const param in defaultQuotingParameters)
       timeProvider,
       fvEngine,
       paramsRepo,
-      persister,
+      sqlite,
+      bindings.computeStdevs,
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
@@ -294,7 +293,7 @@ for (const param in defaultQuotingParameters)
         broker,
         timeProvider,
         paramsRepo,
-        persister,
+        sqlite,
         fvEngine,
         new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
         publisher
