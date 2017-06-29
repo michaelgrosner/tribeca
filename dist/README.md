@@ -19,7 +19,7 @@ To run K.js under winy (or if you love Docker), make use of the [Dockerfile](htt
 3. Save your new Dockerfile, preferably in a secure location and in an empty directory. Then build the images and run the containers:
 ```
  $ cd path/to/Dockerfile
- $ docker build -t kjs .
+ $ docker build --no-cache -t kjs .
  $ docker run --name Kjs -d kjs
 ```
 
