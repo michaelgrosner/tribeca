@@ -1,6 +1,6 @@
 require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
-const bindings = require('../lib/K.node');
+const bindings = require('./lib/K.node');
 import path = require("path");
 import express = require('express');
 import request = require('request');
@@ -176,7 +176,7 @@ for (const param in defaultQuotingParameters)
   const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
 
   const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
-  const initTrades = sqlite.load(Models.Topics.Trades);
+  const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
   const initRfv = sqlite.load(Models.Topics.FairValue);
   const initMkt = sqlite.load(Models.Topics.MarketData);
 
