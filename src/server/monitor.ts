@@ -21,7 +21,7 @@ export class ApplicationState {
     this._tick = 0;
     const dbFile = path.resolve(this._db);
     if (dbFile.indexOf('/data/db/K.')!==0 || !fs.existsSync(dbFile)) return;
-     this._app_state = new Models.ApplicationState(
+    this._app_state = new Models.ApplicationState(
       process.memoryUsage().rss,
       (new Date()).getHours(),
       this._newOrderMinute / 2,

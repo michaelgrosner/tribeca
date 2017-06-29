@@ -70,7 +70,7 @@ namespace K {
 
   int SQLite::callback(void *param, int argc, char **argv, char **azColName) {
     string* json = reinterpret_cast<string*>(param);
-    for(int i=0; i<argc; i++) json->append(argv[i]).append(",");
+    for (int i=0; i<argc; i++) json->append(argv[i]).append(",");
     return 0;
   }
 
