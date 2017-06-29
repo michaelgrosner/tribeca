@@ -32,7 +32,6 @@
     "babelify": "^7.3.0",
     "basic-auth": "^1.1.0",
     "basic-auth-connect": "^1.0.0",
-    "bindings": "^1.2.1",
     "body-parser": "^1.17.2",
     "browserify": "^14.4.0",
     "collections": "^5.0.6",
