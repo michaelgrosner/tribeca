@@ -13,7 +13,7 @@ namespace K {
 
   Persistent<Function> SQLite::constructor;
 
-  SQLite::SQLite(int exchange_ = -1, int base_ = -1, int quote_ = -1):
+  SQLite::SQLite(int exchange_, int base_, int quote_):
   exchange(exchange_),
   base(base_),
   quote(quote_) {
