@@ -80,23 +80,22 @@ namespace K {
     SQLite* sqlite = ObjectWrap::Unwrap<SQLite>(info.This());
     char* zErrMsg = 0;
     string table = string(*Nan::Utf8String(Local<String>::Cast(info[0])));
+    JSON Json;
+    MaybeLocal<String> row = Json.Stringify(info[1]->IsUndefined() ? New<Object>() : Nan::To<Object>(info[1]).ToLocalChecked());
     bool rm = info[2]->IsUndefined() ? true : info[2]->BooleanValue();
     string id = string(info[3]->IsUndefined() ? "NULL" : *Nan::Utf8String(Local<String>::Cast(info[3])));
     long time = info[4]->IsUndefined() ? 0 : info[4]->NumberValue();
-    Local<Object> obj = Nan::To<Object>(info[1]).ToLocalChecked();
-    JSON Json;
-    MaybeLocal<String> row = Json.Stringify(obj);
-    if (!row.IsEmpty()) {
-      sqlite3_exec(sqlite->db,
-        string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(table)
-        .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
-          time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
-        ) ) : "").append("INSERT INTO ").append(table).append(" (id,json) VALUES(").append(id)
-        .append(",'").append(*Nan::Utf8String(row.ToLocalChecked())).append("');").data(),
-        NULL, NULL, &zErrMsg
-      );
-      if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
-      sqlite3_free(zErrMsg);
-    }
+    sqlite3_exec(sqlite->db,
+      string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(table)
+      .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
+        time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
+      ) ) : "").append(info[1]->IsUndefined() ? "" : string("INSERT INTO ")
+        .append(table).append(" (id,json) VALUES(").append(id).append(",'")
+        .append(*Nan::Utf8String(row.ToLocalChecked())).append("');")
+      ).data(),
+      NULL, NULL, &zErrMsg
+    );
+    if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
   }
 }

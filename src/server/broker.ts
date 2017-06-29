@@ -61,7 +61,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -83,7 +83,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -103,7 +103,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -350,7 +350,7 @@ export class OrderBroker {
                     goWhile = true;
                     this.tradesMemory[i].Kqty = -1;
                     this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-                    this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+                    this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
                     this.tradesMemory.splice(i, 1);
                   }
                 }
