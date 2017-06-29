@@ -2,7 +2,6 @@ import assert = require("assert");
 import Backtest = require("../src/server/backtest");
 import Interfaces = require("../src/server/interfaces");
 import Utils = require("../src/server/utils");
-import Persister = require("../src/server/persister");
 import Models = require("../src/share/models");
 import moment = require("moment");
 
