@@ -1,6 +1,6 @@
 require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
-const bindings = require('bindings')('K.node');
+const bindings = require('../lib/K.node');
 import path = require("path");
 import express = require('express');
 import request = require('request');
