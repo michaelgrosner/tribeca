@@ -20,7 +20,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v6 or v7 [but not v6.1]). Persistence is achieved using mongodb. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
+Runs on the latest node.js (v6 or v7 [but not v6.1]). Persistence is achieved using sqlite. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
@@ -39,7 +39,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 ### Manual Installation
 
-1. Ensure your target machine has installed node v6 or v7 (`nodejs -v`), mongodb and g++ will be installed automatically (to validate if mongodb server is running after install try `mongo --eval "print('OK')"`).
+1. Ensure your target machine has installed node v6 or v7 (see `nodejs -v`), g++ will be installed automatically.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```
@@ -59,8 +59,6 @@ Troubleshooting:
  * Do not install or execute the application as root; if you really want to install as root use `npm install --unsafe-perm`.
 
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
-
- * Use `smallfiles=true` in your `/etc/mongodb.conf` if your `/var/lib/mongodb/journal/*` files are too big (see [more info](https://stackoverflow.com/questions/19533019/is-it-safe-to-delete-the-journal-file-of-mongodb)).
 
  * Run `rm -rf node_modules && npm install` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
 
@@ -96,9 +94,7 @@ To run multiple instances using a collection of config files:
 
     1. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have a unique port to display the UI.
 
-    2. Edit the value of `MongoDbUrl` in the new config file to set a new database name, so all applications have a unique database to save the data. You dont need to modify the host:port because a single database host can have multiple databases inside.
-
-    3. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+    2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
 2. Run the new instance with `npm start --K.js:config=X.json`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
@@ -121,6 +117,16 @@ Once `K.js` is up and running, visit HTTPS port `3000` (or value of `WebClientLi
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
 In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `dist/sslcert` folder.
+
+### Databases
+
+Each currency pair of each exchange will use a different sqlite database file.
+
+All database files are located at `/data/db/K.*.db`, where `*` is the identifier with format `exchange.base_currency.quote_currency`; it is located outside the application path to survive reinstalls and wild `rm -rf path/to/K`.
+
+You can copy any `.db` file to another machine when migrating or as a backup.
+
+If a database file do not exists, the application will create it on boot; otherwise, it will load it and reuse it.
 
 ### Charts
 
@@ -155,6 +161,8 @@ To debug the server code with chrome-devtools, attach the node debugger with `no
 Passing a config filename as a parameter after `K.js` is also allowed, like `nodejs K.js X.json`.
 
 ### Unreleased Changelog:
+
+Added built-in SQLite C++ interface to replace external mongodb server.
 
 Added Poloniex API.
 

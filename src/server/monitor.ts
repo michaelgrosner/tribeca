@@ -1,8 +1,9 @@
 import Models = require("../share/models");
-import Persister = require("./persister");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import QuotingParameters = require("./quoting-parameters");
+import path = require('path');
+import fs = require('fs');
 import * as moment from "moment";
 
 export class ApplicationState {
@@ -18,16 +19,16 @@ export class ApplicationState {
 
   private onTick = () => {
     this._tick = 0;
-    this._persister.loadDBSize().then(dbSize => {
-      this._app_state = new Models.ApplicationState(
-        process.memoryUsage().rss,
-        (new Date()).getHours(),
-        this._newOrderMinute / 2,
-        dbSize
-      );
-      this._newOrderMinute = 0;
-      this._publisher.publish(Models.Topics.ApplicationState, this._app_state);
-    });
+    const dbFile = path.resolve(this._db);
+    if (dbFile.indexOf('/data/db/K.')!==0 || !fs.existsSync(dbFile)) return;
+     this._app_state = new Models.ApplicationState(
+      process.memoryUsage().rss,
+      (new Date()).getHours(),
+      this._newOrderMinute / 2,
+      fs.statSync(dbFile).size
+    );
+    this._newOrderMinute = 0;
+    this._publisher.publish(Models.Topics.ApplicationState, this._app_state);
   };
 
   private onDelay = () => {
@@ -68,7 +69,7 @@ export class ApplicationState {
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher,
     private _reciever: Publish.Receiver,
-    private _persister: Persister.Repository,
+    private _db: string,
     private _io: SocketIO.Server
   ) {
     this.setDelay();

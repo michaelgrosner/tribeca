@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Persister = require("./persister");
 import Publish = require("./publish");
 import Utils = require("./utils");
 
@@ -12,7 +11,7 @@ export class QuotingParametersRepository {
   }
 
   constructor(
-    private _persister: Persister.Repository,
+    private _sqlite,
     private _publisher: Publish.Publisher,
     reciever: Publish.Receiver,
     initParams: Models.QuotingParameters
@@ -29,7 +28,7 @@ export class QuotingParametersRepository {
         p.widthPercentage = false;
 
       this._latest = p;
-      this._persister.persist(Models.Topics.QuotingParametersChange, p)
+      this._sqlite.insert(Models.Topics.QuotingParametersChange, p);
       this.NewParameters.trigger();
     }
 

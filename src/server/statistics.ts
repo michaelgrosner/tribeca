@@ -3,9 +3,7 @@ import Utils = require("./utils");
 import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
-import Persister = require("./persister");
 import moment = require("moment");
-var bindings = require('bindings')('K.node');
 
 function computeEwma(newValue: number, previous: number, periods: number): number {
     if (previous !== null) {
@@ -98,7 +96,8 @@ export class STDEVProtectionCalculator {
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-      private _persister: Persister.Repository,
+      private _sqlite,
+      private _computeStdevs,
       initMkt: Models.MarketStats[]
     ) {
         _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
@@ -125,7 +124,7 @@ export class STDEVProtectionCalculator {
     private onSave = () => {
         if (this._lastFV.length < 2 || this._lastTops.length < 2 || this._lastBids.length < 2 || this._lastAsks.length < 2) return;
 
-        this._latest = <Models.IStdev>bindings.computeStdevs(
+        this._latest = <Models.IStdev>this._computeStdevs(
           new Float64Array(this._lastFV),
           new Float64Array(this._lastTops),
           new Float64Array(this._lastBids),
@@ -153,12 +152,11 @@ export class STDEVProtectionCalculator {
 
         this.onSave();
 
-        this._persister.persist('mkt', new Models.MarketStats(
+        this._sqlite.insert(Models.Topics.MarketData, new Models.MarketStats(
           fv.price,
           filteredMkt.bids[0].price,
           filteredMkt.asks[0].price,
           new Date()
-        ));
-        this._persister.reclean('mkt', new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
+        ), false, undefined, new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods);
     };
 }

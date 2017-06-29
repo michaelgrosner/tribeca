@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Publish = require("./publish");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
-import Persister = require("./persister");
 import FairValue = require("./fair-value");
 import moment = require("moment");
 import QuotingParameters = require("./quoting-parameters");
@@ -50,7 +49,7 @@ export class PositionManager {
         private _details: Broker.ExchangeBroker,
         private _timeProvider: Utils.ITimeProvider,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _persister: Persister.Repository,
+        private _sqlite,
         private _fvAgent: FairValue.FairValueEngine,
         private _ewma: Statistics.EWMATargetPositionCalculator,
         private _publisher : Publish.Publisher
@@ -113,10 +112,9 @@ export class PositionManager {
           this._timeProvider.utcNow()
         ), true);
 
-        this._persister.persist('rfv', rfv);
         this._data.push(rfv);
         this._data = this._data.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
-        this._persister.reclean('rfv', new Date(new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods));
+        this._sqlite.insert(Models.Topics.FairValue, rfv, false, undefined, new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods);
     };
 }
 

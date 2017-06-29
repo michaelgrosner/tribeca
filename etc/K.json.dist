@@ -2,7 +2,6 @@
     "BotIdentifier": "bot",
     "EXCHANGE": "null",
     "TradedPair": "BTC/USD",
-    "MongoDbUrl": "mongodb://localhost:27017/tribeca",
     "WebClientUsername": "NULL",
     "WebClientPassword": "NULL",
     "WebClientListenPort": "3000",
