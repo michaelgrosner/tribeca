@@ -48,7 +48,7 @@ namespace K {
     char* zErrMsg = 0;
     string table = string(*Nan::Utf8String(Local<String>::Cast(info[0])));
     sqlite3_exec(sqlite->db,
-      string("CREATE TABLE ").append(table).append("("                                                   \
+      string("CREATE TABLE ").append(table).append("("                                                        \
         "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL,"                                          \
         "json  BLOB                                       NOT NULL,"                                          \
         "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);").data(),

@@ -20,7 +20,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v6 or v7 [but not v6.1]). Persistence is achieved using sqlite. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
+Runs on the latest node.js (v6 or v7). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
