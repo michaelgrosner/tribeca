@@ -25,7 +25,7 @@
     'dependencies': [ 'K' ],
     'copies': [{
       'files': [ '<(PRODUCT_DIR)/K.node' ],
-      'destination': 'app/lib'
+      'destination': 'app/server/lib'
     }]
   }]
 }
