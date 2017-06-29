@@ -128,6 +128,8 @@ You can copy any `.db` file to another machine when migrating or as a backup.
 
 If a database file do not exists, the application will create it on boot; otherwise, it will load it and reuse it.
 
+To see the data of each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or similars.
+
 ### Charts
 
 The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
