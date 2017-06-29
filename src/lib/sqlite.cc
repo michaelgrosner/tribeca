@@ -54,18 +54,16 @@ namespace K {
         "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);").data(),
       NULL, NULL, &zErrMsg
     );
-    string json;
-    json.append("[");
+    string json = "[";
     sqlite3_exec(sqlite->db,
       string("SELECT json FROM ").append(table).append(" ORDER BY time DESC;").data(),
       SQLite::callback, (void*)&json, &zErrMsg
     );
-    if (json[strlen(json.data()) - 1] == ',') json.pop_back();
-    json.append("]");
     if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
+    if (json[strlen(json.data()) - 1] == ',') json.pop_back();
     JSON Json;
-    MaybeLocal<Value> array = Json.Parse(New(json.data()).ToLocalChecked());
+    MaybeLocal<Value> array = Json.Parse(New(json.append("]").data()).ToLocalChecked());
     if (array.IsEmpty()) info.GetReturnValue().Set(New<Array>());
     else info.GetReturnValue().Set(array.ToLocalChecked());
   }
@@ -91,8 +89,7 @@ namespace K {
         time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
       ) ) : "").append(info[1]->IsUndefined() ? "" : string("INSERT INTO ")
         .append(table).append(" (id,json) VALUES(").append(id).append(",'")
-        .append(*Nan::Utf8String(row.ToLocalChecked())).append("');")
-      ).data(),
+        .append(*Nan::Utf8String(row.ToLocalChecked())).append("');")).data(),
       NULL, NULL, &zErrMsg
     );
     if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
