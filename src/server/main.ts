@@ -1,12 +1,13 @@
-require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
-const bindings = ((K)=>{try {
+const bindings = ((K) => { try {
   return require('./lib/'+K.join('.'));
 } catch (e) {
   if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 6)
-    throw new Error('Error: K requires Node.js 6.0.0 or greater.');
-  else throw new Error('Error: compilation of K is obsolete (maybe because npm was upgraded), please run "npm install" again to upgrade also K.');
-}})(['K', process.platform, process.versions.modules]);
+    throw new Error('Error: K requires Node.js v6.0.0 or greater.');
+  else throw new Error('Error: compilation of K is obsolete (maybe because Node.js was upgraded), please run "npm install" again to recompile also K.');
+}})([packageConfig.name[0], process.platform, process.versions.modules]);
+
+require('events').EventEmitter.prototype._maxListeners = 30;
 import path = require("path");
 import express = require('express');
 import request = require('request');
@@ -178,14 +179,18 @@ for (const param in defaultQuotingParameters)
   if (config.GetDefaultString(param) !== null)
     defaultQuotingParameters[param] = config.GetDefaultString(param);
 
+const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
+
+const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
+const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
+
+const receiver = new Publish.Receiver(io);
+const publisher = new Publish.Publisher(io);
+
 (async (): Promise<void> => {
-  const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
-
-  const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
-  const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
-  const initRfv = sqlite.load(Models.Topics.FairValue);
-  const initMkt = sqlite.load(Models.Topics.MarketData);
-
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (exchange) {
       case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair);
@@ -198,10 +203,6 @@ for (const param in defaultQuotingParameters)
       default: throw new Error("no gateway provided for exchange " + exchange);
     }
   })();
-
-  const receiver = new Publish.Receiver(io);
-
-  const publisher = new Publish.Publisher(io);
 
   publisher
     .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
@@ -221,11 +222,11 @@ for (const param in defaultQuotingParameters)
   );
 
   publisher.monitor = new Monitor.ApplicationState(
+    '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     timeProvider,
     paramsRepo,
     publisher,
     receiver,
-    '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     io
   );
 
@@ -264,7 +265,8 @@ for (const param in defaultQuotingParameters)
     broker,
     timeProvider,
     paramsRepo,
-    publisher
+    publisher,
+    initRfv
   );
 
   const positionBroker = new Broker.PositionBroker(
@@ -295,18 +297,14 @@ for (const param in defaultQuotingParameters)
     ),
     new PositionManagement.TargetBasePositionManager(
       timeProvider,
-      new PositionManagement.PositionManager(
-        broker,
-        timeProvider,
-        paramsRepo,
-        sqlite,
-        fvEngine,
-        new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
-        publisher
-      ),
+      broker.minTickIncrement,
+      sqlite,
+      fvEngine,
+      new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
       paramsRepo,
       positionBroker,
-      publisher
+      publisher,
+      initTBP
     ),
     new Safety.SafetyCalculator(
       timeProvider,

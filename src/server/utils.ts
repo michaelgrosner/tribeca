@@ -16,14 +16,14 @@ export class Evt<T> {
         else this._singleCallback = handler;
     };
 
-    public off = (handler: EvtCallback<T>) => {
-        if (this._multiCallback.length > 0)
-          for(let i = this._multiCallback.length; i--;)
-            if (this._multiCallback[i] === handler)
-              this._multiCallback.splice(i, 1);
-        if (this._singleCallback === handler)
-            this._singleCallback = null;
-    };
+    // public off = (handler: EvtCallback<T>) => {
+        // if (this._multiCallback.length > 0)
+          // for(let i = this._multiCallback.length; i--;)
+            // if (this._multiCallback[i] === handler)
+              // this._multiCallback.splice(i, 1);
+        // if (this._singleCallback === handler)
+            // this._singleCallback = null;
+    // };
 
     public trigger = (data?: T) => {
         if (this._singleCallback !== null)
