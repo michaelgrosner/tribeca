@@ -126,16 +126,14 @@ const config = new Config.ConfigProvider();
 
 const app = express();
 
-const io = socket_io(((() => {
-  try {
-    return https.createServer({
-      key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-      cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-    }, app);
-  } catch (e) {
-    return http.createServer(app);
-  }
-})()).listen(
+const io = socket_io(((() => { try {
+  return https.createServer({
+    key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
+    cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
+  }, app);
+} catch (e) {
+  return http.createServer(app);
+}})()).listen(
   parseFloat(config.GetString("WebClientListenPort")),
   () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on port', parseFloat(config.GetString("WebClientListenPort")))
 ));

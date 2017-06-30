@@ -31,13 +31,14 @@ export class Publisher {
 
     this._io.on("connection", s => {
       s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
-        let snap: any[] = snapshot();
+        let snap: any[];
         if (topic === Models.Topics.MarketData)
             snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
         else if (topic === Models.Topics.OrderStatusReports)
           snap = this.compressSnapshot(snapshot(), this.compressOSRInc);
         else if (topic === Models.Topics.Position)
           snap = this.compressSnapshot(snapshot(), this.compressPositionInc);
+        else snap = snapshot();
         s.emit(Models.Prefixes.SNAPSHOT + topic, snap);
       });
     });
