@@ -89,8 +89,8 @@ interface MarketDataIncrementalRefresh {
 interface ExecutionReport {
     orderId : string;
     clientOrderId : string;
-    execReportType : string;
-    orderStatus : string;
+    execReportType : "new"|"canceled"|"rejected"|"expired"|"trade"|"status";
+    orderStatus : "new"|"partiallyFilled"|"filled"|"canceled"|"rejected"|"expired";
     orderRejectReason? : string;
     symbol : string;
     side : string;
@@ -213,6 +213,9 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             this._log.error(e, "Error parsing msg", raw);
             throw e;
         }
+
+        if (this._log.debug())
+            this._log.debug(msg, "message");
 
         if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
             this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, raw.time);
@@ -390,18 +393,34 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         const msg = tsMsg.data;
 
         const ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
+
+        let lastQuantity : number = undefined;
+        let lastPrice : number = undefined;
+        
+
         const status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
             orderStatus: ordStatus,
             time: t,
-            rejectMessage: msg.orderRejectReason,
-            lastQuantity: msg.lastQuantity > 0 ? msg.lastQuantity / _lotMultiplier : undefined,
-            lastPrice: msg.lastQuantity > 0 ? msg.lastPrice : undefined,
-            leavesQuantity: ordStatus == Models.OrderStatus.Working ? msg.leavesQuantity / _lotMultiplier : undefined,
-            cumQuantity: msg.cumQuantity / _lotMultiplier,
-            averagePrice: msg.averagePrice
         };
+
+        if (msg.lastQuantity > 0 && msg.execReportType === "trade") {
+            status.lastQuantity = msg.lastQuantity / _lotMultiplier;
+            status.lastPrice = msg.lastPrice;
+        }
+
+        if (msg.orderRejectReason)
+            status.rejectMessage = msg.orderRejectReason;
+
+        if (status.leavesQuantity)
+            status.leavesQuantity = msg.leavesQuantity / _lotMultiplier;
+        
+        if (msg.cumQuantity)
+            status.cumQuantity = msg.cumQuantity / _lotMultiplier;
+
+        if (msg.averagePrice)
+            status.averagePrice = msg.averagePrice;
 
         this.OrderUpdate.trigger(status);
     };
@@ -456,6 +475,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private onMessage = (raw : Models.Timestamped<string>) => {
         try {
             const msg = JSON.parse(raw.data);
+
+            if (this._log.debug())
+                this._log.debug(msg, "message");
+
             if (msg.hasOwnProperty("ExecutionReport")) {
                 this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
             }
