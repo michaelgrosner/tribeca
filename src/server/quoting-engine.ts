@@ -51,37 +51,36 @@ export class QuotingEngine {
     private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
 
     constructor(
-        private _timeProvider: Utils.ITimeProvider,
-        private _fvEngine: FairValue.FairValueEngine,
-        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _orderBroker: Broker.OrderBroker,
-        private _positionBroker: Broker.PositionBroker,
-        private _details: Broker.ExchangeBroker,
-        private _ewma: Statistics.EWMAProtectionCalculator,
-        private _stdev: Statistics.STDEVProtectionCalculator,
-        private _targetPosition: PositionManagement.TargetBasePositionManager,
-        private _safeties: Safety.SafetyCalculator) {
-        this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
+      private _timeProvider: Utils.ITimeProvider,
+      private _fvEngine: FairValue.FairValueEngine,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _orderBroker: Broker.OrderBroker,
+      private _positionBroker: Broker.PositionBroker,
+      private _details: Broker.ExchangeBroker,
+      private _ewma: Statistics.EWMAProtectionCalculator,
+      private _stdev: Statistics.STDEVProtectionCalculator,
+      private _targetPosition: PositionManagement.TargetBasePositionManager,
+      private _safeties: Safety.SafetyCalculator
+    ) {
+      this._safeties.targetPosition = this._targetPosition;
+      this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
 
-        _fvEngine.filtration.FilteredMarketChanged.on(this.recalcQuote);
-        _qlParamRepo.NewParameters.on(this.recalcQuote);
-        _orderBroker.Trade.on(this.recalcQuote);
-        _ewma.Updated.on(() => {
-          this.recalcQuote();
-          _targetPosition.quoteEWMA = _ewma.latest;
-          _targetPosition.widthSTDEV = _stdev.latest;
-        });
-        _targetPosition.NewTargetPosition.on(() => {
-          this._safeties.latestTargetPosition = this._targetPosition.latestTargetPosition;
-          this.recalcQuote();
-        });
-        _safeties.NewValue.on(this.recalcQuote);
+      _fvEngine.filtration.FilteredMarketChanged.on(this.recalcQuote);
+      _qlParamRepo.NewParameters.on(this.recalcQuote);
+      _orderBroker.Trade.on(this.recalcQuote);
+      _ewma.Updated.on(() => {
+        this.recalcQuote();
+        _targetPosition.quoteEwma = _ewma.latest;
+        _targetPosition.widthStdev = _stdev.latest;
+      });
+      _targetPosition.NewTargetPosition.on(this.recalcQuote);
+      _safeties.NewValue.on(this.recalcQuote);
 
-        _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
+      _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
-        if (this._targetPosition.latestTargetPosition === null) return null;
+        if (this._targetPosition.latestTargetPosition === null || this._positionBroker.latestReport === null) return null;
         const targetBasePosition = this._targetPosition.latestTargetPosition.data;
 
         const params = this._qlParamRepo.latest;

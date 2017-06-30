@@ -7,170 +7,103 @@ import moment = require("moment");
 import QuotingParameters = require("./quoting-parameters");
 import Broker = require("./broker");
 
-export class PositionManager {
-    private newWidth: Models.IStdev = null;
-    private newQuote: number = null;
-    private newShort: number = null;
-    private newMedium: number = null;
-    private newLong: number = null;
-    private fairValue: number = null;
-    public set quoteEwma(quoteEwma: number) {
-      if (quoteEwma === null) return;
-      this.newQuote = quoteEwma;
-    }
-    public set widthStdev(widthStdev: Models.IStdev) {
-      const fv = this._fvAgent.latestFairValue;
-      if (fv === null || widthStdev === null) return;
-      this.fairValue = fv.price;
-      this.newWidth = widthStdev;
-      const minTick = this._details.minTickIncrement;
-      this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
-        widthStdev,
-        this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
-        this.newShort?Utils.roundNearest(this.newShort, minTick):null,
-        this.newMedium?Utils.roundNearest(this.newMedium, minTick):null,
-        this.newLong?Utils.roundNearest(this.newLong, minTick):null,
-        Utils.roundNearest(fv.price, minTick),
-        this._timeProvider.utcNow()
-      ), true);
-    }
-
-    public NewTargetPosition = new Utils.Evt();
-
-    private _SMA3: number[] = [];
-    private _latest: number = null;
-    public get latestTargetPosition(): number {
-        return this._latest;
-    }
-
-    private _data: Models.RegularFairValue[] = [];
-
-    constructor(
-        private _details: Broker.ExchangeBroker,
-        private _timeProvider: Utils.ITimeProvider,
-        private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-        private _sqlite,
-        private _fvAgent: FairValue.FairValueEngine,
-        private _ewma: Statistics.EWMATargetPositionCalculator,
-        private _publisher : Publish.Publisher
-    ) {
-        const minTick = this._details.minTickIncrement;
-        _publisher.registerSnapshot(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
-          this.newWidth,
-          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
-          this.newShort?Utils.roundNearest(this.newShort, minTick):null,
-          this.newMedium?Utils.roundNearest(this.newMedium, minTick):null,
-          this.newLong?Utils.roundNearest(this.newLong, minTick):null,
-          this.fairValue?Utils.roundNearest(this.fairValue, minTick):null,
-          this._timeProvider.utcNow()
-        ):null]);
-        this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(1, 'minutes'));
-        this._timeProvider.setTimeout(this.updateEwmaValues, moment.duration(1, 'seconds'));
-    }
-
-    private updateEwmaValues = () => {
-        const fv = this._fvAgent.latestFairValue;
-        if (fv === null)
-            return;
-        this.fairValue = fv.price;
-
-        const rfv = new Models.RegularFairValue(this._timeProvider.utcNow(), fv.price);
-
-        this._SMA3.push(fv.price);
-        this._SMA3 = this._SMA3.slice(-3);
-        const SMA3 = this._SMA3.reduce((a,b) => a+b) / this._SMA3.length;
-
-        this.newShort = this._ewma.addNewShortValue(fv.price);
-        this.newMedium = this._ewma.addNewMediumValue(fv.price);
-        this.newLong = this._ewma.addNewLongValue(fv.price);
-
-        let newTargetPosition: number;
-        if (this._qlParamRepo.latest.autoPositionMode === Models.AutoPositionMode.EWMA_LMS) {
-          let newTrend = ((SMA3 * 100 / this.newLong) - 100);
-          let newEwmacrossing = ((this.newShort * 100 / this.newMedium) - 100);
-          newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
-        } else {
-          newTargetPosition = ((this.newShort * 100/ this.newLong) - 100) * (1 / this._qlParamRepo.latest.ewmaSensiblityPercentage);
-        }
-
-        if (newTargetPosition > 1) newTargetPosition = 1;
-        if (newTargetPosition < -1) newTargetPosition = -1;
-
-        const minTick = this._details.minTickIncrement;
-        if (Math.abs(newTargetPosition - this._latest) > minTick) {
-            this._latest = newTargetPosition;
-            this.NewTargetPosition.trigger();
-        }
-
-        this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
-          this.newWidth,
-          this.newQuote?Utils.roundNearest(this.newQuote, minTick):null,
-          Utils.roundNearest(this.newShort, minTick),
-          Utils.roundNearest(this.newMedium, minTick),
-          Utils.roundNearest(this.newLong, minTick),
-          Utils.roundNearest(fv.price, minTick),
-          this._timeProvider.utcNow()
-        ), true);
-
-        this._data.push(rfv);
-        this._data = this._data.slice(-this._qlParamRepo.latest.quotingStdevProtectionPeriods);
-        this._sqlite.insert(Models.Topics.FairValue, rfv, false, undefined, new Date().getTime() - 1000 * this._qlParamRepo.latest.quotingStdevProtectionPeriods);
-    };
-}
-
 export class TargetBasePositionManager {
-    public NewTargetPosition = new Utils.Evt();
+  public NewTargetPosition = new Utils.Evt();
 
-    public sideAPR: string;
+  public sideAPR: string;
 
-    private _latest: Models.TargetBasePositionValue = null;
-    public get latestTargetPosition(): Models.TargetBasePositionValue {
-        return this._latest;
+  private newWidth: Models.IStdev = null;
+  private newQuote: number = null;
+  private newShort: number = null;
+  private newMedium: number = null;
+  private newLong: number = null;
+  private fairValue: number = null;
+  public set quoteEwma(quoteEwma: number) {
+    this.newQuote = quoteEwma;
+  }
+  public set widthStdev(widthStdev: Models.IStdev) {
+    this.newWidth = widthStdev;
+  }
+
+  private _newTargetPosition: number = 0;
+  private _lastPosition: number = null;
+
+  private _latest: Models.TargetBasePositionValue = null;
+  public get latestTargetPosition(): Models.TargetBasePositionValue {
+    return this._latest;
+  }
+
+  constructor(
+    private _timeProvider: Utils.ITimeProvider,
+    private _minTick: number,
+    private _sqlite,
+    private _fvAgent: FairValue.FairValueEngine,
+    private _ewma: Statistics.EWMATargetPositionCalculator,
+    private _params: QuotingParameters.QuotingParametersRepository,
+    private _positionBroker: Broker.PositionBroker,
+    private _publisher: Publish.Publisher,
+    initTBP: Models.TargetBasePositionValue
+  ) {
+    if (initTBP) this._latest = initTBP;
+
+    _publisher.registerSnapshot(Models.Topics.TargetBasePosition, () => [this._latest]);
+    _publisher.registerSnapshot(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
+      this.newWidth,
+      this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
+      this.newShort?Utils.roundNearest(this.newShort, this._minTick):null,
+      this.newMedium?Utils.roundNearest(this.newMedium, this._minTick):null,
+      this.newLong?Utils.roundNearest(this.newLong, this._minTick):null,
+      this.fairValue?Utils.roundNearest(this.fairValue, this._minTick):null,
+      this._timeProvider.utcNow()
+    ):null]);
+    _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
+    _positionBroker.NewReport.on(this.recomputeTargetPosition);
+    this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(1, 'minutes'));
+  }
+
+  private recomputeTargetPosition = () => {
+    if (this._params.latest === null || this._positionBroker.latestReport === null) {
+      console.info(new Date().toISOString().slice(11, -1), 'Unable to compute tbp [ qp | pos ] = [', !!this._params.latest, '|', !!this._positionBroker.latestReport, ']');
+      return;
     }
+    const targetBasePosition: number = (this._params.latest.autoPositionMode === Models.AutoPositionMode.Manual)
+      ? (this._params.latest.percentageValues
+        ? this._params.latest.targetBasePositionPercentage * this._positionBroker.latestReport.value / 100
+        : this._params.latest.targetBasePosition)
+      : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
 
-    public set quoteEWMA(quoteEwma: number) {
-      this._positionManager.quoteEwma = quoteEwma;
+    if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
+      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, this._timeProvider.utcNow());
+      this.NewTargetPosition.trigger();
+      this._publisher.publish(Models.Topics.TargetBasePosition, this._latest, true);
+      this._sqlite.insert(Models.Topics.TargetBasePosition, this._latest);
+      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.data);
     }
+  };
 
-    public set widthSTDEV(widthStdev: Models.IStdev) {
-      this._positionManager.widthStdev = widthStdev;
+  private updateEwmaValues = () => {
+    if (this._fvAgent.latestFairValue === null) {
+      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Unable to update ewma');
+      return;
     }
+    this.fairValue = this._fvAgent.latestFairValue.price;
 
-    constructor(
-        private _timeProvider: Utils.ITimeProvider,
-        private _positionManager: PositionManager,
-        private _params: QuotingParameters.QuotingParametersRepository,
-        private _positionBroker: Broker.PositionBroker,
-        private _publisher: Publish.Publisher) {
-        _publisher.registerSnapshot(Models.Topics.TargetBasePosition, () => [this._latest]);
-        _positionBroker.NewReport.on(r => this.recomputeTargetPosition());
-        _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
-        _positionManager.NewTargetPosition.on(() => this.recomputeTargetPosition());
-    }
+    this.newShort = this._ewma.addNewShortValue(this.fairValue);
+    this.newMedium = this._ewma.addNewMediumValue(this.fairValue);
+    this.newLong = this._ewma.addNewLongValue(this.fairValue);
+    this._newTargetPosition = this._ewma.computeTBP(this.fairValue, this.newLong, this.newMedium, this.newShort);
+    this.recomputeTargetPosition();
 
-    private recomputeTargetPosition = () => {
-        const latestPosition = this._positionBroker.latestReport;
-        const params = this._params.latest;
+    this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
+      this.newWidth,
+      this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
+      Utils.roundNearest(this.newShort, this._minTick),
+      Utils.roundNearest(this.newMedium, this._minTick),
+      Utils.roundNearest(this.newLong, this._minTick),
+      Utils.roundNearest(this.fairValue, this._minTick),
+      this._timeProvider.utcNow()
+    ), true);
 
-        if (params === null || latestPosition === null)
-            return;
-
-        let targetBasePosition: number = params.percentageValues
-          ? params.targetBasePositionPercentage * latestPosition.value / 100
-          : params.targetBasePosition;
-
-        if (params.autoPositionMode !== Models.AutoPositionMode.Manual)
-            targetBasePosition = ((1 + this._positionManager.latestTargetPosition) / 2) * latestPosition.value;
-
-        if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-2 || this.sideAPR !== this._latest.sideAPR) {
-            this._latest = new Models.TargetBasePositionValue(
-              targetBasePosition,
-              this.sideAPR,
-              this._timeProvider.utcNow()
-            );
-            this.NewTargetPosition.trigger();
-            this._publisher.publish(Models.Topics.TargetBasePosition, this.latestTargetPosition, true);
-            console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this.latestTargetPosition.data);
-        }
-    };
+    this._sqlite.insert(Models.Topics.FairValue, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._params.latest.quotingStdevProtectionPeriods);
+  };
 }

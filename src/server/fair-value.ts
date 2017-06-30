@@ -24,8 +24,12 @@ export class FairValueEngine {
     private _details: Broker.ExchangeBroker,
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _publisher: Publish.Publisher
+    private _publisher: Publish.Publisher,
+    initRfv: Models.RegularFairValue[]
   ) {
+    if (initRfv !== null)
+      this.latestFairValue = new Models.FairValue(initRfv[0].value, initRfv[0].time);
+
     filtration.FilteredMarketChanged.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
     _qlParamRepo.NewParameters.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
     _publisher.registerSnapshot(Models.Topics.FairValue, () => this.latestFairValue ? [this.latestFairValue] : []);

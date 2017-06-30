@@ -462,19 +462,22 @@ export class PositionBroker {
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
             quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._broker.pair, this._broker.exchange(), timeNow);
 
-        if (this._report !== null &&
-          Math.abs(positionReport.value - this._report.value) < 2e-6 &&
-          Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
-          Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
-          Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
-          Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
-          Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2 &&
-          Math.abs(positionReport.profitBase - this._report.profitBase) < 2e-2 &&
-          Math.abs(positionReport.profitQuote - this._report.profitQuote) < 2e-2
-        ) return;
+        let sameValue = true;
+        if (this._report !== null) {
+          sameValue = Math.abs(positionReport.value - this._report.value) < 2e-6;
+          if(sameValue &&
+            Math.abs(positionReport.quoteValue - this._report.quoteValue) < 2e-2 &&
+            Math.abs(positionReport.baseAmount - this._report.baseAmount) < 2e-6 &&
+            Math.abs(positionReport.quoteAmount - this._report.quoteAmount) < 2e-2 &&
+            Math.abs(positionReport.baseHeldAmount - this._report.baseHeldAmount) < 2e-6 &&
+            Math.abs(positionReport.quoteHeldAmount - this._report.quoteHeldAmount) < 2e-2 &&
+            Math.abs(positionReport.profitBase - this._report.profitBase) < 2e-2 &&
+            Math.abs(positionReport.profitQuote - this._report.profitQuote) < 2e-2
+          ) return;
+        }
 
         this._report = positionReport;
-        this.NewReport.trigger(positionReport);
+        if (!sameValue) this.NewReport.trigger();
         this._publisher.publish(Models.Topics.Position, positionReport, true);
     };
 

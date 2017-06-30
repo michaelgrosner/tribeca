@@ -65,11 +65,11 @@ export class ApplicationState {
   };
 
   constructor(
+    private _db: string,
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher,
     private _reciever: Publish.Receiver,
-    private _db: string,
     private _io: SocketIO.Server
   ) {
     this.setDelay();
