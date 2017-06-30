@@ -26,7 +26,7 @@ ENV MatryoshkaUrl https://
 
 # Set options only for your desired EXCHANGE:
 
-## Coinbase (GDAX keys)
+## Coinbase GDAX
 ENV CoinbaseRestUrl https://api-public.sandbox.gdax.com
 ENV CoinbaseWebsocketUrl wss://ws-feed-public.sandbox.gdax.com
 ENV CoinbasePassphrase NULL

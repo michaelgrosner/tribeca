@@ -23,8 +23,22 @@
     'target_name': 'build',
     'type': 'none',
     'dependencies': [ 'K' ],
+    'conditions': [
+      ['OS!="win"', {
+        'actions': [{
+          'action_name': 'K.platform.modules',
+          'inputs': [ '<@(PRODUCT_DIR)/K.node' ],
+          'outputs': [ 'K' ],
+          'action': [ 'cp', '<@(PRODUCT_DIR)/K.node', 'build/K.<!@(node -p process.platform).<!@(node -p process.versions.modules).node' ]
+        }]
+      }]
+    ]
+  }, {
+    'target_name': 'install',
+    'type': 'none',
+    'dependencies': [ 'K', 'build' ],
     'copies': [{
-      'files': [ '<(PRODUCT_DIR)/K.node' ],
+      'files': [ 'build/K.<!@(node -p process.platform).<!@(node -p process.versions.modules).node' ],
       'destination': 'app/server/lib'
     }]
   }]
