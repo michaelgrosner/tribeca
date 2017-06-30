@@ -1,6 +1,12 @@
 require('events').EventEmitter.prototype._maxListeners = 30;
 const packageConfig = require("./../../package.json");
-const bindings = require('./lib/K.node');
+const bindings = ((K)=>{try {
+  return require('./lib/'+K.join('.'));
+} catch (e) {
+  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 6)
+    throw new Error('Error: K requires Node.js 6.0.0 or greater.');
+  else throw new Error('Error: compilation of K is obsolete (maybe because npm was upgraded), please run "npm install" again to upgrade also K.');
+}})(['K', process.platform, process.versions.modules]);
 import path = require("path");
 import express = require('express');
 import request = require('request');
