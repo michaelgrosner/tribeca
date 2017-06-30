@@ -224,8 +224,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             throw e;
         }
 
-        if (this._log.debug())
-            this._log.debug(msg, "message");
 
         if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
             this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, raw.time);
