@@ -41,7 +41,7 @@ export class QuotingEngine {
     public latestQuoteBidStatus: Models.QuoteStatus;
     public get latestQuote() { return this._latest; }
     public set latestQuote(val: Models.TwoSidedQuote) {
-        if (!quotesChanged(this._latest, val, this._details.minTickIncrement))
+        if (!quotesChanged(this._latest, val, this._minTick))
             return;
 
         this._latest = val;
@@ -56,7 +56,8 @@ export class QuotingEngine {
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
       private _orderBroker: Broker.OrderBroker,
       private _positionBroker: Broker.PositionBroker,
-      private _details: Broker.ExchangeBroker,
+      private _minTick: number,
+      private _minSize: number,
       private _ewma: Statistics.EWMAProtectionCalculator,
       private _stdev: Statistics.STDEVProtectionCalculator,
       private _targetPosition: PositionManagement.TargetBasePositionManager,
@@ -84,8 +85,6 @@ export class QuotingEngine {
         const targetBasePosition = this._targetPosition.latestTargetPosition.data;
 
         const params = this._qlParamRepo.latest;
-        const minTick = this._details.minTickIncrement;
-        const minSize = this._details.minSize;
         const widthPing = (params.widthPercentage)
           ? params.widthPingPercentage * fv.price / 100
           : params.widthPing;
@@ -106,7 +105,7 @@ export class QuotingEngine {
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
           sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
 
-        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv.price, widthPing, buySize, sellSize, params.mode, minTick));
+        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv.price, widthPing, buySize, sellSize, params.mode, this._minTick));
 
         if (unrounded === null) return null;
         const _unroundedBidSz = unrounded.bidSz;
@@ -209,7 +208,7 @@ export class QuotingEngine {
           if (unrounded.askPx !== null)
             for (var fai = 0; fai < filteredMkt.asks.length; fai++)
               if (filteredMkt.asks[fai].price > unrounded.askPx) {
-                let bestAsk: number = filteredMkt.asks[fai].price - minTick;
+                let bestAsk: number = filteredMkt.asks[fai].price - this._minTick;
                 if (bestAsk > fv.price) {
                   unrounded.askPx = bestAsk;
                   break;
@@ -218,7 +217,7 @@ export class QuotingEngine {
           if (unrounded.bidPx !== null)
             for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
               if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
-                let bestBid: number = filteredMkt.bids[fbi].price + minTick;
+                let bestBid: number = filteredMkt.bids[fbi].price + this._minTick;
                 if (bestBid < fv.price) {
                   unrounded.bidPx = bestBid;
                   break;
@@ -259,20 +258,20 @@ export class QuotingEngine {
         }
 
         if (unrounded.bidPx !== null) {
-            unrounded.bidPx = Utils.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
+            unrounded.bidPx = Utils.roundSide(unrounded.bidPx, this._minTick, Models.Side.Bid);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
 
         if (unrounded.askPx !== null) {
-            unrounded.askPx = Utils.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
-            unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
+            unrounded.askPx = Utils.roundSide(unrounded.askPx, this._minTick, Models.Side.Ask);
+            unrounded.askPx = Math.max(unrounded.bidPx + this._minTick, unrounded.askPx);
         }
 
         if (unrounded.askSz !== null) {
             if (unrounded.askSz > totalBasePosition)
               unrounded.askSz = (!_unroundedBidSz || _unroundedBidSz > totalBasePosition)
                 ? totalBasePosition : _unroundedBidSz;
-            unrounded.askSz = Utils.roundDown(Math.max(minSize, unrounded.askSz), 1e-8);
+            unrounded.askSz = Utils.roundDown(Math.max(this._minSize, unrounded.askSz), 1e-8);
             unrounded.isAskPong = (safety.buyPing && unrounded.askPx && unrounded.askPx >= safety.buyPing + widthPong);
         }
 
@@ -280,7 +279,7 @@ export class QuotingEngine {
             if (unrounded.bidSz > totalQuotePosition)
               unrounded.bidSz = (!_unroundedAskSz || _unroundedAskSz > totalQuotePosition)
                 ? totalQuotePosition : _unroundedAskSz;
-            unrounded.bidSz = Utils.roundDown(Math.max(minSize, unrounded.bidSz), 1e-8);
+            unrounded.bidSz = Utils.roundDown(Math.max(this._minSize, unrounded.bidSz), 1e-8);
             unrounded.isBidPong = (safety.sellPong && unrounded.bidPx && unrounded.bidPx <= safety.sellPong - widthPong);
         }
 
@@ -329,7 +328,7 @@ export class QuotingEngine {
         if (previousQ == null && newQ != null) return newQ;
         if (Math.abs(newQ.size - previousQ.size) > 5e-3) return newQ;
 
-        if (Math.abs(newQ.price - previousQ.price) < this._details.minTickIncrement) {
+        if (Math.abs(newQ.price - previousQ.price) < this._minTick) {
             return previousQ;
         }
 
