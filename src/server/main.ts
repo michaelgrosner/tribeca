@@ -262,7 +262,7 @@ const publisher = new Publish.Publisher(io);
       orderBroker,
       marketBroker
     ),
-    broker,
+    broker.minTickIncrement,
     timeProvider,
     paramsRepo,
     publisher,
@@ -285,7 +285,8 @@ const publisher = new Publish.Publisher(io);
     paramsRepo,
     orderBroker,
     positionBroker,
-    broker,
+    broker.minTickIncrement,
+    broker.minSize,
     new Statistics.EWMAProtectionCalculator(timeProvider, fvEngine, paramsRepo),
     new Statistics.STDEVProtectionCalculator(
       timeProvider,
