@@ -1,10 +1,8 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
-import Utils = require("./utils");
 import QuotingParameters = require("./quoting-parameters");
 import path = require('path');
 import fs = require('fs');
-import * as moment from "moment";
 
 export class ApplicationState {
 
@@ -57,16 +55,15 @@ export class ApplicationState {
     if (this._interval) clearInterval(this._interval);
     if (this._ioDelay<1) this._ioDelay = 0;
     this._delayed = [];
-    this._interval = this._timeProvider.setInterval(
+    this._interval = setInterval(
       this._ioDelay ? this.onDelay : this.onTick,
-      moment.duration(this._ioDelay || 6e1, "seconds")
+      (this._ioDelay || 6e1) * 1e3
     );
     this.onTick();
   };
 
   constructor(
     private _db: string,
-    private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher,
     private _reciever: Publish.Receiver,

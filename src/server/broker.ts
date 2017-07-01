@@ -509,11 +509,11 @@ export class PositionBroker {
                 private _fvEngine: FairValue.FairValueEngine,
                 private _posGateway : Interfaces.IPositionGateway,
                 private _publisher : Publish.Publisher) {
-        this._posGateway.PositionUpdate.on(this.onPositionUpdate);
-        this._orderBroker.OrderUpdate.on(this.handleOrderUpdate);
-        this._fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
+        _posGateway.PositionUpdate.on(this.onPositionUpdate);
+        _orderBroker.OrderUpdate.on(this.handleOrderUpdate);
+        _fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
 
-        this._publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
+        _publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
     }
 }
 

@@ -1,7 +1,7 @@
 #include "sqlite.h"
 
 namespace K {
-  NAN_MODULE_INIT(SQLite::Init) {
+  NAN_MODULE_INIT(SQLite::main) {
     Local<FunctionTemplate> o = New<FunctionTemplate>(NEw);
     o->InstanceTemplate()->SetInternalFieldCount(1);
     o->SetClassName(New("SQLite").ToLocalChecked());

@@ -3,10 +3,10 @@
 #include "sqlite.h"
 
 namespace K {
-  NAN_MODULE_INIT(InitAll) {
-    Stdev::Init(target);
-    SQLite::Init(target);
+  NAN_MODULE_INIT(main) {
+    Stdev::main(target);
+    SQLite::main(target);
   }
 
-  NODE_MODULE(K, InitAll)
+  NODE_MODULE(K, main)
 }

@@ -221,7 +221,6 @@ const publisher = new Publish.Publisher(io);
 
   publisher.monitor = new Monitor.ApplicationState(
     '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
-    timeProvider,
     paramsRepo,
     publisher,
     receiver,
