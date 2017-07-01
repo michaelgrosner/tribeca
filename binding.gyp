@@ -5,7 +5,8 @@
     'sources': [
       'src/lib/K.cc',
       'src/lib/stdev.cc',
-      'src/lib/sqlite.cc'
+      'src/lib/sqlite.cc',
+      'src/lib/ui.cc'
     ],
     'include_dirs': [ '<!(node -e "require(\'nan\')")' ],
     'libraries': [ '-lsqlite3' ],
