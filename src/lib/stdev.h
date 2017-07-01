@@ -13,7 +13,7 @@ namespace K {
 
   class Stdev {
     public:
-      static NAN_MODULE_INIT(Init);
+      static NAN_MODULE_INIT(main);
       static NAN_METHOD(ComputeStdevs);
     private:
       static double ComputeStdev(double[], int, double, double *);

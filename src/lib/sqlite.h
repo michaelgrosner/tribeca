@@ -26,7 +26,7 @@ namespace K {
 
   class SQLite: public ObjectWrap {
     public:
-      static NAN_MODULE_INIT(Init);
+      static NAN_MODULE_INIT(main);
     protected:
       sqlite3 *db;
       int exchange;

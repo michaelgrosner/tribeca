@@ -33,7 +33,7 @@ export class Publisher {
       s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
         let snap: any[];
         if (topic === Models.Topics.MarketData)
-            snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
+          snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
         else if (topic === Models.Topics.OrderStatusReports)
           snap = this.compressSnapshot(snapshot(), this.compressOSRInc);
         else if (topic === Models.Topics.Position)
@@ -42,8 +42,6 @@ export class Publisher {
         s.emit(Models.Prefixes.SNAPSHOT + topic, snap);
       });
     });
-
-    return this;
   }
 
   private compressSnapshot = (data: any[], compressIncremental:(data: any) => any): any[] => {

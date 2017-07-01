@@ -1,7 +1,7 @@
 #include "stdev.h"
 
 namespace K {
-  NAN_MODULE_INIT(Stdev::Init) {
+  NAN_MODULE_INIT(Stdev::main) {
     Export(target, "computeStdevs", Stdev::ComputeStdevs);
   }
 
