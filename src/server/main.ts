@@ -6,14 +6,17 @@ import http = require("http");
 const noop = () => {};
 
 const abortConnection = (socket, code, name) => {
+  console.log('abortConnection');
     socket.end('HTTP/1.1 ' + code + ' ' + name + '\r\n\r\n');
 }
 
 const emitConnection = (ws) => {
+  console.log('emitConnection');
     // this.emit('connection', ws);
 }
 
 const onServerMessage = (message, webSocket) => {
+  console.log('onServerMessage');
     webSocket.internalOnMessage(message);
 }
 
@@ -311,9 +314,6 @@ class WebSocketClient extends WebSocket {
     public OPCODE_PING = 9;
     public OPEN = 1;
     public CLOSED = 0;
-    public Server = Server;
-    public http = bindings.httpServer;
-    public bindings = bindings;
     constructor(uri) {
         super(null);
         this.internalOnOpen = noop;
@@ -364,85 +364,70 @@ class Server {
     public _upgradeCallback;
     public _upgradeListener;
     public httpServer;
-    public _noDelay;
     public _lastUpgradeListener;
-    public _passedHttpServer;
-    constructor(options) {
-        if (!options) {
-            throw new TypeError('missing options');
+    constructor(options, callback?) {
+        if (!options || !options.port) {
+            throw new TypeError('invalid port');
         }
 
-        if (options.port === undefined && !options.server && !options.noServer) {
-            throw new TypeError('invalid options');
-        }
-
-        var bindingsOptions = (<any>WebSocketClient).PERMESSAGE_DEFLATE;
-
-        if (options.perMessageDeflate !== undefined) {
-            if (options.perMessageDeflate === false) {
-                bindingsOptions = 0;
-            }
-        }
-
-        this.serverGroup = bindings.server.group.create(bindingsOptions, options.maxPayload === undefined ? 1048576 : options.maxPayload);
+        this.serverGroup = bindings.server.group.create((<any>WebSocketClient).PERMESSAGE_DEFLATE, 1048576);
 
         // can these be made private?
         this._upgradeCallback = noop;
         this._upgradeListener = null;
-        this._noDelay = options.noDelay === undefined ? true : options.noDelay;
         this._lastUpgradeListener = true;
-        this._passedHttpServer = options.server;
 
-        if (!options.noServer) {
-            this.httpServer = options.server ? options.server : http.createServer((request, response) => {
-                // todo: default HTTP response
-                response.end();
-            });
+        this.httpServer = http.createServer((request, response) => {
+            // todo: default HTTP response
+            console.log('request');
+            response.end('-.|.-');
+        });
 
-            if (options.path && (!options.path.length || options.path[0] !== '/')) {
-                options.path = '/' + options.path;
-            }
+        if (options.path && (!options.path.length || options.path[0] !== '/')) {
+            options.path = '/' + options.path;
+        }
 
-            this.httpServer.on('upgrade', this._upgradeListener = ((request, socket, head) => {
-                if (!options.path || options.path == request.url.split('?')[0].split('#')[0]) {
-                    if (options.verifyClient) {
-                        const info = {
-                            origin: request.headers.origin,
-                            secure: request.connection.authorized !== undefined || request.connection.encrypted !== undefined,
-                            req: request
-                        };
+        this.httpServer.on('upgrade', this._upgradeListener = ((request, socket, head) => {
+          console.log('on upgrade');
+            if (!options.path || options.path == request.url.split('?')[0].split('#')[0]) {
+                if (options.verifyClient) {
+                    const info = {
+                        origin: request.headers.origin,
+                        secure: request.connection.authorized !== undefined || request.connection.encrypted !== undefined,
+                        req: request
+                    };
 
-                        if (options.verifyClient.length === 2) {
-                            options.verifyClient(info, (result, code, name) => {
-                                if (result) {
-                                    this.handleUpgrade(request, socket, head, emitConnection);
-                                } else {
-                                    abortConnection(socket, code, name);
-                                }
-                            });
-                        } else {
-                            if (options.verifyClient(info)) {
+                    if (options.verifyClient.length === 2) {
+                        options.verifyClient(info, (result, code, name) => {
+                            if (result) {
                                 this.handleUpgrade(request, socket, head, emitConnection);
                             } else {
-                                abortConnection(socket, 400, 'Client verification failed');
+                                abortConnection(socket, code, name);
                             }
-                        }
+                        });
                     } else {
-                        this.handleUpgrade(request, socket, head, emitConnection);
+                        if (options.verifyClient(info)) {
+                            this.handleUpgrade(request, socket, head, emitConnection);
+                        } else {
+                            abortConnection(socket, 400, 'Client verification failed');
+                        }
                     }
                 } else {
-                    if (this._lastUpgradeListener) {
-                        abortConnection(socket, 400, 'URL not supported');
-                    }
+                    this.handleUpgrade(request, socket, head, emitConnection);
                 }
-            }));
+            } else {
+                if (this._lastUpgradeListener) {
+                    abortConnection(socket, 400, 'URL not supported');
+                }
+            }
+        }));
 
-            this.httpServer.on('newListener', (eventName, listener) => {
-                if (eventName === 'upgrade') {
-                    this._lastUpgradeListener = false;
-                }
-            });
-        }
+        this.httpServer.on('newListener', (eventName, listener) => {
+          console.log('on newListener');
+            if (eventName === 'upgrade') {
+                this._lastUpgradeListener = false;
+            }
+        });
 
         bindings.server.group.onDisconnection(this.serverGroup, (external, code, message, webSocket) => {
             webSocket.external = null;
@@ -472,19 +457,11 @@ class Server {
             _upgradeReq = null;
         });
 
-        if (options.port !== undefined) {
-            if (options.host) {
-                this.httpServer.listen(options.port, options.host, () => {
-                    // this.emit('listening');
-                    // callback && callback();
-                });
-            } else {
-                this.httpServer.listen(options.port, () => {
-                    // this.emit('listening');
-                    // callback && callback();
-                });
-            }
-        }
+        this.httpServer.listen(options.port, () => {
+          console.log('emitPort', options.port);
+            // this.emit('listening');
+            callback && callback();
+        });
     }
 
     handleUpgrade(request, socket, upgradeHead, callback) {
@@ -499,7 +476,7 @@ class Server {
             const socketHandle = socket.ssl ? socket._parent._handle : socket._handle;
             const sslState = socket.ssl ? socket.ssl._external : null;
             if (socketHandle && secKey && secKey.length == 24) {
-                socket.setNoDelay(this._noDelay);
+                socket.setNoDelay(true);
                 const ticket = bindings.transfer(socketHandle.fd === -1 ? socketHandle : socketHandle.fd, sslState);
                 socket.on('close', (error) => {
                     if (this.serverGroup) {
@@ -529,9 +506,7 @@ class Server {
         if (this._upgradeListener && this.httpServer) {
             this.httpServer.removeListener('upgrade', this._upgradeListener);
 
-            if (!this._passedHttpServer) {
-                this.httpServer.close();
-            }
+            this.httpServer.close();
         }
 
         if (this.serverGroup) {
@@ -677,7 +652,6 @@ const config = new Config.ConfigProvider();
 console.log('a3');
 // const socket = new bindings.UI(9334);
 var wss = new Server({ port: 3001 });
-
 
 // wss.on('connection', (ws) => {
     // ws.send('something');
