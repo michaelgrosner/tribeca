@@ -1,11 +1,6 @@
 #ifndef K_SQLITE_H_
 #define K_SQLITE_H_
 
-#include <node.h>
-#include <node_object_wrap.h>
-#include <string.h>
-#include <sqlite3.h>
-
 namespace K {
   Persistent<Function> sqlite_;
 

@@ -1,16 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
 
-#include <node.h>
-#include <node_buffer.h>
-#include <node_object_wrap.h>
-#include <iostream>
-#include <cstring>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <uv.h>
-#include <uWS/uWS.h>
-
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t check;
