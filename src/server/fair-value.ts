@@ -27,7 +27,7 @@ export class FairValueEngine {
     private _publisher: Publish.Publisher,
     initRfv: Models.RegularFairValue[]
   ) {
-    if (initRfv !== null)
+    if (initRfv !== null && initRfv.length)
       this.latestFairValue = new Models.FairValue(initRfv[0].value, initRfv[0].time);
 
     filtration.FilteredMarketChanged.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
