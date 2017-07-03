@@ -163,6 +163,7 @@ namespace K {
   template <bool isServer>
   void send(const FunctionCallbackInfo<Value> &args)
   {
+std::cout << "sent on" << std::endl;
       uWS::OpCode opCode = (uWS::OpCode) args[2]->IntegerValue();
       NativeString nativeString(args[1]);
 
@@ -181,6 +182,7 @@ namespace K {
   }
 
   void connect(const FunctionCallbackInfo<Value> &args) {
+std::cout << "connect on" << std::endl;
       uWS::Group<uWS::CLIENT> *clientGroup = (uWS::Group<uWS::CLIENT> *) args[0].As<External>()->Value();
       NativeString uri(args[1]);
       hub.connect(std::string(uri.getData(), uri.getLength()), new Persistent<Value>(args.GetIsolate(), args[2]), {}, 5000, clientGroup);
@@ -237,6 +239,7 @@ namespace K {
 
   template <bool isServer>
   void onConnection(const FunctionCallbackInfo<Value> &args) {
+std::cout << "onConnection" << (isServer ? "isServer" : "isClient") << std::endl;
       uWS::Group<isServer> *group = (uWS::Group<isServer> *) args[0].As<External>()->Value();
       GroupData *groupData = (GroupData *) group->getUserData();
 
@@ -244,6 +247,7 @@ namespace K {
       Persistent<Function> *connectionCallback = &groupData->connectionHandler;
       connectionCallback->Reset(isolate, Local<Function>::Cast(args[1]));
       group->onConnection([isolate, connectionCallback, groupData](uWS::WebSocket<isServer> *webSocket, uWS::HttpRequest req) {
+std::cout << "onConnection on" << (isServer ? "isServer" : "isClient") << std::endl;
           groupData->size++;
           HandleScope hs(isolate);
           Local<Value> argv[] = {wrapSocket(webSocket, isolate)};
@@ -253,6 +257,7 @@ namespace K {
 
   template <bool isServer>
   void onMessage(const FunctionCallbackInfo<Value> &args) {
+std::cout << "onMessage" << (isServer ? "isServer" : "isClient") << std::endl;
       uWS::Group<isServer> *group = (uWS::Group<isServer> *) args[0].As<External>()->Value();
       GroupData *groupData = (GroupData *) group->getUserData();
 
@@ -260,6 +265,7 @@ namespace K {
       Persistent<Function> *messageCallback = &groupData->messageHandler;
       messageCallback->Reset(isolate, Local<Function>::Cast(args[1]));
       group->onMessage([isolate, messageCallback](uWS::WebSocket<isServer> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+std::cout << "onMessage on" << (isServer ? "isServer" : "isClient") << std::endl;
           HandleScope hs(isolate);
           Local<Value> argv[] = {wrapMessage(message, length, opCode, isolate),
                                  getDataV8(webSocket, isolate)};
@@ -269,6 +275,7 @@ namespace K {
 
   template <bool isServer>
   void onPing(const FunctionCallbackInfo<Value> &args) {
+std::cout << "onPing" << (isServer ? "isServer" : "isClient") << std::endl;
       uWS::Group<isServer> *group = (uWS::Group<isServer> *) args[0].As<External>()->Value();
       GroupData *groupData = (GroupData *) group->getUserData();
 
@@ -276,6 +283,7 @@ namespace K {
       Persistent<Function> *pingCallback = &groupData->pingHandler;
       pingCallback->Reset(isolate, Local<Function>::Cast(args[1]));
       group->onPing([isolate, pingCallback](uWS::WebSocket<isServer> *webSocket, const char *message, size_t length) {
+std::cout << "onPing on" << (isServer ? "isServer" : "isClient") << std::endl;
           HandleScope hs(isolate);
           Local<Value> argv[] = {wrapMessage(message, length, uWS::OpCode::PING, isolate),
                                  getDataV8(webSocket, isolate)};
@@ -301,6 +309,7 @@ namespace K {
 
   template <bool isServer>
   void onDisconnection(const FunctionCallbackInfo<Value> &args) {
+std::cout << "onDisconnection" << (isServer ? "isServer" : "isClient") << std::endl;
       uWS::Group<isServer> *group = (uWS::Group<isServer> *) args[0].As<External>()->Value();
       GroupData *groupData = (GroupData *) group->getUserData();
 
@@ -309,6 +318,7 @@ namespace K {
       disconnectionCallback->Reset(isolate, Local<Function>::Cast(args[1]));
 
       group->onDisconnection([isolate, disconnectionCallback, groupData](uWS::WebSocket<isServer> *webSocket, int code, char *message, size_t length) {
+std::cout << "onDisconnection on" << (isServer ? "isServer" : "isClient") << std::endl;
           groupData->size--;
           HandleScope hs(isolate);
           Local<Value> argv[] = {wrapSocket(webSocket, isolate),
@@ -411,10 +421,12 @@ namespace K {
   }
 
   void setNoop(const FunctionCallbackInfo<Value> &args) {
+std::cout << "setNoop" << std::endl;
       noop.Reset(args.GetIsolate(), Local<Function>::Cast(args[0]));
   }
 
   void listen(const FunctionCallbackInfo<Value> &args) {
+std::cout << "listen1" << to_string(args[1]->IntegerValue()) << std::endl;
       uWS::Group<uWS::SERVER> *group = (uWS::Group<uWS::SERVER> *) args[0].As<External>()->Value();
       hub.listen(args[1]->IntegerValue(), nullptr, 0, group);
   }
@@ -423,6 +435,7 @@ namespace K {
   struct Namespace {
       Local<Object> object;
       Namespace (Isolate *isolate) {
+              std::cout << "createServer" << (isServer ? "isServer" : "isClient") << std::endl;
           object = Object::New(isolate);
           NODE_SET_METHOD(object, "send", send<isServer>);
           NODE_SET_METHOD(object, "close", closeSocket<isServer>);
@@ -466,6 +479,7 @@ namespace K {
 
       struct Request {
           static void on(const FunctionCallbackInfo<Value> &args) {
+std::cout << "Request on" << std::endl;
               NativeString eventName(args[0]);
               if (std::string(eventName.getData(), eventName.getLength()) == "data") {
                   args.Holder()->SetInternalField(1, args[1]);
@@ -495,6 +509,7 @@ namespace K {
           }
 
           static void method(Local<String> property, const PropertyCallbackInfo<Value> &args) {
+std::cout << "method" << std::endl;
               //std::cout << "method" << std::endl;
               long methodId = ((long) args.This()->GetAlignedPointerFromInternalField(3)) >> 1;
               switch (methodId) {
@@ -565,6 +580,7 @@ namespace K {
 
       struct Response {
           static void on(const FunctionCallbackInfo<Value> &args) {
+std::cout << "Response on" << std::endl;
               NativeString eventName(args[0]);
               if (std::string(eventName.getData(), eventName.getLength()) == "close") {
                   args.Holder()->SetInternalField(1, args[1]);
@@ -575,6 +591,7 @@ namespace K {
           }
 
           static void end(const FunctionCallbackInfo<Value> &args) {
+std::cout << "end on" << std::endl;
               uWS::HttpResponse *res = (uWS::HttpResponse *) args.Holder()->GetAlignedPointerFromInternalField(0);
               if (res) {
                   NativeString nativeString(args[0]);
@@ -589,6 +606,8 @@ namespace K {
 
           // todo: this is slow
           static void writeHead(const FunctionCallbackInfo<Value> &args) {
+              std::cout << "writeHead" << std::endl;
+              
               uWS::HttpResponse *res = (uWS::HttpResponse *) args.Holder()->GetAlignedPointerFromInternalField(0);
               if (res) {
                   std::string head = "HTTP/1.1 " + std::to_string(args[0]->IntegerValue()) + " ";
@@ -656,6 +675,7 @@ namespace K {
 
       // todo: wrap everything up - most important function to get correct
       static void createServer(const FunctionCallbackInfo<Value> &args) {
+              std::cout << "createServerHTTP" << std::endl;
 
           // todo: delete this on destructor
           uWS::Group<uWS::SERVER> *group = hub.createGroup<uWS::SERVER>();
@@ -666,6 +686,7 @@ namespace K {
           Persistent<Function> *httpRequestCallback = &groupData->httpRequestHandler;
           httpRequestCallback->Reset(isolate, Local<Function>::Cast(args[0]));
           group->onHttpRequest([isolate, httpRequestCallback](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+              std::cout << "onHttpRequest" << std::endl;
               HandleScope hs(isolate);
 
               currentReq = &req;
@@ -762,7 +783,7 @@ namespace K {
 
       static void listen(const FunctionCallbackInfo<Value> &args) {
           uWS::Group<uWS::SERVER> *group = (uWS::Group<uWS::SERVER> *) args.Holder()->GetAlignedPointerFromInternalField(0);
-          std::cout << "listen: " << hub.listen(args[0]->IntegerValue(), nullptr, 0, group) << std::endl;
+          std::cout << "listen: " << (hub.listen(args[0]->IntegerValue(), nullptr, 0, group) ? "yes" : "no") << " on port " << to_string(args[0]->IntegerValue()) << std::endl;
 
           if (args[args.Length() - 1]->IsFunction()) {
               Local<Function>::Cast(args[args.Length() - 1])->Call(args.GetIsolate()->GetCurrentContext()->Global(), 0, nullptr);
