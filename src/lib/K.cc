@@ -1,14 +1,14 @@
-#include <nan.h>
 #include "stdev.h"
 #include "sqlite.h"
 #include "ui.h"
 
 namespace K {
-  NAN_MODULE_INIT(main) {
-    Stdev::main(target);
-    SQLite::main(target);
-    UI::main(target);
+  void main(Local<Object> exports) {
+    Stdev::main(exports);
+    SQLite::main(exports);
+    UI::main(exports);
   }
-
-  NODE_MODULE(K, main)
 }
+
+NODE_MODULE(K, K::main)
+

@@ -2,21 +2,28 @@
   'targets': [{
     'target_name': 'K',
     'type': 'loadable_module',
-    'sources': [
-      'src/lib/K.cc',
-      'src/lib/stdev.cc',
-      'src/lib/sqlite.cc',
-      'src/lib/ui.cc'
-    ],
-    'include_dirs': [ '<!(node -e "require(\'nan\')")' ],
-    'libraries': [ '-lsqlite3' ],
+    'sources': [ 'src/lib/K.cc' ],
+    'libraries': [ '-lsqlite3', '-luWS' ],
     'conditions': [
+      ['OS=="linux"', {
+        'cflags_cc': [ '-std=c++11', '-DUSE_LIBUV' ],
+        'cflags_cc!': [ '-fno-exceptions', '-std=gnu++0x', '-fno-rtti' ],
+        'cflags!': [ '-fno-omit-frame-pointer' ],
+        'ldflags!': [ '-rdynamic' ],
+        'ldflags': [ '-s' ]
+      }],
       ['OS=="mac"', {
         'xcode_settings': {
-          "OTHER_CFLAGS": [
-            '-mmacosx-version-min=10.7',
-            '-stdlib=libc++'
-          ]
+          'MACOSX_DEPLOYMENT_TARGET': '10.7',
+          'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+          'CLANG_CXX_LIBRARY': 'libc++',
+          'GCC_GENERATE_DEBUGGING_SYMBOLS': 'NO',
+          'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+          'GCC_THREADSAFE_STATICS': 'YES',
+          'GCC_OPTIMIZATION_LEVEL': '3',
+          'GCC_ENABLE_CPP_RTTI': 'YES',
+          'OTHER_CFLAGS!': [ '-fno-strict-aliasing' ],
+          'OTHER_CPLUSPLUSFLAGS': [ '-DUSE_LIBUV' ]
         }
       }]
     ]
