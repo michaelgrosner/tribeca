@@ -1,12 +1,7 @@
 #ifndef K_STDEV_H_
 #define K_STDEV_H_
 
-#include <node.h>
-#include <math.h>
-
 namespace K {
-  using namespace std;
-  using namespace v8;
   class Stdev {
     public:
       static void main(Local<Object> exports) {
