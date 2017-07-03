@@ -61,10 +61,10 @@ describe("Benchmark C shared objects", () => {
       // var mul = 1;
       // return (new Benchmark.Suite())
         // .add('JS Stdev', function() {
-          // Statistics.computeStdev(seqA, mul, min);
-          // Statistics.computeStdev(seqB, mul, min);
-          // Statistics.computeStdev(seqC, mul, min);
-          // Statistics.computeStdev(seqD, mul, min);
+          // computeStdev(seqA, mul, min);
+          // computeStdev(seqB, mul, min);
+          // computeStdev(seqC, mul, min);
+          // computeStdev(seqD, mul, min);
         // })
         // .add('C Stdev', function() {
           // bindings.computeStdevs(
