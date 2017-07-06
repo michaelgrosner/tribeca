@@ -13,7 +13,7 @@
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <uv.h>
-#include <uWS/uWS.h>
+#include <uWS.h>
 
 using namespace std;
 using namespace v8;
