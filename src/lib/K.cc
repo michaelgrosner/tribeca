@@ -1,5 +1,7 @@
+#include <fstream>
 #include <iostream>
-#include <string.h>
+#include <sstream>
+#include <cstring>
 #include <math.h>
 
 #include <node.h>
@@ -29,4 +31,3 @@ namespace K {
 }
 
 NODE_MODULE(K, K::main)
-
