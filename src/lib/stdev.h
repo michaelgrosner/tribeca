@@ -10,14 +10,12 @@ namespace K {
       static void ComputeStdevs(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-
         Local<Float64Array> seqA = args[0].As<Float64Array>();
         Local<Float64Array> seqB = args[1].As<Float64Array>();
         Local<Float64Array> seqC = args[2].As<Float64Array>();
         Local<Float64Array> seqD = args[3].As<Float64Array>();
         double factor = args[4]->NumberValue();
         double mean = 0;
-
         Local<Object> obj = Object::New(isolate);
         obj->Set(String::NewFromUtf8(isolate, "fv"),       Number::New(isolate, Stdev::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
         obj->Set(String::NewFromUtf8(isolate, "fvMean"),   Number::New(isolate, mean));

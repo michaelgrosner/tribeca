@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cstring>
 #include <math.h>
+#include <algorithm>
 
 #include <node.h>
 #include <node_buffer.h>

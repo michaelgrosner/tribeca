@@ -3,7 +3,6 @@
 
 namespace K {
   Persistent<Function> sqlite_;
-
   class SQLite: public node::ObjectWrap {
     public:
       static void main(Local<Object> exports) {
@@ -42,10 +41,8 @@ namespace K {
       static void NEw(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-
         if (!args.IsConstructCall())
           return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new SQLite objects")));
-
         SQLite* sqlite = new SQLite(args[0]->NumberValue(), args[1]->NumberValue(), args[2]->NumberValue());
         sqlite->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
@@ -53,7 +50,6 @@ namespace K {
       static void load(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-
         SQLite* sqlite = ObjectWrap::Unwrap<SQLite>(args.This());
         char* zErrMsg = 0;
         std::string table = string(*String::Utf8Value(args[0]->ToString()));
@@ -85,7 +81,6 @@ namespace K {
       static void insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-
         SQLite* sqlite = ObjectWrap::Unwrap<SQLite>(args.This());
         char* zErrMsg = 0;
         string table = string(*String::Utf8Value(args[0]->ToString()));
