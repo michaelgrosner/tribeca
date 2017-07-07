@@ -1,7 +1,6 @@
 const packageConfig = require("./../../package.json");
 
 const noop = () => {};
-
 const bindings = ((K) => { try {
   console.log(K.join('.'));
   return require('./lib/'+K.join('.'));
@@ -10,7 +9,6 @@ const bindings = ((K) => { try {
     throw new Error('K requires Node.js v6.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
-
 bindings.setNoop(noop);
 
 require('events').EventEmitter.prototype._maxListeners = 30;

@@ -24,6 +24,7 @@ build:
 	UWSv=0.14.3 NODEv=v7.1.0 ABIv=51 $(MAKE) K
 #	UWSv=0.14.3 NODEv=v8.1.2 ABIv=57 $(MAKE) K
 	for K in app/server/lib/K*node; do chmod +x $$K; done
+	# SUCCESS
 
 K: app/server/lib
 	$(MAKE) uws
