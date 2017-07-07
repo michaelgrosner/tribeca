@@ -7,7 +7,7 @@ G_SHARED_ARGS := -lsqlite3 -DUSE_LIBUV -std=c++11 -O3 -shared -fPIC \
    build/uWebSockets-$(UWSv)/src/Socket.cpp     build/uWebSockets-$(UWSv)/src/Epoll.cpp      \
 src/lib/K.cc
 
-all: build
+all: K
 
 help:
 	#
@@ -15,21 +15,17 @@ help:
 	#   make help                      - show this help
 	#
 	#   make                           - compile K node module
-	#   make build                     - compile K node module
+	#   make K                         - compile K node module
 	#   make node                      - download node src files
+	#   make uws                       - download uws src files
 	#   make clean                     - remove external src files
 
-build:
+K:
 	mkdir -p build app/server/lib
-	UWSv=0.14.3 NODEv=v7.1.0 ABIv=51 $(MAKE) K
-#	UWSv=0.14.3 NODEv=v8.1.2 ABIv=57 $(MAKE) K
+	NODEv=v7.1.0 ABIv=51 UWSv=0.14.3 $(MAKE) node uws `(uname -s)`
+#	NODEv=v8.1.2 ABIv=57 UWSv=0.14.3 $(MAKE) node uws `(uname -s)`
 	for K in app/server/lib/K*node; do chmod +x $$K; done
 	# SUCCESS
-
-K: app/server/lib
-	$(MAKE) uws
-	$(MAKE) node
-	$(MAKE) `(uname -s)`
 
 node:
 ifndef NODEv
@@ -37,19 +33,17 @@ ifndef NODEv
 	@NODEv=v8.1.2 $(MAKE) $@
 else
 	test -d build/node-$(NODEv) || ( \
-    curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build \
-  )
+		curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build \
+	)
 endif
 
 uws:
 ifndef UWSv
 	@UWSv=0.14.3 $(MAKE) $@
 else
-	test -d build/uWebSockets-$(UWSv) || ( cd build && \
-    rm -rf uWebSockets-$(UWSv) uWebSockets-$(UWSv).tar.gz* && \
-    wget -O uWebSockets-$(UWSv).tar.gz https://github.com/uNetworking/uWebSockets/archive/v$(UWSv).tar.gz && \
-    tar -zxvf uWebSockets-$(UWSv).tar.gz \
-  )
+	test -d build/uWebSockets-$(UWSv) || ( \
+		curl -L https://github.com/uNetworking/uWebSockets/archive/v$(UWSv).tar.gz | tar xz -C build \
+	)
 endif
 
 Linux:
