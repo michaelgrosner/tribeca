@@ -50,25 +50,42 @@ namespace K {
         group = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         group->setUserData(new GroupData);
         group->onHttpRequest([&isolate](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-          stringstream content;
-          string document = "HTTP/1.1 200 OK\r\nnConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\n";
-          string path = req.getUrl().toString();
-          string::size_type n = 0;
-          while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
-          const string leaf = path.substr(path.find_last_of('.')+1);
-          if (leaf == "/") {
-            document.append("Content-Type: text/html; charset=UTF-8\r\n");
-            content << ifstream ("app/pub/index.html").rdbuf();
-            if (!content.str().length()) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Failed to load pub/index.html file.")));
-          } else if (leaf == "js" || leaf == "css" || leaf == "png") {
-            if (leaf == "js") document.append("Content-Type: application/javascript; charset=UTF-8\r\n");
-            if (leaf == "css") document.append("Content-Type: text/css; charset=UTF-8\r\n");
-            if (leaf == "png") document.append("Content-Type: image/png\r\n");
-            content << ifstream (string("app/pub").append(path)).rdbuf();
-            if (!content.str().length()) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Failed to load pub/index.html file.")));
-          } else content << "Today, is a beautiful day.";
-          document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
-          res->write(document.data(), document.length());
+          if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
+            string url;
+            string document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\n";
+            string path = req.getUrl().toString();
+            string::size_type n = 0;
+            while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
+            if (path.substr(1, path.find_last_of('/')-1) == "socket.io") {
+              cout << "path " << path << endl;
+              res->end(nullptr, 0);
+            } else {
+              const string leaf = path.substr(path.find_last_of('.')+1);
+              if (leaf == "/") {
+                document.append("Content-Type: text/html; charset=UTF-8\r\n");
+                url = "/index.html";
+              } else if (leaf == "js") {
+                document.append("Content-Type: application/javascript; charset=UTF-8\r\n");
+                url = path;
+              } else if (leaf == "css") {
+                document.append("Content-Type: text/css; charset=UTF-8\r\n");
+                url = path;
+              } else if (leaf == "png") {
+                document.append("Content-Type: image/png\r\n");
+                url = path;
+              }
+              stringstream content;
+              if (!url.length()) {
+                document = "HTTP/1.1 404 Not Found\r\n";
+                content << "Today, is a beautiful day.";
+                res->end(nullptr, 0);
+              } else {
+                content << ifstream (string("app/pub").append(url)).rdbuf();
+                document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
+                res->write(document.data(), document.length());
+              }
+            }
+          }
         });
         cout << "listen: " << (hub.listen(port, nullptr, 0, group) ? "yes" : "no") << " on port " << to_string(port) << endl;
       }
