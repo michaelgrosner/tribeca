@@ -50,16 +50,15 @@ namespace K {
         group = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         group->setUserData(new GroupData);
         GroupData *groupData = (GroupData *) group->getUserData();
-group->onConnection([isolate, groupData](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-cout << "onConnectionnn " << endl;
-    groupData->size++;
-    // HandleScope hs(isolate);
-    // HandleScope hs(isolate);
-    // Local<Value> argv[] = {wrapSocket(webSocket, isolate)};
-});
-hub.onHttpUpgrade([](uWS::HttpSocket<uWS::SERVER> *s, uWS::HttpRequest req) {
-cout << "onHttpUpgrade " << endl;
-});
+        group->onConnection([isolate, groupData](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+          groupData->size++;
+          typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
+          cout << to_string(groupData->size) << " UI connected from " << address.address << " on port " << address.port << " (" << address.family << ")" << endl;
+        });
+        group->onDisconnection([isolate, groupData](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+          groupData->size--;
+          cout << "1 UI disconnected, " << to_string(groupData->size) << " UI remain connected." << endl;
+        });
         group->onHttpRequest([isolate](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
             string url;
@@ -70,18 +69,6 @@ cout << "onHttpUpgrade " << endl;
             while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
             if (path.substr(1, path.find_last_of('/')-1) == "socket.io") {
               cout << "path " << path << endl;
-              std::cout << to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) << endl;
-              // cout << "key " <<  req.getHeader("sec-websocket-key").toString() << endl;
-              // cout << "extensions " <<  req.getHeader("sec-websocket-extensions").toString() << endl;
-              // cout << "protocol " <<  req.getHeader("sec-websocket-protocol").toString() << endl;
-              // res->getHttpSocket()->upgrade(
-                // req.getHeader("sec-websocket-key").toString().data(),
-                // req.getHeader("sec-websocket-extensions").toString().data(),
-                // req.getHeader("sec-websocket-extensions").toString().length(),
-                // req.getHeader("sec-websocket-protocol").toString().data(),
-                // req.getHeader("sec-websocket-protocol").toString().length(),
-                // (bool*)new bool(true)
-              // );
               content << "90:0{\"sid\":\"" << to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) << "\",\"upgrades\":[\"websocket\"],\"pingInterval\":25000,\"pingTimeout\":60000}2:40";
               document.append("Content-Type: text/plain; charset=UTF-8\r\n");
               document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
@@ -115,9 +102,10 @@ cout << "onHttpUpgrade " << endl;
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if (hub.listen(port, c, 0, group))
-          cout << "listen: " << "HTTPS" << " on port " << to_string(port) << endl;
+          cout << "UI ready over " << "HTTPS" << " on port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, group))
-          cout << "listen: " << "HTTP" << " on port " << to_string(port) << endl;
+          cout << "UI ready over " << "HTTP" << " on port " << to_string(port) << endl;
+        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Unable to open port for UI, may be already in use.")));
       }
       ~UI() {
         delete group;
@@ -129,10 +117,14 @@ cout << "onHttpUpgrade " << endl;
         Persistent<Function> *messageCallback = &groupData->messageHandler;
         messageCallback->Reset(isolate, Local<Function>::Cast(args[0]));
         uws->group->onMessage([isolate, messageCallback](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-cout << "msgss" << endl;
-          HandleScope hs(isolate);
-          Local<Value> argv[] = {wrapMessage(message, length, opCode, isolate), getDataV8(webSocket, isolate)};
-          Local<Function>::New(isolate, *messageCallback)->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+          cout << "msgs " << message << endl;
+          cout << "code " << to_string(opCode) << endl;
+          if (strcmp(message, "2probe") == 0) webSocket->send("3probe");
+          else {
+            HandleScope hs(isolate);
+            Local<Value> argv[] = {wrapMessage(message, length, opCode, isolate), getDataV8(webSocket, isolate)};
+            Local<Function>::New(isolate, *messageCallback)->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+          }
         });
       }
       static void NEw(const FunctionCallbackInfo<Value>& args) {
