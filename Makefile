@@ -32,18 +32,14 @@ ifndef NODEv
 	@NODEv=v7.1.0 $(MAKE) $@
 	@NODEv=v8.1.2 $(MAKE) $@
 else
-	test -d build/node-$(NODEv) || ( \
-		curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build \
-	)
+	test -d build/node-$(NODEv) || curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build
 endif
 
 uws:
 ifndef UWSv
 	@UWSv=0.14.3 $(MAKE) $@
 else
-	test -d build/uWebSockets-$(UWSv) || ( \
-		curl -L https://github.com/uNetworking/uWebSockets/archive/v$(UWSv).tar.gz | tar xz -C build \
-	)
+	test -d build/uWebSockets-$(UWSv) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(UWSv).tar.gz | tar xz -C build
 endif
 
 Linux:
