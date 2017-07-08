@@ -12,36 +12,37 @@ export interface ISubscribe<T> {
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private _connectHandler: () => void = null;
   private _disconnectHandler: () => void = null;
-  private _socket: SocketIOClient.Socket;
+  private _incrementalHandler: boolean;
 
   constructor(
     private topic: string,
-    io: SocketIOClient.Socket
+    private _socket: WebSocket
   ) {
     super(observer => {
-      this._socket = io;
+      console.log(this._socket);
+      if (this._socket.readyState==1) this.onConnect();
 
-      if (this.connected) this.onConnect();
-
-      this._socket
-        .on("connect", this.onConnect)
-        .on("disconnect", this.onDisconnect)
-        .on(Models.Prefixes.MESSAGE + topic, (data) => observer.next(data))
-        .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
+      this._socket.addEventListener('open', this.onConnect);
+      this._socket.addEventListener('close', this.onDisconnect);
+      this._socket.addEventListener('message', (msg) => {
+        console.log('MSG:', msg[0], msg);
+        // .on(Models.Prefixes.MESSAGE + topic, (data) => observer.next(data))
+        // .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
+      });
 
       return () => {};
     });
   }
 
   public get connected(): boolean {
-    return this._socket.connected;
+    return this._socket.readyState == 1;
   }
 
   private onConnect = () => {
       if (this._connectHandler !== null)
           this._connectHandler();
 
-      this._socket.emit(Models.Prefixes.SUBSCRIBE + this.topic);
+      this._socket.send(Models.Prefixes.SUBSCRIBE + this.topic);
   };
 
   private onDisconnect = () => {
@@ -50,7 +51,10 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   };
 
   public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
-    if (!this._socket) this.subscribe(incrementalHandler);
+    if (!this._incrementalHandler) {
+      this.subscribe(incrementalHandler);
+      this._incrementalHandler = true;
+    }
     else throw new Error("already registered incremental handler for topic " + this.topic);
     return this;
   };
@@ -73,15 +77,12 @@ export interface IFire<T> {
 }
 
 export class Fire<T> implements IFire<T> {
-    private _socket : SocketIOClient.Socket;
-
-    constructor(private topic : string, io : SocketIOClient.Socket) {
-        this._socket = io;
+    constructor(private topic: string, private _socket: WebSocket) {
         // this._socket.on("connect", () => _log("Fire connected to", this.topic))
                     // .on("disconnect", () => _log("Fire disconnected to", this.topic));
     }
 
     public fire = (msg?: T) : void => {
-        this._socket.emit(Models.Prefixes.MESSAGE + this.topic, msg || null);
+        this._socket.send(JSON.stringify([Models.Prefixes.MESSAGE + this.topic, msg || null]));
     };
 }

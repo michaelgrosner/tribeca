@@ -21,10 +21,7 @@ namespace K {
       int base;
       int quote;
     private:
-      explicit SQLite(int exchange_, int base_, int quote_):
-        exchange(exchange_),
-        base(base_),
-        quote(quote_) {
+      explicit SQLite(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
         Isolate* isolate = Isolate::GetCurrent();
         if (sqlite3_open(
           string("/data/db/K.")

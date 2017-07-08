@@ -2,14 +2,13 @@ import {NgModule, Component, Injectable, Inject} from '@angular/core';
 import {AgRendererComponent} from 'ag-grid-angular/main';
 
 import moment = require('moment');
-import * as io from 'socket.io-client';
 
 import Subscribe = require("./subscribe");
 import Models = require("../share/models");
 
 @Injectable()
 export class FireFactory {
-    constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
+    constructor(@Inject('socket') private socket: WebSocket) {}
 
     public getFire = <T>(topic : string) : Subscribe.IFire<T> => {
         return new Subscribe.Fire<T>(topic, this.socket);
@@ -18,7 +17,7 @@ export class FireFactory {
 
 @Injectable()
 export class SubscriberFactory {
-    constructor(@Inject('socket') private socket: SocketIOClient.Socket) {}
+    constructor(@Inject('socket') private socket: WebSocket) {}
 
     public getSubscriber = <T>(scope: any, topic: string): Subscribe.ISubscribe<T> => {
       return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
@@ -28,8 +27,8 @@ export class SubscriberFactory {
 class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
     private _wrapped: Subscribe.ISubscribe<T>;
 
-    constructor(private _scope: any, topic: string, io: any) {
-      this._wrapped = new Subscribe.Subscriber<T>(topic, io);
+    constructor(private _scope: any, topic: string, socket: WebSocket) {
+      this._wrapped = new Subscribe.Subscriber<T>(topic, socket);
     }
 
     public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
@@ -83,7 +82,7 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
     FireFactory,
     {
       provide: 'socket',
-      useValue: io()
+      useValue: new WebSocket(location.origin.replace('http', 'ws'))
     }
   ]
 })
