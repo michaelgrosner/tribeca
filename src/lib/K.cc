@@ -5,6 +5,7 @@
 #include <chrono>
 #include <math.h>
 #include <algorithm>
+#include <map>
 
 #include <node.h>
 #include <node_buffer.h>

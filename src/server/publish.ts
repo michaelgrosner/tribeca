@@ -6,7 +6,7 @@ export class Publisher {
   private _lastMarketData: number = new Date().getTime();
   public monitor: Monitor.ApplicationState;
   constructor(
-    private _io: SocketIO.Server,
+    private _socket
   ) {
   }
 
@@ -20,7 +20,7 @@ export class Publisher {
       msg = this.compressPositionInc(msg);
     if (monitor && this.monitor)
       this.monitor.delay(Models.Prefixes.MESSAGE, topic, msg)
-    else this._io.emit(Models.Prefixes.MESSAGE + topic, msg);
+    else this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
   };
 
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
@@ -29,18 +29,16 @@ export class Publisher {
 
     this._snapshot[topic] = true;
 
-    this._io.on("connection", s => {
-      s.on(Models.Prefixes.SUBSCRIBE + topic, () => {
-        let snap: any[];
-        if (topic === Models.Topics.MarketData)
-          snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
-        else if (topic === Models.Topics.OrderStatusReports)
-          snap = this.compressSnapshot(snapshot(), this.compressOSRInc);
-        else if (topic === Models.Topics.Position)
-          snap = this.compressSnapshot(snapshot(), this.compressPositionInc);
-        else snap = snapshot();
-        s.emit(Models.Prefixes.SNAPSHOT + topic, snap);
-      });
+    this._socket.on(Models.Prefixes.SUBSCRIBE + topic, (topic, msg) => {
+      let snap: any[];
+      if (topic === Models.Topics.MarketData)
+        snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
+      else if (topic === Models.Topics.OrderStatusReports)
+        snap = this.compressSnapshot(snapshot(), this.compressOSRInc);
+      else if (topic === Models.Topics.Position)
+        snap = this.compressSnapshot(snapshot(), this.compressPositionInc);
+      else snap = snapshot();
+      this._socket.send(Models.Prefixes.SNAPSHOT + topic, snap);
     });
   }
 
@@ -104,7 +102,7 @@ export class Receiver {
   private _handler: boolean[] = [];
 
   constructor(
-    private _io: SocketIO.Server
+    private _socket
   ) {
   }
 
@@ -112,12 +110,8 @@ export class Receiver {
     if (typeof this._handler[topic] !== 'undefined')
       throw new Error("already registered receive handler for topic " + topic);
 
-    this._handler[topic] = true;
+    this._handler[topic] = handler;
 
-    this._io.on("connection", (s: SocketIO.Socket) => {
-      s.on(Models.Prefixes.MESSAGE + topic, msg => {
-          handler(msg);
-      });
-    });
+    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => handler(msg));
   };
 }
