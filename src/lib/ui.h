@@ -1,22 +1,15 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-
+//gzip auth retry
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t check;
   Persistent<Function> noop_;
   Persistent<Function> socket_;
   struct GroupData {
-      Persistent<Function> messageHandler;
+      std::map<string, Persistent<Function>> messageHandler;
       int size = 0;
   };
-  inline Local<Value> wrapMessage(const char *message, size_t length, uWS::OpCode opCode, Isolate *isolate) {
-      return opCode == uWS::OpCode::BINARY ? (Local<Value>) ArrayBuffer::New(isolate, (char *) message, length) : (Local<Value>) String::NewFromUtf8(isolate, message, String::kNormalString, length);
-  }
-  template <bool isServer>
-  inline Local<Value> getDataV8(uWS::WebSocket<isServer> *webSocket, Isolate *isolate) {
-      return webSocket->getUserData() ? Local<Value>::New(isolate, *(Persistent<Value> *) webSocket->getUserData()) : Local<Value>::Cast(Undefined(isolate));
-  }
   class UI: public node::ObjectWrap {
     public:
       static void main(Local<Object> exports) {
@@ -25,6 +18,7 @@ namespace K {
       o->InstanceTemplate()->SetInternalFieldCount(1);
       o->SetClassName(String::NewFromUtf8(isolate, "UI"));
       NODE_SET_PROTOTYPE_METHOD(o, "on", on);
+      NODE_SET_PROTOTYPE_METHOD(o, "send", send);
       socket_.Reset(isolate, o->GetFunction());
       exports->Set(String::NewFromUtf8(isolate, "UI"), o->GetFunction());
       NODE_SET_METHOD(exports, "setNoop", UI::setNoop);
@@ -100,6 +94,18 @@ namespace K {
             }
           }
         });
+        group->onMessage([isolate, groupData](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+          cout << "MSG" << message << endl;
+          if (strcmp(message, "_") == 0) webSocket->send("¯");
+          else if(length > 1 && (groupData->messageHandler.find(string(message).substr(1,1)) != groupData->messageHandler.end())) {
+            HandleScope hs(isolate);
+            Local<Value> argv[] = {
+              String::NewFromUtf8(isolate, string(message).substr(1,1).data()),
+              String::NewFromUtf8(isolate, message, String::kNormalString, length)
+            };
+            Local<Function>::New(isolate, groupData->messageHandler[string(message).substr(1,1)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+          }
+        });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if (hub.listen(port, c, 0, group))
           cout << "UI ready over " << "HTTPS" << " on port " << to_string(port) << endl;
@@ -110,31 +116,31 @@ namespace K {
       ~UI() {
         delete group;
       }
-      static void on(const FunctionCallbackInfo<Value>& args) {
-        UI* uws = ObjectWrap::Unwrap<UI>(args.This());
-        GroupData *groupData = (GroupData *) uws->group->getUserData();
-        Isolate *isolate = args.GetIsolate();
-        Persistent<Function> *messageCallback = &groupData->messageHandler;
-        messageCallback->Reset(isolate, Local<Function>::Cast(args[0]));
-        uws->group->onMessage([isolate, messageCallback](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          cout << "msgs " << message << endl;
-          cout << "code " << to_string(opCode) << endl;
-          if (strcmp(message, "2probe") == 0) webSocket->send("3probe");
-          else {
-            HandleScope hs(isolate);
-            Local<Value> argv[] = {wrapMessage(message, length, opCode, isolate), getDataV8(webSocket, isolate)};
-            Local<Function>::New(isolate, *messageCallback)->Call(isolate->GetCurrentContext()->Global(), 2, argv);
-          }
-        });
-      }
       static void NEw(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         if (!args.IsConstructCall())
           return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new UI objects")));
-        UI* uws = new UI(args[0]->NumberValue());
-        uws->Wrap(args.This());
+        UI* ui = new UI(args[0]->NumberValue());
+        ui->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
+      }
+      static void on(const FunctionCallbackInfo<Value>& args) {
+        UI* ui = ObjectWrap::Unwrap<UI>(args.This());
+        GroupData *groupData = (GroupData *) ui->group->getUserData();
+        Isolate *isolate = args.GetIsolate();
+        std::string k = string(*String::Utf8Value(args[0]->ToString()));
+        Persistent<Function> *messageCallback = &groupData->messageHandler[k];
+        messageCallback->Reset(isolate, Local<Function>::Cast(args[1]));
+      }
+      static void send(const FunctionCallbackInfo<Value>& args) {
+        UI* ui = ObjectWrap::Unwrap<UI>(args.This());
+        Isolate *isolate = args.GetIsolate();
+        std::string k = string(*String::Utf8Value(args[0]->ToString()));
+        JSON Json;
+        MaybeLocal<String> v = args[1]->IsUndefined() ? String::NewFromUtf8(isolate, "''") : Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject());
+        std::string msg = string("['").append(k).append("',").append(*String::Utf8Value(v.ToLocalChecked())).append("]");
+        ui->group->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }
   };
 }

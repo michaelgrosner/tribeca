@@ -131,10 +131,6 @@ const config = new Config.ConfigProvider();
 
 const socket = new bindings.UI(config.GetString("WebClientListenPort"));
 
-socket.on((message) => {
-  console.log('on newListener', message);
-});
-
 // const app = express();
 
 // const io = socket_io(((() => { try {
@@ -165,193 +161,193 @@ socket.on((message) => {
   // }
 // });
 
-// const pair = ((raw: string): Models.CurrencyPair => {
-  // const split = raw.split("/");
-  // if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
-  // return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-// })(config.GetString("TradedPair"));
+const pair = ((raw: string): Models.CurrencyPair => {
+  const split = raw.split("/");
+  if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
+  return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
+})(config.GetString("TradedPair"));
 
-// const exchange = ((ex: string): Models.Exchange => {
-  // switch (ex) {
-    // case "coinbase": return Models.Exchange.Coinbase;
-    // case "okcoin": return Models.Exchange.OkCoin;
-    // case "bitfinex": return Models.Exchange.Bitfinex;
-    // case "poloniex": return Models.Exchange.Poloniex;
-    // case "korbit": return Models.Exchange.Korbit;
-    // case "hitbtc": return Models.Exchange.HitBtc;
-    // case "null": return Models.Exchange.Null;
-    // default: throw new Error("Invalid configuration value EXCHANGE: " + ex);
-  // }
-// })(config.GetString("EXCHANGE").toLowerCase());
+const exchange = ((ex: string): Models.Exchange => {
+  switch (ex) {
+    case "coinbase": return Models.Exchange.Coinbase;
+    case "okcoin": return Models.Exchange.OkCoin;
+    case "bitfinex": return Models.Exchange.Bitfinex;
+    case "poloniex": return Models.Exchange.Poloniex;
+    case "korbit": return Models.Exchange.Korbit;
+    case "hitbtc": return Models.Exchange.HitBtc;
+    case "null": return Models.Exchange.Null;
+    default: throw new Error("Invalid configuration value EXCHANGE: " + ex);
+  }
+})(config.GetString("EXCHANGE").toLowerCase());
 
-// for (const param in defaultQuotingParameters)
-  // if (config.GetDefaultString(param) !== null)
-    // defaultQuotingParameters[param] = config.GetDefaultString(param);
+for (const param in defaultQuotingParameters)
+  if (config.GetDefaultString(param) !== null)
+    defaultQuotingParameters[param] = config.GetDefaultString(param);
 
-// const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
+const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
 
-// const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
-// const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
-// const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
-// const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
-// const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
+const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
+const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-// const receiver = new Publish.Receiver(io);
-// const publisher = new Publish.Publisher(io);
+const receiver = new Publish.Receiver(socket);
+const publisher = new Publish.Publisher(socket);
 
-// (async (): Promise<void> => {
-  // const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
-    // switch (exchange) {
-      // case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair);
-      // case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-      // case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair);
-      // case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
-      // case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
-      // case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-      // case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
-      // default: throw new Error("no gateway provided for exchange " + exchange);
-    // }
-  // })();
+(async (): Promise<void> => {
+  const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
+    switch (exchange) {
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
+      case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+      default: throw new Error("no gateway provided for exchange " + exchange);
+    }
+  })();
 
-  // publisher
-    // .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
-      // exchange,
-      // pair,
-      // config.GetString("BotIdentifier").replace('auto',''),
-      // config.GetString("MatryoshkaUrl"),
-      // packageConfig.homepage,
-      // gateway.base.minTickIncrement
-    // )]);
+  publisher
+    .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
+      exchange,
+      pair,
+      config.GetString("BotIdentifier").replace('auto',''),
+      config.GetString("MatryoshkaUrl"),
+      packageConfig.homepage,
+      gateway.base.minTickIncrement
+    )]);
 
-  // const paramsRepo = new QuotingParameters.QuotingParametersRepository(
-    // sqlite,
-    // publisher,
-    // receiver,
-    // initParams
-  // );
+  const paramsRepo = new QuotingParameters.QuotingParametersRepository(
+    sqlite,
+    publisher,
+    receiver,
+    initParams
+  );
 
-  // publisher.monitor = new Monitor.ApplicationState(
-    // '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
-    // paramsRepo,
-    // publisher,
-    // receiver,
-    // io
-  // );
+  publisher.monitor = new Monitor.ApplicationState(
+    '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
+    paramsRepo,
+    publisher,
+    receiver,
+    socket
+  );
 
-  // const broker = new Broker.ExchangeBroker(
-    // pair,
-    // gateway.md,
-    // gateway.base,
-    // gateway.oe,
-    // publisher,
-    // receiver,
-    // config.GetString("BotIdentifier").indexOf('auto')>-1
-  // );
+  const broker = new Broker.ExchangeBroker(
+    pair,
+    gateway.md,
+    gateway.base,
+    gateway.oe,
+    publisher,
+    receiver,
+    config.GetString("BotIdentifier").indexOf('auto')>-1
+  );
 
-  // const orderBroker = new Broker.OrderBroker(
-    // timeProvider,
-    // paramsRepo,
-    // broker,
-    // gateway.oe,
-    // sqlite,
-    // publisher,
-    // receiver,
-    // initTrades
-  // );
+  const orderBroker = new Broker.OrderBroker(
+    timeProvider,
+    paramsRepo,
+    broker,
+    gateway.oe,
+    sqlite,
+    publisher,
+    receiver,
+    initTrades
+  );
 
-  // const marketBroker = new Broker.MarketDataBroker(
-    // gateway.md,
-    // publisher
-  // );
+  const marketBroker = new Broker.MarketDataBroker(
+    gateway.md,
+    publisher
+  );
 
-  // const fvEngine = new FairValue.FairValueEngine(
-    // new MarketFiltration.MarketFiltration(
-      // broker.minTickIncrement,
-      // orderBroker,
-      // marketBroker
-    // ),
-    // broker.minTickIncrement,
-    // timeProvider,
-    // paramsRepo,
-    // publisher,
-    // initRfv
-  // );
+  const fvEngine = new FairValue.FairValueEngine(
+    new MarketFiltration.MarketFiltration(
+      broker.minTickIncrement,
+      orderBroker,
+      marketBroker
+    ),
+    broker.minTickIncrement,
+    timeProvider,
+    paramsRepo,
+    publisher,
+    initRfv
+  );
 
-  // const positionBroker = new Broker.PositionBroker(
-    // timeProvider,
-    // paramsRepo,
-    // broker,
-    // orderBroker,
-    // fvEngine,
-    // gateway.pg,
-    // publisher
-  // );
+  const positionBroker = new Broker.PositionBroker(
+    timeProvider,
+    paramsRepo,
+    broker,
+    orderBroker,
+    fvEngine,
+    gateway.pg,
+    publisher
+  );
 
-  // const quotingEngine = new QuotingEngine.QuotingEngine(
-    // timeProvider,
-    // fvEngine,
-    // paramsRepo,
-    // orderBroker,
-    // positionBroker,
-    // broker.minTickIncrement,
-    // broker.minSize,
-    // new Statistics.EWMAProtectionCalculator(timeProvider, fvEngine, paramsRepo),
-    // new Statistics.STDEVProtectionCalculator(
-      // timeProvider,
-      // fvEngine,
-      // paramsRepo,
-      // sqlite,
-      // bindings.computeStdevs,
-      // initMkt
-    // ),
-    // new PositionManagement.TargetBasePositionManager(
-      // timeProvider,
-      // broker.minTickIncrement,
-      // sqlite,
-      // fvEngine,
-      // new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
-      // paramsRepo,
-      // positionBroker,
-      // publisher,
-      // initTBP
-    // ),
-    // new Safety.SafetyCalculator(
-      // timeProvider,
-      // fvEngine,
-      // paramsRepo,
-      // positionBroker,
-      // orderBroker,
-      // publisher
-    // )
-  // );
+  const quotingEngine = new QuotingEngine.QuotingEngine(
+    timeProvider,
+    fvEngine,
+    paramsRepo,
+    orderBroker,
+    positionBroker,
+    broker.minTickIncrement,
+    broker.minSize,
+    new Statistics.EWMAProtectionCalculator(timeProvider, fvEngine, paramsRepo),
+    new Statistics.STDEVProtectionCalculator(
+      timeProvider,
+      fvEngine,
+      paramsRepo,
+      sqlite,
+      bindings.computeStdevs,
+      initMkt
+    ),
+    new PositionManagement.TargetBasePositionManager(
+      timeProvider,
+      broker.minTickIncrement,
+      sqlite,
+      fvEngine,
+      new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
+      paramsRepo,
+      positionBroker,
+      publisher,
+      initTBP
+    ),
+    new Safety.SafetyCalculator(
+      timeProvider,
+      fvEngine,
+      paramsRepo,
+      positionBroker,
+      orderBroker,
+      publisher
+    )
+  );
 
-  // new QuoteSender.QuoteSender(
-    // timeProvider,
-    // quotingEngine,
-    // broker,
-    // orderBroker,
-    // paramsRepo,
-    // publisher
-  // );
+  new QuoteSender.QuoteSender(
+    timeProvider,
+    quotingEngine,
+    broker,
+    orderBroker,
+    paramsRepo,
+    publisher
+  );
 
-  // new MarketTrades.MarketTradeBroker(
-    // gateway.md,
-    // publisher,
-    // marketBroker,
-    // quotingEngine,
-    // broker
-  // );
+  new MarketTrades.MarketTradeBroker(
+    gateway.md,
+    publisher,
+    marketBroker,
+    quotingEngine,
+    broker
+  );
 
-  // happyEnding = () => {
-    // orderBroker.cancelOpenOrders();
-    // console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
-  // };
+  happyEnding = () => {
+    orderBroker.cancelOpenOrders();
+    console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
+  };
 
-  // let highTime = process.hrtime();
-  // setInterval(() => {
-    // const diff = process.hrtime(highTime);
-    // const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
-    // if (n > 121) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
-    // highTime = process.hrtime();
-  // }, 500).unref();
-// })();
+  let highTime = process.hrtime();
+  setInterval(() => {
+    const diff = process.hrtime(highTime);
+    const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
+    if (n > 121) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+    highTime = process.hrtime();
+  }, 500).unref();
+})();

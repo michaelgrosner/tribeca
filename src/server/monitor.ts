@@ -35,14 +35,14 @@ export class ApplicationState {
     let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     this._delayed = this._delayed.filter(x => x[0]!==Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
     if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
-    this._delayed.forEach(x => this._io.emit(x[0], x[1]));
+    this._delayed.forEach(x => this._socket.send(x[0], x[1]));
     this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
   };
 
   public delay = (prefix: string, topic: string, msg: any) => {
     const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
-    if (!this._ioDelay) return this._io.emit(prefix + topic, msg);
+    if (!this._ioDelay) return this._socket.send(prefix + topic, msg);
     this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
     this._delayed.push([prefix+topic, msg]);
   };
@@ -67,7 +67,7 @@ export class ApplicationState {
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher,
     private _reciever: Publish.Receiver,
-    private _io: SocketIO.Server
+    private _socket
   ) {
     this.setDelay();
     this.setTick();
