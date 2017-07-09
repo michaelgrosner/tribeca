@@ -1,6 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//POST marked
+
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
