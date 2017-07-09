@@ -25,7 +25,6 @@ K:
 	NODEv=v7.1.0 ABIv=51 UWSv=0.14.3 $(MAKE) node uws `(uname -s)`
 #	NODEv=v8.1.2 ABIv=57 UWSv=0.14.3 $(MAKE) node uws `(uname -s)`
 	for K in app/server/lib/K*node; do chmod +x $$K; done
-	# SUCCESS
 
 node:
 ifndef NODEv
