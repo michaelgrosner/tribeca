@@ -31,6 +31,7 @@ namespace K {
             .append(".db").data(),
           &db
         )) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
+        cout << "DB " << to_string(exchange) << "." << to_string(base) << "." << to_string(quote) << " loaded OK" << endl;
       }
       ~SQLite() {
         sqlite3_close(db);
