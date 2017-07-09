@@ -1,21 +1,18 @@
 const packageConfig = require("./../../package.json");
+
+const noop = () => {};
 const bindings = ((K) => { try {
+  console.log(K.join('.'));
   return require('./lib/'+K.join('.'));
 } catch (e) {
-  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 6)
-    throw new Error('Error: K requires Node.js v6.0.0 or greater.');
-  else throw new Error('Error: compilation of K is obsolete (maybe because Node.js was upgraded), please run "npm install" again to recompile also K.');
+  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
+    throw new Error('K requires Node.js v7.0.0 or greater.');
+  else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
+bindings.setNoop(noop);
 
 require('events').EventEmitter.prototype._maxListeners = 30;
-import path = require("path");
-import express = require('express');
 import request = require('request');
-import fs = require("fs");
-import http = require("http");
-import https = require('https');
-import socket_io = require('socket.io');
-import marked = require('marked');
 
 import NullGw = require("./gateways/nullgw");
 import Coinbase = require("./gateways/coinbase");
@@ -34,7 +31,6 @@ import Publish = require("./publish");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
-import compression = require("compression");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
@@ -120,39 +116,10 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
+
 const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
 const config = new Config.ConfigProvider();
-
-const app = express();
-
-const io = socket_io(((() => { try {
-  return https.createServer({
-    key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-    cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-  }, app);
-} catch (e) {
-  return http.createServer(app);
-}})()).listen(
-  parseFloat(config.GetString("WebClientListenPort")),
-  () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on port', parseFloat(config.GetString("WebClientListenPort")))
-));
-
-if (config.GetString("WebClientUsername") !== "NULL" && config.GetString("WebClientPassword") !== "NULL") {
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-  app.use(require('basic-auth-connect')((u, p) => u === config.GetString("WebClientUsername") && p === config.GetString("WebClientPassword")));
-}
-
-app.use(compression());
-app.use(express.static(path.join(__dirname, "..", "pub")));
-
-app.get("/view/*", (req: express.Request, res: express.Response) => {
-  try {
-    res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
-  } catch (e) {
-    res.send('Document Not Found, but today is a beautiful day.');
-  }
-});
 
 const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
@@ -185,8 +152,14 @@ const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-const receiver = new Publish.Receiver(io);
-const publisher = new Publish.Publisher(io);
+const socket = new bindings.UI(
+  config.GetString("WebClientListenPort"),
+  config.GetString("WebClientUsername"),
+  config.GetString("WebClientPassword")
+);
+
+const receiver = new Publish.Receiver(socket);
+const publisher = new Publish.Publisher(socket);
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
@@ -224,7 +197,7 @@ const publisher = new Publish.Publisher(io);
     paramsRepo,
     publisher,
     receiver,
-    io
+    socket
   );
 
   const broker = new Broker.ExchangeBroker(
@@ -340,7 +313,7 @@ const publisher = new Publish.Publisher(io);
   setInterval(() => {
     const diff = process.hrtime(highTime);
     const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
-    if (n > 121) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+    if (n > 242) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
     highTime = process.hrtime();
   }, 500).unref();
 })();

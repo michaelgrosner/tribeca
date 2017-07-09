@@ -398,7 +398,7 @@ export class OrderBroker {
         _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
               this.sendOrder(new Models.SubmitNewOrder(
-                Models.Side[o.side],
+                o.side == 'Ask' ? Models.Side.Ask : Models.Side.Bid,
                 o.quantity,
                 Models.OrderType[o.orderType],
                 o.price,

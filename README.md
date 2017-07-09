@@ -20,7 +20,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v6 or v7). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
+Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
@@ -39,7 +39,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 ### Manual Installation
 
-1. Ensure your target machine has installed node v6 or v7 (see `nodejs -v`), g++ will be installed automatically.
+1. Ensure your target machine has installed node v7 or v8 (see `node -v` or `nodejs -v`), g++ will be installed automatically.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```
@@ -154,7 +154,7 @@ To rebuild the application with your modifications, please run `npm install` or 
 
 To rebuild the C++ shared objects with your modifications, please run `node-gyp rebuild`.
 
-To pipe the output to stdout, execute the application in the foreground with `nodejs K.js`.
+To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K.js`.
 
 To ignore the output, execute the application in the background with `forever start K.js` or with the alias `npm start`.
 
@@ -163,6 +163,8 @@ To debug the server code with chrome-devtools, attach the node debugger with `no
 Passing a config filename as a parameter after `K.js` is also allowed, like `nodejs K.js X.json`.
 
 ### Unreleased Changelog:
+
+Added built-in C++ WWW Server to replace expressjs and socketio.
 
 Added built-in SQLite C++ interface to replace external mongodb server.
 
