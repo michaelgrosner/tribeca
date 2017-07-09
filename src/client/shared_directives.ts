@@ -8,27 +8,27 @@ import Models = require("../share/models");
 
 @Injectable()
 export class FireFactory {
-    constructor(@Inject('socket') private socket: WebSocket) {}
+    constructor() {}
 
     public getFire = <T>(topic : string) : Subscribe.IFire<T> => {
-        return new Subscribe.Fire<T>(topic, this.socket);
+        return new Subscribe.Fire<T>(topic);
     }
 }
 
 @Injectable()
 export class SubscriberFactory {
-    constructor(@Inject('socket') private socket: WebSocket) {}
+    constructor() {}
 
     public getSubscriber = <T>(scope: any, topic: string): Subscribe.ISubscribe<T> => {
-      return new EvalAsyncSubscriber<T>(scope, topic, this.socket);
+      return new EvalAsyncSubscriber<T>(scope, topic);
     }
 }
 
 class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
     private _wrapped: Subscribe.ISubscribe<T>;
 
-    constructor(private _scope: any, topic: string, socket: WebSocket) {
-      this._wrapped = new Subscribe.Subscriber<T>(topic, socket);
+    constructor(private _scope: any, topic: string) {
+      this._wrapped = new Subscribe.Subscriber<T>(topic);
     }
 
     public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
@@ -79,11 +79,7 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
 @NgModule({
   providers: [
     SubscriberFactory,
-    FireFactory,
-    {
-      provide: 'socket',
-      useValue: new WebSocket(location.origin.replace('http', 'ws'))
-    }
+    FireFactory
   ]
 })
 export class SharedModule {}

@@ -5,10 +5,7 @@ export class Publisher {
   private _snapshot: boolean[] = [];
   private _lastMarketData: number = new Date().getTime();
   public monitor: Monitor.ApplicationState;
-  constructor(
-    private _socket
-  ) {
-  }
+  constructor(private _socket) {}
 
   public publish = (topic: string, msg: any, monitor?: boolean) => {
     if (topic === Models.Topics.MarketData) {
@@ -29,7 +26,7 @@ export class Publisher {
 
     this._snapshot[topic] = true;
 
-    this._socket.on(Models.Prefixes.SUBSCRIBE + topic, (topic, msg) => {
+    this._socket.on(Models.Prefixes.SUBSCRIBE + topic, (_topic, msg) => {
       let snap: any[];
       if (topic === Models.Topics.MarketData)
         snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
@@ -99,19 +96,9 @@ export class Publisher {
 }
 
 export class Receiver {
-  private _handler: boolean[] = [];
-
-  constructor(
-    private _socket
-  ) {
-  }
+  constructor(private _socket) {}
 
   public registerReceiver = (topic: string, handler : (msg : any) => void) => {
-    if (typeof this._handler[topic] !== 'undefined')
-      throw new Error("already registered receive handler for topic " + topic);
-
-    this._handler[topic] = handler;
-
     this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => handler(msg));
   };
 }
