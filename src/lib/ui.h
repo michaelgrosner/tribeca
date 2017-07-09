@@ -1,6 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//rmcert POST marked
+//POST marked
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
@@ -117,7 +117,7 @@ namespace K {
           }
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
-        if (hub.listen(port, c, 0, group))
+        if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, group))
           cout << "UI ready over " << "HTTPS" << " on external port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, group))
           cout << "UI ready over " << "HTTP" << " on external port " << to_string(port) << endl;
