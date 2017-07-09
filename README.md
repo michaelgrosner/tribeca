@@ -20,7 +20,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v6 or v7). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
+Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS fresh instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
@@ -39,7 +39,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 ### Manual Installation
 
-1. Ensure your target machine has installed node v6 or v7 (see `nodejs -v`), g++ will be installed automatically.
+1. Ensure your target machine has installed node v7 or v8 (see `nodejs -v`), g++ will be installed automatically.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```

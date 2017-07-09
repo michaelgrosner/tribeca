@@ -51,12 +51,12 @@ namespace K {
         group->onConnection([session](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           session->size++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(session->size) << " UI currently connected, connection from " << address.address << " on internal port " << address.port << " over " << address.family << endl;
+          cout << to_string(session->size) << " UI currently connected, last connection was from " << address.address << endl;
         });
         group->onDisconnection([session](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           session->size--;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(session->size) << " UI currently connected, disconnection from internal port " << address.port << endl;
+          cout << to_string(session->size) << " UI currently connected, last disconnection was from " << address.address << endl;
         });
         group->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;

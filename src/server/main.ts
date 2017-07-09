@@ -9,17 +9,13 @@ const bindings = ((K) => { try {
     throw new Error('K requires Node.js v6.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
+console.log(bindings);
 bindings.setNoop(noop);
 
 require('events').EventEmitter.prototype._maxListeners = 30;
 import path = require("path");
-import express = require('express');
 import request = require('request');
 import fs = require("fs");
-import http = require("http");
-import https = require('https');
-import socket_io = require('socket.io');
-import marked = require('marked');
 
 import NullGw = require("./gateways/nullgw");
 import Coinbase = require("./gateways/coinbase");
@@ -38,7 +34,6 @@ import Publish = require("./publish");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
-import compression = require("compression");
 import FairValue = require("./fair-value");
 import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
@@ -134,36 +129,6 @@ const socket = new bindings.UI(
   config.GetString("WebClientUsername"),
   config.GetString("WebClientPassword")
 );
-
-// const app = express();
-
-// const io = socket_io(((() => { try {
-  // return https.createServer({
-    // key: fs.readFileSync('./dist/sslcert/server.key', 'utf8'),
-    // cert: fs.readFileSync('./dist/sslcert/server.crt', 'utf8')
-  // }, app);
-// } catch (e) {
-  // return http.createServer(app);
-// }})()).listen(
-  // parseFloat(config.GetString("WebClientListenPort")),
-  // () => console.info(new Date().toISOString().slice(11, -1), 'main', 'Listening to admins on port', parseFloat(config.GetString("WebClientListenPort")))
-// ));
-
-// if (config.GetString("WebClientUsername") !== "NULL" && config.GetString("WebClientPassword") !== "NULL") {
-  // console.info(new Date().toISOString().slice(11, -1), 'main', 'Requiring authentication to web client');
-  // app.use(require('basic-auth-connect')((u, p) => u === config.GetString("WebClientUsername") && p === config.GetString("WebClientPassword")));
-// }
-
-// app.use(compression());
-// app.use(express.static(path.join(__dirname, "..", "pub")));
-
-// app.get("/view/*", (req: express.Request, res: express.Response) => {
-  // try {
-    // res.send(marked(fs.readFileSync('./'+req.path.replace('/view/','').replace('/','').replace('..',''), 'utf8')));
-  // } catch (e) {
-    // res.send('Document Not Found, but today is a beautiful day.');
-  // }
-// });
 
 const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
