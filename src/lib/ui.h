@@ -90,7 +90,7 @@ namespace K {
               document.append("Content-Type: image/png\r\n");
               url = path;
             } else if (leaf == "mp3") {
-              document.append("Content-Type:audio/mpeg\r\n");
+              document.append("Content-Type: audio/mpeg\r\n");
               url = path;
             }
             if (!url.length()) {
