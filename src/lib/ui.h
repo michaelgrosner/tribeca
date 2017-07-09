@@ -1,6 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//rmauth rmcert POST
+//rmcert POST marked
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
@@ -44,8 +44,10 @@ namespace K {
         group = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         group->setUserData(new Session);
         Session *session = (Session *) group->getUserData();
-        B64::Encode(name.append(":").append(key), &nk64);
-        nk64 = string("Basic ").append(nk64);
+        if (name != "NULL" && key != "NULL") {
+          B64::Encode(name.append(":").append(key), &nk64);
+          nk64 = string("Basic ").append(nk64);
+        }
         group->onConnection([session](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           session->size++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
@@ -60,11 +62,11 @@ namespace K {
           string document;
           string auth = req.getHeader("authorization").toString();
           typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
-          if (auth == "") {
+          if (nk64.length() > 0 && auth == "") {
             cout << "UI authorization attempt from " << address.address << endl;
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
-          } else if (auth != nk64) {
+          } else if (nk64.length() > 0 && auth != nk64) {
             cout << "UI authorization failed from " << address.address << endl;
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
