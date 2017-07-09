@@ -39,7 +39,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 ### Manual Installation
 
-1. Ensure your target machine has installed node v7 or v8 (see `nodejs -v`), g++ will be installed automatically.
+1. Ensure your target machine has installed node v7 or v8 (see `nodejs -v` or `node -v`), g++ will be installed automatically.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name `K`):
 ```
@@ -154,7 +154,7 @@ To rebuild the application with your modifications, please run `npm install` or 
 
 To rebuild the C++ shared objects with your modifications, please run `node-gyp rebuild`.
 
-To pipe the output to stdout, execute the application in the foreground with `nodejs K.js`.
+To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K.js`.
 
 To ignore the output, execute the application in the background with `forever start K.js` or with the alias `npm start`.
 
