@@ -15,8 +15,7 @@ export class Timestamped<T> implements ITimestamped {
 export var Prefixes = {
   SUBSCRIBE: '_',
   SNAPSHOT: '=',
-  MESSAGE: '-',
-  DELAYED: '.'
+  MESSAGE: '-'
 }
 
 export var Topics = {

@@ -2,6 +2,24 @@ import { Observable } from 'rxjs/Observable';
 
 import Models = require("../share/models");
 
+class KSocket extends WebSocket {
+  constructor() {
+    super(location.origin.replace('http', 'ws'));
+    for (const ev in events) events[ev].forEach(cb => this.addEventListener(ev, cb));
+    this.addEventListener('close', () => {
+      setTimeout(() => { socket = new KSocket(); }, 5000);
+    });
+  }
+  public setEventListener = (ev, cb) => {
+    if (typeof events[ev] == 'undefined') events[ev] = [];
+    events[ev].push(cb);
+    this.addEventListener(ev, cb);
+  }
+}
+
+var events = {};
+var socket = new KSocket();
+
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
   registerConnectHandler: (handler: () => void) => ISubscribe<T>;
@@ -12,36 +30,37 @@ export interface ISubscribe<T> {
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private _connectHandler: () => void = null;
   private _disconnectHandler: () => void = null;
-  private _socket: SocketIOClient.Socket;
+  private _incrementalHandler: boolean;
 
   constructor(
-    private topic: string,
-    io: SocketIOClient.Socket
+    private _topic: string
   ) {
     super(observer => {
-      this._socket = io;
+      if (socket.readyState==1) this.onConnect();
 
-      if (this.connected) this.onConnect();
-
-      this._socket
-        .on("connect", this.onConnect)
-        .on("disconnect", this.onDisconnect)
-        .on(Models.Prefixes.MESSAGE + topic, (data) => observer.next(data))
-        .on(Models.Prefixes.SNAPSHOT + topic, (data) => data.forEach(item => setTimeout(() => observer.next(item), 0)));
+      socket.setEventListener('open', this.onConnect);
+      socket.setEventListener('close', this.onDisconnect);
+      socket.setEventListener('message', (msg) => {
+        const topic = msg.data.substr(0,2);
+        const data = JSON.parse(msg.data.substr(2));
+        if (Models.Prefixes.MESSAGE+this._topic == topic) observer.next(data);
+        else if (Models.Prefixes.SNAPSHOT+this._topic == topic)
+          data.forEach(item => setTimeout(() => observer.next(item), 0));
+      });
 
       return () => {};
     });
   }
 
   public get connected(): boolean {
-    return this._socket.connected;
+    return socket.readyState == 1;
   }
 
   private onConnect = () => {
       if (this._connectHandler !== null)
           this._connectHandler();
 
-      this._socket.emit(Models.Prefixes.SUBSCRIBE + this.topic);
+      socket.send(Models.Prefixes.SUBSCRIBE + this._topic);
   };
 
   private onDisconnect = () => {
@@ -50,20 +69,23 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   };
 
   public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
-    if (!this._socket) this.subscribe(incrementalHandler);
-    else throw new Error("already registered incremental handler for topic " + this.topic);
+    if (!this._incrementalHandler) {
+      this.subscribe(incrementalHandler);
+      this._incrementalHandler = true;
+    }
+    else throw new Error("already registered incremental handler for topic " + this._topic);
     return this;
   };
 
   public registerDisconnectedHandler = (handler : () => void) => {
     if (this._disconnectHandler === null) this._disconnectHandler = handler;
-    else throw new Error("already registered disconnect handler for topic " + this.topic);
+    else throw new Error("already registered disconnect handler for topic " + this._topic);
     return this;
   };
 
   public registerConnectHandler = (handler : () => void) => {
       if (this._connectHandler === null) this._connectHandler = handler;
-      else throw new Error("already registered connect handler for topic " + this.topic);
+      else throw new Error("already registered connect handler for topic " + this._topic);
       return this;
   };
 }
@@ -73,15 +95,9 @@ export interface IFire<T> {
 }
 
 export class Fire<T> implements IFire<T> {
-    private _socket : SocketIOClient.Socket;
-
-    constructor(private topic : string, io : SocketIOClient.Socket) {
-        this._socket = io;
-        // this._socket.on("connect", () => _log("Fire connected to", this.topic))
-                    // .on("disconnect", () => _log("Fire disconnected to", this.topic));
-    }
+    constructor(private _topic: string) {}
 
     public fire = (msg?: T) : void => {
-        this._socket.emit(Models.Prefixes.MESSAGE + this.topic, msg || null);
+        socket.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
     };
 }
