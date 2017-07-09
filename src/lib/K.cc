@@ -21,6 +21,8 @@
 using namespace std;
 using namespace v8;
 
+#include "_b64.h"
+
 #include "stdev.h"
 #include "sqlite.h"
 #include "ui.h"
