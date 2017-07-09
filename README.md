@@ -164,6 +164,8 @@ Passing a config filename as a parameter after `K.js` is also allowed, like `nod
 
 ### Unreleased Changelog:
 
+Added built-in C++ WWW Server to replace expressjs and socketio.
+
 Added built-in SQLite C++ interface to replace external mongodb server.
 
 Added Poloniex API.
