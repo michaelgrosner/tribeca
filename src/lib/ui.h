@@ -1,6 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//rmcert POST
+//rmauth rmcert POST
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
@@ -71,7 +71,7 @@ namespace K {
           } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
             string url;
             stringstream content;
-            document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\n";
+            document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             string path = req.getUrl().toString();
             string::size_type n = 0;
             while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
@@ -88,6 +88,9 @@ namespace K {
               url = path;
             } else if (leaf == "png") {
               document.append("Content-Type: image/png\r\n");
+              url = path;
+            } else if (leaf == "mp3") {
+              document.append("Content-Type:audio/mpeg\r\n");
               url = path;
             }
             if (!url.length()) {
