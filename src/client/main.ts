@@ -65,8 +65,7 @@ class DisplayOrder {
 
   public submit = () => {
     if (!this.side || !this.price || !this.quantity || !this.timeInForce || !this.orderType) return;
-    var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-    this._fire.fire(msg);
+    this._fire.fire(new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType));
   };
 }
 

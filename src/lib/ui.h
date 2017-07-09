@@ -44,7 +44,7 @@ namespace K {
         group = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         group->setUserData(new Session);
         Session *session = (Session *) group->getUserData();
-        if (name != "NULL" && key != "NULL") {
+        if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
           B64::Encode(name.append(":").append(key), &nk64);
           nk64 = string("Basic ").append(nk64);
         }
@@ -110,9 +110,7 @@ namespace K {
           if (length > 1 && (session->cb.find(string(message).substr(0,2)) != session->cb.end())) {
             JSON Json;
             HandleScope hs(isolate);
-            MaybeLocal<Value> v = (length > 2 && (message[2] == '[' || message[2] == '{'))
-              ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2, length-2).data()))
-              : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2, length-2).data() : "");
+            MaybeLocal<Value> v = (length > 2 && (message[2] == '[' || message[2] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2, length-2).data())) : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2, length-2).data() : "");
             Local<Value> argv[] = {String::NewFromUtf8(isolate, ""), (string(message).substr(2, length-2) == "true" || string(message).substr(2, length-2) == "false") ? (Local<Value>)Boolean::New(isolate, string(message).substr(2, length-2) == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())};
             Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
             if (!reply->IsUndefined()) webSocket->send(string("=").append(string(message).substr(1,1)).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
