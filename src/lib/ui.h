@@ -1,11 +1,11 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//gzip auth retry
+//gzip auth rmcert
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
   Persistent<Function> noop;
-  struct Session { std::map<string, Persistent<Function>> cb; int size = 0; };
+  struct Session { map<string, Persistent<Function>> cb; int size = 0; };
   Persistent<Function> socket_;
   class UI: public node::ObjectWrap {
     public:
@@ -45,16 +45,10 @@ namespace K {
           session->size++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
           cout << to_string(session->size) << " UI connected from " << address.address << " on port " << address.port << " (" << address.family << ")" << endl;
-          HandleScope hs(isolate);
-          for (std::map<string, Persistent<Function>>::iterator it=session->cb.begin(); it!=session->cb.end(); ++it)
-            if (it->first[0]=='=') {
-              Local<Value> argv[] = {String::NewFromUtf8(isolate, it->first.data()), String::NewFromUtf8(isolate, "")};
-              Local<Function>::New(isolate, it->second)->Call(isolate->GetCurrentContext()->Global(), 2, argv);
-            }
         });
         group->onDisconnection([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           session->size--;
-          cout << "1 UI disconnected, " << to_string(session->size) << " UI remain connected." << endl;
+          cout << "UI disconnected, " << to_string(session->size) << " UI remain connected" << endl;
         });
         group->onHttpRequest([isolate](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
@@ -90,11 +84,13 @@ namespace K {
           }
         });
         group->onMessage([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          if (strcmp(message, "_") == 0) webSocket->send("¯");
-          else if (length > 1 && (session->cb.find(string(message).substr(0,2)) != session->cb.end())) {
+          if (length > 1 && (session->cb.find(string(message).substr(0,2)) != session->cb.end())) {
+            JSON Json;
             HandleScope hs(isolate);
-            Local<Value> argv[] = {String::NewFromUtf8(isolate, ""), String::NewFromUtf8(isolate, string(message).substr(2).data())};
-            Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+            MaybeLocal<Value> array = (length > 2 && (message[2] == '[' || message[2] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2).data())) : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2).data() : "");
+            Local<Value> argv[] = {String::NewFromUtf8(isolate, ""), array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked()};
+            Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+            if (!reply->IsUndefined()) webSocket->send(string("=").append(string(message).substr(1,1)).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
           }
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
@@ -102,7 +98,7 @@ namespace K {
           cout << "UI ready over " << "HTTPS" << " on port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, group))
           cout << "UI ready over " << "HTTP" << " on port " << to_string(port) << endl;
-        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use another UI port number, because it seems already in use.")));
+        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use another UI port number, because it seems already in use")));
       }
       ~UI() {
         delete group;
@@ -111,7 +107,7 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         if (!args.IsConstructCall())
-          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new UI objects.")));
+          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new UI objects")));
         UI* ui = new UI(args[0]->NumberValue());
         ui->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
@@ -120,9 +116,9 @@ namespace K {
         UI* ui = ObjectWrap::Unwrap<UI>(args.This());
         Session *session = (Session *) ui->group->getUserData();
         Isolate *isolate = args.GetIsolate();
-        std::string k = string(*String::Utf8Value(args[0]->ToString()));
+        string k = string(*String::Utf8Value(args[0]->ToString()));
         if (session->cb.find(k) != session->cb.end())
-          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use a single message handler for each different topic.")));
+          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use a single message handler for each different topic")));
         Persistent<Function> *messageCallback = &session->cb[k];
         messageCallback->Reset(isolate, Local<Function>::Cast(args[1]));
       }
@@ -130,10 +126,10 @@ namespace K {
         UI* ui = ObjectWrap::Unwrap<UI>(args.This());
         Session *session = (Session *) ui->group->getUserData();
         Isolate *isolate = args.GetIsolate();
-        std::string k = string(*String::Utf8Value(args[0]->ToString()));
+        string k = string(*String::Utf8Value(args[0]->ToString()));
         JSON Json;
         MaybeLocal<String> v = args[1]->IsUndefined() ? String::NewFromUtf8(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject());
-        std::string msg = k.append(*String::Utf8Value(v.ToLocalChecked()));
+        string msg = k.append(*String::Utf8Value(v.ToLocalChecked()));
         ui->group->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }
   };

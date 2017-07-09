@@ -7,8 +7,8 @@ import fs = require('fs');
 export class ApplicationState {
 
   private _delayed: any[] = [];
-  private _app_state: Models.ApplicationState = null;
-  private _notepad: string = null;
+  private _app_state: Models.ApplicationState;
+  private _notepad: string;
   private _toggleConfigs: boolean = true;
   private _newOrderMinute: number = 0;
   private _tick: number = 0;

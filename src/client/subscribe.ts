@@ -98,6 +98,6 @@ export class Fire<T> implements IFire<T> {
     constructor(private _topic: string) {}
 
     public fire = (msg?: T) : void => {
-        socket.send(Models.Prefixes.MESSAGE + this._topic + JSON.stringify(msg || null));
+        socket.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
     };
 }

@@ -35,7 +35,7 @@ export class Publisher {
       else if (topic === Models.Topics.Position)
         snap = this.compressSnapshot(snapshot(), this.compressPositionInc);
       else snap = snapshot();
-      this._socket.send(Models.Prefixes.SNAPSHOT + topic, snap);
+      return snap;
     });
   }
 
@@ -99,6 +99,6 @@ export class Receiver {
   constructor(private _socket) {}
 
   public registerReceiver = (topic: string, handler : (msg : any) => void) => {
-    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => handler(msg));
+    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => { handler(msg); });
   };
 }

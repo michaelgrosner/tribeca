@@ -347,7 +347,7 @@ const publisher = new Publish.Publisher(socket);
   setInterval(() => {
     const diff = process.hrtime(highTime);
     const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
-    if (n > 121) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+    if (n > 242) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
     highTime = process.hrtime();
   }, 500).unref();
 })();
