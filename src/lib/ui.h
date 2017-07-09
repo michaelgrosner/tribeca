@@ -44,11 +44,12 @@ namespace K {
         group->onConnection([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           session->size++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(session->size) << " UI connected from " << address.address << " on port " << address.port << " (" << address.family << ")" << endl;
+          cout << to_string(session->size) << " UI currently connected, connection from " << address.address << " on internal port " << address.port << " over " << address.family << endl;
         });
         group->onDisconnection([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           session->size--;
-          cout << "UI disconnected, " << to_string(session->size) << " UI remain connected" << endl;
+          typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
+          cout << to_string(session->size) << " UI currently connected, disconnection from internal port " << address.port << endl;
         });
         group->onHttpRequest([isolate](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
@@ -95,10 +96,10 @@ namespace K {
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if (hub.listen(port, c, 0, group))
-          cout << "UI ready over " << "HTTPS" << " on port " << to_string(port) << endl;
+          cout << "UI ready over " << "HTTPS" << " on external port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, group))
-          cout << "UI ready over " << "HTTP" << " on port " << to_string(port) << endl;
-        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use another UI port number, because it seems already in use")));
+          cout << "UI ready over " << "HTTP" << " on external port " << to_string(port) << endl;
+        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use another UI port number, it seems already in use")));
       }
       ~UI() {
         delete group;
