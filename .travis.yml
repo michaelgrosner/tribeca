@@ -6,7 +6,7 @@ language: node_js
 
 node_js:
   - 7
-  - latest
+  - node
 
 branches:
   only: master
