@@ -5,7 +5,7 @@ namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
   Persistent<Function> noop;
-  struct Session { map<string, Persistent<Function>> cb; int size = 0; string nk64 = ""; };
+  struct Session { map<string, Persistent<Function>> cb; int size = 0; };
   Persistent<Function> socket_;
   class UI: public node::ObjectWrap {
     public:
