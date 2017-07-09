@@ -5,17 +5,14 @@ const bindings = ((K) => { try {
   console.log(K.join('.'));
   return require('./lib/'+K.join('.'));
 } catch (e) {
-  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 6)
-    throw new Error('K requires Node.js v6.0.0 or greater.');
+  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
+    throw new Error('K requires Node.js v7.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
-console.log(bindings);
 bindings.setNoop(noop);
 
 require('events').EventEmitter.prototype._maxListeners = 30;
-import path = require("path");
 import request = require('request');
-import fs = require("fs");
 
 import NullGw = require("./gateways/nullgw");
 import Coinbase = require("./gateways/coinbase");
