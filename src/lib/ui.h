@@ -87,7 +87,7 @@ namespace K {
           if (length > 1 && (session->cb.find(string(message).substr(0,2)) != session->cb.end())) {
             JSON Json;
             HandleScope hs(isolate);
-            MaybeLocal<Value> array = (length > 2 && (message[2] == '[' || message[2] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2).data())) : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2).data() : "");
+            MaybeLocal<Value> array = (length > 2 && (message[2] == '[' || message[2] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2, length-2).data())) : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2, length-2).data() : "");
             Local<Value> argv[] = {String::NewFromUtf8(isolate, ""), array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked()};
             Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
             if (!reply->IsUndefined()) webSocket->send(string("=").append(string(message).substr(1,1)).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
