@@ -129,7 +129,11 @@ const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
 const config = new Config.ConfigProvider();
 
-const socket = new bindings.UI(config.GetString("WebClientListenPort"));
+const socket = new bindings.UI(
+  config.GetString("WebClientListenPort"),
+  config.GetString("WebClientUsername"),
+  config.GetString("WebClientPassword")
+);
 
 // const app = express();
 
