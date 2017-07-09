@@ -121,12 +121,6 @@ const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
 const config = new Config.ConfigProvider();
 
-const socket = new bindings.UI(
-  config.GetString("WebClientListenPort"),
-  config.GetString("WebClientUsername"),
-  config.GetString("WebClientPassword")
-);
-
 const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
   if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
@@ -157,6 +151,12 @@ const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {
 const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
+
+const socket = new bindings.UI(
+  config.GetString("WebClientListenPort"),
+  config.GetString("WebClientUsername"),
+  config.GetString("WebClientPassword")
+);
 
 const receiver = new Publish.Receiver(socket);
 const publisher = new Publish.Publisher(socket);
