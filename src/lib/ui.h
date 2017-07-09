@@ -1,6 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
-//gzip auth rmcert
+//auth rmcert
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
@@ -64,7 +64,7 @@ namespace K {
               document.append("Content-Type: text/html; charset=UTF-8\r\n");
               url = "/index.html";
             } else if (leaf == "js") {
-              document.append("Content-Type: application/javascript; charset=UTF-8\r\n");
+              document.append("Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding:gzip\r\n");
               url = path;
             } else if (leaf == "css") {
               document.append("Content-Type: text/css; charset=UTF-8\r\n");
