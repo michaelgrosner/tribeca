@@ -24,7 +24,7 @@ Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in 
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
-The web UI is compatible with most web browsers/devices/resolutions, but Chrome at 1600px is recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
+The web UI is compatible with most web browsers/devices/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
 ### Compatible Exchanges
 
