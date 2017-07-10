@@ -60,7 +60,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       if (this._connectHandler !== null)
           this._connectHandler();
 
-      socket.send(Models.Prefixes.SUBSCRIBE + this._topic);
+      socket.send(Models.Prefixes.SNAPSHOT + this._topic);
   };
 
   private onDisconnect = () => {
