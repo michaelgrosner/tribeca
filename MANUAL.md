@@ -243,4 +243,4 @@ Alternatively, you can always open a [new issue](https://github.com/ctubio/Krypt
 
 K.js is packaged with a backtesting mode.
 
-To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts` (see [Issue #43](https://github.com/ctubio/Krypto-trading-bot/issues/43)).
+To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts` (see [Issue #43](https://github.com/ctubio/tribeca/issues/43)).
