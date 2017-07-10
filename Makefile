@@ -1,12 +1,12 @@
 V_UWS := 0.14.3
 V_QF  := v.1.14.4
-G_SHARED_ARGS := -lsqlite3 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node    \
+G_SHARED_ARGS := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node   \
    -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
    build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
    build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
    build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
    build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
--std=c++11 src/lib/K.cc
+src/lib/K.cc
 
 all: K
 
