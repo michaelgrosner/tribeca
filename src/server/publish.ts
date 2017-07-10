@@ -24,6 +24,10 @@ export class Publisher {
     this._socket.send(topic, msg);
   };
 
+  public registerReceiver = (topic: string, handler : (msg : any) => void) => {
+    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => { handler(msg); });
+  };
+
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
     if (typeof this._snapshot[topic] !== 'undefined')
       throw new Error("Already registered snapshot for topic " + topic);
@@ -96,13 +100,5 @@ export class Publisher {
       data.pair.base,
       data.pair.quote
     ], data.time);
-  };
-}
-
-export class Receiver {
-  constructor(private _socket) {}
-
-  public registerReceiver = (topic: string, handler : (msg : any) => void) => {
-    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => { handler(msg); });
   };
 }
