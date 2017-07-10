@@ -50,10 +50,14 @@ quickfix:
 	)
 
 Linux:
+ifdef ABIv
 	g++ $(G_SHARED_ARGS) -static-libstdc++ -static-libgcc -s -o app/server/lib/K.linux.$(ABIv).node
+endif
 
 Darwin:
+ifdef ABIv
 	g++ $(G_SHARED_ARGS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -o app/server/lib/K.darwin.$(ABIv).node
+endif
 
 clean:
 	rm -rf build
