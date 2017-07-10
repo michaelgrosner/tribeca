@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Monitor = require("./monitor");
 
 export class Publisher {
-  private _snapshot: boolean[] = [];
   private _lastMarketData: number = new Date().getTime();
   public monitor: Monitor.ApplicationState;
   constructor(private _socket) {}
@@ -29,11 +28,6 @@ export class Publisher {
   };
 
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
-    if (typeof this._snapshot[topic] !== 'undefined')
-      throw new Error("Already registered snapshot for topic " + topic);
-
-    this._snapshot[topic] = true;
-
     this._socket.on(Models.Prefixes.SNAPSHOT + topic, (_topic, msg) => {
       let snap: any[];
       if (topic === Models.Topics.MarketData)
