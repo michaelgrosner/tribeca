@@ -152,14 +152,11 @@ const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-const socket = new bindings.UI(
+const publisher = new Publish.Publisher(new bindings.UI(
   config.GetString("WebClientListenPort"),
   config.GetString("WebClientUsername"),
   config.GetString("WebClientPassword")
-);
-
-const receiver = new Publish.Receiver(socket);
-const publisher = new Publish.Publisher(socket);
+));
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
@@ -188,15 +185,13 @@ const publisher = new Publish.Publisher(socket);
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
     sqlite,
     publisher,
-    receiver,
     initParams
   );
 
   publisher.monitor = new Monitor.ApplicationState(
     '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     paramsRepo,
-    publisher,
-    receiver
+    publisher
   );
 
   const broker = new Broker.ExchangeBroker(
@@ -205,7 +200,6 @@ const publisher = new Publish.Publisher(socket);
     gateway.base,
     gateway.oe,
     publisher,
-    receiver,
     config.GetString("BotIdentifier").indexOf('auto')>-1
   );
 
@@ -216,7 +210,6 @@ const publisher = new Publish.Publisher(socket);
     gateway.oe,
     sqlite,
     publisher,
-    receiver,
     initTrades
   );
 

@@ -380,7 +380,6 @@ export class OrderBroker {
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _sqlite,
       private _publisher : Publish.Publisher,
-      private _reciever : Publish.Receiver,
       initTrades : Models.Trade[]
     ) {
         this.tradesMemory = initTrades;
@@ -395,7 +394,7 @@ export class OrderBroker {
           return orderCache;
         });
 
-        _reciever.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
+        _publisher.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
               this.sendOrder(new Models.SubmitNewOrder(
                 o.side == 'Ask' ? Models.Side.Ask : Models.Side.Bid,
@@ -415,11 +414,11 @@ export class OrderBroker {
             }
         });
 
-        _reciever.registerReceiver(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
-        _reciever.registerReceiver(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
-        _reciever.registerReceiver(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
-        _reciever.registerReceiver(Models.Topics.CleanAllOrders, () => this.cleanOrders());
-        _reciever.registerReceiver(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
+        _publisher.registerReceiver(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
+        _publisher.registerReceiver(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
+        _publisher.registerReceiver(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
+        _publisher.registerReceiver(Models.Topics.CleanAllOrders, () => this.cleanOrders());
+        _publisher.registerReceiver(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
 
         _oeGateway.OrderUpdate.on(this.updateOrderState);
     }
@@ -582,7 +581,6 @@ export class ExchangeBroker {
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
       private _publisher: Publish.Publisher,
-      private _reciever: Publish.Receiver,
       startQuoting: boolean
     ) {
       this._savedQuotingMode = startQuoting;
@@ -597,7 +595,7 @@ export class ExchangeBroker {
 
       _publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
       _publisher.registerSnapshot(Models.Topics.ActiveState, () => [this._latestState]);
-      _reciever.registerReceiver(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
+      _publisher.registerReceiver(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
       console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details' ,{
           exchange: Models.Exchange[this.exchange()],

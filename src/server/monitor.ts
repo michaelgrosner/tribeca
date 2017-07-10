@@ -65,8 +65,7 @@ export class ApplicationState {
   constructor(
     private _db: string,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _publisher: Publish.Publisher,
-    private _reciever: Publish.Receiver
+    private _publisher: Publish.Publisher
   ) {
     this.setDelay();
     this.setTick();
@@ -81,11 +80,11 @@ export class ApplicationState {
 
     _publisher.registerSnapshot(Models.Topics.ToggleConfigs, () => [this._toggleConfigs]);
 
-    _reciever.registerReceiver(Models.Topics.Notepad, (notepad: string) => {
+    _publisher.registerReceiver(Models.Topics.Notepad, (notepad: string) => {
       this._notepad = notepad;
     });
 
-    _reciever.registerReceiver(Models.Topics.ToggleConfigs, (toggleConfigs: boolean) => {
+    _publisher.registerReceiver(Models.Topics.ToggleConfigs, (toggleConfigs: boolean) => {
       this._toggleConfigs = toggleConfigs;
     });
   }

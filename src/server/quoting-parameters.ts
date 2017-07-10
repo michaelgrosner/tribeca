@@ -13,11 +13,12 @@ export class QuotingParametersRepository {
   constructor(
     private _sqlite,
     private _publisher: Publish.Publisher,
-    reciever: Publish.Receiver,
     initParams: Models.QuotingParameters
   ) {
-    if (_publisher) _publisher.registerSnapshot(Models.Topics.QuotingParametersChange, () => [this.latest]);
-    if (reciever) reciever.registerReceiver(Models.Topics.QuotingParametersChange, this.updateParameters);
+    if (_publisher) {
+      _publisher.registerSnapshot(Models.Topics.QuotingParametersChange, () => [this.latest]);
+      _publisher.registerReceiver(Models.Topics.QuotingParametersChange, this.updateParameters);
+    }
     this._latest = initParams;
   }
 
