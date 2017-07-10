@@ -65,4 +65,4 @@ clean:
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K uws node Linux Darwin clean asandwich
+.PHONY: K quickfix uws node Linux Darwin clean asandwich
