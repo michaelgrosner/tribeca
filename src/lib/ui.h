@@ -95,15 +95,14 @@ namespace K {
               document.append("Content-Type: audio/mpeg\r\n");
               url = path;
             }
-            if (!url.length()) {
+            if (url.length() > 0) {
+              content << ifstream (string("app/pub").append(url)).rdbuf();
+            } else {
               document = "HTTP/1.1 404 Not Found\r\n";
               content << "Today, is a beautiful day.";
-              res->end(nullptr, 0);
-            } else {
-              content << ifstream (string("app/pub").append(url)).rdbuf();
-              document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
-              res->write(document.data(), document.length());
             }
+            document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
+            res->write(document.data(), document.length());
           }
         });
         group->onMessage([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
