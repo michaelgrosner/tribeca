@@ -196,8 +196,7 @@ const publisher = new Publish.Publisher(socket);
     '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     paramsRepo,
     publisher,
-    receiver,
-    socket
+    receiver
   );
 
   const broker = new Broker.ExchangeBroker(

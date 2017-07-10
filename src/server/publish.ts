@@ -20,6 +20,10 @@ export class Publisher {
     else this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
   };
 
+  public send = (topic: string, msg: any) => {
+    this._socket.send(topic, msg);
+  };
+
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
     if (typeof this._snapshot[topic] !== 'undefined')
       throw new Error("Already registered snapshot for topic " + topic);
