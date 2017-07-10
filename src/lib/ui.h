@@ -140,7 +140,7 @@ namespace K {
         Isolate *isolate = args.GetIsolate();
         string k = string(*String::Utf8Value(args[0]->ToString()));
         if (session->cb.find(k) != session->cb.end())
-          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use a single message handler for each different topic")));
+          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use only a single unique message handler for each different topic")));
         Persistent<Function> *messageCallback = &session->cb[k];
         messageCallback->Reset(isolate, Local<Function>::Cast(args[1]));
       }
