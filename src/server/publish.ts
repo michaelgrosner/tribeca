@@ -34,7 +34,7 @@ export class Publisher {
 
     this._snapshot[topic] = true;
 
-    this._socket.on(Models.Prefixes.SUBSCRIBE + topic, (_topic, msg) => {
+    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (_topic, msg) => {
       let snap: any[];
       if (topic === Models.Topics.MarketData)
         snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
