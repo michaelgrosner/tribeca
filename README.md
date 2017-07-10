@@ -5,7 +5,7 @@
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K.js`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency cryptocurrency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web client](https://github.com/ctubio/Krypto-trading-bot#web-ui), [backtester](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), and supports direct connectivity to [several cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options). On modern hardware, it can react to market data by placing and canceling orders in under a millisecond.
+[`K.js`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency cryptocurrency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui) and [backtester](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#how-can-i-test-new-trading-strategies), it directly connects to [several cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options). On a decent machine, it reacts to market data by placing and canceling orders in under a millisecond.
 
 [![Build Status](https://img.shields.io/travis/ctubio/Krypto-trading-bot/master.svg?label=test%20build)](https://travis-ci.org/ctubio/Krypto-trading-bot)
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)
@@ -23,6 +23,8 @@
 Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian 8, CentOS 7 or macOS 10.12 instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
+
+The web UI is compatible with most web browsers/devices/resolutions, but Chrome at 1600px is recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
 ### Compatible Exchanges
 

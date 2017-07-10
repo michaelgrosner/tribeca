@@ -116,7 +116,6 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-
 const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
 const config = new Config.ConfigProvider();
