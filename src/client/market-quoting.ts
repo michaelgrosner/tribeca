@@ -232,7 +232,7 @@ export class MarketQuotingComponent implements OnInit {
   private updateQuoteClass = (levels?: any[]) => {
     if (document.body.className != "visible") return;
     if (levels && levels.length > 0) {
-      for (var i = 0; i < levels.length; i++) {
+      for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
         if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').addClass('buy');
         if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').addClass('sell');
