@@ -12,26 +12,22 @@ namespace K {
         o->SetClassName(String::NewFromUtf8(isolate, "DB"));
         NODE_SET_PROTOTYPE_METHOD(o, "load", load);
         NODE_SET_PROTOTYPE_METHOD(o, "insert", insert);
+        NODE_SET_PROTOTYPE_METHOD(o, "size", size);
         sqlite_.Reset(isolate, o->GetFunction());
         exports->Set(String::NewFromUtf8(isolate, "DB"), o->GetFunction());
       }
     protected:
-      sqlite3 *db;
+      sqlite3* db;
+      string fname;
       int exchange;
       int base;
       int quote;
     private:
       explicit DB(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
         Isolate* isolate = Isolate::GetCurrent();
-        if (sqlite3_open(
-          string("/data/db/K.")
-            .append(to_string(exchange))
-            .append(".").append(to_string(base))
-            .append(".").append(to_string(quote))
-            .append(".db").data(),
-          &db
-        )) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
-        cout << "DB " << to_string(exchange) << "." << to_string(base) << "." << to_string(quote) << " loaded OK" << endl;
+        fname = string("/data/db/K.").append(to_string(exchange)).append(".").append(to_string(base)).append(".").append(to_string(quote)).append(".db");
+        if (sqlite3_open(fname.data(), &db)) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
+        cout << "DB " << fname << " loaded OK" << endl;
       }
       ~DB() {
         sqlite3_close(db);
@@ -61,7 +57,7 @@ namespace K {
         string json = "[";
         sqlite3_exec(sqlite->db,
           string("SELECT json FROM ").append(table).append(" ORDER BY time DESC;").data(),
-          DB::callback, (void*)&json, &zErrMsg
+          cb, (void*)&json, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
@@ -71,7 +67,7 @@ namespace K {
         if (array.IsEmpty()) args.GetReturnValue().Set(Array::New(isolate));
         else args.GetReturnValue().Set(array.ToLocalChecked());
       }
-      static int callback(void *param, int argc, char **argv, char **azColName) {
+      static int cb(void *param, int argc, char **argv, char **azColName) {
         string* json = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) json->append(argv[i]).append(",");
         return 0;
@@ -98,6 +94,13 @@ namespace K {
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
+      }
+      static void size(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
+        struct stat st;
+        args.GetReturnValue().Set(Number::New(isolate, stat(sqlite->fname.data(), &st) != 0 ? 0 : st.st_size));
       }
   };
 }
