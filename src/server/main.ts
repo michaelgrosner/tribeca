@@ -189,7 +189,7 @@ const publisher = new Publish.Publisher(new bindings.UI(
   );
 
   publisher.monitor = new Monitor.ApplicationState(
-    '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
+    sqlite,
     paramsRepo,
     publisher,
     bindings.evOn
