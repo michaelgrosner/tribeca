@@ -15,7 +15,7 @@
     "@types/angular": "^1.6.25",
     "@types/highcharts": "^4.2.57",
     "@types/jquery": "^3.2.6",
-    "@types/node": "^8.0.9",
+    "@types/node": "^8.0.10",
     "@types/request": "0.0.45",
     "@types/socket.io-client": "^1.4.29",
     "@types/uws": "^0.13.0",
