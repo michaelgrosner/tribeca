@@ -5,7 +5,6 @@ import url = require("url");
 import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
-import Utils = require("../utils");
 import util = require("util");
 import Interfaces = require("../interfaces");
 
