@@ -1,10 +1,7 @@
 import Models = require("../share/models");
-import Monitor = require("./monitor");
 
 export class Publisher {
   private _lastMarketData: number = new Date().getTime();
-  public monitor: Monitor.ApplicationState;
-  constructor(private _socket) {}
 
   public publish = (topic: string, msg: any, monitor?: boolean) => {
     if (topic === Models.Topics.MarketData) {
@@ -14,13 +11,8 @@ export class Publisher {
       msg = this.compressOSRInc(msg);
     else if (topic === Models.Topics.Position)
       msg = this.compressPositionInc(msg);
-    if (monitor && this.monitor)
-      this.monitor.delay(Models.Prefixes.MESSAGE, topic, msg)
+    if (monitor) this.delay(Models.Prefixes.MESSAGE, topic, msg);
     else this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
-  };
-
-  public send = (topic: string, msg: any) => {
-    this._socket.send(topic, msg);
   };
 
   public registerReceiver = (topic: string, handler : (msg : any) => void) => {
@@ -94,5 +86,81 @@ export class Publisher {
       data.pair.base,
       data.pair.quote
     ], data.time);
+  };
+
+  constructor(
+    private _sqlite,
+    private _socket,
+    private _evOn,
+    private _delayUI
+  ) {
+    this.setTick();
+    this._evOn('QuotingParameters', (qp) => {
+      this._delayUI = qp.delayUI;
+      this.setTick();
+    });
+
+    this.registerSnapshot(Models.Topics.ApplicationState, () => [this._app_state]);
+
+    this.registerSnapshot(Models.Topics.Notepad, () => [this._notepad]);
+
+    this.registerSnapshot(Models.Topics.ToggleConfigs, () => [this._toggleConfigs]);
+
+    this.registerReceiver(Models.Topics.Notepad, (notepad: string) => {
+      this._notepad = notepad;
+    });
+
+    this.registerReceiver(Models.Topics.ToggleConfigs, (toggleConfigs: boolean) => {
+      this._toggleConfigs = toggleConfigs;
+    });
+  }
+
+  private _delayed: any[] = [];
+  private _app_state: Models.ApplicationState;
+  private _notepad: string;
+  private _toggleConfigs: boolean = true;
+  private _newOrderMinute: number = 0;
+  private _tick: number = 0;
+  private _interval = null;
+
+  private onTick = () => {
+    this._tick = 0;
+    this._app_state = new Models.ApplicationState(
+      process.memoryUsage().rss,
+      (new Date()).getHours(),
+      this._newOrderMinute / 2,
+      this._sqlite.size()
+    );
+    this._newOrderMinute = 0;
+    this.publish(Models.Topics.ApplicationState, this._app_state);
+  };
+
+  private onDelay = () => {
+    this._tick += this._delayUI;
+    if (this._tick>=6e1) this.onTick();
+    let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
+    this._delayed = this._delayed.filter(x => x[0]!==Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
+    if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
+    this._delayed.forEach(x => this._socket.send(x[0], x[1]));
+    this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
+  };
+
+  public delay = (prefix: string, topic: string, msg: any) => {
+    const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
+    if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
+    if (!this._delayUI) return this._socket.send(prefix + topic, msg);
+    this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
+    this._delayed.push([prefix+topic, msg]);
+  };
+
+  private setTick = () => {
+    if (this._interval) clearInterval(this._interval);
+    if (this._delayUI<1) this._delayUI = 0;
+    this._delayed = [];
+    this._interval = setInterval(
+      this._delayUI ? this.onDelay : this.onTick,
+      (this._delayUI || 6e1) * 1e3
+    );
+    this.onTick();
   };
 }
