@@ -30,12 +30,13 @@ export class FairValueEngine {
     if (initRfv !== null && initRfv.length)
       this.latestFairValue = new Models.FairValue(initRfv[0].value, initRfv[0].time);
 
-    this._evOn('FilteredMarket', () => this.recalcFairValue(filtration.latestFilteredMarket));
-    this._evOn('QuotingParameters', () => this.recalcFairValue(filtration.latestFilteredMarket));
-    _publisher.registerSnapshot(Models.Topics.FairValue, () => this.latestFairValue ? [this.latestFairValue] : []);
+    this._evOn('FilteredMarket', this.recalcFairValue);
+    this._evOn('QuotingParameters', this.recalcFairValue);
+    _publisher.registerSnapshot(Models.Topics.FairValue, () => [this.latestFairValue]);
   }
 
-  private recalcFairValue = (mkt: Models.Market) => {
+  private recalcFairValue = () => {
+    const mkt: Models.Market = this.filtration.latestFilteredMarket;
     this.latestFairValue = (mkt && mkt.asks.length && mkt.bids.length)
       ? new Models.FairValue(Utils.roundNearest(
           this._qlParamRepo.latest.fvModel == Models.FairValueModel.BBO

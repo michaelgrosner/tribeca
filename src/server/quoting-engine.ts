@@ -52,7 +52,6 @@ export class QuotingEngine {
       private _timeProvider: Utils.ITimeProvider,
       private _fvEngine: FairValue.FairValueEngine,
       private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-      private _orderBroker: Broker.OrderBroker,
       private _positionBroker: Broker.PositionBroker,
       private _minTick: number,
       private _minSize: number,

@@ -39,7 +39,6 @@ export class MarketTradeBroker {
     };
 
     constructor(
-      private _mdGateway: Interfaces.IMarketDataGateway,
       private _publisher: Publish.Publisher,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
