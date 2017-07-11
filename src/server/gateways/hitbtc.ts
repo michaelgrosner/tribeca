@@ -6,7 +6,6 @@ import url = require("url");
 import querystring = require("querystring");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
-import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
 import moment = require("moment");
