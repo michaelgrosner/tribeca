@@ -197,9 +197,7 @@ const publisher = new Publish.Publisher(new bindings.UI(
 
   const broker = new Broker.ExchangeBroker(
     pair,
-    gateway.md,
     gateway.base,
-    gateway.oe,
     publisher,
     bindings.evOn,
     bindings.evUp,
@@ -219,7 +217,6 @@ const publisher = new Publish.Publisher(new bindings.UI(
   );
 
   const marketBroker = new Broker.MarketDataBroker(
-    gateway.md,
     publisher,
     bindings.evOn,
     bindings.evUp
@@ -248,7 +245,6 @@ const publisher = new Publish.Publisher(new bindings.UI(
     broker,
     orderBroker,
     fvEngine,
-    gateway.pg,
     publisher,
     bindings.evOn,
     bindings.evUp
@@ -258,7 +254,6 @@ const publisher = new Publish.Publisher(new bindings.UI(
     timeProvider,
     fvEngine,
     paramsRepo,
-    orderBroker,
     positionBroker,
     broker.minTickIncrement,
     broker.minSize,
@@ -314,7 +309,6 @@ const publisher = new Publish.Publisher(new bindings.UI(
   );
 
   new MarketTrades.MarketTradeBroker(
-    gateway.md,
     publisher,
     marketBroker,
     quotingEngine,

@@ -17,7 +17,6 @@ export class MarketDataBroker {
   };
 
   constructor(
-    private _mdGateway: Interfaces.IMarketDataGateway,
     private _publisher: Publish.Publisher,
     private _evOn,
     private _evUp
@@ -506,7 +505,6 @@ export class PositionBroker {
       private _broker: ExchangeBroker,
       private _orderBroker: OrderBroker,
       private _fvEngine: FairValue.FairValueEngine,
-      private _posGateway : Interfaces.IPositionGateway,
       private _publisher : Publish.Publisher,
       private _evOn,
       private _evUp
@@ -579,9 +577,7 @@ export class ExchangeBroker {
 
     constructor(
       private _pair: Models.CurrencyPair,
-      private _mdGateway: Interfaces.IMarketDataGateway,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
-      private _oeGateway: Interfaces.IOrderEntryGateway,
       private _publisher: Publish.Publisher,
       private _evOn,
       private _evUp,
