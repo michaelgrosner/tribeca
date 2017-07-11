@@ -5,7 +5,8 @@ namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
   Persistent<Function> noop;
-  struct Session { map<string, Persistent<Function>> cb; int size = 0; };
+  struct uiSession { map<string, Persistent<Function>> cb; int size = 0; };
+  enum uiBit: unsigned char { MSG = '-', SNAP = '=' };
   Persistent<Function> socket_;
   class UI: public node::ObjectWrap {
     public:
@@ -15,10 +16,10 @@ namespace K {
         o->InstanceTemplate()->SetInternalFieldCount(1);
         o->SetClassName(String::NewFromUtf8(isolate, "UI"));
         NODE_SET_PROTOTYPE_METHOD(o, "on", on);
-        NODE_SET_PROTOTYPE_METHOD(o, "send", send);
+        NODE_SET_PROTOTYPE_METHOD(o, "up", up);
         socket_.Reset(isolate, o->GetFunction());
         exports->Set(String::NewFromUtf8(isolate, "UI"), o->GetFunction());
-        NODE_SET_METHOD(exports, "setNoop", UI::setNoop);
+        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
       }
     protected:
       int port;
@@ -27,7 +28,7 @@ namespace K {
       string nk64;
       uWS::Group<uWS::SERVER> *group;
     private:
-      static void setNoop(const FunctionCallbackInfo<Value> &args) {
+      static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         noop.Reset(isolate, Local<Function>::Cast(args[0]));
         uv_check_init((uv_loop_t *) hub.getLoop(), &loop);
@@ -42,8 +43,8 @@ namespace K {
       explicit UI(int p_, string n_, string k_): port(p_), name(n_), key(k_) {
         Isolate* isolate = Isolate::GetCurrent();
         group = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        group->setUserData(new Session);
-        Session *session = (Session *) group->getUserData();
+        group->setUserData(new uiSession);
+        uiSession *session = (uiSession *) group->getUserData();
         if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
           B64::Encode(name.append(":").append(key), &nk64);
           nk64 = string("Basic ").append(nk64);
@@ -110,9 +111,10 @@ namespace K {
             JSON Json;
             HandleScope hs(isolate);
             MaybeLocal<Value> v = (length > 2 && (message[2] == '[' || message[2] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, string(message).substr(2, length-2).data())) : String::NewFromUtf8(isolate, length > 2 ? string(message).substr(2, length-2).data() : "");
-            Local<Value> argv[] = {String::NewFromUtf8(isolate, ""), (string(message).substr(2, length-2) == "true" || string(message).substr(2, length-2) == "false") ? (Local<Value>)Boolean::New(isolate, string(message).substr(2, length-2) == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())};
+            Local<Value> argv[] = {String::NewFromUtf8(isolate, string(message).substr(1,1).data()), (string(message).substr(2, length-2) == "true" || string(message).substr(2, length-2) == "false") ? (Local<Value>)Boolean::New(isolate, string(message).substr(2, length-2) == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())};
             Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 2, argv);
-            if (!reply->IsUndefined()) webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+            if (!reply->IsUndefined() && string(1, uiBit::SNAP) == string(message).substr(0,1))
+              webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
           }
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
@@ -136,7 +138,7 @@ namespace K {
       }
       static void on(const FunctionCallbackInfo<Value>& args) {
         UI* ui = ObjectWrap::Unwrap<UI>(args.This());
-        Session *session = (Session *) ui->group->getUserData();
+        uiSession *session = (uiSession *) ui->group->getUserData();
         Isolate *isolate = args.GetIsolate();
         string k = string(*String::Utf8Value(args[0]->ToString()));
         if (session->cb.find(k) != session->cb.end())
@@ -144,14 +146,13 @@ namespace K {
         Persistent<Function> *cb = &session->cb[k];
         cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
-      static void send(const FunctionCallbackInfo<Value>& args) {
+      static void up(const FunctionCallbackInfo<Value>& args) {
         UI* ui = ObjectWrap::Unwrap<UI>(args.This());
         Isolate *isolate = args.GetIsolate();
-        string k = string(*String::Utf8Value(args[0]->ToString()));
         JSON Json;
         MaybeLocal<String> v = args[1]->IsUndefined() ? String::NewFromUtf8(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject());
-        string msg = k.append(*String::Utf8Value(v.ToLocalChecked()));
-        ui->group->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        string m = string(1, uiBit::MSG).append(string(*String::Utf8Value(args[0]->ToString()))).append(*String::Utf8Value(v.ToLocalChecked()));
+        ui->group->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
   };
 }

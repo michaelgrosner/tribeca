@@ -25,8 +25,8 @@ namespace K {
         string k = string(*String::Utf8Value(args[0]->ToString()));
         if (ev.cb.find(k) == ev.cb.end()) return;
         Local<Value> argv[] = {args[1]};
-        for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator it = ev.cb[k].begin(); it != ev.cb[k].end(); ++it)
-          Local<Function>::New(isolate, *it)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+        for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
+          Local<Function>::New(isolate, *cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
       };
   };
 }
