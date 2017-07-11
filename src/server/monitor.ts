@@ -65,11 +65,12 @@ export class ApplicationState {
   constructor(
     private _db: string,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _publisher: Publish.Publisher
+    private _publisher: Publish.Publisher,
+    private _evOn
   ) {
     this.setDelay();
     this.setTick();
-    _qlParamRepo.NewParameters.on(() => {
+    this._evOn('QuotingParameters', () => {
       this.setDelay();
       this.setTick();
     });

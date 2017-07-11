@@ -8,8 +8,6 @@ import QuotingParameters = require("./quoting-parameters");
 import Broker = require("./broker");
 
 export class TargetBasePositionManager {
-  public NewTargetPosition = new Utils.Evt();
-
   public sideAPR: string;
 
   private newWidth: Models.IStdev = null;
@@ -42,6 +40,8 @@ export class TargetBasePositionManager {
     private _params: QuotingParameters.QuotingParametersRepository,
     private _positionBroker: Broker.PositionBroker,
     private _publisher: Publish.Publisher,
+    private _evOn,
+    private _evUp,
     initTBP: Models.TargetBasePositionValue
   ) {
     if (initTBP) this._latest = initTBP;
@@ -56,8 +56,8 @@ export class TargetBasePositionManager {
       this.fairValue?Utils.roundNearest(this.fairValue, this._minTick):null,
       this._timeProvider.utcNow()
     ):null]);
-    _params.NewParameters.on(() => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
-    _positionBroker.NewReport.on(this.recomputeTargetPosition);
+    this._evOn('PositionBroker', this.recomputeTargetPosition);
+    this._evOn('QuotingParameters', () => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
     this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(1, 'minutes'));
   }
 
@@ -74,7 +74,7 @@ export class TargetBasePositionManager {
 
     if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
       this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, this._timeProvider.utcNow());
-      this.NewTargetPosition.trigger();
+      this._evUp('TargetPosition');
       this._publisher.publish(Models.Topics.TargetBasePosition, this._latest, true);
       this._sqlite.insert(Models.Topics.TargetBasePosition, this._latest);
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.data);

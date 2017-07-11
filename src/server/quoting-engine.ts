@@ -34,8 +34,6 @@ const quotesChanged = (o: Models.TwoSidedQuote, n: Models.TwoSidedQuote, tick: n
 }
 
 export class QuotingEngine {
-    public QuoteChanged = new Utils.Evt<Models.TwoSidedQuote>();
-
     private _latest: Models.TwoSidedQuote = null;
     public latestQuoteAskStatus: Models.QuoteStatus;
     public latestQuoteBidStatus: Models.QuoteStatus;
@@ -45,7 +43,7 @@ export class QuotingEngine {
             return;
 
         this._latest = val;
-        this.QuoteChanged.trigger();
+        this._evUp('Quote');
     }
 
     private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
@@ -61,21 +59,23 @@ export class QuotingEngine {
       private _ewma: Statistics.EWMAProtectionCalculator,
       private _stdev: Statistics.STDEVProtectionCalculator,
       private _targetPosition: PositionManagement.TargetBasePositionManager,
-      private _safeties: Safety.SafetyCalculator
+      private _safeties: Safety.SafetyCalculator,
+      private _evOn,
+      private _evUp
     ) {
       this._safeties.targetPosition = this._targetPosition;
       this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
 
-      _fvEngine.filtration.FilteredMarketChanged.on(this.recalcQuote);
-      _qlParamRepo.NewParameters.on(this.recalcQuote);
-      _orderBroker.Trade.on(this.recalcQuote);
-      _ewma.Updated.on(() => {
+      this._evOn('EWMAProtectionCalculator', () => {
         this.recalcQuote();
         _targetPosition.quoteEwma = _ewma.latest;
         _targetPosition.widthStdev = _stdev.latest;
       });
-      _targetPosition.NewTargetPosition.on(this.recalcQuote);
-      _safeties.NewValue.on(this.recalcQuote);
+      this._evOn('FilteredMarket', this.recalcQuote);
+      this._evOn('QuotingParameters', this.recalcQuote);
+      this._evOn('OrderTradeBroker', this.recalcQuote);
+      this._evOn('TargetPosition', this.recalcQuote);
+      this._evOn('Safety', this.recalcQuote);
 
       _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
     }

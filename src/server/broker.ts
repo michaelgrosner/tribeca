@@ -7,24 +7,25 @@ import FairValue = require("./fair-value");
 import moment = require("moment");
 
 export class MarketDataBroker {
-  MarketData = new Utils.Evt<Models.Market>();
   public get currentBook(): Models.Market { return this._currentBook; }
 
   private _currentBook: Models.Market = null;
   private handleMarketData = (book: Models.Market) => {
       this._currentBook = book;
-      this.MarketData.trigger(this.currentBook);
+      this._evUp('MarketDataBroker');
       this._publisher.publish(Models.Topics.MarketData, this.currentBook, true);
   };
 
   constructor(
     private _mdGateway: Interfaces.IMarketDataGateway,
-    private _publisher: Publish.Publisher
+    private _publisher: Publish.Publisher,
+    private _evOn,
+    private _evUp
   ) {
     _publisher.registerSnapshot(Models.Topics.MarketData, () => this.currentBook === null ? []: [this.currentBook]);
 
-    this._mdGateway.MarketData.on(this.handleMarketData);
-    this._mdGateway.ConnectChanged.on(s => {
+    this._evOn('MarketDataGateway', this.handleMarketData);
+    this._evOn('GatewayMarketConnect', s => {
       if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
     });
   }
@@ -111,10 +112,8 @@ export class OrderBroker {
       }
     }
 
-    OrderUpdate = new Utils.Evt<Models.OrderStatusReport>();
     private _cancelsWaitingForExchangeOrderId: {[clId : string]: Models.OrderCancel} = {};
 
-    Trade = new Utils.Evt<Models.Trade>();
     tradesMemory : Models.Trade[] = [];
 
     sendOrder = (order : Models.SubmitNewOrder) => {
@@ -292,7 +291,7 @@ export class OrderBroker {
           }
         }
 
-        this.OrderUpdate.trigger(o);
+        this._evUp('OrderUpdateBroker', o);
         this._publisher.publish(Models.Topics.OrderStatusReports, o, true);
 
         if (osr.lastQuantity > 0) {
@@ -309,7 +308,7 @@ export class OrderBroker {
 
             const trade = new Models.Trade(this._timeProvider.utcNow().getTime().toString(), o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
-            this.Trade.trigger(trade);
+            this._evUp('OrderTradeBroker', trade);
             if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
               var widthPong = (this._qlParamRepo.latest.widthPercentage)
                   ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
@@ -380,6 +379,8 @@ export class OrderBroker {
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _sqlite,
       private _publisher : Publish.Publisher,
+      private _evOn,
+      private _evUp,
       initTrades : Models.Trade[]
     ) {
         this.tradesMemory = initTrades;
@@ -420,13 +421,11 @@ export class OrderBroker {
         _publisher.registerReceiver(Models.Topics.CleanAllOrders, () => this.cleanOrders());
         _publisher.registerReceiver(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
 
-        _oeGateway.OrderUpdate.on(this.updateOrderState);
+        this._evOn('OrderUpdateGateway', this.updateOrderState);
     }
 }
 
 export class PositionBroker {
-    public NewReport = new Utils.Evt<Models.PositionReport>();
-
     private _lastPositions: any[] = [];
     private _report : Models.PositionReport = null;
     public get latestReport() : Models.PositionReport {
@@ -476,7 +475,7 @@ export class PositionBroker {
         }
 
         this._report = positionReport;
-        if (!sameValue) this.NewReport.trigger();
+        if (!sameValue) this._evUp('PositionBroker');
         this._publisher.publish(Models.Topics.Position, positionReport, true);
     };
 
@@ -501,16 +500,20 @@ export class PositionBroker {
         ));
     };
 
-    constructor(private _timeProvider: Utils.ITimeProvider,
-                private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-                private _broker: ExchangeBroker,
-                private _orderBroker: OrderBroker,
-                private _fvEngine: FairValue.FairValueEngine,
-                private _posGateway : Interfaces.IPositionGateway,
-                private _publisher : Publish.Publisher) {
-        _posGateway.PositionUpdate.on(this.onPositionUpdate);
-        _orderBroker.OrderUpdate.on(this.handleOrderUpdate);
-        _fvEngine.FairValueChanged.on(() => this.onPositionUpdate(null));
+    constructor(
+      private _timeProvider: Utils.ITimeProvider,
+      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _broker: ExchangeBroker,
+      private _orderBroker: OrderBroker,
+      private _fvEngine: FairValue.FairValueEngine,
+      private _posGateway : Interfaces.IPositionGateway,
+      private _publisher : Publish.Publisher,
+      private _evOn,
+      private _evUp
+    ) {
+        this._evOn('PositionGateway', this.onPositionUpdate);
+        this._evOn('OrderUpdateBroker', this.handleOrderUpdate);
+        this._evOn('FairValue', () => this.onPositionUpdate(null));
 
         _publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
     }
@@ -545,7 +548,6 @@ export class ExchangeBroker {
         return this._baseGateway.minSize;
     }
 
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private mdConnected = Models.ConnectivityStatus.Disconnected;
     private oeConnected = Models.ConnectivityStatus.Disconnected;
     private _connectStatus = Models.ConnectivityStatus.Disconnected;
@@ -565,7 +567,7 @@ export class ExchangeBroker {
             : Models.ConnectivityStatus.Disconnected;
 
         this._connectStatus = newStatus;
-        this.ConnectChanged.trigger(newStatus);
+        this._evUp('ExchangeConnect');
 
         this.updateConnectivity();
         this._publisher.publish(Models.Topics.ExchangeConnectivity, this.connectStatus);
@@ -581,15 +583,17 @@ export class ExchangeBroker {
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _oeGateway: Interfaces.IOrderEntryGateway,
       private _publisher: Publish.Publisher,
+      private _evOn,
+      private _evUp,
       startQuoting: boolean
     ) {
       this._savedQuotingMode = startQuoting;
 
-      _mdGateway.ConnectChanged.on(s => {
+      this._evOn('GatewayMarketConnect', s => {
         this.onConnect(Models.GatewayType.MarketData, s);
       });
 
-      _oeGateway.ConnectChanged.on(s => {
+      this._evOn('GatewayOrderConnect', s => {
         this.onConnect(Models.GatewayType.OrderEntry, s)
       });
 
@@ -619,7 +623,7 @@ export class ExchangeBroker {
     if (v !== this._savedQuotingMode) {
       this._savedQuotingMode = v;
       this.updateConnectivity();
-      this.ConnectChanged.trigger(this._connectStatus);
+      this._evUp('ExchangeConnect');
     }
 
     this._publisher.publish(Models.Topics.ActiveState, this._latestState);

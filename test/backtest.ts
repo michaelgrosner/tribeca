@@ -1,3 +1,14 @@
+const packageConfig = require("./../package.json");
+
+const bindings = ((K) => { try {
+  console.log(K.join('.'));
+  return require('./../app/server/lib/'+K.join('.'));
+} catch (e) {
+  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
+    throw new Error('K requires Node.js v7.0.0 or greater.');
+  else throw new Error(e);
+}})([packageConfig.name[0], process.platform, process.versions.modules]);
+
 import assert = require("assert");
 import Backtest = require("../src/server/backtest");
 import Interfaces = require("../src/server/interfaces");
@@ -100,9 +111,9 @@ describe("BacktestGatewayTests", () => {
         ];
 
         var timeProvider = new Backtest.BacktestTimeProvider(moment.unix(1), moment.unix(40));
-        var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider);
+        var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider, bindings.evOn, bindings.evUp);
 
-        gateway.MarketData.on(m => {
+        bindings.evOn('MarketDataGateway', m => {
             gateway.sendOrder(<Models.OrderStatusReport>{
                 orderId: "A",
                 side: Models.Side.Ask,
@@ -116,7 +127,7 @@ describe("BacktestGatewayTests", () => {
         });
 
         var gotTrade = false;
-        gateway.OrderUpdate.on(o => {
+        bindings.evOn('OrderUpdateGateway', o => {
             if (o.orderStatus === Models.OrderStatus.Complete) {
                 gotTrade = true;
                 assert.equal(12, o.lastPrice);
@@ -124,7 +135,7 @@ describe("BacktestGatewayTests", () => {
             }
         });
 
-        // gateway.PositionUpdate.on(p => {
+        // bindings.evOn('PositionGateway', p => {
             // console.log(Models.Currency[p.currency], p.amount, p.heldAmount);
         // });
 

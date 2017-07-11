@@ -1,40 +1,6 @@
 import Models = require("../share/models");
 import moment = require('moment');
 
-// typesafe event raiser
-type EvtCallback<T> = (data?: T) => void;
-export class Evt<T> {
-    private _singleCallback : EvtCallback<T> = null;
-    private _multiCallback = new Array<EvtCallback<T>>();
-
-    public on = (handler: EvtCallback<T>) => {
-        if (this._singleCallback) {
-            this._multiCallback = [this._singleCallback, handler];
-            this._singleCallback = null;
-        } else if (this._multiCallback.length > 0)
-          this._multiCallback.push(handler);
-        else this._singleCallback = handler;
-    };
-
-    // public off = (handler: EvtCallback<T>) => {
-        // if (this._multiCallback.length > 0)
-          // for(let i = this._multiCallback.length; i--;)
-            // if (this._multiCallback[i] === handler)
-              // this._multiCallback.splice(i, 1);
-        // if (this._singleCallback === handler)
-            // this._singleCallback = null;
-    // };
-
-    public trigger = (data?: T) => {
-        if (this._singleCallback !== null)
-            this._singleCallback(data);
-        else {
-            for(let i = this._multiCallback.length; i--;)
-                this._multiCallback[i](data);
-        }
-    };
-}
-
 export function roundSide(x: number, minTick: number, side: Models.Side) {
     switch (side) {
         case Models.Side.Bid: return roundDown(x, minTick);

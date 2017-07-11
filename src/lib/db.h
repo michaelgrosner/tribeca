@@ -1,19 +1,19 @@
-#ifndef K_SQLITE_H_
-#define K_SQLITE_H_
+#ifndef K_DB_H_
+#define K_DB_H_
 
 namespace K {
   Persistent<Function> sqlite_;
-  class SQLite: public node::ObjectWrap {
+  class DB: public node::ObjectWrap {
     public:
       static void main(Local<Object> exports) {
         Isolate* isolate = exports->GetIsolate();
         Local<FunctionTemplate> o = FunctionTemplate::New(isolate, NEw);
         o->InstanceTemplate()->SetInternalFieldCount(1);
-        o->SetClassName(String::NewFromUtf8(isolate, "SQLite"));
+        o->SetClassName(String::NewFromUtf8(isolate, "DB"));
         NODE_SET_PROTOTYPE_METHOD(o, "load", load);
         NODE_SET_PROTOTYPE_METHOD(o, "insert", insert);
         sqlite_.Reset(isolate, o->GetFunction());
-        exports->Set(String::NewFromUtf8(isolate, "SQLite"), o->GetFunction());
+        exports->Set(String::NewFromUtf8(isolate, "DB"), o->GetFunction());
       }
     protected:
       sqlite3 *db;
@@ -21,7 +21,7 @@ namespace K {
       int base;
       int quote;
     private:
-      explicit SQLite(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
+      explicit DB(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
         Isolate* isolate = Isolate::GetCurrent();
         if (sqlite3_open(
           string("/data/db/K.")
@@ -33,7 +33,7 @@ namespace K {
         )) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
         cout << "DB " << to_string(exchange) << "." << to_string(base) << "." << to_string(quote) << " loaded OK" << endl;
       }
-      ~SQLite() {
+      ~DB() {
         sqlite3_close(db);
       }
       static void NEw(const FunctionCallbackInfo<Value>& args) {
@@ -41,14 +41,14 @@ namespace K {
         HandleScope scope(isolate);
         if (!args.IsConstructCall())
           return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new SQLite objects")));
-        SQLite* sqlite = new SQLite(args[0]->NumberValue(), args[1]->NumberValue(), args[2]->NumberValue());
+        DB* sqlite = new DB(args[0]->NumberValue(), args[1]->NumberValue(), args[2]->NumberValue());
         sqlite->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
       }
       static void load(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        SQLite* sqlite = ObjectWrap::Unwrap<SQLite>(args.This());
+        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
         char* zErrMsg = 0;
         std::string table = string(*String::Utf8Value(args[0]->ToString()));
         sqlite3_exec(sqlite->db,
@@ -61,7 +61,7 @@ namespace K {
         string json = "[";
         sqlite3_exec(sqlite->db,
           string("SELECT json FROM ").append(table).append(" ORDER BY time DESC;").data(),
-          SQLite::callback, (void*)&json, &zErrMsg
+          DB::callback, (void*)&json, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
@@ -79,7 +79,7 @@ namespace K {
       static void insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        SQLite* sqlite = ObjectWrap::Unwrap<SQLite>(args.This());
+        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
         char* zErrMsg = 0;
         string table = string(*String::Utf8Value(args[0]->ToString()));
         JSON Json;

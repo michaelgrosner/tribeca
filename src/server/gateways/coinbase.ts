@@ -67,15 +67,11 @@ interface Product {
 }
 
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
-    MarketData = new Utils.Evt<Models.Market>();
-    MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
     private onMessage = (data: CoinbaseOrder) => {
       if (data.type == 'match' || data.type == 'open') {
           this.onOrderBookChanged(data.side === "buy" ? Models.Side.Bid : Models.Side.Ask, parseFloat(data.price));
           if (data.type == 'match') {
-            this.MarketTrade.trigger(new Models.GatewayMarketTrade(
+            this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
               parseFloat(data.price),
               parseFloat(data.size),
               new Date(),
@@ -116,16 +112,16 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onStateChange = () => {
-        this.ConnectChanged.trigger(this._client.socket ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected);
+        this._evUp('GatewayMarketConnect', this._client.socket ? Models.ConnectivityStatus.Connected : Models.ConnectivityStatus.Disconnected);
         this.raiseMarketData();
     };
 
     private reevalPublicBook = async () => {
       return await new Promise<boolean>((resolve, reject) => {
         this._authClient.getProductOrderBook({level:2}, this._client.productID, (err, res, data) => {
-            if (err) this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
+            if (err) this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Disconnected);
             else {
-              this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+              this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected);
               this._cachedBids = [];
               this._cachedAsks = [];
               data.bids.slice(0,13).forEach(x => this._cachedBids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
@@ -142,10 +138,11 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
           this.reevalBook();
         else this.reevalPublicBook();
         if (this._cachedBids.length && this._cachedAsks.length)
-            this.MarketData.trigger(new Models.Market(this._cachedBids, this._cachedAsks, new Date()));
+            this._evUp('MarketDataGateway', new Models.Market(this._cachedBids, this._cachedAsks, new Date()));
     };
 
     constructor(
+      private _evUp,
       private _client: Gdax.OrderbookSync,
       private _authClient: Gdax.AuthenticatedClient
     ) {
@@ -156,14 +153,12 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
-
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         this._authClient.cancelAllOrders((err, resp, data) => {
             data.forEach(cxl_id => {
-                this.OrderUpdate.trigger({
+                this._evUp('OrderUpdateGateway', {
                     exchangeId: cxl_id,
                     time: new Date(),
                     orderStatus: Models.OrderStatus.Cancelled,
@@ -191,7 +186,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 if (ack.error) msg = ack.error;
             }
             if (msg !== null) {
-                this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+                this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                     orderId: cancel.orderId,
                     rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Cancelled,
@@ -244,7 +239,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             }
 
             if (msg !== null) {
-              this.OrderUpdate.trigger({
+              this._evUp('OrderUpdateGateway', {
                   orderId: order.orderId,
                   rejectMessage: msg,
                   orderStatus: Models.OrderStatus.Cancelled,
@@ -285,7 +280,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         else if (order.side === Models.Side.Ask)
             this._authClient.sell(o, cb);
 
-        this.OrderUpdate.trigger({
+        this._evUp('OrderUpdateGateway', {
             orderId: order.orderId,
             computationalLatency: (new Date()).getTime() - order.time.getTime()
         });
@@ -328,7 +323,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
 
         this._FIXClient.send(o, () => {
-          this.OrderUpdate.trigger({
+          this._evUp('OrderUpdateGateway', {
               orderId: order.orderId,
               computationalLatency: (new Date()).getTime() - order.time.getTime()
           });
@@ -337,15 +332,13 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     public cancelsByClientOrderId = false;
 
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
     private onStateChange = () => {
       let state = Models.ConnectivityStatus.Disconnected;
       if (this._FIXHeader) {
         if (this._FIXClient.isLoggedOn()) state = Models.ConnectivityStatus.Connected;
         console.log(new Date().toISOString().slice(11, -1), 'coinbase', 'FIX Logon', Models.ConnectivityStatus[state])
       } else if (this._client.socket) state = Models.ConnectivityStatus.Connected;
-      this.ConnectChanged.trigger(state);
+      this._evUp('GatewayOrderConnect', state);
     };
 
     private onMessage = (data: CoinbaseOrder) => {
@@ -382,7 +375,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             lastPrice: parseFloat(data.price),
             liquidity: Models.Liquidity.Make
         };
-        this.OrderUpdate.trigger(status);
+        this._evUp('OrderUpdateGateway', status);
         status.exchangeId = data.taker_order_id;
         status.liquidity = Models.Liquidity.Take;
       } else if (data.type == 'done') {
@@ -396,7 +389,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
       }
 
-      this.OrderUpdate.trigger(status);
+      this._evUp('OrderUpdateGateway', status);
     };
 
     private onFIXMessage = (tags) => {
@@ -438,7 +431,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
       }
 
-      this.OrderUpdate.trigger(status);
+      this._evUp('OrderUpdateGateway', status);
     };
 
     private _fixedPrecision: number = 0;
@@ -446,6 +439,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _FIXHeader:any = null;
 
     constructor(
+        private _evUp,
         config: Config.ConfigProvider,
         minTick: number,
         private _client: Gdax.OrderbookSync,
@@ -520,13 +514,11 @@ ResetOnLogon=Y`
 }
 
 class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
     private onTick = () => {
         this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
             try {
               if (Array.isArray(data)) {
-                    data.forEach(d => this.PositionUpdate.trigger(new Models.CurrencyPosition(
+                    data.forEach(d => this._evUp('PositionGateway', new Models.CurrencyPosition(
                       parseFloat(d.available),
                       parseFloat(d.hold),
                       Models.toCurrency(d.currency)
@@ -540,7 +532,9 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     };
 
     constructor(
-        private _authClient: Gdax.AuthenticatedClient) {
+      private _evUp,
+      private _authClient: Gdax.AuthenticatedClient
+    ) {
         setInterval(this.onTick, 7500);
         this.onTick();
     }
@@ -584,21 +578,23 @@ class Coinbase extends Interfaces.CombinedGateway {
       config: Config.ConfigProvider,
       symbolProvider: CoinbaseSymbolProvider,
       quoteIncrement: number,
-      minSize: number
+      minSize: number,
+      _evOn,
+      _evUp
     ) {
         const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
 
         super(
-            new CoinbaseMarketDataGateway(orderEventEmitter, authClient),
+            new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient),
             config.GetString("CoinbaseOrderDestination") == "Coinbase"
-              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
-              : new NullGateway.NullOrderGateway(),
-            new CoinbasePositionGateway(authClient),
+              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
+              : new NullGateway.NullOrderGateway(_evUp),
+            new CoinbasePositionGateway(_evUp, authClient),
             new CoinbaseBaseGateway(quoteIncrement, minSize));
     }
 };
 
-export async function createCoinbase(config: Config.ConfigProvider, pair: Models.CurrencyPair): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
       config.GetString("CoinbaseApiKey"),
       config.GetString("CoinbaseSecret"),
@@ -620,7 +616,7 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
 
     for (let p of products) {
         if (p.id === symbolProvider.symbol)
-            return new Coinbase(authClient, config, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size));
+            return new Coinbase(authClient, config, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size), _evOn, _evUp);
     }
 
     throw new Error("Unable to match pair to a coinbase symbol " + pair.toString());

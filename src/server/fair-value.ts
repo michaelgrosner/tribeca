@@ -6,8 +6,6 @@ import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 
 export class FairValueEngine {
-  public FairValueChanged = new Utils.Evt<Models.FairValue>();
-
   private _latest: Models.FairValue = null;
   public get latestFairValue() { return this._latest; }
   public set latestFairValue(val: Models.FairValue) {
@@ -15,7 +13,7 @@ export class FairValueEngine {
       && Math.abs(this._latest.price - val.price) < this._minTick) return;
 
     this._latest = val;
-    this.FairValueChanged.trigger();
+    this._evUp('FairValue');
     this._publisher.publish(Models.Topics.FairValue, this._latest, true);
   }
 
@@ -25,13 +23,15 @@ export class FairValueEngine {
     private _timeProvider: Utils.ITimeProvider,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
     private _publisher: Publish.Publisher,
+    private _evOn,
+    private _evUp,
     initRfv: Models.RegularFairValue[]
   ) {
     if (initRfv !== null && initRfv.length)
       this.latestFairValue = new Models.FairValue(initRfv[0].value, initRfv[0].time);
 
-    filtration.FilteredMarketChanged.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
-    _qlParamRepo.NewParameters.on(() => this.recalcFairValue(filtration.latestFilteredMarket));
+    this._evOn('FilteredMarket', () => this.recalcFairValue(filtration.latestFilteredMarket));
+    this._evOn('QuotingParameters', () => this.recalcFairValue(filtration.latestFilteredMarket));
     _publisher.registerSnapshot(Models.Topics.FairValue, () => this.latestFairValue ? [this.latestFairValue] : []);
   }
 
