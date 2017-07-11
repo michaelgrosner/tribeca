@@ -11,12 +11,14 @@ export class Publisher {
       msg = this.compressOSRInc(msg);
     else if (topic === Models.Topics.Position)
       msg = this.compressPositionInc(msg);
-    if (monitor) this.delay(Models.Prefixes.MESSAGE, topic, msg);
+    if (monitor) this.delay(topic, msg);
     else this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
   };
 
   public registerReceiver = (topic: string, handler : (msg : any) => void) => {
-    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => { handler(msg); });
+    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => {
+      handler(msg);
+    });
   };
 
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
@@ -138,19 +140,19 @@ export class Publisher {
   private onDelay = () => {
     this._tick += this._delayUI;
     if (this._tick>=6e1) this.onTick();
-    let orders: any[] = this._delayed.filter(x => x[0]===Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
-    this._delayed = this._delayed.filter(x => x[0]!==Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports);
-    if (orders.length) this._delayed.push([Models.Prefixes.MESSAGE+Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
-    this._delayed.forEach(x => this._socket.send(x[0], x[1]));
+    let orders: any[] = this._delayed.filter(x => x[0]===Models.Topics.OrderStatusReports);
+    this._delayed = this._delayed.filter(x => x[0]!==Models.Topics.OrderStatusReports);
+    if (orders.length) this._delayed.push([Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
+    this._delayed.forEach(x => this._socket.send(Models.Prefixes.MESSAGE + x[0], x[1]));
     this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
   };
 
-  public delay = (prefix: string, topic: string, msg: any) => {
+  private delay = (topic: string, msg: any) => {
     const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
-    if (!this._delayUI) return this._socket.send(prefix + topic, msg);
-    this._delayed = this._delayed.filter(x => x[0] !== prefix+topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
-    this._delayed.push([prefix+topic, msg]);
+    if (!this._delayUI) return this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
+    this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
+    this._delayed.push([topic, msg]);
   };
 
   private setTick = () => {
