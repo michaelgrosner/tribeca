@@ -24,7 +24,6 @@ import HitBtc = require("./gateways/hitbtc");
 import Utils = require("./utils");
 import Config = require("./config");
 import Broker = require("./broker");
-import Monitor = require("./monitor");
 import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
 import Publish = require("./publish");
@@ -151,11 +150,16 @@ const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-const publisher = new Publish.Publisher(new bindings.UI(
-  config.GetString("WebClientListenPort"),
-  config.GetString("WebClientUsername"),
-  config.GetString("WebClientPassword")
-));
+const publisher = new Publish.Publisher(
+  sqlite,
+  new bindings.UI(
+    config.GetString("WebClientListenPort"),
+    config.GetString("WebClientUsername"),
+    config.GetString("WebClientPassword")
+  ),
+  bindings.evOn,
+  initParams.delayUI
+);
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
@@ -186,13 +190,6 @@ const publisher = new Publish.Publisher(new bindings.UI(
     publisher,
     bindings.evUp,
     initParams
-  );
-
-  publisher.monitor = new Monitor.ApplicationState(
-    sqlite,
-    paramsRepo,
-    publisher,
-    bindings.evOn
   );
 
   const broker = new Broker.ExchangeBroker(

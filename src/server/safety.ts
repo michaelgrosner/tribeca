@@ -34,23 +34,22 @@ export class SafetyCalculator {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fvEngine: FairValue.FairValueEngine,
-      private _qlParams: QuotingParameters.QuotingParametersRepository,
+      private _qpRepo: QuotingParameters.QuotingParametersRepository,
       private _positionBroker: Broker.PositionBroker,
       private _orderBroker: Broker.OrderBroker,
       private _publisher: Publish.Publisher,
       private _evOn,
       private _evUp
-
     ) {
       _publisher.registerSnapshot(Models.Topics.TradeSafetyValue, () => [this.latest]);
-      this._evOn('QuotingParameters', this.computeQtyLimit);
       this._evOn('OrderTradeBroker', this.onTrade);
 
+      this._evOn('QuotingParameters', this.computeQtyLimit);
       _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
 
     private onTrade = (ut: Models.Trade) => {
-        if (this.isOlderThan(ut.time, this._qlParams.latest)) return;
+        if (this.isOlderThan(ut.time)) return;
 
         this[ut.side === Models.Side.Ask ? '_sells' : '_buys'].push(<ITrade>{
           price: ut.price,
@@ -61,14 +60,14 @@ export class SafetyCalculator {
         this.computeQtyLimit();
     };
 
-    private isOlderThan(time: Date, settings: Models.QuotingParameters) {
-        return Math.abs(this._timeProvider.utcNow().valueOf() - time.valueOf()) > settings.tradeRateSeconds * 1000;
+    private isOlderThan(time: Date) {
+        return Math.abs(this._timeProvider.utcNow().valueOf() - time.valueOf()) > this._qpRepo.latest.tradeRateSeconds * 1000;
     }
 
     private computeQtyLimit = () => {
         var fv = this._fvEngine.latestFairValue;
         if (!fv || !this.targetPosition.latestTargetPosition || !this._positionBroker.latestReport) return;
-        const settings = this._qlParams.latest;
+        const settings = this._qpRepo.latest;
         const latestPosition = this._positionBroker.latestReport;
         let buySize: number  = (settings.percentageValues && latestPosition != null)
             ? settings.buySizePercentage * latestPosition.value / 100
@@ -137,9 +136,9 @@ export class SafetyCalculator {
         if (buyPq) buyPing /= buyPq;
         if (sellPq) sellPong /= sellPq;
 
-        this._buys = this._buys.filter(o => !this.isOlderThan(o.time, settings))
+        this._buys = this._buys.filter(o => !this.isOlderThan(o.time))
           .sort(function(a,b){return a.price>b.price?-1:(a.price<b.price?1:0)});
-        this._sells = this._sells.filter(o => !this.isOlderThan(o.time, settings))
+        this._sells = this._sells.filter(o => !this.isOlderThan(o.time))
           .sort(function(a,b){return a.price>b.price?1:(a.price<b.price?-1:0)});
 
         // don't count good trades against safety

@@ -28,7 +28,7 @@ export class QuotingParametersRepository {
 
       this._latest = p;
       this._sqlite.insert(Models.Topics.QuotingParametersChange, p);
-      this._evUp('QuotingParameters');
+      this._evUp('QuotingParameters', p);
     }
 
     this._publisher.publish(Models.Topics.QuotingParametersChange, this._latest);
