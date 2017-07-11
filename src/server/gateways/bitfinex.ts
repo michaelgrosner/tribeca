@@ -127,19 +127,18 @@ class BitfinexWebsocket {
 
     private connectWS = (config: Config.ConfigProvider) => {
         this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
-        this._ws.on("open", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected));
+        this._ws.on("open", () => this._evUp('GatewaySocketConnect', Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
         this._ws.on("error", (x) => console.error(new Date().toISOString().slice(11, -1), 'bitfinex', 'WS ERROR', x));
-        this._ws.on("close", () => this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected));
+        this._ws.on("close", () => this._evUp('GatewaySocketConnect', Models.ConnectivityStatus.Disconnected));
     };
 
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private _serializedHeartping = JSON.stringify({event: "ping"});
     private _serializedHeartbeat = JSON.stringify({event: "pong"});
     private _stillAlive: boolean = true;
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(config : Config.ConfigProvider) {
+    constructor(private _evUp, config: Config.ConfigProvider) {
         this.connectWS(config);
         setInterval(() => {
           if (!this._stillAlive) {
@@ -153,9 +152,6 @@ class BitfinexWebsocket {
 }
 
 class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
-    MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private onTrade = (trades: Models.Timestamped<any[]>) => {
         trades.data.forEach(trade => {
             if (trade=='tu') return;
@@ -164,11 +160,9 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
             var time = trades.time;
             var side = trade[2] > 0 ? Models.Side.Bid : Models.Side.Ask;
             var mt = new Models.GatewayMarketTrade(px, sz, time, false, side);
-            this.MarketTrade.trigger(mt);
+            this._evUp('MarketTradeGateway', mt);
         });
     };
-
-    MarketData = new Utils.Evt<Models.Market>();
 
     private mkt = new Models.Market([], [], null);
 
@@ -184,19 +178,22 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         let _bids = this.mkt.bids.slice(0, 13);
         let _asks = this.mkt.asks.slice(0, 13);
         if (_bids.length && _asks.length)
-          this.MarketData.trigger(new Models.Market(_bids, _asks, depth.time));
+          this._evUp('MarketDataGateway', new Models.Market(_bids, _asks, depth.time));
     };
 
     constructor(
-        private _socket: BitfinexWebsocket,
-        private _symbolProvider: BitfinexSymbolProvider) {
+      private _evOn,
+      private _evUp,
+      private _socket: BitfinexWebsocket,
+      private _symbolProvider: BitfinexSymbolProvider
+    ) {
         var depthChannel = "book";
         var tradesChannel = "trades";
         _socket.setHandler(depthChannel, this.onDepth);
         _socket.setHandler(tradesChannel, this.onTrade);
 
-        _socket.ConnectChanged.on(cs => {
-            this.ConnectChanged.trigger(cs);
+        this._evOn('GatewaySocketConnect', cs => {
+            this._evUp('GatewayMarketConnect', cs);
 
             if (cs == Models.ConnectivityStatus.Connected) {
                 _socket.send(depthChannel, {
@@ -213,9 +210,6 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
       return new Promise<number>((resolve, reject) => {
@@ -228,7 +222,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                         .then(resp => {
                             if (typeof resp.data.message !== "undefined")
                                 return;
-                            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+                            this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                                 exchangeId: t.id,
                                 leavesQuantity: 0,
                                 time: resp.time,
@@ -255,7 +249,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             type: encodeTimeInForce(order.timeInForce, order.type),
             postonly: +order.preferPostOnly
         }, () => {
-            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+            this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: order.orderId,
                 computationalLatency: new Date().valueOf() - order.time.valueOf()
             });
@@ -264,7 +258,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onOrderAck = (orders: any[], time: Date) => {
         orders.forEach(order => {
-            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+            this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: order[2],
               time: time,
               exchangeId: order[0],
@@ -283,7 +277,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._socket.send("oc", {
             id: cancel.exchangeId
         }, () => {
-            this.OrderUpdate.trigger(<Models.OrderStatusUpdate>{
+            this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: cancel.orderId,
                 leavesQuantity: 0,
                 time: cancel.time,
@@ -308,20 +302,22 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     constructor(
+        private _evOn,
+        private _evUp,
         private _details: BitfinexBaseGateway,
         private _http: BitfinexHttp,
         private _socket: BitfinexWebsocket,
         private _signer: BitfinexMessageSigner,
         private _symbolProvider: BitfinexSymbolProvider) {
-        _http.ConnectChanged.on(s => this.ConnectChanged.trigger(s));
+        this._evOn('GatewayRESTConnect', s => this._evUp('GatewayOrderConnect', s));
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
           if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], new Date());
         });
 
-        _socket.ConnectChanged.on(cs => {
-            this.ConnectChanged.trigger(cs);
+        this._evOn('GatewaySocketConnect', cs => {
+            this._evUp('GatewayOrderConnect', cs);
 
             if (cs === Models.ConnectivityStatus.Connected) {
                 _socket.send("auth", _signer.signMessage({filter: ['trading']}));
@@ -375,8 +371,6 @@ class BitfinexMessageSigner {
 }
 
 class BitfinexHttp {
-    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-
     private _timeout = 15000;
 
     get = <T>(actionUrl: string, qs?: any): Promise<Models.Timestamped<T>> => {
@@ -456,14 +450,14 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
 
-    constructor(config: Config.ConfigProvider) {
+    constructor(private _evUp, config: Config.ConfigProvider) {
         this._baseUrl = config.GetString("BitfinexHttpUrl");
         this._apiKey = config.GetString("BitfinexKey");
         this._secret = config.GetString("BitfinexSecret");
 
         this._nonce = new Date().valueOf();
         console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Starting nonce:', this._nonce);
-        setTimeout(() => this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected), 10);
+        setTimeout(() => this._evUp('GatewayRESTConnect', Models.ConnectivityStatus.Connected), 10);
     }
 }
 
@@ -475,18 +469,16 @@ interface BitfinexPositionResponseItem {
 }
 
 class BitfinexPositionGateway implements Interfaces.IPositionGateway {
-    PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
-
     private onRefreshPositions = () => {
         this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
             res.data.filter(x => x.type === "exchange").forEach(p => {
                 var amt = parseFloat(p.available);
-                this.PositionUpdate.trigger(new Models.CurrencyPosition(amt, parseFloat(p.amount) - amt, Models.toCurrency(p.currency)));
+                this._evUp('PositionGateway', new Models.CurrencyPosition(amt, parseFloat(p.amount) - amt, Models.toCurrency(p.currency)));
             });
         });
     }
 
-    constructor(private _http: BitfinexHttp) {
+    constructor(private _evUp, private _http: BitfinexHttp) {
         setInterval(this.onRefreshPositions, 15000);
         this.onRefreshPositions();
     }
@@ -525,20 +517,27 @@ class BitfinexSymbolProvider {
 }
 
 class Bitfinex extends Interfaces.CombinedGateway {
-    constructor(config: Config.ConfigProvider, symbol: BitfinexSymbolProvider, pricePrecision: number, minSize: number) {
-        const http = new BitfinexHttp(config);
+    constructor(
+      config: Config.ConfigProvider,
+      symbol: BitfinexSymbolProvider,
+      pricePrecision: number,
+      minSize: number,
+      _evOn,
+      _evUp
+    ) {
+        const http = new BitfinexHttp(_evUp, config);
         const signer = new BitfinexMessageSigner(config);
-        const socket = new BitfinexWebsocket(config);
+        const socket = new BitfinexWebsocket(_evUp, config);
         const details = new BitfinexBaseGateway(pricePrecision, minSize);
 
         const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(details, http, socket, signer, symbol)
-            : new NullGateway.NullOrderGateway();
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, details, http, socket, signer, symbol)
+            : new NullGateway.NullOrderGateway(_evUp);
 
         super(
-            new BitfinexMarketDataGateway(socket, symbol),
+            new BitfinexMarketDataGateway(_evOn, _evUp, socket, symbol),
             orderGateway,
-            new BitfinexPositionGateway(http),
+            new BitfinexPositionGateway(_evUp, http),
             details);
     }
 }
@@ -563,7 +562,7 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(config: Config.ConfigProvider, pair: Models.CurrencyPair) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);
@@ -573,7 +572,7 @@ export async function createBitfinex(config: Config.ConfigProvider, pair: Models
             const tickerUrl = config.GetString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
             const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            return new Bitfinex(config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size));
+            return new Bitfinex(config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size), _evOn, _evUp);
         }
     }
 }

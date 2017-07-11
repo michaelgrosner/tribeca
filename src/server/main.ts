@@ -143,7 +143,7 @@ for (const param in defaultQuotingParameters)
   if (config.GetDefaultString(param) !== null)
     defaultQuotingParameters[param] = config.GetDefaultString(param);
 
-const sqlite = new bindings.SQLite(exchange, pair.base, pair.quote);
+const sqlite = new bindings.DB(exchange, pair.base, pair.quote);
 
 const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
 const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
@@ -160,13 +160,13 @@ const publisher = new Publish.Publisher(new bindings.UI(
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (exchange) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair);
-      case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(config, pair, bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + exchange);
     }
   })();
@@ -184,13 +184,15 @@ const publisher = new Publish.Publisher(new bindings.UI(
   const paramsRepo = new QuotingParameters.QuotingParametersRepository(
     sqlite,
     publisher,
+    bindings.evUp,
     initParams
   );
 
   publisher.monitor = new Monitor.ApplicationState(
     '/data/db/K.'+exchange+'.'+pair.base+'.'+pair.quote+'.db',
     paramsRepo,
-    publisher
+    publisher,
+    bindings.evOn
   );
 
   const broker = new Broker.ExchangeBroker(
@@ -199,6 +201,8 @@ const publisher = new Publish.Publisher(new bindings.UI(
     gateway.base,
     gateway.oe,
     publisher,
+    bindings.evOn,
+    bindings.evUp,
     config.GetString("BotIdentifier").indexOf('auto')>-1
   );
 
@@ -209,24 +213,32 @@ const publisher = new Publish.Publisher(new bindings.UI(
     gateway.oe,
     sqlite,
     publisher,
+    bindings.evOn,
+    bindings.evUp,
     initTrades
   );
 
   const marketBroker = new Broker.MarketDataBroker(
     gateway.md,
-    publisher
+    publisher,
+    bindings.evOn,
+    bindings.evUp
   );
 
   const fvEngine = new FairValue.FairValueEngine(
     new MarketFiltration.MarketFiltration(
       broker.minTickIncrement,
       orderBroker,
-      marketBroker
+      marketBroker,
+      bindings.evOn,
+      bindings.evUp
     ),
     broker.minTickIncrement,
     timeProvider,
     paramsRepo,
     publisher,
+    bindings.evOn,
+    bindings.evUp,
     initRfv
   );
 
@@ -237,7 +249,9 @@ const publisher = new Publish.Publisher(new bindings.UI(
     orderBroker,
     fvEngine,
     gateway.pg,
-    publisher
+    publisher,
+    bindings.evOn,
+    bindings.evUp
   );
 
   const quotingEngine = new QuotingEngine.QuotingEngine(
@@ -248,7 +262,12 @@ const publisher = new Publish.Publisher(new bindings.UI(
     positionBroker,
     broker.minTickIncrement,
     broker.minSize,
-    new Statistics.EWMAProtectionCalculator(timeProvider, fvEngine, paramsRepo),
+    new Statistics.EWMAProtectionCalculator(
+      timeProvider,
+      fvEngine,
+      paramsRepo,
+      bindings.evUp
+    ),
     new Statistics.STDEVProtectionCalculator(
       timeProvider,
       fvEngine,
@@ -266,6 +285,8 @@ const publisher = new Publish.Publisher(new bindings.UI(
       paramsRepo,
       positionBroker,
       publisher,
+      bindings.evOn,
+      bindings.evUp,
       initTBP
     ),
     new Safety.SafetyCalculator(
@@ -274,8 +295,12 @@ const publisher = new Publish.Publisher(new bindings.UI(
       paramsRepo,
       positionBroker,
       orderBroker,
-      publisher
-    )
+      publisher,
+      bindings.evOn,
+      bindings.evUp
+    ),
+    bindings.evOn,
+    bindings.evUp
   );
 
   new QuoteSender.QuoteSender(
@@ -284,7 +309,8 @@ const publisher = new Publish.Publisher(new bindings.UI(
     broker,
     orderBroker,
     paramsRepo,
-    publisher
+    publisher,
+    bindings.evOn
   );
 
   new MarketTrades.MarketTradeBroker(
@@ -292,7 +318,9 @@ const publisher = new Publish.Publisher(new bindings.UI(
     publisher,
     marketBroker,
     quotingEngine,
-    broker
+    broker,
+    bindings.evOn,
+    bindings.evUp
   );
 
   happyEnding = () => {

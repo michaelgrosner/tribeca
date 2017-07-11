@@ -1,23 +1,23 @@
 import Models = require("../share/models");
-import Utils = require("./utils");
 import Broker = require("./broker");
 
 export class MarketFiltration {
   private _latest: Models.Market = null;
-  public FilteredMarketChanged = new Utils.Evt<Models.Market>();
 
   public get latestFilteredMarket() { return this._latest; }
   public set latestFilteredMarket(val: Models.Market) {
     this._latest = val;
-    this.FilteredMarketChanged.trigger();
+    this._evUp('FilteredMarket');
   }
 
   constructor(
       private _minTick: number,
       private _orderBroker: Broker.OrderBroker,
-      private _marketBroker: Broker.MarketDataBroker
+      private _marketBroker: Broker.MarketDataBroker,
+      private _evOn,
+      private _evUp
   ) {
-    _marketBroker.MarketData.on(this.filterFullMarket);
+    this._evOn('MarketDataBroker', this.filterFullMarket);
   }
 
   private filterFullMarket = () => {

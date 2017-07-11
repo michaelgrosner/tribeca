@@ -1,14 +1,11 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
-import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import QuotingEngine = require("./quoting-engine");
 import * as moment from "moment";
 
 export class MarketTradeBroker {
-    // TOOD: is this event needed? (nobody listens to MarketTrade yet)
-    MarketTrade = new Utils.Evt<Models.MarketTrade>();
     public get marketTrades() { return this._marketTrades; }
 
     private _marketTrades: Models.MarketTrade[] = [];
@@ -34,11 +31,10 @@ export class MarketTradeBroker {
             }
         }
 
-        while (this.marketTrades.length >= 50)
-            this.marketTrades.shift();
+        while (this.marketTrades.length >= 50) this.marketTrades.shift();
         this.marketTrades.push(t);
 
-        this.MarketTrade.trigger(t);
+        this._evUp('MarketTrade');
         this._publisher.publish(Models.Topics.MarketTrade, t);
     };
 
@@ -47,9 +43,11 @@ export class MarketTradeBroker {
       private _publisher: Publish.Publisher,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
-      private _base: Broker.ExchangeBroker
+      private _base: Broker.ExchangeBroker,
+      private _evOn,
+      private _evUp
     ) {
       _publisher.registerSnapshot(Models.Topics.MarketTrade, () => this.marketTrades.slice(-69));
-      this._mdGateway.MarketTrade.on(this.handleNewMarketTrade);
+      this._evOn('MarketTradeGateway', this.handleNewMarketTrade);
     }
 }

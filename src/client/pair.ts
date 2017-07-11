@@ -42,8 +42,10 @@ class FormViewModel<T> {
 }
 
 class QuotingButtonViewModel extends FormViewModel<boolean> {
-  constructor(sub: Subscribe.ISubscribe<boolean>,
-    fire: Subscribe.IFire<boolean>) {
+  constructor(
+    sub: Subscribe.ISubscribe<boolean>,
+    fire: Subscribe.IFire<boolean>
+  ) {
     super(false, sub, fire, d => !d);
   }
 

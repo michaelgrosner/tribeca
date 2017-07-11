@@ -78,7 +78,8 @@ export class EWMAProtectionCalculator {
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _fv: FairValue.FairValueEngine,
-    private _qlParamRepo: QuotingParameters.QuotingParametersRepository
+    private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+    private _evUp
   ) {
     _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
   }
@@ -97,11 +98,9 @@ export class EWMAProtectionCalculator {
   private setLatest = (v: number) => {
     if (Math.abs(v - this._latest) > 1e-3) {
       this._latest = v;
-      this.Updated.trigger();
+      this._evUp('EWMAProtectionCalculator');
     }
   };
-
-  Updated = new Utils.Evt<any>();
 }
 
 export class STDEVProtectionCalculator {

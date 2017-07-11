@@ -15,12 +15,13 @@ export class QuoteSender {
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
     private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
-    private _publisher: Publish.Publisher
+    private _publisher: Publish.Publisher,
+    private _evOn
   ) {
     this._exchange = _broker.exchange();
 
-    _broker.ConnectChanged.on(this.sendQuote);
-    _quotingEngine.QuoteChanged.on(this.sendQuote);
+    this._evOn('Quote', this.sendQuote);
+    this._evOn('ExchangeConnect', this.sendQuote);
     _publisher.registerSnapshot(Models.Topics.QuoteStatus, () => [this._latestStatus]);
   }
 

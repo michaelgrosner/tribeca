@@ -141,12 +141,11 @@ namespace K {
         string k = string(*String::Utf8Value(args[0]->ToString()));
         if (session->cb.find(k) != session->cb.end())
           return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use only a single unique message handler for each different topic")));
-        Persistent<Function> *messageCallback = &session->cb[k];
-        messageCallback->Reset(isolate, Local<Function>::Cast(args[1]));
+        Persistent<Function> *cb = &session->cb[k];
+        cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
       static void send(const FunctionCallbackInfo<Value>& args) {
         UI* ui = ObjectWrap::Unwrap<UI>(args.This());
-        Session *session = (Session *) ui->group->getUserData();
         Isolate *isolate = args.GetIsolate();
         string k = string(*String::Utf8Value(args[0]->ToString()));
         JSON Json;

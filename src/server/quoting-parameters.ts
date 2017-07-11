@@ -1,10 +1,7 @@
 import Models = require("../share/models");
 import Publish = require("./publish");
-import Utils = require("./utils");
 
 export class QuotingParametersRepository {
-  NewParameters = new Utils.Evt();
-
   private _latest: Models.QuotingParameters;
   public get latest(): Models.QuotingParameters {
     return this._latest;
@@ -13,6 +10,7 @@ export class QuotingParametersRepository {
   constructor(
     private _sqlite,
     private _publisher: Publish.Publisher,
+    private _evUp,
     initParams: Models.QuotingParameters
   ) {
     if (_publisher) {
@@ -30,7 +28,7 @@ export class QuotingParametersRepository {
 
       this._latest = p;
       this._sqlite.insert(Models.Topics.QuotingParametersChange, p);
-      this.NewParameters.trigger();
+      this._evUp('QuotingParameters');
     }
 
     this._publisher.publish(Models.Topics.QuotingParametersChange, this._latest);

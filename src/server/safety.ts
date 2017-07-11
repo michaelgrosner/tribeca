@@ -14,8 +14,6 @@ interface ITrade {
 }
 
 export class SafetyCalculator {
-    NewValue = new Utils.Evt();
-
     private _latest: Models.TradeSafety = null;
     public get latest() { return this._latest; }
     public set latest(val: Models.TradeSafety) {
@@ -23,7 +21,7 @@ export class SafetyCalculator {
           || Math.abs(val.buyPing - this._latest.buyPing) >= 1e-2
           || Math.abs(val.sellPong - this._latest.sellPong) >= 1e-2) {
             this._latest = val;
-            this.NewValue.trigger(this.latest);
+            this._evUp('Safety');
             this._publisher.publish(Models.Topics.TradeSafetyValue, this.latest, true);
         }
     }
@@ -39,11 +37,14 @@ export class SafetyCalculator {
       private _qlParams: QuotingParameters.QuotingParametersRepository,
       private _positionBroker: Broker.PositionBroker,
       private _orderBroker: Broker.OrderBroker,
-      private _publisher: Publish.Publisher
+      private _publisher: Publish.Publisher,
+      private _evOn,
+      private _evUp
+
     ) {
       _publisher.registerSnapshot(Models.Topics.TradeSafetyValue, () => [this.latest]);
-      _qlParams.NewParameters.on(this.computeQtyLimit);
-      _orderBroker.Trade.on(this.onTrade);
+      this._evOn('QuotingParameters', this.computeQtyLimit);
+      this._evOn('OrderTradeBroker', this.onTrade);
 
       _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
