@@ -12,7 +12,7 @@ export class Publisher {
     else if (topic === Models.Topics.Position)
       msg = this.compressPositionInc(msg);
     if (monitor) this.delay(topic, msg);
-    else this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
+    else this._socket.up(topic, msg);
   };
 
   public registerReceiver = (topic: string, handler : (msg : any) => void) => {
@@ -22,7 +22,7 @@ export class Publisher {
   };
 
   public registerSnapshot = (topic: string, snapshot: () => any[]) => {
-    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (_topic, msg) => {
+    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (topic, msg) => {
       let snap: any[];
       if (topic === Models.Topics.MarketData)
         snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
@@ -143,14 +143,14 @@ export class Publisher {
     let orders: any[] = this._delayed.filter(x => x[0]===Models.Topics.OrderStatusReports);
     this._delayed = this._delayed.filter(x => x[0]!==Models.Topics.OrderStatusReports);
     if (orders.length) this._delayed.push([Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
-    this._delayed.forEach(x => this._socket.send(Models.Prefixes.MESSAGE + x[0], x[1]));
+    this._delayed.forEach(x => this._socket.up(x[0], x[1]));
     this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
   };
 
   private delay = (topic: string, msg: any) => {
     const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
     if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
-    if (!this._delayUI) return this._socket.send(Models.Prefixes.MESSAGE + topic, msg);
+    if (!this._delayUI) return this._socket.up(topic, msg);
     this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
     this._delayed.push([topic, msg]);
   };

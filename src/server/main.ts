@@ -9,7 +9,7 @@ const bindings = ((K) => { try {
     throw new Error('K requires Node.js v7.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
-bindings.setNoop(noop);
+bindings.uiLoop(noop);
 
 require('events').EventEmitter.prototype._maxListeners = 30;
 import request = require('request');
