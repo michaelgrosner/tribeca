@@ -2,6 +2,8 @@
 #define K_DB_H_
 
 namespace K {
+  sqlite3* db;
+  string dbFname;
   Persistent<Function> sqlite_;
   class DB: public node::ObjectWrap {
     public:
@@ -12,22 +14,20 @@ namespace K {
         o->SetClassName(String::NewFromUtf8(isolate, "DB"));
         NODE_SET_PROTOTYPE_METHOD(o, "load", load);
         NODE_SET_PROTOTYPE_METHOD(o, "insert", insert);
-        NODE_SET_PROTOTYPE_METHOD(o, "size", size);
         sqlite_.Reset(isolate, o->GetFunction());
         exports->Set(String::NewFromUtf8(isolate, "DB"), o->GetFunction());
+        NODE_SET_METHOD(exports, "dbSize", DB::_dbSize);
       }
     protected:
-      sqlite3* db;
-      string fname;
       int exchange;
       int base;
       int quote;
     private:
       explicit DB(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
         Isolate* isolate = Isolate::GetCurrent();
-        fname = string("/data/db/K.").append(to_string(exchange)).append(".").append(to_string(base)).append(".").append(to_string(quote)).append(".db");
-        if (sqlite3_open(fname.data(), &db)) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
-        cout << "DB " << fname << " loaded OK" << endl;
+        dbFname = string("/data/db/K.").append(to_string(exchange)).append(".").append(to_string(base)).append(".").append(to_string(quote)).append(".db");
+        if (sqlite3_open(dbFname.data(), &db)) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
+        cout << "DB " << dbFname << " loaded OK" << endl;
       }
       ~DB() {
         sqlite3_close(db);
@@ -44,10 +44,9 @@ namespace K {
       static void load(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
         char* zErrMsg = 0;
         std::string table = string(*String::Utf8Value(args[0]->ToString()));
-        sqlite3_exec(sqlite->db,
+        sqlite3_exec(db,
           string("CREATE TABLE ").append(table).append("("                                                        \
             "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL,"                                          \
             "json  BLOB                                       NOT NULL,"                                          \
@@ -55,7 +54,7 @@ namespace K {
           NULL, NULL, &zErrMsg
         );
         string json = "[";
-        sqlite3_exec(sqlite->db,
+        sqlite3_exec(db,
           string("SELECT json FROM ").append(table).append(" ORDER BY time DESC;").data(),
           cb, (void*)&json, &zErrMsg
         );
@@ -75,7 +74,6 @@ namespace K {
       static void insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
         char* zErrMsg = 0;
         string table = string(*String::Utf8Value(args[0]->ToString()));
         JSON Json;
@@ -83,7 +81,7 @@ namespace K {
         bool rm = args[2]->IsUndefined() ? true : args[2]->BooleanValue();
         string id = string(args[3]->IsUndefined() ? "NULL" : *String::Utf8Value(args[3]->ToString()));
         long time = args[4]->IsUndefined() ? 0 : args[4]->NumberValue();
-        sqlite3_exec(sqlite->db,
+        sqlite3_exec(db,
           string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(table)
           .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
             time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
@@ -95,12 +93,15 @@ namespace K {
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
       }
-      static void size(const FunctionCallbackInfo<Value>& args) {
+      static void _dbSize(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        DB* sqlite = ObjectWrap::Unwrap<DB>(args.This());
         struct stat st;
-        args.GetReturnValue().Set(Number::New(isolate, stat(sqlite->fname.data(), &st) != 0 ? 0 : st.st_size));
+        args.GetReturnValue().Set(Number::New(isolate, dbSize()));
+      }
+      static size_t dbSize() {
+        struct stat st;
+        return stat(dbFname.data(), &st) != 0 ? 0 : st.st_size;
       }
   };
 }

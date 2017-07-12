@@ -151,14 +151,15 @@ const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, 
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
 const publisher = new Publish.Publisher(
-  sqlite,
+  bindings.dbSize,
   new bindings.UI(
     config.GetString("WebClientListenPort"),
     config.GetString("WebClientUsername"),
     config.GetString("WebClientPassword")
   ),
   bindings.evOn,
-  initParams.delayUI
+  initParams.delayUI,
+  bindings.uiHandler
 );
 
 (async (): Promise<void> => {
