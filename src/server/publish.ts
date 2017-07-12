@@ -15,14 +15,8 @@ export class Publisher {
     else this._socket.up(topic, msg);
   };
 
-  public registerReceiver = (topic: string, handler : (msg : any) => void) => {
-    this._socket.on(Models.Prefixes.MESSAGE + topic, (topic, msg) => {
-      handler(msg);
-    });
-  };
-
-  public registerSnapshot = (topic: string, snapshot: () => any[]) => {
-    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (topic, msg) => {
+  public registerSnapshot = (topic, snapshot) => {
+    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (topic) => {
       let snap: any[];
       if (topic === Models.Topics.MarketData)
         snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
@@ -91,10 +85,11 @@ export class Publisher {
   };
 
   constructor(
-    private _sqlite,
+    private _dbSize,
     private _socket,
     private _evOn,
-    private _delayUI
+    private _delayUI,
+    public registerReceiver
   ) {
     this.setTick();
     this._evOn('QuotingParameters', (qp) => {
@@ -131,7 +126,7 @@ export class Publisher {
       process.memoryUsage().rss,
       (new Date()).getHours(),
       this._newOrderMinute / 2,
-      this._sqlite.size()
+      this._dbSize()
     );
     this._newOrderMinute = 0;
     this.publish(Models.Topics.ApplicationState, this._app_state);
