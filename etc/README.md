@@ -44,7 +44,7 @@ You must end up with a customized `etc/K.json` file, see all option details bell
     - DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT
     - NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD
     - SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT
-    - EOS
+    - EOS, SAN
 
   * WebClientUsername and WebClientPassword - Username and password for [web UI](https://github.com/ctubio/Krypto-trading-bot#web-ui) access. If kept as `NULL`, the web client will not require authentication (not recommended)
 
