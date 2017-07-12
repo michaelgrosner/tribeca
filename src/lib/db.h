@@ -3,7 +3,7 @@
 
 namespace K {
   sqlite3* db;
-  string dbFname;
+  string dbFpath;
   Persistent<Function> sqlite_;
   class DB: public node::ObjectWrap {
     public:
@@ -25,9 +25,9 @@ namespace K {
     private:
       explicit DB(int e_, int b_, int q_): exchange(e_), base(b_), quote(q_) {
         Isolate* isolate = Isolate::GetCurrent();
-        dbFname = string("/data/db/K.").append(to_string(exchange)).append(".").append(to_string(base)).append(".").append(to_string(quote)).append(".db");
-        if (sqlite3_open(dbFname.data(), &db)) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
-        cout << "DB " << dbFname << " loaded OK" << endl;
+        dbFpath = string("/data/db/K.").append(to_string(exchange)).append(".").append(to_string(base)).append(".").append(to_string(quote)).append(".db");
+        if (sqlite3_open(dbFpath.data(), &db)) isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, sqlite3_errmsg(db))));
+        cout << "DB " << dbFpath << " loaded OK" << endl;
       }
       ~DB() {
         sqlite3_close(db);
@@ -101,7 +101,7 @@ namespace K {
       }
       static size_t dbSize() {
         struct stat st;
-        return stat(dbFname.data(), &st) != 0 ? 0 : st.st_size;
+        return stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
       }
   };
 }
