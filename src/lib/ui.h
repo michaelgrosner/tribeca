@@ -23,6 +23,7 @@ namespace K {
         exports->Set(String::NewFromUtf8(isolate, "UI"), o->GetFunction());
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         NODE_SET_METHOD(exports, "uiHandler", UI::uiHandler);
+        // NODE_SET_METHOD(exports, "uiSnap", UI::uiSnap);
       }
     protected:
       int port;
@@ -125,10 +126,16 @@ namespace K {
         ui->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
       }
+      static void uiSnap(const FunctionCallbackInfo<Value>& args) {
+        uiOn(args, uiBIT::SNAP);
+      }
       static void uiHandler(const FunctionCallbackInfo<Value>& args) {
+        uiOn(args, uiBIT::MSG);
+      }
+      static void uiOn(const FunctionCallbackInfo<Value>& args, char k_) {
         uiSession *session = (uiSession *) uiGroup->getUserData();
         Isolate *isolate = args.GetIsolate();
-        string k = string(1, uiBIT::MSG).append(*String::Utf8Value(args[0]->ToString()));
+        string k = string(1, k_).append(*String::Utf8Value(args[0]->ToString()));
         if (session->cb.find(k) != session->cb.end())
           return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use only a single unique message handler for each different topic")));
         Persistent<Function> *cb = &session->cb[k];
