@@ -130,16 +130,17 @@ namespace K {
         args.GetReturnValue().Set(args.This());
       }
       static Local<Object> shrinkSnap(Isolate* isolate, char k, Local<Object> snap) {
-        if (k == uiTXT::MarketData) {
+        if (k == uiTXT::OrderStatusReports) return shrinkHand(isolate, k, snap);
+        else if (k == uiTXT::MarketData) {
           MaybeLocal<Array> maybe_props = snap->GetOwnPropertyNames(Context::New(isolate));
           if (!maybe_props.IsEmpty()) {
-            Local<Array> snap_ = Array::New(isolate);
             Local<Array> props = maybe_props.ToLocalChecked();
+            Local<Array> snap_ = Array::New(isolate);
             for(uint32_t i=0; i < props->Length(); i++)
               snap_->Set(0, shrinkHand(isolate, k, snap->Get(props->Get(i))->ToObject()));
-            snap = snap_->ToObject();
+            return snap_->ToObject();
           }
-        } else if (k == uiTXT::OrderStatusReports) snap = shrinkHand(isolate, k, snap);
+        }
         return snap;
       }
       static Local<Object> shrinkHand(Isolate* isolate, char k, Local<Object> snap) {
@@ -152,19 +153,23 @@ namespace K {
             Local<Array> props = maybe_props.ToLocalChecked();
             for(uint32_t i=0; i < props->Length(); i++) {
               Local<Object> lvl = snap->Get(props->Get(i))->ToObject();
-              int lvls = 0;
-              int side = string(*String::Utf8Value(props->Get(i)->ToString())) == "bids" ? 0 : 1;
               MaybeLocal<Array> maybe_props = lvl->GetOwnPropertyNames(Context::New(isolate));
-              Local<Array> props = maybe_props.ToLocalChecked();
-              if (!maybe_props.IsEmpty()) for(uint32_t i=0; i < props->Length(); i++) {
-                Local<Object> px = lvl->Get(props->Get(i))->ToObject();
-                MaybeLocal<Array> maybe_props = px->GetOwnPropertyNames(Context::New(isolate));
+              if (!maybe_props.IsEmpty()) {
+                int lvls = 0;
+                int side = string(*String::Utf8Value(props->Get(i)->ToString())) == "bids" ? 0 : 1;
                 Local<Array> props = maybe_props.ToLocalChecked();
-                if (!maybe_props.IsEmpty()) for(uint32_t i=0; i < props->Length(); i++)
-                  snap_->Get(side)->ToObject()->Set(lvls++, px->Get(props->Get(i))->ToNumber());
+                for(uint32_t i=0; i < props->Length(); i++) {
+                  Local<Object> px = lvl->Get(props->Get(i))->ToObject();
+                  MaybeLocal<Array> maybe_props = px->GetOwnPropertyNames(Context::New(isolate));
+                  if (!maybe_props.IsEmpty()) {
+                    Local<Array> props = maybe_props.ToLocalChecked();
+                    for(uint32_t i=0; i < props->Length(); i++)
+                      snap_->Get(side)->ToObject()->Set(lvls++, px->Get(props->Get(i))->ToNumber());
+                  }
+                }
               }
             }
-            snap = snap_->ToObject();
+            return snap_->ToObject();
           }
         } else if (k == uiTXT::OrderStatusReports) {
           MaybeLocal<Array> maybe_props = snap->GetOwnPropertyNames(Context::New(isolate));
@@ -194,7 +199,7 @@ namespace K {
                 }
               }
             }
-            snap = snap_->ToObject();
+            return snap_->ToObject();
           }
         }
         return snap;
