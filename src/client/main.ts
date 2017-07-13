@@ -80,7 +80,7 @@ class DisplayOrder {
             <div>
                 <div style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div class="row" [hidden]="!showConfigs">
-                        <div class="col-md-10 col-xs-12">
+                        <div class="col-md-12 col-xs-12">
                             <div class="row">
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
@@ -416,9 +416,6 @@ class DisplayOrder {
                                 </table>
                             </div>
                         </div>
-                        <div class="col-md-2 col-xs-12">
-                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:153px;width: 100%;max-width: 100%;"></textarea>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
@@ -525,7 +522,8 @@ class DisplayOrder {
                           </div>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                            <market-trades [product]="product"></market-trades>
+                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:69px;width: 100%;max-width: 100%;"></textarea>
+                          <market-trades [product]="product"></market-trades>
                         </div>
                       </div>
                 </div>
