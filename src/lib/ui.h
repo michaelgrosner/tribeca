@@ -24,8 +24,9 @@ namespace K {
         socket_.Reset(isolate, o->GetFunction());
         exports->Set(String::NewFromUtf8(isolate, "UI"), o->GetFunction());
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
-        NODE_SET_METHOD(exports, "uiHand", UI::uiHand);
         NODE_SET_METHOD(exports, "uiSnap", UI::uiSnap);
+        NODE_SET_METHOD(exports, "uiHand", UI::uiHand);
+        // NODE_SET_METHOD(exports, "uiSend", UI::uiSend);
       }
     protected:
       int port;
@@ -103,7 +104,7 @@ namespace K {
             HandleScope hs(isolate);
             string m = string(message).substr(2, length-2);
             MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, m.data())) : String::NewFromUtf8(isolate, length > 2 ? m.data() : "");
-            Local<Value> argv[] = {uiBIT::SNAP == message[0] ? (Local<Value>)String::NewFromUtf8(isolate, /*message[1]*/string(message).substr(1,1).data()) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
+            Local<Value> argv[] = {uiBIT::SNAP == message[0] ? (Local<Value>)String::NewFromUtf8(isolate, string(message).substr(1,1).data()) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
             Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
             if (!reply->IsUndefined() && uiBIT::SNAP == message[0])
               webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap(isolate, message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
@@ -225,6 +226,10 @@ namespace K {
         string m = string(1, uiBIT::MSG).append(k).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
+      // static void uiSend(const FunctionCallbackInfo<Value> &args) {
+        // if (monitor) this.delay(topic, msg);
+        // else this._socket.up(topic, msg);
+      // }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         noop.Reset(isolate, Local<Function>::Cast(args[0]));
