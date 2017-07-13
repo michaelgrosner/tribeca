@@ -17,7 +17,7 @@ import {SubscriberFactory} from './shared_directives';
 })
 export class StatsComponent implements OnInit {
 
-  public positionData: number[] = [];
+  public positionData: Models.PositionReport;
   public targetBasePosition: number;
   public fairValue: number;
   public width: number;
@@ -484,19 +484,19 @@ export class StatsComponent implements OnInit {
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
       if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
-    if (this.positionData.length) {
-      Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData[5],Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
-      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData[4],Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+    if (this.positionData) {
+      Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData.quoteValue,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.value,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
       if (this.targetBasePosition) {
-        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData[4]-this.targetBasePosition)*this.positionData[5]/this.positionData[4]], false);
+        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.value-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.value], false);
         Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
       }
-      Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData[5]], false);
-      Highcharts.charts[this.quoteChart].series[2].addPoint([time, this.positionData[1]], false);
-      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData[3]], this.showStats);
-      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData[4]], false);
-      Highcharts.charts[this.baseChart].series[2].addPoint([time, this.positionData[0]], false);
-      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData[2]], this.showStats);
+      Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quoteValue], false);
+      Highcharts.charts[this.quoteChart].series[2].addPoint([time, this.positionData.quoteAmount], false);
+      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
+      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.value], false);
+      Highcharts.charts[this.baseChart].series[2].addPoint([time, this.positionData.baseAmount], false);
+      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
     }
   }
 
@@ -515,9 +515,9 @@ export class StatsComponent implements OnInit {
     if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
   }
 
-  private updateMarket = (update: Models.Timestamped<any[]>) => {
-    if (update && update.data[0].length && update.data[1].length)
-      this.width = (update.data[1][0] - update.data[0][0]) / 2;
+  private updateMarket = (update: any[]) => {
+    if (update && update[0].length && update[1].length)
+      this.width = (update[1][0] - update[0][0]) / 2;
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {
@@ -540,11 +540,11 @@ export class StatsComponent implements OnInit {
     this.targetBasePosition = value.data;
   }
 
-  private updatePosition = (o: Models.Timestamped<any[]>) => {
+  private updatePosition = (o: Models.PositionReport) => {
     let time = new Date().getTime();
-    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = Models.Currency[o.data[8]];
-    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = Models.Currency[o.data[9]];
-    this.positionData = o.data;
+    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = Models.Currency[o.pair.base];
+    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = Models.Currency[o.pair.quote];
+    this.positionData = o;
   }
 
   private removeOldPoints = (time: number) => {

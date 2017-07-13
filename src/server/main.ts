@@ -159,7 +159,8 @@ const publisher = new Publish.Publisher(
   ),
   bindings.evOn,
   initParams.delayUI,
-  bindings.uiHandler
+  bindings.uiSnap,
+  bindings.uiHand
 );
 
 (async (): Promise<void> => {

@@ -390,7 +390,10 @@ export class OrderBroker {
         _publisher.registerSnapshot(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
         _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
           let orderCache = [];
-          this.orderCache.allOrders.forEach(x => { if (x.orderStatus === Models.OrderStatus.Working) orderCache.push(x); });
+          this.orderCache.allOrders.forEach(x => {
+            if (x.orderStatus === Models.OrderStatus.Working)
+              orderCache.push(x);
+          });
           return orderCache;
         });
 
