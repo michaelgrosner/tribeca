@@ -403,15 +403,15 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.audio">
                                             </td>
-                                            <td style="border-bottom: 3px solid #A0A0A0;">
-                                                <input class="btn btn-default btn col-md-1 col-xs-6"
+                                            <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
+                                                <input class="btn btn-default btn"
                                                     style="width:55px"
                                                     type="button"
                                                     (click)="pair.quotingParameters.reset()"
                                                     value="Reset" />
                                             </td>
-                                            <td style="border-bottom: 3px solid #A0A0A0;">
-                                                <input class="btn btn-default btn col-md-1 col-xs-6"
+                                            <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
+                                                <input class="btn btn-default btn"
                                                     style="width:50px"
                                                     type="submit"
                                                     [disabled]="!pair.quotingParameters.connected"
