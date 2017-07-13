@@ -141,14 +141,14 @@ export class DisplayPair {
         
         this._subscribers.push(connectivitySubscriber);
 
-        const activeSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.ActiveChange);
+        const activeSub = subscriberFactory.getSubscriber<boolean>(scope, Messaging.Topics.ActiveChange);
         this.active = new QuotingButtonViewModel(
             activeSub,
             fireFactory.getFire(Messaging.Topics.ActiveChange)
             );
         this._subscribers.push(activeSub);
 
-        const qpSub = subscriberFactory.getSubscriber(scope, Messaging.Topics.QuotingParametersChange);
+        const qpSub = subscriberFactory.getSubscriber<Models.QuotingParameters>(scope, Messaging.Topics.QuotingParametersChange);
         this.quotingParameters = new DisplayQuotingParameters(
             qpSub,
             fireFactory.getFire(Messaging.Topics.QuotingParametersChange)

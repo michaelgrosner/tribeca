@@ -23,7 +23,7 @@
     "@types/mongodb": "^2.1.43",
     "@types/node": "^7.0.12",
     "@types/q": "^1.0.0",
-    "@types/request": "0.0.42",
+    "@types/request": "0.0.46",
     "@types/serve-static": "^1.7.31",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
@@ -57,7 +57,7 @@
     "shortid": "2.2.8",
     "socket.io": "^1.4.5",
     "socket.io-client": "1.7.3",
-    "typescript": "2.2.2",
+    "typescript": "^2.4.1",
     "typings": "2.1.0",
     "utf-8-validate": "^1.2.1",
     "ws": "^1.0.1"
