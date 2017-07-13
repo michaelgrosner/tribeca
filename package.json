@@ -12,11 +12,11 @@
     "@angular/platform-browser": "^4.2.6",
     "@angular/platform-browser-dynamic": "^4.2.6",
     "@angular/router": "^4.2.6",
-    "@types/angular": "^1.6.25",
+    "@types/angular": "^1.6.26",
     "@types/highcharts": "^4.2.57",
-    "@types/jquery": "^3.2.6",
-    "@types/node": "^8.0.10",
-    "@types/request": "0.0.45",
+    "@types/jquery": "^3.2.7",
+    "@types/node": "^8.0.11",
+    "@types/request": "0.0.46",
     "@types/socket.io-client": "^1.4.29",
     "@types/uws": "^0.13.0",
     "ag-grid": "^11.0.0",
@@ -48,7 +48,7 @@
     "uglify-es": "^3.0.24",
     "uuid": "^3.1.0",
     "uws": "^8.14.0",
-    "zone.js": "^0.8.12"
+    "zone.js": "^0.8.13"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.41",
