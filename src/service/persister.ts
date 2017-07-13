@@ -42,7 +42,7 @@ export interface ILoadAll<T> extends IPersist<T> {
     loadAll(limit?: number, query?: Object): Promise<T[]>;
 }
 
-export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T> {
+export class RepositoryPersister<T> implements ILoadLatest<T> {
     private _log = log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = async (): Promise<T> => {
@@ -73,7 +73,7 @@ export class RepositoryPersister<T extends Persistable> implements ILoadLatest<T
         }).done();
     };
 
-    private converter = (x: T) : T => {
+    private converter = (x: any) : T => {
         if (typeof x.exchange === "undefined")
             x.exchange = this._exchange;
         if (typeof x.pair === "undefined")
