@@ -363,6 +363,7 @@ export interface QuotingParameters {
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
+    delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
     stepOverSize?: number;

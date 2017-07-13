@@ -210,6 +210,8 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `BB?` - Enable Bollinger Bands with upper and lower bands calculated from the result of the selected `stdev` above or below its own moving average of `periods`.
 
+* `delayAPI` - Does nothing, under development yet.
+
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
 * `profit` - Interval in hours to recalculate the display of Profit (under wallet values), for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both.

@@ -78,6 +78,7 @@ let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParamete
   shortEwmaPeridos:               50,
   aprMultiplier:                  2,
   sopWidthMultiplier:             2,
+  delayAPI:                       15,
   cancelOrdersAuto:               false,
   cleanPongsAuto:                 0,
   profitHourInterval:             0.5,
