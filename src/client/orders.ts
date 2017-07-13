@@ -96,27 +96,27 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.api.updateRowData({remove:[$event.data]});
   }
 
-  private addRowData = (o: Models.Timestamped<any[]>) => {
+  private addRowData = (o) => {
     if (!this.gridOptions.api) return;
-    if (typeof o.data[0] === 'object') {
+    if (typeof o[0] == 'object') {
       this.gridOptions.api.setRowData([]);
-      return o.data.forEach(x => setTimeout(this.addRowData(x), 0));
+      return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;
-    let isClosed: boolean = (o.data[1] == Models.OrderStatus.Cancelled
-      || o.data[1] == Models.OrderStatus.Complete);
+    let isClosed: boolean = (o[1] == Models.OrderStatus.Cancelled
+      || o[1] == Models.OrderStatus.Complete);
     this.gridOptions.api.forEachNode((node: RowNode) => {
-      if (!exists && node.data.orderId==o.data[0]) {
+      if (!exists && node.data.orderId==o[0]) {
         exists = true;
         if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-            price: o.data[4],
-            value: Math.round(o.data[4] * o.data[5] * 100) / 100,
-            tif: Models.TimeInForce[o.data[7]],
-            lat: o.data[8]+'ms',
-            lvQty: o.data[9]
+            time: (moment.isMoment(o[5]) ? o[5] : moment(o[5])),
+            price: o[3],
+            value: Math.round(o[3] * o[4] * 100) / 100,
+            tif: Models.TimeInForce[o[8]],
+            lat: o[9]+'ms',
+            lvQty: o[10]
           }));
         }
       }
@@ -124,18 +124,18 @@ export class OrdersComponent implements OnInit {
     setTimeout(()=>this.gridOptions.api.refreshView(),0);
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
-        orderId: o.data[0],
-        side: Models.Side[o.data[2]],
-        exchange: o.data[3],
-        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-        price: o.data[4],
-        value: Math.round(o.data[4] * o.data[5] * 100) / 100,
-        type: Models.OrderType[o.data[6]],
-        tif: Models.TimeInForce[o.data[7]],
-        lat: o.data[8]+'ms',
-        lvQty: o.data[9],
-        pong: o.data[10],
-        quoteSymbol: Models.Currency[o.data[11]],
+        orderId: o[0],
+        side: Models.Side[o[2]],
+        price: o[3],
+        value: Math.round(o[3] * o[4] * 100) / 100,
+        exchange: o[6],
+        type: Models.OrderType[o[7]],
+        tif: Models.TimeInForce[o[8]],
+        lat: o[9]+'ms',
+        lvQty: o[10],
+        pong: o[11],
+        time: (moment.isMoment(o[5]) ? o[5] : moment(o[5])),
+        quoteSymbol: Models.Currency[this.product.advert.pair.quote],
         productFixed: this.product.fixed
       }]});
   }

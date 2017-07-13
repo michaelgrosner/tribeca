@@ -1,87 +1,9 @@
 import Models = require("../share/models");
 
 export class Publisher {
-  private _lastMarketData: number = new Date().getTime();
-
   public publish = (topic: string, msg: any, monitor?: boolean) => {
-    if (topic === Models.Topics.MarketData) {
-      if (this._lastMarketData+369>new Date().getTime()) return;
-      msg = this.compressMarketDataInc(msg);
-    } else if (topic === Models.Topics.OrderStatusReports)
-      msg = this.compressOSRInc(msg);
-    else if (topic === Models.Topics.Position)
-      msg = this.compressPositionInc(msg);
     if (monitor) this.delay(topic, msg);
     else this._socket.up(topic, msg);
-  };
-
-  public registerSnapshot = (topic, snapshot) => {
-    this._socket.on(Models.Prefixes.SNAPSHOT + topic, (topic) => {
-      let snap: any[];
-      if (topic === Models.Topics.MarketData)
-        snap = this.compressSnapshot(snapshot(), this.compressMarketDataInc);
-      else if (topic === Models.Topics.OrderStatusReports)
-        snap = this.compressSnapshot(snapshot(), this.compressOSRInc);
-      else if (topic === Models.Topics.Position)
-        snap = this.compressSnapshot(snapshot(), this.compressPositionInc);
-      else snap = snapshot();
-      return snap;
-    });
-  }
-
-  private compressSnapshot = (data: any[], compressIncremental:(data: any) => any): any[] => {
-    let ret: any[] = [];
-    data.forEach(x => ret.push(compressIncremental(x)));
-    return ret;
-  };
-
-  private compressMarketDataInc = (data: any): any => {
-    let ret: any = new Models.Timestamped([[],[]], data.time);
-    data.bids.forEach(bid => ret.data[0].push(bid.price, bid.size));
-    data.asks.forEach(ask => ret.data[1].push(ask.price, ask.size));
-    this._lastMarketData = new Date().getTime();
-    return ret;
-  };
-
-  private compressOSRInc = (data: any): any => {
-    return <any>new Models.Timestamped(
-      (data.orderStatus == Models.OrderStatus.Cancelled
-      || data.orderStatus == Models.OrderStatus.Complete)
-    ? [
-      data.orderId,
-      data.orderStatus,
-      data.side,
-      data.price,
-      data.quantity
-    ] : [
-      data.orderId,
-      data.orderStatus,
-      data.side,
-      data.exchange,
-      data.price,
-      data.quantity,
-      data.type,
-      data.timeInForce,
-      data.computationalLatency,
-      data.leavesQuantity,
-      data.isPong,
-      data.pair.quote
-    ], data.time);
-  };
-
-  private compressPositionInc = (data: any): any => {
-    return <any>new Models.Timestamped([
-      data.baseAmount,
-      data.quoteAmount,
-      data.baseHeldAmount,
-      data.quoteHeldAmount,
-      data.value,
-      data.quoteValue,
-      data.profitBase,
-      data.profitQuote,
-      data.pair.base,
-      data.pair.quote
-    ], data.time);
   };
 
   constructor(
@@ -89,6 +11,7 @@ export class Publisher {
     private _socket,
     private _evOn,
     private _delayUI,
+    public registerSnapshot,
     public registerReceiver
   ) {
     this.setTick();
@@ -137,16 +60,16 @@ export class Publisher {
     if (this._tick>=6e1) this.onTick();
     let orders: any[] = this._delayed.filter(x => x[0]===Models.Topics.OrderStatusReports);
     this._delayed = this._delayed.filter(x => x[0]!==Models.Topics.OrderStatusReports);
-    if (orders.length) this._delayed.push([Models.Topics.OrderStatusReports, {data: orders.map(x => x[1])}]);
+    if (orders.length) this._delayed.push([Models.Topics.OrderStatusReports, orders.map(x => x[1])]);
     this._delayed.forEach(x => this._socket.up(x[0], x[1]));
-    this._delayed = orders.filter(x => x[1].data[1]===Models.OrderStatus.Working);
+    this._delayed = orders.filter(x => x[1].orderStatus===Models.OrderStatus.Working);
   };
 
   private delay = (topic: string, msg: any) => {
     const isOSR: boolean = topic === Models.Topics.OrderStatusReports;
-    if (isOSR && msg.data[1] === Models.OrderStatus.New) return ++this._newOrderMinute;
-    if (!this._delayUI) return this._socket.up(topic, msg);
-    this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].data[0] !== msg.data[0]:false));
+    if (isOSR && msg.orderStatus === Models.OrderStatus.New) return ++this._newOrderMinute;
+    if (!this._delayUI) return this._socket.up(topic, isOSR?[msg]:msg);
+    this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].orderId !== msg.orderId:false));
     this._delayed.push([topic, msg]);
   };
 

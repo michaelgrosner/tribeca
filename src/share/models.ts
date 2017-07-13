@@ -13,8 +13,8 @@ export class Timestamped<T> implements ITimestamped {
 }
 
 export var Prefixes = {
-  SNAPSHOT: '=',
-  MESSAGE: '-'
+SNAPSHOT: '=',
+MESSAGE: '-'
 }
 
 export var Topics = {
@@ -22,16 +22,16 @@ export var Topics = {
   Quote: 'b',
   ActiveSubscription: 'c',
   ActiveState: 'd',
-  MarketData: 'e',
+MarketData: 'e',
   QuotingParametersChange: 'f',
   SafetySettings: 'g',
   Product: 'h',
-  OrderStatusReports: 'i',
+OrderStatusReports: 'i',
   ProductAdvertisement: 'j',
   ApplicationState: 'k',
   Notepad: 'l',
   ToggleConfigs: 'm',
-  Position: 'n',
+Position: 'n',
   ExchangeConnectivity: 'o',
   SubmitNewOrder: 'p',
   CancelOrder: 'q',

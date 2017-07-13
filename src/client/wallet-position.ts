@@ -15,7 +15,7 @@ import {SubscriberFactory} from './shared_directives';
 export class WalletPositionComponent implements OnInit {
 
   public baseCurrency: string;
-  public basePosition: string;
+  public basePosition: number;
   public quoteCurrency: string;
   public quotePosition: number;
   public baseHeldPosition: number;
@@ -51,16 +51,16 @@ export class WalletPositionComponent implements OnInit {
     this.profitQuote = 0;
   }
 
-  private updatePosition = (o: Models.Timestamped<any[]>) => {
-    this.basePosition = o.data[0];
-    this.quotePosition = o.data[1];
-    this.baseHeldPosition = o.data[2];
-    this.quoteHeldPosition = o.data[3];
-    this.value = o.data[4];
-    this.quoteValue = o.data[5];
-    this.profitBase = o.data[6];
-    this.profitQuote = o.data[7];
-    this.baseCurrency = Models.Currency[o.data[8]];
-    this.quoteCurrency = Models.Currency[o.data[9]];
+  private updatePosition = (o: Models.PositionReport) => {
+    this.basePosition = o.baseAmount;
+    this.quotePosition = o.quoteAmount;
+    this.baseHeldPosition = o.baseHeldAmount;
+    this.quoteHeldPosition = o.quoteHeldAmount;
+    this.value = o.value;
+    this.quoteValue = o.quoteValue;
+    this.profitBase = o.profitBase;
+    this.profitQuote = o.profitQuote;
+    this.baseCurrency = Models.Currency[o.pair.base];
+    this.quoteCurrency = Models.Currency[o.pair.quote];
   }
 }
