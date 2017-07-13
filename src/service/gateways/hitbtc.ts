@@ -168,7 +168,7 @@ class SideMarketData {
 
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
-    MarketTrade = new Utils.Evt<Models.MarketSide>();
+    MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
     private readonly _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
