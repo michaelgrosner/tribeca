@@ -88,9 +88,9 @@
       "resolved": "https://registry.npmjs.org/@types/q/-/q-1.0.0.tgz"
     },
     "@types/request": {
-      "version": "0.0.42",
+      "version": "0.0.46",
       "from": "@types/request@latest",
-      "resolved": "https://registry.npmjs.org/@types/request/-/request-0.0.42.tgz"
+      "resolved": "https://registry.npmjs.org/@types/request/-/request-0.0.46.tgz"
     },
     "@types/serve-static": {
       "version": "1.7.31",
@@ -4055,9 +4055,9 @@
       "resolved": "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz"
     },
     "typescript": {
-      "version": "2.2.2",
-      "from": "typescript@2.2.2",
-      "resolved": "https://registry.npmjs.org/typescript/-/typescript-2.2.2.tgz"
+      "version": "2.4.1",
+      "from": "typescript@latest",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-2.4.1.tgz"
     },
     "typings": {
       "version": "2.1.0",
