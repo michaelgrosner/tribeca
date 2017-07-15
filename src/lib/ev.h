@@ -2,7 +2,7 @@
 #define K_EV_H_
 
 namespace K {
-  typedef void (*evCb)(string);
+  typedef void (*evCb)(Local<Object>);
   struct Ev { map<string, vector<CopyablePersistentTraits<Function>::CopyablePersistent>> _cb; map<string, vector<evCb>> cb; } ev;
   class EV {
     public:
@@ -12,11 +12,9 @@ namespace K {
         NODE_SET_METHOD(exports, "evUp", EV::_evUp);
       }
       static void evUp(string k, Local<Object> o) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
         if (ev.cb.find(k) == ev.cb.end()) return;
         for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
-          (*cb)(o);  
+          (*cb)(o);
       };
       static void _evOn(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

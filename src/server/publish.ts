@@ -51,7 +51,6 @@ export class Publisher {
     this.publish(Models.Topics.ApplicationState, this._app_state);
   };
 
-  private _delayed: any[] = [];
   private onDelay = () => {
     this._tick += this._delayUI;
     if (this._tick>=6e1) this.onTick();
