@@ -22,7 +22,6 @@ import Poloniex = require("./gateways/poloniex");
 import Korbit = require("./gateways/korbit");
 import HitBtc = require("./gateways/hitbtc");
 import Utils = require("./utils");
-import Config = require("./config");
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
@@ -31,60 +30,10 @@ import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import FairValue = require("./fair-value");
-import QuotingParameters = require("./quoting-parameters");
 import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import QuotingEngine = require("./quoting-engine");
-
-let defaultQuotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{
-  widthPing:                      2,
-  widthPingPercentage:            0.25,
-  widthPong:                      2,
-  widthPongPercentage:            0.25,
-  widthPercentage:                false,
-  bestWidth:                      true,
-  buySize:                        0.02,
-  buySizePercentage:              7,
-  buySizeMax:                     false,
-  sellSize:                       0.01,
-  sellSizePercentage:             7,
-  sellSizeMax:                    false,
-  pingAt:                         Models.PingAt.BothSides,
-  pongAt:                         Models.PongAt.ShortPingFair,
-  mode:                           Models.QuotingMode.AK47,
-  bullets:                        2,
-  range:                          0.5,
-  fvModel:                        Models.FairValueModel.BBO,
-  targetBasePosition:             1,
-  targetBasePositionPercentage:   50,
-  positionDivergence:             0.9,
-  positionDivergencePercentage:   21,
-  percentageValues:               false,
-  autoPositionMode:               Models.AutoPositionMode.EWMA_LS,
-  aggressivePositionRebalancing:  Models.APR.Off,
-  superTrades:                    Models.SOP.Off,
-  tradesPerMinute:                0.9,
-  tradeRateSeconds:               69,
-  quotingEwmaProtection:          true,
-  quotingEwmaProtectionPeridos:   200,
-  quotingStdevProtection:         Models.STDEV.Off,
-  quotingStdevBollingerBands:     false,
-  quotingStdevProtectionFactor:   1,
-  quotingStdevProtectionPeriods:  1200,
-  ewmaSensiblityPercentage:       0.5,
-  longEwmaPeridos:                200,
-  mediumEwmaPeridos:              100,
-  shortEwmaPeridos:               50,
-  aprMultiplier:                  2,
-  sopWidthMultiplier:             2,
-  delayAPI:                       15,
-  cancelOrdersAuto:               false,
-  cleanPongsAuto:                 0,
-  profitHourInterval:             0.5,
-  audio:                          false,
-  delayUI:                        7
-};
 
 let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
 
@@ -118,13 +67,11 @@ process.on("exit", (code) => {
 
 const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
-const config = new Config.ConfigProvider();
-
 const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
   if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
   return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-})(config.GetString("TradedPair"));
+})(bindings.cfString("TradedPairx"));
 
 const exchange = ((ex: string): Models.Exchange => {
   switch (ex) {
@@ -137,15 +84,10 @@ const exchange = ((ex: string): Models.Exchange => {
     case "null": return Models.Exchange.Null;
     default: throw new Error("Invalid configuration value EXCHANGE: " + ex);
   }
-})(config.GetString("EXCHANGE").toLowerCase());
-
-for (const param in defaultQuotingParameters)
-  if (config.GetDefaultString(param) !== null)
-    defaultQuotingParameters[param] = config.GetDefaultString(param);
+})(bindings.cfString("EXCHANGE").toLowerCase());
 
 const sqlite = new bindings.DB(exchange, pair.base, pair.quote);
 
-const initParams = Object.assign(defaultQuotingParameters, sqlite.load(Models.Topics.QuotingParametersChange)[0] || {});
 const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
@@ -154,26 +96,28 @@ const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.as
 const publisher = new Publish.Publisher(
   bindings.dbSize,
   new bindings.UI(
-    config.GetString("WebClientListenPort"),
-    config.GetString("WebClientUsername"),
-    config.GetString("WebClientPassword")
+    bindings.cfString("WebClientListenPort"),
+    bindings.cfString("WebClientUsername"),
+    bindings.cfString("WebClientPassword")
   ),
   bindings.evOn,
   initParams.delayUI,
+  bindings.o60,
   bindings.uiSnap,
-  bindings.uiHand
+  bindings.uiHand,
+  bindings.uiSend
 );
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (exchange) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(config, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Null: return NullGw.createNullGateway(config, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.cfString, pair, bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + exchange);
     }
   })();
@@ -182,18 +126,11 @@ const publisher = new Publish.Publisher(
     .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
       exchange,
       pair,
-      config.GetString("BotIdentifier").replace('auto',''),
-      config.GetString("MatryoshkaUrl"),
+      bindings.cfString("BotIdentifier").replace('auto',''),
+      bindings.cfString("MatryoshkaUrl"),
       packageConfig.homepage,
       gateway.base.minTickIncrement
     )]);
-
-  const paramsRepo = new QuotingParameters.QuotingParametersRepository(
-    sqlite,
-    publisher,
-    bindings.evUp,
-    initParams
-  );
 
   const broker = new Broker.ExchangeBroker(
     pair,
@@ -201,12 +138,12 @@ const publisher = new Publish.Publisher(
     publisher,
     bindings.evOn,
     bindings.evUp,
-    config.GetString("BotIdentifier").indexOf('auto')>-1
+    bindings.cfString("BotIdentifier").indexOf('auto')>-1
   );
 
   const orderBroker = new Broker.OrderBroker(
     timeProvider,
-    paramsRepo,
+    bindings.qpRepo,
     broker,
     gateway.oe,
     sqlite,
@@ -232,7 +169,7 @@ const publisher = new Publish.Publisher(
     ),
     broker.minTickIncrement,
     timeProvider,
-    paramsRepo,
+    bindings.qpRepo,
     publisher,
     bindings.evOn,
     bindings.evUp,
@@ -241,7 +178,7 @@ const publisher = new Publish.Publisher(
 
   const positionBroker = new Broker.PositionBroker(
     timeProvider,
-    paramsRepo,
+    bindings.qpRepo,
     broker,
     orderBroker,
     fvEngine,
@@ -253,20 +190,20 @@ const publisher = new Publish.Publisher(
   const quotingEngine = new QuotingEngine.QuotingEngine(
     timeProvider,
     fvEngine,
-    paramsRepo,
+    bindings.qpRepo,
     positionBroker,
     broker.minTickIncrement,
     broker.minSize,
     new Statistics.EWMAProtectionCalculator(
       timeProvider,
       fvEngine,
-      paramsRepo,
+      bindings.qpRepo,
       bindings.evUp
     ),
     new Statistics.STDEVProtectionCalculator(
       timeProvider,
       fvEngine,
-      paramsRepo,
+      bindings.qpRepo,
       sqlite,
       bindings.computeStdevs,
       initMkt
@@ -276,8 +213,8 @@ const publisher = new Publish.Publisher(
       broker.minTickIncrement,
       sqlite,
       fvEngine,
-      new Statistics.EWMATargetPositionCalculator(paramsRepo, initRfv),
-      paramsRepo,
+      new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
+      bindings.qpRepo,
       positionBroker,
       publisher,
       bindings.evOn,
@@ -287,7 +224,7 @@ const publisher = new Publish.Publisher(
     new Safety.SafetyCalculator(
       timeProvider,
       fvEngine,
-      paramsRepo,
+      bindings.qpRepo,
       positionBroker,
       orderBroker,
       publisher,
@@ -303,7 +240,7 @@ const publisher = new Publish.Publisher(
     quotingEngine,
     broker,
     orderBroker,
-    paramsRepo,
+    bindings.qpRepo,
     publisher,
     bindings.evOn
   );

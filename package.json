@@ -82,7 +82,7 @@
     "startall": "ls -1 etc/*.json | cut -d / -f2 | grep -v ^_ | exec xargs -I % npm start --$npm_package_name:config=%",
     "restart": "npm stop --$npm_package_name:config=$npm_package_config_config && npm start --$npm_package_name:config=$npm_package_config_config",
     "stop": "forever stop -a -l /dev/null $npm_package_config_config || :",
-    "start": "npm run test-compile && forever start --uid $npm_package_config_config -a -l /dev/null K.js $npm_package_config_config && exec npm run test-stunnel",
+    "start": "npm run test-compile && KCONFIG=$npm_package_config_config forever start --uid $npm_package_config_config -a -l /dev/null K.js && exec npm run test-stunnel",
     "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install",
     "test-stunnel": "test -z \"$SKIP_STUNNEL$(ps axu | grep stunnel | grep -v grep)\" && exec stunnel dist/K-stunnel.conf || :",
     "test": "mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts",

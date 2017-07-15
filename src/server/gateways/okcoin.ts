@@ -3,7 +3,6 @@ import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
 import querystring = require("querystring");
-import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import util = require("util");
@@ -133,8 +132,8 @@ class OkCoinWebsocket {
         }
     };
 
-    private connectWS = (config: Config.ConfigProvider) => {
-        this._ws = new ws(config.GetString("OkCoinWsUrl"));
+    private connectWS = (cfString) => {
+        this._ws = new ws(cfString("OkCoinWsUrl"));
         this._ws.on("open", () => this._evUp('GatewaySocketConnect', Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
         this._ws.on("close", () => this._evUp('GatewaySocketConnect', Models.ConnectivityStatus.Disconnected));
@@ -147,14 +146,14 @@ class OkCoinWebsocket {
     private _ws : ws;
     constructor(
       private _evUp,
-      config: Config.ConfigProvider
+      cfString
     ) {
-        this.connectWS(config);
+        this.connectWS(cfString);
         setInterval(() => {
           if (!this._stillAlive) {
             console.warn(new Date().toISOString().slice(11, -1), 'okcoin', 'Heartbeat lost, reconnecting..');
             this._stillAlive = true;
-            this.connectWS(config);
+            this.connectWS(cfString);
           } else this._stillAlive = false;
           this._ws.send(this._serializedHeartping);
         }, 21000);
@@ -423,9 +422,9 @@ class OkCoinMessageSigner {
         return m;
     };
 
-    constructor(config : Config.ConfigProvider) {
-        this._api_key = config.GetString("OkCoinApiKey");
-        this._secretKey = config.GetString("OkCoinSecretKey");
+    constructor(cfString) {
+        this._api_key = cfString("OkCoinApiKey");
+        this._secretKey = cfString("OkCoinSecretKey");
     }
 }
 
@@ -455,8 +454,8 @@ class OkCoinHttp {
     };
 
     private _baseUrl : string;
-    constructor(config : Config.ConfigProvider, private _signer: OkCoinMessageSigner) {
-        this._baseUrl = config.GetString("OkCoinHttpUrl")
+    constructor(cfString, private _signer: OkCoinMessageSigner) {
+        this._baseUrl = cfString("OkCoinHttpUrl")
     }
 }
 
@@ -523,17 +522,17 @@ class OkCoinSymbolProvider {
 
 class OkCoin extends Interfaces.CombinedGateway {
     constructor(
-      config: Config.ConfigProvider,
+      cfString,
       pair: Models.CurrencyPair,
       _evOn,
       _evUp
     ) {
         var symbol = new OkCoinSymbolProvider(pair);
-        var signer = new OkCoinMessageSigner(config);
-        var http = new OkCoinHttp(config, signer);
-        var socket = new OkCoinWebsocket(_evUp, config);
+        var signer = new OkCoinMessageSigner(cfString);
+        var http = new OkCoinHttp(cfString, signer);
+        var socket = new OkCoinWebsocket(_evUp, cfString);
 
-        var orderGateway = config.GetString("OkCoinOrderDestination") == "OkCoin"
+        var orderGateway = cfString("OkCoinOrderDestination") == "OkCoin"
             ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(_evOn, _evUp, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
@@ -550,6 +549,6 @@ class OkCoin extends Interfaces.CombinedGateway {
         }
 }
 
-export async function createOkCoin(config : Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new OkCoin(config, pair, _evOn, _evUp);
+export async function createOkCoin(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    return new OkCoin(cfString, pair, _evOn, _evUp);
 }

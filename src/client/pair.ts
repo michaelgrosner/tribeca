@@ -157,8 +157,4 @@ export class DisplayPair {
       this.connectedToServer = cs;
       this.setStatus();
   };
-
-  public updateParameters = (p: Models.QuotingParameters) => {
-    this.quotingParameters.update(p);
-  };
 }

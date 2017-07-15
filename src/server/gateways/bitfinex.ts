@@ -2,7 +2,6 @@ import ws = require('uws');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
-import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Interfaces = require("../interfaces");
@@ -124,8 +123,8 @@ class BitfinexWebsocket {
         }
     };
 
-    private connectWS = (config: Config.ConfigProvider) => {
-        this._ws = new ws(config.GetString("BitfinexWebsocketUrl"));
+    private connectWS = (cfString) => {
+        this._ws = new ws(cfString("BitfinexWebsocketUrl"));
         this._ws.on("open", () => this._evUp('GatewaySocketConnect', Models.ConnectivityStatus.Connected));
         this._ws.on("message", this.onMessage);
         this._ws.on("error", (x) => console.error(new Date().toISOString().slice(11, -1), 'bitfinex', 'WS ERROR', x));
@@ -137,13 +136,13 @@ class BitfinexWebsocket {
     private _stillAlive: boolean = true;
     private _handlers : { [channel : string] : (newMsg : Models.Timestamped<any>) => void} = {};
     private _ws : ws;
-    constructor(private _evUp, config: Config.ConfigProvider) {
-        this.connectWS(config);
+    constructor(private _evUp, cfString) {
+        this.connectWS(cfString);
         setInterval(() => {
           if (!this._stillAlive) {
             console.warn(new Date().toISOString().slice(11, -1), 'bitfinex', 'Heartbeat lost, reconnecting..');
             this._stillAlive = true;
-            this.connectWS(config);
+            this.connectWS(cfString);
           } else this._stillAlive = false;
           this._ws.send(this._serializedHeartping);
         }, 7000);
@@ -363,9 +362,9 @@ class BitfinexMessageSigner {
         return m;
     };
 
-    constructor(config : Config.ConfigProvider) {
-        this._api_key = config.GetString("BitfinexKey");
-        this._secretKey = config.GetString("BitfinexSecret");
+    constructor(cfString) {
+        this._api_key = cfString("BitfinexKey");
+        this._secretKey = cfString("BitfinexSecret");
     }
 }
 
@@ -449,10 +448,10 @@ class BitfinexHttp {
     private _secret: string;
     private _nonce: number;
 
-    constructor(private _evUp, config: Config.ConfigProvider) {
-        this._baseUrl = config.GetString("BitfinexHttpUrl");
-        this._apiKey = config.GetString("BitfinexKey");
-        this._secret = config.GetString("BitfinexSecret");
+    constructor(private _evUp, cfString) {
+        this._baseUrl = cfString("BitfinexHttpUrl");
+        this._apiKey = cfString("BitfinexKey");
+        this._secret = cfString("BitfinexSecret");
 
         this._nonce = new Date().valueOf();
         console.info(new Date().toISOString().slice(11, -1), 'bitfinex', 'Starting nonce:', this._nonce);
@@ -517,19 +516,19 @@ class BitfinexSymbolProvider {
 
 class Bitfinex extends Interfaces.CombinedGateway {
     constructor(
-      config: Config.ConfigProvider,
+      cfString,
       symbol: BitfinexSymbolProvider,
       pricePrecision: number,
       minSize: number,
       _evOn,
       _evUp
     ) {
-        const http = new BitfinexHttp(_evUp, config);
-        const signer = new BitfinexMessageSigner(config);
-        const socket = new BitfinexWebsocket(_evUp, config);
+        const http = new BitfinexHttp(_evUp, cfString);
+        const signer = new BitfinexMessageSigner(cfString);
+        const socket = new BitfinexWebsocket(_evUp, cfString);
         const details = new BitfinexBaseGateway(pricePrecision, minSize);
 
-        const orderGateway = config.GetString("BitfinexOrderDestination") == "Bitfinex"
+        const orderGateway = cfString("BitfinexOrderDestination") == "Bitfinex"
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, details, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
@@ -561,17 +560,17 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const detailsUrl = config.GetString("BitfinexHttpUrl")+"/symbols_details";
+export async function createBitfinex(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    const detailsUrl = cfString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
     const symbol = new BitfinexSymbolProvider(pair);
 
     for (let s of symbolDetails) {
         if (s.pair === symbol.symbol) {
-            const tickerUrl = config.GetString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
+            const tickerUrl = cfString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
             const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            return new Bitfinex(config, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size), _evOn, _evUp);
+            return new Bitfinex(cfString, symbol, parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length), parseFloat(s.minimum_order_size), _evOn, _evUp);
         }
     }
 }

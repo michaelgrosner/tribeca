@@ -305,19 +305,20 @@ export class OrderBroker {
                 value = value * (1 + sign * feeCharged);
             }
 
+            const params = this._qpRepo();
             const trade = new Models.Trade(this._timeProvider.utcNow().getTime().toString(), o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this._evUp('OrderTradeBroker', trade);
-            if (this._qlParamRepo.latest.mode === Models.QuotingMode.Boomerang || this._qlParamRepo.latest.mode === Models.QuotingMode.HamelinRat || this._qlParamRepo.latest.mode === Models.QuotingMode.AK47) {
-              var widthPong = (this._qlParamRepo.latest.widthPercentage)
-                  ? this._qlParamRepo.latest.widthPongPercentage * trade.price / 100
-                  : this._qlParamRepo.latest.widthPong;
+            if (params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.AK47) {
+              var widthPong = (params.widthPercentage)
+                  ? params.widthPongPercentage * trade.price / 100
+                  : params.widthPong;
               this._reTrade(this.tradesMemory.filter((x: Models.Trade) => (
                 (trade.side==Models.Side.Bid?(x.price > (trade.price + widthPong)):(x.price < (trade.price - widthPong)))
                 && (x.side == (trade.side==Models.Side.Bid?Models.Side.Ask:Models.Side.Bid))
                 && ((x.quantity - x.Kqty) > 0)
               )).sort((a: Models.Trade, b: Models.Trade) => (
-                (this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingFair || this._qlParamRepo.latest.pongAt == Models.PongAt.LongPingAggressive)
+                (params.pongAt == Models.PongAt.LongPingFair || params.pongAt == Models.PongAt.LongPingAggressive)
                   ? (
                   trade.side==Models.Side.Bid
                     ? (a.price<b.price?1:(a.price>b.price?-1:0))
@@ -336,8 +337,8 @@ export class OrderBroker {
 
             this._publisher.publish(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
 
-            if (this._qlParamRepo.latest.cleanPongsAuto>0) {
-              const cleanTime = o.time.getTime() - (this._qlParamRepo.latest.cleanPongsAuto * 864e5);
+            if (params.cleanPongsAuto>0) {
+              const cleanTime = o.time.getTime() - (params.cleanPongsAuto * 864e5);
               var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time.getTime() < cleanTime);
               var goWhile = true;
               while (goWhile && cleanTrades.length) {
@@ -373,7 +374,7 @@ export class OrderBroker {
 
     constructor(
       private _timeProvider: Utils.ITimeProvider,
-      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _qpRepo,
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _sqlite,
@@ -385,7 +386,7 @@ export class OrderBroker {
         this.tradesMemory = initTrades;
         this.orderCache = new OrderStateCache();
 
-        _timeProvider.setInterval(() => { if (this._qlParamRepo.latest.cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
+        _timeProvider.setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
         _publisher.registerSnapshot(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
         _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
@@ -455,7 +456,7 @@ export class PositionBroker {
         const timeNow = this._timeProvider.utcNow();
         const now = timeNow.getTime();
         this._lastPositions.push({ baseValue: baseValue, quoteValue: quoteValue, time: now });
-        this._lastPositions = this._lastPositions.filter(x => x.time+(this._qlParamRepo.latest.profitHourInterval * 36e+5)>now);
+        this._lastPositions = this._lastPositions.filter(x => x.time+(this._qpRepo().profitHourInterval * 36e+5)>now);
         const profitBase = ((baseValue - this._lastPositions[0].baseValue) / baseValue) * 1e+2;
         const profitQuote = ((quoteValue - this._lastPositions[0].quoteValue) / quoteValue) * 1e+2;
 
@@ -504,7 +505,7 @@ export class PositionBroker {
 
     constructor(
       private _timeProvider: Utils.ITimeProvider,
-      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _qpRepo,
       private _broker: ExchangeBroker,
       private _orderBroker: OrderBroker,
       private _fvEngine: FairValue.FairValueEngine,
