@@ -4,7 +4,6 @@ import Utils = require("./utils");
 import Statistics = require("./statistics");
 import FairValue = require("./fair-value");
 import moment = require("moment");
-import QuotingParameters = require("./quoting-parameters");
 import Broker = require("./broker");
 
 export class TargetBasePositionManager {
@@ -37,7 +36,7 @@ export class TargetBasePositionManager {
     private _sqlite,
     private _fvAgent: FairValue.FairValueEngine,
     private _ewma: Statistics.EWMATargetPositionCalculator,
-    private _qpRepo: QuotingParameters.QuotingParametersRepository,
+    private _qpRepo,
     private _positionBroker: Broker.PositionBroker,
     private _publisher: Publish.Publisher,
     private _evOn,
@@ -65,14 +64,15 @@ export class TargetBasePositionManager {
   }
 
   private recomputeTargetPosition = () => {
-    if (this._qpRepo.latest === null || this._positionBroker.latestReport === null) {
-      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Unable to compute tbp [ qp | pos ] = [', !!this._qpRepo.latest, '|', !!this._positionBroker.latestReport, ']');
+    const params = this._qpRepo();
+    if (params === null || this._positionBroker.latestReport === null) {
+      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Unable to compute tbp [ qp | pos ] = [', !!params, '|', !!this._positionBroker.latestReport, ']');
       return;
     }
-    const targetBasePosition: number = (this._qpRepo.latest.autoPositionMode === Models.AutoPositionMode.Manual)
-      ? (this._qpRepo.latest.percentageValues
-        ? this._qpRepo.latest.targetBasePositionPercentage * this._positionBroker.latestReport.value / 100
-        : this._qpRepo.latest.targetBasePosition)
+    const targetBasePosition: number = (params.autoPositionMode === Models.AutoPositionMode.Manual)
+      ? (params.percentageValues
+        ? params.targetBasePositionPercentage * this._positionBroker.latestReport.value / 100
+        : params.targetBasePosition)
       : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
 
     if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
@@ -107,6 +107,6 @@ export class TargetBasePositionManager {
       this._timeProvider.utcNow()
     ), true);
 
-    this._sqlite.insert(Models.Topics.FairValue, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._qpRepo.latest.quotingStdevProtectionPeriods);
+    this._sqlite.insert(Models.Topics.FairValue, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._qpRepo().quotingStdevProtectionPeriods);
   };
 }

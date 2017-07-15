@@ -5,11 +5,17 @@ namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
   Persistent<Function> noop;
-  struct uiSession { map<string, Persistent<Function>> cb; int size = 0; };
+  typedef void (*uiCb)(string);
+  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<char, vector<Local<Object>>> D; int u = 0; };
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   enum uiBIT: unsigned char { MSG = '-', SNAP = '=' };
-  enum uiTXT: unsigned char { MarketData = 'e', OrderStatusReports = 'i', Position = 'n', };
-  enum usORS: unsigned int { New, Working, Complete, Cancelled };
+  enum uiTXT: unsigned char {
+    MarketData = 'e',
+    OrderStatusReports = 'i',
+    Position = 'n',
+    QuotingParametersChange = 'f'
+  };
+  int iOSR60 = 0;
   double uiMDT = 0;
   string uiNK64 = "";
   Persistent<Function> socket_;
@@ -19,14 +25,40 @@ namespace K {
         Isolate* isolate = exports->GetIsolate();
         Local<FunctionTemplate> o = FunctionTemplate::New(isolate, NEw);
         o->InstanceTemplate()->SetInternalFieldCount(1);
-        o->SetClassName(String::NewFromUtf8(isolate, "UI"));
-        NODE_SET_PROTOTYPE_METHOD(o, "up", up);
+        o->SetClassName(FN::v8S("UI"));
+NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
         socket_.Reset(isolate, o->GetFunction());
-        exports->Set(String::NewFromUtf8(isolate, "UI"), o->GetFunction());
+        exports->Set(FN::v8S("UI"), o->GetFunction());
+        NODE_SET_METHOD(exports, "o60", UI::o60);
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         NODE_SET_METHOD(exports, "uiSnap", UI::uiSnap);
-        NODE_SET_METHOD(exports, "uiHand", UI::uiHand);
-        // NODE_SET_METHOD(exports, "uiSend", UI::uiSend);
+        NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
+        NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
+      }
+      static void uiSnap(char k, uiCb cb) {
+        uiOn(k, uiBIT::SNAP, cb);
+      }
+      static void uiHand(char k, uiCb cb) {
+        uiOn(k, uiBIT::MSG, cb);
+      }
+      static void uiUp(char k, Local<Object> o) {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        if (k == uiTXT::MarketData) {
+          if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
+          uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+        }
+        MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(isolate, k, o));
+        string m = string(1, uiBIT::MSG).append(string(1, k)).append(*String::Utf8Value(v.ToLocalChecked()));
+        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+      }
+      static void uiOn(char k, char k_, uiCb cb) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        Isolate *isolate = args.GetIsolate();
+        string k = string(1, k_).append(string(1, k));
+        if (sess->cb.find(k) != sess->cb.end())
+          return { cout << "Use only a single unique message handler for each different topic" << endl; exit(1); }
+        sess->cb[k] = cb;
       }
     protected:
       int port;
@@ -35,21 +67,21 @@ namespace K {
     private:
       explicit UI(int p_, string n_, string k_): port(p_), name(n_), key(k_) {
         Isolate* isolate = Isolate::GetCurrent();
-        uiGroup->setUserData(new uiSession);
-        uiSession *session = (uiSession *) uiGroup->getUserData();
+        uiGroup->setUserData(new uiSess);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
           B64::Encode(name.append(":").append(key), &uiNK64);
           uiNK64 = string("Basic ").append(uiNK64);
         }
-        uiGroup->onConnection([session](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          session->size++;
+        uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+          sess->u++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(session->size) << " UI currently connected, last connection was from " << address.address << endl;
+          cout << to_string(sess->u) << " UI currently connected, last connection was from " << address.address << endl;
         });
-        uiGroup->onDisconnection([session](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          session->size--;
+        uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+          sess->u--;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(session->size) << " UI currently connected, last disconnection was from " << address.address << endl;
+          cout << to_string(sess->u) << " UI currently connected, last disconnection was from " << address.address << endl;
         });
         uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;
@@ -98,14 +130,23 @@ namespace K {
             res->write(document.data(), document.length());
           }
         });
-        uiGroup->onMessage([isolate, session](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          if (length > 1 && (session->cb.find(string(message).substr(0,2)) != session->cb.end())) {
+        uiGroup->onMessage([isolate, sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+          if (length > 1 && (sess->cb.find(string(message).substr(0,2)) != sess->cb.end())) {
             JSON Json;
             HandleScope hs(isolate);
             string m = string(message).substr(2, length-2);
-            MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, m.data())) : String::NewFromUtf8(isolate, length > 2 ? m.data() : "");
-            Local<Value> argv[] = {uiBIT::SNAP == message[0] ? (Local<Value>)String::NewFromUtf8(isolate, string(message).substr(1,1).data()) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
-            Local<Value> reply = Local<Function>::New(isolate, session->cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+            MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
+            Local<Value> reply = (*sess->cb[string(message).substr(0,2)])(uiBIT::SNAP == message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
+            if (!reply->IsUndefined() && uiBIT::SNAP == message[0])
+              webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap(isolate, message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+          }
+          if (length > 1 && (sess->_cb.find(string(message).substr(0,2)) != sess->_cb.end())) {
+            JSON Json;
+            HandleScope hs(isolate);
+            string m = string(message).substr(2, length-2);
+            MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
+            Local<Value> argv[] = {uiBIT::SNAP == message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
+            Local<Value> reply = Local<Function>::New(isolate, sess->_cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
             if (!reply->IsUndefined() && uiBIT::SNAP == message[0])
               webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap(isolate, message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
           }
@@ -115,7 +156,7 @@ namespace K {
           cout << "UI ready over " << "HTTPS" << " on external port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
           cout << "UI ready over " << "HTTP" << " on external port " << to_string(port) << endl;
-        else isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use another UI port number, it seems already in use")));
+        else isolate->ThrowException(Exception::TypeError(FN::v8S(string("Use another UI port number, ").append(to_string(port)).append(" seems already in use").data())));
       }
       ~UI() {
         delete uiGroup;
@@ -124,8 +165,8 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         if (!args.IsConstructCall())
-          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use the 'new' operator to create new UI objects")));
-        UI* ui = new UI(args[0]->NumberValue(), string(*String::Utf8Value(args[1]->ToString())), string(*String::Utf8Value(args[2]->ToString())));
+          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use the 'new' operator to create new UI objects")));
+        UI* ui = new UI(args[0]->NumberValue(), FN::S8v(args[1]->ToString()), FN::S8v(args[2]->ToString()));
         ui->Wrap(args.This());
         args.GetReturnValue().Set(args.This());
       }
@@ -156,7 +197,7 @@ namespace K {
               MaybeLocal<Array> maybe_props = lvl->GetOwnPropertyNames(Context::New(isolate));
               if (!maybe_props.IsEmpty()) {
                 int lvls = 0;
-                int side = string(*String::Utf8Value(props->Get(i)->ToString())) == "bids" ? 0 : 1;
+                int side = FN::S8v(props->Get(i)->ToString()) == "bids" ? 0 : 1;
                 Local<Array> props = maybe_props.ToLocalChecked();
                 for(uint32_t i=0; i < props->Length(); i++) {
                   Local<Object> px = lvl->Get(props->Get(i))->ToObject();
@@ -182,20 +223,20 @@ namespace K {
               Local<Array> props = maybe_props.ToLocalChecked();
               if (!maybe_props.IsEmpty()) {
                 snap_->Set(i, Array::New(isolate));
-                Local<Number> osr = o->Get(String::NewFromUtf8(isolate, "orderStatus"))->ToNumber();
-                snap_->Get(i)->ToObject()->Set(0, o->Get(String::NewFromUtf8(isolate, "orderId"))->ToString());
+                Local<Number> osr = o->Get(FN::v8S("orderStatus"))->ToNumber();
+                snap_->Get(i)->ToObject()->Set(0, o->Get(FN::v8S("orderId"))->ToString());
                 snap_->Get(i)->ToObject()->Set(1, osr);
-                snap_->Get(i)->ToObject()->Set(2, o->Get(String::NewFromUtf8(isolate, "side"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(3, o->Get(String::NewFromUtf8(isolate, "price"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(4, o->Get(String::NewFromUtf8(isolate, "quantity"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(5, o->Get(String::NewFromUtf8(isolate, "time"))->ToNumber());
-                if (osr->NumberValue() <= usORS::Working) {
-                  snap_->Get(i)->ToObject()->Set(6, o->Get(String::NewFromUtf8(isolate, "exchange"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(7, o->Get(String::NewFromUtf8(isolate, "type"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(8, o->Get(String::NewFromUtf8(isolate, "timeInForce"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(9, o->Get(String::NewFromUtf8(isolate, "computationalLatency"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(10, o->Get(String::NewFromUtf8(isolate, "leavesQuantity"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(11, o->Get(String::NewFromUtf8(isolate, "isPong"))->ToNumber());
+                snap_->Get(i)->ToObject()->Set(2, o->Get(FN::v8S("side"))->ToNumber());
+                snap_->Get(i)->ToObject()->Set(3, o->Get(FN::v8S("price"))->ToNumber());
+                snap_->Get(i)->ToObject()->Set(4, o->Get(FN::v8S("quantity"))->ToNumber());
+                snap_->Get(i)->ToObject()->Set(5, o->Get(FN::v8S("time"))->ToNumber());
+                if (osr->NumberValue() <= mORS::Working) {
+                  snap_->Get(i)->ToObject()->Set(6, o->Get(FN::v8S("exchange"))->ToNumber());
+                  snap_->Get(i)->ToObject()->Set(7, o->Get(FN::v8S("type"))->ToNumber());
+                  snap_->Get(i)->ToObject()->Set(8, o->Get(FN::v8S("timeInForce"))->ToNumber());
+                  snap_->Get(i)->ToObject()->Set(9, o->Get(FN::v8S("computationalLatency"))->ToNumber());
+                  snap_->Get(i)->ToObject()->Set(10, o->Get(FN::v8S("leavesQuantity"))->ToNumber());
+                  snap_->Get(i)->ToObject()->Set(11, o->Get(FN::v8S("isPong"))->ToNumber());
                 }
               }
             }
@@ -204,37 +245,60 @@ namespace K {
         }
         return snap;
       }
-      static void uiSnap(const FunctionCallbackInfo<Value>& args) {
-        uiOn(args, uiBIT::SNAP);
+      static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
+        _uiOn(args, uiBIT::SNAP);
       }
-      static void uiHand(const FunctionCallbackInfo<Value>& args) {
-        uiOn(args, uiBIT::MSG);
+      static void _uiHand(const FunctionCallbackInfo<Value>& args) {
+        _uiOn(args, uiBIT::MSG);
       }
-      static void uiOn(const FunctionCallbackInfo<Value>& args, char k_) {
-        uiSession *session = (uiSession *) uiGroup->getUserData();
+      static void _uiOn(const FunctionCallbackInfo<Value>& args, char k_) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
         Isolate *isolate = args.GetIsolate();
         string k = string(1, k_).append(*String::Utf8Value(args[0]->ToString()));
-        if (session->cb.find(k) != session->cb.end())
-          return (void)isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Use only a single unique message handler for each different topic")));
-        Persistent<Function> *cb = &session->cb[k];
-        cb->Reset(isolate, Local<Function>::Cast(args[1]));
+        if (sess->_cb.find(k) != sess->_cb.end())
+          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use only a single unique message handler for each different topic")));
+        Persistent<Function> *_cb = &sess->_cb[k];
+        _cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
-      static void up(const FunctionCallbackInfo<Value>& args) {
+      static void _uiUp(const FunctionCallbackInfo<Value>& args) {
         Isolate *isolate = args.GetIsolate();
         JSON Json;
-        string k = string(*String::Utf8Value(args[0]->ToString()));
+        string k = FN::S8v(args[0]->ToString());
         if (k[0] == uiTXT::MarketData) {
           if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
           uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         }
-        MaybeLocal<String> v = args[1]->IsUndefined() ? String::NewFromUtf8(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(isolate, k[0], args[1]->ToObject()));
+        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(isolate, k[0], args[1]->ToObject()));
         string m = string(1, uiBIT::MSG).append(k).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
-      // static void uiSend(const FunctionCallbackInfo<Value> &args) {
-        // if (monitor) this.delay(topic, msg);
-        // else this._socket.up(topic, msg);
-      // }
+      static void uiSend(char k, Local<Object> o, bool h = false) {
+        if (h) uiHold(k, o);
+        else uiUp(k, o);
+      }
+      static void o60(const FunctionCallbackInfo<Value> &args) {
+        Isolate *isolate = args.GetIsolate();
+        if (args[0]->IsUndefined() ? false : args[0]->BooleanValue()) iOSR60 = 0;
+        args.GetReturnValue().Set(Number::New(isolate, iOSR60));
+      }
+      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
+        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold(FN::S8v(args[0]->ToString()), args[1]->ToObject());
+        else _uiUp(args);
+      }
+      static void uiHold(string k, Local<Object> o) {
+        Isolate* isolate = Isolate::GetCurrent();
+        bool isOSR = k[0] == uiTXT::OrderStatusReports;
+        if (isOSR && mORS::New == o->Get(FN::v8S("orderStatus"))->NumberValue())
+          return (void)++iOSR60;
+        Local<Object> qp_ = Local<Object>::New(isolate, qpRepo);
+        if (!qp_->Get(FN::v8S("delayUI"))->NumberValue()) return uiUp(k, o);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        // for (vector<Local<Object>>::iterator o_ = sess->D[k[0]].begin(); o_ != sess->D[k[0]].end(); ++o_) {
+          // if ()
+        // }
+        // this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].orderId !== msg.orderId:false));
+        sess->D[k[0]].push_back(o);
+      }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         noop.Reset(isolate, Local<Function>::Cast(args[0]));

@@ -2,7 +2,6 @@ import autobahn = require('autobahn');
 import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
-import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import util = require("util");
@@ -46,7 +45,7 @@ class PoloniexWebsocket {
   };
 
   public connectWS = () => {
-      // const ws = new autobahn.Connection({ url: this.config.GetString("PoloniexWebsocketUrl"), realm: "realm1" });
+      // const ws = new autobahn.Connection({ url: this.cfString("PoloniexWebsocketUrl"), realm: "realm1" });
 
       // ws.onclose = (reason, details) => {
         // this.ConnectChanged.trigger(Models.ConnectivityStatus.Disconnected);
@@ -79,7 +78,7 @@ class PoloniexWebsocket {
 
   private _handler: any[] = [];
   constructor(
-    private config: Config.ConfigProvider,
+    private cfString,
     private symbolProvider: PoloniexSymbolProvider
   ) {
   }
@@ -313,9 +312,9 @@ class PoloniexMessageSigner {
     };
   };
 
-  constructor(config : Config.ConfigProvider) {
-    this._api_key = config.GetString("PoloniexApiKey");
-    this._secretKey = config.GetString("PoloniexSecretKey");
+  constructor(cfString) {
+    this._api_key = cfString("PoloniexApiKey");
+    this._secretKey = cfString("PoloniexSecretKey");
   }
 }
 
@@ -373,8 +372,8 @@ class PoloniexHttp {
   };
 
   private _baseUrl : string;
-  constructor(config : Config.ConfigProvider, private _signer: PoloniexMessageSigner) {
-    this._baseUrl = config.GetString("PoloniexHttpUrl");
+  constructor(cfString, private _signer: PoloniexMessageSigner) {
+    this._baseUrl = cfString("PoloniexHttpUrl");
   }
 }
 
@@ -437,16 +436,16 @@ class PoloniexSymbolProvider {
 
 class Poloniex extends Interfaces.CombinedGateway {
   constructor(
-    config: Config.ConfigProvider,
+    cfString,
     symbol: PoloniexSymbolProvider,
     http: PoloniexHttp,
     minTick: number,
     _evUp
   ) {
-    const socket = new PoloniexWebsocket(config, symbol);
+    const socket = new PoloniexWebsocket(cfString, symbol);
     super(
       new PoloniexMarketDataGateway(_evUp, socket, http, symbol),
-      config.GetString("PoloniexOrderDestination") == "Poloniex"
+      cfString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(_evUp, http, symbol, socket)
         : new NullGateway.NullOrderGateway(_evUp),
       new PoloniexPositionGateway(_evUp, http, symbol),
@@ -456,10 +455,10 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export async function createPoloniex(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createPoloniex(cfString, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
   const symbol = new PoloniexSymbolProvider(pair);
-  const signer = new PoloniexMessageSigner(config);
-  const http = new PoloniexHttp(config, signer);
+  const signer = new PoloniexMessageSigner(cfString);
+  const http = new PoloniexHttp(cfString, signer);
 
   const minTick = await new Promise<number>((resolve, reject) => {
     http.get('returnTicker').then(msg => {
@@ -470,5 +469,5 @@ export async function createPoloniex(config: Config.ConfigProvider, pair: Models
     });
   });
 
-  return new Poloniex(config, symbol, http, minTick, _evUp,);
+  return new Poloniex(cfString, symbol, http, minTick, _evUp,);
 }

@@ -1,7 +1,6 @@
 import Models = require("../../share/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
-import Config = require("../config");
 
 export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
@@ -124,7 +123,7 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 
 class NullGateway extends Interfaces.CombinedGateway {
     constructor(
-      config: Config.ConfigProvider,
+      cfString,
       pair: Models.CurrencyPair,
       _evOn,
       _evUp
@@ -138,6 +137,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createNullGateway(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new NullGateway(config, pair, _evOn, _evUp);
+export async function createNullGateway(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    return new NullGateway(cfString, pair, _evOn, _evUp);
 }

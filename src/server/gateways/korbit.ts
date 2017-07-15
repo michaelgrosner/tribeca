@@ -2,7 +2,6 @@ import crypto = require("crypto");
 import request = require("request");
 import url = require("url");
 import querystring = require("querystring");
-import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import util = require("util");
@@ -283,11 +282,11 @@ class KorbitMessageSigner {
         return els.join("&");
     }
 
-    constructor(config : Config.ConfigProvider) {
-        this._client_id = config.GetString("KorbitApiKey");
-        this._secretKey = config.GetString("KorbitSecretKey");
-        this._user = config.GetString("KorbitUsername");
-        this._pass = config.GetString("KorbitPassword");
+    constructor(cfString) {
+        this._client_id = cfString("KorbitApiKey");
+        this._secretKey = cfString("KorbitSecretKey");
+        this._user = cfString("KorbitUsername");
+        this._pass = cfString("KorbitPassword");
     }
 }
 
@@ -349,8 +348,8 @@ class KorbitHttp {
     };
 
     private _baseUrl : string;
-    constructor(config : Config.ConfigProvider, private _signer: KorbitMessageSigner) {
-        this._baseUrl = config.GetString("KorbitHttpUrl")
+    constructor(cfString, private _signer: KorbitMessageSigner) {
+        this._baseUrl = cfString("KorbitHttpUrl")
     }
 }
 
@@ -423,7 +422,7 @@ class KorbitSymbolProvider {
 
 class Korbit extends Interfaces.CombinedGateway {
     constructor(
-      config: Config.ConfigProvider,
+      cfString,
       pair: Models.CurrencyPair,
       minTick: number,
       minSize: number,
@@ -431,9 +430,9 @@ class Korbit extends Interfaces.CombinedGateway {
       _evUp
     ) {
         var symbol = new KorbitSymbolProvider(pair);
-        var http = new KorbitHttp(config, new KorbitMessageSigner(config));
+        var http = new KorbitHttp(cfString, new KorbitMessageSigner(cfString));
 
-        var orderGateway = config.GetString("KorbitOrderDestination") == "Korbit"
+        var orderGateway = cfString("KorbitOrderDestination") == "Korbit"
             ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(_evUp, http, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
@@ -446,8 +445,8 @@ class Korbit extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createKorbit(config : Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const constants = await getJSON<any[]>(config.GetString("KorbitHttpUrl")+"/constants");
+export async function createKorbit(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    const constants = await getJSON<any[]>(cfString("KorbitHttpUrl")+"/constants");
     let minTick = 500;
     let minSize = 0.015;
     for (let constant in constants)
@@ -456,5 +455,5 @@ export async function createKorbit(config : Config.ConfigProvider, pair: Models.
       // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(pair.base)+'ORDER')
           // minSize = parseFloat(constants[constant]);
 
-    return new Korbit(config, pair, minTick, minSize, _evOn, _evUp);
+    return new Korbit(cfString, pair, minTick, minSize, _evOn, _evUp);
 }

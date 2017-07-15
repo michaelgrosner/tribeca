@@ -3,7 +3,6 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuotingEngine = require("./quoting-engine");
-import QuotingParameters = require("./quoting-parameters");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
@@ -14,7 +13,7 @@ export class QuoteSender {
     private _quotingEngine: QuotingEngine.QuotingEngine,
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
-    private _qpRepo: QuotingParameters.QuotingParametersRepository,
+    private _qpRepo,
     private _publisher: Publish.Publisher,
     private _evOn
   ) {
@@ -94,14 +93,14 @@ export class QuoteSender {
     const orderSide = this.orderCacheSide(side, false);
     const dupe = orderSide.filter(x => q.price.toFixed(8) === x.price.toFixed(8)).length;
 
-    if (this._qpRepo.latest.mode !== Models.QuotingMode.AK47) {
+    if (this._qpRepo().mode !== Models.QuotingMode.AK47) {
       if (orderSide.length) {
         if (!dupe) this.modify(side, q);
       } else this.start(side, q);
       return;
     }
 
-    if (!dupe && orderSide.length >= this._qpRepo.latest.bullets) {
+    if (!dupe && orderSide.length >= this._qpRepo().bullets) {
       this.modify(side, q);
       return;
     }
@@ -123,22 +122,23 @@ export class QuoteSender {
   };
 
   private modify = (side: Models.Side, q: Models.Quote) => {
-    if (this._qpRepo.latest.mode === Models.QuotingMode.AK47) this.stopWorstQuote(side);
+    if (this._qpRepo().mode === Models.QuotingMode.AK47) this.stopWorstQuote(side);
     else this.stopAllQuotes(side);
     this.start(side, q);
   };
 
   private start = (side: Models.Side, q: Models.Quote) => {
+    const params = this._qpRepo();
     let price: number = q.price;
     let orderSide = this.orderCacheSide(side, true);
     if (orderSide.filter(x => price.toFixed(8) == x.price.toFixed(8)
-      || (this._qpRepo.latest.mode === Models.QuotingMode.AK47 &&
-           ((price + (this._qpRepo.latest.range - 1e-2)) >= x.price
-           && (price - (this._qpRepo.latest.range - 1e-2)) <= x.price))
+      || (params.mode === Models.QuotingMode.AK47 &&
+           ((price + (params.range - 1e-2)) >= x.price
+           && (price - (params.range - 1e-2)) <= x.price))
     ).length) {
-      if (this._qpRepo.latest.mode === Models.QuotingMode.AK47) {
-        if (orderSide.length<this._qpRepo.latest.bullets) {
-          let incPrice: number = (this._qpRepo.latest.range * (side === Models.Side.Bid ? -1 : 1 ));
+      if (params.mode === Models.QuotingMode.AK47) {
+        if (orderSide.length<params.bullets) {
+          let incPrice: number = (params.range * (side === Models.Side.Bid ? -1 : 1 ));
           let oldPrice:number = 0;
           let len:number  = 0;
           orderSide.forEach(x => {
@@ -151,8 +151,8 @@ export class QuoteSender {
           });
           if (len==orderSide.length) price = orderSide.slice(-1).pop().price + incPrice;
           if (orderSide.filter(x =>
-            (price + (this._qpRepo.latest.range - 1e-2)) >= x.price
-            && (price - (this._qpRepo.latest.range - 1e-2)) <= x.price
+            (price + (params.range - 1e-2)) >= x.price
+            && (price - (params.range - 1e-2)) <= x.price
           ).length) return;
           this.stopWorstsQuotes(side, q.price);
           price = Utils.roundNearest(price, this._broker.minTickIncrement);

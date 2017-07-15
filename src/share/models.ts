@@ -23,7 +23,7 @@ export var Topics = {
   ActiveSubscription: 'c',
   ActiveState: 'd',
 MarketData: 'e',
-  QuotingParametersChange: 'f',
+QuotingParametersChange: 'f',
   SafetySettings: 'g',
   Product: 'h',
 OrderStatusReports: 'i',
@@ -308,14 +308,10 @@ export class CurrencyPair {
     }
 }
 
-export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
-    return a.base === b.base && a.quote === b.quote;
-}
-
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
-export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings  }
+export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }

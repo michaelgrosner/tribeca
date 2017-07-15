@@ -3,7 +3,6 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import MarketFiltration = require("./market-filtration");
-import QuotingParameters = require("./quoting-parameters");
 
 export class FairValueEngine {
   private _latest: Models.FairValue = null;
@@ -21,7 +20,7 @@ export class FairValueEngine {
     public filtration: MarketFiltration.MarketFiltration,
     private _minTick: number,
     private _timeProvider: Utils.ITimeProvider,
-    private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+    private _qpRepo,
     private _publisher: Publish.Publisher,
     private _evOn,
     private _evUp,
@@ -39,7 +38,7 @@ export class FairValueEngine {
     const mkt: Models.Market = this.filtration.latestFilteredMarket;
     this.latestFairValue = (mkt && mkt.asks.length && mkt.bids.length)
       ? new Models.FairValue(Utils.roundNearest(
-          this._qlParamRepo.latest.fvModel == Models.FairValueModel.BBO
+          this._qpRepo().fvModel == Models.FairValueModel.BBO
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
             : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
           this._minTick

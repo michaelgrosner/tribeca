@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
 import FairValue = require("./fair-value");
-import QuotingParameters = require("./quoting-parameters");
 import PositionManagement = require("./position-management");
 import Broker = require("./broker");
 import Statistics = require("./statistics");
@@ -51,7 +50,7 @@ export class QuotingEngine {
     constructor(
       private _timeProvider: Utils.ITimeProvider,
       private _fvEngine: FairValue.FairValueEngine,
-      private _qlParamRepo: QuotingParameters.QuotingParametersRepository,
+      private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
       private _minTick: number,
       private _minSize: number,
@@ -83,7 +82,7 @@ export class QuotingEngine {
         if (this._targetPosition.latestTargetPosition === null || this._positionBroker.latestReport === null) return null;
         const targetBasePosition = this._targetPosition.latestTargetPosition.data;
 
-        const params = this._qlParamRepo.latest;
+        const params = this._qpRepo();
         const widthPing = (params.widthPercentage)
           ? params.widthPingPercentage * fv.price / 100
           : params.widthPing;

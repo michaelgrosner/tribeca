@@ -1,9 +1,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 #include <cstring>
 #include <chrono>
+#include <locale>
 #include <math.h>
+#include <iomanip>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -23,18 +26,27 @@ using namespace std;
 using namespace v8;
 
 #include "_b64.h"
+#include "_dec.h"
 
+using namespace dec;
+
+#include "fn.h"
 #include "ev.h"
 #include "sd.h"
+#include "km.h"
+#include "cf.h"
 #include "db.h"
 #include "ui.h"
+#include "qp.h"
 
 namespace K {
   void main(Local<Object> exports) {
     EV::main(exports);
     SD::main(exports);
+    CF::main(exports);
     DB::main(exports);
     UI::main(exports);
+    QP::main(exports);
   }
 }
 

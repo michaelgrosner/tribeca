@@ -1,4 +1,3 @@
-import Config = require("../config");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import util = require("util");
@@ -439,7 +438,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     constructor(
         private _evUp,
-        config: Config.ConfigProvider,
+        cfString,
         minTick: number,
         private _client: Gdax.OrderbookSync,
         private _authClient: Gdax.AuthenticatedClient,
@@ -450,8 +449,8 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         if (typeof initiator !== 'undefined') {
           this._FIXHeader = {
             8: 'FIX.4.2',
-            49: config.GetString("CoinbaseApiKey"),
-            56: config.GetString("CoinbaseOrderDestination")
+            49: cfString("CoinbaseApiKey"),
+            56: cfString("CoinbaseOrderDestination")
           };
           util.inherits(initiator, events.EventEmitter);
           let now;
@@ -465,13 +464,13 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
           }, {
             credentials: {
               username: '',
-              password: config.GetString("CoinbasePassphrase"),
+              password: cfString("CoinbasePassphrase"),
               rawdata: ((what, secret) => crypto.createHmac('sha256', new Buffer(secret, 'base64')).update(what).digest('base64'))([
                 now=df(new Date(), "yyyymmdd-HH:MM:ss.l"), 'A', '1',
-                config.GetString("CoinbaseApiKey"),
-                config.GetString("CoinbaseOrderDestination"),
-                config.GetString("CoinbasePassphrase")
-              ].join('\x01'), config.GetString("CoinbaseSecret")),
+                cfString("CoinbaseApiKey"),
+                cfString("CoinbaseOrderDestination"),
+                cfString("CoinbasePassphrase")
+              ].join('\x01'), cfString("CoinbaseSecret")),
               sendingtime: now,
               cancelordersondisconnect: 'Y'
             },
@@ -483,8 +482,8 @@ FileLogPath=/var/tmp/quickfix/log
 [SESSION]
 ConnectionType=initiator
 EncryptMethod=0
-SenderCompID=${config.GetString("CoinbaseApiKey")}
-TargetCompID=${config.GetString("CoinbaseOrderDestination")}
+SenderCompID=${cfString("CoinbaseApiKey")}
+TargetCompID=${cfString("CoinbaseOrderDestination")}
 BeginString=FIX.4.2
 StartTime=00:00:00
 EndTime=23:59:59
@@ -574,31 +573,31 @@ class CoinbaseSymbolProvider {
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(
       authClient: Gdax.AuthenticatedClient,
-      config: Config.ConfigProvider,
+      cfString,
       symbolProvider: CoinbaseSymbolProvider,
       quoteIncrement: number,
       minSize: number,
       _evOn,
       _evUp
     ) {
-        const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, config.GetString("CoinbaseRestUrl"), config.GetString("CoinbaseWebsocketUrl"), authClient);
+        const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
 
         super(
             new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient),
-            config.GetString("CoinbaseOrderDestination") == "Coinbase"
-              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, config, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
+            cfString("CoinbaseOrderDestination") == "Coinbase"
+              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
               : new NullGateway.NullOrderGateway(_evUp),
             new CoinbasePositionGateway(_evUp, authClient),
             new CoinbaseBaseGateway(quoteIncrement, minSize));
     }
 };
 
-export async function createCoinbase(config: Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(cfString, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
-      config.GetString("CoinbaseApiKey"),
-      config.GetString("CoinbaseSecret"),
-      config.GetString("CoinbasePassphrase"),
-      config.GetString("CoinbaseRestUrl")
+      cfString("CoinbaseApiKey"),
+      cfString("CoinbaseSecret"),
+      cfString("CoinbasePassphrase"),
+      cfString("CoinbaseRestUrl")
     );
 
     const products = await new Promise<Product[]>((resolve, reject) => {
@@ -615,7 +614,7 @@ export async function createCoinbase(config: Config.ConfigProvider, pair: Models
 
     for (let p of products) {
         if (p.id === symbolProvider.symbol)
-            return new Coinbase(authClient, config, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size), _evOn, _evUp);
+            return new Coinbase(authClient, cfString, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size), _evOn, _evUp);
     }
 
     throw new Error("Unable to match pair to a coinbase symbol " + pair.toString());

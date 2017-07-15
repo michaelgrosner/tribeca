@@ -1,4 +1,3 @@
-import Config = require("../config");
 import crypto = require('crypto');
 import WebSocket = require('uws');
 import request = require('request');
@@ -256,8 +255,8 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     _tradesClient : SocketIOClient.Socket;
 
-    constructor(private _evUp, config: Config.ConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
-        this._marketDataWs = new WebSocket(config.GetString("HitBtcMarketDataUrl"));
+    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
+        this._marketDataWs = new WebSocket(cfString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
         this._marketDataWs.on("close", (code, msg) => {
@@ -270,20 +269,20 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             throw err;
         });
 
-        console.info('hitbtc', 'socket.io', config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
-        this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
+        console.info('hitbtc', 'socket.io', cfString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
+        this._tradesClient = io.connect(cfString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
         this._tradesClient.on("connect", this.onConnectionStatusChange);
         this._tradesClient.on("trade", this.onTrade);
         this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
-            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
+            {url: url.resolve(cfString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
             (err, body, resp) => {
                 this.onMarketDataSnapshotFullRefresh(resp, new Date());
             });
 
         request.get(
-            {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/trades"),
+            {url: url.resolve(cfString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/trades"),
              qs: {from: 0, by: "trade_id", sort: 'desc', start_index: 0, max_results: 100}},
             (err, body, resp) => {
                 JSON.parse((<any>body).body).trades.forEach(t => {
@@ -510,10 +509,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private _apiKey : string;
     private _secret : string;
-    constructor(private _evUp, config: Config.ConfigProvider, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
-        this._apiKey = config.GetString("HitBtcApiKey");
-        this._secret = config.GetString("HitBtcSecret");
-        this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"));
+    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
+        this._apiKey = cfString("HitBtcApiKey");
+        this._secret = cfString("HitBtcSecret");
+        this._orderEntryWs = new WebSocket(cfString("HitBtcOrderEntryUrl"));
         this._orderEntryWs.on('open', this.onOpen);
         this._orderEntryWs.on('message', this.onMessage);
         this._orderEntryWs.on('close', this.onConnectionStatusChange);
@@ -576,10 +575,10 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     private readonly _apiKey: string;
     private readonly _secret: string;
     private readonly _pullUrl: string;
-    constructor(private _evUp, config: Config.ConfigProvider) {
-        this._apiKey = config.GetString("HitBtcApiKey");
-        this._secret = config.GetString("HitBtcSecret");
-        this._pullUrl = config.GetString("HitBtcPullUrl");
+    constructor(private _evUp, cfString) {
+        this._apiKey = cfString("HitBtcApiKey");
+        this._secret = cfString("HitBtcSecret");
+        this._pullUrl = cfString("HitBtcPullUrl");
         this.onTick();
         setInterval(this.onTick, 15000);
     }
@@ -619,7 +618,7 @@ class HitBtcSymbolProvider {
 
 class HitBtc extends Interfaces.CombinedGateway {
     constructor(
-      config: Config.ConfigProvider,
+      cfString,
       symbolProvider: HitBtcSymbolProvider,
       step: number,
       minSize: number,
@@ -628,18 +627,18 @@ class HitBtc extends Interfaces.CombinedGateway {
       _evUp
     ) {
         const details = new HitBtcBaseGateway(step, minSize);
-        const orderGateway = config.GetString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, config, symbolProvider, details)
+        const orderGateway = cfString("HitBtcOrderDestination") == "HitBtc" ?
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, details)
             : new NullGateway.NullOrderGateway(_evUp);
 
         // Payment actions are not permitted in demo mode -- helpful.
-        let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, config);
-        if (config.GetString("HitBtcPullUrl").indexOf("demo") > -1) {
+        let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, cfString);
+        if (cfString("HitBtcPullUrl").indexOf("demo") > -1) {
             positionGateway = new NullGateway.NullPositionGateway(_evUp, pair);
         }
 
         super(
-            new HitBtcMarketDataGateway(_evUp, config, symbolProvider, step),
+            new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step),
             orderGateway,
             positionGateway,
             details);
@@ -656,14 +655,14 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(config : Config.ConfigProvider, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const symbolsUrl = config.GetString("HitBtcPullUrl") + "/api/1/public/symbols";
+export async function createHitBtc(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    const symbolsUrl = cfString("HitBtcPullUrl") + "/api/1/public/symbols";
     const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
     const symbolProvider = new HitBtcSymbolProvider(pair);
 
     for (let s of symbols.symbols) {
         if (s.symbol === symbolProvider.symbol)
-            return new HitBtc(config, symbolProvider, parseFloat(s.step), 0.01, pair, _evOn, _evUp);
+            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), 0.01, pair, _evOn, _evUp);
     }
 
     throw new Error("unable to match pair to a hitbtc symbol " + pair.toString());
