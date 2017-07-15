@@ -5,7 +5,7 @@ namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
   Persistent<Function> noop;
-  typedef void (*uiCb)(string);
+  typedef void (*uiCb)(Local<Value>);
   struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<char, vector<Local<Object>>> D; int u = 0; };
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   enum uiBIT: unsigned char { MSG = '-', SNAP = '=' };
@@ -31,7 +31,7 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
         exports->Set(FN::v8S("UI"), o->GetFunction());
         NODE_SET_METHOD(exports, "o60", UI::o60);
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
-        NODE_SET_METHOD(exports, "uiSnap", UI::uiSnap);
+        NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
       }
@@ -54,7 +54,6 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
       }
       static void uiOn(char k, char k_, uiCb cb) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        Isolate *isolate = args.GetIsolate();
         string k = string(1, k_).append(string(1, k));
         if (sess->cb.find(k) != sess->cb.end())
           return { cout << "Use only a single unique message handler for each different topic" << endl; exit(1); }
@@ -288,15 +287,13 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
       static void uiHold(string k, Local<Object> o) {
         Isolate* isolate = Isolate::GetCurrent();
         bool isOSR = k[0] == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == o->Get(FN::v8S("orderStatus"))->NumberValue())
-          return (void)++iOSR60;
+        if (isOSR && mORS::New == o->Get(FN::v8S("orderStatus"))->NumberValue()) return (void)++iOSR60;
         Local<Object> qp_ = Local<Object>::New(isolate, qpRepo);
         if (!qp_->Get(FN::v8S("delayUI"))->NumberValue()) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        // for (vector<Local<Object>>::iterator o_ = sess->D[k[0]].begin(); o_ != sess->D[k[0]].end(); ++o_) {
-          // if ()
-        // }
-        // this._delayed = this._delayed.filter(x => x[0] !== topic || (isOSR?x[1].orderId !== msg.orderId:false));
+        for (it=sess->D.begin(); it!=sess->D.end(); ++it) if (it->first == k[0]) sess->D.erase(it);
+        if (isOSR) for (vector<Local<Object>>::iterator it = sess->D[k[0]].begin(); it != sess->D[k[0]].end(); ++it)
+          if (it->second->Get(FN::v8S("orderStatus"))->ToString() == o->Get(FN::v8S("orderStatus"))->ToString()) sess->D[k[0]].erase(*it);
         sess->D[k[0]].push_back(o);
       }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {

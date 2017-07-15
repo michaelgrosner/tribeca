@@ -71,12 +71,12 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         char* zErrMsg = 0;
         JSON Json;
-        MaybeLocal<String> row = args[1]->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), o);
+        MaybeLocal<String> row = Json.Stringify(isolate->GetCurrentContext(), o);
         sqlite3_exec(db,
           string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(table)
           .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
             time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
-          ) ) : "").append((args[1]->IsUndefined() || row.IsEmpty()) ? "" : string("INSERT INTO ")
+          ) ) : "").append(row.IsEmpty() ? "" : string("INSERT INTO ")
             .append(table).append(" (id,json) VALUES(").append(id).append(",'")
             .append(*String::Utf8Value(row.ToLocalChecked())).append("');")).data(),
           NULL, NULL, &zErrMsg
