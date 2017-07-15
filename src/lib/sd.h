@@ -17,14 +17,14 @@ namespace K {
         double factor = args[4]->NumberValue();
         double mean = 0;
         Local<Object> obj = Object::New(isolate);
-        obj->Set(String::NewFromUtf8(isolate, "fv"),       Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
-        obj->Set(String::NewFromUtf8(isolate, "fvMean"),   Number::New(isolate, mean));
-        obj->Set(String::NewFromUtf8(isolate, "tops"),     Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, &mean)));
-        obj->Set(String::NewFromUtf8(isolate, "topsMean"), Number::New(isolate, mean));
-        obj->Set(String::NewFromUtf8(isolate, "bid"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, &mean)));
-        obj->Set(String::NewFromUtf8(isolate, "bidMean"),  Number::New(isolate, mean));
-        obj->Set(String::NewFromUtf8(isolate, "ask"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, &mean)));
-        obj->Set(String::NewFromUtf8(isolate, "askMean"),  Number::New(isolate, mean));
+        obj->Set(FN::v8S("fv"),       Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
+        obj->Set(FN::v8S("fvMean"),   Number::New(isolate, mean));
+        obj->Set(FN::v8S("tops"),     Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, &mean)));
+        obj->Set(FN::v8S("topsMean"), Number::New(isolate, mean));
+        obj->Set(FN::v8S("bid"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, &mean)));
+        obj->Set(FN::v8S("bidMean"),  Number::New(isolate, mean));
+        obj->Set(FN::v8S("ask"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, &mean)));
+        obj->Set(FN::v8S("askMean"),  Number::New(isolate, mean));
         args.GetReturnValue().Set(obj);
       };
     private:
