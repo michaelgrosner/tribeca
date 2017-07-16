@@ -11,6 +11,9 @@ namespace K {
         NODE_SET_METHOD(exports, "evOn", EV::_evOn);
         NODE_SET_METHOD(exports, "evUp", EV::_evUp);
       }
+      static void evOn(string k, evCb cb) {
+        ev.cb[k].push_back(cb);
+      };
       static void evUp(string k, Local<Object> o) {
         if (ev.cb.find(k) == ev.cb.end()) return;
         for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
