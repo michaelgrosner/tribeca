@@ -42,6 +42,23 @@ namespace K {
         MaybeLocal<Value> array = Json.Parse(isolate->GetCurrentContext(), FN::v8S(json.append("]").data()));
         return array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked();
       }
+      static void insert(uiTXT k, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
+        Isolate* isolate = Isolate::GetCurrent();
+        char* zErrMsg = 0;
+        JSON Json;
+        MaybeLocal<String> row = Json.Stringify(isolate->GetCurrentContext(), o);
+        sqlite3_exec(db,
+          string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(string(1, (char)k))
+          .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
+            time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
+          ) ) : "").append(row.IsEmpty() ? "" : string("INSERT INTO ")
+            .append(string(1, (char)k)).append(" (id,json) VALUES(").append(id).append(",'")
+            .append(*String::Utf8Value(row.ToLocalChecked())).append("');")).data(),
+          NULL, NULL, &zErrMsg
+        );
+        if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+      }
     protected:
       int exchange;
       int base;
@@ -67,27 +84,10 @@ namespace K {
         for (int i=0; i<argc; i++) json->append(argv[i]).append(",");
         return 0;
       }
-      static void insert(string table, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
-        Isolate* isolate = Isolate::GetCurrent();
-        char* zErrMsg = 0;
-        JSON Json;
-        MaybeLocal<String> row = Json.Stringify(isolate->GetCurrentContext(), o);
-        sqlite3_exec(db,
-          string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(table)
-          .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
-            time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
-          ) ) : "").append(row.IsEmpty() ? "" : string("INSERT INTO ")
-            .append(table).append(" (id,json) VALUES(").append(id).append(",'")
-            .append(*String::Utf8Value(row.ToLocalChecked())).append("');")).data(),
-          NULL, NULL, &zErrMsg
-        );
-        if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-      }
       static void _insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        insert(FN::S8v(args[0]->ToString()), args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), string(args[3]->IsUndefined() ? "NULL" : *String::Utf8Value(args[3]->ToString())), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
+        insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), string(args[3]->IsUndefined() ? "NULL" : *String::Utf8Value(args[3]->ToString())), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
       }
       static void _dbSize(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();

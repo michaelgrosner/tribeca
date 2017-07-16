@@ -2,7 +2,6 @@
 #define K_QP_H_
 
 namespace K {
-  Persistent<Object> qpRepo;
   struct Qp {
     int               widthPing                     = 2;
     double            widthPingPercentage           = decimal_cast<2>("0.25").getAsDouble();
@@ -113,7 +112,7 @@ namespace K {
             if (k != "") qpRepo_->Set(props->Get(i)->ToString(), Number::New(isolate, stod(k)));
           }
         }
-        Local<Object> qp_ = DB::load(isolate, string(1, uiTXT::QuotingParametersChange))->ToObject()->Get(0)->ToObject();
+        Local<Object> qp_ = DB::load(isolate, string(1, (char)uiTXT::QuotingParametersChange))->ToObject()->Get(0)->ToObject();
         maybe_props = qp_->GetOwnPropertyNames(Context::New(isolate));
         if (!maybe_props.IsEmpty()) {
           props = maybe_props.ToLocalChecked();
@@ -121,23 +120,23 @@ namespace K {
             qpRepo_->Set(props->Get(i)->ToString(), qp_->Get(props->Get(i)->ToString())->ToNumber());
         }
         qpRepo.Reset(isolate, qpRepo_);
-        UI::uiSnap(uiTXT::QuotingParametersChange, onSnap);
-        UI::uiHand(uiTXT::QuotingParametersChange, onHand);
+        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
+        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         args.GetReturnValue().Set(Local<Object>::New(isolate, qpRepo));
       };
-      static Local<Value> onSnap() {
+      static Local<Value> onSnap(Local<Value> z) {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k = Array::New(isolate);
         k->Set(0, Local<Object>::New(isolate, qpRepo));
-        return Local<Value>k;
+        return k;
       };
-      static void onHand(Local<Value> o_) {
+      static Local<Value> onHand(Local<Value> o_) {
         Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate, o_);
+        Local<Object> o = o_->ToObject();
         if (o->Get(FN::v8S("buySize"))->NumberValue() > 0
           && o->Get(FN::v8S("sellSize"))->NumberValue() > 0
           && o->Get(FN::v8S("buySizePercentage"))->NumberValue() > 0
@@ -147,13 +146,14 @@ namespace K {
           && o->Get(FN::v8S("widthPingPercentage"))->NumberValue() > 0
           && o->Get(FN::v8S("widthPongPercentage"))->NumberValue() > 0
         ) {
-          if (o->Get(FN::v8S("widthPongPercentage"))->NumberValue() == mQuotingMode::Depth)
+          if ((mQuotingMode)o->Get(FN::v8S("widthPongPercentage"))->NumberValue() == mQuotingMode::Depth)
             o->Set(FN::v8S("widthPercentage"), Boolean::New(isolate, false));
           qpRepo.Reset(isolate, o);
           DB::insert(uiTXT::QuotingParametersChange, o);
           EV::evUp("QuotingParameters", o);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, o);
+        return (Local<Value>)Undefined(isolate);
       };
   };
 }
