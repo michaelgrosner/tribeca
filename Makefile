@@ -11,16 +11,19 @@ src/lib/K.cc
 all: K
 
 help:
-	#
-	# Available commands inside K top level directory:
-	#   make help                      - show this help
-	#
-	#   make                           - compile K node module
-	#   make K                         - compile K node module
-	#   make node                      - download node src files
-	#   make uws                       - download uws src files
-	#   make quickfix                  - download quickfix src files
-	#   make clean                     - remove external src files
+	#                                                  #
+	# Available commands inside K top level directory: #
+	#   make help       - show this help               #
+	#                                                  #
+	#   make            - compile K node module        #
+	#   make K          - compile K node module        #
+	#                                                  #
+	#   make node       - download node src files      #
+	#   make uws        - download uws src files       #
+	#   make quickfix   - download quickfix src files  #
+	#                                                  #
+	#   make clean      - remove external src files    #
+	#                                                  #
 
 K:
 	mkdir -p build app/server/lib
