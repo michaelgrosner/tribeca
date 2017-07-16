@@ -109,7 +109,7 @@ export enum Currency {
     DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT,
     NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD,
     SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT,
-    EOS, SAN
+    EOS, SAN, OMG
 }
 
 export function toCurrency(c: string) : Currency|undefined {
