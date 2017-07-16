@@ -71,7 +71,7 @@ const pair = ((raw: string): Models.CurrencyPair => {
   const split = raw.split("/");
   if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
   return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-})(bindings.cfString("TradedPairx"));
+})(bindings.cfString("TradedPair"));
 
 const exchange = ((ex: string): Models.Exchange => {
   switch (ex) {

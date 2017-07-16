@@ -2,6 +2,7 @@
 #define K_KM_H_
 
 namespace K {
+  Persistent<Object> qpRepo;
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mCurrency: unsigned int {
     BTC, LTC, EUR, GBP, CNY, CAD, ETH, ETC, BFX, RRT, ZEC, BCN, DASH, DOGE,
@@ -27,6 +28,13 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int{ Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
+  enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
+  enum class uiTXT: unsigned char {
+    MarketData = 'e',
+    OrderStatusReports = 'i',
+    Position = 'n',
+    QuotingParametersChange = 'f'
+  };
 }
 
 #endif

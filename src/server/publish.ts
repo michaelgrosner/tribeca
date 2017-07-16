@@ -35,7 +35,6 @@ export class Publisher {
   private _app_state: Models.ApplicationState;
   private _notepad: string;
   private _toggleConfigs: boolean = true;
-  private _newOrderMinute: number = 0;
   private _tick: number = 0;
   private _interval = null;
 
