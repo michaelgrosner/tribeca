@@ -4,6 +4,7 @@
 namespace K {
   uWS::Hub hub(0, true);
   uv_check_t loop;
+  uv_timer_t uiD_;
   Persistent<Function> noop;
   typedef Local<Value> (*uiCb)(Local<Value>);
   struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<Local<Object>>> D; int u = 0; };
@@ -28,6 +29,22 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
         uiGroup->setUserData(new uiSess);
+        if (uv_timer_init(uv_default_loop(), &uiD_)) {
+          cout << "Errrror: UV uiD_ init timer failed." << endl;
+          exit(1);
+        }
+        uiD_.data = (uiSess *) uiGroup->getUserData();
+        if (uv_timer_start(&uiD_, uiD, 0, 0)) {
+          cout << "Errrror: UV uiD_ start timer failed." << endl;
+          exit(1);
+        }
+      }
+      static void uiD(uv_timer_t *handle) {
+        uiSess *sess = (uiSess*) handle->data;
+        for (map<uiTXT, vector<Local<Object>>>::iterator it_=sess->D.begin(); it_!=sess->D.end(); ++it_)
+          for (vector<Local<Object>>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
+            uiUp(it_->first, *it);
+        sess->D.clear();
       }
       static void uiSnap(uiTXT k, uiCb cb) {
         uiOn(uiBIT::SNAP, k, cb);
@@ -285,8 +302,10 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
         Local<Object> qp_ = Local<Object>::New(isolate, qpRepo);
         if (!qp_->Get(FN::v8S("delayUI"))->NumberValue()) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        for (map<uiTXT, vector<Local<Object>>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it) if (it->first == k) sess->D.erase(it);
-        if (isOSR) for (vector<Local<Object>>::iterator it = sess->D[k].begin(); it != sess->D[k].end(); ++it)
+        if (!isOSR) {
+          for (map<uiTXT, vector<Local<Object>>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it)
+            if (it->first == k) sess->D.erase(it);
+        } else for (vector<Local<Object>>::iterator it = sess->D[k].begin(); it != sess->D[k].end(); ++it)
           if ((*it)->Get(FN::v8S("orderId"))->ToString() == o->Get(FN::v8S("orderId"))->ToString()) sess->D[k].erase(it);
         sess->D[k].push_back(o);
       }
