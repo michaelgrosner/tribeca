@@ -16,12 +16,7 @@ import Config = require("./config");
 import log from "./logging";
 
 export function loadDb(config: Config.IConfigProvider) {
-    var deferred = Q.defer<mongodb.Db>();
-    mongodb.MongoClient.connect(config.GetString("MongoDbUrl"), (err, db) => {
-        if (err) deferred.reject(err);
-        else deferred.resolve(db);
-    });
-    return deferred.promise;
+    return mongodb.MongoClient.connect(config.GetString("MongoDbUrl"));
 }
 
 export interface Persistable {
@@ -62,15 +57,13 @@ export class RepositoryPersister<T> implements ILoadLatest<T> {
         return this.converter(v);
     };
 
-    public persist = (report: T) => {
-        this.collection.then(coll => {
-            coll.insertOne(this.converter(report), err => {
-                if (err)
-                    this._log.error(err, "Unable to insert", this._dbName, report);
-                else
-                    this._log.info("Persisted", report);
-            });
-        }).done();
+    public persist = async (report: T) => {
+        try {
+            await (await this.collection).insertOne(this.converter(report));
+            this._log.info("Persisted", report);
+        } catch (err) {
+            this._log.error(err, "Unable to insert", this._dbName, report);
+        }
     };
 
     private converter = (x: any) : T => {
@@ -146,16 +139,23 @@ export class Persister<T extends Persistable> implements ILoadAll<T> {
         private _pair: Models.CurrencyPair) {
             this._log = log("persister:"+_dbName);
 
-            time.setInterval(() => {
-                if (this._persistQueue.length === 0) return;
-                
-                collection.insertMany(_.map(this._persistQueue, this.converter), (err, r) => {
-                    if (r.result.ok) {
+            time.setInterval(async () => {
+                if (this._persistQueue.length === 0) 
+                    return;
+
+                const docs = _.map(this._persistQueue, this.converter);
+
+                try {
+                    const result = await collection.insertMany(docs);
+                    if (result.result && result.result.ok) {
                         this._persistQueue.length = 0;
                     }
-                    else if (err)
-                        this._log.error(err, "Unable to insert", this._dbName, this._persistQueue);
-                }, );
+                    else {
+                        this._log.warn("Unable to insert, retrying soon", this._dbName, this._persistQueue);
+                    }
+                } catch (err) {
+                    this._log.error(err, "Unable to insert, retrying soon", this._dbName, this._persistQueue);
+                }
             }, moment.duration(10, "seconds"));
     }
 }
