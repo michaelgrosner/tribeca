@@ -5,14 +5,14 @@ import Utils = require("../src/server/utils");
 import Statistics = require("../src/server/statistics");
 import Benchmark = require('benchmark');
 
-const bindings = ((K) => { try {
-  console.log(K.join('.'));
-  return require('./../app/server/lib/'+K.join('.'));
-} catch (e) {
-  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
-    throw new Error('K requires Node.js v7.0.0 or greater.');
-  else throw new Error(e);
-}})([packageConfig.name[0], process.platform, process.versions.modules]);
+// const bindings = ((K) => { try {
+  // console.log(K.join('.'));
+  // return require('./../app/server/lib/'+K.join('.'));
+// } catch (e) {
+  // if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
+    // throw new Error('K requires Node.js v7.0.0 or greater.');
+  // else throw new Error(e);
+// }})([packageConfig.name[0], process.platform, process.versions.modules]);
 
 // function computeStdev(sequence: number[], factor: number, minTick: number): number {
   // const n = sequence.length;
