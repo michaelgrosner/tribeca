@@ -13,3 +13,4 @@ services:
     tty: true
   tribeca-mongo:
     image: mongo
+    restart: on-failure
