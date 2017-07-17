@@ -148,7 +148,6 @@ namespace K {
         uiSend(isolate, uiTXT::ApplicationState, app_state);
       }
       static void uiD(uv_timer_t *handle) {
-cout << "uiD_________" << endl;
         Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -190,7 +189,6 @@ cout << "uiD_________" << endl;
         uiOn(uiBIT::MSG, k, cb);
       }
       static void uiSend(Isolate* isolate, uiTXT k, Local<Object> o, bool h = false) {
-cout << "uiSend" << string(1, (char)k) << endl;
         if (h) uiHold(isolate, k, o);
         else uiUp(isolate, k, o);
       }
@@ -303,10 +301,7 @@ cout << "uiSend" << string(1, (char)k) << endl;
         Persistent<Function> *_cb = &sess->_cb[k];
         _cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
-      static void _uiSend(const FunctionCallbackInfo<Value> &args) {JSON Json;
-cout << "_uiSend " << FN::S8v(args[0]->ToString()) << " " << endl;
-MaybeLocal<String> v = Json.Stringify(args.GetIsolate()->GetCurrentContext(), args[1]->ToObject());
-cout << FN::S8v(v.ToLocalChecked()) << endl;
+      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
         if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
         else _uiUp(args);
       }
@@ -343,7 +338,6 @@ cout << FN::S8v(v.ToLocalChecked()) << endl;
         Persistent<Object> _o;
         _o.Reset(isolate, o);
         sess->D[string(1, (char)k)].push_back(_o);
-cout << "size" << sess->D.size() << " " << string(1, (char)k) << " " <<  sess->D[string(1, (char)k)].size() << endl;
       }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
