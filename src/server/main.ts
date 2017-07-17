@@ -94,15 +94,6 @@ const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, 
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
 const publisher = new Publish.Publisher(
-  bindings.dbSize,
-  new bindings.UI(
-    bindings.cfString("WebClientListenPort"),
-    bindings.cfString("WebClientUsername"),
-    bindings.cfString("WebClientPassword")
-  ),
-  bindings.evOn,
-  initParams.delayUI,
-  bindings.o60,
   bindings.uiSnap,
   bindings.uiHand,
   bindings.uiSend

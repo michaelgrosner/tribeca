@@ -19,7 +19,6 @@ namespace K {
         NODE_SET_PROTOTYPE_METHOD(o, "insert", _insert);
         sqlite_.Reset(isolate, o->GetFunction());
         exports->Set(FN::v8S("DB"), o->GetFunction());
-        NODE_SET_METHOD(exports, "dbSize", DB::_dbSize);
       }
       static Local<Value> load(Isolate* isolate, string table) {
         char* zErrMsg = 0;
@@ -59,6 +58,10 @@ namespace K {
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
       }
+      static size_t dbSize() {
+        struct stat st;
+        return stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
+      }
     protected:
       int exchange;
       int base;
@@ -88,16 +91,6 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), string(args[3]->IsUndefined() ? "NULL" : *String::Utf8Value(args[3]->ToString())), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
-      }
-      static void _dbSize(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        struct stat st;
-        args.GetReturnValue().Set(Number::New(isolate, dbSize()));
-      }
-      static size_t dbSize() {
-        struct stat st;
-        return stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
       }
   };
 }

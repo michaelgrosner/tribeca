@@ -7,79 +7,21 @@ namespace K {
   uv_timer_t uiD_;
   Persistent<Function> noop;
   typedef Local<Value> (*uiCb)(Local<Value>);
-  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<Local<Object>>> D; int u = 0; };
+  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>> D; int u = 0; };
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   int iOSR60 = 0;
   double uiMDT = 0;
+  double uiDDT = 0;
   string uiNK64 = "";
   Persistent<Function> socket_;
-  class UI: public node::ObjectWrap {
+  Persistent<Object> _app_state;
+  class UI {
     public:
       static void main(Local<Object> exports) {
         Isolate* isolate = exports->GetIsolate();
-        Local<FunctionTemplate> o = FunctionTemplate::New(isolate, NEw);
-        o->InstanceTemplate()->SetInternalFieldCount(1);
-        o->SetClassName(FN::v8S("UI"));
-NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
-        socket_.Reset(isolate, o->GetFunction());
-        exports->Set(FN::v8S("UI"), o->GetFunction());
-        NODE_SET_METHOD(exports, "o60", UI::o60);
-        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
-        NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
-        NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
-        NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
+        string name = CF::cfString("WebClientUsername");
+        string key = CF::cfString("WebClientPassword");
         uiGroup->setUserData(new uiSess);
-        if (uv_timer_init(uv_default_loop(), &uiD_)) {
-          cout << "Errrror: UV uiD_ init timer failed." << endl;
-          exit(1);
-        }
-        uiD_.data = (uiSess *) uiGroup->getUserData();
-        if (uv_timer_start(&uiD_, uiD, 0, 0)) {
-          cout << "Errrror: UV uiD_ start timer failed." << endl;
-          exit(1);
-        }
-      }
-      static void uiD(uv_timer_t *handle) {
-        uiSess *sess = (uiSess*) handle->data;
-        for (map<uiTXT, vector<Local<Object>>>::iterator it_=sess->D.begin(); it_!=sess->D.end(); ++it_)
-          for (vector<Local<Object>>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-            uiUp(it_->first, *it);
-        sess->D.clear();
-      }
-      static void uiSnap(uiTXT k, uiCb cb) {
-        uiOn(uiBIT::SNAP, k, cb);
-      }
-      static void uiHand(uiTXT k, uiCb cb) {
-        uiOn(uiBIT::MSG, k, cb);
-      }
-      static void uiSend(uiTXT k, Local<Object> o, bool h = false) {
-        if (h) uiHold(k, o);
-        else uiUp(k, o);
-      }
-      static void uiUp(uiTXT k, Local<Object> o) {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
-        if (k == uiTXT::MarketData) {
-          if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
-          uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
-        }
-        MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(k, o));
-        string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(*String::Utf8Value(v.ToLocalChecked()));
-        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
-      }
-      static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        string k = string(1, (char)k_).append(string(1, (char)_k));
-        if (sess->cb.find(k) != sess->cb.end()) { cout << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-        sess->cb[k] = cb;
-      }
-    protected:
-      int port;
-      string name;
-      string key;
-    private:
-      explicit UI(int p_, string n_, string k_): port(p_), name(n_), key(k_) {
-        Isolate* isolate = Isolate::GetCurrent();
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
           B64::Encode(name.append(":").append(key), &uiNK64);
@@ -163,25 +105,112 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
               webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap((uiTXT)message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
           }
         });
+        int port = stoi(CF::cfString("WebClientListenPort"));
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
           cout << "UI ready over " << "HTTPS" << " on external port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
           cout << "UI ready over " << "HTTP" << " on external port " << to_string(port) << endl;
-        else isolate->ThrowException(Exception::TypeError(FN::v8S(string("Use another UI port number, ").append(to_string(port)).append(" seems already in use").data())));
+        else { cout << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use" << endl; exit(1); }
+        if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
+        uiD_.data = isolate;
+        EV::evOn("QuotingParameters", [](Local<Object> qp_) {
+          uiD__(qp_->Get(FN::v8S("delayUI"))->NumberValue());
+        });
+        UI::uiSnap(uiTXT::ApplicationState, &onSnap);
+        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
+        NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
+        NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
+        NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
       }
-      ~UI() {
-        delete uiGroup;
+      static void uiD__(double d) {
+        if (uv_timer_stop(&uiD_)) { cout << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        sess->D.clear();
+        if (d) {
+          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
+        } else {
+          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
+        }
       }
-      static void NEw(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
+      static void uiDD(uv_timer_t *handle) {
+        Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
-        if (!args.IsConstructCall())
-          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use the 'new' operator to create new UI objects")));
-        UI* ui = new UI(args[0]->NumberValue(), FN::S8v(args[1]->ToString()), FN::S8v(args[2]->ToString()));
-        ui->Wrap(args.This());
-        args.GetReturnValue().Set(args.This());
+        time_t rawtime;
+        time(&rawtime);
+        Local<Object> app_state = Object::New(isolate);
+        app_state->Set(FN::v8S("memory"), Number::New(isolate, 21));
+        app_state->Set(FN::v8S("hour"), Number::New(isolate, localtime(&rawtime)->tm_hour));
+        app_state->Set(FN::v8S("freq"), Number::New(isolate, iOSR60 / 2));
+        app_state->Set(FN::v8S("dbsize"), Number::New(isolate, DB::dbSize()));
+        _app_state.Reset(isolate, app_state);
+        iOSR60 = 0;
+        uiSend(isolate, uiTXT::ApplicationState, app_state);
       }
+      static void uiD(uv_timer_t *handle) {
+cout << "uiD_________" << endl;
+        Isolate* isolate = (Isolate*) handle->data;
+        HandleScope scope(isolate);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        for (map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it_=sess->D.begin(); it_!=sess->D.end(); ++it_) {
+          if (it_->first != string(1, (char)uiTXT::OrderStatusReports)) {
+            for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
+              uiUp(isolate, (uiTXT)it_->first[0], Local<Object>::New(isolate, *it));
+            sess->D.erase(it_);
+          }
+        }
+        if (sess->D.find(string(1, (char)uiTXT::OrderStatusReports)) != sess->D.end() && sess->D[string(1, (char)uiTXT::OrderStatusReports)].size() > 0) {
+          int ki = 0;
+          Local<Array> k = Array::New(isolate);
+          for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[string(1, (char)uiTXT::OrderStatusReports)].begin(); it != sess->D[string(1, (char)uiTXT::OrderStatusReports)].end();) {
+            Local<Object> o = Local<Object>::New(isolate, *it);
+            k->Set(ki++, o);
+            if (mORS::Working != (mORS)o->Get(FN::v8S("orderStatus"))->NumberValue())
+              sess->D[string(1, (char)uiTXT::OrderStatusReports)].erase(it);
+            else it++;
+          }
+          if (!k->GetOwnPropertyNames(Context::New(isolate)).IsEmpty())
+            uiUp(isolate, uiTXT::OrderStatusReports, k);
+          sess->D.erase(string(1, (char)uiTXT::OrderStatusReports));
+        }
+        if (uiDDT+60000 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
+        uiDDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+        uiDD(handle);
+      }
+      static Local<Value> onSnap(Local<Value> z) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Array> k = Array::New(isolate);
+        k->Set(0, Local<Object>::New(isolate, _app_state));
+        return k;
+      };
+      static void uiSnap(uiTXT k, uiCb cb) {
+        uiOn(uiBIT::SNAP, k, cb);
+      }
+      static void uiHand(uiTXT k, uiCb cb) {
+        uiOn(uiBIT::MSG, k, cb);
+      }
+      static void uiSend(Isolate* isolate, uiTXT k, Local<Object> o, bool h = false) {
+cout << "uiSend" << string(1, (char)k) << endl;
+        if (h) uiHold(isolate, k, o);
+        else uiUp(isolate, k, o);
+      }
+      static void uiUp(Isolate* isolate, uiTXT k, Local<Object> o) {
+        JSON Json;
+        if (k == uiTXT::MarketData) {
+          if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
+          uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+        }
+        MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(k, o));
+        string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(*String::Utf8Value(v.ToLocalChecked()));
+        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+      }
+      static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        string k = string(1, (char)k_).append(string(1, (char)_k));
+        if (sess->cb.find(k) != sess->cb.end()) { cout << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+        sess->cb[k] = cb;
+      }
+    private:
       static Local<Object> shrinkSnap(uiTXT k, Local<Object> snap) {
         Isolate* isolate = Isolate::GetCurrent();
         if (k == uiTXT::OrderStatusReports) return shrinkHand(k, snap);
@@ -274,6 +303,13 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
         Persistent<Function> *_cb = &sess->_cb[k];
         _cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
+      static void _uiSend(const FunctionCallbackInfo<Value> &args) {JSON Json;
+cout << "_uiSend " << FN::S8v(args[0]->ToString()) << " " << endl;
+MaybeLocal<String> v = Json.Stringify(args.GetIsolate()->GetCurrentContext(), args[1]->ToObject());
+cout << FN::S8v(v.ToLocalChecked()) << endl;
+        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
+        else _uiUp(args);
+      }
       static void _uiUp(const FunctionCallbackInfo<Value>& args) {
         Isolate *isolate = args.GetIsolate();
         JSON Json;
@@ -282,32 +318,32 @@ NODE_SET_PROTOTYPE_METHOD(o, "uiUp", _uiUp);
           if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
           uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         }
-        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand((uiTXT)k[0], args[1]->ToObject()));
+        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand((uiTXT)k[0], args[1]->ToObject()));
         string m = string(1, (char)uiBIT::MSG).append(k).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
-      static void o60(const FunctionCallbackInfo<Value> &args) {
-        Isolate *isolate = args.GetIsolate();
-        if (args[0]->IsUndefined() ? false : args[0]->BooleanValue()) iOSR60 = 0;
-        args.GetReturnValue().Set(Number::New(isolate, iOSR60));
-      }
-      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
-        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
-        else _uiUp(args);
-      }
-      static void uiHold(uiTXT k, Local<Object> o) {
-        Isolate* isolate = Isolate::GetCurrent();
+      static void uiHold(Isolate* isolate, uiTXT k, Local<Object> o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o->Get(FN::v8S("orderStatus"))->NumberValue()) return (void)++iOSR60;
+        if (isOSR && mORS::New == (mORS)o->Get(FN::v8S(isolate, "orderStatus"))->NumberValue()) return (void)++iOSR60;
         Local<Object> qp_ = Local<Object>::New(isolate, qpRepo);
-        if (!qp_->Get(FN::v8S("delayUI"))->NumberValue()) return uiUp(k, o);
+        if (!qp_->Get(FN::v8S(isolate, "delayUI"))->NumberValue()) return uiUp(isolate, k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (!isOSR) {
-          for (map<uiTXT, vector<Local<Object>>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it)
-            if (it->first == k) sess->D.erase(it);
-        } else for (vector<Local<Object>>::iterator it = sess->D[k].begin(); it != sess->D[k].end(); ++it)
-          if ((*it)->Get(FN::v8S("orderId"))->ToString() == o->Get(FN::v8S("orderId"))->ToString()) sess->D[k].erase(it);
-        sess->D[k].push_back(o);
+          for (map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it)
+            if (it->first == string(1, (char)k)) sess->D.erase(it);
+        } else {
+          if (sess->D.find(string(1, (char)k)) != sess->D.end() && sess->D[string(1, (char)k)].size() > 0) {
+            for(vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[string(1, (char)k)].begin(); it != sess->D[string(1, (char)k)].end();) {
+              if (Local<Object>::New(isolate, *it)->Get(FN::v8S(isolate, "orderId"))->ToString() == o->Get(FN::v8S(isolate, "orderId"))->ToString())
+                sess->D[string(1, (char)k)].erase(it);
+              else it++;
+            }
+          }
+        }
+        Persistent<Object> _o;
+        _o.Reset(isolate, o);
+        sess->D[string(1, (char)k)].push_back(_o);
+cout << "size" << sess->D.size() << " " << string(1, (char)k) << " " <<  sess->D[string(1, (char)k)].size() << endl;
       }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

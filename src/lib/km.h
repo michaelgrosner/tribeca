@@ -30,10 +30,36 @@ namespace K {
   enum class mSTDEV: unsigned int{ Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
+    FairValue = 'a',
+    Quote = 'b',
+    ActiveSubscription = 'c',
+    ActiveState = 'd',
     MarketData = 'e',
+    QuotingParametersChange = 'f',
+    SafetySettings = 'g',
+    Product = 'h',
     OrderStatusReports = 'i',
+    ProductAdvertisement = 'j',
+    ApplicationState = 'k',
+    Notepad = 'l',
+    ToggleConfigs = 'm',
     Position = 'n',
-    QuotingParametersChange = 'f'
+    ExchangeConnectivity = 'o',
+    SubmitNewOrder = 'p',
+    CancelOrder = 'q',
+    MarketTrade = 'r',
+    Trades = 's',
+    ExternalValuation = 't',
+    QuoteStatus = 'u',
+    TargetBasePosition = 'v',
+    TradeSafetyValue = 'w',
+    CancelAllOrders = 'x',
+    CleanAllClosedOrders = 'y',
+    CleanAllOrders = 'z',
+    CleanTrade = 'A',
+    TradesChart = 'B',
+    WalletChart = 'C',
+    EWMAChart = 'D'
   };
 }
 
