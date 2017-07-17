@@ -4,7 +4,7 @@
 namespace K {
   sqlite3* db;
   string dbFpath;
-  class DB: public node::ObjectWrap {
+  class DB {
     public:
       static void main(Local<Object> exports) {
         Isolate* isolate = exports->GetIsolate();
