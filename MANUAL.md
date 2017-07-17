@@ -210,7 +210,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `BB?` - Enable Bollinger Bands with upper and lower bands calculated from the result of the selected `stdev` above or below its own moving average of `periods`.
 
-* `delayAPI` - Does nothing, under development yet.
+* `delayAPI` - Relax the new orders send to the exchange API by `delayAPI` orders/60seconds, for example `delayAPI=0` does not apply any delay but `delayAPI=75` will send a new order once every 800 milliseconds, or `delayAPI=3` will send a new order once every 20 seconds.
 
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
