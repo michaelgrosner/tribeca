@@ -115,12 +115,12 @@ namespace K {
         Local<Value> qpa = DB::load(isolate, string(1, (char)uiTXT::QuotingParametersChange));
         if (FN::S8v(qpa->ToString()).length()) {
           Local<Object> qp_ = qpa->ToObject()->Get(0)->ToObject();
-            maybe_props = qp_->GetOwnPropertyNames(Context::New(isolate));
-            if (!maybe_props.IsEmpty()) {
-              props = maybe_props.ToLocalChecked();
-              for(uint32_t i=0; i < props->Length(); i++)
-                qpRepo_->Set(props->Get(i)->ToString(), qp_->Get(props->Get(i)->ToString())->ToNumber());
-            }
+          maybe_props = qp_->GetOwnPropertyNames(Context::New(isolate));
+          if (!maybe_props.IsEmpty()) {
+            props = maybe_props.ToLocalChecked();
+            for(uint32_t i=0; i < props->Length(); i++)
+              qpRepo_->Set(props->Get(i)->ToString(), qp_->Get(props->Get(i)->ToString())->ToNumber());
+          }
         }
         qpRepo.Reset(isolate, qpRepo_);
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
