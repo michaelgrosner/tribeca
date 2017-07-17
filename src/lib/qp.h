@@ -43,7 +43,7 @@ namespace K {
     int               shortEwmaPeridos              = 50;
     int               aprMultiplier                 = 2;
     int               sopWidthMultiplier            = 2;
-    int               delayAPI                      = 15;
+    int               delayAPI                      = 0;
     bool              cancelOrdersAuto              = false;
     int               cleanPongsAuto                = 0;
     double            profitHourInterval            = decimal_cast<1>("0.5").getAsDouble();
