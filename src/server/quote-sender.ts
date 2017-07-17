@@ -137,7 +137,7 @@ export class QuoteSender {
       var nextStart = this._lastStart + (60000/params.delayAPI);
       var diffStart = nextStart - new Date().getTime();
       if (diffStart>0) {
-        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(diffStart, 'seconds'));
+        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(diffStart/1000, 'seconds'));
         return;
       }
       this._lastStart = new Date().getTime();
