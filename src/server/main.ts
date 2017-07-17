@@ -86,7 +86,10 @@ const exchange = ((ex: string): Models.Exchange => {
   }
 })(bindings.cfString("EXCHANGE").toLowerCase());
 
-const sqlite = new bindings.DB(exchange, pair.base, pair.quote);
+const sqlite = {
+  load: bindings.dbLoad,
+  insert: bindings.dbInsert
+};
 
 const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initRfv = sqlite.load(Models.Topics.FairValue).map(x => Object.assign(x, {time: new Date(x.time)}));
