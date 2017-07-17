@@ -122,6 +122,7 @@ namespace K {
         qpRepo.Reset(isolate, qpRepo_);
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
+        EV::evUp("QuotingParameters", qpRepo_);
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
@@ -152,7 +153,7 @@ namespace K {
           DB::insert(uiTXT::QuotingParametersChange, o);
           EV::evUp("QuotingParameters", o);
         }
-        UI::uiSend(uiTXT::QuotingParametersChange, o);
+        UI::uiSend(isolate, uiTXT::QuotingParametersChange, o);
         return (Local<Value>)Undefined(isolate);
       };
   };
