@@ -138,8 +138,10 @@ namespace K {
         HandleScope scope(isolate);
         time_t rawtime;
         time(&rawtime);
+        HeapStatistics heapStatistics;
+        isolate->GetHeapStatistics(&heapStatistics);
         Local<Object> app_state = Object::New(isolate);
-        app_state->Set(FN::v8S("memory"), Number::New(isolate, 21));
+        app_state->Set(FN::v8S("memory"), Number::New(isolate, heapStatistics.total_heap_size()));
         app_state->Set(FN::v8S("hour"), Number::New(isolate, localtime(&rawtime)->tm_hour));
         app_state->Set(FN::v8S("freq"), Number::New(isolate, iOSR60 / 2));
         app_state->Set(FN::v8S("dbsize"), Number::New(isolate, DB::dbSize()));
