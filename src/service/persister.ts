@@ -9,7 +9,6 @@ import Messaging = require("../common/messaging");
 import Utils = require("./utils");
 import _ = require("lodash");
 import mongodb = require('mongodb');
-import Q = require("q");
 import moment = require('moment');
 import Interfaces = require("./interfaces");
 import Config = require("./config");
@@ -41,10 +40,8 @@ export class RepositoryPersister<T> implements ILoadLatest<T> {
     private _log = log("tribeca:exchangebroker:repopersister");
 
     public loadLatest = async (): Promise<T> => {
-        const coll = await this.collection;
-
         const selector = { exchange: this._exchange, pair: this._pair };
-        const docs = await coll.find(selector)
+        const docs = await this.collection.find(selector)
                 .limit(1)
                 .project({ _id: 0 })
                 .sort({ $natural: -1 })
@@ -59,7 +56,7 @@ export class RepositoryPersister<T> implements ILoadLatest<T> {
 
     public persist = async (report: T) => {
         try {
-            await (await this.collection).insertOne(this.converter(report));
+            await this.collection.insertOne(this.converter(report));
             this._log.info("Persisted", report);
         } catch (err) {
             this._log.error(err, "Unable to insert", this._dbName, report);
@@ -74,14 +71,12 @@ export class RepositoryPersister<T> implements ILoadLatest<T> {
         return x;
     };
 
-    collection: Q.Promise<mongodb.Collection>;
     constructor(
-        db: Q.Promise<mongodb.Db>,
+        private collection: mongodb.Collection,
         private _defaultParameter: T,
         private _dbName: string,
         private _exchange: Models.Exchange,
         private _pair: Models.CurrencyPair) {
-        this.collection = db.then(db => db.collection(this._dbName));
     }
 }
 
