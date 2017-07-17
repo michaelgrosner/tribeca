@@ -3,10 +3,13 @@ import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuotingEngine = require("./quoting-engine");
+import moment = require("moment");
 
 export class QuoteSender {
   private _exchange: Models.Exchange;
   private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0, 0, 0);
+  private _lastStart: number = new Date().getTime();
+  private _timeoutStart: number = 0;
 
   constructor(
     private _timeProvider: Utils.ITimeProvider,
@@ -129,12 +132,20 @@ export class QuoteSender {
 
   private start = (side: Models.Side, q: Models.Quote) => {
     const params = this._qpRepo();
+    if (params.delayAPI > 0) {
+      if (this._lastStart+(60000/params.delayAPI)>new Date().getTime()) {
+        if (this._timeoutStart) clearTimeout(this._timeoutStart);
+        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(60000/params.delayAPI, 'seconds'));
+        return;
+      }
+      this._lastStart = new Date().getTime();
+    }
     let price: number = q.price;
     let orderSide = this.orderCacheSide(side, true);
     if (orderSide.filter(x => price.toFixed(8) == x.price.toFixed(8)
       || (params.mode === Models.QuotingMode.AK47 &&
-           ((price + (params.range - 1e-2)) >= x.price
-           && (price - (params.range - 1e-2)) <= x.price))
+         ((price + (params.range - 1e-2)) >= x.price
+         && (price - (params.range - 1e-2)) <= x.price))
     ).length) {
       if (params.mode === Models.QuotingMode.AK47) {
         if (orderSide.length<params.bullets) {
