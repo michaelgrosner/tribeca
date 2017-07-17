@@ -15,9 +15,16 @@ namespace K {
         ev.cb[k].push_back(cb);
       };
       static void evUp(string k, Local<Object> o) {
-        if (ev.cb.find(k) == ev.cb.end()) return;
-        for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
-          (*cb)(o);
+        if (ev.cb.find(k) != ev.cb.end()) {
+          for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
+            (*cb)(o);
+        }
+        if (ev._cb.find(k) != ev._cb.end()) {
+          Isolate* isolate = Isolate::GetCurrent();
+          Local<Value> argv[] = {o};
+          for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
+            Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+        }
       };
       static void _evOn(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
@@ -31,10 +38,15 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         string k = string(*String::Utf8Value(args[0]->ToString()));
-        if (ev._cb.find(k) == ev._cb.end()) return;
-        Local<Value> argv[] = {args[1]};
-        for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
-          Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+        if (ev._cb.find(k) != ev._cb.end()) {
+          Local<Value> argv[] = {args[1]};
+          for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
+            Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+        }
+        if (ev.cb.find(k) != ev.cb.end()) {
+          for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
+            (*cb)(args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject());
+        }
       };
   };
 }
