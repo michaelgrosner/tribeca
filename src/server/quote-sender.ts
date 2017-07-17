@@ -133,9 +133,11 @@ export class QuoteSender {
   private start = (side: Models.Side, q: Models.Quote) => {
     const params = this._qpRepo();
     if (params.delayAPI > 0) {
-      if (this._lastStart+(60000/params.delayAPI)>new Date().getTime()) {
-        if (this._timeoutStart) clearTimeout(this._timeoutStart);
-        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(60000/params.delayAPI, 'seconds'));
+      if (this._timeoutStart) clearTimeout(this._timeoutStart);
+      var nextStart = this._lastStart + (60000/params.delayAPI);
+      var diffStart = nextStart - new Date().getTime();
+      if (diffStart>0) {
+        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(diffStart, 'seconds'));
         return;
       }
       this._lastStart = new Date().getTime();
