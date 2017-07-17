@@ -17,7 +17,9 @@ node_js:
 branches:
   only: master
 
-install: npm install
+install:
+  - cp etc/K.json.dist etc/K.json
+  - npm install
 
 script: npm run test-cov
 
