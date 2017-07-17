@@ -1,20 +1,26 @@
-const packageConfig = require("./../package.json");
-
-const bindings = ((K) => { try {
-  console.log(K.join('.'));
-  return require('./../app/server/lib/'+K.join('.'));
-} catch (e) {
-  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
-    throw new Error('K requires Node.js v7.0.0 or greater.');
-  else throw new Error(e);
-}})([packageConfig.name[0], process.platform, process.versions.modules]);
-
 import assert = require("assert");
 import Backtest = require("../src/server/backtest");
 import Interfaces = require("../src/server/interfaces");
 import Utils = require("../src/server/utils");
 import Models = require("../src/share/models");
 import moment = require("moment");
+class Evt {
+  private _multiCallback = new Array();
+
+  public evOn = (k, handler) => {
+    if (typeof this._multiCallback[k] == 'undefined')
+      this._multiCallback[k] = new Array();
+    this._multiCallback[k].push(handler);
+  };
+
+  public evUp = (k, data?) => {
+    if (typeof this._multiCallback[k] != 'undefined')
+      for(let i = this._multiCallback[k].length; i--;)
+        this._multiCallback[k][i](data);
+  };
+}
+
+const ev = new Evt();
 
 describe("BacktestTests", () => {
     var timeProvider : Backtest.BacktestTimeProvider;
@@ -111,9 +117,9 @@ describe("BacktestGatewayTests", () => {
         ];
 
         var timeProvider = new Backtest.BacktestTimeProvider(moment.unix(1), moment.unix(40));
-        var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider, bindings.evOn, bindings.evUp);
+        var gateway = new Backtest.BacktestGateway(inputData, 10, 5000, timeProvider, ev.evOn, ev.evUp);
 
-        bindings.evOn('MarketDataGateway', m => {
+        ev.evOn('MarketDataGateway', m => {
             gateway.sendOrder(<Models.OrderStatusReport>{
                 orderId: "A",
                 side: Models.Side.Ask,
@@ -127,7 +133,7 @@ describe("BacktestGatewayTests", () => {
         });
 
         var gotTrade = false;
-        bindings.evOn('OrderUpdateGateway', o => {
+        ev.evOn('OrderUpdateGateway', o => {
             if (o.orderStatus === Models.OrderStatus.Complete) {
                 gotTrade = true;
                 assert.equal(12, o.lastPrice);
@@ -135,7 +141,7 @@ describe("BacktestGatewayTests", () => {
             }
         });
 
-        // bindings.evOn('PositionGateway', p => {
+        // ev.evOn('PositionGateway', p => {
             // console.log(Models.Currency[p.currency], p.amount, p.heldAmount);
         // });
 
