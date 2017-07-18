@@ -18,24 +18,17 @@ export class EWMATargetPositionCalculator {
     private _qpRepo,
     initRfv: Models.RegularFairValue[]
   ) {
-    if (initRfv !== null)
-      this.initialize(initRfv.map((r: Models.RegularFairValue) => r.fairValue));
+    if (initRfv !== null && initRfv.length) {
+      this.latestLong = initRfv[0].ewmaLong;
+      this.latestMedium = initRfv[0].ewmaMedium;
+      this.latestShort = initRfv[0].ewmaShort;
+    }
   }
   private _SMA3: number[] = [];
 
-  private latestShort: number = null;
-  private latestMedium: number = null;
   private latestLong: number = null;
-
-  initialize(seedData: number[]) {
-    for (var i = seedData.length; i--;)
-      this.computeTBP(
-        seedData[i],
-        this.addNewLongValue(seedData[i]),
-        this.addNewMediumValue(seedData[i]),
-        this.addNewShortValue(seedData[i])
-      );
-  }
+  private latestMedium: number = null;
+  private latestShort: number = null;
 
   computeTBP(value: number, newLong: number, newMedium: number, newShort: number): number {
     this._SMA3.push(value);
