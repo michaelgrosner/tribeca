@@ -23,6 +23,7 @@ help:
 	#   make quickfix   - download quickfix src files  #
 	#                                                  #
 	#   make clean      - remove external src files    #
+	#   make cleandb    - remove K database files      #
 	#                                                  #
 
 K:
@@ -64,6 +65,9 @@ endif
 
 clean:
 	rm -rf build
+
+cleandb:
+	rm -rf /data/db/K*.db
 
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
