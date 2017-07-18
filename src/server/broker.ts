@@ -11,15 +11,16 @@ export class MarketDataBroker {
   private handleMarketData = (book: Models.Market) => {
       this._currentBook = book;
       this._evUp('MarketDataBroker');
-      this._publisher.publish(Models.Topics.MarketData, this.currentBook, true);
+      this._uiSend(Models.Topics.MarketData, this.currentBook, true);
   };
 
   constructor(
-    private _publisher,
+    private _uiSnap,
+    private _uiSend,
     private _evOn,
     private _evUp
   ) {
-    _publisher.registerSnapshot(Models.Topics.MarketData, () => this.currentBook === null ? []: [this.currentBook]);
+    _uiSnap(Models.Topics.MarketData, () => this.currentBook === null ? []: [this.currentBook]);
 
     this._evOn('MarketDataGateway', this.handleMarketData);
     this._evOn('GatewayMarketConnect', s => {
@@ -58,7 +59,7 @@ export class OrderBroker {
         for(var i = 0;i<this.tradesMemory.length;i++) {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
-            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
             this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
@@ -80,7 +81,7 @@ export class OrderBroker {
         for(var i = 0;i<this.tradesMemory.length;i++) {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
-            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
             this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
@@ -100,7 +101,7 @@ export class OrderBroker {
         for(var i = 0;i<this.tradesMemory.length;i++) {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
-            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
             this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
@@ -194,7 +195,7 @@ export class OrderBroker {
             if (this.tradesMemory[i].quantity<=this.tradesMemory[i].Kqty)
               this.tradesMemory[i].Kdiff = Math.abs((this.tradesMemory[i].quantity*this.tradesMemory[i].price)-(this.tradesMemory[i].Kqty*this.tradesMemory[i].Kprice));
             this.tradesMemory[i].loadedFromDB = false;
-            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
             this._dbInsert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
@@ -209,13 +210,13 @@ export class OrderBroker {
             this.tradesMemory[i].quantity += trade.quantity;
             this.tradesMemory[i].value += trade.value;
             this.tradesMemory[i].loadedFromDB = false;
-            this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+            this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
             this._dbInsert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
         }
         if (!exists) {
-          this._publisher.publish(Models.Topics.Trades, trade);
+          this._uiSend(Models.Topics.Trades, trade);
           this._dbInsert(Models.Topics.Trades, trade, false, trade.tradeId);
           this.tradesMemory.push(trade);
         }
@@ -289,7 +290,7 @@ export class OrderBroker {
         }
 
         this._evUp('OrderUpdateBroker', o);
-        this._publisher.publish(Models.Topics.OrderStatusReports, o, true);
+        this._uiSend(Models.Topics.OrderStatusReports, o, true);
 
         if (osr.lastQuantity > 0) {
             let value = Math.abs(o.lastPrice * o.lastQuantity);
@@ -328,12 +329,12 @@ export class OrderBroker {
                 )
               )), trade);
             } else {
-              this._publisher.publish(Models.Topics.Trades, trade);
+              this._uiSend(Models.Topics.Trades, trade);
               this._dbInsert(Models.Topics.Trades, trade, false, trade.tradeId);
               this.tradesMemory.push(trade);
             }
 
-            this._publisher.publish(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
+            this._uiSend(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
 
             if (params.cleanPongsAuto>0) {
               const cleanTime = o.time.getTime() - (params.cleanPongsAuto * 864e5);
@@ -346,7 +347,7 @@ export class OrderBroker {
                   if (this.tradesMemory[i].tradeId==cleanTrade.tradeId) {
                     goWhile = true;
                     this.tradesMemory[i].Kqty = -1;
-                    this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
+                    this._uiSend(Models.Topics.Trades, this.tradesMemory[i]);
                     this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
                     this.tradesMemory.splice(i, 1);
                   }
@@ -376,7 +377,9 @@ export class OrderBroker {
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _dbInsert,
-      private _publisher,
+      private _uiSnap,
+      private _uiHand,
+      private _uiSend,
       private _evOn,
       private _evUp,
       initTrades : Models.Trade[]
@@ -386,8 +389,8 @@ export class OrderBroker {
 
         _timeProvider.setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
-        _publisher.registerSnapshot(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
-        _publisher.registerSnapshot(Models.Topics.OrderStatusReports, () => {
+        _uiSnap(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
+        _uiSnap(Models.Topics.OrderStatusReports, () => {
           let orderCache = [];
           this.orderCache.allOrders.forEach(x => {
             if (x.orderStatus === Models.OrderStatus.Working)
@@ -396,7 +399,7 @@ export class OrderBroker {
           return orderCache;
         });
 
-        _publisher.registerReceiver(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
+        _uiHand(Models.Topics.SubmitNewOrder, (o : Models.OrderRequestFromUI) => {
             try {
               this.sendOrder(new Models.SubmitNewOrder(
                 o.side == 'Ask' ? Models.Side.Ask : Models.Side.Bid,
@@ -416,11 +419,11 @@ export class OrderBroker {
             }
         });
 
-        _publisher.registerReceiver(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
-        _publisher.registerReceiver(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
-        _publisher.registerReceiver(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
-        _publisher.registerReceiver(Models.Topics.CleanAllOrders, () => this.cleanOrders());
-        _publisher.registerReceiver(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
+        _uiHand(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
+        _uiHand(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
+        _uiHand(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
+        _uiHand(Models.Topics.CleanAllOrders, () => this.cleanOrders());
+        _uiHand(Models.Topics.CleanTrade, t => this.cleanTrade(t.tradeId));
 
         this._evOn('OrderUpdateGateway', this.updateOrderState);
     }
@@ -477,7 +480,7 @@ export class PositionBroker {
 
         this._report = positionReport;
         if (!sameValue) this._evUp('PositionBroker');
-        this._publisher.publish(Models.Topics.Position, positionReport, true);
+        this._uiSend(Models.Topics.Position, positionReport, true);
     };
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
@@ -507,7 +510,8 @@ export class PositionBroker {
       private _broker: ExchangeBroker,
       private _orderBroker: OrderBroker,
       private _fvEngine: FairValue.FairValueEngine,
-      private _publisher,
+      private _uiSnap,
+      private _uiSend,
       private _evOn,
       private _evUp
     ) {
@@ -515,7 +519,7 @@ export class PositionBroker {
         this._evOn('OrderUpdateBroker', this.handleOrderUpdate);
         this._evOn('FairValue', () => this.onPositionUpdate(null));
 
-        _publisher.registerSnapshot(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
+        _uiSnap(Models.Topics.Position, () => (this._report === null ? [] : [this._report]));
     }
 }
 
@@ -570,7 +574,7 @@ export class ExchangeBroker {
         this._evUp('ExchangeConnect');
 
         this.updateConnectivity();
-        this._publisher.publish(Models.Topics.ExchangeConnectivity, this.connectStatus);
+        this._uiSend(Models.Topics.ExchangeConnectivity, this.connectStatus);
     };
 
     public get connectStatus(): Models.ConnectivityStatus {
@@ -580,7 +584,9 @@ export class ExchangeBroker {
     constructor(
       private _pair: Models.CurrencyPair,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
-      private _publisher,
+      private _uiSnap,
+      private _uiHand,
+      private _uiSend,
       private _evOn,
       private _evUp,
       startQuoting: boolean
@@ -595,9 +601,9 @@ export class ExchangeBroker {
         this.onConnect(Models.GatewayType.OrderEntry, s)
       });
 
-      _publisher.registerSnapshot(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
-      _publisher.registerSnapshot(Models.Topics.ActiveState, () => [this._latestState]);
-      _publisher.registerReceiver(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
+      _uiSnap(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
+      _uiSnap(Models.Topics.ActiveState, () => [this._latestState]);
+      _uiHand(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
       console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details' ,{
           exchange: Models.Exchange[this.exchange()],
@@ -624,7 +630,7 @@ export class ExchangeBroker {
       this._evUp('ExchangeConnect');
     }
 
-    this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+    this._uiSend(Models.Topics.ActiveState, this._latestState);
   };
 
   private updateConnectivity = () => {
@@ -634,7 +640,7 @@ export class ExchangeBroker {
     if (newMode !== this._latestState) {
       this._latestState = newMode;
       console.log(new Date().toISOString().slice(11, -1), 'active', 'Changed quoting mode to', !!this._latestState);
-      this._publisher.publish(Models.Topics.ActiveState, this._latestState);
+      this._uiSend(Models.Topics.ActiveState, this._latestState);
     }
   };
 }

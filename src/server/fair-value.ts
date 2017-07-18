@@ -12,7 +12,7 @@ export class FairValueEngine {
 
     this._latest = val;
     this._evUp('FairValue');
-    this._publisher.publish(Models.Topics.FairValue, this._latest, true);
+    this._uiSend(Models.Topics.FairValue, this._latest, true);
   }
 
   constructor(
@@ -20,7 +20,8 @@ export class FairValueEngine {
     private _minTick: number,
     private _timeProvider: Utils.ITimeProvider,
     private _qpRepo,
-    private _publisher,
+    private _uiSnap,
+    private _uiSend,
     private _evOn,
     private _evUp,
     initRfv: Models.RegularFairValue[]
@@ -30,7 +31,7 @@ export class FairValueEngine {
 
     this._evOn('FilteredMarket', this.recalcFairValue);
     this._evOn('QuotingParameters', this.recalcFairValue);
-    _publisher.registerSnapshot(Models.Topics.FairValue, () => [this.latestFairValue]);
+    _uiSnap(Models.Topics.FairValue, () => [this.latestFairValue]);
   }
 
   private recalcFairValue = () => {

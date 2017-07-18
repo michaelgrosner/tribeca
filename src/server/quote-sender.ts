@@ -16,14 +16,15 @@ export class QuoteSender {
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
     private _qpRepo,
-    private _publisher,
+    private _uiSnap,
+    private _uiSend,
     private _evOn
   ) {
     this._exchange = _broker.exchange();
 
     this._evOn('Quote', this.sendQuote);
     this._evOn('ExchangeConnect', this.sendQuote);
-    _publisher.registerSnapshot(Models.Topics.QuoteStatus, () => [this._latestStatus]);
+    _uiSnap(Models.Topics.QuoteStatus, () => [this._latestStatus]);
   }
 
   private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
@@ -88,7 +89,7 @@ export class QuoteSender {
     if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && quotesInMemoryNew === this._latestStatus.quotesInMemoryNew && quotesInMemoryWorking === this._latestStatus.quotesInMemoryWorking && quotesInMemoryDone === this._latestStatus.quotesInMemoryDone) return;
 
     this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
-    this._publisher.publish(Models.Topics.QuoteStatus, this._latestStatus, true);
+    this._uiSend(Models.Topics.QuoteStatus, this._latestStatus, true);
   };
 
   private updateQuote = (q: Models.Quote, side: Models.Side) => {

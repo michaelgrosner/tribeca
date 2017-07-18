@@ -37,7 +37,8 @@ export class TargetBasePositionManager {
     private _ewma: Statistics.EWMATargetPositionCalculator,
     private _qpRepo,
     private _positionBroker: Broker.PositionBroker,
-    private _publisher,
+    private _uiSnap,
+    private _uiSend,
     private _evOn,
     private _evUp,
     initTBP: Models.TargetBasePositionValue
@@ -47,8 +48,8 @@ export class TargetBasePositionManager {
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Loaded from DB:', this._latest);
     }
 
-    _publisher.registerSnapshot(Models.Topics.TargetBasePosition, () => [this._latest]);
-    _publisher.registerSnapshot(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
+    _uiSnap(Models.Topics.TargetBasePosition, () => [this._latest]);
+    _uiSnap(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
       this.newWidth,
       this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
       this.newShort?Utils.roundNearest(this.newShort, this._minTick):null,
@@ -77,7 +78,7 @@ export class TargetBasePositionManager {
     if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
       this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, this._timeProvider.utcNow());
       this._evUp('TargetPosition');
-      this._publisher.publish(Models.Topics.TargetBasePosition, this._latest, true);
+      this._uiSend(Models.Topics.TargetBasePosition, this._latest, true);
       this._dbInsert(Models.Topics.TargetBasePosition, this._latest);
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.data);
     }
@@ -97,7 +98,7 @@ export class TargetBasePositionManager {
     // console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated ewma [ FV | L | M | S ] = [',this.fairValue,'|',this.newLong,'|',this.newMedium,'|',this.newShort,']');
     this.recomputeTargetPosition();
 
-    this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
+    this._uiSend(Models.Topics.EWMAChart, new Models.EWMAChart(
       this.newWidth,
       this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
       Utils.roundNearest(this.newShort, this._minTick),
