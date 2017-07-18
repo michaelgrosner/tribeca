@@ -103,7 +103,7 @@ export class OrdersComponent implements OnInit {
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;
-    let isClosed: boolean = (o[1] == Models.OrderStatus.Cancelled
+    let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete);
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
