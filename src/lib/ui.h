@@ -10,8 +10,10 @@ namespace K {
   struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>> D; int u = 0; };
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   int iOSR60 = 0;
+  bool uiOPT = true;
   double uiMDT = 0;
   double uiDDT = 0;
+  string uiNOTE = "";
   string uiNK64 = "";
   Persistent<Function> socket_;
   Persistent<Object> _app_state;
@@ -116,7 +118,11 @@ namespace K {
         EV::evOn("QuotingParameters", [](Local<Object> qp_) {
           uiD__(qp_->Get(FN::v8S("delayUI"))->NumberValue());
         });
-        UI::uiSnap(uiTXT::ApplicationState, &onSnap);
+        UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
+        UI::uiSnap(uiTXT::Notepad, &onSnapNote);
+        UI::uiHand(uiTXT::Notepad, &onHandNote);
+        UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
+        UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
@@ -177,11 +183,33 @@ namespace K {
         uiDDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         uiDD(handle);
       }
-      static Local<Value> onSnap(Local<Value> z) {
+      static Local<Value> onSnapApp(Local<Value> z) {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k = Array::New(isolate);
         k->Set(0, Local<Object>::New(isolate, _app_state));
         return k;
+      };
+      static Local<Value> onSnapNote(Local<Value> z) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Array> k = Array::New(isolate);
+        k->Set(0, FN::v8S(uiNOTE));
+        return k;
+      };
+      static Local<Value> onHandNote(Local<Value> o_) {
+        Isolate* isolate = Isolate::GetCurrent();
+        uiNOTE = FN::S8v(o_->ToString());
+        return (Local<Value>)Undefined(isolate);
+      };
+      static Local<Value> onSnapOpt(Local<Value> z) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Array> k = Array::New(isolate);
+        k->Set(0, Boolean::New(isolate, uiOPT));
+        return k;
+      };
+      static Local<Value> onHandOpt(Local<Value> o_) {
+        Isolate* isolate = Isolate::GetCurrent();
+        uiOPT = o_->BooleanValue();
+        return (Local<Value>)Undefined(isolate);
       };
       static void uiSnap(uiTXT k, uiCb cb) {
         uiOn(uiBIT::SNAP, k, cb);

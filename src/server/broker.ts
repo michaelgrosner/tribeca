@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Publish = require("./publish");
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");
 import FairValue = require("./fair-value");
@@ -16,7 +15,7 @@ export class MarketDataBroker {
   };
 
   constructor(
-    private _publisher: Publish.Publisher,
+    private _publisher,
     private _evOn,
     private _evUp
   ) {
@@ -377,7 +376,7 @@ export class OrderBroker {
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _sqlite,
-      private _publisher : Publish.Publisher,
+      private _publisher,
       private _evOn,
       private _evUp,
       initTrades : Models.Trade[]
@@ -508,7 +507,7 @@ export class PositionBroker {
       private _broker: ExchangeBroker,
       private _orderBroker: OrderBroker,
       private _fvEngine: FairValue.FairValueEngine,
-      private _publisher : Publish.Publisher,
+      private _publisher,
       private _evOn,
       private _evUp
     ) {
@@ -581,7 +580,7 @@ export class ExchangeBroker {
     constructor(
       private _pair: Models.CurrencyPair,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
-      private _publisher: Publish.Publisher,
+      private _publisher,
       private _evOn,
       private _evUp,
       startQuoting: boolean

@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuotingEngine = require("./quoting-engine");
@@ -17,7 +16,7 @@ export class QuoteSender {
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
     private _qpRepo,
-    private _publisher: Publish.Publisher,
+    private _publisher,
     private _evOn
   ) {
     this._exchange = _broker.exchange();

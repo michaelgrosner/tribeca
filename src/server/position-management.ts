@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Publish = require("./publish");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
 import FairValue = require("./fair-value");
@@ -38,7 +37,7 @@ export class TargetBasePositionManager {
     private _ewma: Statistics.EWMATargetPositionCalculator,
     private _qpRepo,
     private _positionBroker: Broker.PositionBroker,
-    private _publisher: Publish.Publisher,
+    private _publisher,
     private _evOn,
     private _evUp,
     initTBP: Models.TargetBasePositionValue

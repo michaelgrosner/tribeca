@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Publish = require("./publish");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import MarketFiltration = require("./market-filtration");
@@ -21,7 +20,7 @@ export class FairValueEngine {
     private _minTick: number,
     private _timeProvider: Utils.ITimeProvider,
     private _qpRepo,
-    private _publisher: Publish.Publisher,
+    private _publisher,
     private _evOn,
     private _evUp,
     initRfv: Models.RegularFairValue[]
