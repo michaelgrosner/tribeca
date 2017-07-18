@@ -108,6 +108,6 @@ export class TargetBasePositionManager {
       this._timeProvider.utcNow()
     ), true);
 
-    this._sqlite.insert(Models.Topics.FairValue, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._qpRepo().quotingStdevProtectionPeriods);
+    this._sqlite.insert(Models.Topics.EWMAChart, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._qpRepo().quotingStdevProtectionPeriods);
   };
 }
