@@ -95,7 +95,7 @@ export class TargetBasePositionManager {
     this.newMedium = this._ewma.addNewMediumValue(this.fairValue);
     this.newLong = this._ewma.addNewLongValue(this.fairValue);
     this._newTargetPosition = this._ewma.computeTBP(this.fairValue, this.newLong, this.newMedium, this.newShort);
-    console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated ewma [ FV | L | M | S ] = [',this.fairValue,'|',this.newLong,'|',this.newMedium,'|',this.newShort,']');
+    // console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated ewma [ FV | L | M | S ] = [',this.fairValue,'|',this.newLong,'|',this.newMedium,'|',this.newShort,']');
     this.recomputeTargetPosition();
 
     this._publisher.publish(Models.Topics.EWMAChart, new Models.EWMAChart(
@@ -108,6 +108,6 @@ export class TargetBasePositionManager {
       this._timeProvider.utcNow()
     ), true);
 
-    this._sqlite.insert(Models.Topics.EWMAChart, new Models.RegularFairValue(this._timeProvider.utcNow(), this.fairValue), false, undefined, new Date().getTime() - 1000 * this._qpRepo().quotingStdevProtectionPeriods);
+    this._sqlite.insert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, this._timeProvider.utcNow()));
   };
 }

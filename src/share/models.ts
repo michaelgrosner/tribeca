@@ -383,7 +383,13 @@ export class ApplicationState {
 }
 
 export class RegularFairValue {
-    constructor(public time: Date, public fairValue: number) {}
+    constructor(
+      public fairValue: number,
+      public ewmaLong: number,
+      public ewmaMedium: number,
+      public ewmaShort: number,
+      public time: Date,
+    ) {}
 }
 
 export class TradeSafety {
