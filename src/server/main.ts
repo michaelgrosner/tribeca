@@ -25,7 +25,6 @@ import Utils = require("./utils");
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
 import MarketTrades = require("./markettrades");
-import Publish = require("./publish");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
@@ -96,11 +95,11 @@ const initRfv = sqlite.load(Models.Topics.EWMAChart).map(x => Object.assign(x, {
 const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-const publisher = new Publish.Publisher(
-  bindings.uiSnap,
-  bindings.uiHand,
-  bindings.uiSend
-);
+const publisher = {
+  registerSnapshot: bindings.uiSnap,
+  registerReceiver: bindings.uiHand,
+  publish: bindings.uiSend
+};
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {

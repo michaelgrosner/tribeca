@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import Publish = require("./publish");
 import Interfaces = require("./interfaces");
 import Broker = require("./broker");
 import QuotingEngine = require("./quoting-engine");
@@ -39,7 +38,7 @@ export class MarketTradeBroker {
     };
 
     constructor(
-      private _publisher: Publish.Publisher,
+      private _publisher,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker,

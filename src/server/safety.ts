@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Broker = require("./broker");
-import Publish = require("./publish");
 import moment = require('moment');
 import FairValue = require("./fair-value");
 import PositionManagement = require("./position-management");
@@ -36,7 +35,7 @@ export class SafetyCalculator {
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
       private _orderBroker: Broker.OrderBroker,
-      private _publisher: Publish.Publisher,
+      private _publisher,
       private _evOn,
       private _evUp
     ) {
