@@ -121,15 +121,15 @@ export class MarketQuotingComponent implements OnInit {
       if (!update.asks.filter(x => x.price===this.orderAsks[i].price).length) {
         for (var j: number = 0; j < update.asks.length;j++)
           if (update.asks[j].price>this.orderAsks[i].price) break;
-        update.asks.splice(j-(j==update.asks.length?0:1), 0, this.orderAsks[i].price, this.orderAsks[i].quantity);
-        update.asks = update.asks.slice(0, -2);
+        update.asks.splice(j-(j==update.asks.length?0:1), 0, {price:this.orderAsks[i].price, size:this.orderAsks[i].quantity});
+        update.asks = update.asks.slice(0, -1);
       }
     for (var i: number = 0; i < this.orderBids.length; i++)
       if (!update.bids.filter(x => x.price===this.orderBids[i].price).length) {
         for (var j: number = 0; j < update.bids.length;j++)
           if (update.bids[j].price<this.orderBids[i].price) break;
-        update.bids.splice(j-(j==update.bids.length?0:1), 0, this.orderBids[i].price, this.orderBids[i].quantity);
-        update.bids = update.bids.slice(0, -2);
+        update.bids.splice(j-(j==update.bids.length?0:1), 0, {price:this.orderBids[i].price, size:this.orderBids[i].quantity});
+        update.bids = update.bids.slice(0, -1);
       }
 
     var _levels = [];
