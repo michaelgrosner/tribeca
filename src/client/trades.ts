@@ -115,7 +115,7 @@ export class TradesComponent implements OnInit {
         if (node.data.tradeId==t.tradeId)
           this.gridOptions.api.updateRowData({remove:[node.data]});
       });
-    } else if (t) {
+    } else {
       let exists: boolean = false;
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (!exists && node.data.tradeId==t.tradeId) {
