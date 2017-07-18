@@ -207,13 +207,13 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             side.update(u.price, ms);
         }
 
-        return side.getBest(25);
+        return side.getBest(13);
     }
 
-    private onMessage = (raw : Models.Timestamped<string>) => {
+    private onMessage = (raw: string) => {
         let msg: any;
         try {
-            msg = JSON.parse(raw.data);
+            msg = JSON.parse(raw);
         }
         catch (e) {
             console.error('hitbtc', e, 'Error parsing msg', raw);
@@ -222,10 +222,10 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
 
         if (msg.hasOwnProperty("MarketDataIncrementalRefresh")) {
-            this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, raw.time);
+            this.onMarketDataIncrementalRefresh(msg.MarketDataIncrementalRefresh, new Date());
         }
         else if (msg.hasOwnProperty("MarketDataSnapshotFullRefresh")) {
-            this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, raw.time);
+            this.onMarketDataSnapshotFullRefresh(msg.MarketDataSnapshotFullRefresh, new Date());
         }
         else {
             console.info('hitbtc', 'unhandled message', msg);
@@ -485,15 +485,15 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         throw err;
     };
 
-    private onMessage = (raw : Models.Timestamped<string>) => {
+    private onMessage = (raw: string) => {
         try {
             var t = new Date();
-            var msg = JSON.parse(raw.data);
+            var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("ExecutionReport")) {
-                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
+                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, new Date()));
             }
             else if (msg.hasOwnProperty("CancelReject")) {
-                this.onCancelReject(new Models.Timestamped(msg.CancelReject, raw.time));
+                this.onCancelReject(new Models.Timestamped(msg.CancelReject, new Date()));
             }
             else {
                 console.info('hitbtc', 'unhandled message', msg);
