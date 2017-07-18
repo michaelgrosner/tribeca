@@ -22,7 +22,7 @@ namespace K {
     double            range                         = decimal_cast<1>("0.5").getAsDouble();
     mFairValueModel   fvModel                       = mFairValueModel::BBO;
     int               targetBasePosition            = 1;
-    int               getBasePositionPercentage     = 50;
+    int               targetBasePositionPercentage  = 50;
     double            positionDivergence            = decimal_cast<1>("0.9").getAsDouble();
     int               positionDivergencePercentage  = 21;
     bool              percentageValues              = false;
@@ -75,7 +75,7 @@ namespace K {
         qpRepo_->Set(FN::v8S("range"), Number::New(isolate, qp->range));
         qpRepo_->Set(FN::v8S("fvModel"), Number::New(isolate, (int)qp->fvModel));
         qpRepo_->Set(FN::v8S("targetBasePosition"), Number::New(isolate, qp->targetBasePosition));
-        qpRepo_->Set(FN::v8S("getBasePositionPercentage"), Number::New(isolate, qp->getBasePositionPercentage));
+        qpRepo_->Set(FN::v8S("targetBasePositionPercentage"), Number::New(isolate, qp->targetBasePositionPercentage));
         qpRepo_->Set(FN::v8S("positionDivergence"), Number::New(isolate, qp->positionDivergence));
         qpRepo_->Set(FN::v8S("positionDivergencePercentage"), Number::New(isolate, qp->positionDivergencePercentage));
         qpRepo_->Set(FN::v8S("percentageValues"), Boolean::New(isolate, qp->percentageValues));
