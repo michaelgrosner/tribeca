@@ -35,7 +35,7 @@ namespace K {
     int               quotingEwmaProtectionPeridos  = 200;
     mSTDEV            quotingStdevProtection        = mSTDEV::Off;
     bool              quotingStdevBollingerBands    = false;
-    int               quotingStdevProtectionFactor  = 1;
+    double            quotingStdevProtectionFactor  = decimal_cast<1>("1.0").getAsDouble();
     int               quotingStdevProtectionPeriods = 1200;
     double            ewmaSensiblityPercentage      = decimal_cast<1>("0.5").getAsDouble();
     int               longEwmaPeridos               = 200;
