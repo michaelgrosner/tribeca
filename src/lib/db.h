@@ -39,18 +39,19 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         char* zErrMsg = 0;
         MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-        MaybeLocal<String> row;
+        MaybeLocal<String> r_;
         if (!maybe_props.IsEmpty()) {
           JSON Json;
-          row = Json.Stringify(isolate->GetCurrentContext(), o);
-        } else row = String::NewFromUtf8(isolate, "");
+          MaybeLocal<String> r_ = Json.Stringify(isolate->GetCurrentContext(), o);
+        } else r_ = String::NewFromUtf8(isolate, "");
+        string r = r_.IsEmpty() ? "" : FN::S8v(r_.ToLocalChecked());
         sqlite3_exec(db,
           string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(string(1, (char)k))
           .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
             time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
-          ) ) : "").append(o->IsUndefined() || row.IsEmpty() ? "" : string("INSERT INTO ")
+          ) ) : "").append((!r.length() || r == "{}") ? "" : string("INSERT INTO ")
             .append(string(1, (char)k)).append(" (id,json) VALUES(").append(id).append(",'")
-            .append(*String::Utf8Value(row.ToLocalChecked())).append("');")).data(),
+            .append(r).append("');")).data(),
           NULL, NULL, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
