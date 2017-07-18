@@ -32,7 +32,7 @@ export class TargetBasePositionManager {
   constructor(
     private _timeProvider: Utils.ITimeProvider,
     private _minTick: number,
-    private _sqlite,
+    private _dbInsert,
     private _fvAgent: FairValue.FairValueEngine,
     private _ewma: Statistics.EWMATargetPositionCalculator,
     private _qpRepo,
@@ -78,7 +78,7 @@ export class TargetBasePositionManager {
       this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, this._timeProvider.utcNow());
       this._evUp('TargetPosition');
       this._publisher.publish(Models.Topics.TargetBasePosition, this._latest, true);
-      this._sqlite.insert(Models.Topics.TargetBasePosition, this._latest);
+      this._dbInsert(Models.Topics.TargetBasePosition, this._latest);
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.data);
     }
   };
@@ -107,6 +107,6 @@ export class TargetBasePositionManager {
       this._timeProvider.utcNow()
     ), true);
 
-    this._sqlite.insert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, this._timeProvider.utcNow()));
+    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, this._timeProvider.utcNow()));
   };
 }

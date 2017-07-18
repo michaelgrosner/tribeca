@@ -59,7 +59,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
+            this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -81,7 +81,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
+            this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -101,7 +101,7 @@ export class OrderBroker {
           if (k == this.tradesMemory[i].tradeId) {
             this.tradesMemory[i].Kqty = -1;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
+            this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
             this.tradesMemory.splice(i, 1);
             break;
           }
@@ -195,7 +195,7 @@ export class OrderBroker {
               this.tradesMemory[i].Kdiff = Math.abs((this.tradesMemory[i].quantity*this.tradesMemory[i].price)-(this.tradesMemory[i].Kqty*this.tradesMemory[i].Kprice));
             this.tradesMemory[i].loadedFromDB = false;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+            this._dbInsert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
         }
@@ -210,13 +210,13 @@ export class OrderBroker {
             this.tradesMemory[i].value += trade.value;
             this.tradesMemory[i].loadedFromDB = false;
             this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-            this._sqlite.insert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
+            this._dbInsert(Models.Topics.Trades, this.tradesMemory[i], false, this.tradesMemory[i].tradeId);
             break;
           }
         }
         if (!exists) {
           this._publisher.publish(Models.Topics.Trades, trade);
-          this._sqlite.insert(Models.Topics.Trades, trade, false, trade.tradeId);
+          this._dbInsert(Models.Topics.Trades, trade, false, trade.tradeId);
           this.tradesMemory.push(trade);
         }
       }
@@ -329,7 +329,7 @@ export class OrderBroker {
               )), trade);
             } else {
               this._publisher.publish(Models.Topics.Trades, trade);
-              this._sqlite.insert(Models.Topics.Trades, trade, false, trade.tradeId);
+              this._dbInsert(Models.Topics.Trades, trade, false, trade.tradeId);
               this.tradesMemory.push(trade);
             }
 
@@ -347,7 +347,7 @@ export class OrderBroker {
                     goWhile = true;
                     this.tradesMemory[i].Kqty = -1;
                     this._publisher.publish(Models.Topics.Trades, this.tradesMemory[i]);
-                    this._sqlite.insert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
+                    this._dbInsert(Models.Topics.Trades, undefined, false, this.tradesMemory[i].tradeId);
                     this.tradesMemory.splice(i, 1);
                   }
                 }
@@ -375,7 +375,7 @@ export class OrderBroker {
       private _qpRepo,
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
-      private _sqlite,
+      private _dbInsert,
       private _publisher,
       private _evOn,
       private _evUp,

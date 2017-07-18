@@ -108,7 +108,7 @@ export class STDEVProtectionCalculator {
       private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
       private _qpRepo,
-      private _sqlite,
+      private _dbInsert,
       private _computeStdevs,
       initMkt: Models.MarketStats[]
     ) {
@@ -164,6 +164,6 @@ export class STDEVProtectionCalculator {
 
         this.onSave();
 
-        this._sqlite.insert(Models.Topics.MarketData, new Models.MarketStats(this._fv.latestFairValue.price, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
+        this._dbInsert(Models.Topics.MarketData, new Models.MarketStats(this._fv.latestFairValue.price, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
     };
 }
