@@ -29,6 +29,8 @@ namespace K {
           B64::Encode(name.append(":").append(key), &uiNK64);
           uiNK64 = string("Basic ").append(uiNK64);
         }
+        srand(time(0));
+        uiNOTE = rand() % 2 ? "Avoid this app to go private, donate!" : "3 privatization offers refused, donate!";
         uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           sess->u++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
