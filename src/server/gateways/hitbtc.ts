@@ -6,7 +6,6 @@ import querystring = require("querystring");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Interfaces = require("../interfaces");
-import io = require("socket.io-client");
 import moment = require("moment");
 import util = require("util");
 const SortedMap = require("collections/sorted-map");
@@ -129,8 +128,8 @@ function getJSON<T>(url: string, qs?: any) : Promise<T> {
 }
 
 class SideMarketData {
-    private readonly _data : Map<string, Models.MarketSide>;
-    private readonly _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
+    private _data : Map<string, Models.MarketSide>;
+    private _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
 
     constructor(side: Models.Side) {
         const compare = side === Models.Side.Bid ?
@@ -175,12 +174,12 @@ class SideMarketData {
 }
 
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
-    private readonly _marketDataWs : WebSocket;
+    private _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
 
-    private readonly _lastBids = new SideMarketData(Models.Side.Bid);
-    private readonly _lastAsks = new SideMarketData(Models.Side.Ask);
+    private _lastBids = new SideMarketData(Models.Side.Bid);
+    private _lastAsks = new SideMarketData(Models.Side.Ask);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -233,7 +232,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 
     private onConnectionStatusChange = () => {
-        if (this._marketDataWs.OPEN && this._tradesClient.connected) {
+        if (this._marketDataWs.OPEN) {
             this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected);
         }
         else {
@@ -253,8 +252,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
     };
 
-    _tradesClient : SocketIOClient.Socket;
-
     constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
         this._marketDataWs = new WebSocket(cfString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
@@ -268,12 +265,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             console.error('hitbtc', err);
             throw err;
         });
-
-        console.info('hitbtc', 'socket.io', cfString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
-        this._tradesClient = io.connect(cfString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
-        this._tradesClient.on("connect", this.onConnectionStatusChange);
-        this._tradesClient.on("trade", this.onTrade);
-        this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
             {url: url.resolve(cfString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
@@ -297,7 +288,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
-    private readonly _orderEntryWs : WebSocket;
+    private _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
 
@@ -487,6 +478,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onMessage = (raw: string) => {
         try {
+            if (raw == 'Slow down... You should login first.') return this.sendAuth("Login", {});
             var t = new Date();
             var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("ExecutionReport")) {
@@ -516,6 +508,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._orderEntryWs.on('open', this.onOpen);
         this._orderEntryWs.on('message', this.onMessage);
         this._orderEntryWs.on('close', this.onConnectionStatusChange);
+        this._orderEntryWs.on("error", this.onError);
     }
 }
 
@@ -572,9 +565,9 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             });
     };
 
-    private readonly _apiKey: string;
-    private readonly _secret: string;
-    private readonly _pullUrl: string;
+    private _apiKey: string;
+    private _secret: string;
+    private _pullUrl: string;
     constructor(private _evUp, cfString) {
         this._apiKey = cfString("HitBtcApiKey");
         this._secret = cfString("HitBtcSecret");
