@@ -14,10 +14,10 @@ namespace K {
         NODE_SET_METHOD(exports, "dbLoad", DB::_load);
         NODE_SET_METHOD(exports, "dbInsert", DB::_insert);
       }
-      static Local<Value> load(Isolate* isolate, string table) {
+      static Local<Value> load(Isolate* isolate, string k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
-          string("CREATE TABLE ").append(table).append("("                                                        \
+          string("CREATE TABLE ").append(k).append("("                                                            \
             "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL,"                                          \
             "json  BLOB                                       NOT NULL,"                                          \
             "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);").data(),
@@ -25,7 +25,7 @@ namespace K {
         );
         string json = "[";
         sqlite3_exec(db,
-          string("SELECT json FROM ").append(table).append(" ORDER BY time DESC;").data(),
+          string("SELECT json FROM ").append(k).append(" ORDER BY time DESC;").data(),
           cb, (void*)&json, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);

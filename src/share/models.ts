@@ -383,7 +383,7 @@ export class ApplicationState {
 }
 
 export class RegularFairValue {
-    constructor(public time: Date, public value: number) {}
+    constructor(public time: Date, public fairValue: number) {}
 }
 
 export class TradeSafety {
