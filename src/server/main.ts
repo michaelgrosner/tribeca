@@ -90,11 +90,6 @@ const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-const publisher = {
-  registerSnapshot: bindings.uiSnap,
-  registerReceiver: bindings.uiHand,
-  publish: bindings.uiSend
-};
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
@@ -110,20 +105,21 @@ const publisher = {
     }
   })();
 
-  publisher
-    .registerSnapshot(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
-      exchange,
-      pair,
-      bindings.cfString("BotIdentifier").replace('auto',''),
-      bindings.cfString("MatryoshkaUrl"),
-      packageConfig.homepage,
-      gateway.base.minTickIncrement
-    )]);
+  bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
+    exchange,
+    pair,
+    bindings.cfString("BotIdentifier").replace('auto',''),
+    bindings.cfString("MatryoshkaUrl"),
+    packageConfig.homepage,
+    gateway.base.minTickIncrement
+  )]);
 
   const broker = new Broker.ExchangeBroker(
     pair,
     gateway.base,
-    publisher,
+    bindings.uiSnap,
+    bindings.uiHand,
+    bindings.uiSend,
     bindings.evOn,
     bindings.evUp,
     bindings.cfString("BotIdentifier").indexOf('auto')>-1
@@ -135,14 +131,17 @@ const publisher = {
     broker,
     gateway.oe,
     bindings.dbInsert,
-    publisher,
+    bindings.uiSnap,
+    bindings.uiHand,
+    bindings.uiSend,
     bindings.evOn,
     bindings.evUp,
     initTrades
   );
 
   const marketBroker = new Broker.MarketDataBroker(
-    publisher,
+    bindings.uiSnap,
+    bindings.uiSend,
     bindings.evOn,
     bindings.evUp
   );
@@ -158,7 +157,8 @@ const publisher = {
     broker.minTickIncrement,
     timeProvider,
     bindings.qpRepo,
-    publisher,
+    bindings.uiSnap,
+    bindings.uiSend,
     bindings.evOn,
     bindings.evUp,
     initRfv
@@ -170,7 +170,8 @@ const publisher = {
     broker,
     orderBroker,
     fvEngine,
-    publisher,
+    bindings.uiSnap,
+    bindings.uiSend,
     bindings.evOn,
     bindings.evUp
   );
@@ -204,7 +205,8 @@ const publisher = {
       new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
       bindings.qpRepo,
       positionBroker,
-      publisher,
+      bindings.uiSnap,
+      bindings.uiSend,
       bindings.evOn,
       bindings.evUp,
       initTBP
@@ -215,7 +217,8 @@ const publisher = {
       bindings.qpRepo,
       positionBroker,
       orderBroker,
-      publisher,
+      bindings.uiSnap,
+      bindings.uiSend,
       bindings.evOn,
       bindings.evUp
     ),
@@ -229,12 +232,14 @@ const publisher = {
     broker,
     orderBroker,
     bindings.qpRepo,
-    publisher,
+    bindings.uiSnap,
+    bindings.uiSend,
     bindings.evOn
   );
 
   new MarketTrades.MarketTradeBroker(
-    publisher,
+    bindings.uiSnap,
+    bindings.uiSend,
     marketBroker,
     quotingEngine,
     broker,

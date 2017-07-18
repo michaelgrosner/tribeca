@@ -34,18 +34,19 @@ export class MarketTradeBroker {
         this.marketTrades.push(t);
 
         this._evUp('MarketTrade');
-        this._publisher.publish(Models.Topics.MarketTrade, t);
+        this._uiSend(Models.Topics.MarketTrade, t);
     };
 
     constructor(
-      private _publisher,
+      private _uiSnap,
+      private _uiSend,
       private _mdBroker: Broker.MarketDataBroker,
       private _quoteEngine: QuotingEngine.QuotingEngine,
       private _base: Broker.ExchangeBroker,
       private _evOn,
       private _evUp
     ) {
-      _publisher.registerSnapshot(Models.Topics.MarketTrade, () => this.marketTrades.slice(-69));
+      _uiSnap(Models.Topics.MarketTrade, () => this.marketTrades.slice(-69));
       this._evOn('MarketTradeGateway', this.handleNewMarketTrade);
     }
 }
