@@ -19,7 +19,7 @@ export class EWMATargetPositionCalculator {
     initRfv: Models.RegularFairValue[]
   ) {
     if (initRfv !== null)
-      this.initialize(initRfv.map((r: Models.RegularFairValue) => r.value));
+      this.initialize(initRfv.map((r: Models.RegularFairValue) => r.fairValue));
   }
   private _SMA3: number[] = [];
 

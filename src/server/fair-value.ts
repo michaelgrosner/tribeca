@@ -27,7 +27,7 @@ export class FairValueEngine {
     initRfv: Models.RegularFairValue[]
   ) {
     if (initRfv !== null && initRfv.length)
-      this.latestFairValue = new Models.FairValue(initRfv[0].value, initRfv[0].time);
+      this.latestFairValue = new Models.FairValue(initRfv[0].fairValue, initRfv[0].time);
 
     this._evOn('FilteredMarket', this.recalcFairValue);
     this._evOn('QuotingParameters', this.recalcFairValue);
