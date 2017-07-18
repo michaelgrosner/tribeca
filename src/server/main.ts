@@ -72,28 +72,14 @@ const pair = ((raw: string): Models.CurrencyPair => {
   return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
 })(bindings.cfString("TradedPair"));
 
-const exchange = ((ex: string): Models.Exchange => {
-  switch (ex) {
-    case "coinbase": return Models.Exchange.Coinbase;
-    case "okcoin": return Models.Exchange.OkCoin;
-    case "bitfinex": return Models.Exchange.Bitfinex;
-    case "poloniex": return Models.Exchange.Poloniex;
-    case "korbit": return Models.Exchange.Korbit;
-    case "hitbtc": return Models.Exchange.HitBtc;
-    case "null": return Models.Exchange.Null;
-    default: throw new Error("Invalid configuration value EXCHANGE: " + ex);
-  }
-})(bindings.cfString("EXCHANGE").toLowerCase());
-
 const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
-
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
-    switch (exchange) {
+    switch (bindings.cfmExchange()) {
       case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.cfString, pair, bindings.evOn, bindings.evUp);
       case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.cfString, pair, bindings.evOn, bindings.evUp);
       case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.cfString, pair, bindings.evOn, bindings.evUp);
@@ -101,12 +87,12 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.cfString, pair, bindings.evOn, bindings.evUp);
       case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.cfString, pair, bindings.evOn, bindings.evUp);
       case Models.Exchange.Null: return NullGw.createNullGateway(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      default: throw new Error("no gateway provided for exchange " + exchange);
+      default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }
   })();
 
   bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
-    exchange,
+    bindings.cfmExchange(),
     pair,
     bindings.cfString("BotIdentifier").replace('auto',''),
     bindings.cfString("MatryoshkaUrl"),
