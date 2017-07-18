@@ -111,36 +111,36 @@ export class MarketQuotingComponent implements OnInit {
     this.sideAPRSafety = value.sideAPR || 'Off';
   }
 
-  private updateMarket = (update: any[]) => {
+  private updateMarket = (update: Models.Market) => {
     if (update == null) {
       this.clearMarket();
       return;
     }
 
     for (var i: number = 0; i < this.orderAsks.length; i++)
-      if (!update[1].filter(x => x===this.orderAsks[i].price).length) {
-        for (var j: number = 0; j < update[1].length;j++)
-          if (update[1][j++]>this.orderAsks[i].price) break;
-        update[1].splice(j-(j==update[1].length?0:1), 0, this.orderAsks[i].price, this.orderAsks[i].quantity);
-        update[1] = update[1].slice(0, -2);
+      if (!update.asks.filter(x => x.price===this.orderAsks[i].price).length) {
+        for (var j: number = 0; j < update.asks.length;j++)
+          if (update.asks[j].price>this.orderAsks[i].price) break;
+        update.asks.splice(j-(j==update.asks.length?0:1), 0, this.orderAsks[i].price, this.orderAsks[i].quantity);
+        update.asks = update.asks.slice(0, -2);
       }
     for (var i: number = 0; i < this.orderBids.length; i++)
-      if (!update[0].filter(x => x===this.orderBids[i].price).length) {
-        for (var j: number = 0; j < update[0].length;j++)
-          if (update[0][j++]<this.orderBids[i].price) break;
-        update[0].splice(j-(j==update[0].length?0:1), 0, this.orderBids[i].price, this.orderBids[i].quantity);
-        update[0] = update[0].slice(0, -2);
+      if (!update.bids.filter(x => x.price===this.orderBids[i].price).length) {
+        for (var j: number = 0; j < update.bids.length;j++)
+          if (update.bids[j].price<this.orderBids[i].price) break;
+        update.bids.splice(j-(j==update.bids.length?0:1), 0, this.orderBids[i].price, this.orderBids[i].quantity);
+        update.bids = update.bids.slice(0, -2);
       }
 
     var _levels = [];
-    for (var i: number = 0, j: number = 0; i < update[1].length; i++, j++) {
+    for (var j: number = 0; j < update.asks.length; j++) {
       if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { askPrice: update[1][i], askSize: update[1][++i] });
+      _levels[j] = Object.assign(_levels[j], { askPrice: update.asks[j].price, askSize: update.asks[j].size });
     }
 
-    for (var i: number = 0, j: number = 0; i < update[0].length; i++, j++) {
+    for (var j: number = 0; j < update.bids.length; j++) {
       if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { bidPrice: update[0][i], bidSize: update[0][++i] });
+      _levels[j] = Object.assign(_levels[j], { bidPrice: update.bids[j].price, bidSize: update.bids[j].size });
       if (j==0) this.diffMD = _levels[j].askPrice - _levels[j].bidPrice;
       else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
     }
@@ -184,16 +184,16 @@ export class MarketQuotingComponent implements OnInit {
       this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
-    const orderSide = o[2] === Models.Side.Bid ? 'orderBids' : 'orderAsks';
-    if (o[1] == Models.OrderStatus.Cancelled
-      || o[1] == Models.OrderStatus.Complete
-    ) this[orderSide] = this[orderSide].filter(x => x.orderId !== o[0]);
-    else if (!this[orderSide].filter(x => x.orderId === o[0]).length)
+    const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
+    if (o.orderStatus == Models.OrderStatus.Cancelled
+      || o.orderStatus == Models.OrderStatus.Complete
+    ) this[orderSide] = this[orderSide].filter(x => x.orderId !== o.orderId);
+    else if (!this[orderSide].filter(x => x.orderId === o.orderId).length)
       this[orderSide].push({
-        orderId: o[0],
-        side: o[2],
-        price: o[3],
-        quantity: o[4],
+        orderId: o.orderId,
+        side: o.side,
+        price: o.price,
+        quantity: o.quantity,
       });
 
     if (this.orderBids.length) {

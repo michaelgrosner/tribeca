@@ -515,9 +515,9 @@ export class StatsComponent implements OnInit {
     if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
   }
 
-  private updateMarket = (update: any[]) => {
-    if (update && update[0].length && update[1].length)
-      this.width = (update[1][0] - update[0][0]) / 2;
+  private updateMarket = (update: Models.Market) => {
+    if (update && update.bids.length && update.asks.length)
+      this.width = (update.asks[0].price - update.bids[0].price) / 2;
   }
 
   private addTradesChartData = (t: Models.TradeChart) => {

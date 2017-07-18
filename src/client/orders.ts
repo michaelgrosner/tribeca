@@ -104,19 +104,19 @@ export class OrdersComponent implements OnInit {
     }
     let exists: boolean = false;
     let isClosed: boolean = (o[1] == Models.OrderStatus.Cancelled
-      || o[1] == Models.OrderStatus.Complete);
+      || o.orderStatus == Models.OrderStatus.Complete);
     this.gridOptions.api.forEachNode((node: RowNode) => {
-      if (!exists && node.data.orderId==o[0]) {
+      if (!exists && node.data.orderId==o.orderId) {
         exists = true;
         if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o[5]) ? o[5] : moment(o[5])),
-            price: o[3],
-            value: Math.round(o[3] * o[4] * 100) / 100,
-            tif: Models.TimeInForce[o[8]],
-            lat: o[9]+'ms',
-            lvQty: o[10]
+            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+            price: o.price,
+            value: Math.round(o.price * o.quantity * 100) / 100,
+            tif: Models.TimeInForce[o.timeInForce],
+            lat: o.computationalLatency+'ms',
+            lvQty: o.leavesQuantity
           }));
         }
       }
@@ -124,20 +124,19 @@ export class OrdersComponent implements OnInit {
     setTimeout(()=>this.gridOptions.api.refreshView(),0);
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
-        orderId: o[0],
-        side: Models.Side[o[2]],
-        price: o[3],
-        value: Math.round(o[3] * o[4] * 100) / 100,
-        exchange: o[6],
-        type: Models.OrderType[o[7]],
-        tif: Models.TimeInForce[o[8]],
-        lat: o[9]+'ms',
-        lvQty: o[10],
-        pong: o[11],
-        time: (moment.isMoment(o[5]) ? o[5] : moment(o[5])),
+        orderId: o.orderId,
+        side: Models.Side[o.side],
+        price: o.price,
+        value: Math.round(o.price * o.quantity * 100) / 100,
+        exchange: o.exchange,
+        type: Models.OrderType[o.type],
+        tif: Models.TimeInForce[o.timeInForce],
+        lat: o.computationalLatency+'ms',
+        lvQty: o.leavesQuantity,
+        pong: o.isPong,
+        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
         quoteSymbol: Models.Currency[this.product.advert.pair.quote],
         productFixed: this.product.fixed
       }]});
   }
 }
-
