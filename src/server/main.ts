@@ -85,15 +85,10 @@ const exchange = ((ex: string): Models.Exchange => {
   }
 })(bindings.cfString("EXCHANGE").toLowerCase());
 
-const sqlite = {
-  load: bindings.dbLoad,
-  insert: bindings.dbInsert
-};
-
-const initTrades = sqlite.load(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
-const initRfv = sqlite.load(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time)}));
-const initMkt = sqlite.load(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
-const initTBP = sqlite.load(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
+const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
+const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time)}))[0];
 
 const publisher = {
   registerSnapshot: bindings.uiSnap,
@@ -139,7 +134,7 @@ const publisher = {
     bindings.qpRepo,
     broker,
     gateway.oe,
-    sqlite,
+    bindings.dbInsert,
     publisher,
     bindings.evOn,
     bindings.evUp,
@@ -197,14 +192,14 @@ const publisher = {
       timeProvider,
       fvEngine,
       bindings.qpRepo,
-      sqlite,
+      bindings.dbInsert,
       bindings.computeStdevs,
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
       timeProvider,
       broker.minTickIncrement,
-      sqlite,
+      bindings.dbInsert,
       fvEngine,
       new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
       bindings.qpRepo,
