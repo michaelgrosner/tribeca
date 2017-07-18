@@ -50,8 +50,7 @@ namespace K {
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
           } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
-            string url;
-            stringstream content;
+            string url = "";
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             string path = req.getUrl().toString();
             string::size_type n = 0;
@@ -74,6 +73,7 @@ namespace K {
               document.append("Content-Type: audio/mpeg\r\n");
               url = path;
             }
+            stringstream content;
             if (url.length() > 0) {
               content << ifstream (string("app/pub").append(url)).rdbuf();
             } else {
@@ -85,24 +85,23 @@ namespace K {
           }
         });
         uiGroup->onMessage([isolate, sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          if (length > 1 && (sess->cb.find(string(message).substr(0,2)) != sess->cb.end())) {
+          if (length > 1) {
             JSON Json;
             HandleScope hs(isolate);
+            Local<Value> reply;
             string m = string(message).substr(2, length-2);
             MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
-            Local<Value> reply = (*sess->cb[string(message).substr(0,2)])(uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
-            if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-              webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap((uiTXT)message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
-          }
-          if (length > 1 && (sess->_cb.find(string(message).substr(0,2)) != sess->_cb.end())) {
-            JSON Json;
-            HandleScope hs(isolate);
-            string m = string(message).substr(2, length-2);
-            MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
-            Local<Value> argv[] = {uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
-            Local<Value> reply = Local<Function>::New(isolate, sess->_cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-            if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-              webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), shrinkSnap((uiTXT)message[1], reply->ToObject())).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+            if (sess->cb.find(string(message).substr(0,2)) != sess->cb.end()) {
+              reply = (*sess->cb[string(message).substr(0,2)])(uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
+              if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
+                webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+            }
+            if (sess->_cb.find(string(message).substr(0,2)) != sess->_cb.end()) {
+              Local<Value> argv[] = {uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
+              reply = Local<Function>::New(isolate, sess->_cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+              if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
+                webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+            }
           }
         });
         int port = stoi(CF::cfString("WebClientListenPort"));
@@ -200,7 +199,7 @@ namespace K {
           if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
           uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         }
-        MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand(k, o));
+        MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), o);
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
@@ -211,83 +210,6 @@ namespace K {
         sess->cb[k] = cb;
       }
     private:
-      static Local<Object> shrinkSnap(uiTXT k, Local<Object> snap) {
-        Isolate* isolate = Isolate::GetCurrent();
-        if (k == uiTXT::OrderStatusReports) return shrinkHand(k, snap);
-        else if (k == uiTXT::MarketData) {
-          MaybeLocal<Array> maybe_props = snap->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            Local<Array> props = maybe_props.ToLocalChecked();
-            Local<Array> snap_ = Array::New(isolate);
-            for(uint32_t i=0; i < props->Length(); i++)
-              snap_->Set(0, shrinkHand(k, snap->Get(props->Get(i))->ToObject()));
-            return snap_->ToObject();
-          }
-        }
-        return snap;
-      }
-      static Local<Object> shrinkHand(uiTXT k, Local<Object> snap) {
-        Isolate* isolate = Isolate::GetCurrent();
-        if (k == uiTXT::MarketData) {
-          MaybeLocal<Array> maybe_props = snap->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            Local<Array> snap_ = Array::New(isolate);
-            snap_->Set(0, Array::New(isolate));
-            snap_->Set(1, Array::New(isolate));
-            Local<Array> props = maybe_props.ToLocalChecked();
-            for(uint32_t i=0; i < props->Length(); i++) {
-              Local<Object> lvl = snap->Get(props->Get(i))->ToObject();
-              MaybeLocal<Array> maybe_props = lvl->GetOwnPropertyNames(Context::New(isolate));
-              if (!maybe_props.IsEmpty()) {
-                int lvls = 0;
-                int side = FN::S8v(props->Get(i)->ToString()) == "bids" ? 0 : 1;
-                Local<Array> props = maybe_props.ToLocalChecked();
-                for(uint32_t i=0; i < props->Length(); i++) {
-                  Local<Object> px = lvl->Get(props->Get(i))->ToObject();
-                  MaybeLocal<Array> maybe_props = px->GetOwnPropertyNames(Context::New(isolate));
-                  if (!maybe_props.IsEmpty()) {
-                    Local<Array> props = maybe_props.ToLocalChecked();
-                    for(uint32_t i=0; i < props->Length(); i++)
-                      snap_->Get(side)->ToObject()->Set(lvls++, px->Get(props->Get(i))->ToNumber());
-                  }
-                }
-              }
-            }
-            return snap_->ToObject();
-          }
-        } else if (k == uiTXT::OrderStatusReports) {
-          MaybeLocal<Array> maybe_props = snap->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            Local<Object> snap_ = Array::New(isolate);
-            Local<Array> props = maybe_props.ToLocalChecked();
-            for(uint32_t i=0; i < props->Length(); i++) {
-              Local<Object> o = snap->Get(props->Get(i))->ToObject();
-              MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-              Local<Array> props = maybe_props.ToLocalChecked();
-              if (!maybe_props.IsEmpty()) {
-                snap_->Set(i, Array::New(isolate));
-                Local<Number> osr = o->Get(FN::v8S("orderStatus"))->ToNumber();
-                snap_->Get(i)->ToObject()->Set(0, o->Get(FN::v8S("orderId"))->ToString());
-                snap_->Get(i)->ToObject()->Set(1, osr);
-                snap_->Get(i)->ToObject()->Set(2, o->Get(FN::v8S("side"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(3, o->Get(FN::v8S("price"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(4, o->Get(FN::v8S("quantity"))->ToNumber());
-                snap_->Get(i)->ToObject()->Set(5, o->Get(FN::v8S("time"))->ToNumber());
-                if ((mORS)osr->NumberValue() <= mORS::Working) {
-                  snap_->Get(i)->ToObject()->Set(6, o->Get(FN::v8S("exchange"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(7, o->Get(FN::v8S("type"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(8, o->Get(FN::v8S("timeInForce"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(9, o->Get(FN::v8S("computationalLatency"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(10, o->Get(FN::v8S("leavesQuantity"))->ToNumber());
-                  snap_->Get(i)->ToObject()->Set(11, o->Get(FN::v8S("isPong"))->ToNumber());
-                }
-              }
-            }
-            return snap_->ToObject();
-          }
-        }
-        return snap;
-      }
       static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
         _uiOn(args, uiBIT::SNAP);
       }
@@ -315,7 +237,7 @@ namespace K {
           if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
           uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         }
-        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), shrinkHand((uiTXT)k[0], args[1]->ToObject()));
+        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject());
         string m = string(1, (char)uiBIT::MSG).append(k).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       }
