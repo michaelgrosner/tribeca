@@ -15,10 +15,10 @@ namespace K {
           string txt((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
           JSON Json;
           cfRepo.Reset(isolate, Json.Parse(isolate->GetCurrentContext(), FN::v8S(txt.data())).ToLocalChecked()->ToObject());
-          cout << "CF settings loaded from " << k << " OK." << endl;
+          cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
         } else {
           cfRepo.Reset(isolate, Object::New(isolate));
-          cout << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead.";
+          cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead.";
         }
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
       }
@@ -32,23 +32,23 @@ namespace K {
         if (!maybe_props.IsEmpty())
           for(uint32_t i=0; i < props->Length(); i++) if (k == string(*String::Utf8Value(props->Get(i)->ToString())))
             return string(*String::Utf8Value(o->Get(props->Get(i)->ToObject())->ToString()));
-        if (r) { cout << "Errrror: Use of missing \"" << k << "\" configuration." << endl; exit(1); }
+        if (r) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl; exit(1); }
         return "";
       };
       static mCurrency cfBase() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(0, k_.find("/"));
-        if (k == k_) { cout << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
+        if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         ptrdiff_t pos = distance(mCurrency_.begin(), find(mCurrency_.begin(), mCurrency_.end(), k));
-        if (pos >= mCurrency_.size()) { cout << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
+        if (pos >= mCurrency_.size()) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
         return (mCurrency)pos;
       }
       static mCurrency cfQuote() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(k_.find("/")+1);
-        if (k == k_) { cout << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
+        if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         ptrdiff_t pos = distance(mCurrency_.begin(), find(mCurrency_.begin(), mCurrency_.end(), k));
-        if (pos >= mCurrency_.size()) { cout << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
+        if (pos >= mCurrency_.size()) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
         return (mCurrency)pos;
       }
       static mExchange cfExchange() {
@@ -61,7 +61,7 @@ namespace K {
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k ==  "null") return mExchange::Null;
-        cout << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE." << endl;
+        cout << FN::uiT() << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE." << endl;
         exit(1);
       }
     private:

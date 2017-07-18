@@ -30,23 +30,23 @@ namespace K {
         uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           sess->u++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(sess->u) << " UI currently connected, last connection was from " << address.address << endl;
+          cout << FN::uiT() << to_string(sess->u) << " UI currently connected, last connection was from " << address.address << endl;
         });
         uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           sess->u--;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << to_string(sess->u) << " UI currently connected, last disconnection was from " << address.address << endl;
+          cout << FN::uiT() << to_string(sess->u) << " UI currently connected, last disconnection was from " << address.address << endl;
         });
         uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;
           string auth = req.getHeader("authorization").toString();
           typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
           if (uiNK64 != "" && auth == "") {
-            cout << "UI authorization attempt from " << address.address << endl;
+            cout << FN::uiT() << "UI authorization attempt from " << address.address << endl;
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
           } else if (uiNK64 != "" && auth != uiNK64) {
-            cout << "UI authorization failed from " << address.address << endl;
+            cout << FN::uiT() << "UI authorization failed from " << address.address << endl;
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
           } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
@@ -57,7 +57,7 @@ namespace K {
             while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
             const string leaf = path.substr(path.find_last_of('.')+1);
             if (leaf == "/") {
-              cout << "UI authorization success from " << address.address << endl;
+              cout << FN::uiT() << "UI authorization success from " << address.address << endl;
               document.append("Content-Type: text/html; charset=UTF-8\r\n");
               url = "/index.html";
             } else if (leaf == "js") {
@@ -107,11 +107,11 @@ namespace K {
         int port = stoi(CF::cfString("WebClientListenPort"));
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
-          cout << "UI ready over " << "HTTPS" << " on external port " << to_string(port) << endl;
+          cout << FN::uiT() << "UI ready over HTTPS on external port " << to_string(port) << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
-          cout << "UI ready over " << "HTTP" << " on external port " << to_string(port) << endl;
-        else { cout << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
-        if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
+          cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << endl;
+        else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
+        if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
         uiD_.data = isolate;
         EV::evOn("QuotingParameters", [](Local<Object> qp_) {
           uiD__(qp_->Get(FN::v8S("delayUI"))->NumberValue());
@@ -123,13 +123,13 @@ namespace K {
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
       }
       static void uiD__(double d) {
-        if (uv_timer_stop(&uiD_)) { cout << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
+        if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         if (d) {
-          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
+          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
         } else {
-          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
+          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
         }
       }
       static void uiDD(uv_timer_t *handle) {
@@ -206,7 +206,7 @@ namespace K {
       static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         string k = string(1, (char)k_).append(string(1, (char)_k));
-        if (sess->cb.find(k) != sess->cb.end()) { cout << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+        if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
         sess->cb[k] = cb;
       }
     private:
