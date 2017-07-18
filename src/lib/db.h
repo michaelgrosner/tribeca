@@ -38,13 +38,13 @@ namespace K {
       static void insert(uiTXT k, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
         Isolate* isolate = Isolate::GetCurrent();
         char* zErrMsg = 0;
+        string r;
         MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-        MaybeLocal<String> r_;
         if (!maybe_props.IsEmpty()) {
           JSON Json;
           MaybeLocal<String> r_ = Json.Stringify(isolate->GetCurrentContext(), o);
-        } else r_ = String::NewFromUtf8(isolate, "");
-        string r = r_.IsEmpty() ? "" : FN::S8v(r_.ToLocalChecked());
+          r = FN::S8v(r_.ToLocalChecked());
+        } else r = "";
         sqlite3_exec(db,
           string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(string(1, (char)k))
           .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
@@ -70,7 +70,7 @@ namespace K {
       static void _insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), string(args[3]->IsUndefined() ? "NULL" : *String::Utf8Value(args[3]->ToString())), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
+        insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
       }
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* json = reinterpret_cast<string*>(param);
