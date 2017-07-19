@@ -14,6 +14,7 @@ help:
 	#                                                  #
 	# Available commands inside K top level directory: #
 	#   make help       - show this help               #
+	#   make changelog  - show remote commits          #
 	#                                                  #
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
@@ -26,7 +27,7 @@ help:
 	#   make cleandb    - remove K database files      #
 	#                                                  #
 
-K:
+K: src/lib/K.cc
 	mkdir -p build app/server/lib
 	$(MAKE) quickfix
 	$(MAKE) uws
@@ -34,7 +35,7 @@ K:
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
 	for K in app/server/lib/K*node; do chmod +x $$K; done
 
-node:
+node: build
 ifndef NODEv
 	@NODEv=v7.1.0 $(MAKE) $@
 	@NODEv=v8.1.2 $(MAKE) $@
@@ -42,10 +43,10 @@ else
 	test -d build/node-$(NODEv) || curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build
 endif
 
-uws:
+uws: build
 	test -d build/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build
 
-quickfix:
+quickfix: build
 	(test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || ( \
 		curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build  \
 		&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure && make                     \
@@ -53,21 +54,24 @@ quickfix:
 		&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      \
 	)
 
-Linux:
+Linux: build app/server/lib
 ifdef ABIv
 	g++ $(G_SHARED_ARGS) -static-libstdc++ -static-libgcc -s -o app/server/lib/K.linux.$(ABIv).node -lsqlite3
 endif
 
-Darwin:
+Darwin: build app/server/lib
 ifdef ABIv
 	g++ $(G_SHARED_ARGS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -o app/server/lib/K.darwin.$(ABIv).node -lsqlite3
 endif
 
-clean:
+clean: build
 	rm -rf build
 
-cleandb:
-	rm -rf /data/db/K*.db
+cleandb: /data/db/K*
+	rm -rf /data/db/K*.dbx
+
+changelog: .git
+	git --no-pager log --graph --oneline @..@{u}
 
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
