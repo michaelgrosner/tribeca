@@ -582,7 +582,7 @@ export class ExchangeBroker {
     }
 
     constructor(
-      private _pair: Models.CurrencyPair,
+      private _pair,
       private _baseGateway: Interfaces.IExchangeDetailsGateway,
       private _uiSnap,
       private _uiHand,
@@ -605,14 +605,14 @@ export class ExchangeBroker {
       _uiSnap(Models.Topics.ActiveState, () => [this._latestState]);
       _uiHand(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
-      console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details' ,{
+      console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details', {
           exchange: Models.Exchange[this.exchange()],
-          pair: this.pair.toString(),
+          pair: Models.Currency[this.pair.base]+'/'+Models.Currency[this.pair.quote],
           minTick: this.minTickIncrement,
           minSize: this.minSize,
           makeFee: this.makeFee(),
           takeFee: this.takeFee(),
-          hasSelfTradePrevention: this.hasSelfTradePrevention,
+          hasSelfTradePrevention: this.hasSelfTradePrevention
       });
     }
 

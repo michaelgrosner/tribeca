@@ -604,8 +604,8 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class HitBtcSymbolProvider {
     public symbol : string;
 
-    constructor(pair: Models.CurrencyPair) {
-        this.symbol = Models.fromCurrency(pair.base) + Models.fromCurrency(pair.quote);
+    constructor(cfPair) {
+        this.symbol = Models.fromCurrency(cfPair.base) + Models.fromCurrency(cfPair.quote);
     }
 }
 
@@ -615,7 +615,7 @@ class HitBtc extends Interfaces.CombinedGateway {
       symbolProvider: HitBtcSymbolProvider,
       step: number,
       minSize: number,
-      pair: Models.CurrencyPair,
+      cfPair,
       _evOn,
       _evUp
     ) {
@@ -627,7 +627,7 @@ class HitBtc extends Interfaces.CombinedGateway {
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, cfString);
         if (cfString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.NullPositionGateway(_evUp, pair);
+            positionGateway = new NullGateway.NullPositionGateway(_evUp, cfPair);
         }
 
         super(
@@ -648,15 +648,15 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createHitBtc(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const symbolsUrl = cfString("HitBtcPullUrl") + "/api/1/public/symbols";
     const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
-    const symbolProvider = new HitBtcSymbolProvider(pair);
+    const symbolProvider = new HitBtcSymbolProvider(cfPair);
 
     for (let s of symbols.symbols) {
         if (s.symbol === symbolProvider.symbol)
-            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), 0.01, pair, _evOn, _evUp);
+            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), 0.01, cfPair, _evOn, _evUp);
     }
 
-    throw new Error("unable to match pair to a hitbtc symbol " + pair.toString());
+    throw new Error("unable to match pair to a hitbtc symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);
 }
