@@ -67,12 +67,6 @@ export class GatewayMarketTrade implements ITimestamped {
                 public make_side: Side) { }
 }
 
-export function marketSideEquals(t: MarketSide, other: MarketSide, tol?: number) {
-    tol = tol || 1e-4;
-    if (other == null) return false;
-    return Math.abs(t.price - other.price) > tol && Math.abs(t.size - other.size) > tol;
-}
-
 export class Market implements ITimestamped {
     constructor(public bids: MarketSide[],
                 public asks: MarketSide[],
