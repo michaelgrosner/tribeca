@@ -66,12 +66,6 @@ process.on("exit", (code) => {
 
 const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
 
-const pair = ((raw: string): Models.CurrencyPair => {
-  const split = raw.split("/");
-  if (split.length !== 2) throw new Error("Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR");
-  return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
-})(bindings.cfString("TradedPair"));
-
 const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
@@ -80,20 +74,20 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (bindings.cfmExchange()) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.cfString, pair, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.cfString, pair, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }
   })();
 
   bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
     bindings.cfmExchange(),
-    pair,
+    bindings.cfmCurrencyPair(),
     bindings.cfString("BotIdentifier").replace('auto',''),
     bindings.cfString("MatryoshkaUrl"),
     packageConfig.homepage,
@@ -101,7 +95,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   )]);
 
   const broker = new Broker.ExchangeBroker(
-    pair,
+    bindings.cfmCurrencyPair(),
     gateway.base,
     bindings.uiSnap,
     bindings.uiHand,

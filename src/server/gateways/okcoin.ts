@@ -511,23 +511,23 @@ class OkCoinSymbolProvider {
     public symbolQuote: string;
     public symbolWithoutUnderscore: string;
 
-    constructor(pair: Models.CurrencyPair) {
+    constructor(cfPair) {
         const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s).toLowerCase();
-        this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
-        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
-        this.symbolQuote = GetCurrencySymbol(pair.quote);
-        this.symbolWithoutUnderscore = GetCurrencySymbol(pair.base) + GetCurrencySymbol(pair.quote);
+        this.symbol = GetCurrencySymbol(cfPair.base) + "_" + GetCurrencySymbol(cfPair.quote);
+        this.symbolReversed = GetCurrencySymbol(cfPair.quote) + "_" + GetCurrencySymbol(cfPair.base);
+        this.symbolQuote = GetCurrencySymbol(cfPair.quote);
+        this.symbolWithoutUnderscore = GetCurrencySymbol(cfPair.base) + GetCurrencySymbol(cfPair.quote);
     }
 }
 
 class OkCoin extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      pair: Models.CurrencyPair,
+      cfPair,
       _evOn,
       _evUp
     ) {
-        var symbol = new OkCoinSymbolProvider(pair);
+        var symbol = new OkCoinSymbolProvider(cfPair);
         var signer = new OkCoinMessageSigner(cfString);
         var http = new OkCoinHttp(cfString, signer);
         var socket = new OkCoinWebsocket(_evUp, cfString);
@@ -541,7 +541,7 @@ class OkCoin extends Interfaces.CombinedGateway {
             orderGateway,
             new OkCoinPositionGateway(_evUp, http),
             new OkCoinBaseGateway(parseFloat(
-              Models.fromCurrency(pair.base)
+              Models.fromCurrency(cfPair.base)
                 .replace('BTC', '0.01')
                 .replace('LTC', '0.001')
             ) || 0.01, 0.01)
@@ -549,6 +549,6 @@ class OkCoin extends Interfaces.CombinedGateway {
         }
 }
 
-export async function createOkCoin(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new OkCoin(cfString, pair, _evOn, _evUp);
+export async function createOkCoin(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    return new OkCoin(cfString, cfPair, _evOn, _evUp);
 }

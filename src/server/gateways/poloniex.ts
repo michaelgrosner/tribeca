@@ -429,8 +429,8 @@ class PoloniexBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class PoloniexSymbolProvider {
   public symbol: string;
 
-  constructor(pair: Models.CurrencyPair) {
-    this.symbol = Models.fromCurrency(pair.quote) + "_" + Models.fromCurrency(pair.base);
+  constructor(cfPair) {
+    this.symbol = Models.fromCurrency(cfPair.quote) + "_" + Models.fromCurrency(cfPair.base);
   }
 }
 
@@ -455,8 +455,8 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export async function createPoloniex(cfString, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
-  const symbol = new PoloniexSymbolProvider(pair);
+export async function createPoloniex(cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+  const symbol = new PoloniexSymbolProvider(cfPair);
   const signer = new PoloniexMessageSigner(cfString);
   const http = new PoloniexHttp(cfString, signer);
 

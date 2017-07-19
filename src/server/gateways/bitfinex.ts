@@ -509,8 +509,8 @@ class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class BitfinexSymbolProvider {
     public symbol: string;
 
-    constructor(pair: Models.CurrencyPair) {
-        this.symbol = Models.fromCurrency(pair.base).toLowerCase() + Models.fromCurrency(pair.quote).toLowerCase();
+    constructor(cfPair) {
+        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + Models.fromCurrency(cfPair.quote).toLowerCase();
     }
 }
 
@@ -560,10 +560,10 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = cfString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
-    const symbol = new BitfinexSymbolProvider(pair);
+    const symbol = new BitfinexSymbolProvider(cfPair);
 
     for (let s of symbolDetails) {
         if (s.pair === symbol.symbol) {

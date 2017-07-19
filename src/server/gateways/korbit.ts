@@ -412,24 +412,24 @@ class KorbitSymbolProvider {
     public symbolReversed: string;
     public symbolQuote: string;
 
-    constructor(pair: Models.CurrencyPair) {
+    constructor(cfPair) {
         const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s).toLowerCase();
-        this.symbol = GetCurrencySymbol(pair.base) + "_" + GetCurrencySymbol(pair.quote);
-        this.symbolReversed = GetCurrencySymbol(pair.quote) + "_" + GetCurrencySymbol(pair.base);
-        this.symbolQuote = GetCurrencySymbol(pair.quote);
+        this.symbol = GetCurrencySymbol(cfPair.base) + "_" + GetCurrencySymbol(cfPair.quote);
+        this.symbolReversed = GetCurrencySymbol(cfPair.quote) + "_" + GetCurrencySymbol(cfPair.base);
+        this.symbolQuote = GetCurrencySymbol(cfPair.quote);
     }
 }
 
 class Korbit extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      pair: Models.CurrencyPair,
+      cfPair,
       minTick: number,
       minSize: number,
       _evOn,
       _evUp
     ) {
-        var symbol = new KorbitSymbolProvider(pair);
+        var symbol = new KorbitSymbolProvider(cfPair);
         var http = new KorbitHttp(cfString, new KorbitMessageSigner(cfString));
 
         var orderGateway = cfString("KorbitOrderDestination") == "Korbit"
@@ -445,15 +445,15 @@ class Korbit extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createKorbit(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createKorbit(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const constants = await getJSON<any[]>(cfString("KorbitHttpUrl")+"/constants");
     let minTick = 500;
     let minSize = 0.015;
     for (let constant in constants)
-      if (constant.toUpperCase()==Models.fromCurrency(pair.base)+'TICKSIZE')
+      if (constant.toUpperCase()==Models.fromCurrency(cfPair.base)+'TICKSIZE')
           minTick = parseFloat(constants[constant]);
-      // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(pair.base)+'ORDER')
+      // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(cfPair.base)+'ORDER')
           // minSize = parseFloat(constants[constant]);
 
-    return new Korbit(cfString, pair, minTick, minSize, _evOn, _evUp);
+    return new Korbit(cfString, cfPair, minTick, minSize, _evOn, _evUp);
 }

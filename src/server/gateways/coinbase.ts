@@ -565,8 +565,8 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
 class CoinbaseSymbolProvider {
     public symbol: string;
 
-    constructor(pair: Models.CurrencyPair) {
-        this.symbol = Models.fromCurrency(pair.base) + "-" + Models.fromCurrency(pair.quote);
+    constructor(cfPair) {
+        this.symbol = Models.fromCurrency(cfPair.base) + "-" + Models.fromCurrency(cfPair.quote);
     }
 }
 
@@ -592,7 +592,7 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(cfString, pair: Models.CurrencyPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
       cfString("CoinbaseApiKey"),
       cfString("CoinbaseSecret"),
@@ -610,12 +610,12 @@ export async function createCoinbase(cfString, pair: Models.CurrencyPair, _evOn,
     if (!products)
       throw new Error("Unable to connect to Coinbase, seems currently offline. Please retry once is online.");
 
-    const symbolProvider = new CoinbaseSymbolProvider(pair);
+    const symbolProvider = new CoinbaseSymbolProvider(cfPair);
 
     for (let p of products) {
         if (p.id === symbolProvider.symbol)
             return new Coinbase(authClient, cfString, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size), _evOn, _evUp);
     }
 
-    throw new Error("Unable to match pair to a coinbase symbol " + pair.toString());
+    throw new Error("Unable to match pair to a coinbase symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);
 }

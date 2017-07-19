@@ -63,9 +63,9 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 }
 
 export class NullPositionGateway implements Interfaces.IPositionGateway {
-    constructor(private _evUp, pair: Models.CurrencyPair) {
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, pair.base)), 2500);
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, pair.quote)), 2500);
+    constructor(private _evUp, cfPair) {
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, cfPair.base)), 2500);
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, cfPair.quote)), 2500);
     }
 }
 
@@ -124,7 +124,7 @@ class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
 class NullGateway extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      pair: Models.CurrencyPair,
+      cfPair,
       _evOn,
       _evUp
     ) {
@@ -132,11 +132,11 @@ class NullGateway extends Interfaces.CombinedGateway {
         super(
             new NullMarketDataGateway(_evUp, minTick),
             new NullOrderGateway(_evUp),
-            new NullPositionGateway(_evUp, pair),
+            new NullPositionGateway(_evUp, cfPair),
             new NullGatewayDetails(minTick, 0.01));
     }
 }
 
-export async function createNullGateway(cfString, pair: Models.CurrencyPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new NullGateway(cfString, pair, _evOn, _evUp);
+export async function createNullGateway(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+    return new NullGateway(cfString, cfPair, _evOn, _evUp);
 }

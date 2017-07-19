@@ -22,6 +22,7 @@ namespace K {
         }
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
+        NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
       }
       static string cfString(string k, bool r = true) {
         Isolate* isolate = Isolate::GetCurrent();
@@ -75,6 +76,14 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, (double)cfExchange()));
+      };
+      static void _cfmCurrencyPair(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("base"), Number::New(isolate, (double)cfBase()));
+        o->Set(FN::v8S("quote"), Number::New(isolate, (double)cfQuote()));
+        args.GetReturnValue().Set(o);
       };
   };
 }

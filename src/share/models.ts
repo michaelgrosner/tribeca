@@ -13,8 +13,8 @@ export class Timestamped<T> implements ITimestamped {
 }
 
 export var Prefixes = {
-SNAPSHOT: '=',
-MESSAGE: '-'
+  SNAPSHOT: '=',
+  MESSAGE: '-'
 }
 
 export var Topics = {
@@ -302,10 +302,6 @@ export class TwoSidedQuoteStatus {
 
 export class CurrencyPair {
     constructor(public base: Currency, public quote: Currency) {}
-
-    public toString() {
-        return Currency[this.base] + "/" + Currency[this.quote];
-    }
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth }
