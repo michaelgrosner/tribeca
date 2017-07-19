@@ -36,21 +36,21 @@ namespace K {
         if (r) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl; exit(1); }
         return "";
       };
-      static mCurrency cfBase() {
+      static int cfBase() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        ptrdiff_t pos = distance(mCurrency_.begin(), find(mCurrency_.begin(), mCurrency_.end(), k));
-        if (pos >= mCurrency_.size()) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
-        return (mCurrency)pos;
+        for (unsigned i=0; i<mCurrency.size(); ++i)
+          if (mCurrency[i] == k) return i;
+        cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
       }
-      static mCurrency cfQuote() {
+      static int cfQuote() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        ptrdiff_t pos = distance(mCurrency_.begin(), find(mCurrency_.begin(), mCurrency_.end(), k));
-        if (pos >= mCurrency_.size()) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); }
-        return (mCurrency)pos;
+        for (unsigned i=0; i<mCurrency.size(); ++i)
+          if (mCurrency[i] == k) return i;
+        cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
       }
       static mExchange cfExchange() {
         string k = cfString("EXCHANGE");
