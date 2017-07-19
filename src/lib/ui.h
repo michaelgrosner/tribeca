@@ -7,7 +7,7 @@ namespace K {
   uv_timer_t uiD_;
   Persistent<Function> noop;
   typedef Local<Value> (*uiCb)(Local<Value>);
-  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>> D; int u = 0; };
+  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<CopyablePersistentTraits<Object>::CopyablePersistent>> D; int u = 0; };
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   int iOSR60 = 0;
   bool uiOPT = true;
@@ -160,26 +160,26 @@ namespace K {
         Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        for (map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it_=sess->D.begin(); it_!=sess->D.end(); ++it_) {
-          if (it_->first != string(1, (char)uiTXT::OrderStatusReports)) {
+        for (map<uiTXT, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it_=sess->D.begin(); it_!=sess->D.end(); ++it_) {
+          if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp(isolate, (uiTXT)it_->first[0], Local<Object>::New(isolate, *it));
+              uiUp(isolate, it_->first, Local<Object>::New(isolate, *it));
             sess->D.erase(it_);
           }
         }
-        if (sess->D.find(string(1, (char)uiTXT::OrderStatusReports)) != sess->D.end() && sess->D[string(1, (char)uiTXT::OrderStatusReports)].size() > 0) {
+        if (sess->D.find(uiTXT::OrderStatusReports) != sess->D.end() && sess->D[uiTXT::OrderStatusReports].size() > 0) {
           int ki = 0;
           Local<Array> k = Array::New(isolate);
-          for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[string(1, (char)uiTXT::OrderStatusReports)].begin(); it != sess->D[string(1, (char)uiTXT::OrderStatusReports)].end();) {
+          for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
             Local<Object> o = Local<Object>::New(isolate, *it);
             k->Set(ki++, o);
             if (mORS::Working != (mORS)o->Get(FN::v8S("orderStatus"))->NumberValue())
-              sess->D[string(1, (char)uiTXT::OrderStatusReports)].erase(it);
+              sess->D[uiTXT::OrderStatusReports].erase(it);
             else it++;
           }
           if (!k->GetOwnPropertyNames(Context::New(isolate)).IsEmpty())
             uiUp(isolate, uiTXT::OrderStatusReports, k);
-          sess->D.erase(string(1, (char)uiTXT::OrderStatusReports));
+          sess->D.erase(uiTXT::OrderStatusReports);
         }
         if (uiDDT+60000 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
         uiDDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
@@ -278,20 +278,20 @@ namespace K {
         if (!qp_->Get(FN::v8S(isolate, "delayUI"))->NumberValue()) return uiUp(isolate, k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (!isOSR) {
-          for (map<string, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it)
-            if (it->first == string(1, (char)k)) sess->D.erase(it);
+          for (map<uiTXT, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it=sess->D.begin(); it!=sess->D.end(); ++it)
+            if (it->first == k) sess->D.erase(it);
         } else {
-          if (sess->D.find(string(1, (char)k)) != sess->D.end() && sess->D[string(1, (char)k)].size() > 0) {
-            for(vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[string(1, (char)k)].begin(); it != sess->D[string(1, (char)k)].end();) {
+          if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
+            for(vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = sess->D[k].begin(); it != sess->D[k].end();) {
               if (Local<Object>::New(isolate, *it)->Get(FN::v8S(isolate, "orderId"))->ToString() == o->Get(FN::v8S(isolate, "orderId"))->ToString())
-                sess->D[string(1, (char)k)].erase(it);
+                sess->D[k].erase(it);
               else it++;
             }
           }
         }
         Persistent<Object> _o;
         _o.Reset(isolate, o);
-        sess->D[string(1, (char)k)].push_back(_o);
+        sess->D[k].push_back(_o);
       }
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
