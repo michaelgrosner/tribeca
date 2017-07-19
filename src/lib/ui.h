@@ -160,7 +160,6 @@ namespace K {
         Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-
         for (map<uiTXT, vector<CopyablePersistentTraits<Object>::CopyablePersistent>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<CopyablePersistentTraits<Object>::CopyablePersistent>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
