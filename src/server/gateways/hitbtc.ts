@@ -555,7 +555,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                             return;
                         }
                         if (currency == null || [this._cfPair.base,this._cfPair.quote].indexOf(currency)==-1) return;
-                        console.log(new Models.CurrencyPosition(r.cash, r.reserved, currency));
                         this._evUp('PositionGateway', new Models.CurrencyPosition(r.cash, r.reserved, currency));
                     });
                 }
