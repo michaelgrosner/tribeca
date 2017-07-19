@@ -64,11 +64,10 @@
     "config": "K.json"
   },
   "scripts": {
-    "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && npm run changelog",
+    "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && make changelog",
     "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && exec npm run reinstall || echo Already running latest `_ @{u}` version!",
     "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever restartall && exec npm run test-stunnel",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
-    "changelog": "git --no-pager log --graph --oneline @..@{u}",
     "preinstall": "sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && exec npm run install-packages",
     "postinstall": "npm run compile-server && npm run compile-client && npm run compile-public && npm run compile-bundle",
     "install-packages": "test -n \"$(command -v apt-get)\" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libssl-dev openssl stunnel python wget gzip || (test -n \"$(command -v yum)\" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel openssl openssl-devel zlib-devel stunnel python wget gzip) || (test -n \"$(command -v brew)\" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python wget gzip || brew upgrade || :)) && (sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db) && make && openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem && sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/ && exec npm run test-stunnel",
