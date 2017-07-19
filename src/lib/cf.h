@@ -18,7 +18,7 @@ namespace K {
           cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
         } else {
           cfRepo.Reset(isolate, Object::New(isolate));
-          cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead.";
+          cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         }
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
