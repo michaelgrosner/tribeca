@@ -262,16 +262,8 @@ namespace K {
         else _uiUp(args);
       }
       static void _uiUp(const FunctionCallbackInfo<Value>& args) {
-        Isolate *isolate = args.GetIsolate();
-        JSON Json;
-        string k = FN::S8v(args[0]->ToString());
-        if ((uiTXT)k[0] == uiTXT::MarketData) {
-          if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
-          uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
-        }
-        MaybeLocal<String> v = args[1]->IsUndefined() ? FN::v8S(isolate, "") : Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject());
-        string m = string(1, (char)uiBIT::MSG).append(k).append(*String::Utf8Value(v.ToLocalChecked()));
-        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        if (args[1]->IsUndefined()) return;
+        uiUp(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
       }
       static void uiHold(Isolate* isolate, uiTXT k, Local<Object> o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
