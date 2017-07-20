@@ -382,9 +382,6 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class KorbitBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
 
     name() : string {
         return "Korbit";

@@ -480,9 +480,6 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
 
     name() : string {
         return "OkCoin";

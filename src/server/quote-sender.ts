@@ -27,8 +27,6 @@ export class QuoteSender {
   }
 
   private checkCrossedQuotes = (side: Models.Side, px: number): boolean => {
-    if (this._broker.hasSelfTradePrevention) return false;
-
     var oppSide = side === Models.Side.Bid ? Models.Side.Ask : Models.Side.Bid;
 
     var doesQuoteCross = oppSide === Models.Side.Bid
