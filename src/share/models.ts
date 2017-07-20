@@ -138,7 +138,6 @@ export class SubmitNewOrder {
                 public timeInForce: TimeInForce,
                 public isPong: boolean,
                 public exchange: Exchange,
-                public generatedTime: Date,
                 public preferPostOnly: boolean,
                 public source: OrderSource,
                 public msg?: string) {
@@ -150,14 +149,12 @@ export class CancelReplaceOrder {
     constructor(public origOrderId: string,
                 public quantity: number,
                 public price: number,
-                public exchange: Exchange,
-                public generatedTime: Date) {}
+                public exchange: Exchange) {}
 }
 
 export class OrderCancel {
     constructor(public origOrderId: string,
-                public exchange: Exchange,
-                public generatedTime: Date) {}
+                public exchange: Exchange) {}
 }
 
 export interface OrderStatusReport {
@@ -368,8 +365,7 @@ export class RegularFairValue {
       public fairValue: number,
       public ewmaLong: number,
       public ewmaMedium: number,
-      public ewmaShort: number,
-      public time: number,
+      public ewmaShort: number
     ) {}
 }
 

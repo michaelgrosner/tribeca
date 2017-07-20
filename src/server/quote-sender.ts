@@ -181,7 +181,6 @@ export class QuoteSender {
       Models.TimeInForce.GTC,
       q.isPong,
       this._exchange,
-      new Date(),
       true,
       Models.OrderSource.Quote
     ));
@@ -193,19 +192,19 @@ export class QuoteSender {
         ? price < x.price
         : price > x.price
     ).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, new Date()))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange))
     );
   };
 
   private stopWorstQuote = (side: Models.Side) => {
     const orderSide = this.orderCacheSide(side, true);
     if (orderSide.length)
-      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId, this._exchange, new Date()));
+      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId, this._exchange));
   };
 
   private stopAllQuotes = (side: Models.Side) => {
     this.orderCacheSide(side, false).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, new Date()))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange))
     );
   };
 }

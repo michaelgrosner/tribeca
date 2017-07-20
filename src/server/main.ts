@@ -67,7 +67,7 @@ process.on("exit", (code) => {
 const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
-const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}))[0];
+const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
