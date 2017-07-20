@@ -5,7 +5,6 @@ import QuotingEngine = require("./quoting-engine");
 import moment = require("moment");
 
 export class QuoteSender {
-  private _exchange: Models.Exchange;
   private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0, 0, 0);
   private _lastStart: number = new Date().getTime();
   private _timeoutStart: number = 0;
@@ -19,8 +18,6 @@ export class QuoteSender {
     private _uiSend,
     private _evOn
   ) {
-    this._exchange = _broker.exchange();
-
     this._evOn('Quote', this.sendQuote);
     this._evOn('ExchangeConnect', this.sendQuote);
     _uiSnap(Models.Topics.QuoteStatus, () => [this._latestStatus]);
@@ -178,7 +175,6 @@ export class QuoteSender {
       price,
       Models.TimeInForce.GTC,
       q.isPong,
-      this._exchange,
       true,
       Models.OrderSource.Quote
     ));
@@ -190,19 +186,19 @@ export class QuoteSender {
         ? price < x.price
         : price > x.price
     ).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId))
     );
   };
 
   private stopWorstQuote = (side: Models.Side) => {
     const orderSide = this.orderCacheSide(side, true);
     if (orderSide.length)
-      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId, this._exchange));
+      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId));
   };
 
   private stopAllQuotes = (side: Models.Side) => {
     this.orderCacheSide(side, false).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId))
     );
   };
 }

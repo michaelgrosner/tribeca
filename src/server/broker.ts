@@ -42,7 +42,7 @@ export class OrderBroker {
 
         for (let e of this.orderCache.allOrders.values()) {
             if (e.orderStatus == Models.OrderStatus.New || e.orderStatus == Models.OrderStatus.Working)
-              this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange));
+              this.cancelOrder(new Models.OrderCancel(e.orderId));
         }
     }
 
@@ -407,7 +407,6 @@ export class OrderBroker {
                 o.price,
                 Models.TimeInForce[o.timeInForce],
                 false,
-                this._baseBroker.exchange(),
                 false,
                 Models.OrderSource.OrderTicket
               ));
@@ -417,7 +416,7 @@ export class OrderBroker {
             }
         });
 
-        _uiHand(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange)));
+        _uiHand(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId)));
         _uiHand(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
         _uiHand(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
         _uiHand(Models.Topics.CleanAllOrders, () => this.cleanOrders());
