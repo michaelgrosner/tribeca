@@ -93,7 +93,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
           for (var i = this.Depth;i--;) s.push(this.genSingleLevel(sign));
           return s.sort((a, b) => sign*a.price<sign*b.price?1:(sign*a.price>sign*b.price?-1:0));
        };
-       return new Models.Market(genSide(-1), genSide(1), new Date());
+       return new Models.Market(genSide(-1), genSide(1));
     };
 }
 

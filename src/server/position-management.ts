@@ -54,8 +54,7 @@ export class TargetBasePositionManager {
       this.newShort?Utils.roundNearest(this.newShort, this._minTick):null,
       this.newMedium?Utils.roundNearest(this.newMedium, this._minTick):null,
       this.newLong?Utils.roundNearest(this.newLong, this._minTick):null,
-      this.fairValue?Utils.roundNearest(this.fairValue, this._minTick):null,
-      new Date()
+      this.fairValue?Utils.roundNearest(this.fairValue, this._minTick):null
     ):null]);
     this._evOn('PositionBroker', this.recomputeTargetPosition);
     this._evOn('QuotingParameters', () => setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
@@ -103,8 +102,7 @@ export class TargetBasePositionManager {
       Utils.roundNearest(this.newShort, this._minTick),
       Utils.roundNearest(this.newMedium, this._minTick),
       Utils.roundNearest(this.newLong, this._minTick),
-      Utils.roundNearest(this.fairValue, this._minTick),
-      new Date()
+      Utils.roundNearest(this.fairValue, this._minTick)
     ), true);
 
     this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, new Date().getTime()));

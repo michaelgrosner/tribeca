@@ -36,7 +36,7 @@ export class MarketFiltration {
       return;
     }
 
-    this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
+    this.latestFilteredMarket = new Models.Market(bid, ask);
   };
 
   private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {

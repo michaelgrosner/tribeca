@@ -65,10 +65,9 @@ export class GatewayMarketTrade {
                 public make_side: Side) { }
 }
 
-export class Market implements ITimestamped {
+export class Market {
     constructor(public bids: MarketSide[],
-                public asks: MarketSide[],
-                public time: Date) { }
+                public asks: MarketSide[]) { }
 
     public toString() {
         return "asks: [" + this.asks.join(";") + "] bids: [" + this.bids.join(";") + "]";
@@ -199,14 +198,13 @@ export interface IStdev {
     askMean: number;
 }
 
-export class EWMAChart implements ITimestamped {
+export class EWMAChart {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
-                public fairValue: number,
-                public time: Date) {}
+                public fairValue: number) {}
 }
 
 export class TradeChart implements ITimestamped {

@@ -93,7 +93,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     ));
   };
 
-  private mkt: Models.Market = new Models.Market([], [], null);
+  private mkt: Models.Market = new Models.Market([], []);
 
   private onDepth = (depth: Models.Timestamped<any>) => {
     const side = depth.data.type+'s';
@@ -105,7 +105,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     const _bids = this.mkt.bids.slice(0, 13);
     const _asks = this.mkt.asks.slice(0, 13);
     if (_bids.length && _asks.length)
-      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks, depth.time));
+      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
   };
 
   private onDepthSnapshot = (mkt: Models.Timestamped<any>) => {
@@ -113,7 +113,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     const _bids = this.mkt.bids.slice(0, 13);
     const _asks = this.mkt.asks.slice(0, 13);
     if (_bids.length && _asks.length)
-      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks, mkt.time));
+      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
   };
 
   constructor(
@@ -133,7 +133,7 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
         http.get('returnOrderBook&depth=13&currencyPair='+symbol.symbol).then(msg => {
           if (!(<any>msg.data).seq) return reject(0);
           var kwargs = parseFloat((<any>msg.data).seq);
-          const _mkt = new Models.Market([], [], msg.time);
+          const _mkt = new Models.Market([], []);
           (<any>msg.data).bids.forEach(x => _mkt.bids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
           (<any>msg.data).asks.forEach(x => _mkt.asks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
           _mkt.bids = _mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);

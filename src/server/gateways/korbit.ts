@@ -102,8 +102,7 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (!(<any>msg.data).timestamp) return;
             this._evUp('MarketDataGateway', new Models.Market(
               (<any>msg.data).bids.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
-              (<any>msg.data).asks.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
-              msg.time
+              (<any>msg.data).asks.slice(0,13).map(KorbitMarketDataGateway.GetLevel)
             ));
         });
     };

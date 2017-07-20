@@ -134,7 +134,7 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
           this.reevalBook();
         else this.reevalPublicBook();
         if (this._cachedBids.length && this._cachedAsks.length)
-            this._evUp('MarketDataGateway', new Models.Market(this._cachedBids, this._cachedAsks, new Date()));
+            this._evUp('MarketDataGateway', new Models.Market(this._cachedBids, this._cachedAsks));
     };
 
     constructor(

@@ -195,7 +195,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         const ordBids = this.applyUpdates(bids, this._lastBids);
         const ordAsks = this.applyUpdates(asks, this._lastAsks);
 
-        this._evUp('MarketDataGateway', new Models.Market(ordBids, ordAsks, t));
+        this._evUp('MarketDataGateway', new Models.Market(ordBids, ordAsks));
     };
 
     private applyUpdates(incomingUpdates : Update[], side : SideMarketData) {

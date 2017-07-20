@@ -180,7 +180,7 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
         var bids = msg.bids.slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
         var asks = msg.asks.reverse().slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
 
-        this._evUp('MarketDataGateway', new Models.Market(bids, asks, depth.time));
+        this._evUp('MarketDataGateway', new Models.Market(bids, asks));
     };
 
     constructor(
