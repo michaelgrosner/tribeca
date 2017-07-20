@@ -137,7 +137,6 @@ export class SubmitNewOrder {
                 public price: number,
                 public timeInForce: TimeInForce,
                 public isPong: boolean,
-                public exchange: Exchange,
                 public preferPostOnly: boolean,
                 public source: OrderSource,
                 public msg?: string) {
@@ -148,13 +147,11 @@ export class SubmitNewOrder {
 export class CancelReplaceOrder {
     constructor(public origOrderId: string,
                 public quantity: number,
-                public price: number,
-                public exchange: Exchange) {}
+                public price: number) {}
 }
 
 export class OrderCancel {
-    constructor(public origOrderId: string,
-                public exchange: Exchange) {}
+    constructor(public origOrderId: string) {}
 }
 
 export interface OrderStatusReport {
@@ -343,11 +340,6 @@ export interface QuotingParameters {
     stepOverSize?: number;
     profitHourInterval?: number;
     delayUI?: number;
-    exchange?: Exchange;
-}
-
-export class ExchangePairMessage<T> {
-    constructor(public exchange: Exchange, public pair: CurrencyPair, public data: T) { }
 }
 
 export class ProductAdvertisement {
