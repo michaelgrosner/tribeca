@@ -1,16 +1,14 @@
-import crypto = require('crypto');
 import WebSocket = require('uws');
 import request = require('request');
 import url = require("url");
-import querystring = require("querystring");
 import NullGateway = require("./nullgw");
 import Models = require("../../share/models");
 import Interfaces = require("../interfaces");
 import moment = require("moment");
 import util = require("util");
 const SortedMap = require("collections/sorted-map");
-
-const _lotMultiplier = 100.0;
+import querystring = require("querystring");
+import crypto = require('crypto');
 
 interface NoncePayload<T> {
     nonce: number;
@@ -202,7 +200,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     private applyUpdates(incomingUpdates : Update[], side : SideMarketData) {
         for (let u of incomingUpdates) {
-            const ms = new Models.MarketSide(parseFloat(u.price), u.size / _lotMultiplier);
+            const ms = new Models.MarketSide(parseFloat(u.price), u.size * this._lotMultiplier);
             side.update(u.price, ms);
         }
 
@@ -252,7 +250,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
     };
 
-    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _minTick) {
+    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _minTick, private _lotMultiplier) {
         this._marketDataWs = new WebSocket(cfString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
@@ -298,15 +296,16 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _nonce = 1;
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        this.sendAuth<OrderCancel>("OrderCancel", {clientOrderId: cancel.orderId,
+      request(this.getAuth("/api/1/trading/cancel_order", {clientOrderId: cancel.orderId,
             cancelRequestClientOrderId: cancel.orderId + "C",
             symbol: this._symbolProvider.symbol,
-            side: HitBtcOrderEntryGateway.getSide(cancel.side)}, () => {
-                this._evUp('OrderUpdateGateway', {
-                    orderId: cancel.orderId,
-                    computationalLatency: new Date().valueOf() - cancel.time.valueOf()
-                });
-            });
+            side: HitBtcOrderEntryGateway.getSide(cancel.side)}), (err, body, resp) => {this.onMessage(resp);});
+        // this.sendAuth<OrderCancel>("OrderCancel", , () => {
+                // this._evUp('OrderUpdateGateway', {
+                    // orderId: cancel.orderId,
+                    // computationalLatency: new Date().valueOf() - cancel.time.valueOf()
+                // });
+            // });
     };
 
     replaceOrder = (replace : Models.OrderStatusReport) => {
@@ -319,18 +318,19 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             clientOrderId: order.orderId,
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(order.side),
-            quantity: order.quantity * _lotMultiplier,
+            quantity: order.quantity / this._lotMultiplier,
             type: HitBtcOrderEntryGateway.getType(order.type),
             price: order.price,
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
+      request(this.getAuth("/api/1/trading/new_order", hitBtcOrder), (err, body, resp) => {this.onMessage(resp);});
 
-        this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
-            this._evUp('OrderUpdateGateway', {
-                orderId: order.orderId,
-                computationalLatency: new Date().valueOf() - order.time.valueOf()
-            });
-        });
+        // this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
+            // this._evUp('OrderUpdateGateway', {
+                // orderId: order.orderId,
+                // computationalLatency: new Date().valueOf() - order.time.valueOf()
+            // });
+        // });
     };
 
     private static getStatus(m : ExecutionReport) : Models.OrderStatus {
@@ -384,24 +384,17 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private onExecutionReport = (tsMsg : Models.Timestamped<ExecutionReport>) => {
-        const t = tsMsg.time;
         const msg = tsMsg.data;
-
-        const ordStatus = HitBtcOrderEntryGateway.getStatus(msg);
-
-        let lastQuantity : number = undefined;
-        let lastPrice : number = undefined;
-
 
         const status : Models.OrderStatusUpdate = {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
-            orderStatus: ordStatus,
-            time: t,
+            orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
+            time: tsMsg.time
         };
 
         if (msg.lastQuantity > 0 && msg.execReportType === "trade") {
-            status.lastQuantity = msg.lastQuantity / _lotMultiplier;
+            status.lastQuantity = msg.lastQuantity * this._lotMultiplier;
             status.lastPrice = msg.lastPrice;
         }
 
@@ -409,10 +402,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             status.rejectMessage = msg.orderRejectReason;
 
         if (status.leavesQuantity)
-            status.leavesQuantity = msg.leavesQuantity / _lotMultiplier;
+            status.leavesQuantity = msg.leavesQuantity * this._lotMultiplier;
 
         if (msg.cumQuantity)
-            status.cumQuantity = msg.cumQuantity / _lotMultiplier;
+            status.cumQuantity = msg.cumQuantity * this._lotMultiplier;
 
         if (msg.averagePrice)
             status.averagePrice = msg.averagePrice;
@@ -448,6 +441,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         const v = {};
         v[msgType] = msg;
         const readyMsg = this.authMsg(v);
+        console.log('MSG',msg);
         this._orderEntryWs.send(JSON.stringify(readyMsg), cb);
     };
 
@@ -461,8 +455,8 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private onOpen = () => {
-        this.sendAuth("Login", {});
-        this.onConnectionStatusChange();
+      this.sendAuth("Login", {});
+      this.onConnectionStatusChange();
     };
 
     private onClosed = (code, msg) => {
@@ -472,13 +466,12 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onError = (err : Error) => {
         this.onConnectionStatusChange();
-        console.error('hitbtc', err);
+        console.log('hitbtc', err);
         throw err;
     };
 
-    private onMessage = (raw: string) => {
+    private onMessage = (raw) => {
         try {
-            if (raw == 'Slow down... You should login first.') return this.sendAuth("Login", {});
             var t = new Date();
             var msg = JSON.parse(raw);
             if (msg.hasOwnProperty("ExecutionReport")) {
@@ -497,18 +490,42 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     };
 
-    generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);
+    private chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    generateClientOrderId = (): string => {
+      let id: string = '';
+      for(let i=16;i--;) id += this.chars.charAt(Math.floor(Math.random() * this.chars.length));
+      return id;
+    };
+
+    private getAuth = (uri : string, param: any) : any => {
+        const nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
+        const comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey}) + querystring.stringify(param);
+
+        const signature = crypto.createHmac('sha512', this._secret)
+                              .update(comb)
+                              .digest('hex')
+                              .toString()
+                              .toLowerCase();
+
+        return {url: this._pullUrl + uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey}),
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded", "X-Signature": signature},
+                body: querystring.stringify(param)};
+    };
 
     private _apiKey : string;
     private _secret : string;
-    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway) {
+    private _pullUrl: string;
+    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway, private _lotMultiplier) {
         this._apiKey = cfString("HitBtcApiKey");
         this._secret = cfString("HitBtcSecret");
-        this._orderEntryWs = new WebSocket(cfString("HitBtcOrderEntryUrl"));
-        this._orderEntryWs.on('open', this.onOpen);
-        this._orderEntryWs.on('message', this.onMessage);
-        this._orderEntryWs.on('close', this.onConnectionStatusChange);
-        this._orderEntryWs.on("error", this.onError);
+        this._pullUrl = cfString("HitBtcPullUrl");
+        setTimeout(() => {this._evUp('GatewayOrderConnect', Models.ConnectivityStatus.Connected)}, 3000);
+        // this._orderEntryWs = new WebSocket(cfString("HitBtcOrderEntryUrl"));
+        // this._orderEntryWs.on('open', this.onOpen);
+        // this._orderEntryWs.on('message', this.onMessage);
+        // this._orderEntryWs.on('close', this.onConnectionStatusChange);
+        // this._orderEntryWs.on("error", this.onError);
     }
 }
 
@@ -613,6 +630,7 @@ class HitBtc extends Interfaces.CombinedGateway {
       cfString,
       symbolProvider: HitBtcSymbolProvider,
       step: number,
+      lot: number,
       minSize: number,
       cfPair,
       _evOn,
@@ -620,7 +638,7 @@ class HitBtc extends Interfaces.CombinedGateway {
     ) {
         const details = new HitBtcBaseGateway(step, minSize);
         const orderGateway = cfString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, details)
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, details, lot)
             : new NullGateway.NullOrderGateway(_evUp);
 
         // Payment actions are not permitted in demo mode -- helpful.
@@ -630,7 +648,7 @@ class HitBtc extends Interfaces.CombinedGateway {
         }
 
         super(
-            new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step),
+            new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step, lot),
             orderGateway,
             positionGateway,
             details);
@@ -654,7 +672,7 @@ export async function createHitBtc(cfString, cfPair, _evOn, _evUp) : Promise<Int
 
     for (let s of symbols.symbols) {
         if (s.symbol === symbolProvider.symbol)
-            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), 0.01, cfPair, _evOn, _evUp);
+            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), parseFloat(s.lot), 0.01, cfPair, _evOn, _evUp);
     }
 
     throw new Error("unable to match pair to a hitbtc symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);
