@@ -1,12 +1,10 @@
 import Models = require("../share/models");
 
-export interface IGateway {
+
+export interface IMarketDataGateway {
 }
 
-export interface IMarketDataGateway extends IGateway {
-}
-
-export interface IOrderEntryGateway extends IGateway {
+export interface IOrderEntryGateway {
     sendOrder(order: Models.OrderStatusReport): void;
     cancelOrder(cancel: Models.OrderStatusReport): void;
     replaceOrder(replace: Models.OrderStatusReport): void;
@@ -33,9 +31,7 @@ export interface IExchangeDetailsGateway {
 
 export class CombinedGateway {
     constructor(
-        public md: IMarketDataGateway,
         public oe: IOrderEntryGateway,
-        public pg: IPositionGateway,
         public base: IExchangeDetailsGateway) { }
 }
 

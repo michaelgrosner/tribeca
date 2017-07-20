@@ -436,10 +436,10 @@ class Korbit extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(_evUp, http, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
+        new KorbitMarketDataGateway(_evUp, http, symbol);
+        new KorbitPositionGateway(_evUp, http, symbol);
         super(
-            new KorbitMarketDataGateway(_evUp, http, symbol),
             orderGateway,
-            new KorbitPositionGateway(_evUp, http, symbol),
             new KorbitBaseGateway(minTick, minSize)
         );
     }
