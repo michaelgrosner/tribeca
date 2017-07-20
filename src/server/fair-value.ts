@@ -18,7 +18,6 @@ export class FairValueEngine {
   constructor(
     public filtration: MarketFiltration.MarketFiltration,
     private _minTick: number,
-    private _timeProvider: Utils.ITimeProvider,
     private _qpRepo,
     private _uiSnap,
     private _uiSend,
@@ -42,7 +41,7 @@ export class FairValueEngine {
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
             : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
           this._minTick
-        ), this._timeProvider.utcNow())
+        ), new Date())
       : null;
   };
 }

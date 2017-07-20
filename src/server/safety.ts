@@ -30,7 +30,6 @@ export class SafetyCalculator {
     public targetPosition: PositionManagement.TargetBasePositionManager;
 
     constructor(
-      private _timeProvider: Utils.ITimeProvider,
       private _fvEngine: FairValue.FairValueEngine,
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
@@ -44,7 +43,7 @@ export class SafetyCalculator {
       this._evOn('OrderTradeBroker', this.onTrade);
 
       this._evOn('QuotingParameters', this.computeQtyLimit);
-      _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
+      setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
     }
 
     private onTrade = (ut: Models.Trade) => {
@@ -60,7 +59,7 @@ export class SafetyCalculator {
     };
 
     private isOlderThan(time: Date) {
-        return Math.abs(this._timeProvider.utcNow().valueOf() - time.valueOf()) > this._qpRepo().tradeRateSeconds * 1000;
+        return Math.abs(new Date().getTime() - time.getTime()) > this._qpRepo().tradeRateSeconds * 1000;
     }
 
     private computeQtyLimit = () => {
@@ -166,7 +165,7 @@ export class SafetyCalculator {
           ((t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (buySize + sellSize / 2))(this._buys.concat(this._sells)),
           buyPing,
           sellPong,
-          this._timeProvider.utcNow()
+          new Date()
         );
     };
 }

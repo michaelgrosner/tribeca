@@ -64,8 +64,6 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const timeProvider: Utils.ITimeProvider = new Utils.RealTimeProvider();
-
 const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time)}));
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time)}));
@@ -106,7 +104,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   );
 
   const orderBroker = new Broker.OrderBroker(
-    timeProvider,
     bindings.qpRepo,
     broker,
     gateway.oe,
@@ -135,7 +132,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       bindings.evUp
     ),
     broker.minTickIncrement,
-    timeProvider,
     bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,
@@ -145,7 +141,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   );
 
   const positionBroker = new Broker.PositionBroker(
-    timeProvider,
     bindings.qpRepo,
     broker,
     orderBroker,
@@ -157,20 +152,17 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   );
 
   const quotingEngine = new QuotingEngine.QuotingEngine(
-    timeProvider,
     fvEngine,
     bindings.qpRepo,
     positionBroker,
     broker.minTickIncrement,
     broker.minSize,
     new Statistics.EWMAProtectionCalculator(
-      timeProvider,
       fvEngine,
       bindings.qpRepo,
       bindings.evUp
     ),
     new Statistics.STDEVProtectionCalculator(
-      timeProvider,
       fvEngine,
       bindings.qpRepo,
       bindings.dbInsert,
@@ -178,7 +170,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
-      timeProvider,
       broker.minTickIncrement,
       bindings.dbInsert,
       fvEngine,
@@ -192,7 +183,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       initTBP
     ),
     new Safety.SafetyCalculator(
-      timeProvider,
       fvEngine,
       bindings.qpRepo,
       positionBroker,
@@ -207,7 +197,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   );
 
   new QuoteSender.QuoteSender(
-    timeProvider,
     quotingEngine,
     broker,
     orderBroker,

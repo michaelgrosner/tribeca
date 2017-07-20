@@ -68,12 +68,11 @@ export class EWMATargetPositionCalculator {
 
 export class EWMAProtectionCalculator {
   constructor(
-    private _timeProvider: Utils.ITimeProvider,
     private _fv: FairValue.FairValueEngine,
     private _qpRepo,
     private _evUp
   ) {
-    _timeProvider.setInterval(this.onTick, moment.duration(1, "minutes"));
+    setInterval(this.onTick, moment.duration(1, "minutes"));
   }
 
   private onTick = () => {
@@ -105,7 +104,6 @@ export class STDEVProtectionCalculator {
     public get latest() { return this._latest; }
 
     constructor(
-      private _timeProvider: Utils.ITimeProvider,
       private _fv: FairValue.FairValueEngine,
       private _qpRepo,
       private _dbInsert,
@@ -119,7 +117,7 @@ export class STDEVProtectionCalculator {
           initMkt.map((r: Models.MarketStats) => r.ask)
         );
       }
-      _timeProvider.setInterval(this.onTick, moment.duration(1, "seconds"));
+      setInterval(this.onTick, moment.duration(1, "seconds"));
     }
 
     private initialize(rfv: number[], mktBids: number[], mktAsks: number[]) {

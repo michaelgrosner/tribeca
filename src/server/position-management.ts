@@ -30,7 +30,6 @@ export class TargetBasePositionManager {
   }
 
   constructor(
-    private _timeProvider: Utils.ITimeProvider,
     private _minTick: number,
     private _dbInsert,
     private _fvAgent: FairValue.FairValueEngine,
@@ -56,11 +55,11 @@ export class TargetBasePositionManager {
       this.newMedium?Utils.roundNearest(this.newMedium, this._minTick):null,
       this.newLong?Utils.roundNearest(this.newLong, this._minTick):null,
       this.fairValue?Utils.roundNearest(this.fairValue, this._minTick):null,
-      this._timeProvider.utcNow()
+      new Date()
     ):null]);
     this._evOn('PositionBroker', this.recomputeTargetPosition);
-    this._evOn('QuotingParameters', () => _timeProvider.setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
-    this._timeProvider.setInterval(this.updateEwmaValues, moment.duration(1, 'minutes'));
+    this._evOn('QuotingParameters', () => setTimeout(() => this.recomputeTargetPosition(), moment.duration(121)));
+    setInterval(this.updateEwmaValues, moment.duration(1, 'minutes'));
   }
 
   private recomputeTargetPosition = () => {
@@ -76,7 +75,7 @@ export class TargetBasePositionManager {
       : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
 
     if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
-      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, this._timeProvider.utcNow());
+      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, new Date());
       this._evUp('TargetPosition');
       this._uiSend(Models.Topics.TargetBasePosition, this._latest, true);
       this._dbInsert(Models.Topics.TargetBasePosition, this._latest);
@@ -105,9 +104,9 @@ export class TargetBasePositionManager {
       Utils.roundNearest(this.newMedium, this._minTick),
       Utils.roundNearest(this.newLong, this._minTick),
       Utils.roundNearest(this.fairValue, this._minTick),
-      this._timeProvider.utcNow()
+      new Date()
     ), true);
 
-    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, this._timeProvider.utcNow()));
+    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, new Date()));
   };
 }

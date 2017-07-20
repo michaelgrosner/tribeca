@@ -48,7 +48,6 @@ export class QuotingEngine {
     private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
 
     constructor(
-      private _timeProvider: Utils.ITimeProvider,
       private _fvEngine: FairValue.FairValueEngine,
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
@@ -75,7 +74,7 @@ export class QuotingEngine {
       this._evOn('TargetPosition', this.recalcQuote);
       this._evOn('Safety', this.recalcQuote);
 
-      _timeProvider.setInterval(this.recalcQuote, moment.duration(1, "seconds"));
+      setInterval(this.recalcQuote, moment.duration(1, "seconds"));
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
@@ -310,7 +309,7 @@ export class QuotingEngine {
         this.latestQuote = new Models.TwoSidedQuote(
             this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz, genQt.isBidPong), this.latestQuote, Models.Side.Bid),
             this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz, genQt.isAskPong), this.latestQuote, Models.Side.Ask),
-            this._timeProvider.utcNow()
+            new Date()
         );
     };
 
