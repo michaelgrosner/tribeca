@@ -252,8 +252,7 @@ export class PositionReport {
                 public profitBase: number,
                 public profitQuote: number,
                 public pair: CurrencyPair,
-                public exchange: Exchange,
-                public time: Date) {}
+                public exchange: Exchange) {}
 }
 
 export class OrderRequestFromUI {

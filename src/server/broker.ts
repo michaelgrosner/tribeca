@@ -460,7 +460,7 @@ export class PositionBroker {
         const profitQuote = ((quoteValue - this._lastPositions[0].quoteValue) / quoteValue) * 1e+2;
 
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._broker.pair, this._broker.exchange(), timeNow);
+            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._broker.pair, this._broker.exchange());
 
         let sameValue = true;
         if (this._report !== null) {
