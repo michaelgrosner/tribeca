@@ -521,10 +521,6 @@ export class PositionBroker {
 }
 
 export class ExchangeBroker {
-    public get hasSelfTradePrevention() {
-        return this._baseGateway.hasSelfTradePrevention;
-    }
-
     makeFee() : number {
         return this._baseGateway.makeFee();
     }
@@ -608,8 +604,7 @@ export class ExchangeBroker {
           minTick: this.minTickIncrement,
           minSize: this.minSize,
           makeFee: this.makeFee(),
-          takeFee: this.takeFee(),
-          hasSelfTradePrevention: this.hasSelfTradePrevention
+          takeFee: this.takeFee()
       });
     }
 

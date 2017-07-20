@@ -537,11 +537,6 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 }
 
 class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-    exchange(): Models.Exchange {
-        return Models.Exchange.Coinbase;
-    }
-
     makeFee(): number {
         return 0;
     }
@@ -550,8 +545,8 @@ class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return 0;
     }
 
-    name(): string {
-        return "Coinbase";
+    exchange(): Models.Exchange {
+        return Models.Exchange.Coinbase;
     }
 
     constructor(public minTickIncrement: number, public minSize: number) {}

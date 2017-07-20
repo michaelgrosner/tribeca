@@ -20,7 +20,6 @@ export interface IPositionGateway {
 }
 
 export interface IExchangeDetailsGateway {
-    name(): string;
     makeFee(): number;
     takeFee(): number;
     exchange(): Models.Exchange;

@@ -480,11 +480,6 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-    name() : string {
-        return "OkCoin";
-    }
-
     makeFee() : number {
         return 0.001;
     }
