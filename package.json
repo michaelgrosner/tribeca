@@ -64,7 +64,7 @@
   "scripts": {
     "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && make changelog",
     "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && exec npm run reinstall || echo Already running latest `_ @{u}` version!",
-    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && npm run test && forever restartall && exec npm run test-stunnel",
+    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && make test && forever restartall && exec npm run test-stunnel",
     "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
     "preinstall": "sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && exec npm run install-packages",
     "postinstall": "make server client public bundle",
@@ -77,10 +77,7 @@
     "stop": "forever stop -a -l /dev/null $npm_package_config_config || :",
     "start": "npm run test-compile && KCONFIG=$npm_package_config_config forever start --uid $npm_package_config_config -a -l /dev/null K.js && exec npm run test-stunnel",
     "test-compile": "test -d app || npm $(test -d node_modules && echo run post)install",
-    "test-stunnel": "test -z \"$SKIP_STUNNEL$(ps axu | grep stunnel | grep -v grep)\" && exec stunnel dist/K-stunnel.conf || :",
-    "test": "mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts",
-    "test-cov": "ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts _mocha -- --timeout 42000 test/*.ts",
-    "send-cov": "cd test && cat coverage/lcov.info | codacy-coverage && istanbul-coveralls"
+    "test-stunnel": "test -z \"$SKIP_STUNNEL$(ps axu | grep stunnel | grep -v grep)\" && exec stunnel dist/K-stunnel.conf || :"
   },
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
   "bugs": "https://github.com/ctubio/Krypto-trading-bot/issues",

@@ -19,17 +19,22 @@ help:
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
 	#                                                  #
+	#   make config     - initialize config file       #
+	#   make cleandb    - remove K database files      #
+	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
 	#   make public     - compile K client src         #
 	#   make bundle     - compile K client bundle      #
 	#                                                  #
+	#   make test       - run tests                    #
+	#   make test-cov   - run tests and coverage       #
+	#   make send-cov   - send coverage                #
+	#                                                  #
 	#   make node       - download node src files      #
 	#   make uws        - download uws src files       #
 	#   make quickfix   - download quickfix src files  #
-	#                                                  #
 	#   make clean      - remove external src files    #
-	#   make cleandb    - remove K database files      #
 	#                                                  #
 
 K: src/lib/K.cc
@@ -75,6 +80,9 @@ clean: build
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.dbx
 
+config: etc/K.json.dist
+	test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json
+
 server: node_modules/.bin/tsc src/server src/share app
 	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
 
@@ -90,7 +98,16 @@ bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/clien
 changelog: .git
 	git --no-pager log --graph --oneline @..@{u}
 
+test: node_modules/.bin/mocha
+	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
+
+test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
+	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
+
+send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
+	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
+
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws node Linux Darwin clean cleandb changelog asandwich
+.PHONY: K quickfix uws node Linux Darwin clean cleandb config server client public bundle changelog test test-cov send-cov asandwich

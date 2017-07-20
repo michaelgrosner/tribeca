@@ -18,12 +18,12 @@ branches:
   only: master
 
 install:
-  - cp etc/K.json.dist etc/K.json
+  - make config
   - npm install
 
-script: npm run test-cov
+script: make test-cov
 
-after_success: npm run send-cov
+after_success: make send-cov
 
 notifications:
   email:
