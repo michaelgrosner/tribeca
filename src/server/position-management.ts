@@ -105,6 +105,6 @@ export class TargetBasePositionManager {
       Utils.roundNearest(this.fairValue, this._minTick)
     ), true);
 
-    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, new Date().getTime()));
+    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort));
   };
 }
