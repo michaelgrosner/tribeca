@@ -67,7 +67,6 @@ ENV KorbitOrderDestination Korbit
 ENV HitBtcPullUrl http://demo-api.hitbtc.com
 ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
 ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
-ENV HitBtcSocketIoUrl https://demo-api.hitbtc.com:8081
 ENV HitBtcApiKey NULL
 ENV HitBtcSecret NULL
 ENV HitBtcOrderDestination HitBtc
