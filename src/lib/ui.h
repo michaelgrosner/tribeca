@@ -256,6 +256,8 @@ namespace K {
         _cb->Reset(isolate, Local<Function>::Cast(args[1]));
       }
       static void _uiSend(const FunctionCallbackInfo<Value> &args) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->u == 0) return;
         if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
         else _uiUp(args);
       }
