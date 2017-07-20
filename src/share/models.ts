@@ -268,7 +268,7 @@ export class OrderRequestFromUI {
 }
 
 export class FairValue {
-    constructor(public price: number, public time: number) {}
+    constructor(public price: number) {}
 }
 
 export class Quote {
@@ -277,8 +277,8 @@ export class Quote {
                 public isPong: boolean) {}
 }
 
-export class TwoSidedQuote implements ITimestamped {
-    constructor(public bid: Quote, public ask: Quote, public time: Date) {}
+export class TwoSidedQuote {
+    constructor(public bid: Quote, public ask: Quote) {}
 }
 
 export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
@@ -374,18 +374,18 @@ export class RegularFairValue {
 }
 
 export class TradeSafety {
-    constructor(public buy: number,
-                public sell: number,
-                public combined: number,
-                public buyPing: number,
-                public sellPong: number,
-                public time: Date) {}
+    constructor(
+      public buy: number,
+      public sell: number,
+      public combined: number,
+      public buyPing: number,
+      public sellPong: number
+    ) {}
 }
 
 export class TargetBasePositionValue {
     constructor(
-      public data: number,
-      public sideAPR: string,
-      public time: number
+      public tbp: number,
+      public sideAPR: string
     ) {}
 }

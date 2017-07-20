@@ -73,7 +73,7 @@ export class SafetyCalculator {
         let sellSize: number = (params.percentageValues && latestPosition != null)
               ? params.sellSizePercentage * latestPosition.value / 100
               : params.sellSize;
-        const targetBasePosition = this.targetPosition.latestTargetPosition.data;
+        const targetBasePosition = this.targetPosition.latestTargetPosition.tbp;
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.buySizeMax) buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax) sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
@@ -164,8 +164,7 @@ export class SafetyCalculator {
           ((t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / sellSize)(this._sells),
           ((t: ITrade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / (buySize + sellSize / 2))(this._buys.concat(this._sells)),
           buyPing,
-          sellPong,
-          new Date()
+          sellPong
         );
     };
 }

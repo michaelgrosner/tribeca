@@ -26,7 +26,7 @@ export class FairValueEngine {
     initRfv: Models.RegularFairValue[]
   ) {
     if (initRfv !== null && initRfv.length)
-      this.latestFairValue = new Models.FairValue(initRfv[0].fairValue, initRfv[0].time);
+      this.latestFairValue = new Models.FairValue(initRfv[0].fairValue);
 
     this._evOn('FilteredMarket', this.recalcFairValue);
     this._evOn('QuotingParameters', this.recalcFairValue);
@@ -41,7 +41,7 @@ export class FairValueEngine {
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
             : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
           this._minTick
-        ), new Date().getTime())
+        ))
       : null;
   };
 }

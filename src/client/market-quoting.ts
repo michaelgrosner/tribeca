@@ -107,7 +107,7 @@ export class MarketQuotingComponent implements OnInit {
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
-    this.targetBasePosition = value.data;
+    this.targetBasePosition = value.tbp;
     this.sideAPRSafety = value.sideAPR || 'Off';
   }
 

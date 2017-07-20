@@ -537,7 +537,7 @@ export class StatsComponent implements OnInit {
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
-    this.targetBasePosition = value.data;
+    this.targetBasePosition = value.tbp;
   }
 
   private updatePosition = (o: Models.PositionReport) => {
