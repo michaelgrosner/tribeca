@@ -162,7 +162,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         });
     };
 
-    private mkt = new Models.Market([], [], null);
+    private mkt = new Models.Market([], []);
 
     private onDepth = (depth : Models.Timestamped<any>) => {
         depth.data.forEach(x => {
@@ -176,7 +176,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
         let _bids = this.mkt.bids.slice(0, 13);
         let _asks = this.mkt.asks.slice(0, 13);
         if (_bids.length && _asks.length)
-          this._evUp('MarketDataGateway', new Models.Market(_bids, _asks, depth.time));
+          this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
     };
 
     constructor(
