@@ -41,7 +41,7 @@ export class FairValueEngine {
             ? (mkt.asks[0].price + mkt.bids[0].price) / 2
             : (mkt.asks[0].price * mkt.asks[0].size + mkt.bids[0].price * mkt.bids[0].size) / (mkt.asks[0].size + mkt.bids[0].size),
           this._minTick
-        ), new Date())
+        ), new Date().getTime())
       : null;
   };
 }

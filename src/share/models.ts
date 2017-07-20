@@ -77,11 +77,11 @@ export class Market implements ITimestamped {
     }
 }
 
-export class MarketStats implements ITimestamped {
+export class MarketStats {
     constructor(public fv: number,
                 public bid: number,
                 public ask: number,
-                public time: Date) { }
+                public time: number) { }
 }
 
 export class MarketTrade implements ITimestamped {
@@ -223,9 +223,9 @@ export class TradeChart implements ITimestamped {
                 public time: Date) {}
 }
 
-export class Trade implements ITimestamped {
+export class Trade {
     constructor(public tradeId: string,
-                public time: Date,
+                public time: number,
                 public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
@@ -233,7 +233,7 @@ export class Trade implements ITimestamped {
                 public side: Side,
                 public value: number,
                 public liquidity: Liquidity,
-                public Ktime: Date,
+                public Ktime: number,
                 public Kqty: number,
                 public Kprice: number,
                 public Kvalue: number,
@@ -274,8 +274,8 @@ export class OrderRequestFromUI {
                 public orderType: string) {}
 }
 
-export class FairValue implements ITimestamped {
-    constructor(public price: number, public time: Date) {}
+export class FairValue {
+    constructor(public price: number, public time: number) {}
 }
 
 export class Quote {
@@ -378,7 +378,7 @@ export class RegularFairValue {
       public ewmaLong: number,
       public ewmaMedium: number,
       public ewmaShort: number,
-      public time: Date,
+      public time: number,
     ) {}
 }
 
@@ -395,6 +395,6 @@ export class TargetBasePositionValue {
     constructor(
       public data: number,
       public sideAPR: string,
-      public time: Date
+      public time: number
     ) {}
 }

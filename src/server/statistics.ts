@@ -162,6 +162,6 @@ export class STDEVProtectionCalculator {
 
         this.onSave();
 
-        this._dbInsert(Models.Topics.MarketData, new Models.MarketStats(this._fv.latestFairValue.price, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
+        this._dbInsert(Models.Topics.MarketData, new Models.MarketStats(this._fv.latestFairValue.price, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date().getTime()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
     };
 }

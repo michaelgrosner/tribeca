@@ -75,7 +75,7 @@ export class TargetBasePositionManager {
       : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
 
     if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
-      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, new Date());
+      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, new Date().getTime());
       this._evUp('TargetPosition');
       this._uiSend(Models.Topics.TargetBasePosition, this._latest, true);
       this._dbInsert(Models.Topics.TargetBasePosition, this._latest);
@@ -107,6 +107,6 @@ export class TargetBasePositionManager {
       new Date()
     ), true);
 
-    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, new Date()));
+    this._dbInsert(Models.Topics.EWMAChart, new Models.RegularFairValue(this.fairValue, this.newLong, this.newMedium, this.newShort, new Date().getTime()));
   };
 }
