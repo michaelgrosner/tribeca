@@ -40,11 +40,11 @@ export class TargetBasePositionManager {
     private _uiSend,
     private _evOn,
     private _evUp,
-    initTBP: Models.TargetBasePositionValue
+    initTBP: Models.TargetBasePositionValue[]
   ) {
-    if (initTBP) {
-      this._latest = initTBP;
-      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Loaded from DB:', this._latest);
+    if (initTBP.length && typeof initTBP[0].tbp != "undefined") {
+      this._latest = initTBP[0];
+      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Loaded from DB:', this._latest.tbp);
     }
 
     _uiSnap(Models.Topics.TargetBasePosition, () => [this._latest]);
@@ -73,12 +73,12 @@ export class TargetBasePositionManager {
         : params.targetBasePosition)
       : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
 
-    if (this._latest === null || Math.abs(this._latest.data - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
-      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR, new Date().getTime());
+    if (this._latest === null || Math.abs(this._latest.tbp - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
+      this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR);
       this._evUp('TargetPosition');
       this._uiSend(Models.Topics.TargetBasePosition, this._latest, true);
       this._dbInsert(Models.Topics.TargetBasePosition, this._latest);
-      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.data);
+      console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated', this._latest.tbp);
     }
   };
 

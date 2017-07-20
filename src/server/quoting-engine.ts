@@ -33,6 +33,7 @@ const quotesChanged = (o: Models.TwoSidedQuote, n: Models.TwoSidedQuote, tick: n
 }
 
 export class QuotingEngine {
+    private _lastQuote: number = new Date().getTime();
     private _latest: Models.TwoSidedQuote = null;
     public latestQuoteAskStatus: Models.QuoteStatus;
     public latestQuoteBidStatus: Models.QuoteStatus;
@@ -79,7 +80,7 @@ export class QuotingEngine {
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         if (this._targetPosition.latestTargetPosition === null || this._positionBroker.latestReport === null) return null;
-        const targetBasePosition = this._targetPosition.latestTargetPosition.data;
+        const targetBasePosition = this._targetPosition.latestTargetPosition.tbp;
 
         const params = this._qpRepo();
         const widthPing = (params.widthPercentage)
@@ -308,8 +309,7 @@ export class QuotingEngine {
 
         this.latestQuote = new Models.TwoSidedQuote(
             this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz, genQt.isBidPong), this.latestQuote, Models.Side.Bid),
-            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz, genQt.isAskPong), this.latestQuote, Models.Side.Ask),
-            new Date()
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz, genQt.isAskPong), this.latestQuote, Models.Side.Ask)
         );
     };
 
@@ -333,10 +333,10 @@ export class QuotingEngine {
         if (Models.Side.Bid === side && previousQ.price < newQ.price) quoteWasWidened = false;
         if (Models.Side.Ask === side && previousQ.price > newQ.price) quoteWasWidened = false;
 
-        // prevent flickering
-        if (!quoteWasWidened && Math.abs((new Date()).getTime() - prevTwoSided.time.getTime()) < 300) {
+        if (!quoteWasWidened && new Date().getTime() - this._lastQuote < 300) {
             return previousQ;
         }
+        this._lastQuote = new Date().getTime();
 
         return newQ;
     }
