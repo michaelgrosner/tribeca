@@ -151,11 +151,11 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 
 ### Test units and Build notes
 
-Feel free to run `npm test` anytime.
+Feel free to run `make test` anytime.
 
 To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
 
-To rebuild the C++ shared objects with your modifications, please run `node-gyp rebuild`.
+To rebuild the C++ shared objects with your modifications, please run `make`.
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K.js`.
 
