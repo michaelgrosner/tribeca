@@ -592,11 +592,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-    exchange() : Models.Exchange {
-        return Models.Exchange.HitBtc;
-    }
-
     makeFee() : number {
         return -0.0001;
     }
@@ -605,8 +600,8 @@ class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
         return 0.001;
     }
 
-    name() : string {
-        return "HitBtc";
+    exchange() : Models.Exchange {
+        return Models.Exchange.HitBtc;
     }
 
     constructor(public minTickIncrement: number, public minSize: number) {}

@@ -382,11 +382,6 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class KorbitBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-    name() : string {
-        return "Korbit";
-    }
-
     makeFee() : number {
         return 0.001;
     }

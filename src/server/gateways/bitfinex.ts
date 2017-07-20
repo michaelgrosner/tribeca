@@ -483,11 +483,6 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-    name(): string {
-        return "Bitfinex";
-    }
-
     makeFee(): number {
         return 0.001;
     }

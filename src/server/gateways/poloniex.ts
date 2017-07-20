@@ -401,11 +401,6 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class PoloniexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-
-  name() : string {
-    return "Poloniex";
-  }
-
   makeFee() : number {
     return 0.001;
   }

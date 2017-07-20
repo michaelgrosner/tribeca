@@ -98,11 +98,6 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
-
-    name(): string {
-        return "Null";
-    }
-
     makeFee(): number {
         return 0;
     }
