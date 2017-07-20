@@ -155,7 +155,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (trade=='tu') return;
             var px = trade[3];
             var sz = Math.abs(trade[2]);
-            var time = trades.time;
+            var time = trades.time.getTime();
             var side = trade[2] > 0 ? Models.Side.Bid : Models.Side.Ask;
             var mt = new Models.GatewayMarketTrade(px, sz, side);
             this._evUp('MarketTradeGateway', mt);
@@ -223,7 +223,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                                 exchangeId: t.id,
                                 leavesQuantity: 0,
-                                time: resp.time,
+                                time: new Date().getTime(),
                                 orderStatus: Models.OrderStatus.Cancelled
                             });
                         });
@@ -249,12 +249,12 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }, () => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: order.orderId,
-                computationalLatency: new Date().valueOf() - order.time.valueOf()
+                computationalLatency: new Date().valueOf() - order.time
             });
         });
     };
 
-    private onOrderAck = (orders: any[], time: Date) => {
+    private onOrderAck = (orders: any[], time: number) => {
         orders.forEach(order => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: order[2],
@@ -311,7 +311,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
           if (typeof msg.data[1] == 'undefined' || !msg.data[1].length) return;
-          if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], new Date());
+          if (['on','ou','oc'].indexOf(msg.data[0])>-1) this.onOrderAck([msg.data[1]], new Date().getTime());
         });
 
         this._evOn('GatewaySocketConnect', cs => {

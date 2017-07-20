@@ -128,7 +128,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                   this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                     exchangeId: (<any>msg.data).order_id.toString(),
                     leavesQuantity: 0,
-                    time: msg.time,
+                    time: msg.time.getTime(),
                     orderStatus: Models.OrderStatus.Cancelled
                   });
               });
@@ -152,7 +152,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: order.orderId,
               leavesQuantity: 0,
-              time: (<any>msg.data).time,
+              time: new Date().getTime(),
               orderStatus: Models.OrderStatus.Cancelled
             });
             if ((<any>msg.data).status)
@@ -161,8 +161,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
           else
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: order.orderId,
-              computationalLatency: new Date().valueOf() - (<any>msg.time).valueOf(),
-              time: (<any>msg.data).time,
+              time: new Date().getTime(),
               exchangeId: (<any>msg.data).orderId,
               orderStatus: Models.OrderStatus.Working,
               leavesQuantity: order[1]
@@ -197,7 +196,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               var status : Models.OrderStatusUpdate = {
                   exchangeId: trade.fillsDetail.orderId,
                   orderStatus: Models.OrderStatus.Complete,
-                  time: new Date(trade.timestamp),
+                  time: new Date(trade.timestamp).getTime(),
                   side: trade.type.indexOf('buy')>-1 ? Models.Side.Bid : Models.Side.Ask,
                   lastQuantity: trade.fillsDetail.amount.value,
                   lastPrice: trade.fillsDetail.price.value,

@@ -227,7 +227,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                       this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                         exchangeId: (<any>msg.data).order_id.toString(),
                         leavesQuantity: 0,
-                        time: msg.time,
+                        time: new Date().getTime(),
                         orderStatus: Models.OrderStatus.Cancelled
                       });
                   }
@@ -268,7 +268,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: order.orderId,
-                computationalLatency: new Date().valueOf() - order.time.valueOf()
+                computationalLatency: new Date().valueOf() - order.time
             });
         });
     };
@@ -282,7 +282,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             return;
         }
 
-        var osr : Models.OrderStatusUpdate = { orderId: orderId, time: ts.time };
+        var osr : Models.OrderStatusUpdate = { orderId: orderId, time: ts.time.getTime() };
 
         if (typeof ts.data !== "undefined" && ts.data.result) {
             osr.exchangeId = ts.data.order_id.toString();
@@ -313,7 +313,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
           exchangeId: ts.data.order_id.toString(),
           orderStatus: Models.OrderStatus.Cancelled,
-          time: ts.time,
+          time: ts.time.getTime(),
           leavesQuantity: 0
         });
     };
@@ -336,7 +336,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 
     private onTrade = (tsMsg : Models.Timestamped<OkCoinTradeRecord>) => {
-        var t = tsMsg.time;
+        var t = tsMsg.time.getTime();
         var msg : OkCoinTradeRecord = tsMsg.data;
         var avgPx = parseFloat(msg.averagePrice);
         var lastQty = parseFloat(msg.sigTradeAmount);

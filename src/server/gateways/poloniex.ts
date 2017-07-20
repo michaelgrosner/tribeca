@@ -163,7 +163,7 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                   exchangeId: o.orderNumber,
                   leavesQuantity: 0,
-                  time: msg.time,
+                  time: new Date().getTime(),
                   orderStatus: Models.OrderStatus.Cancelled
                 });
               }
@@ -193,15 +193,15 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               exchangeId: (<any>msg.data).orderNumber,
               orderId: order.orderId,
               leavesQuantity: order.quantity,
-              time: msg.time,
+              time: new Date().getTime(),
               orderStatus: Models.OrderStatus.Working,
-              computationalLatency: new Date().valueOf() - order.time.valueOf()
+              computationalLatency: new Date().valueOf() - order.time
             });
           else
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: order.orderId,
               leavesQuantity: 0,
-              time: msg.time,
+              time: new Date().getTime(),
               orderStatus: Models.OrderStatus.Cancelled
             });
           resolve(1);
@@ -220,7 +220,7 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
               exchangeId: cancel.exchangeId,
               orderId: cancel.orderId,
               leavesQuantity: 0,
-              time: msg.time,
+              time: new Date().getTime(),
               orderStatus: Models.OrderStatus.Cancelled
             });
           }
@@ -239,7 +239,7 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
       exchangeId: trade.data.orderNumber,
       orderStatus: Models.OrderStatus.Complete,
-      time: trade.time,
+      time: new Date().getTime(),
       side: trade.data.type === "sell" ? Models.Side.Ask : Models.Side.Bid,
       lastQuantity: parseFloat(trade.data.amount),
       lastPrice: parseFloat(trade.data.rate),

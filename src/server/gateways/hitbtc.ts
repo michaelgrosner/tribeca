@@ -277,7 +277,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
                 JSON.parse((<any>body).body).trades.forEach(t => {
                     const price = parseFloat(t[1]);
                     const size = parseFloat(t[2]);
-                    const time = new Date(t[3]);
 
                     this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(price, size, null));
                 });
@@ -303,7 +302,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         // this.sendAuth<OrderCancel>("OrderCancel", , () => {
                 // this._evUp('OrderUpdateGateway', {
                     // orderId: cancel.orderId,
-                    // computationalLatency: new Date().valueOf() - cancel.time.valueOf()
+                    // computationalLatency: new Date().valueOf() - cancel.time
                 // });
             // });
     };
@@ -328,7 +327,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         // this.sendAuth<NewOrder>("NewOrder", hitBtcOrder, () => {
             // this._evUp('OrderUpdateGateway', {
                 // orderId: order.orderId,
-                // computationalLatency: new Date().valueOf() - order.time.valueOf()
+                // computationalLatency: new Date().valueOf() - order.time
             // });
         // });
     };
@@ -390,7 +389,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             exchangeId: msg.orderId,
             orderId: msg.clientOrderId,
             orderStatus: HitBtcOrderEntryGateway.getStatus(msg),
-            time: tsMsg.time
+            time: tsMsg.time.getTime()
         };
 
         if (msg.lastQuantity > 0 && msg.execReportType === "trade") {
@@ -419,7 +418,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderId: msg.clientOrderId,
             rejectMessage: msg.rejectReasonText,
             orderStatus: Models.OrderStatus.Cancelled,
-            time: tsMsg.time
+            time: tsMsg.time.getTime()
         };
         this._evUp('OrderUpdateGateway', status);
     };
