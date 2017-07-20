@@ -19,6 +19,11 @@ help:
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
 	#                                                  #
+	#   make server     - compile K server src         #
+	#   make client     - compile K client src         #
+	#   make public     - compile K client src         #
+	#   make bundle     - compile K client bundle      #
+	#                                                  #
 	#   make node       - download node src files      #
 	#   make uws        - download uws src files       #
 	#   make quickfix   - download quickfix src files  #
@@ -69,6 +74,18 @@ clean: build
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.dbx
+
+server: node_modules/.bin/tsc src/server src/share app
+	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
+
+client: node_modules/.bin/tsc src/client src/share app
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
+
+public: src/pub app/pub
+	cp -R src/pub/* app/pub/
+
+bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 
 changelog: .git
 	git --no-pager log --graph --oneline @..@{u}
