@@ -305,7 +305,7 @@ export class OrderBroker {
             }
 
             const params = this._qpRepo();
-            const trade = new Models.Trade(new Date().getTime().toString(), o.time, o.exchange, o.pair,
+            const trade = new Models.Trade(new Date().getTime().toString(), o.time.getTime(), o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this._evUp('OrderTradeBroker', trade);
             if (params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.AK47) {
@@ -338,7 +338,7 @@ export class OrderBroker {
 
             if (params.cleanPongsAuto>0) {
               const cleanTime = o.time.getTime() - (params.cleanPongsAuto * 864e5);
-              var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time.getTime() < cleanTime);
+              var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time < cleanTime);
               var goWhile = true;
               while (goWhile && cleanTrades.length) {
                 var cleanTrade = cleanTrades.shift();

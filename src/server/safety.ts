@@ -8,7 +8,7 @@ import PositionManagement = require("./position-management");
 interface ITrade {
     price: number;
     quantity: number;
-    time: Date;
+    time: number;
 }
 
 export class SafetyCalculator {
@@ -58,8 +58,8 @@ export class SafetyCalculator {
         this.computeQtyLimit();
     };
 
-    private isOlderThan(time: Date) {
-        return Math.abs(new Date().getTime() - time.getTime()) > this._qpRepo().tradeRateSeconds * 1000;
+    private isOlderThan(time: number) {
+        return Math.abs(new Date().getTime() - time) > this._qpRepo().tradeRateSeconds * 1000;
     }
 
     private computeQtyLimit = () => {
