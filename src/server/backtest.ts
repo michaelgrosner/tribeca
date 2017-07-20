@@ -276,7 +276,7 @@ export class BacktestParameters {
 
 export class BacktestExchange extends Interfaces.CombinedGateway {
     constructor(private gw: BacktestGateway) {
-        super(gw, gw, gw, new BacktestGatewayDetails());
+        super(gw, new BacktestGatewayDetails());
     }
 
     public run = () => this.gw.run();

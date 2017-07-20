@@ -443,12 +443,12 @@ class Poloniex extends Interfaces.CombinedGateway {
     _evUp
   ) {
     const socket = new PoloniexWebsocket(cfString, symbol);
+    new PoloniexMarketDataGateway(_evUp, socket, http, symbol);
+    new PoloniexPositionGateway(_evUp, http, symbol);
     super(
-      new PoloniexMarketDataGateway(_evUp, socket, http, symbol),
       cfString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(_evUp, http, symbol, socket)
         : new NullGateway.NullOrderGateway(_evUp),
-      new PoloniexPositionGateway(_evUp, http, symbol),
       new PoloniexBaseGateway(minTick, 0.01)
     );
     socket.connectWS();

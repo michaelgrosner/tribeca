@@ -532,10 +532,10 @@ class Bitfinex extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, details, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
+        new BitfinexMarketDataGateway(_evOn, _evUp, socket, symbol);
+        new BitfinexPositionGateway(_evUp, http);
         super(
-            new BitfinexMarketDataGateway(_evOn, _evUp, socket, symbol),
             orderGateway,
-            new BitfinexPositionGateway(_evUp, http),
             details);
     }
 }

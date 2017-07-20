@@ -582,12 +582,13 @@ class Coinbase extends Interfaces.CombinedGateway {
     ) {
         const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
 
+        new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient);
+        new CoinbasePositionGateway(_evUp, authClient);
+
         super(
-            new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient),
             cfString("CoinbaseOrderDestination") == "Coinbase"
               ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
               : new NullGateway.NullOrderGateway(_evUp),
-            new CoinbasePositionGateway(_evUp, authClient),
             new CoinbaseBaseGateway(quoteIncrement, minSize));
     }
 };

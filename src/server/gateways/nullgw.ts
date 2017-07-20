@@ -129,10 +129,10 @@ class NullGateway extends Interfaces.CombinedGateway {
       _evUp
     ) {
         const minTick = .01;
+        new NullMarketDataGateway(_evUp, minTick);
+        new NullPositionGateway(_evUp, cfPair);
         super(
-            new NullMarketDataGateway(_evUp, minTick),
             new NullOrderGateway(_evUp),
-            new NullPositionGateway(_evUp, cfPair),
             new NullGatewayDetails(minTick, 0.01));
     }
 }

@@ -640,6 +640,7 @@ class HitBtc extends Interfaces.CombinedGateway {
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, details, lot)
             : new NullGateway.NullOrderGateway(_evUp);
 
+        new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step, lot);
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, cfPair, cfString);
         if (cfString("HitBtcPullUrl").indexOf("demo") > -1) {
@@ -647,9 +648,7 @@ class HitBtc extends Interfaces.CombinedGateway {
         }
 
         super(
-            new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step, lot),
             orderGateway,
-            positionGateway,
             details);
     }
 }

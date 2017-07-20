@@ -536,10 +536,10 @@ class OkCoin extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(_evOn, _evUp, http, socket, signer, symbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
+        new OkCoinMarketDataGateway(_evOn, _evUp, socket, symbol);
+        new OkCoinPositionGateway(_evUp, http);
         super(
-            new OkCoinMarketDataGateway(_evOn, _evUp, socket, symbol),
             orderGateway,
-            new OkCoinPositionGateway(_evUp, http),
             new OkCoinBaseGateway(parseFloat(
               Models.fromCurrency(cfPair.base)
                 .replace('BTC', '0.01')
