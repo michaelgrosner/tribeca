@@ -262,7 +262,7 @@ export class OrderBroker {
           exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
           orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
           rejectMessage: osr.rejectMessage,
-          time: getOrFallback(osr.time, new Date()),
+          time: getOrFallback(osr.time, new Date().getTime()),
           lastQuantity: osr.lastQuantity,
           lastPrice: osr.lastPrice,
           isPong: getOrFallback(osr.isPong, orig.isPong),
@@ -305,7 +305,7 @@ export class OrderBroker {
             }
 
             const params = this._qpRepo();
-            const trade = new Models.Trade(new Date().getTime().toString(), o.time.getTime(), o.exchange, o.pair,
+            const trade = new Models.Trade(new Date().getTime().toString(), o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this._evUp('OrderTradeBroker', trade);
             if (params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.AK47) {
@@ -334,10 +334,10 @@ export class OrderBroker {
               this.tradesMemory.push(trade);
             }
 
-            this._uiSend(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong, o.time));
+            this._uiSend(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong));
 
             if (params.cleanPongsAuto>0) {
-              const cleanTime = o.time.getTime() - (params.cleanPongsAuto * 864e5);
+              const cleanTime = o.time - (params.cleanPongsAuto * 864e5);
               var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time < cleanTime);
               var goWhile = true;
               while (goWhile && cleanTrades.length) {

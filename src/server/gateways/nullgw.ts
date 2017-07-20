@@ -15,7 +15,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     private raiseTimeEvent = (o: Models.OrderStatusReport) => {
         this._evUp('OrderUpdateGateway', {
             orderId: o.orderId,
-            computationalLatency: new Date().valueOf() - o.time.valueOf()
+            computationalLatency: new Date().valueOf() - o.time
         })
     };
 
@@ -40,7 +40,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         var rpt: Models.OrderStatusUpdate = {
             orderId: orderId,
             orderStatus: status,
-            time: new Date()
+            time: new Date().getTime()
         };
         this._evUp('OrderUpdateGateway', rpt);
 
@@ -48,7 +48,7 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
             var rpt: Models.OrderStatusUpdate = {
                 orderId: orderId,
                 orderStatus: status,
-                time: new Date(),
+                time: new Date().getTime(),
                 lastQuantity: order.quantity,
                 lastPrice: order.price,
                 liquidity: Math.random() < .5 ? Models.Liquidity.Make : Models.Liquidity.Take

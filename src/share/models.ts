@@ -168,7 +168,7 @@ export interface OrderStatusReport {
     exchangeId : any;
     orderStatus : OrderStatus;
     rejectMessage : string;
-    time : Date;
+    time : number;
     lastQuantity : number;
     lastPrice : number;
     leavesQuantity : number;
@@ -204,13 +204,12 @@ export class EWMAChart {
                 public fairValue: number) {}
 }
 
-export class TradeChart implements ITimestamped {
+export class TradeChart {
     constructor(public price: number,
                 public side: Side,
                 public quantity: number,
                 public value: number,
-                public pong: boolean,
-                public time: Date) {}
+                public pong: boolean) {}
 }
 
 export class Trade {

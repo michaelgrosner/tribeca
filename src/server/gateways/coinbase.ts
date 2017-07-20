@@ -156,7 +156,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             data.forEach(cxl_id => {
                 this._evUp('OrderUpdateGateway', {
                     exchangeId: cxl_id,
-                    time: new Date(),
+                    time: new Date().getTime(),
                     orderStatus: Models.OrderStatus.Cancelled,
                     leavesQuantity: 0
                 });
@@ -186,7 +186,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                     orderId: cancel.orderId,
                     rejectMessage: msg,
                     orderStatus: Models.OrderStatus.Cancelled,
-                    time: new Date(),
+                    time: new Date().getTime(),
                     leavesQuantity: 0
                 });
 
@@ -239,7 +239,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                   orderId: order.orderId,
                   rejectMessage: msg,
                   orderStatus: Models.OrderStatus.Cancelled,
-                  time: new Date()
+                  time: new Date().getTime()
               });
             }
         };
@@ -278,7 +278,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this._evUp('OrderUpdateGateway', {
             orderId: order.orderId,
-            computationalLatency: (new Date()).getTime() - order.time.getTime()
+            computationalLatency: (new Date()).getTime() - order.time
         });
     };
 
@@ -321,7 +321,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._FIXClient.send(o, () => {
           this._evUp('OrderUpdateGateway', {
               orderId: order.orderId,
-              computationalLatency: (new Date()).getTime() - order.time.getTime()
+              computationalLatency: (new Date()).getTime() - order.time
           });
         });
     };
@@ -343,7 +343,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         status = {
             exchangeId: data.order_id,
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             leavesQuantity: parseFloat(data.remaining_size)
         };
       } else if (data.type == 'received') {
@@ -351,14 +351,14 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             exchangeId: data.order_id,
             orderId: data.client_oid,
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             leavesQuantity: parseFloat(data.size)
         };
       } else if (data.type == 'change') {
         status = {
             exchangeId: data.order_id,
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             quantity: parseFloat(data.new_size)
         };
 
@@ -366,7 +366,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         status = {
             exchangeId: data.maker_order_id,
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             lastQuantity: parseFloat(data.size),
             lastPrice: parseFloat(data.price),
             liquidity: Models.Liquidity.Make
@@ -380,7 +380,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderStatus: data.reason === "filled"
               ? Models.OrderStatus.Complete
               : Models.OrderStatus.Cancelled,
-            time: new Date(),
+            time: new Date().getTime(),
             leavesQuantity: 0
         };
       }
@@ -395,14 +395,14 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             exchangeId: tags[37],
             orderId: tags[11],
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             leavesQuantity: parseFloat(tags[38])
         };
       } else if (tags[150] == 'D') {
         status = {
             exchangeId: tags[37],
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             quantity: parseFloat(tags[38])
         };
 
@@ -410,7 +410,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         status = {
             exchangeId: tags[37],
             orderStatus: Models.OrderStatus.Working,
-            time: new Date(),
+            time: new Date().getTime(),
             lastQuantity: parseFloat(tags[32]),
             lastPrice: parseFloat(tags[44]),
             liquidity: Models.Liquidity.Make
@@ -422,7 +422,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             orderStatus: tags[150] == '3'
               ? Models.OrderStatus.Complete
               : Models.OrderStatus.Cancelled,
-            time: new Date(),
+            time: new Date().getTime(),
             leavesQuantity: tags[151] ? parseFloat(tags[151]) : 0
         };
       }
