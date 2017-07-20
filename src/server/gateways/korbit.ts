@@ -88,7 +88,7 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
               var px = parseFloat((<any>msg.data)[i].price);
               var amt = parseFloat((<any>msg.data)[i].amount);
               var side = Models.Side.Ask;
-              var mt = new Models.GatewayMarketTrade(px, amt, msg.time, false, side);
+              var mt = new Models.GatewayMarketTrade(px, amt, side);
               this._evUp('MarketTradeGateway', mt);
             }
         });

@@ -59,11 +59,9 @@ export class MarketSide {
     }
 }
 
-export class GatewayMarketTrade implements ITimestamped {
+export class GatewayMarketTrade {
     constructor(public price: number,
                 public size: number,
-                public time: Date,
-                public onStartup: boolean,
                 public make_side: Side) { }
 }
 
@@ -84,15 +82,12 @@ export class MarketStats {
                 public time: number) { }
 }
 
-export class MarketTrade implements ITimestamped {
+export class MarketTrade {
     constructor(public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
                 public size: number,
-                public time: Date,
-                public quote: TwoSidedQuote,
-                public bid: MarketSide,
-                public ask: MarketSide,
+                public time: number,
                 public make_side: Side) {}
 }
 
@@ -355,8 +350,6 @@ export interface QuotingParameters {
     stepOverSize?: number;
     profitHourInterval?: number;
     delayUI?: number;
-    time?: Date;
-    pair?: CurrencyPair;
     exchange?: Exchange;
 }
 

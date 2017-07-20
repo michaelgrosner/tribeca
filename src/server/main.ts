@@ -209,8 +209,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   new MarketTrades.MarketTradeBroker(
     bindings.uiSnap,
     bindings.uiSend,
-    marketBroker,
-    quotingEngine,
     broker,
     bindings.evOn,
     bindings.evUp

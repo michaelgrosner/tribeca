@@ -157,7 +157,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
             var sz = Math.abs(trade[2]);
             var time = trades.time;
             var side = trade[2] > 0 ? Models.Side.Bid : Models.Side.Ask;
-            var mt = new Models.GatewayMarketTrade(px, sz, time, false, side);
+            var mt = new Models.GatewayMarketTrade(px, sz, side);
             this._evUp('MarketTradeGateway', mt);
         });
     };
