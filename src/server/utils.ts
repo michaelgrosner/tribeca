@@ -29,19 +29,3 @@ export interface ITimeProvider {
     setImmediate(action: () => void);
     setInterval(action: () => void, time: moment.Duration);
 }
-
-export class RealTimeProvider implements ITimeProvider {
-    constructor() { }
-
-    utcNow = () => new Date();
-
-    setTimeout = (action: () => void, time: moment.Duration) => setTimeout(action, time.asMilliseconds());
-
-    setImmediate = (action: () => void) => setImmediate(action);
-
-    setInterval = (action: () => void, time: moment.Duration) => setInterval(action, time.asMilliseconds());
-}
-
-export interface IBacktestingTimeProvider extends ITimeProvider {
-    scrollTimeTo(time : moment.Moment);
-}

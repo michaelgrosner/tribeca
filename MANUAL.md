@@ -243,6 +243,6 @@ Alternatively, you can always open a [new issue](https://github.com/ctubio/Krypt
 
 # How can I test new trading strategies?
 
-K.js is packaged with a backtesting mode.
+K.js is packaged with a test unit mode.
 
-To create your own test runs, you can duplicate at your convenience the mocha test unit `test/backtest.ts` (see [Issue #43](https://github.com/ctubio/tribeca/issues/43)).
+To create your own test runs, you can duplicate at your convenience the mocha test units at `test/*.ts`.

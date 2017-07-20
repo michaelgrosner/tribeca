@@ -42,7 +42,7 @@ export class OrderBroker {
 
         for (let e of this.orderCache.allOrders.values()) {
             if (e.orderStatus == Models.OrderStatus.New || e.orderStatus == Models.OrderStatus.Working)
-              this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, this._timeProvider.utcNow()));
+              this.cancelOrder(new Models.OrderCancel(e.orderId, e.exchange, new Date()));
         }
     }
 
@@ -262,7 +262,7 @@ export class OrderBroker {
           exchangeId: getOrFallback(osr.exchangeId, orig.exchangeId),
           orderStatus: getOrFallback(osr.orderStatus, orig.orderStatus),
           rejectMessage: osr.rejectMessage,
-          time: getOrFallback(osr.time, this._timeProvider.utcNow()),
+          time: getOrFallback(osr.time, new Date()),
           lastQuantity: osr.lastQuantity,
           lastPrice: osr.lastPrice,
           isPong: getOrFallback(osr.isPong, orig.isPong),
@@ -305,7 +305,7 @@ export class OrderBroker {
             }
 
             const params = this._qpRepo();
-            const trade = new Models.Trade(this._timeProvider.utcNow().getTime().toString(), o.time, o.exchange, o.pair,
+            const trade = new Models.Trade(new Date().getTime().toString(), o.time, o.exchange, o.pair,
                 o.lastPrice, o.lastQuantity, o.side, value, o.liquidity, null, 0, 0, 0, 0, feeCharged, false);
             this._evUp('OrderTradeBroker', trade);
             if (params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.AK47) {
@@ -372,7 +372,6 @@ export class OrderBroker {
     public orderCache: OrderStateCache;
 
     constructor(
-      private _timeProvider: Utils.ITimeProvider,
       private _qpRepo,
       private _baseBroker : ExchangeBroker,
       private _oeGateway : Interfaces.IOrderEntryGateway,
@@ -387,7 +386,7 @@ export class OrderBroker {
         this.tradesMemory = initTrades;
         this.orderCache = new OrderStateCache();
 
-        _timeProvider.setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
+        setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
         _uiSnap(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
         _uiSnap(Models.Topics.OrderStatusReports, () => {
@@ -409,7 +408,7 @@ export class OrderBroker {
                 Models.TimeInForce[o.timeInForce],
                 false,
                 this._baseBroker.exchange(),
-                this._timeProvider.utcNow(),
+                new Date(),
                 false,
                 Models.OrderSource.OrderTicket
               ));
@@ -419,7 +418,7 @@ export class OrderBroker {
             }
         });
 
-        _uiHand(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, this._timeProvider.utcNow())));
+        _uiHand(Models.Topics.CancelOrder, o => this.cancelOrder(new Models.OrderCancel(o.orderId, o.exchange, new Date())));
         _uiHand(Models.Topics.CancelAllOrders, () => this.cancelOpenOrders());
         _uiHand(Models.Topics.CleanAllClosedOrders, () => this.cleanClosedOrders());
         _uiHand(Models.Topics.CleanAllOrders, () => this.cleanOrders());
@@ -454,7 +453,7 @@ export class PositionBroker {
         const baseValue = baseAmount + quoteAmount / fv.price + basePosition.heldAmount + quotePosition.heldAmount / fv.price;
         const quoteValue = baseAmount * fv.price + quoteAmount + basePosition.heldAmount * fv.price + quotePosition.heldAmount;
 
-        const timeNow = this._timeProvider.utcNow();
+        const timeNow = new Date();
         const now = timeNow.getTime();
         this._lastPositions.push({ baseValue: baseValue, quoteValue: quoteValue, time: now });
         this._lastPositions = this._lastPositions.filter(x => x.time+(this._qpRepo().profitHourInterval * 36e+5)>now);
@@ -505,7 +504,6 @@ export class PositionBroker {
     };
 
     constructor(
-      private _timeProvider: Utils.ITimeProvider,
       private _qpRepo,
       private _broker: ExchangeBroker,
       private _orderBroker: OrderBroker,

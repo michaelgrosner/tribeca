@@ -11,7 +11,6 @@ export class QuoteSender {
   private _timeoutStart: number = 0;
 
   constructor(
-    private _timeProvider: Utils.ITimeProvider,
     private _quotingEngine: QuotingEngine.QuotingEngine,
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
@@ -137,7 +136,7 @@ export class QuoteSender {
       var nextStart = this._lastStart + (60000/params.delayAPI);
       var diffStart = nextStart - new Date().getTime();
       if (diffStart>0) {
-        this._timeoutStart = this._timeProvider.setTimeout(() => this.start(side, q), moment.duration(diffStart/1000, 'seconds'));
+        this._timeoutStart = setTimeout(() => this.start(side, q), moment.duration(diffStart/1000, 'seconds'));
         return;
       }
       this._lastStart = new Date().getTime();
@@ -182,7 +181,7 @@ export class QuoteSender {
       Models.TimeInForce.GTC,
       q.isPong,
       this._exchange,
-      this._timeProvider.utcNow(),
+      new Date(),
       true,
       Models.OrderSource.Quote
     ));
@@ -194,19 +193,19 @@ export class QuoteSender {
         ? price < x.price
         : price > x.price
     ).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, this._timeProvider.utcNow()))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, new Date()))
     );
   };
 
   private stopWorstQuote = (side: Models.Side) => {
     const orderSide = this.orderCacheSide(side, true);
     if (orderSide.length)
-      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId, this._exchange, this._timeProvider.utcNow()));
+      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId, this._exchange, new Date()));
   };
 
   private stopAllQuotes = (side: Models.Side) => {
     this.orderCacheSide(side, false).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, this._timeProvider.utcNow()))
+      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId, this._exchange, new Date()))
     );
   };
 }
