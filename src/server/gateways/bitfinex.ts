@@ -483,9 +483,6 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class BitfinexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
 
     name(): string {
         return "Bitfinex";

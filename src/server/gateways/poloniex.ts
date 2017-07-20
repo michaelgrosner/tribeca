@@ -401,9 +401,6 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class PoloniexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-  public get hasSelfTradePrevention() {
-    return false;
-  }
 
   name() : string {
     return "Poloniex";

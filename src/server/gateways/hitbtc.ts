@@ -592,9 +592,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
 }
 
 class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
 
     exchange() : Models.Exchange {
         return Models.Exchange.HitBtc;

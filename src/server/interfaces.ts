@@ -26,7 +26,6 @@ export interface IExchangeDetailsGateway {
     exchange(): Models.Exchange;
     minTickIncrement: number;
     minSize: number;
-    hasSelfTradePrevention: boolean;
 }
 
 export class CombinedGateway {

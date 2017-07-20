@@ -98,9 +98,6 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 }
 
 class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
-    public get hasSelfTradePrevention() {
-        return false;
-    }
 
     name(): string {
         return "Null";
