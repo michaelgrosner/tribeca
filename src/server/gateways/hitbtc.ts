@@ -441,7 +441,6 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         const v = {};
         v[msgType] = msg;
         const readyMsg = this.authMsg(v);
-        console.log('MSG',msg);
         this._orderEntryWs.send(JSON.stringify(readyMsg), cb);
     };
 
