@@ -89,8 +89,6 @@ class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
     this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
       parseFloat(trade.data.rate),
       parseFloat(trade.data.amount),
-      trade.time,
-      false,
       trade.data.type === "sell" ? Models.Side.Ask : Models.Side.Bid
     ));
   };

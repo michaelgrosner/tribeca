@@ -166,8 +166,6 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
           this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
             parseFloat(trade[1]),
             parseFloat(trade[2]),
-            trades.time,
-            trades.data.length > 0,
             trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid
           ));
         });

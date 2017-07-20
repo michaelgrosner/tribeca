@@ -57,15 +57,7 @@ export class MarketTradesComponent implements OnInit {
       { width: 40, field: 'make_side', headerName: 'ms' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
-      }},
-      { width: 50, field: 'qBz', headerName: 'qBz', cellRendererFramework: BaseCurrencyCellComponent },
-      { width: 75, field: 'qB', headerName: 'qB', cellRendererFramework: QuoteCurrencyCellComponent },
-      { width: 75, field: 'qA', headerName: 'qA', cellRendererFramework: QuoteCurrencyCellComponent },
-      { width: 50, field: 'qAz', headerName: 'qAz', cellRendererFramework: BaseCurrencyCellComponent },
-      { width: 50, field: 'mBz', headerName: 'mBz', cellRendererFramework: BaseCurrencyCellComponent },
-      { width: 60, field: 'mB', headerName: 'mB', cellRendererFramework: QuoteCurrencyCellComponent },
-      { width: 60, field: 'mA', headerName: 'mA', cellRendererFramework: QuoteCurrencyCellComponent },
-      { width: 50, field: 'mAz', headerName: 'mAz', cellRendererFramework: BaseCurrencyCellComponent }
+      }}
     ];
   }
 
@@ -77,14 +69,6 @@ export class MarketTradesComponent implements OnInit {
         size: trade.size,
         time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
         recent: true,
-        qA: (trade.quote != null && trade.quote.ask !== null ? trade.quote.ask.price : null),
-        qB: (trade.quote != null && trade.quote.bid !== null ? trade.quote.bid.price : null),
-        qAz: (trade.quote != null && trade.quote.ask !== null ? trade.quote.ask.size : null),
-        qBz: (trade.quote != null && trade.quote.bid !== null ? trade.quote.bid.size : null),
-        mA: (trade.ask != null ? trade.ask.price : null),
-        mB: (trade.bid != null ? trade.bid.price : null),
-        mAz: (trade.ask != null ? trade.ask.size : null),
-        mBz: (trade.bid != null ? trade.bid.size : null),
         make_side: Models.Side[trade.make_side],
         quoteSymbol: Models.Currency[trade.pair.quote],
         productFixed: this.product.fixed

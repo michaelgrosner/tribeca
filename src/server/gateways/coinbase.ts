@@ -72,8 +72,6 @@ class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
             this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
               parseFloat(data.price),
               parseFloat(data.size),
-              new Date(),
-              false,
               data.side === "buy" ? Models.Side.Bid : Models.Side.Ask
             ));
           }

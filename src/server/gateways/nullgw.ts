@@ -81,7 +81,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     private genMarketTrade = () => {
         const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
         const sign = Models.Side.Ask === side ? 1 : -1;
-        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), new Date(), false, side);
+        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), side);
     }
 
     private genSingleLevel = (sign: number) => new Models.MarketSide(this.getPrice(sign), Math.random());

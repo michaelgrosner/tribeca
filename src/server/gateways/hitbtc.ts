@@ -247,7 +247,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             if (distance_from_bid > distance_from_ask) side = Models.Side.Ask;
         }
 
-        this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
+        this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(t.price, t.amount, side));
     };
 
     constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _minTick, private _lotMultiplier) {
@@ -279,7 +279,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
                     const size = parseFloat(t[2]);
                     const time = new Date(t[3]);
 
-                    this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(price, size, time, true, null));
+                    this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(price, size, null));
                 });
             })
     }
