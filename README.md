@@ -65,6 +65,8 @@ Troubleshooting:
 
  * Run `rm -rf node_modules && npm install` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
 
+ * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
+
  Optional:
 
  * Install the system daemon script `dist/K-init.sh` (to make use of `service K start` from anywhere instead of `cd path/to/K && npm start`) see [dist](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist) folder.
