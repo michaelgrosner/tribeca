@@ -383,14 +383,9 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 
 class KorbitSymbolProvider {
     public symbol: string;
-    public symbolReversed: string;
-    public symbolQuote: string;
 
     constructor(cfPair) {
-        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s).toLowerCase();
-        this.symbol = GetCurrencySymbol(cfPair.base) + "_" + GetCurrencySymbol(cfPair.quote);
-        this.symbolReversed = GetCurrencySymbol(cfPair.quote) + "_" + GetCurrencySymbol(cfPair.base);
-        this.symbolQuote = GetCurrencySymbol(cfPair.quote);
+        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + "_" + Models.fromCurrency(cfPair.quote).toLowerCase();
     }
 }
 
