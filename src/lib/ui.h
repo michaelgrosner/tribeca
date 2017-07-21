@@ -111,9 +111,9 @@ namespace K {
         int port = stoi(CF::cfString("WebClientListenPort"));
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
-          cout << FN::uiT() << "UI ready over HTTPS on external port " << to_string(port) << endl;
+          cout << FN::uiT() << "UI ready over HTTPS on external port " << to_string(port) << "." << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
-          cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << endl;
+          cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << "." << endl;
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
         uiD_.data = isolate;

@@ -70,14 +70,6 @@ const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign
 const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 
 (async (): Promise<void> => {
-  const broker = new Broker.ExchangeBroker(
-    bindings.uiSnap,
-    bindings.uiHand,
-    bindings.uiSend,
-    bindings.evOn,
-    bindings.evUp
-  );
-
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (bindings.cfmExchange()) {
       case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
@@ -231,7 +223,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
   };
 
-  broker.savedQuotingMode = bindings.cfString("BotIdentifier").indexOf('auto')>-1;
+  bindings.setSavedQuotingMode(bindings.cfString("BotIdentifier").indexOf('auto')>-1);
 
   let highTime = process.hrtime();
   setInterval(() => {
