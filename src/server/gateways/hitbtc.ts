@@ -250,7 +250,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(t.price, t.amount, side));
     };
 
-    constructor(private _evUp, cfString, private _gwSymbol, private _minTick, private _lotMultiplier) {
+    constructor(private _evUp, cfString, private _gwSymbol, private _lotMultiplier) {
         this._marketDataWs = new WebSocket(cfString("HitBtcMarketDataUrl"));
         this._marketDataWs.on('open', this.onConnectionStatusChange);
         this._marketDataWs.on('message', this.onMessage);
@@ -609,7 +609,6 @@ class HitBtc extends Interfaces.CombinedGateway {
     constructor(
       cfString,
       gwSymbol,
-      step: number,
       lot: number,
       _evOn,
       _evUp
@@ -618,7 +617,7 @@ class HitBtc extends Interfaces.CombinedGateway {
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, gwSymbol, lot)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new HitBtcMarketDataGateway(_evUp, cfString, gwSymbol, step, lot);
+        new HitBtcMarketDataGateway(_evUp, cfString, gwSymbol, lot);
         // Payment actions are not permitted in demo mode -- helpful.
         let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, gwSymbol, cfString);
         if (cfString("HitBtcPullUrl").indexOf("demo") > -1) {
@@ -649,7 +648,7 @@ export async function createHitBtc(gwSymbol, gwSetMinTick, gwSetMinSize, cfStrin
         if (s.symbol === gwSymbol) {
             gwSetMinTick(parseFloat(s.step));
             gwSetMinSize(0.01);
-            return new HitBtc(cfString, gwSymbol, parseFloat(s.step), parseFloat(s.lot), _evOn, _evUp);
+            return new HitBtc(cfString, gwSymbol, parseFloat(s.lot), _evOn, _evUp);
         }
     }
 
