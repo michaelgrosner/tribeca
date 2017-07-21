@@ -1,12 +1,12 @@
 V_UWS := 0.14.3
 V_QF  := v.1.14.4
-G_SHARED_ARGS := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node   \
+G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node           \
    -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
    build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
    build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
    build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
    build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-src/lib/K.cc
+-lsqlite3 -lcurl src/lib/K.cc
 
 all: K
 
@@ -66,12 +66,12 @@ quickfix: build
 
 Linux: build app/server/lib
 ifdef ABIv
-	g++ $(G_SHARED_ARGS) -static-libstdc++ -static-libgcc -s -o app/server/lib/K.linux.$(ABIv).node -lsqlite3
+	g++ -o app/server/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
 endif
 
 Darwin: build app/server/lib
 ifdef ABIv
-	g++ $(G_SHARED_ARGS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -o app/server/lib/K.darwin.$(ABIv).node -lsqlite3
+	g++ -o app/server/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup  $(G_ARG)
 endif
 
 clean: build

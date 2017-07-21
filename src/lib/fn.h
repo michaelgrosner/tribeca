@@ -37,6 +37,24 @@ namespace K {
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
       };
+      static string wGet(string u) {
+        string k;
+        CURL* curl;
+        curl_global_init(CURL_GLOBAL_ALL);
+        curl = curl_easy_init();
+        curl_easy_setopt(curl, CURLOPT_URL, u.data());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &cbGet);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k);
+        curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+cout << "DATA" << k << endl;
+        return k;
+      }
+      static size_t cbGet(void *buf, size_t size, size_t nmemb, void *up) {
+        ((string*)up)->append((char*)buf, size * nmemb);
+        return size * nmemb;
+      }
   };
 }
 
