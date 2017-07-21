@@ -19,14 +19,6 @@ export interface IOrderEntryGateway {
 export interface IPositionGateway {
 }
 
-export interface IExchangeDetailsGateway {
-    makeFee(): number;
-    takeFee(): number;
-    exchange(): Models.Exchange;
-    minTickIncrement: number;
-    minSize: number;
-}
-
 export class CombinedGateway {
     constructor(public oe: IOrderEntryGateway) { }
 }
