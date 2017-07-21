@@ -101,7 +101,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     constructor(
       cfString,
       cfPair,
-      _evOn,
       _evUp
     ) {
         new NullMarketDataGateway(_evUp);
@@ -115,5 +114,5 @@ class NullGateway extends Interfaces.CombinedGateway {
 export async function createNullGateway(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
   setMinTick(0.01);
   setMinSize(0.01);
-  return new NullGateway(cfString, cfPair, _evOn, _evUp);
+  return new NullGateway(cfString, cfPair, _evUp);
 }

@@ -84,7 +84,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   })();
 
   console.info(new Date().toISOString().slice(11, -1), 'GW', 'Exchange details', {
-      exchange: Models.Exchange[bindings.exchange()],
+      exchange: bindings.cfString("EXCHANGE"),
       pair: bindings.cfString("TradedPair"),
       minTick: bindings.minTick(),
       minSize: bindings.minSize(),

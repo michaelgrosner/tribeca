@@ -189,8 +189,9 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
       socket: OkCoinWebsocket,
       symbolProvider: OkCoinSymbolProvider
     ) {
-        var depthChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_depth_20";
-        var tradesChannel = "ok_sub_spot" + symbolProvider.symbolReversed + "_trades";
+        var _symbolReversed = symbolProvider.symbol.split('_').reverse().join('_');
+        var depthChannel = "ok_sub_spot" + _symbolReversed + "_depth_20";
+        var tradesChannel = "ok_sub_spot" + _symbolReversed + "_trades";
         socket.setHandler(depthChannel, this.onDepth);
         socket.setHandler(tradesChannel, this.onTrade);
 
@@ -265,7 +266,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         this._ordersWaitingForAckQueue.push([order.orderId, order.quantity]);
 
-        this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_trade", this._signer.signMessage(o), () => {
+        this._socket.send<OrderAck>("ok_spot" + this._symbolQuote + "_trade", this._signer.signMessage(o), () => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: order.orderId,
                 computationalLatency: new Date().valueOf() - order.time
@@ -298,7 +299,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
         var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
-        this._socket.send<OrderAck>("ok_spot" + this._symbolProvider.symbolQuote + "_cancel_order", this._signer.signMessage(c), () => {
+        this._socket.send<OrderAck>("ok_spot" + this._symbolQuote + "_cancel_order", this._signer.signMessage(c), () => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: cancel.orderId,
                 leavesQuantity: 0,
@@ -369,6 +370,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         }
     }
 
+    private _symbolQuote: string;
     constructor(
       private _evOn,
       private _evUp,
@@ -377,16 +379,18 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       private _signer: OkCoinMessageSigner,
       private _symbolProvider: OkCoinSymbolProvider
     ) {
-        _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", this.onTrade);
-        _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_trade", this.onOrderAck);
-        _socket.setHandler("ok_spot" + _symbolProvider.symbolQuote + "_cancel_order", this.onCancel);
-        _socket.setHandler("ok_sub_spot" + _symbolProvider.symbolQuote + "_userinfo", this.onPosition);
+        this._symbolQuote = _symbolProvider.symbol.split('_')[1];
+
+        _socket.setHandler("ok_sub_spot" + this._symbolQuote + "_trades", this.onTrade);
+        _socket.setHandler("ok_spot" + this._symbolQuote + "_trade", this.onOrderAck);
+        _socket.setHandler("ok_spot" + this._symbolQuote + "_cancel_order", this.onCancel);
+        _socket.setHandler("ok_sub_spot" + this._symbolQuote + "_userinfo", this.onPosition);
 
         this._evOn('GatewaySocketConnect', cs => {
             this._evUp('GatewayOrderConnect', cs);
 
             if (cs === Models.ConnectivityStatus.Connected) {
-                _socket.send("ok_sub_spot" + _symbolProvider.symbolQuote + "_trades", _signer.signMessage({}));
+                _socket.send("ok_sub_spot" + this._symbolQuote + "_trades", _signer.signMessage({}));
             }
         });
     }
@@ -481,16 +485,9 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
 class OkCoinSymbolProvider {
     public symbol: string;
-    public symbolReversed: string;
-    public symbolQuote: string;
-    public symbolWithoutUnderscore: string;
 
     constructor(cfPair) {
-        const GetCurrencySymbol = (s: Models.Currency) : string => Models.fromCurrency(s).toLowerCase();
-        this.symbol = GetCurrencySymbol(cfPair.base) + "_" + GetCurrencySymbol(cfPair.quote);
-        this.symbolReversed = GetCurrencySymbol(cfPair.quote) + "_" + GetCurrencySymbol(cfPair.base);
-        this.symbolQuote = GetCurrencySymbol(cfPair.quote);
-        this.symbolWithoutUnderscore = GetCurrencySymbol(cfPair.base) + GetCurrencySymbol(cfPair.quote);
+        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + "_" + Models.fromCurrency(cfPair.quote).toLowerCase();
     }
 }
 
