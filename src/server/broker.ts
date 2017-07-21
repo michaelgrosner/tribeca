@@ -521,15 +521,15 @@ export class PositionBroker {
 
 export class ExchangeBroker {
     makeFee() : number {
-        return this._baseGateway.makeFee();
+        return this._makeFee;
     }
 
     takeFee() : number {
-        return this._baseGateway.takeFee();
+        return this._takeFee;
     }
 
     exchange() : Models.Exchange {
-        return this._baseGateway.exchange();
+        return this._exchange;
     }
 
     public get pair() {
@@ -537,11 +537,11 @@ export class ExchangeBroker {
     }
 
     public get minTickIncrement() {
-        return this._baseGateway.minTickIncrement;
+        return this._minTick;
     }
 
     public get minSize() {
-        return this._baseGateway.minSize;
+        return this._minSize;
     }
 
     private mdConnected = Models.ConnectivityStatus.Disconnected;
@@ -575,7 +575,11 @@ export class ExchangeBroker {
 
     constructor(
       private _pair,
-      private _baseGateway: Interfaces.IExchangeDetailsGateway,
+      private _makeFee,
+      private _takeFee,
+      private _minTick,
+      private _minSize,
+      private _exchange,
       private _uiSnap,
       private _uiHand,
       private _uiSend,

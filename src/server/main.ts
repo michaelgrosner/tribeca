@@ -72,13 +72,13 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (bindings.cfmExchange()) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
-      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.setMinTick, bindings.setMinSize, bindings.cfString, bindings.cfmCurrencyPair(), bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }
   })();
@@ -89,12 +89,16 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     bindings.cfString("BotIdentifier").replace('auto',''),
     bindings.cfString("MatryoshkaUrl"),
     packageConfig.homepage,
-    gateway.base.minTickIncrement
+    bindings.minTick()
   )]);
 
   const broker = new Broker.ExchangeBroker(
     bindings.cfmCurrencyPair(),
-    gateway.base,
+    bindings.makeFee(),
+    bindings.takeFee(),
+    bindings.minTick(),
+    bindings.minSize(),
+    bindings.exchange(),
     bindings.uiSnap,
     bindings.uiHand,
     bindings.uiSend,
@@ -125,13 +129,13 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
   const fvEngine = new FairValue.FairValueEngine(
     new MarketFiltration.MarketFiltration(
-      broker.minTickIncrement,
+      bindings.minTick(),
       orderBroker,
       marketBroker,
       bindings.evOn,
       bindings.evUp
     ),
-    broker.minTickIncrement,
+    bindings.minTick(),
     bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,
@@ -155,8 +159,8 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     fvEngine,
     bindings.qpRepo,
     positionBroker,
-    broker.minTickIncrement,
-    broker.minSize,
+    bindings.minTick(),
+    bindings.minSize(),
     new Statistics.EWMAProtectionCalculator(
       fvEngine,
       bindings.qpRepo,
@@ -170,7 +174,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
-      broker.minTickIncrement,
+      bindings.minTick(),
       bindings.dbInsert,
       fvEngine,
       new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),

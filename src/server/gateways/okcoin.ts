@@ -479,22 +479,6 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class OkCoinBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    makeFee() : number {
-        return 0.001;
-    }
-
-    takeFee() : number {
-        return 0.002;
-    }
-
-    exchange() : Models.Exchange {
-        return Models.Exchange.OkCoin;
-    }
-
-    constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class OkCoinSymbolProvider {
     public symbol: string;
     public symbolReversed: string;
@@ -529,16 +513,17 @@ class OkCoin extends Interfaces.CombinedGateway {
         new OkCoinMarketDataGateway(_evOn, _evUp, socket, symbol);
         new OkCoinPositionGateway(_evUp, http);
         super(
-            orderGateway,
-            new OkCoinBaseGateway(parseFloat(
-              Models.fromCurrency(cfPair.base)
-                .replace('BTC', '0.01')
-                .replace('LTC', '0.001')
-            ) || 0.01, 0.01)
+          orderGateway
         );
-        }
+    }
 }
 
-export async function createOkCoin(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new OkCoin(cfString, cfPair, _evOn, _evUp);
+export async function createOkCoin(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  setMinTick(parseFloat(
+    Models.fromCurrency(cfPair.base)
+      .replace('BTC', '0.01')
+      .replace('LTC', '0.001')
+  ) || 0.01);
+  setMinSize(0.01);
+  return new OkCoin(cfString, cfPair, _evOn, _evUp);
 }

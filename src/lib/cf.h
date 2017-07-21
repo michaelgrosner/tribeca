@@ -23,7 +23,7 @@ namespace K {
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
-      }
+      };
       static string cfString(string k, bool r = true) {
         Isolate* isolate = Isolate::GetCurrent();
         if (getenv(k.data()) != NULL)
@@ -44,7 +44,7 @@ namespace K {
         for (unsigned i=0; i<mCurrency.size(); ++i)
           if (mCurrency[i] == k) return i;
         cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
-      }
+      };
       static int cfQuote() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(k_.find("/")+1);
@@ -52,7 +52,7 @@ namespace K {
         for (unsigned i=0; i<mCurrency.size(); ++i)
           if (mCurrency[i] == k) return i;
         cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
-      }
+      };
       static mExchange cfExchange() {
         string k = cfString("EXCHANGE");
         transform(k.begin(), k.end(), k.begin(), ::tolower);
@@ -65,7 +65,7 @@ namespace K {
         else if (k ==  "null") return mExchange::Null;
         cout << FN::uiT() << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE." << endl;
         exit(1);
-      }
+      };
     private:
       static void _cfString(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

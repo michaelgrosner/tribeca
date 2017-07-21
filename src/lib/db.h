@@ -13,7 +13,7 @@ namespace K {
         cout << FN::uiT() << "DB " << dbFpath << " loaded OK." << endl;
         NODE_SET_METHOD(exports, "dbLoad", DB::_load);
         NODE_SET_METHOD(exports, "dbInsert", DB::_insert);
-      }
+      };
       static Local<Value> load(Isolate* isolate, string k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
@@ -34,7 +34,7 @@ namespace K {
         JSON Json;
         MaybeLocal<Value> array = Json.Parse(isolate->GetCurrentContext(), FN::v8S(json.append("]").data()));
         return array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked();
-      }
+      };
       static void insert(uiTXT k, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
         Isolate* isolate = Isolate::GetCurrent();
         char* zErrMsg = 0;
@@ -56,27 +56,27 @@ namespace K {
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
-      }
+      };
       static size_t dbSize() {
         struct stat st;
         return stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
-      }
+      };
     private:
       static void _load(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(load(isolate, string(*String::Utf8Value(args[0]->ToString()))));
-      }
+      };
       static void _insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
-      }
+      };
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* json = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) json->append(argv[i]).append(",");
         return 0;
-      }
+      };
   };
 }
 

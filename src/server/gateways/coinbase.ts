@@ -536,22 +536,6 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class CoinbaseBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    makeFee(): number {
-        return 0;
-    }
-
-    takeFee(): number {
-        return 0;
-    }
-
-    exchange(): Models.Exchange {
-        return Models.Exchange.Coinbase;
-    }
-
-    constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class CoinbaseSymbolProvider {
     public symbol: string;
 
@@ -566,7 +550,6 @@ class Coinbase extends Interfaces.CombinedGateway {
       cfString,
       symbolProvider: CoinbaseSymbolProvider,
       quoteIncrement: number,
-      minSize: number,
       _evOn,
       _evUp
     ) {
@@ -576,14 +559,14 @@ class Coinbase extends Interfaces.CombinedGateway {
         new CoinbasePositionGateway(_evUp, authClient);
 
         super(
-            cfString("CoinbaseOrderDestination") == "Coinbase"
-              ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
-              : new NullGateway.NullOrderGateway(_evUp),
-            new CoinbaseBaseGateway(quoteIncrement, minSize));
+          cfString("CoinbaseOrderDestination") == "Coinbase"
+            ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
+            : new NullGateway.NullOrderGateway(_evUp)
+        );
     }
 };
 
-export async function createCoinbase(cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
       cfString("CoinbaseApiKey"),
       cfString("CoinbaseSecret"),
@@ -604,8 +587,11 @@ export async function createCoinbase(cfString, cfPair, _evOn, _evUp): Promise<In
     const symbolProvider = new CoinbaseSymbolProvider(cfPair);
 
     for (let p of products) {
-        if (p.id === symbolProvider.symbol)
-            return new Coinbase(authClient, cfString, symbolProvider, parseFloat(p.quote_increment), parseFloat(p.base_min_size), _evOn, _evUp);
+        if (p.id === symbolProvider.symbol) {
+            setMinTick(parseFloat(p.quote_increment));
+            setMinSize(parseFloat(p.base_min_size));
+            return new Coinbase(authClient, cfString, symbolProvider, parseFloat(p.quote_increment), _evOn, _evUp);
+        }
     }
 
     throw new Error("Unable to match pair to a coinbase symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);
