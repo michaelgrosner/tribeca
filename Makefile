@@ -78,7 +78,7 @@ clean: build
 	rm -rf build
 
 cleandb: /data/db/K*
-	rm -rf /data/db/K*.dbx
+	rm -rf /data/db/K*.db
 
 config: etc/K.json.dist
 	test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json
