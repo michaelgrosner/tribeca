@@ -41,7 +41,38 @@ namespace K {
     public:
       mExchange exchange() { return mExchange::Bitfinex; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()])); };
-      void fetch() { minTick = 0.01; minSize = 0.01; };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("BitfinexHttpUrl").append("/symbols_details")).data()));
+        double _minTick;
+        if (!v.IsEmpty()) {
+          Local<Object> k_;
+          Local<Object> k = v.ToLocalChecked()->ToObject();
+          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
+          if (!maybe_props.IsEmpty()) {
+            Local<Array> props = maybe_props.ToLocalChecked();
+            for(uint32_t i=0; i < props->Length(); i++) {
+              k_ = k->Get(i)->ToObject();
+              if (FN::S8v(k_->Get(FN::v8S("pair"))->ToString()) == symbol()) {
+                MaybeLocal<Value> v_ = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol())).data()));
+                if (!v_.IsEmpty()) {
+                  Local<Object> _k = v_.ToLocalChecked()->ToObject();
+                  istringstream os(string("1e-").append(to_string(k_->Get(FN::v8S("price_precision"))->NumberValue()-FN::toP(_k->Get(FN::v8S("last_price"))->NumberValue(), k_->Get(FN::v8S("price_precision"))->NumberValue()).find("."))));
+                  os >> _minTick;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if (!_minTick) {
+          cout << FN::uiT() << "Unable to match pair to a bitfinex symbol \"" << symbol() << "\"." << endl;
+          exit(1);
+        }
+        minTick = _minTick;
+        minSize = 0.01;
+      };
   };
   class GwKorbit: public Gw {
     public:

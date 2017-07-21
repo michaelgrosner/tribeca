@@ -49,11 +49,21 @@ namespace K {
         curl_easy_cleanup(curl);
         curl_global_cleanup();
         return k;
-      }
+      };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
-      }
+      };
+      static string toP(double num, int n) {
+        if(num == 0) return "0";
+        double d = ceil(log10(num < 0 ? -num : num));
+        int power = n - (int)d;
+        double magnitude = pow(10., power);
+        long shifted = ::round(num*magnitude);
+        ostringstream oss;
+        oss << shifted / magnitude;
+        return oss.str();
+      };
   };
 }
 
