@@ -544,9 +544,9 @@ export class ExchangeBroker {
             : Models.ConnectivityStatus.Disconnected;
 
         this._connectStatus = newStatus;
-        this._evUp('ExchangeConnect', {state:this._latestState, status:this._connectStatus});
-
         this.updateConnectivity();
+
+        this._evUp('ExchangeConnect', {state:this._latestState, status:this._connectStatus});
         this._uiSend(Models.Topics.ExchangeConnectivity, this._connectStatus);
     };
 
@@ -555,11 +555,8 @@ export class ExchangeBroker {
       private _uiHand,
       private _uiSend,
       private _evOn,
-      private _evUp,
-      startQuoting: boolean
+      private _evUp
     ) {
-      this._savedQuotingMode = startQuoting;
-
       this._evOn('GatewayMarketConnect', s => {
         this.onConnect(Models.GatewayType.MarketData, s);
       });
@@ -570,17 +567,16 @@ export class ExchangeBroker {
 
       _uiSnap(Models.Topics.ExchangeConnectivity, () => [this._connectStatus]);
       _uiSnap(Models.Topics.ActiveState, () => [this._latestState]);
-      _uiHand(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
-
+      _uiHand(Models.Topics.ActiveState, this.handleQuotingModeChange);
     }
 
-  private _savedQuotingMode: boolean = false;
+  public savedQuotingMode: boolean = false;
 
   private _latestState: boolean = false;
 
-  private handleNewQuotingModeChangeRequest = (v: boolean) => {
-    if (v !== this._savedQuotingMode) {
-      this._savedQuotingMode = v;
+  private handleQuotingModeChange = (v: boolean) => {
+    if (v !== this.savedQuotingMode) {
+      this.savedQuotingMode = v;
       this.updateConnectivity();
       this._evUp('ExchangeConnect', {state:this._latestState, status:this._connectStatus});
     }
@@ -590,7 +586,7 @@ export class ExchangeBroker {
 
   private updateConnectivity = () => {
     var newMode = (this._connectStatus !== Models.ConnectivityStatus.Connected)
-      ? false : this._savedQuotingMode;
+      ? false : this.savedQuotingMode;
 
     if (newMode !== this._latestState) {
       this._latestState = newMode;
