@@ -379,7 +379,7 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
   private trigger = async () => {
     await new Promise<number>((resolve, reject) => {
       this._http.post("returnCompleteBalances", {}).then(msg => {
-        const symbols: string[] = this.gwSymbol.split('_');
+        const symbols: string[] = this._gwSymbol.split('_');
         for (var i = symbols.length;i--;) {
           if (!(<any>msg.data) || !(<any>msg.data)[symbols[i]])
             console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Missing symbol', symbols[i]);
@@ -393,7 +393,7 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
   constructor(
     private _evUp,
     private _http: PoloniexHttp,
-    private gwSymbol
+    private _gwSymbol
   ) {
     setInterval(this.trigger, 15000);
     setTimeout(this.trigger, 10);
@@ -402,12 +402,12 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
 
 class Poloniex extends Interfaces.CombinedGateway {
   constructor(
-    cfString,
     gwSymbol,
-    http: PoloniexHttp,
+    cfString,
     _evUp
   ) {
     const socket = new PoloniexWebsocket(cfString, gwSymbol);
+    const http = new PoloniexHttp(cfString, new PoloniexMessageSigner(cfString));
     new PoloniexMarketDataGateway(_evUp, socket, http, gwSymbol);
     new PoloniexPositionGateway(_evUp, http, gwSymbol);
     super(
@@ -419,21 +419,6 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export async function createPoloniex(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
-  const signer = new PoloniexMessageSigner(cfString);
-  const http = new PoloniexHttp(cfString, signer);
-
-  const minTick = await new Promise<number>((resolve, reject) => {
-    http.get('returnTicker').then(msg => {
-      if (!(<any>msg.data)[gwSymbol]) return reject('Unable to get Poloniex Ticker for symbol '+gwSymbol);
-      console.warn(new Date().toISOString().slice(11, -1), 'poloniex', 'client IP allowed');
-      const precisePrice = parseFloat((<any>msg.data)[gwSymbol].last).toPrecision(6).toString();
-      resolve(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
-    });
-  });
-
-  gwSetMinTick(minTick);
-  gwSetMinSize(0.01);
-
-  return new Poloniex(cfString, gwSymbol, http, _evUp,);
+export async function createPoloniex(gwSymbol, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+  return new Poloniex(gwSymbol, cfString, _evUp);
 }

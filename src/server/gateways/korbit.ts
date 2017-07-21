@@ -7,24 +7,6 @@ import Models = require("../../share/models");
 import util = require("util");
 import Interfaces = require("../interfaces");
 
-function getJSON<T>(url: string, qs?: any) : Promise<T> {
-    return new Promise((resolve, reject) => {
-        request({url: url, qs: qs}, (err: Error, resp, body) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                try {
-                    resolve(JSON.parse(body));
-                }
-                catch (e) {
-                    reject(e);
-                }
-            }
-        });
-    });
-}
-
 interface KorbitMessageIncomingMessage {
     channel: string;
     success: boolean;
@@ -383,8 +365,8 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
 
 class Korbit extends Interfaces.CombinedGateway {
     constructor(
-      cfString,
       gwSymbol,
+      cfString,
       _evOn,
       _evUp
     ) {
@@ -403,5 +385,5 @@ class Korbit extends Interfaces.CombinedGateway {
 }
 
 export async function createKorbit(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new Korbit(cfString, gwSymbol, _evOn, _evUp);
+    return new Korbit(gwSymbol, cfString, _evOn, _evUp);
 }
