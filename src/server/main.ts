@@ -73,12 +73,12 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (bindings.cfmExchange()) {
       case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }
   })();

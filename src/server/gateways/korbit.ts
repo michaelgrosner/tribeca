@@ -403,15 +403,5 @@ class Korbit extends Interfaces.CombinedGateway {
 }
 
 export async function createKorbit(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const constants = await getJSON<any[]>(cfString("KorbitHttpUrl")+"/constants");
-    let minTick = 500;
-    let minSize = 0.015;
-    for (let constant in constants)
-      if (constant.toUpperCase()==(gwSymbol.split('_')[0]).toUpperCase()+'TICKSIZE')
-          minTick = parseFloat(constants[constant]);
-      // else if (constant.toUpperCase()=='MIN'+(gwSymbol.split('_')[0]).toUpperCase()+'ORDER')
-          // minSize = parseFloat(constants[constant]);
-    gwSetMinTick(minTick);
-    gwSetMinSize(minSize);
     return new Korbit(cfString, gwSymbol, _evOn, _evUp);
 }
