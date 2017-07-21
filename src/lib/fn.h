@@ -14,6 +14,10 @@ namespace K {
       static string S8v(Local<String> k) {
         return string(*String::Utf8Value(k));
       };
+      static string S2l(string k) {
+        transform(k.begin(), k.end(), k.begin(), ::tolower);
+        return k;
+      };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();

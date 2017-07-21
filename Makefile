@@ -24,7 +24,7 @@ help:
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
-	#   make public     - compile K client src         #
+	#   make pub        - compile K client src         #
 	#   make bundle     - compile K client bundle      #
 	#                                                  #
 	#   make test       - run tests                    #
@@ -89,7 +89,7 @@ server: node_modules/.bin/tsc src/server src/share app
 client: node_modules/.bin/tsc src/client src/share app
 	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
 
-public: src/pub app/pub
+pub: src/pub app/pub
 	cp -R src/pub/* app/pub/
 
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
@@ -110,4 +110,4 @@ send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws node Linux Darwin clean cleandb config server client public bundle changelog test test-cov send-cov asandwich
+.PHONY: K quickfix uws node Linux Darwin clean cleandb config server client pub bundle changelog test test-cov send-cov asandwich
