@@ -483,8 +483,8 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
 
 class Bitfinex extends Interfaces.CombinedGateway {
     constructor(
-      cfString,
       gwSymbol,
+      cfString,
       _evOn,
       _evUp
     ) {
@@ -525,18 +525,5 @@ interface SymbolTicker {
 }
 
 export async function createBitfinex(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const detailsUrl = cfString("BitfinexHttpUrl")+"/symbols_details";
-    const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
-
-    for (let s of symbolDetails) {
-        if (s.pair === gwSymbol) {
-            const tickerUrl = cfString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
-            const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
-            const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            gwSetMinTick(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
-            gwSetMinSize(parseFloat(s.minimum_order_size));
-            return new Bitfinex(cfString, gwSymbol, _evOn, _evUp);
-        }
-    }
-    throw new Error("Unable to match pair to a bitfinex symbol " + gwSymbol);
+    return new Bitfinex(gwSymbol, cfString, _evOn, _evUp);
 }
