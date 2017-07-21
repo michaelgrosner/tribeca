@@ -6,7 +6,7 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         NODE_SET_METHOD(exports, "computeStdevs", SD::ComputeStdevs);
-      }
+      };
       static void ComputeStdevs(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
@@ -40,7 +40,7 @@ namespace K {
         }
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
-      }
+      };
   };
 }
 

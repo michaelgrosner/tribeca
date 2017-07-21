@@ -129,7 +129,7 @@ namespace K {
         NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
-      }
+      };
       static void uiD__(double d) {
         if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -139,7 +139,7 @@ namespace K {
         } else {
           if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
         }
-      }
+      };
       static void uiDD(uv_timer_t *handle) {
         Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
@@ -155,7 +155,7 @@ namespace K {
         _app_state.Reset(isolate, app_state);
         iOSR60 = 0;
         uiSend(isolate, uiTXT::ApplicationState, app_state);
-      }
+      };
       static void uiD(uv_timer_t *handle) {
         Isolate* isolate = (Isolate*) handle->data;
         HandleScope scope(isolate);
@@ -184,7 +184,7 @@ namespace K {
         if (uiDDT+60000 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
         uiDDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
         uiDD(handle);
-      }
+      };
       static Local<Value> onSnapApp(Local<Value> z) {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k = Array::New(isolate);
@@ -215,14 +215,14 @@ namespace K {
       };
       static void uiSnap(uiTXT k, uiCb cb) {
         uiOn(uiBIT::SNAP, k, cb);
-      }
+      };
       static void uiHand(uiTXT k, uiCb cb) {
         uiOn(uiBIT::MSG, k, cb);
-      }
+      };
       static void uiSend(Isolate* isolate, uiTXT k, Local<Object> o, bool h = false) {
         if (h) uiHold(isolate, k, o);
         else uiUp(isolate, k, o);
-      }
+      };
       static void uiUp(Isolate* isolate, uiTXT k, Local<Object> o) {
         JSON Json;
         if (k == uiTXT::MarketData) {
@@ -232,20 +232,20 @@ namespace K {
         MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), o);
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(*String::Utf8Value(v.ToLocalChecked()));
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
-      }
+      };
       static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         string k = string(1, (char)k_).append(string(1, (char)_k));
         if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
         sess->cb[k] = cb;
-      }
+      };
     private:
       static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
         _uiOn(args, uiBIT::SNAP);
-      }
+      };
       static void _uiHand(const FunctionCallbackInfo<Value>& args) {
         _uiOn(args, uiBIT::MSG);
-      }
+      };
       static void _uiOn(const FunctionCallbackInfo<Value>& args, uiBIT k_) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         Isolate *isolate = args.GetIsolate();
@@ -254,17 +254,17 @@ namespace K {
           return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use only a single unique message handler for each different topic")));
         Persistent<Function> *_cb = &sess->_cb[k];
         _cb->Reset(isolate, Local<Function>::Cast(args[1]));
-      }
+      };
       static void _uiSend(const FunctionCallbackInfo<Value> &args) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
         if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) uiHold(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
         else _uiUp(args);
-      }
+      };
       static void _uiUp(const FunctionCallbackInfo<Value>& args) {
         if (args[1]->IsUndefined()) return;
         uiUp(args.GetIsolate(), (uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->ToObject());
-      }
+      };
       static void uiHold(Isolate* isolate, uiTXT k, Local<Object> o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o->Get(FN::v8S(isolate, "orderStatus"))->NumberValue()) return (void)++iOSR60;
@@ -281,7 +281,7 @@ namespace K {
         Persistent<Object> _o;
         _o.Reset(isolate, o);
         sess->D[k].push_back(_o);
-      }
+      };
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         noop.Reset(isolate, Local<Function>::Cast(args[0]));
@@ -293,7 +293,7 @@ namespace K {
           node::MakeCallback(isolate, isolate->GetCurrentContext()->Global(), Local<Function>::New(isolate, noop), 0, nullptr);
         });
         uv_unref((uv_handle_t *) &loop);
-      }
+      };
   };
 }
 

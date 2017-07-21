@@ -400,22 +400,6 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
   }
 }
 
-class PoloniexBaseGateway implements Interfaces.IExchangeDetailsGateway {
-  makeFee() : number {
-    return 0.001;
-  }
-
-  takeFee() : number {
-    return 0.002;
-  }
-
-  exchange() : Models.Exchange {
-    return Models.Exchange.Poloniex;
-  }
-
-  constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class PoloniexSymbolProvider {
   public symbol: string;
 
@@ -429,7 +413,6 @@ class Poloniex extends Interfaces.CombinedGateway {
     cfString,
     symbol: PoloniexSymbolProvider,
     http: PoloniexHttp,
-    minTick: number,
     _evUp
   ) {
     const socket = new PoloniexWebsocket(cfString, symbol);
@@ -438,14 +421,13 @@ class Poloniex extends Interfaces.CombinedGateway {
     super(
       cfString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(_evUp, http, symbol, socket)
-        : new NullGateway.NullOrderGateway(_evUp),
-      new PoloniexBaseGateway(minTick, 0.01)
+        : new NullGateway.NullOrderGateway(_evUp)
     );
     socket.connectWS();
   }
 }
 
-export async function createPoloniex(cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createPoloniex(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
   const symbol = new PoloniexSymbolProvider(cfPair);
   const signer = new PoloniexMessageSigner(cfString);
   const http = new PoloniexHttp(cfString, signer);
@@ -459,5 +441,8 @@ export async function createPoloniex(cfString, cfPair, _evOn, _evUp): Promise<In
     });
   });
 
-  return new Poloniex(cfString, symbol, http, minTick, _evUp,);
+  setMinTick(minTick);
+  setMinSize(0.01);
+
+  return new Poloniex(cfString, symbol, http, _evUp,);
 }

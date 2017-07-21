@@ -514,7 +514,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private _apiKey : string;
     private _secret : string;
     private _pullUrl: string;
-    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _details: HitBtcBaseGateway, private _lotMultiplier) {
+    constructor(private _evUp, cfString, private _symbolProvider: HitBtcSymbolProvider, private _lotMultiplier) {
         this._apiKey = cfString("HitBtcApiKey");
         this._secret = cfString("HitBtcSecret");
         this._pullUrl = cfString("HitBtcPullUrl");
@@ -591,22 +591,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class HitBtcBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    makeFee() : number {
-        return -0.0001;
-    }
-
-    takeFee() : number {
-        return 0.001;
-    }
-
-    exchange() : Models.Exchange {
-        return Models.Exchange.HitBtc;
-    }
-
-    constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class HitBtcSymbolProvider {
     public symbol : string;
 
@@ -621,14 +605,12 @@ class HitBtc extends Interfaces.CombinedGateway {
       symbolProvider: HitBtcSymbolProvider,
       step: number,
       lot: number,
-      minSize: number,
       cfPair,
       _evOn,
       _evUp
     ) {
-        const details = new HitBtcBaseGateway(step, minSize);
         const orderGateway = cfString("HitBtcOrderDestination") == "HitBtc" ?
-            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, details, lot)
+            <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, symbolProvider, lot)
             : new NullGateway.NullOrderGateway(_evUp);
 
         new HitBtcMarketDataGateway(_evUp, cfString, symbolProvider, step, lot);
@@ -639,8 +621,8 @@ class HitBtc extends Interfaces.CombinedGateway {
         }
 
         super(
-            orderGateway,
-            details);
+          orderGateway
+        );
     }
 }
 
@@ -654,14 +636,17 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createHitBtc(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const symbolsUrl = cfString("HitBtcPullUrl") + "/api/1/public/symbols";
     const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
     const symbolProvider = new HitBtcSymbolProvider(cfPair);
 
     for (let s of symbols.symbols) {
-        if (s.symbol === symbolProvider.symbol)
-            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), parseFloat(s.lot), 0.01, cfPair, _evOn, _evUp);
+        if (s.symbol === symbolProvider.symbol) {
+            setMinTick(parseFloat(s.step));
+            setMinSize(0.01);
+            return new HitBtc(cfString, symbolProvider, parseFloat(s.step), parseFloat(s.lot), cfPair, _evOn, _evUp);
+        }
     }
 
     throw new Error("unable to match pair to a hitbtc symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);

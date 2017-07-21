@@ -381,22 +381,6 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class KorbitBaseGateway implements Interfaces.IExchangeDetailsGateway {
-    makeFee() : number {
-        return 0.001;
-    }
-
-    takeFee() : number {
-        return 0.002;
-    }
-
-    exchange() : Models.Exchange {
-        return Models.Exchange.Korbit;
-    }
-
-    constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class KorbitSymbolProvider {
     public symbol: string;
     public symbolReversed: string;
@@ -414,8 +398,6 @@ class Korbit extends Interfaces.CombinedGateway {
     constructor(
       cfString,
       cfPair,
-      minTick: number,
-      minSize: number,
       _evOn,
       _evUp
     ) {
@@ -429,13 +411,12 @@ class Korbit extends Interfaces.CombinedGateway {
         new KorbitMarketDataGateway(_evUp, http, symbol);
         new KorbitPositionGateway(_evUp, http, symbol);
         super(
-            orderGateway,
-            new KorbitBaseGateway(minTick, minSize)
+            orderGateway
         );
     }
 }
 
-export async function createKorbit(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createKorbit(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const constants = await getJSON<any[]>(cfString("KorbitHttpUrl")+"/constants");
     let minTick = 500;
     let minSize = 0.015;
@@ -444,6 +425,7 @@ export async function createKorbit(cfString, cfPair, _evOn, _evUp) : Promise<Int
           minTick = parseFloat(constants[constant]);
       // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(cfPair.base)+'ORDER')
           // minSize = parseFloat(constants[constant]);
-
-    return new Korbit(cfString, cfPair, minTick, minSize, _evOn, _evUp);
+    setMinTick(minTick);
+    setMinSize(minSize);
+    return new Korbit(cfString, cfPair, _evOn, _evUp);
 }

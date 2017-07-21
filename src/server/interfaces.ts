@@ -28,8 +28,6 @@ export interface IExchangeDetailsGateway {
 }
 
 export class CombinedGateway {
-    constructor(
-        public oe: IOrderEntryGateway,
-        public base: IExchangeDetailsGateway) { }
+    constructor(public oe: IOrderEntryGateway) { }
 }
 

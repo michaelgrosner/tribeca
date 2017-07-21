@@ -7,13 +7,13 @@ namespace K {
     public:
       static Local<String> v8S(string k) {
         return String::NewFromUtf8(Isolate::GetCurrent(), k.data());
-      }
+      };
       static Local<String> v8S(Isolate* isolate, string k) {
         return String::NewFromUtf8(isolate, k.data());
-      }
+      };
       static string S8v(Local<String> k) {
         return string(*String::Utf8Value(k));
-      }
+      };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
@@ -32,7 +32,7 @@ namespace K {
         T << hours.count() << ":" << minutes.count() << ":" << seconds.count()
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
-      }
+      };
   };
 }
 

@@ -38,6 +38,7 @@ using namespace dec;
 #include "db.h"
 #include "ui.h"
 #include "qp.h"
+#include "gw.h"
 
 namespace K {
   void main(Local<Object> exports) {
@@ -47,7 +48,8 @@ namespace K {
     DB::main(exports);
     UI::main(exports);
     QP::main(exports);
-  }
+    GW::main(exports);
+  };
 }
 
 NODE_MODULE(K, K::main)

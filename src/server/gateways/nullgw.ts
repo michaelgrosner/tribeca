@@ -70,13 +70,13 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
 }
 
 export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
-    constructor(private _evUp, private _minTick: number) {
+    constructor(private _evUp) {
         setTimeout(() => this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 500);
         setInterval(() => this._evUp('MarketDataGateway', this.generateMarketData()), 5000);
         setInterval(() => this._evUp('MarketTradeGateway', this.genMarketTrade()), 15000);
     }
 
-    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), this._minTick);
+    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), 0.01);
 
     private genMarketTrade = () => {
         const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
@@ -97,22 +97,6 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 }
 
-class NullGatewayDetails implements Interfaces.IExchangeDetailsGateway {
-    makeFee(): number {
-        return 0;
-    }
-
-    takeFee(): number {
-        return 0;
-    }
-
-    exchange(): Models.Exchange {
-        return Models.Exchange.Null;
-    }
-
-    constructor(public minTickIncrement: number, public minSize: number) {}
-}
-
 class NullGateway extends Interfaces.CombinedGateway {
     constructor(
       cfString,
@@ -120,15 +104,16 @@ class NullGateway extends Interfaces.CombinedGateway {
       _evOn,
       _evUp
     ) {
-        const minTick = .01;
-        new NullMarketDataGateway(_evUp, minTick);
+        new NullMarketDataGateway(_evUp);
         new NullPositionGateway(_evUp, cfPair);
         super(
-            new NullOrderGateway(_evUp),
-            new NullGatewayDetails(minTick, 0.01));
+          new NullOrderGateway(_evUp)
+        );
     }
 }
 
-export async function createNullGateway(cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    return new NullGateway(cfString, cfPair, _evOn, _evUp);
+export async function createNullGateway(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  setMinTick(0.01);
+  setMinSize(0.01);
+  return new NullGateway(cfString, cfPair, _evOn, _evUp);
 }
