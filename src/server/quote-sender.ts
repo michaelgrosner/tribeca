@@ -23,6 +23,7 @@ export class QuoteSender {
     this._evOn('ExchangeConnect', (statusState) => {
       this._brokerStatus = statusState.status;
       this._brokerState = statusState.state;
+      console.log('ExchangeConnectExchangeConnect', statusState);
       this.sendQuote();
     });
     _uiSnap(Models.Topics.QuoteStatus, () => [this._latestStatus]);
