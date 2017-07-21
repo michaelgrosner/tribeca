@@ -290,7 +290,21 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     public cancelsByClientOrderId = true;
 
     supportsCancelAllOpenOrders = () : boolean => { return false; };
-    cancelAllOpenOrders = () : Promise<number> => { return Promise.resolve(0); };
+    cancelAllOpenOrders = () : Promise<number> => {
+      return new Promise<number>((resolve, reject) => {
+        request(this.getAuth("/api/1/trading/orders/active", {symbols: this._gwSymbol}), (err, body, resp) => {
+          var msg: any = JSON.parse(resp);
+          if (!msg.orders || !msg.orders.length) { resolve(0); return; }
+          msg.orders.forEach((o) => {
+              request(this.getAuth("/api/1/trading/cancel_order", {clientOrderId: o.clientOrderId,
+                cancelRequestClientOrderId: o.clientOrderId + "C",
+                symbol: this._gwSymbol,
+                side: o.side}), (err, body, resp) => {this.onMessage(resp);});
+          });
+          resolve(msg.orders.length);
+        });
+      });
+    };
 
     _nonce = 1;
 
