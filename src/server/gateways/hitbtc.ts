@@ -627,14 +627,14 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createHitBtc(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const symbolsUrl = cfString("HitBtcPullUrl") + "/api/1/public/symbols";
     const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
 
     for (let s of symbols.symbols) {
         if (s.symbol === gwSymbol) {
-            gwMinTick(parseFloat(s.step));
-            gwMinSize(0.01);
+            gwSetMinTick(parseFloat(s.step));
+            gwSetMinSize(0.01);
             return new HitBtc(cfString, gwSymbol, parseFloat(s.step), parseFloat(s.lot), _evOn, _evUp);
         }
     }

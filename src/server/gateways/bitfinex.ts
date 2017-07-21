@@ -524,7 +524,7 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = cfString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
 
@@ -533,8 +533,8 @@ export async function createBitfinex(gwSymbol, gwMinTick, gwMinSize, cfString, _
             const tickerUrl = cfString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
             const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            gwMinTick(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
-            gwMinSize(parseFloat(s.minimum_order_size));
+            gwSetMinTick(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
+            gwSetMinSize(parseFloat(s.minimum_order_size));
             return new Bitfinex(cfString, gwSymbol, _evOn, _evUp);
         }
     }

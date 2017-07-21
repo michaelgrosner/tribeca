@@ -506,12 +506,12 @@ class OkCoin extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createOkCoin(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-  gwMinTick(parseFloat(
+export async function createOkCoin(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  gwSetMinTick(parseFloat(
     gwSymbol.split('_')[0]
       .replace('btc', '0.01')
       .replace('ltc', '0.001')
   ) || 0.01);
-  gwMinSize(0.01);
+  gwSetMinSize(0.01);
   return new OkCoin(cfString, gwSymbol, _evOn, _evUp);
 }

@@ -72,13 +72,13 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 (async (): Promise<void> => {
   const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
     switch (bindings.cfmExchange()) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.gwMinTick, bindings.gwMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }
   })();
@@ -86,10 +86,10 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   console.info(new Date().toISOString().slice(11, -1), 'GW', 'Exchange details', {
       exchange: bindings.cfString("EXCHANGE"),
       pair: bindings.gwSymbol(),
-      minTick: bindings.minTick(),
-      minSize: bindings.minSize(),
-      makeFee: bindings.makeFee(),
-      takeFee: bindings.takeFee()
+      minTick: bindings.gwMinTick(),
+      minSize: bindings.gwMinSize(),
+      makeFee: bindings.gwMakeFee(),
+      takeFee: bindings.gwTakeFee()
   });
 
   bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
@@ -98,15 +98,15 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     bindings.cfString("BotIdentifier").replace('auto',''),
     bindings.cfString("MatryoshkaUrl"),
     packageConfig.homepage,
-    bindings.minTick()
+    bindings.gwMinTick()
   )]);
 
   const orderBroker = new Broker.OrderBroker(
     bindings.qpRepo,
     bindings.cfmCurrencyPair(),
-    bindings.makeFee(),
-    bindings.takeFee(),
-    bindings.minTick(),
+    bindings.gwMakeFee(),
+    bindings.gwTakeFee(),
+    bindings.gwMinTick(),
     bindings.gwExchange(),
     gateway.oe,
     bindings.dbInsert,
@@ -127,13 +127,13 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
   const fvEngine = new FairValue.FairValueEngine(
     new MarketFiltration.MarketFiltration(
-      bindings.minTick(),
+      bindings.gwMinTick(),
       orderBroker,
       marketBroker,
       bindings.evOn,
       bindings.evUp
     ),
-    bindings.minTick(),
+    bindings.gwMinTick(),
     bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,
@@ -158,8 +158,8 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     fvEngine,
     bindings.qpRepo,
     positionBroker,
-    bindings.minTick(),
-    bindings.minSize(),
+    bindings.gwMinTick(),
+    bindings.gwMinSize(),
     new Statistics.EWMAProtectionCalculator(
       fvEngine,
       bindings.qpRepo,
@@ -173,7 +173,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       initMkt
     ),
     new PositionManagement.TargetBasePositionManager(
-      bindings.minTick(),
+      bindings.gwMinTick(),
       bindings.dbInsert,
       fvEngine,
       new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
@@ -202,7 +202,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   new QuoteSender.QuoteSender(
     quotingEngine,
     orderBroker,
-    bindings.minTick(),
+    bindings.gwMinTick(),
     bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,

@@ -419,7 +419,7 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export async function createPoloniex(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createPoloniex(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
   const signer = new PoloniexMessageSigner(cfString);
   const http = new PoloniexHttp(cfString, signer);
 
@@ -432,8 +432,8 @@ export async function createPoloniex(gwSymbol, gwMinTick, gwMinSize, cfString, _
     });
   });
 
-  gwMinTick(minTick);
-  gwMinSize(0.01);
+  gwSetMinTick(minTick);
+  gwSetMinSize(0.01);
 
   return new Poloniex(cfString, gwSymbol, http, _evUp,);
 }
