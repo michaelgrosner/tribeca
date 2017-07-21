@@ -111,8 +111,8 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createNullGateway(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-  gwMinTick(0.01);
-  gwMinSize(0.01);
+export async function createNullGateway(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  gwSetMinTick(0.01);
+  gwSetMinSize(0.01);
   return new NullGateway(gwSymbol, cfString, _evUp);
 }

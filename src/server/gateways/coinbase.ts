@@ -558,7 +558,7 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
       cfString("CoinbaseApiKey"),
       cfString("CoinbaseSecret"),
@@ -578,8 +578,8 @@ export async function createCoinbase(gwSymbol, gwMinTick, gwMinSize, cfString, _
 
     for (let p of products) {
         if (p.id === gwSymbol) {
-            gwMinTick(parseFloat(p.quote_increment));
-            gwMinSize(parseFloat(p.base_min_size));
+            gwSetMinTick(parseFloat(p.quote_increment));
+            gwSetMinSize(parseFloat(p.base_min_size));
             return new Coinbase(authClient, cfString, gwSymbol, parseFloat(p.quote_increment), _evOn, _evUp);
         }
     }

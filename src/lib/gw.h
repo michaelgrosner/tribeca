@@ -77,14 +77,14 @@ namespace K {
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
-        NODE_SET_METHOD(exports, "makeFee", GW::_makeFee);
-        NODE_SET_METHOD(exports, "takeFee", GW::_takeFee);
-        NODE_SET_METHOD(exports, "minTick", GW::_minTick);
-        NODE_SET_METHOD(exports, "minSize", GW::_minSize);
-        NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
-        NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
+        NODE_SET_METHOD(exports, "gwMakeFee", GW::_gwMakeFee);
+        NODE_SET_METHOD(exports, "gwTakeFee", GW::_gwTakeFee);
         NODE_SET_METHOD(exports, "gwMinTick", GW::_gwMinTick);
         NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
+        NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
+        NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
+        NODE_SET_METHOD(exports, "gwSetMinTick", GW::_gwSetMinTick);
+        NODE_SET_METHOD(exports, "gwSetMinSize", GW::_gwSetMinSize);
         NODE_SET_METHOD(exports, "gwSavedQuotingMode", GW::_gwSavedQuotingMode);
       };
     private:
@@ -139,22 +139,22 @@ namespace K {
           UI::uiSend(isolate, uiTXT::ActiveState, Boolean::New(isolate, gwState)->ToObject());
         }
       }
-      static void _makeFee(const FunctionCallbackInfo<Value> &args) {
+      static void _gwMakeFee(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, gw->makeFee));
       };
-      static void _takeFee(const FunctionCallbackInfo<Value> &args) {
+      static void _gwTakeFee(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, gw->takeFee));
       };
-      static void _minTick(const FunctionCallbackInfo<Value> &args) {
+      static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, gw->minTick));
       };
-      static void _minSize(const FunctionCallbackInfo<Value> &args) {
+      static void _gwMinSize(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, gw->minSize));
@@ -169,10 +169,10 @@ namespace K {
         HandleScope scope(isolate);
         args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol()));
       };
-      static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
+      static void _gwSetMinTick(const FunctionCallbackInfo<Value> &args) {
         gw->minTick = args[0]->NumberValue();
       };
-      static void _gwMinSize(const FunctionCallbackInfo<Value> &args) {
+      static void _gwSetMinSize(const FunctionCallbackInfo<Value> &args) {
         gw->minSize = args[0]->NumberValue();
       };
       static void _gwSavedQuotingMode(const FunctionCallbackInfo<Value> &args) {
