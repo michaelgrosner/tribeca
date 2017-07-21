@@ -83,6 +83,15 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     }
   })();
 
+  console.info(new Date().toISOString().slice(11, -1), 'GW', 'Exchange details', {
+      exchange: Models.Exchange[bindings.exchange()],
+      pair: bindings.cfString("TradedPair"),
+      minTick: bindings.minTick(),
+      minSize: bindings.minSize(),
+      makeFee: bindings.makeFee(),
+      takeFee: bindings.takeFee()
+  });
+
   bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
     bindings.cfmExchange(),
     bindings.cfmCurrencyPair(),
@@ -93,12 +102,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   )]);
 
   const broker = new Broker.ExchangeBroker(
-    bindings.cfmCurrencyPair(),
-    bindings.makeFee(),
-    bindings.takeFee(),
-    bindings.minTick(),
-    bindings.minSize(),
-    bindings.exchange(),
     bindings.uiSnap,
     bindings.uiHand,
     bindings.uiSend,
@@ -109,7 +112,11 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
   const orderBroker = new Broker.OrderBroker(
     bindings.qpRepo,
-    broker,
+    bindings.cfmCurrencyPair(),
+    bindings.makeFee(),
+    bindings.takeFee(),
+    bindings.minTick(),
+    bindings.exchange(),
     gateway.oe,
     bindings.dbInsert,
     bindings.uiSnap,
@@ -146,7 +153,8 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
   const positionBroker = new Broker.PositionBroker(
     bindings.qpRepo,
-    broker,
+    bindings.cfmCurrencyPair(),
+    bindings.exchange(),
     orderBroker,
     fvEngine,
     bindings.uiSnap,
@@ -204,6 +212,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     quotingEngine,
     broker,
     orderBroker,
+    bindings.minTick(),
     bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,
@@ -213,7 +222,8 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
   new MarketTrades.MarketTradeBroker(
     bindings.uiSnap,
     bindings.uiSend,
-    broker,
+    bindings.cfmCurrencyPair(),
+    bindings.exchange(),
     bindings.evOn,
     bindings.evUp
   );
