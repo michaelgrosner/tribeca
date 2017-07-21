@@ -402,6 +402,6 @@ class Korbit extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createKorbit(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createKorbit(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     return new Korbit(cfString, gwSymbol, _evOn, _evUp);
 }
