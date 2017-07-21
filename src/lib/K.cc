@@ -15,6 +15,8 @@
 #include <node_buffer.h>
 #include <node_object_wrap.h>
 
+#include <curl/curl.h>
+
 #include <sqlite3.h>
 
 #include <openssl/ssl.h>
