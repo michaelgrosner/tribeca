@@ -79,7 +79,7 @@ namespace K {
             cout << FN::uiT() << "Poloniex client IP allowed." << endl;
           }
         }
-        minTick = _minTick ? _minTick : 0.022222;
+        minTick = _minTick ? _minTick : 0.01;
         minSize = 0.01;
       };
   };
