@@ -223,8 +223,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
   };
 
-  bindings.gwSavedQuotingMode(bindings.cfString("BotIdentifier").indexOf('auto')>-1);
-
   let highTime = process.hrtime();
   setInterval(() => {
     const diff = process.hrtime(highTime);
