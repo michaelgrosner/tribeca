@@ -159,7 +159,7 @@ To rebuild the application with your modifications, please run `npm install` or 
 
 To rebuild the C++ shared objects with your modifications, please run `make`.
 
-To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K.js`.
+To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K`.
 
 To ignore the output, execute the application in the background with `forever start K.js` or with the alias `npm start`.
 

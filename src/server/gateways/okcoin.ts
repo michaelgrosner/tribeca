@@ -485,8 +485,8 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
 
 class OkCoin extends Interfaces.CombinedGateway {
     constructor(
-      cfString,
       gwSymbol,
+      cfString,
       _evOn,
       _evUp
     ) {
@@ -506,12 +506,6 @@ class OkCoin extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createOkCoin(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-  gwSetMinTick(parseFloat(
-    gwSymbol.split('_')[0]
-      .replace('btc', '0.01')
-      .replace('ltc', '0.001')
-  ) || 0.01);
-  gwSetMinSize(0.01);
-  return new OkCoin(cfString, gwSymbol, _evOn, _evUp);
+export async function createOkCoin(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  return new OkCoin(gwSymbol, cfString, _evOn, _evUp);
 }

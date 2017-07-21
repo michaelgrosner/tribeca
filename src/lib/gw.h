@@ -11,41 +11,60 @@ namespace K {
       double minSize = 0;
       virtual mExchange exchange() = 0;
       virtual string symbol() = 0;
+      virtual void fetch() = 0;
   };
   class GwNull: public Gw {
     public:
       mExchange exchange() { return mExchange::Null; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]); };
+      void fetch() { minTick = 0.01; minSize = 0.01; };
   };
   class GwHitBtc: public Gw {
     public:
       mExchange exchange() { return mExchange::HitBtc; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
+      void fetch() { minTick = 0.01; minSize = 0.01; };
   };
   class GwOkCoin: public Gw {
     public:
       mExchange exchange() { return mExchange::OkCoin; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
+      void fetch() { minTick = "btc" == symbol().substr(0,3) ? 0.01 : 0.001; minSize = 0.01; };
   };
   class GwCoinbase: public Gw {
     public:
       mExchange exchange() { return mExchange::Coinbase; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]); };
+      void fetch() { minTick = 0.01; minSize = 0.01; };
   };
   class GwBitfinex: public Gw {
     public:
       mExchange exchange() { return mExchange::Bitfinex; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()])); };
+      void fetch() { minTick = 0.01; minSize = 0.01; };
   };
   class GwKorbit: public Gw {
     public:
       mExchange exchange() { return mExchange::Korbit; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("KorbitHttpUrl").append("/constants")).data()));
+        double _minTick;
+        if (!v.IsEmpty()) {
+          Local<Object> k = v.ToLocalChecked()->ToObject();
+          _minTick = k->Get(FN::v8S(symbol().substr(0,3).append("TickSize")))->NumberValue();
+        }
+        minTick = _minTick ? _minTick : 500;
+        minSize = 0.015;
+      };
   };
   class GwPoloniex: public Gw {
     public:
       mExchange exchange() { return mExchange::Poloniex; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfBase()])); };
+      void fetch() { minTick = 0.01; minSize = 0.01; };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
@@ -68,6 +87,7 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
+        gw->fetch();
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
