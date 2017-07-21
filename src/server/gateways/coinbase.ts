@@ -251,7 +251,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         };
 
         if (order.type === Models.OrderType.Limit) {
-            o.price = order.price.toFixed(this._fixedPrecision);
+            o.price = order.price.toFixed(8);
 
             if (order.preferPostOnly)
                 o.post_only = true;
@@ -298,7 +298,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         if (order.type === Models.OrderType.Limit) {
             o.tags[40] = 2;
-            o.tags[44] = order.price.toFixed(this._fixedPrecision);
+            o.tags[44] = order.price.toFixed(8);
 
             if (order.preferPostOnly)
                 o.tags[59] = 'P';
@@ -430,19 +430,16 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       this._evUp('OrderUpdateGateway', status);
     };
 
-    private _fixedPrecision: number = 0;
     private _FIXClient: any = null;
     private _FIXHeader:any = null;
 
     constructor(
         private _evUp,
         cfString,
-        minTick: number,
         private _client: Gdax.OrderbookSync,
         private _authClient: Gdax.AuthenticatedClient,
         private _gwSymbol
     ) {
-        this._fixedPrecision = -Math.floor(Math.log10(minTick));
         var initiator = quickfix.initiator;
         if (typeof initiator !== 'undefined') {
           this._FIXHeader = {
@@ -541,7 +538,6 @@ class Coinbase extends Interfaces.CombinedGateway {
       authClient: Gdax.AuthenticatedClient,
       cfString,
       gwSymbol,
-      quoteIncrement: number,
       _evOn,
       _evUp
     ) {
@@ -552,7 +548,7 @@ class Coinbase extends Interfaces.CombinedGateway {
 
         super(
           cfString("CoinbaseOrderDestination") == "Coinbase"
-            ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, gwSymbol)
+            ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, orderEventEmitter, authClient, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp)
         );
     }
@@ -580,7 +576,7 @@ export async function createCoinbase(gwSymbol, gwSetMinTick, gwSetMinSize, cfStr
         if (p.id === gwSymbol) {
             gwSetMinTick(parseFloat(p.quote_increment));
             gwSetMinSize(parseFloat(p.base_min_size));
-            return new Coinbase(authClient, cfString, gwSymbol, parseFloat(p.quote_increment), _evOn, _evUp);
+            return new Coinbase(authClient, cfString, gwSymbol, _evOn, _evUp);
         }
     }
 
