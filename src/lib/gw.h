@@ -63,8 +63,25 @@ namespace K {
   class GwPoloniex: public Gw {
     public:
       mExchange exchange() { return mExchange::Poloniex; };
-      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfBase()])); };
-      void fetch() { minTick = 0.01; minSize = 0.01; };
+      string symbol() { return string(mCurrency[CF::cfQuote()]).append("_").append(mCurrency[CF::cfBase()]); };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("PoloniexHttpUrl").append("/public?command=returnTicker")).data()));
+        double _minTick;
+        if (!v.IsEmpty()) {
+          Local<Object> k = v.ToLocalChecked()->ToObject();
+          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
+          if (!maybe_props.IsEmpty()) {
+            k = k->Get(FN::v8S(symbol()))->ToObject();
+            istringstream os(string("1e-").append(to_string(6-FN::S8v(k->Get(FN::v8S("last"))->ToString()).find("."))));
+            os >> _minTick;
+            cout << FN::uiT() << "Poloniex client IP allowed." << endl;
+          }
+        }
+        minTick = _minTick ? _minTick : 0.022222;
+        minSize = 0.01;
+      };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
