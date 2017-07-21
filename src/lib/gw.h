@@ -15,12 +15,12 @@ namespace K {
   class GwNull: public Gw {
     public:
       mExchange exchange() { return mExchange::Null; };
-      string symbol() { return mCurrency[CF::cfBase()].append("_").append(mCurrency[CF::cfQuote()]); };
+      string symbol() { return string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]); };
   };
   class GwHitBtc: public Gw {
     public:
       mExchange exchange() { return mExchange::HitBtc; };
-      string symbol() { return mCurrency[CF::cfBase()].append(mCurrency[CF::cfQuote()]); };
+      string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
   };
   class GwOkCoin: public Gw {
     public:
