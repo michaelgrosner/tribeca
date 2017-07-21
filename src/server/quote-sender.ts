@@ -13,6 +13,7 @@ export class QuoteSender {
     private _quotingEngine: QuotingEngine.QuotingEngine,
     private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
+    private _minTick,
     private _qpRepo,
     private _uiSnap,
     private _uiSend,
@@ -162,7 +163,7 @@ export class QuoteSender {
             && (price - (params.range - 1e-2)) <= x.price
           ).length) return;
           this.stopWorstsQuotes(side, q.price);
-          price = Utils.roundNearest(price, this._broker.minTickIncrement);
+          price = Utils.roundNearest(price, this._minTick);
           q.price = price;
         } else return;
       } else return;

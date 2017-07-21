@@ -118,18 +118,18 @@ export class OrderBroker {
         const orderId = this._oeGateway.generateClientOrderId();
 
         const rpt : Models.OrderStatusUpdate = {
-            pair: this._baseBroker.pair,
+            pair: this._pair,
             orderId: orderId,
             side: order.side,
             quantity: order.quantity,
             leavesQuantity: order.quantity,
             type: order.type,
             isPong: order.isPong,
-            price: Utils.roundSide(order.price, this._baseBroker.minTickIncrement, order.side),
+            price: Utils.roundSide(order.price, this._minTick, order.side),
             timeInForce: order.timeInForce,
             orderStatus: Models.OrderStatus.New,
             preferPostOnly: order.preferPostOnly,
-            exchange: this._baseBroker.exchange(),
+            exchange: this._exchange,
             rejectMessage: order.msg,
             source: order.source
         };
@@ -144,7 +144,7 @@ export class OrderBroker {
         const report : Models.OrderStatusUpdate = {
             orderId: replace.origOrderId,
             orderStatus: Models.OrderStatus.Working,
-            price: Utils.roundSide(replace.price, this._baseBroker.minTickIncrement, rpt.side),
+            price: Utils.roundSide(replace.price, this._minTick, rpt.side),
             quantity: replace.quantity
         };
 
@@ -299,7 +299,7 @@ export class OrderBroker {
             let feeCharged = null;
             if (typeof liq !== "undefined") {
                 // negative fee is a rebate, positive fee is a fee
-                feeCharged = (liq === Models.Liquidity.Make ? this._baseBroker.makeFee() : this._baseBroker.takeFee());
+                feeCharged = (liq === Models.Liquidity.Make ? this._makeFee : this._takeFee);
                 const sign = (o.side === Models.Side.Bid ? 1 : -1);
                 value = value * (1 + sign * feeCharged);
             }
@@ -373,7 +373,11 @@ export class OrderBroker {
 
     constructor(
       private _qpRepo,
-      private _baseBroker : ExchangeBroker,
+      private _pair,
+      private _makeFee,
+      private _takeFee,
+      private _minTick,
+      private _exchange,
       private _oeGateway : Interfaces.IOrderEntryGateway,
       private _dbInsert,
       private _uiSnap,
@@ -440,9 +444,9 @@ export class PositionBroker {
 
     private onPositionUpdate = (rpt : Models.CurrencyPosition) => {
         if (rpt !== null) this._currencies[rpt.currency] = rpt;
-        if (!this._currencies[this._broker.pair.base] || !this._currencies[this._broker.pair.quote]) return;
-        var basePosition = this.getPosition(this._broker.pair.base);
-        var quotePosition = this.getPosition(this._broker.pair.quote);
+        if (!this._currencies[this._pair.base] || !this._currencies[this._pair.quote]) return;
+        var basePosition = this.getPosition(this._pair.base);
+        var quotePosition = this.getPosition(this._pair.quote);
         var fv = this._fvEngine.latestFairValue;
         if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || fv === null) return;
 
@@ -459,7 +463,7 @@ export class PositionBroker {
         const profitQuote = ((quoteValue - this._lastPositions[0].quoteValue) / quoteValue) * 1e+2;
 
         const positionReport = new Models.PositionReport(baseAmount, quoteAmount, basePosition.heldAmount,
-            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._broker.pair, this._broker.exchange());
+            quotePosition.heldAmount, baseValue, quoteValue, profitBase, profitQuote, this._pair, this._exchange);
 
         let sameValue = true;
         if (this._report !== null) {
@@ -503,7 +507,8 @@ export class PositionBroker {
 
     constructor(
       private _qpRepo,
-      private _broker: ExchangeBroker,
+      private _pair,
+      private _exchange,
       private _orderBroker: OrderBroker,
       private _fvEngine: FairValue.FairValueEngine,
       private _uiSnap,
@@ -520,30 +525,6 @@ export class PositionBroker {
 }
 
 export class ExchangeBroker {
-    makeFee() : number {
-        return this._makeFee;
-    }
-
-    takeFee() : number {
-        return this._takeFee;
-    }
-
-    exchange() : Models.Exchange {
-        return this._exchange;
-    }
-
-    public get pair() {
-        return this._pair;
-    }
-
-    public get minTickIncrement() {
-        return this._minTick;
-    }
-
-    public get minSize() {
-        return this._minSize;
-    }
-
     private mdConnected = Models.ConnectivityStatus.Disconnected;
     private oeConnected = Models.ConnectivityStatus.Disconnected;
     private _connectStatus = Models.ConnectivityStatus.Disconnected;
@@ -574,12 +555,6 @@ export class ExchangeBroker {
     }
 
     constructor(
-      private _pair,
-      private _makeFee,
-      private _takeFee,
-      private _minTick,
-      private _minSize,
-      private _exchange,
       private _uiSnap,
       private _uiHand,
       private _uiSend,
@@ -601,14 +576,6 @@ export class ExchangeBroker {
       _uiSnap(Models.Topics.ActiveState, () => [this._latestState]);
       _uiHand(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
-      console.info(new Date().toISOString().slice(11, -1), 'broker', 'Exchange details', {
-          exchange: Models.Exchange[this.exchange()],
-          pair: Models.Currency[this.pair.base]+'/'+Models.Currency[this.pair.quote],
-          minTick: this.minTickIncrement,
-          minSize: this.minSize,
-          makeFee: this.makeFee(),
-          takeFee: this.takeFee()
-      });
     }
 
   private _savedQuotingMode: boolean = false;

@@ -7,7 +7,7 @@ import * as moment from "moment";
 export class MarketTradeBroker {
     private _marketTrades: Models.MarketTrade[] = [];
     private handleNewMarketTrade = (u: Models.GatewayMarketTrade) => {
-        var t = new Models.MarketTrade(this._base.exchange(), this._base.pair, u.price, u.size, new Date().getTime(), u.make_side);
+        var t = new Models.MarketTrade(this._exchange, this._pair, u.price, u.size, new Date().getTime(), u.make_side);
 
         this._marketTrades.push(t);
         this._marketTrades = this._marketTrades.slice(-69);
@@ -19,7 +19,8 @@ export class MarketTradeBroker {
     constructor(
       private _uiSnap,
       private _uiSend,
-      private _base: Broker.ExchangeBroker,
+      private _pair,
+      private _exchange,
       private _evOn,
       private _evUp
     ) {
