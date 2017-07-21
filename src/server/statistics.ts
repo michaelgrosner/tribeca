@@ -87,10 +87,8 @@ export class EWMAProtectionCalculator {
   private _latest: number = null;
   public get latest() { return this._latest; }
   private setLatest = (v: number) => {
-    if (Math.abs(v - this._latest) > 1e-3) {
-      this._latest = v;
-      this._evUp('EWMAProtectionCalculator');
-    }
+  this._latest = v;
+  this._evUp('EWMAProtectionCalculator');
   };
 }
 
