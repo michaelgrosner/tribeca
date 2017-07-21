@@ -204,7 +204,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
           11: cancel.orderId,
           37: cancel.exchangeId,
           41: cancel.orderId,
-          55: this._symbolProvider.symbol,
+          55: this._gwSymbol,
           35: 'F'
         }
       });
@@ -247,7 +247,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         var o: CoinbaseOrder = {
             client_oid: order.orderId,
             size: order.quantity.toFixed(8),
-            product_id: this._symbolProvider.symbol
+            product_id: this._gwSymbol
         };
 
         if (order.type === Models.OrderType.Limit) {
@@ -290,7 +290,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             11: order.orderId,
             38: order.quantity.toFixed(8),
             54: (order.side === Models.Side.Bid) ? 1 : 2,
-            55: this._symbolProvider.symbol,
+            55: this._gwSymbol,
             35: 'D',
             7928: 'D'
           }
@@ -440,7 +440,7 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         minTick: number,
         private _client: Gdax.OrderbookSync,
         private _authClient: Gdax.AuthenticatedClient,
-        private _symbolProvider: CoinbaseSymbolProvider
+        private _gwSymbol
     ) {
         this._fixedPrecision = -Math.floor(Math.log10(minTick));
         var initiator = quickfix.initiator;
@@ -536,37 +536,29 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class CoinbaseSymbolProvider {
-    public symbol: string;
-
-    constructor(cfPair) {
-        this.symbol = Models.fromCurrency(cfPair.base) + "-" + Models.fromCurrency(cfPair.quote);
-    }
-}
-
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(
       authClient: Gdax.AuthenticatedClient,
       cfString,
-      symbolProvider: CoinbaseSymbolProvider,
+      gwSymbol,
       quoteIncrement: number,
       _evOn,
       _evUp
     ) {
-        const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(symbolProvider.symbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
+        const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(gwSymbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
 
         new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient);
         new CoinbasePositionGateway(_evUp, authClient);
 
         super(
           cfString("CoinbaseOrderDestination") == "Coinbase"
-            ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, symbolProvider)
+            ? <Interfaces.IOrderEntryGateway>new CoinbaseOrderEntryGateway(_evUp, cfString, quoteIncrement, orderEventEmitter, authClient, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp)
         );
     }
 };
 
-export async function createCoinbase(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export async function createCoinbase(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
     const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
       cfString("CoinbaseApiKey"),
       cfString("CoinbaseSecret"),
@@ -584,15 +576,13 @@ export async function createCoinbase(setMinTick, setMinSize, cfString, cfPair, _
     if (!products)
       throw new Error("Unable to connect to Coinbase, seems currently offline. Please retry once is online.");
 
-    const symbolProvider = new CoinbaseSymbolProvider(cfPair);
-
     for (let p of products) {
-        if (p.id === symbolProvider.symbol) {
-            setMinTick(parseFloat(p.quote_increment));
-            setMinSize(parseFloat(p.base_min_size));
-            return new Coinbase(authClient, cfString, symbolProvider, parseFloat(p.quote_increment), _evOn, _evUp);
+        if (p.id === gwSymbol) {
+            gwMinTick(parseFloat(p.quote_increment));
+            gwMinSize(parseFloat(p.base_min_size));
+            return new Coinbase(authClient, cfString, gwSymbol, parseFloat(p.quote_increment), _evOn, _evUp);
         }
     }
 
-    throw new Error("Unable to match pair to a coinbase symbol " + Models.Currency[cfPair.base]+'/'+Models.Currency[cfPair.quote]);
+    throw new Error("Unable to match pair to a Coinbase symbol " + gwSymbol);
 }

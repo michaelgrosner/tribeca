@@ -41,21 +41,18 @@ namespace K {
         string k_ = cfString("TradedPair");
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        for (unsigned i=0; i<mCurrency.size(); ++i)
-          if (mCurrency[i] == k) return i;
+        for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i;
         cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
       };
       static int cfQuote() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        for (unsigned i=0; i<mCurrency.size(); ++i)
-          if (mCurrency[i] == k) return i;
+        for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i;
         cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
       };
       static mExchange cfExchange() {
-        string k = cfString("EXCHANGE");
-        transform(k.begin(), k.end(), k.begin(), ::tolower);
+        string k = FN::S2l(cfString("EXCHANGE"));
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;
         else if (k == "bitfinex") return mExchange::Bitfinex;

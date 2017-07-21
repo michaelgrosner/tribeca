@@ -187,9 +187,9 @@ class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
       private _evOn,
       private _evUp,
       socket: OkCoinWebsocket,
-      symbolProvider: OkCoinSymbolProvider
+      gwSymbol
     ) {
-        var _symbolReversed = symbolProvider.symbol.split('_').reverse().join('_');
+        var _symbolReversed = gwSymbol.split('_').reverse().join('_');
         var depthChannel = "ok_sub_spot" + _symbolReversed + "_depth_20";
         var tradesChannel = "ok_sub_spot" + _symbolReversed + "_trades";
         socket.setHandler(depthChannel, this.onDepth);
@@ -217,12 +217,12 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
       return new Promise<number>((resolve, reject) => {
-        this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._symbolProvider.symbol }).then(msg => {
+        this._http.post("order_info.do", <Cancel>{order_id: '-1', symbol: this._gwSymbol }).then(msg => {
           if (typeof (<any>msg.data).orders == "undefined"
             || typeof (<any>msg.data).orders[0] == "undefined"
             || typeof (<any>msg.data).orders[0].order_id == "undefined") { resolve(0); return; }
           (<any>msg.data).orders.forEach((o) => {
-              this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._symbolProvider.symbol }).then(msg => {
+              this._http.post("cancel_order.do", <Cancel>{order_id: o.order_id.toString(), symbol: this._gwSymbol }).then(msg => {
                   if (typeof (<any>msg.data).result == "undefined") return;
                   if ((<any>msg.data).result) {
                       this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
@@ -259,7 +259,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     sendOrder = (order : Models.OrderStatusReport) => {
         var o : Order = {
-            symbol: this._symbolProvider.symbol,
+            symbol: this._gwSymbol,
             type: OkCoinOrderEntryGateway.GetOrderType(order.side, order.type),
             price: order.price.toString(),
             amount: order.quantity.toString()};
@@ -298,7 +298,7 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        var c : Cancel = {order_id: cancel.exchangeId, symbol: this._symbolProvider.symbol };
+        var c : Cancel = {order_id: cancel.exchangeId, symbol: this._gwSymbol };
         this._socket.send<OrderAck>("ok_spot" + this._symbolQuote + "_cancel_order", this._signer.signMessage(c), () => {
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                 orderId: cancel.orderId,
@@ -377,9 +377,9 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       private _http: OkCoinHttp,
       private _socket: OkCoinWebsocket,
       private _signer: OkCoinMessageSigner,
-      private _symbolProvider: OkCoinSymbolProvider
+      private _gwSymbol
     ) {
-        this._symbolQuote = _symbolProvider.symbol.split('_')[1];
+        this._symbolQuote = _gwSymbol.split('_')[1];
 
         _socket.setHandler("ok_sub_spot" + this._symbolQuote + "_trades", this.onTrade);
         _socket.setHandler("ok_spot" + this._symbolQuote + "_trade", this.onOrderAck);
@@ -483,31 +483,22 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class OkCoinSymbolProvider {
-    public symbol: string;
-
-    constructor(cfPair) {
-        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + "_" + Models.fromCurrency(cfPair.quote).toLowerCase();
-    }
-}
-
 class OkCoin extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      cfPair,
+      gwSymbol,
       _evOn,
       _evUp
     ) {
-        var symbol = new OkCoinSymbolProvider(cfPair);
         var signer = new OkCoinMessageSigner(cfString);
         var http = new OkCoinHttp(cfString, signer);
         var socket = new OkCoinWebsocket(_evUp, cfString);
 
         var orderGateway = cfString("OkCoinOrderDestination") == "OkCoin"
-            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(_evOn, _evUp, http, socket, signer, symbol)
+            ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(_evOn, _evUp, http, socket, signer, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new OkCoinMarketDataGateway(_evOn, _evUp, socket, symbol);
+        new OkCoinMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
         new OkCoinPositionGateway(_evUp, http);
         super(
           orderGateway
@@ -515,12 +506,12 @@ class OkCoin extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createOkCoin(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-  setMinTick(parseFloat(
-    Models.fromCurrency(cfPair.base)
-      .replace('BTC', '0.01')
-      .replace('LTC', '0.001')
+export async function createOkCoin(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+  gwMinTick(parseFloat(
+    gwSymbol.split('_')[0]
+      .replace('btc', '0.01')
+      .replace('ltc', '0.001')
   ) || 0.01);
-  setMinSize(0.01);
-  return new OkCoin(cfString, cfPair, _evOn, _evUp);
+  gwMinSize(0.01);
+  return new OkCoin(cfString, gwSymbol, _evOn, _evUp);
 }

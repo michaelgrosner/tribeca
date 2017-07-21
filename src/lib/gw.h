@@ -10,34 +10,42 @@ namespace K {
       double minTick = 0;
       double minSize = 0;
       virtual mExchange exchange() = 0;
+      virtual string symbol() = 0;
   };
   class GwNull: public Gw {
     public:
-      mExchange exchange() { return mExchange::Null; }
+      mExchange exchange() { return mExchange::Null; };
+      string symbol() { return mCurrency[CF::cfBase()].append("_").append(mCurrency[CF::cfQuote()]); };
   };
   class GwHitBtc: public Gw {
     public:
-      mExchange exchange() { return mExchange::HitBtc; }
+      mExchange exchange() { return mExchange::HitBtc; };
+      string symbol() { return mCurrency[CF::cfBase()].append(mCurrency[CF::cfQuote()]); };
   };
   class GwOkCoin: public Gw {
     public:
-      mExchange exchange() { return mExchange::OkCoin; }
+      mExchange exchange() { return mExchange::OkCoin; };
+      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
   };
   class GwCoinbase: public Gw {
     public:
-      mExchange exchange() { return mExchange::Coinbase; }
+      mExchange exchange() { return mExchange::Coinbase; };
+      string symbol() { return string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]); };
   };
   class GwBitfinex: public Gw {
     public:
-      mExchange exchange() { return mExchange::Bitfinex; }
+      mExchange exchange() { return mExchange::Bitfinex; };
+      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()])); };
   };
   class GwKorbit: public Gw {
     public:
-      mExchange exchange() { return mExchange::Korbit; }
+      mExchange exchange() { return mExchange::Korbit; };
+      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
   };
   class GwPoloniex: public Gw {
     public:
-      mExchange exchange() { return mExchange::Poloniex; }
+      mExchange exchange() { return mExchange::Poloniex; };
+      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfBase()])); };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
@@ -73,10 +81,11 @@ namespace K {
         NODE_SET_METHOD(exports, "takeFee", GW::_takeFee);
         NODE_SET_METHOD(exports, "minTick", GW::_minTick);
         NODE_SET_METHOD(exports, "minSize", GW::_minSize);
-        NODE_SET_METHOD(exports, "exchange", GW::_exchange);
-        NODE_SET_METHOD(exports, "setMinTick", GW::_setMinTick);
-        NODE_SET_METHOD(exports, "setMinSize", GW::_setMinSize);
-        NODE_SET_METHOD(exports, "setSavedQuotingMode", GW::_setSavedQuotingMode);
+        NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
+        NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
+        NODE_SET_METHOD(exports, "gwMinTick", GW::_gwMinTick);
+        NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
+        NODE_SET_METHOD(exports, "gwSavedQuotingMode", GW::_gwSavedQuotingMode);
       };
     private:
       static Local<Value> onSnapStatus(Local<Value> z) {
@@ -150,18 +159,23 @@ namespace K {
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, gw->minSize));
       };
-      static void _exchange(const FunctionCallbackInfo<Value> &args) {
+      static void _gwExchange(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange()));
       };
-      static void _setMinTick(const FunctionCallbackInfo<Value> &args) {
+      static void _gwSymbol(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol()));
+      };
+      static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
         gw->minTick = args[0]->NumberValue();
       };
-      static void _setMinSize(const FunctionCallbackInfo<Value> &args) {
+      static void _gwMinSize(const FunctionCallbackInfo<Value> &args) {
         gw->minSize = args[0]->NumberValue();
       };
-      static void _setSavedQuotingMode(const FunctionCallbackInfo<Value> &args) {
+      static void _gwSavedQuotingMode(const FunctionCallbackInfo<Value> &args) {
         savedQuotingMode = args[0]->BooleanValue();
       };
   };

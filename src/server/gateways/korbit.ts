@@ -82,7 +82,7 @@ interface SubscriptionRequest extends SignedMessage { }
 
 class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     private triggerMarketTrades = () => {
-        this._http.get("transactions", {currency_pair: this._symbolProvider.symbol, time: 'minute'}, true).then(msg => {
+        this._http.get("transactions", {currency_pair: this._gwSymbol, time: 'minute'}, true).then(msg => {
             if (!(<any>msg.data).length) return;
             for (let i = (<any>msg.data).length;i--;) {
               var px = parseFloat((<any>msg.data)[i].price);
@@ -98,7 +98,7 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
         new Models.MarketSide(parseFloat(n[0]), parseFloat(n[1]));
 
     private triggerOrderBook = () => {
-        this._http.get("orderbook", {currency_pair: this._symbolProvider.symbol, category: 'all'}, true).then(msg => {
+        this._http.get("orderbook", {currency_pair: this._gwSymbol, category: 'all'}, true).then(msg => {
             if (!(<any>msg.data).timestamp) return;
             this._evUp('MarketDataGateway', new Models.Market(
               (<any>msg.data).bids.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
@@ -107,7 +107,7 @@ class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
         });
     };
 
-    constructor(private _evUp, private _http : KorbitHttp, private _symbolProvider: KorbitSymbolProvider) {
+    constructor(private _evUp, private _http : KorbitHttp, private _gwSymbol) {
         setInterval(this.triggerMarketTrades, 60000);
         setInterval(this.triggerOrderBook, 1000);
         setTimeout(()=>this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 10);
@@ -120,10 +120,10 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     supportsCancelAllOpenOrders = () : boolean => { return false; };
     cancelAllOpenOrders = () : Promise<number> => {
       return new Promise<number>((resolve, reject) => {
-        this._http.get("user/orders/open", <Cancel>{currency_pair: this._symbolProvider.symbol }).then(msg => {
+        this._http.get("user/orders/open", <Cancel>{currency_pair: this._gwSymbol }).then(msg => {
           if (!(<any>msg.data).length) { resolve(0); return; }
           (<any>msg.data).forEach((o) => {
-              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
+              this._http.post("user/orders/cancel", <Cancel>{id: o.id, currency_pair: this._gwSymbol, nonce: new Date().getTime() }).then(msg => {
                   if (!(<any>msg.data).length) return;
                   this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
                     exchangeId: (<any>msg.data).order_id.toString(),
@@ -145,7 +145,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             type: order.type === Models.OrderType.Market ? 'market' : 'limit',
             price: order.price.toString(),
             coin_amount: order.quantity.toString(),
-            currency_pair: this._symbolProvider.symbol,
+            currency_pair: this._gwSymbol,
             nonce: new Date().getTime()
         }).then(msg => {
           if (!(<any>msg.data).orderId || ((<any>msg.data).status && (<any>msg.data).status != 'success')) {
@@ -170,7 +170,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
-        this._http.post('user/orders/cancel', <Cancel>{id: cancel.exchangeId, currency_pair: this._symbolProvider.symbol, nonce: new Date().getTime() }).then(msg => {
+        this._http.post('user/orders/cancel', <Cancel>{id: cancel.exchangeId, currency_pair: this._gwSymbol, nonce: new Date().getTime() }).then(msg => {
             if (!(<any>msg.data).length!) return;
             this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
               orderId: cancel.orderId,
@@ -187,7 +187,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private triggerUserTades = () => {
-        this._http.get('user/transactions', {currency_pair: this._symbolProvider.symbol, category: 'fills'}).then(msg => {
+        this._http.get('user/transactions', {currency_pair: this._gwSymbol, category: 'fills'}).then(msg => {
             if (!(<any>msg.data).length) return;
             for (let i = (<any>msg.data).length;i--;) {
               var px = parseFloat((<any>msg.data)[i].price);
@@ -210,7 +210,7 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(
       private _evUp,
       private _http: KorbitHttp,
-      private _symbolProvider: KorbitSymbolProvider
+      private _gwSymbol
     ) {
         setInterval(this.triggerUserTades, 10000);
         setTimeout(()=>this._evUp('GatewayOrderConnect', Models.ConnectivityStatus.Connected), 10);
@@ -353,7 +353,7 @@ class KorbitHttp {
 
 class KorbitPositionGateway implements Interfaces.IPositionGateway {
     private trigger = () => {
-        this._http.get("user/wallet", {currency_pair: this._symbolProvider.symbol}).then(msg => {
+        this._http.get("user/wallet", {currency_pair: this._gwSymbol}).then(msg => {
             if (!(<any>msg.data).balance) return;
 
             var free = (<any>msg.data).available;
@@ -374,53 +374,44 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
     constructor(
       private _evUp,
       private _http: KorbitHttp,
-      private _symbolProvider: KorbitSymbolProvider
+      private _gwSymbol
     ) {
         setInterval(this.trigger, 15000);
         setTimeout(this.trigger, 3000);
     }
 }
 
-class KorbitSymbolProvider {
-    public symbol: string;
-
-    constructor(cfPair) {
-        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + "_" + Models.fromCurrency(cfPair.quote).toLowerCase();
-    }
-}
-
 class Korbit extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      cfPair,
+      gwSymbol,
       _evOn,
       _evUp
     ) {
-        var symbol = new KorbitSymbolProvider(cfPair);
         var http = new KorbitHttp(cfString, new KorbitMessageSigner(cfString));
 
         var orderGateway = cfString("KorbitOrderDestination") == "Korbit"
-            ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(_evUp, http, symbol)
+            ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(_evUp, http, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new KorbitMarketDataGateway(_evUp, http, symbol);
-        new KorbitPositionGateway(_evUp, http, symbol);
+        new KorbitMarketDataGateway(_evUp, http, gwSymbol);
+        new KorbitPositionGateway(_evUp, http, gwSymbol);
         super(
             orderGateway
         );
     }
 }
 
-export async function createKorbit(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createKorbit(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const constants = await getJSON<any[]>(cfString("KorbitHttpUrl")+"/constants");
     let minTick = 500;
     let minSize = 0.015;
     for (let constant in constants)
-      if (constant.toUpperCase()==Models.fromCurrency(cfPair.base)+'TICKSIZE')
+      if (constant.toUpperCase()==(gwSymbol.split('_')[0]).toUpperCase()+'TICKSIZE')
           minTick = parseFloat(constants[constant]);
-      // else if (constant.toUpperCase()=='MIN'+Models.fromCurrency(cfPair.base)+'ORDER')
+      // else if (constant.toUpperCase()=='MIN'+(gwSymbol.split('_')[0]).toUpperCase()+'ORDER')
           // minSize = parseFloat(constants[constant]);
-    setMinTick(minTick);
-    setMinSize(minSize);
-    return new Korbit(cfString, cfPair, _evOn, _evUp);
+    gwMinTick(minTick);
+    gwMinSize(minSize);
+    return new Korbit(cfString, gwSymbol, _evOn, _evUp);
 }

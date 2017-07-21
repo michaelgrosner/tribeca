@@ -183,7 +183,7 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
       private _evOn,
       private _evUp,
       private _socket: BitfinexWebsocket,
-      private _symbolProvider: BitfinexSymbolProvider
+      private _gwSymbol
     ) {
         var depthChannel = "book";
         var tradesChannel = "trades";
@@ -195,12 +195,12 @@ class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
 
             if (cs == Models.ConnectivityStatus.Connected) {
                 _socket.send(depthChannel, {
-                  'symbol': 't'+_symbolProvider.symbol.toUpperCase(),
+                  'symbol': 't'+_gwSymbol.toUpperCase(),
                   'prec': 'P0',
                   'freq': 'F0'
                 });
                 _socket.send(tradesChannel, {
-                  'symbol': 't'+_symbolProvider.symbol.toUpperCase()
+                  'symbol': 't'+_gwSymbol.toUpperCase()
                 });
             }
         });
@@ -243,7 +243,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             cid: order.orderId,
             amount: (order.quantity * (order.side == Models.Side.Bid ? 1 : -1)).toString(),
             price: order.price.toString(),
-            symbol: 't'+this._symbolProvider.symbol.toUpperCase(),
+            symbol: 't'+this._gwSymbol.toUpperCase(),
             type: encodeTimeInForce(order.timeInForce, order.type),
             postonly: +order.preferPostOnly
         }, () => {
@@ -305,7 +305,7 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         private _http: BitfinexHttp,
         private _socket: BitfinexWebsocket,
         private _signer: BitfinexMessageSigner,
-        private _symbolProvider: BitfinexSymbolProvider) {
+        private _gwSymbol) {
         this._evOn('GatewayRESTConnect', s => this._evUp('GatewayOrderConnect', s));
 
         _socket.setHandler("auth", (msg: Models.Timestamped<any>) => {
@@ -481,18 +481,10 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class BitfinexSymbolProvider {
-    public symbol: string;
-
-    constructor(cfPair) {
-        this.symbol = Models.fromCurrency(cfPair.base).toLowerCase() + Models.fromCurrency(cfPair.quote).toLowerCase();
-    }
-}
-
 class Bitfinex extends Interfaces.CombinedGateway {
     constructor(
       cfString,
-      symbol: BitfinexSymbolProvider,
+      gwSymbol,
       _evOn,
       _evUp
     ) {
@@ -501,10 +493,10 @@ class Bitfinex extends Interfaces.CombinedGateway {
         const socket = new BitfinexWebsocket(_evUp, cfString);
 
         const orderGateway = cfString("BitfinexOrderDestination") == "Bitfinex"
-            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, http, socket, signer, symbol)
+            ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, http, socket, signer, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new BitfinexMarketDataGateway(_evOn, _evUp, socket, symbol);
+        new BitfinexMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
         new BitfinexPositionGateway(_evUp, http);
         super(
           orderGateway
@@ -532,19 +524,19 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(setMinTick, setMinSize, cfString, cfPair, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export async function createBitfinex(gwSymbol, gwMinTick, gwMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
     const detailsUrl = cfString("BitfinexHttpUrl")+"/symbols_details";
     const symbolDetails = await getJSON<SymbolDetails[]>(detailsUrl);
-    const symbol = new BitfinexSymbolProvider(cfPair);
 
     for (let s of symbolDetails) {
-        if (s.pair === symbol.symbol) {
+        if (s.pair === gwSymbol) {
             const tickerUrl = cfString("BitfinexHttpUrl")+"/pubticker/"+s.pair;
             const symbolTicker = await getJSON<SymbolTicker>(tickerUrl);
             const precisePrice = parseFloat(symbolTicker.last_price).toPrecision(s.price_precision).toString();
-            setMinTick(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
-            setMinSize(parseFloat(s.minimum_order_size));
-            return new Bitfinex(cfString, symbol, _evOn, _evUp);
+            gwMinTick(parseFloat('1e-'+precisePrice.substr(0, precisePrice.length-1).concat('1').replace(/^-?\d*\.?|0+$/g, '').length));
+            gwMinSize(parseFloat(s.minimum_order_size));
+            return new Bitfinex(cfString, gwSymbol, _evOn, _evUp);
         }
     }
+    throw new Error("Unable to match pair to a bitfinex symbol " + gwSymbol);
 }
