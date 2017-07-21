@@ -68,6 +68,7 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
+        savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
@@ -85,7 +86,6 @@ namespace K {
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
         NODE_SET_METHOD(exports, "gwSetMinTick", GW::_gwSetMinTick);
         NODE_SET_METHOD(exports, "gwSetMinSize", GW::_gwSetMinSize);
-        NODE_SET_METHOD(exports, "gwSavedQuotingMode", GW::_gwSavedQuotingMode);
       };
     private:
       static Local<Value> onSnapStatus(Local<Value> z) {
@@ -174,9 +174,6 @@ namespace K {
       };
       static void _gwSetMinSize(const FunctionCallbackInfo<Value> &args) {
         gw->minSize = args[0]->NumberValue();
-      };
-      static void _gwSavedQuotingMode(const FunctionCallbackInfo<Value> &args) {
-        savedQuotingMode = args[0]->BooleanValue();
       };
   };
 }
