@@ -8,10 +8,10 @@ export class QuoteSender {
   private _latestStatus = new Models.TwoSidedQuoteStatus(Models.QuoteStatus.MissingData, Models.QuoteStatus.MissingData, 0, 0, 0);
   private _lastStart: number = new Date().getTime();
   private _timeoutStart: number = 0;
-
+  private _brokerStatus = Models.ConnectivityStatus.Disconnected;
+  private _brokerState: boolean = false;
   constructor(
     private _quotingEngine: QuotingEngine.QuotingEngine,
-    private _broker: Broker.ExchangeBroker,
     private _orderBroker: Broker.OrderBroker,
     private _minTick,
     private _qpRepo,
@@ -20,7 +20,11 @@ export class QuoteSender {
     private _evOn
   ) {
     this._evOn('Quote', this.sendQuote);
-    this._evOn('ExchangeConnect', this.sendQuote);
+    this._evOn('ExchangeConnect', (statusState) => {
+      this._brokerStatus = statusState.status;
+      this._brokerState = statusState.state;
+      this.sendQuote();
+    });
     _uiSnap(Models.Topics.QuoteStatus, () => [this._latestStatus]);
   }
 
@@ -45,8 +49,8 @@ export class QuoteSender {
     let askStatus = this._quotingEngine.latestQuoteAskStatus;
     let bidStatus = this._quotingEngine.latestQuoteBidStatus;
 
-    if (quote !== null && this._broker.connectStatus === Models.ConnectivityStatus.Connected) {
-      if (this._broker.latestState) {
+    if (quote !== null && this._brokerStatus === Models.ConnectivityStatus.Connected) {
+      if (this._brokerState) {
         if (quote.ask !== null)
           askStatus = !this.checkCrossedQuotes(Models.Side.Ask, quote.ask.price)
             ? Models.QuoteStatus.Live

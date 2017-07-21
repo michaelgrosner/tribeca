@@ -210,7 +210,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
   new QuoteSender.QuoteSender(
     quotingEngine,
-    broker,
     orderBroker,
     bindings.minTick(),
     bindings.qpRepo,

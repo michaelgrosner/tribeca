@@ -544,15 +544,11 @@ export class ExchangeBroker {
             : Models.ConnectivityStatus.Disconnected;
 
         this._connectStatus = newStatus;
-        this._evUp('ExchangeConnect');
+        this._evUp('ExchangeConnect', {state:this._latestState, status:this._connectStatus});
 
         this.updateConnectivity();
-        this._uiSend(Models.Topics.ExchangeConnectivity, this.connectStatus);
+        this._uiSend(Models.Topics.ExchangeConnectivity, this._connectStatus);
     };
-
-    public get connectStatus(): Models.ConnectivityStatus {
-      return this._connectStatus;
-    }
 
     constructor(
       private _uiSnap,
@@ -572,7 +568,7 @@ export class ExchangeBroker {
         this.onConnect(Models.GatewayType.OrderEntry, s)
       });
 
-      _uiSnap(Models.Topics.ExchangeConnectivity, () => [this.connectStatus]);
+      _uiSnap(Models.Topics.ExchangeConnectivity, () => [this._connectStatus]);
       _uiSnap(Models.Topics.ActiveState, () => [this._latestState]);
       _uiHand(Models.Topics.ActiveState, this.handleNewQuotingModeChangeRequest);
 
@@ -581,22 +577,19 @@ export class ExchangeBroker {
   private _savedQuotingMode: boolean = false;
 
   private _latestState: boolean = false;
-  public get latestState() {
-      return this._latestState;
-  }
 
   private handleNewQuotingModeChangeRequest = (v: boolean) => {
     if (v !== this._savedQuotingMode) {
       this._savedQuotingMode = v;
       this.updateConnectivity();
-      this._evUp('ExchangeConnect');
+      this._evUp('ExchangeConnect', {state:this._latestState, status:this._connectStatus});
     }
 
     this._uiSend(Models.Topics.ActiveState, this._latestState);
   };
 
   private updateConnectivity = () => {
-    var newMode = (this.connectStatus !== Models.ConnectivityStatus.Connected)
+    var newMode = (this._connectStatus !== Models.ConnectivityStatus.Connected)
       ? false : this._savedQuotingMode;
 
     if (newMode !== this._latestState) {
