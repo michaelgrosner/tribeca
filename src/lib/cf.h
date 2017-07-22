@@ -10,19 +10,15 @@ namespace K {
       static void main(Local<Object> exports) {
         if (access("package.json", F_OK) != -1) {
           ifstream file_("package.json");
-          string txt_((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>());
-          pkRepo = json::parse(txt_);
+          pkRepo = json::parse(string((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>()));
         } else { cout << FN::uiT() << "Errrror: CF package.json not found." << endl; exit(1); }
         string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K.json");
         cFname = string("etc/").append(k);
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
-          string txt((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-          cfRepo = json::parse(txt);
+          cfRepo = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
           cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
-        } else {
-          cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
-        }
+        } else cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
@@ -31,7 +27,7 @@ namespace K {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
         if (cfRepo.find(k) == cfRepo.end()) {
           if (r) {
-            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
+            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl;
             exit(1);
           } else return "";
         } else return cfRepo[k];
