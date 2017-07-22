@@ -64,8 +64,8 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 
 export class NullPositionGateway implements Interfaces.IPositionGateway {
     constructor(private _evUp, gwSymbol) {
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, gwSymbol().split('_')[0])), 2500);
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, gwSymbol().split('_')[1])), 2500);
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, gwSymbol.split('_')[0])), 2500);
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, gwSymbol.split('_')[1])), 2500);
     }
 }
 
@@ -99,8 +99,8 @@ class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
 
 export class NullGateway extends Interfaces.CombinedGateway {
     constructor(
-      cfString,
       gwSymbol,
+      cfString,
       _evUp
     ) {
         new NullMarketDataGateway(_evUp);
