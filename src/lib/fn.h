@@ -48,12 +48,33 @@ namespace K {
         CURL* curl;
         curl_global_init(CURL_GLOBAL_ALL);
         curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_URL, k.data());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-        curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
+        if (curl) {
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r);
+          curl_easy_cleanup(curl);
+        }
+        curl_global_cleanup();
+        return k_;
+      };
+      static string wPost(string k, string p) {
+        string k_;
+        CURL* curl;
+        curl_global_init(CURL_GLOBAL_ALL);
+        curl = curl_easy_init();
+        if (curl) {
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r);
+          curl_easy_cleanup(curl);
+        }
         curl_global_cleanup();
         return k_;
       };

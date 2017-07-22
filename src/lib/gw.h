@@ -12,18 +12,21 @@ namespace K {
       virtual mExchange exchange() = 0;
       virtual string symbol() = 0;
       virtual void fetch() = 0;
+      virtual void pos() = 0;
   };
   class GwNull: public Gw {
     public:
       mExchange exchange() { return mExchange::Null; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]); };
       void fetch() { minTick = 0.01; minSize = 0.01; };
+      void pos() { };
   };
   class GwOkCoin: public Gw {
     public:
       mExchange exchange() { return mExchange::OkCoin; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
       void fetch() { minTick = "btc" == symbol().substr(0,3) ? 0.01 : 0.001; minSize = 0.01; };
+      void pos() { };
   };
   class GwCoinbase: public Gw {
     public:
@@ -36,6 +39,7 @@ namespace K {
           minSize = stod(k["base_min_size"].get<string>());
         }
       };
+      void pos() { };
   };
   class GwBitfinex: public Gw {
     public:
@@ -49,6 +53,7 @@ namespace K {
           minSize = 0.01;
         }
       };
+      void pos() { };
   };
   class GwKorbit: public Gw {
     public:
@@ -61,6 +66,7 @@ namespace K {
           minSize = 0.015;
         }
       };
+      void pos() { };
   };
   class GwHitBtc: public Gw {
     public:
@@ -76,6 +82,7 @@ namespace K {
               break;
             }
       };
+      void pos() { };
   };
   class GwPoloniex: public Gw {
     public:
@@ -89,6 +96,7 @@ namespace K {
           minSize = 0.01;
         }
       };
+      void pos() { };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
@@ -101,6 +109,7 @@ namespace K {
     cout << FN::uiT() << "No gateway provided for exchange \"" << CF::cfString("EXCHANGE") << "\"." << endl;
     exit(1);
   };
+  uv_timer_t gwPos_;
   bool savedQuotingMode = false;
   bool gwState = false;
   mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
@@ -116,6 +125,9 @@ namespace K {
         else { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " allows client IP." << endl; }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
+        if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
+        gwPos_.data = gw;
+        if (uv_timer_start(&gwPos_, gwPos__, 0, 7500)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
@@ -132,6 +144,10 @@ namespace K {
         NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
         NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
+      };
+      static void gwPos__(uv_timer_t *handle) {
+        Gw* gw = (Gw*) handle->data;
+        gw->pos();
       };
     private:
       static Local<Value> onSnapProduct(Local<Value> z) {
