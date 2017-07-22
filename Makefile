@@ -1,11 +1,13 @@
 V_UWS := 0.14.3
+V_JSO := v2.1.1
 V_QF  := v.1.14.4
 G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node           \
-   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
-   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
-   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
-   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
-   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
+  -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
+  build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
+  build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
+  build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
+  build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
+  -Ibuild/json-$(V_JSO)                                                                \
 src/lib/K.cc -lsqlite3 -lcurl
 
 all: K
@@ -32,6 +34,7 @@ help:
 	#   make send-cov   - send coverage                #
 	#                                                  #
 	#   make node       - download node src files      #
+	#   make json       - download json src files      #
 	#   make uws        - download uws src files       #
 	#   make quickfix   - download quickfix src files  #
 	#   make clean      - remove external src files    #
@@ -40,6 +43,7 @@ help:
 K: src/lib/K.cc
 	mkdir -p build app/server/lib
 	$(MAKE) quickfix
+	$(MAKE) json
 	$(MAKE) uws
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
@@ -55,6 +59,9 @@ endif
 
 uws: build
 	test -d build/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build
+
+json: build
+	test -f build/json-$(V_JSO)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSO)/json.hpp -o build/json-$(V_JSO)/json.h)
 
 quickfix: build
 	(test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || ( \
