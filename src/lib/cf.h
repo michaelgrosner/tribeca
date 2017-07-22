@@ -30,7 +30,8 @@ namespace K {
             cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl;
             exit(1);
           } else return "";
-        } else return cfRepo[k].get<string>();
+        }
+        return (cfRepo[k].is_string()) ? cfRepo[k].get<string>() : to_string(cfRepo[k].get<double>());
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
