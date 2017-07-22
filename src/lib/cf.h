@@ -4,16 +4,22 @@
 namespace K {
   string cFname;
   Persistent<Object> cfRepo;
+  Persistent<Object> pkRepo;
   class CF {
     public:
       static void main(Local<Object> exports) {
         Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        if (access("package.json", F_OK) != -1) {
+          ifstream file_("package.json");
+          string txt_((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>());
+          pkRepo.Reset(isolate, Json.Parse(isolate->GetCurrentContext(), FN::v8S(txt_.data())).ToLocalChecked()->ToObject());
+        } else { cout << FN::uiT() << "Errrror: CF package.json not found." << endl; exit(1); }
         string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K.json");
         cFname = string("etc/").append(k);
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
           string txt((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-          JSON Json;
           cfRepo.Reset(isolate, Json.Parse(isolate->GetCurrentContext(), FN::v8S(txt.data())).ToLocalChecked()->ToObject());
           cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
         } else {
@@ -32,10 +38,21 @@ namespace K {
         MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
         Local<Array> props = maybe_props.ToLocalChecked();
         if (!maybe_props.IsEmpty())
-          for(uint32_t i=0; i < props->Length(); i++) if (k == string(*String::Utf8Value(props->Get(i)->ToString())))
-            return string(*String::Utf8Value(o->Get(props->Get(i)->ToObject())->ToString()));
+          for(uint32_t i=0; i < props->Length(); i++) if (k == FN::S8v(props->Get(i)->ToString()))
+            return FN::S8v(o->Get(props->Get(i)->ToObject())->ToString());
         if (r) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl; exit(1); }
         return "";
+      };
+      static string cfPKString(string k) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Object> o = Local<Object>::New(isolate, pkRepo);
+        MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
+        Local<Array> props = maybe_props.ToLocalChecked();
+        if (!maybe_props.IsEmpty())
+          for(uint32_t i=0; i < props->Length(); i++) if (k == FN::S8v(props->Get(i)->ToString()))
+            return FN::S8v(o->Get(props->Get(i)->ToObject())->ToString());
+        cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
+        exit(1);
       };
       static int cfBase() {
         string k_ = cfString("TradedPair");

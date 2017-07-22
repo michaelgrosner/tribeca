@@ -83,24 +83,6 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
     }
   })();
 
-  console.info(new Date().toISOString().slice(11, -1), 'GW', 'Exchange details', {
-      exchange: bindings.cfString("EXCHANGE"),
-      pair: bindings.gwSymbol(),
-      minTick: bindings.gwMinTick(),
-      minSize: bindings.gwMinSize(),
-      makeFee: bindings.gwMakeFee(),
-      takeFee: bindings.gwTakeFee()
-  });
-
-  bindings.uiSnap(Models.Topics.ProductAdvertisement, () => [new Models.ProductAdvertisement(
-    bindings.cfmExchange(),
-    bindings.cfmCurrencyPair(),
-    bindings.cfString("BotIdentifier").replace('auto',''),
-    bindings.cfString("MatryoshkaUrl"),
-    packageConfig.homepage,
-    bindings.gwMinTick()
-  )]);
-
   const orderBroker = new Broker.OrderBroker(
     bindings.qpRepo,
     bindings.cfmCurrencyPair(),
