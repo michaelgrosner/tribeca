@@ -30,14 +30,14 @@ namespace K {
             cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl;
             exit(1);
           } else return "";
-        } else return cfRepo[k];
+        } else return cfRepo[k].get<string>();
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
           cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
           exit(1);
         }
-        return pkRepo[k];
+        return pkRepo[k].get<string>();
       };
       static int cfBase() {
         string k_ = cfString("TradedPair");
