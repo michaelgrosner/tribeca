@@ -69,147 +69,145 @@ const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 
-(async (): Promise<void> => {
-  const gateway = await ((): Promise<Interfaces.CombinedGateway> => {
-    switch (bindings.cfmExchange()) {
-      case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp, bindings.gwMinSize());
-      case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
-    }
-  })();
+const gateway = ((): Interfaces.CombinedGateway => {
+  switch (bindings.cfmExchange()) {
+    case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp, bindings.gwMinSize());
+    case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
+  }
+})();
 
-  const orderBroker = new Broker.OrderBroker(
-    bindings.qpRepo,
-    bindings.cfmCurrencyPair(),
-    bindings.gwMakeFee(),
-    bindings.gwTakeFee(),
+const orderBroker = new Broker.OrderBroker(
+  bindings.qpRepo,
+  bindings.cfmCurrencyPair(),
+  bindings.gwMakeFee(),
+  bindings.gwTakeFee(),
+  bindings.gwMinTick(),
+  bindings.gwExchange(),
+  gateway.oe,
+  bindings.dbInsert,
+  bindings.uiSnap,
+  bindings.uiHand,
+  bindings.uiSend,
+  bindings.evOn,
+  bindings.evUp,
+  initTrades
+);
+
+const marketBroker = new Broker.MarketDataBroker(
+  bindings.uiSnap,
+  bindings.uiSend,
+  bindings.evOn,
+  bindings.evUp
+);
+
+const fvEngine = new FairValue.FairValueEngine(
+  new MarketFiltration.MarketFiltration(
     bindings.gwMinTick(),
-    bindings.gwExchange(),
-    gateway.oe,
-    bindings.dbInsert,
-    bindings.uiSnap,
-    bindings.uiHand,
-    bindings.uiSend,
-    bindings.evOn,
-    bindings.evUp,
-    initTrades
-  );
-
-  const marketBroker = new Broker.MarketDataBroker(
-    bindings.uiSnap,
-    bindings.uiSend,
-    bindings.evOn,
-    bindings.evUp
-  );
-
-  const fvEngine = new FairValue.FairValueEngine(
-    new MarketFiltration.MarketFiltration(
-      bindings.gwMinTick(),
-      orderBroker,
-      marketBroker,
-      bindings.evOn,
-      bindings.evUp
-    ),
-    bindings.gwMinTick(),
-    bindings.qpRepo,
-    bindings.uiSnap,
-    bindings.uiSend,
-    bindings.evOn,
-    bindings.evUp,
-    initRfv
-  );
-
-  const positionBroker = new Broker.PositionBroker(
-    bindings.qpRepo,
-    bindings.cfmCurrencyPair(),
-    bindings.gwExchange(),
     orderBroker,
+    marketBroker,
+    bindings.evOn,
+    bindings.evUp
+  ),
+  bindings.gwMinTick(),
+  bindings.qpRepo,
+  bindings.uiSnap,
+  bindings.uiSend,
+  bindings.evOn,
+  bindings.evUp,
+  initRfv
+);
+
+const positionBroker = new Broker.PositionBroker(
+  bindings.qpRepo,
+  bindings.cfmCurrencyPair(),
+  bindings.gwExchange(),
+  orderBroker,
+  fvEngine,
+  bindings.uiSnap,
+  bindings.uiSend,
+  bindings.evOn,
+  bindings.evUp
+);
+
+const quotingEngine = new QuotingEngine.QuotingEngine(
+  fvEngine,
+  bindings.qpRepo,
+  positionBroker,
+  bindings.gwMinTick(),
+  bindings.gwMinSize(),
+  new Statistics.EWMAProtectionCalculator(
     fvEngine,
+    bindings.qpRepo,
+    bindings.evUp
+  ),
+  new Statistics.STDEVProtectionCalculator(
+    fvEngine,
+    bindings.qpRepo,
+    bindings.dbInsert,
+    bindings.computeStdevs,
+    initMkt
+  ),
+  new PositionManagement.TargetBasePositionManager(
+    bindings.gwMinTick(),
+    bindings.dbInsert,
+    fvEngine,
+    new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
+    bindings.qpRepo,
+    positionBroker,
     bindings.uiSnap,
     bindings.uiSend,
     bindings.evOn,
-    bindings.evUp
-  );
-
-  const quotingEngine = new QuotingEngine.QuotingEngine(
+    bindings.evUp,
+    initTBP
+  ),
+  new Safety.SafetyCalculator(
     fvEngine,
     bindings.qpRepo,
     positionBroker,
-    bindings.gwMinTick(),
-    bindings.gwMinSize(),
-    new Statistics.EWMAProtectionCalculator(
-      fvEngine,
-      bindings.qpRepo,
-      bindings.evUp
-    ),
-    new Statistics.STDEVProtectionCalculator(
-      fvEngine,
-      bindings.qpRepo,
-      bindings.dbInsert,
-      bindings.computeStdevs,
-      initMkt
-    ),
-    new PositionManagement.TargetBasePositionManager(
-      bindings.gwMinTick(),
-      bindings.dbInsert,
-      fvEngine,
-      new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
-      bindings.qpRepo,
-      positionBroker,
-      bindings.uiSnap,
-      bindings.uiSend,
-      bindings.evOn,
-      bindings.evUp,
-      initTBP
-    ),
-    new Safety.SafetyCalculator(
-      fvEngine,
-      bindings.qpRepo,
-      positionBroker,
-      orderBroker,
-      bindings.uiSnap,
-      bindings.uiSend,
-      bindings.evOn,
-      bindings.evUp
-    ),
-    bindings.evOn,
-    bindings.evUp
-  );
-
-  new QuoteSender.QuoteSender(
-    quotingEngine,
     orderBroker,
-    bindings.gwMinTick(),
-    bindings.qpRepo,
     bindings.uiSnap,
     bindings.uiSend,
-    bindings.evOn
-  );
-
-  new MarketTrades.MarketTradeBroker(
-    bindings.uiSnap,
-    bindings.uiSend,
-    bindings.cfmCurrencyPair(),
-    bindings.gwExchange(),
     bindings.evOn,
     bindings.evUp
-  );
+  ),
+  bindings.evOn,
+  bindings.evUp
+);
 
-  happyEnding = () => {
-    orderBroker.cancelOpenOrders();
-    console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
-  };
+new QuoteSender.QuoteSender(
+  quotingEngine,
+  orderBroker,
+  bindings.gwMinTick(),
+  bindings.qpRepo,
+  bindings.uiSnap,
+  bindings.uiSend,
+  bindings.evOn
+);
 
-  let highTime = process.hrtime();
-  setInterval(() => {
-    const diff = process.hrtime(highTime);
-    const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
-    if (n > 242) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
-    highTime = process.hrtime();
-  }, 500).unref();
-})();
+new MarketTrades.MarketTradeBroker(
+  bindings.uiSnap,
+  bindings.uiSend,
+  bindings.cfmCurrencyPair(),
+  bindings.gwExchange(),
+  bindings.evOn,
+  bindings.evUp
+);
+
+happyEnding = () => {
+  orderBroker.cancelOpenOrders();
+  console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
+};
+
+let highTime = process.hrtime();
+setInterval(() => {
+  const diff = process.hrtime(highTime);
+  const n = ((diff[0] * 1e9 + diff[1]) / 1e6) - 500;
+  if (n > 242) console.info(new Date().toISOString().slice(11, -1), 'main', 'Event loop delay', Utils.roundNearest(n, 100) + 'ms');
+  highTime = process.hrtime();
+}, 500).unref();
