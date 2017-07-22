@@ -576,15 +576,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                     }
 
                     rpts.forEach(r => {
-                        let currency: Models.Currency;
-                        try {
-                            currency = Models.toCurrency(r.currency_code);
-                        }
-                        catch (e) {
-                            return;
-                        }
-                        if (currency == null || [this._gwSymbol].indexOf(currency)==-1) return;
-                        this._evUp('PositionGateway', new Models.CurrencyPosition(r.cash, r.reserved, currency));
+                        if (this._gwSymbol.indexOf(r.currency_code)==-1) return;
+                        this._evUp('PositionGateway', new Models.CurrencyPosition(r.cash, r.reserved, Models.toCurrency(r.currency_code)));
                     });
                 }
                 catch (e) {
