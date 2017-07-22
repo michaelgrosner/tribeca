@@ -4,7 +4,7 @@
 namespace K {
   string cFname;
   Persistent<Object> cfRepo;
-  Persistent<Object> pkRepo;
+  json pkRepo;
   class CF {
     public:
       static void main(Local<Object> exports) {
@@ -13,7 +13,7 @@ namespace K {
         if (access("package.json", F_OK) != -1) {
           ifstream file_("package.json");
           string txt_((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>());
-          pkRepo.Reset(isolate, Json.Parse(isolate->GetCurrentContext(), FN::v8S(txt_.data())).ToLocalChecked()->ToObject());
+          pkRepo = json::parse(txt_);
         } else { cout << FN::uiT() << "Errrror: CF package.json not found." << endl; exit(1); }
         string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K.json");
         cFname = string("etc/").append(k);
@@ -44,15 +44,11 @@ namespace K {
         return "";
       };
       static string cfPKString(string k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Local<Object>::New(isolate, pkRepo);
-        MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-        Local<Array> props = maybe_props.ToLocalChecked();
-        if (!maybe_props.IsEmpty())
-          for(uint32_t i=0; i < props->Length(); i++) if (k == FN::S8v(props->Get(i)->ToString()))
-            return FN::S8v(o->Get(props->Get(i)->ToObject())->ToString());
-        cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
-        exit(1);
+        if (pkRepo.find(k) == pkRepo.end()) {
+          cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
+          exit(1);
+        }
+        return pkRepo[k];
       };
       static int cfBase() {
         string k_ = cfString("TradedPair");
