@@ -3,13 +3,11 @@
 
 namespace K {
   string cFname;
-  Persistent<Object> cfRepo;
+  json cfRepo;
   json pkRepo;
   class CF {
     public:
       static void main(Local<Object> exports) {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
         if (access("package.json", F_OK) != -1) {
           ifstream file_("package.json");
           string txt_((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>());
@@ -20,10 +18,9 @@ namespace K {
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
           string txt((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-          cfRepo.Reset(isolate, Json.Parse(isolate->GetCurrentContext(), FN::v8S(txt.data())).ToLocalChecked()->ToObject());
+          cfRepo = json::parse(txt);
           cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
         } else {
-          cfRepo.Reset(isolate, Object::New(isolate));
           cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         }
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
@@ -31,17 +28,13 @@ namespace K {
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
       };
       static string cfString(string k, bool r = true) {
-        Isolate* isolate = Isolate::GetCurrent();
-        if (getenv(k.data()) != NULL)
-          return string(getenv(k.data()));
-        Local<Object> o = Local<Object>::New(isolate, cfRepo);
-        MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-        Local<Array> props = maybe_props.ToLocalChecked();
-        if (!maybe_props.IsEmpty())
-          for(uint32_t i=0; i < props->Length(); i++) if (k == FN::S8v(props->Get(i)->ToString()))
-            return FN::S8v(o->Get(props->Get(i)->ToObject())->ToString());
-        if (r) { cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl; exit(1); }
-        return "";
+        if (getenv(k.data()) != NULL) return string(getenv(k.data()));
+        if (cfRepo.find(k) == cfRepo.end()) {
+          if (r) {
+            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
+            exit(1);
+          } else return "";
+        } else return cfRepo[k];
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
