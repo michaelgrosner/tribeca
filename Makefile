@@ -117,4 +117,4 @@ send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws node Linux Darwin clean cleandb config server client pub bundle changelog test test-cov send-cov asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean cleandb config server client pub bundle changelog test test-cov send-cov asandwich
