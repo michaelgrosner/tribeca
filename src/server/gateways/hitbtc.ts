@@ -609,9 +609,9 @@ class HitBtc extends Interfaces.CombinedGateway {
     constructor(
       cfString,
       gwSymbol,
-      lot: number,
       _evOn,
-      _evUp
+      _evUp,
+      lot
     ) {
         const orderGateway = cfString("HitBtcOrderDestination") == "HitBtc" ?
             <Interfaces.IOrderEntryGateway>new HitBtcOrderEntryGateway(_evUp, cfString, gwSymbol, lot)
@@ -640,17 +640,6 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
-    const symbolsUrl = cfString("HitBtcPullUrl") + "/api/1/public/symbols";
-    const symbols = await getJSON<{symbols: HitBtcSymbol[]}>(symbolsUrl);
-
-    for (let s of symbols.symbols) {
-        if (s.symbol === gwSymbol) {
-            gwSetMinTick(parseFloat(s.step));
-            gwSetMinSize(0.01);
-            return new HitBtc(cfString, gwSymbol, parseFloat(s.lot), _evOn, _evUp);
-        }
-    }
-
-    throw new Error("Unable to match pair to a hitbtc symbol " + gwSymbol);
+export async function createHitBtc(gwSymbol, cfString, _evOn, _evUp, gwMinSize) : Promise<Interfaces.CombinedGateway> {
+    return new HitBtc(cfString, gwSymbol, _evOn, _evUp, gwMinSize);
 }

@@ -77,7 +77,7 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
       case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
       case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.gwSetMinTick, bindings.gwSetMinSize, bindings.cfString, bindings.evOn, bindings.evUp);
+      case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp, bindings.gwMinSize());
       case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
       default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
     }

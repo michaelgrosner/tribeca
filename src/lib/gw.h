@@ -23,7 +23,32 @@ namespace K {
     public:
       mExchange exchange() { return mExchange::HitBtc; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
-      void fetch() { minTick = 0.01; minSize = 0.01; };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols")).data()));
+        minTick = 0;
+        if (!v.IsEmpty()) {
+          Local<Object> k_;
+          Local<Object> k = v.ToLocalChecked()->ToObject()->Get(FN::v8S("symbols"))->ToObject();
+          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
+          if (!maybe_props.IsEmpty()) {
+            Local<Array> props = maybe_props.ToLocalChecked();
+            for(uint32_t i=0; i < props->Length(); i++) {
+              k_ = k->Get(props->Get(i)->ToString())->ToObject();
+              if (FN::S8v(k_->Get(FN::v8S("symbol"))->ToString()) == symbol()) {
+                minTick = k_->Get(FN::v8S("step"))->NumberValue();
+                minSize = k_->Get(FN::v8S("lot"))->NumberValue();
+                break;
+              }
+            }
+          }
+        }
+        if (!minTick) {
+          cout << FN::uiT() << "Unable to match pair to a hitbtc symbol \"" << symbol() << "\"." << endl;
+          exit(1);
+        }
+      };
   };
   class GwOkCoin: public Gw {
     public:
@@ -53,7 +78,7 @@ namespace K {
           if (!maybe_props.IsEmpty()) {
             Local<Array> props = maybe_props.ToLocalChecked();
             for(uint32_t i=0; i < props->Length(); i++) {
-              k_ = k->Get(i)->ToObject();
+              k_ = k->Get(props->Get(i)->ToString())->ToObject();
               if (FN::S8v(k_->Get(FN::v8S("pair"))->ToString()) == symbol()) {
                 MaybeLocal<Value> v_ = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol())).data()));
                 if (!v_.IsEmpty()) {
