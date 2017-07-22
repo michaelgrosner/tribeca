@@ -176,12 +176,14 @@ namespace K {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " details:" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
         EV::evOn("GatewayOrderConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::OrderEntry, (mConnectivityStatus)c->NumberValue());
         });
+        UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
@@ -193,6 +195,22 @@ namespace K {
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
       };
     private:
+      static Local<Value> onSnapProduct(Local<Value> z) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Array> k_ = Array::New(isolate);
+        Local<Object> k = Object::New(isolate);
+        k->Set(FN::v8S("exchange"), Number::New(isolate, (double)gw->exchange()));
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("base"), Number::New(isolate, (double)CF::cfBase()));
+        o->Set(FN::v8S("quote"), Number::New(isolate, (double)CF::cfQuote()));
+        k->Set(FN::v8S("pair"), o);
+        k->Set(FN::v8S("environment"), FN::v8S(isolate, CF::cfString("BotIdentifier").substr(savedQuotingMode?4:0)));
+        k->Set(FN::v8S("matryoshka"), FN::v8S(isolate, CF::cfString("MatryoshkaUrl")));
+        k->Set(FN::v8S("homepage"), FN::v8S(isolate, CF::cfPKString("homepage")));
+        k->Set(FN::v8S("minTick"), Number::New(isolate, gw->minTick));
+        k_->Set(0, k);
+        return k_;
+      };
       static Local<Value> onSnapStatus(Local<Value> z) {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k = Array::New(isolate);
