@@ -45,6 +45,7 @@ namespace K {
         curl_easy_setopt(curl, CURLOPT_URL, u.data());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         curl_global_cleanup();

@@ -535,12 +535,18 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
 
 class Coinbase extends Interfaces.CombinedGateway {
     constructor(
-      authClient: Gdax.AuthenticatedClient,
-      cfString,
       gwSymbol,
+      cfString,
       _evOn,
       _evUp
     ) {
+        const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
+          cfString("CoinbaseApiKey"),
+          cfString("CoinbaseSecret"),
+          cfString("CoinbasePassphrase"),
+          cfString("CoinbaseRestUrl")
+        );
+
         const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(gwSymbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
 
         new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient);
@@ -554,31 +560,6 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(gwSymbol, gwSetMinTick, gwSetMinSize, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
-    const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
-      cfString("CoinbaseApiKey"),
-      cfString("CoinbaseSecret"),
-      cfString("CoinbasePassphrase"),
-      cfString("CoinbaseRestUrl")
-    );
-
-    const products = await new Promise<Product[]>((resolve, reject) => {
-      authClient.getProducts((err, res, data) => {
-          if (err) reject(err);
-          else resolve(data);
-      });
-    });
-
-    if (!products)
-      throw new Error("Unable to connect to Coinbase, seems currently offline. Please retry once is online.");
-
-    for (let p of products) {
-        if (p.id === gwSymbol) {
-            gwSetMinTick(parseFloat(p.quote_increment));
-            gwSetMinSize(parseFloat(p.base_min_size));
-            return new Coinbase(authClient, cfString, gwSymbol, _evOn, _evUp);
-        }
-    }
-
-    throw new Error("Unable to match pair to a Coinbase symbol " + gwSymbol);
+export async function createCoinbase(gwSymbol, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+    return new Coinbase(gwSymbol, cfString, _evOn, _evUp);
 }

@@ -19,37 +19,6 @@ namespace K {
       string symbol() { return string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]); };
       void fetch() { minTick = 0.01; minSize = 0.01; };
   };
-  class GwHitBtc: public Gw {
-    public:
-      mExchange exchange() { return mExchange::HitBtc; };
-      string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
-      void fetch() {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
-        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols")).data()));
-        minTick = 0;
-        if (!v.IsEmpty()) {
-          Local<Object> k_;
-          Local<Object> k = v.ToLocalChecked()->ToObject()->Get(FN::v8S("symbols"))->ToObject();
-          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            Local<Array> props = maybe_props.ToLocalChecked();
-            for(uint32_t i=0; i < props->Length(); i++) {
-              k_ = k->Get(props->Get(i)->ToString())->ToObject();
-              if (FN::S8v(k_->Get(FN::v8S("symbol"))->ToString()) == symbol()) {
-                minTick = k_->Get(FN::v8S("step"))->NumberValue();
-                minSize = k_->Get(FN::v8S("lot"))->NumberValue();
-                break;
-              }
-            }
-          }
-        }
-        if (!minTick) {
-          cout << FN::uiT() << "Unable to match pair to a hitbtc symbol \"" << symbol() << "\"." << endl;
-          exit(1);
-        }
-      };
-  };
   class GwOkCoin: public Gw {
     public:
       mExchange exchange() { return mExchange::OkCoin; };
@@ -60,7 +29,21 @@ namespace K {
     public:
       mExchange exchange() { return mExchange::Coinbase; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]); };
-      void fetch() { minTick = 0.01; minSize = 0.01; };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol())).data()));
+        minTick = 0;
+        if (!v.IsEmpty()) {
+          Local<Object> k = v.ToLocalChecked()->ToObject();
+          minTick = k->Get(FN::v8S("quote_increment"))->NumberValue();
+          minSize = k->Get(FN::v8S("base_min_size"))->NumberValue();
+        }
+        if (!minTick) {
+          cout << FN::uiT() << "Unable to match pair to a Coinbase symbol \"" << symbol() << "\"." << endl;
+          exit(1);
+        }
+      };
   };
   class GwBitfinex: public Gw {
     public:
@@ -92,7 +75,7 @@ namespace K {
           }
         }
         if (!_minTick) {
-          cout << FN::uiT() << "Unable to match pair to a bitfinex symbol \"" << symbol() << "\"." << endl;
+          cout << FN::uiT() << "Unable to match pair to a Bitfinex symbol \"" << symbol() << "\"." << endl;
           exit(1);
         }
         minTick = _minTick;
@@ -114,6 +97,37 @@ namespace K {
         }
         minTick = _minTick ? _minTick : 500;
         minSize = 0.015;
+      };
+  };
+  class GwHitBtc: public Gw {
+    public:
+      mExchange exchange() { return mExchange::HitBtc; };
+      string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
+      void fetch() {
+        Isolate* isolate = Isolate::GetCurrent();
+        JSON Json;
+        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols")).data()));
+        minTick = 0;
+        if (!v.IsEmpty()) {
+          Local<Object> k_;
+          Local<Object> k = v.ToLocalChecked()->ToObject()->Get(FN::v8S("symbols"))->ToObject();
+          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
+          if (!maybe_props.IsEmpty()) {
+            Local<Array> props = maybe_props.ToLocalChecked();
+            for(uint32_t i=0; i < props->Length(); i++) {
+              k_ = k->Get(props->Get(i)->ToString())->ToObject();
+              if (FN::S8v(k_->Get(FN::v8S("symbol"))->ToString()) == symbol()) {
+                minTick = k_->Get(FN::v8S("step"))->NumberValue();
+                minSize = k_->Get(FN::v8S("lot"))->NumberValue();
+                break;
+              }
+            }
+          }
+        }
+        if (!minTick) {
+          cout << FN::uiT() << "Unable to match pair to a Hitbtc symbol \"" << symbol() << "\"." << endl;
+          exit(1);
+        }
       };
   };
   class GwPoloniex: public Gw {
@@ -141,11 +155,11 @@ namespace K {
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
-    else if (e == mExchange::HitBtc) return new GwHitBtc;
     else if (e == mExchange::OkCoin) return new GwOkCoin;
     else if (e == mExchange::Coinbase) return new GwCoinbase;
     else if (e == mExchange::Bitfinex) return new GwBitfinex;
     else if (e == mExchange::Korbit) return new GwKorbit;
+    else if (e == mExchange::HitBtc) return new GwHitBtc;
     else if (e == mExchange::Poloniex) return new GwPoloniex;
     cout << FN::uiT() << "No gateway provided for exchange \"" << CF::cfString("EXCHANGE") << "\"." << endl;
     exit(1);
@@ -177,8 +191,6 @@ namespace K {
         NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
         NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
-        NODE_SET_METHOD(exports, "gwSetMinTick", GW::_gwSetMinTick);
-        NODE_SET_METHOD(exports, "gwSetMinSize", GW::_gwSetMinSize);
       };
     private:
       static Local<Value> onSnapStatus(Local<Value> z) {
@@ -261,12 +273,6 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol()));
-      };
-      static void _gwSetMinTick(const FunctionCallbackInfo<Value> &args) {
-        gw->minTick = args[0]->NumberValue();
-      };
-      static void _gwSetMinSize(const FunctionCallbackInfo<Value> &args) {
-        gw->minSize = args[0]->NumberValue();
       };
   };
 }
