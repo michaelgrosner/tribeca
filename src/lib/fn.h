@@ -19,7 +19,7 @@ namespace K {
         return k;
       };
       static double T() {
-        return chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+        return chrono::milliseconds(chrono::seconds(time(NULL))).count();
       };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
