@@ -605,10 +605,10 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class HitBtc extends Interfaces.CombinedGateway {
+export class HitBtc extends Interfaces.CombinedGateway {
     constructor(
-      cfString,
       gwSymbol,
+      cfString,
       _evOn,
       _evUp,
       lot
@@ -628,18 +628,4 @@ class HitBtc extends Interfaces.CombinedGateway {
           orderGateway
         );
     }
-}
-
-interface HitBtcSymbol {
-    symbol: string,
-    step: string,
-    lot: string,
-    currency: string,
-    commodity: string,
-    takeLiquidityRate: string,
-    provideLiquidityRate: string
-}
-
-export function createHitBtc(gwSymbol, cfString, _evOn, _evUp, gwMinSize): Interfaces.CombinedGateway {
-    return new HitBtc(cfString, gwSymbol, _evOn, _evUp, gwMinSize);
 }

@@ -69,7 +69,7 @@ export class NullPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
+class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     constructor(private _evUp) {
         setTimeout(() => this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 500);
         setInterval(() => this._evUp('MarketDataGateway', this.generateMarketData()), 5000);
@@ -97,7 +97,7 @@ export class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
     };
 }
 
-class NullGateway extends Interfaces.CombinedGateway {
+export class NullGateway extends Interfaces.CombinedGateway {
     constructor(
       cfString,
       gwSymbol,
@@ -109,8 +109,4 @@ class NullGateway extends Interfaces.CombinedGateway {
           new NullOrderGateway(_evUp)
         );
     }
-}
-
-export function createNullGateway(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-  return new NullGateway(gwSymbol, cfString, _evUp);
 }

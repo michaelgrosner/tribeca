@@ -47,23 +47,6 @@ interface CoinbaseAccountInformation {
     currency: string;
 }
 
-interface CoinbaseRESTTrade {
-    time: string;
-    trade_id: number;
-    price: string;
-    size: string;
-    side: string;
-}
-
-interface Product {
-    id: string,
-    base_currency: string,
-    quote_currency: string,
-    base_min_size: string,
-    base_max_size: string,
-    quote_increment: string,
-}
-
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onMessage = (data: CoinbaseOrder) => {
       if (data.type == 'match' || data.type == 'open') {
@@ -533,7 +516,7 @@ class CoinbasePositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class Coinbase extends Interfaces.CombinedGateway {
+export class Coinbase extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
@@ -559,7 +542,3 @@ class Coinbase extends Interfaces.CombinedGateway {
         );
     }
 };
-
-export function createCoinbase(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-    return new Coinbase(gwSymbol, cfString, _evOn, _evUp);
-}
