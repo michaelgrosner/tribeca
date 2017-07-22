@@ -42,32 +42,12 @@ namespace K {
       mExchange exchange() { return mExchange::Bitfinex; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()])); };
       void fetch() {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
-        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("BitfinexHttpUrl").append("/symbols_details")).data()));
-        double _minTick;
-        if (!v.IsEmpty()) {
-          Local<Object> k_;
-          Local<Object> k = v.ToLocalChecked()->ToObject();
-          MaybeLocal<Array> maybe_props = k->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            Local<Array> props = maybe_props.ToLocalChecked();
-            for(uint32_t i=0; i < props->Length(); i++) {
-              k_ = k->Get(props->Get(i)->ToString())->ToObject();
-              if (FN::S8v(k_->Get(FN::v8S("pair"))->ToString()) == symbol()) {
-                MaybeLocal<Value> v_ = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol())).data()));
-                if (!v_.IsEmpty()) {
-                  Local<Object> _k = v_.ToLocalChecked()->ToObject();
-                  istringstream os(string("1e-").append(to_string(k_->Get(FN::v8S("price_precision"))->NumberValue()-FN::toP(_k->Get(FN::v8S("last_price"))->NumberValue(), k_->Get(FN::v8S("price_precision"))->NumberValue()).find("."))));
-                  os >> _minTick;
-                  break;
-                }
-              }
-            }
-          }
+        json k = FN::wJet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol()));
+        if (k.find("last_price") != k.end()) {
+          istringstream os(string("1e-").append(to_string(5-k["last_price"].get<string>().find("."))));
+          os >> minTick;
+          minSize = 0.01;
         }
-        minTick = _minTick;
-        minSize = 0.01;
       };
   };
   class GwKorbit: public Gw {
@@ -88,15 +68,13 @@ namespace K {
       string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
       void fetch() {
         json k = FN::wJet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols"));
-        if (k.find("symbols") != k.end()) {
-          for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it) {
+        if (k.find("symbols") != k.end())
+          for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
             if ((*it)["symbol"].get<string>() == symbol()) {
               minTick = stod((*it)["step"].get<string>());
               minSize = stod((*it)["lot"].get<string>());
               break;
             }
-          }
-        }
       };
   };
   class GwPoloniex: public Gw {
@@ -106,10 +84,9 @@ namespace K {
       void fetch() {
         json k = FN::wJet(CF::cfString("PoloniexHttpUrl").append("/public?command=returnTicker"));
         if (k.find(symbol()) != k.end()) {
-            istringstream os(string("1e-").append(to_string(6-k[symbol()]["last"].get<string>().find("."))));
-            os >> minTick;
-            minSize = 0.01;
-            cout << FN::uiT() << "Poloniex client IP allowed." << endl;
+          istringstream os(string("1e-").append(to_string(6-k[symbol()]["last"].get<string>().find("."))));
+          os >> minTick;
+          minSize = 0.01;
         }
       };
   };
@@ -135,7 +112,8 @@ namespace K {
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
-        if (!gw->minTick) { cout << FN::uiT() << "Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol() << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "GW Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol() << "\"." << endl; exit(1); }
+        else { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " allows client IP." << endl; }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
