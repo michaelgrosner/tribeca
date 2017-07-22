@@ -19,12 +19,11 @@ branches:
 
 before_install:
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
-      sed -i ".orig" "s/^    \"hacktimer.*$//" package.json;
-      sed -i ".orig" "/\"hacktimer/,+4d" package-lock.json;
+      brew install --with-default-names gnu-sed
     fi
+  - sed -i "s/^    \"hacktimer.*$//" package.json;
+  - sed -i "/\"hacktimer/,+4d" package-lock.json;
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
-      sed -i "s/^    \"hacktimer.*$//" package.json;
-      sed -i "/\"hacktimer/,+4d" package-lock.json;
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
       sudo apt-get update;
       sudo apt-get install gcc-4.9;
