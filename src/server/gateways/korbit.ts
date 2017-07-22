@@ -7,26 +7,6 @@ import Models = require("../../share/models");
 import util = require("util");
 import Interfaces = require("../interfaces");
 
-interface KorbitMessageIncomingMessage {
-    channel: string;
-    success: boolean;
-    data: any;
-    event?: string;
-    errorcode: number;
-    order_id: string;
-}
-
-interface KorbitDepthMessage {
-    asks: [number, number][];
-    bids: [number, number][];
-    timestamp: string;
-}
-
-interface OrderAck {
-    result: boolean;
-    order_id: number;
-}
-
 interface SignedMessage {
     client_id?: string;
     client_secret?: string;
@@ -43,11 +23,6 @@ interface SignedMessage {
     time?: string;
 }
 
-interface TokenMessage {
-    access_token: string;
-    refresh_token: string;
-}
-
 interface Order extends SignedMessage {
     symbol: string;
     type: string;
@@ -59,8 +34,6 @@ interface Cancel extends SignedMessage {
     id?: string;
     currency_pair?: string;
 }
-
-interface SubscriptionRequest extends SignedMessage { }
 
 class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
     private triggerMarketTrades = () => {
@@ -363,7 +336,7 @@ class KorbitPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class Korbit extends Interfaces.CombinedGateway {
+export class Korbit extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
@@ -382,8 +355,4 @@ class Korbit extends Interfaces.CombinedGateway {
             orderGateway
         );
     }
-}
-
-export function createKorbit(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-    return new Korbit(gwSymbol, cfString, _evOn, _evUp);
 }

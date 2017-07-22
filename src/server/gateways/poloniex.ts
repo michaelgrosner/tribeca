@@ -400,7 +400,7 @@ class PoloniexPositionGateway implements Interfaces.IPositionGateway {
   }
 }
 
-class Poloniex extends Interfaces.CombinedGateway {
+export class Poloniex extends Interfaces.CombinedGateway {
   constructor(
     gwSymbol,
     cfString,
@@ -419,6 +419,3 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export function createPoloniex(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-  return new Poloniex(gwSymbol, cfString, _evUp);
-}

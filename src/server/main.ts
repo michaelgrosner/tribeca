@@ -71,13 +71,13 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 
 const gateway = ((): Interfaces.CombinedGateway => {
   switch (bindings.cfmExchange()) {
-    case Models.Exchange.Coinbase: return Coinbase.createCoinbase(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.OkCoin: return OkCoin.createOkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.Poloniex: return Poloniex.createPoloniex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.Korbit: return Korbit.createKorbit(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.HitBtc: return HitBtc.createHitBtc(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp, bindings.gwMinSize());
-    case Models.Exchange.Null: return NullGw.createNullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Coinbase: return new Coinbase.Coinbase(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.OkCoin: return new OkCoin.OkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Bitfinex: return new Bitfinex.Bitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.Poloniex: return new Poloniex.Poloniex(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
+    case Models.Exchange.Korbit: return new Korbit.Korbit(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.HitBtc: return new HitBtc.HitBtc(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp, bindings.gwMinSize());
+    case Models.Exchange.Null: return new NullGw.NullGateway(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
     default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
   }
 })();

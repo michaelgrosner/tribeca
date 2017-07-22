@@ -483,7 +483,7 @@ class OkCoinPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class OkCoin extends Interfaces.CombinedGateway {
+export class OkCoin extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
@@ -504,8 +504,4 @@ class OkCoin extends Interfaces.CombinedGateway {
           orderGateway
         );
     }
-}
-
-export function createOkCoin(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-  return new OkCoin(gwSymbol, cfString, _evOn, _evUp);
 }

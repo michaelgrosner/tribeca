@@ -481,7 +481,7 @@ class BitfinexPositionGateway implements Interfaces.IPositionGateway {
     }
 }
 
-class Bitfinex extends Interfaces.CombinedGateway {
+export class Bitfinex extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
@@ -502,28 +502,4 @@ class Bitfinex extends Interfaces.CombinedGateway {
           orderGateway
         );
     }
-}
-
-interface SymbolDetails {
-    pair: string,
-    price_precision: number,
-    initial_margin:string,
-    minimum_margin:string,
-    maximum_order_size:string,
-    minimum_order_size:string,
-    expiration:string
-}
-
-interface SymbolTicker {
-  mid: string,
-  bid: string,
-  ask: string,
-  last_price: string,
-  low: string,
-  high: string,
-  volume: string
-}
-
-export function createBitfinex(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
-    return new Bitfinex(gwSymbol, cfString, _evOn, _evUp);
 }
