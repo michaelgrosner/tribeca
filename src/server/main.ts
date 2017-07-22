@@ -24,7 +24,6 @@ import HitBtc = require("./gateways/hitbtc");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
-import MarketTrades = require("./markettrades");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
@@ -188,15 +187,6 @@ new QuoteSender.QuoteSender(
   bindings.uiSnap,
   bindings.uiSend,
   bindings.evOn
-);
-
-new MarketTrades.MarketTradeBroker(
-  bindings.uiSnap,
-  bindings.uiSend,
-  bindings.cfmCurrencyPair(),
-  bindings.gwExchange(),
-  bindings.evOn,
-  bindings.evUp
 );
 
 happyEnding = () => {

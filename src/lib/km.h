@@ -14,6 +14,7 @@ namespace K {
     "EOS", "SAN", "OMG", "PAY" };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry, Position };
   enum class mConnectivityStatus: unsigned int { Connected, Disconnected };
+  enum class mSide: unsigned int { Bid, Ask, Unknown };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };

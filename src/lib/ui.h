@@ -181,8 +181,8 @@ namespace K {
             uiUp(isolate, uiTXT::OrderStatusReports, k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
-        if (uiDDT+60000 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
-        uiDDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+        if (uiDDT+60000 > FN::T()) return;
+        uiDDT = FN::T();
         uiDD(handle);
       };
       static Local<Value> onSnapApp(Local<Value> z) {
@@ -226,8 +226,8 @@ namespace K {
       static void uiUp(Isolate* isolate, uiTXT k, Local<Object> o) {
         JSON Json;
         if (k == uiTXT::MarketData) {
-          if (uiMDT+369 > chrono::milliseconds(chrono::seconds(std::time(NULL))).count()) return;
-          uiMDT = chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+          if (uiMDT+369 > FN::T()) return;
+          uiMDT = FN::T();
         }
         MaybeLocal<String> v = o->IsUndefined() ? FN::v8S("") : Json.Stringify(isolate->GetCurrentContext(), o);
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(*String::Utf8Value(v.ToLocalChecked()));

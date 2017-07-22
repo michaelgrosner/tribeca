@@ -14,6 +14,19 @@ namespace K {
       static void evOn(string k, evCb cb) {
         ev.cb[k].push_back(cb);
       };
+      static void evUp(string k) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Object> o = Object::New(isolate);
+        if (ev.cb.find(k) != ev.cb.end()) {
+          for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
+            (*cb)(o);
+        }
+        if (ev._cb.find(k) != ev._cb.end()) {
+          Local<Value> argv[] = {o};
+          for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
+            Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+        }
+      };
       static void evUp(string k, Local<Object> o) {
         if (ev.cb.find(k) != ev.cb.end()) {
           for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)

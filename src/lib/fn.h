@@ -18,6 +18,9 @@ namespace K {
         transform(k.begin(), k.end(), k.begin(), ::tolower);
         return k;
       };
+      static double T() {
+        return chrono::milliseconds(chrono::seconds(std::time(NULL))).count();
+      };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
