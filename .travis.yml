@@ -18,8 +18,8 @@ branches:
   only: master
 
 before_install:
-  - sed -i "s/^    \"hacktimer.*$//" package.json;
-  - sed -i "/\"hacktimer/,+4d" package-lock.json;
+  - sed -i .orig "s/^    \"hacktimer.*$//" package.json;
+  - sed -i .orig "/\"hacktimer/,+4d" package-lock.json;
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
       sudo apt-get update;
