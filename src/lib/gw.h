@@ -34,9 +34,6 @@ namespace K {
         if (k.find("quote_increment") != k.end()) {
           minTick = stod(k["quote_increment"].get<string>());
           minSize = stod(k["base_min_size"].get<string>());
-        } else {
-          cout << FN::uiT() << "Unable to match TradedPair to a Coinbase symbol \"" << symbol() << "\"." << endl;
-          exit(1);
         }
       };
   };
@@ -69,10 +66,6 @@ namespace K {
             }
           }
         }
-        if (!_minTick) {
-          cout << FN::uiT() << "Unable to match TradedPair to a Bitfinex symbol \"" << symbol() << "\"." << endl;
-          exit(1);
-        }
         minTick = _minTick;
         minSize = 0.01;
       };
@@ -86,9 +79,6 @@ namespace K {
         if (k.find(symbol().substr(0,3).append("TickSize")) != k.end()) {
           minTick = k[symbol().substr(0,3).append("TickSize")];
           minSize = 0.015;
-        } else {
-          cout << FN::uiT() << "Unable to match TradedPair to a Korbit symbol \"" << symbol() << "\"." << endl;
-          exit(1);
         }
       };
   };
@@ -107,10 +97,6 @@ namespace K {
             }
           }
         }
-        if (!minTick) {
-          cout << FN::uiT() << "Unable to match TradedPair to a Hitbtc symbol \"" << symbol() << "\"." << endl;
-          exit(1);
-        }
       };
   };
   class GwPoloniex: public Gw {
@@ -124,10 +110,6 @@ namespace K {
             os >> minTick;
             minSize = 0.01;
             cout << FN::uiT() << "Poloniex client IP allowed." << endl;
-        }
-        if (!minTick) {
-          cout << FN::uiT() << "Unable to match TradedPair to a Poloniex symbol \"" << symbol() << "\"." << endl;
-          exit(1);
         }
       };
   };
@@ -153,6 +135,7 @@ namespace K {
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
+        if (!gw->minTick) { cout << FN::uiT() << "Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << symbol() << "\"." << endl; exit(1); }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
