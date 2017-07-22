@@ -419,6 +419,6 @@ class Poloniex extends Interfaces.CombinedGateway {
   }
 }
 
-export async function createPoloniex(gwSymbol, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export function createPoloniex(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
   return new Poloniex(gwSymbol, cfString, _evUp);
 }

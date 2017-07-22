@@ -560,6 +560,6 @@ class Coinbase extends Interfaces.CombinedGateway {
     }
 };
 
-export async function createCoinbase(gwSymbol, cfString, _evOn, _evUp): Promise<Interfaces.CombinedGateway> {
+export function createCoinbase(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
     return new Coinbase(gwSymbol, cfString, _evOn, _evUp);
 }

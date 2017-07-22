@@ -506,6 +506,6 @@ class OkCoin extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createOkCoin(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export function createOkCoin(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
   return new OkCoin(gwSymbol, cfString, _evOn, _evUp);
 }

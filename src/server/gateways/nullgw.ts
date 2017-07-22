@@ -111,6 +111,6 @@ class NullGateway extends Interfaces.CombinedGateway {
     }
 }
 
-export async function createNullGateway(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export function createNullGateway(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
   return new NullGateway(gwSymbol, cfString, _evUp);
 }

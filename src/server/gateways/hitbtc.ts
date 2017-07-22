@@ -640,6 +640,6 @@ interface HitBtcSymbol {
     provideLiquidityRate: string
 }
 
-export async function createHitBtc(gwSymbol, cfString, _evOn, _evUp, gwMinSize) : Promise<Interfaces.CombinedGateway> {
+export function createHitBtc(gwSymbol, cfString, _evOn, _evUp, gwMinSize): Interfaces.CombinedGateway {
     return new HitBtc(cfString, gwSymbol, _evOn, _evUp, gwMinSize);
 }

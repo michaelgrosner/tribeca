@@ -524,6 +524,6 @@ interface SymbolTicker {
   volume: string
 }
 
-export async function createBitfinex(gwSymbol, cfString, _evOn, _evUp) : Promise<Interfaces.CombinedGateway> {
+export function createBitfinex(gwSymbol, cfString, _evOn, _evUp): Interfaces.CombinedGateway {
     return new Bitfinex(gwSymbol, cfString, _evOn, _evUp);
 }
