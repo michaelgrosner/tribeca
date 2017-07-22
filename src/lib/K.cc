@@ -29,7 +29,9 @@ using namespace v8;
 
 #include "_b64.h"
 #include "_dec.h"
+#include "json.h"
 
+using namespace nlohmann;
 using namespace dec;
 
 #include "fn.h"
