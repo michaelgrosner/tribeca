@@ -17,6 +17,13 @@ node_js:
 branches:
   only: master
 
+before_install:
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then
+      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
+      sudo apt-get -qq update;
+      sudo apt-get -qq install g++-4.9;
+    fi
+
 install:
   - make config
   - npm install
