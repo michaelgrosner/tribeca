@@ -18,8 +18,7 @@ branches:
   only: master
 
 before_install:
-  - echo $TRAVIS_OS_NAME
-  - if [ $TRAVIS_OS_NAME == "darwin" ]; then
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then
       sed -i ".orig" "s/^    \"hacktimer.*$//" package.json;
       sed -i ".orig" "/\"hacktimer/,+4d" package-lock.json;
     fi
