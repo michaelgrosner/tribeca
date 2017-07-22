@@ -30,17 +30,12 @@ namespace K {
       mExchange exchange() { return mExchange::Coinbase; };
       string symbol() { return string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]); };
       void fetch() {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
-        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol())).data()));
-        minTick = 0;
-        if (!v.IsEmpty()) {
-          Local<Object> k = v.ToLocalChecked()->ToObject();
-          minTick = k->Get(FN::v8S("quote_increment"))->NumberValue();
-          minSize = k->Get(FN::v8S("base_min_size"))->NumberValue();
-        }
-        if (!minTick) {
-          cout << FN::uiT() << "Unable to match pair to a Coinbase symbol \"" << symbol() << "\"." << endl;
+        json k = FN::wJet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol()));
+        if (k.find("quote_increment") != k.end()) {
+          minTick = stod(k["quote_increment"].get<string>());
+          minSize = stod(k["base_min_size"].get<string>());
+        } else {
+          cout << FN::uiT() << "Unable to match TradedPair to a Coinbase symbol \"" << symbol() << "\"." << endl;
           exit(1);
         }
       };
@@ -75,7 +70,7 @@ namespace K {
           }
         }
         if (!_minTick) {
-          cout << FN::uiT() << "Unable to match pair to a Bitfinex symbol \"" << symbol() << "\"." << endl;
+          cout << FN::uiT() << "Unable to match TradedPair to a Bitfinex symbol \"" << symbol() << "\"." << endl;
           exit(1);
         }
         minTick = _minTick;
@@ -125,7 +120,7 @@ namespace K {
           }
         }
         if (!minTick) {
-          cout << FN::uiT() << "Unable to match pair to a Hitbtc symbol \"" << symbol() << "\"." << endl;
+          cout << FN::uiT() << "Unable to match TradedPair to a Hitbtc symbol \"" << symbol() << "\"." << endl;
           exit(1);
         }
       };
@@ -176,7 +171,7 @@ namespace K {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " details:" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });

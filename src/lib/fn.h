@@ -37,19 +37,22 @@ namespace K {
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
       };
-      static string wGet(string u) {
-        string k;
+      static json wJet(string k) {
+        return json::parse(wGet(k));
+      };
+      static string wGet(string k) {
+        string k_;
         CURL* curl;
         curl_global_init(CURL_GLOBAL_ALL);
         curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_URL, u.data());
+        curl_easy_setopt(curl, CURLOPT_URL, k.data());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         curl_global_cleanup();
-        return k;
+        return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
