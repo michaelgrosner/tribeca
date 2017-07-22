@@ -82,16 +82,14 @@ namespace K {
       mExchange exchange() { return mExchange::Korbit; };
       string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
       void fetch() {
-        Isolate* isolate = Isolate::GetCurrent();
-        JSON Json;
-        MaybeLocal<Value> v = Json.Parse(isolate->GetCurrentContext(), FN::v8S(FN::wGet(CF::cfString("KorbitHttpUrl").append("/constants")).data()));
-        double _minTick;
-        if (!v.IsEmpty()) {
-          Local<Object> k = v.ToLocalChecked()->ToObject();
-          _minTick = k->Get(FN::v8S(symbol().substr(0,3).append("TickSize")))->NumberValue();
+        json k = FN::wJet(CF::cfString("KorbitHttpUrl").append("/constants"));
+        if (k.find(symbol().substr(0,3).append("TickSize")) != k.end()) {
+          minTick = k[symbol().substr(0,3).append("TickSize")];
+          minSize = 0.015;
+        } else {
+          cout << FN::uiT() << "Unable to match TradedPair to a Korbit symbol \"" << symbol() << "\"." << endl;
+          exit(1);
         }
-        minTick = _minTick ? _minTick : 500;
-        minSize = 0.015;
       };
   };
   class GwHitBtc: public Gw {
