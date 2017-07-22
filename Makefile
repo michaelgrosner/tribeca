@@ -41,6 +41,7 @@ help:
 	#                                                  #
 
 K: src/lib/K.cc
+	g++ --version
 	mkdir -p build app/server/lib
 	$(MAKE) quickfix
 	$(MAKE) json
