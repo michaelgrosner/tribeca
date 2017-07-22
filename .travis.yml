@@ -20,9 +20,11 @@ branches:
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-      sudo apt-get -qq update;
-      sudo apt-get -qq install g++-4.9;
-      export CXX='g++-4.9';
+      sudo apt-get update;
+      sudo apt-get install gcc-4.9;
+      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50;
+      sudo apt-get install g++-4.9;
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50;
     fi
 
 install:
