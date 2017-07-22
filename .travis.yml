@@ -18,9 +18,7 @@ branches:
   only: master
 
 before_install:
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then
-      brew install --with-default-names gnu-sed;
-    fi
+  - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed;
   - sed -i "s/^    \"hacktimer.*$//" package.json;
   - sed -i "/\"hacktimer/,+4d" package-lock.json;
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
