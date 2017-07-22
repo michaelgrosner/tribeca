@@ -135,7 +135,7 @@ namespace K {
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
-        if (!gw->minTick) { cout << FN::uiT() << "Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << symbol() << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol() << "\"." << endl; exit(1); }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;;
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
