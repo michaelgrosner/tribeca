@@ -45,6 +45,20 @@ namespace K {
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
       };
+      static string oSha512(string k) {
+        unsigned char digest[SHA512_DIGEST_LENGTH];
+        SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
+        char k_[SHA512_DIGEST_LENGTH*2+1];
+        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return k_;
+      };
+      static string oMd5(string k) {
+        unsigned char digest[MD5_DIGEST_LENGTH];
+        MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
+        char k_[33];
+        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return S2u(k_);
+      };
       static json wJet(string k) {
         return json::parse(wGet(k));
       };
