@@ -547,63 +547,6 @@ interface HitBtcPositionReport {
     reserved : number;
 }
 
-class HitBtcPositionGateway implements Interfaces.IPositionGateway {
-    private getAuth = (uri : string) : any => {
-        const nonce : number = new Date().getTime() * 1000; // get rid of *1000 after getting new keys
-        const comb = uri + "?" + querystring.stringify({nonce: nonce, apikey: this._apiKey});
-
-        const signature = crypto.createHmac('sha512', this._secret)
-                              .update(comb)
-                              .digest('hex')
-                              .toString()
-                              .toLowerCase();
-
-        return {url: url.resolve(this._pullUrl, uri),
-                method: "GET",
-                headers: {"X-Signature": signature},
-                qs: {nonce: nonce.toString(), apikey: this._apiKey}};
-    };
-
-    private onNullTick = () => {
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, this._gwSymbol.split('_')[0])), 2500);
-        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, this._gwSymbol.split('_')[1])), 2500);
-    };
-    private onTick = () => {
-        request.get(
-            this.getAuth("/api/1/trading/balance"),
-            (err, body, resp) => {
-                try {
-                    const rpts: Array<HitBtcPositionReport> = JSON.parse(resp).balance;
-                    if (typeof rpts === 'undefined' || err) {
-                        console.warn('hitbtc', err, 'Error getting positions', body.body);
-                        return;
-                    }
-
-                    rpts.forEach(r => {
-                        if (this._gwSymbol.indexOf(r.currency_code)==-1) return;
-                        this._evUp('PositionGateway', new Models.CurrencyPosition(r.cash, r.reserved, Models.toCurrency(r.currency_code)));
-                    });
-                }
-                catch (e) {
-                    console.error('hitbtc', e, 'Error processing JSON response ', resp);
-                }
-            });
-    };
-
-    private _apiKey: string;
-    private _secret: string;
-    private _pullUrl: string;
-    constructor(private _evUp, private _gwSymbol, cfString) {
-        this._apiKey = cfString("HitBtcApiKey");
-        this._secret = cfString("HitBtcSecret");
-        this._pullUrl = cfString("HitBtcPullUrl");
-        this.onTick();
-        if (cfString("HitBtcPullUrl").indexOf("demo") > -1)
-          setInterval(this.onNullTick, 15000);
-        else setInterval(this.onTick, 15000);
-    }
-}
-
 export class HitBtc extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
@@ -617,9 +560,6 @@ export class HitBtc extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway(_evUp);
 
         new HitBtcMarketDataGateway(_evUp, cfString, gwSymbol, lot);
-        // Payment actions are not permitted in demo mode -- helpful.
-        new HitBtcPositionGateway(_evUp, gwSymbol, cfString);
-
 
         super(
           orderGateway
