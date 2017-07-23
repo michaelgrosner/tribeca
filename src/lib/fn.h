@@ -113,6 +113,27 @@ namespace K {
         }
         return k_;
       };
+      static json wJet(string k, string t, bool auth) {
+        return json::parse(wGet(k, t, auth));
+      };
+      static string wGet(string k, string t, bool auth) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          if (t != "") h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
       static json wJet(string k, string p, string s) {
         return json::parse(wGet(k, p, s));
       };
@@ -173,6 +194,29 @@ namespace K {
           h_ = curl_slist_append(h_, string("X-BFX-APIKEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("X-BFX-PAYLOAD: ").append(p).data());
           h_ = curl_slist_append(h_, string("X-BFX-SIGNATURE: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
+      static json wJet(string k, string p, string a, string s, bool post, bool auth) {
+        return json::parse(wGet(k, p, a, s, post, auth));
+      };
+      static string wGet(string k, string p, string t, string s, bool post, bool auth) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+          if (t != "") h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");

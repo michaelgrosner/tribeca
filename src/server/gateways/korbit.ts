@@ -306,36 +306,6 @@ class KorbitHttp {
     }
 }
 
-class KorbitPositionGateway implements Interfaces.IPositionGateway {
-    private trigger = () => {
-        this._http.get("user/wallet", {currency_pair: this._gwSymbol}).then(msg => {
-            if (!(<any>msg.data).balance) return;
-
-            var free = (<any>msg.data).available;
-            var freezed = (<any>msg.data).pendingOrders;
-            var wallet = [];
-            free.forEach(x => { wallet[x.currency] = [x.currency, x.value]; });
-            freezed.forEach(x => { wallet[x.currency].push(x.value); });
-            for (let x in wallet) {
-                var amount = parseFloat(wallet[x][1]);
-                var held = parseFloat(wallet[x][2]);
-
-                var pos = new Models.CurrencyPosition(amount, held, Models.toCurrency(wallet[x][0]));
-                this._evUp('PositionGateway', pos);
-            }
-        });
-    };
-
-    constructor(
-      private _evUp,
-      private _http: KorbitHttp,
-      private _gwSymbol
-    ) {
-        setInterval(this.trigger, 15000);
-        setTimeout(this.trigger, 3000);
-    }
-}
-
 export class Korbit extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
@@ -350,7 +320,6 @@ export class Korbit extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway(_evUp);
 
         new KorbitMarketDataGateway(_evUp, http, gwSymbol);
-        new KorbitPositionGateway(_evUp, http, gwSymbol);
         super(
             orderGateway
         );

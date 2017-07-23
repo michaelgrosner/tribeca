@@ -219,7 +219,7 @@ namespace K {
         pass = CF::cfString("CoinbasePassphrase");
         http = CF::cfString("CoinbaseRestUrl");
         ws = CF::cfString("CoinbaseWebsocketUrl");
-        json k = FN::wJet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol));
+        json k = FN::wJet(string(http).append("/products/").append(symbol));
         if (k.find("quote_increment") != k.end()) {
           minTick = stod(k["quote_increment"].get<string>());
           minSize = stod(k["base_min_size"].get<string>());
@@ -237,7 +237,7 @@ namespace K {
         secret = CF::cfString("BitfinexSecret");
         http = CF::cfString("BitfinexHttpUrl");
         ws = CF::cfString("BitfinexWebsocketUrl");
-        json k = FN::wJet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol));
+        json k = FN::wJet(string(http).append("/pubticker/").append(symbol));
         if (k.find("last_price") != k.end()) {
           istringstream os(string("1e-").append(to_string(5-k["last_price"].get<string>().find("."))));
           os >> minTick;
@@ -257,6 +257,9 @@ namespace K {
   };
   class GwKorbit: public Gw {
     public:
+      unsigned long token_time_ = 0;
+      string token_ = "";
+      string token_refresh_ = "";
       void fetch() {
         exchange = mExchange::Korbit;
         symbol = FN::S2l(string(mCurrency[base]).append("_").append(mCurrency[quote]));
@@ -266,13 +269,36 @@ namespace K {
         user = CF::cfString("KorbitUsername");
         pass = CF::cfString("KorbitPassword");
         http = CF::cfString("KorbitHttpUrl");
-        json k = FN::wJet(CF::cfString("KorbitHttpUrl").append("/constants"));
+        json k = FN::wJet(string(http).append("/constants"));
         if (k.find(symbol.substr(0,3).append("TickSize")) != k.end()) {
           minTick = k[symbol.substr(0,3).append("TickSize")];
           minSize = 0.015;
         }
       };
-      void pos() { };
+      void pos() {
+        if (!token_time_) {
+          json k = FN::wJet(string(http).append("/oauth2/access_token"), string("client_id=").append(apikey).append("&client_secret=").append(secret).append("&username=").append(user).append("&password=").append(pass).append("&grant_type=password"), token_, "", false, true);
+          token_time_ = (k["expires_in"].get<int>() * 1000) + FN::T();
+          token_ = k["access_token"];
+          token_refresh_ = k["refresh_token"];
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication successful, new token expires at " << to_string(token_time_) << "." << endl;
+        } else if (FN::T()+60 > token_time_) {
+          json k = FN::wJet(string(http).append("/oauth2/access_token"), string("client_id=").append(apikey).append("&client_secret=").append(secret).append("&refresh_token=").append(token_refresh_).append("&grant_type=refresh_token"), token_, "", false, true);
+          token_time_ = (k["expires_in"].get<int>() * 1000) + FN::T();
+          token_ = k["access_token"];
+          token_refresh_ = k["refresh_token"];
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication refresh successful, new token expires at " << to_string(token_time_) << "." << endl;
+        }
+        json k = FN::wJet(string(http).append("/user/wallet?currency_pair=").append(symbol), token_, true);
+        map<string, vector<double>> wallet;
+        for (json::iterator it = k["available"].begin(); it != k["available"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
+        for (json::iterator it = k["pendingOrders"].begin(); it != k["pendingOrders"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
+        for (map<string, vector<double>>::iterator it=wallet.begin(); it!=wallet.end(); ++it) {
+          double amount; double held;
+          for (unsigned i=0; i<it->second.size(); ++i) if (i==0) amount = it->second[i]; else if (i==1) held = it->second[i];
+          GW::gwPosUp(amount, held, FN::S2mC(it->first));
+        }
+      };
   };
   class GwHitBtc: public Gw {
     public:
@@ -285,7 +311,7 @@ namespace K {
         http = CF::cfString("HitBtcPullUrl");
         ws = CF::cfString("HitBtcOrderEntryUrl");
         wS = CF::cfString("HitBtcMarketDataUrl");
-        json k = FN::wJet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols"));
+        json k = FN::wJet(string(http).append("/api/1/public/symbols"));
         if (k.find("symbols") != k.end())
           for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
             if ((*it)["symbol"].get<string>() == symbol) {
@@ -318,7 +344,7 @@ namespace K {
         secret = CF::cfString("PoloniexSecretKey");
         http = CF::cfString("PoloniexHttpUrl");
         ws = CF::cfString("PoloniexWebsocketUrl");
-        json k = FN::wJet(CF::cfString("PoloniexHttpUrl").append("/public?command=returnTicker"));
+        json k = FN::wJet(string(http).append("/public?command=returnTicker"));
         if (k.find(symbol) != k.end()) {
           istringstream os(string("1e-").append(to_string(6-k[symbol]["last"].get<string>().find("."))));
           os >> minTick;
