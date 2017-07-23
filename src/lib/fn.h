@@ -66,6 +66,13 @@ namespace K {
         for(int i = 0; i < 64; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
+      static string oHmac384(string p, string s) {
+        unsigned char* digest;
+        digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
+        char k_[48*2+1];
+        for(int i = 0; i < 48; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return k_;
+      };
       static json wJet(string k) {
         return json::parse(wGet(k));
       };
@@ -106,6 +113,27 @@ namespace K {
         }
         return k_;
       };
+      static json wJet(string k, string p, string s) {
+        return json::parse(wGet(k, p, s));
+      };
+      static string wGet(string k, string p, string s) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
       static json wJet(string k, string p, string a, string s) {
         return json::parse(wGet(k, p, a, s));
       };
@@ -130,10 +158,10 @@ namespace K {
         }
         return k_;
       };
-      static json wJet(string k, string p, string s) {
-        return json::parse(wGet(k, p, s));
+      static json wJet(string k, string p, string a, string s, bool post) {
+        return json::parse(wGet(k, p, a, s, post));
       };
-      static string wGet(string k, string p, string s) {
+      static string wGet(string k, string p, string a, string s, bool post) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
@@ -141,12 +169,15 @@ namespace K {
           struct curl_slist *h_ = NULL;
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          h_ = curl_slist_append(h_, string("X-BFX-APIKEY: ").append(a).data());
+          h_ = curl_slist_append(h_, string("X-BFX-PAYLOAD: ").append(p).data());
+          h_ = curl_slist_append(h_, string("X-BFX-SIGNATURE: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
         return k_;
