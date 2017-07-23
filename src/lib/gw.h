@@ -200,20 +200,20 @@ namespace K {
         minSize = 0.01;
       };
       void pos() {
-        // string p = string("api_key=").append(apikey);
-        // string p_ = string(p).append("&secret_key=").append(secret);
-        // unsigned char digest[MD5_DIGEST_LENGTH];
-        // MD5((unsigned char*)p_.data(), p_.length(), (unsigned char*)&digest);
-        // char mdS[33];
-        // for(int i = 0; i < 16; i++) sprintf(&mdS[i*2], "%02x", (unsigned int)digest[i]);
-        // json k = FN::wJet(string(http).append("userinfo.do"), p.append("&sign=").append(FN::S2u(mdS)));
-        // if (k["result"] == true) {
-          // json free = k["info"]["funds"]["free"];
-          // json freezed = k["info"]["funds"]["freezed"];
-          // for (json::iterator it = free.begin(); it != free.end(); ++it)
-            // if (symbol.find(it.key()) != string::npos)
-              // GW::gwPosUp(stod(free[it.key()].get<string>()), stod(freezed[it.key()].get<string>()), FN::S2mC(it.key()));
-        // }
+        string p = string("api_key=").append(apikey);
+        string p_ = string(p).append("&secret_key=").append(secret);
+        unsigned char digest[MD5_DIGEST_LENGTH];
+        MD5((unsigned char*)p_.data(), p_.length(), (unsigned char*)&digest);
+        char mdS[33];
+        for(int i = 0; i < 16; i++) sprintf(&mdS[i*2], "%02x", (unsigned int)digest[i]);
+        json k = FN::wJet(string(http).append("userinfo.do"), p.append("&sign=").append(FN::S2u(mdS)));
+        if (k["result"] == true) {
+          json free = k["info"]["funds"]["free"];
+          json freezed = k["info"]["funds"]["freezed"];
+          for (json::iterator it = free.begin(); it != free.end(); ++it)
+            if (symbol.find(it.key()) != string::npos)
+              GW::gwPosUp(stod(free[it.key()].get<string>()), stod(freezed[it.key()].get<string>()), FN::S2mC(it.key()));
+        }
       };
   };
   class GwCoinbase: public Gw {

@@ -461,28 +461,6 @@ class OkCoinHttp {
     }
 }
 
-class OkCoinPositionGateway implements Interfaces.IPositionGateway {
-    private trigger = () => {
-        this._http.post("userinfo.do", {}).then(msg => {
-            if (!(<any>msg.data).result)
-              console.error(new Date().toISOString().slice(11, -1), 'okcoin', 'Please change the API Key or contact support team of OkCoin, your API Key does not work because was not possible to retrieve your real wallet position; the application will probably crash now.');
-
-            var free = (<any>msg.data).info.funds.free;
-            var freezed = (<any>msg.data).info.funds.freezed;
-
-            for (var currencyName in free) {
-                if (!free.hasOwnProperty(currencyName)) continue;
-                this._evUp('PositionGateway', new Models.CurrencyPosition(parseFloat(free[currencyName]), parseFloat(freezed[currencyName]), Models.toCurrency(currencyName)));
-            }
-        });
-    };
-
-    constructor(private _evUp, private _http: OkCoinHttp) {
-        setInterval(this.trigger, 15000);
-        setTimeout(this.trigger, 10);
-    }
-}
-
 export class OkCoin extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
@@ -499,7 +477,6 @@ export class OkCoin extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway(_evUp);
 
         new OkCoinMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
-        new OkCoinPositionGateway(_evUp, http);
         super(
           orderGateway
         );

@@ -51,7 +51,6 @@ namespace K {
       static string wGet(string k) {
         string k_;
         CURL* curl;
-        curl_global_init(CURL_GLOBAL_ALL);
         curl = curl_easy_init();
         if (curl) {
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
@@ -59,10 +58,9 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r);
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
-        curl_global_cleanup();
         return k_;
       };
       static json wJet(string k, string p) {
@@ -71,22 +69,20 @@ namespace K {
       static string wGet(string k, string p) {
         string k_;
         CURL* curl;
-        curl_global_init(CURL_GLOBAL_ALL);
         curl = curl_easy_init();
         if (curl) {
-          struct curl_slist *h = NULL;
+          struct curl_slist *h_ = NULL;
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-          h = curl_slist_append(h, "Content-Type: application/x-www-form-urlencoded");
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h);
+          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
-        curl_global_cleanup();
         return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
