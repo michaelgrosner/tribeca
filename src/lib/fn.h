@@ -23,8 +23,8 @@ namespace K {
         return k;
       };
       static int S2mC(string k);
-      static double T() {
-        return chrono::milliseconds(chrono::seconds(time(NULL))).count();
+      static unsigned long T() {
+        return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
       };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
@@ -45,6 +45,13 @@ namespace K {
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
       };
+      static string oMd5(string k) {
+        unsigned char digest[MD5_DIGEST_LENGTH];
+        MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
+        char k_[33];
+        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return S2u(k_);
+      };
       static string oSha512(string k) {
         unsigned char digest[SHA512_DIGEST_LENGTH];
         SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
@@ -52,12 +59,12 @@ namespace K {
         for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string oMd5(string k) {
-        unsigned char digest[MD5_DIGEST_LENGTH];
-        MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-        char k_[33];
-        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return S2u(k_);
+      static string oHmac512(string p, string s) {
+        unsigned char* digest;
+        digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
+        char k_[64*2+1];
+        for(int i = 0; i < 64; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return k_;
       };
       static json wJet(string k) {
         return json::parse(wGet(k));
@@ -90,6 +97,30 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
+      static json wJet(string k, string p, string a, string s) {
+        return json::parse(wGet(k, p, a, s));
+      };
+      static string wGet(string k, string p, string a, string s) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+          h_ = curl_slist_append(h_, string("Key: ").append(a).data());
+          h_ = curl_slist_append(h_, string("Sign: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");

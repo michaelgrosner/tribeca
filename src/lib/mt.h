@@ -8,7 +8,7 @@ namespace K {
     int quote;
     double price;
     double size;
-    double time;
+    unsigned long time;
     mSide make_side;
     mGWmt(mExchange e_, int b_, int q_, double p_, double s_, double t_, mSide m_):
       exchange(e_), base(b_), quote(q_), price(p_), size(s_), time(t_), make_side(m_) {}
@@ -20,8 +20,8 @@ namespace K {
         EV::evOn("MarketTradeGateway", [](Local<Object> o) {
           mGWmt t(
             gw->exchange,
-            CF::cfBase(),
-            CF::cfQuote(),
+            gw->base,
+            gw->quote,
             o->Get(FN::v8S("price"))->NumberValue(),
             o->Get(FN::v8S("size"))->NumberValue(),
             FN::T(),
