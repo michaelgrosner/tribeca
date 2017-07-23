@@ -541,12 +541,6 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     }
 }
 
-interface HitBtcPositionReport {
-    currency_code : string;
-    cash : number;
-    reserved : number;
-}
-
 export class HitBtc extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
