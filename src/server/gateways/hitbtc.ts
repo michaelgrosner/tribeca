@@ -564,6 +564,10 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                 qs: {nonce: nonce.toString(), apikey: this._apiKey}};
     };
 
+    private onNullTick = () => {
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, this._gwSymbol.split('_')[0])), 2500);
+        setInterval(() => this._evUp('PositionGateway', new Models.CurrencyPosition(500, 50, this._gwSymbol.split('_')[1])), 2500);
+    };
     private onTick = () => {
         request.get(
             this.getAuth("/api/1/trading/balance"),
@@ -594,7 +598,9 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         this._secret = cfString("HitBtcSecret");
         this._pullUrl = cfString("HitBtcPullUrl");
         this.onTick();
-        setInterval(this.onTick, 15000);
+        if (cfString("HitBtcPullUrl").indexOf("demo") > -1)
+          setInterval(this.onNullTick, 15000);
+        else setInterval(this.onTick, 15000);
     }
 }
 
@@ -612,10 +618,8 @@ export class HitBtc extends Interfaces.CombinedGateway {
 
         new HitBtcMarketDataGateway(_evUp, cfString, gwSymbol, lot);
         // Payment actions are not permitted in demo mode -- helpful.
-        let positionGateway : Interfaces.IPositionGateway = new HitBtcPositionGateway(_evUp, gwSymbol, cfString);
-        if (cfString("HitBtcPullUrl").indexOf("demo") > -1) {
-            positionGateway = new NullGateway.NullPositionGateway(_evUp, gwSymbol);
-        }
+        new HitBtcPositionGateway(_evUp, gwSymbol, cfString);
+
 
         super(
           orderGateway
