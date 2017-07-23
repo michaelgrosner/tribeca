@@ -57,6 +57,11 @@ namespace K {
     WalletChart = 'C',
     EWMAChart = 'D'
   };
+  int FN::S2mC(string k) {
+    k = FN::S2u(k);
+    for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i;
+    cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1);
+  };
 }
 
 #endif

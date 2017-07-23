@@ -19,6 +19,7 @@
 
 #include <sqlite3.h>
 
+#include <openssl/md5.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <uv.h>
