@@ -5,35 +5,59 @@ namespace K {
   class Gw {
     public:
       static Gw *E(mExchange e);
+      mExchange exchange = mExchange::Null;
       double makeFee = 0;
       double takeFee = 0;
       double minTick = 0;
       double minSize = 0;
-      virtual mExchange exchange() = 0;
-      virtual string symbol() = 0;
+      string symbol = "";
+      string target = "";
+      string apikey = "";
+      string secret = "";
+      string user = "";
+      string pass = "";
+      string http = "";
+      string ws = "";
+      string wS = "";
       virtual void fetch() = 0;
       virtual void pos() = 0;
   };
   class GwNull: public Gw {
     public:
-      mExchange exchange() { return mExchange::Null; };
-      string symbol() { return string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]); };
-      void fetch() { minTick = 0.01; minSize = 0.01; };
+      void fetch() {
+        symbol = string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]);
+        minTick = 0.01;
+        minSize = 0.01;
+      };
       void pos() { };
   };
   class GwOkCoin: public Gw {
     public:
-      mExchange exchange() { return mExchange::OkCoin; };
-      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
-      void fetch() { minTick = "btc" == symbol().substr(0,3) ? 0.01 : 0.001; minSize = 0.01; };
+      mExchange exchange = mExchange::OkCoin;
+      void fetch() {
+        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
+        target = CF::cfString("OkCoinOrderDestination");
+        apikey = CF::cfString("OkCoinApiKey");
+        secret = CF::cfString("OkCoinSecretKey");
+        http = CF::cfString("OkCoinHttpUrl");
+        ws = CF::cfString("OkCoinWsUrl");
+        minTick = "btc" == symbol.substr(0,3) ? 0.01 : 0.001;
+        minSize = 0.01;
+        };
       void pos() { };
   };
   class GwCoinbase: public Gw {
     public:
-      mExchange exchange() { return mExchange::Coinbase; };
-      string symbol() { return string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]); };
+      mExchange exchange = mExchange::Coinbase;
       void fetch() {
-        json k = FN::wJet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol()));
+        symbol = string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]);
+        target = CF::cfString("CoinbaseOrderDestination");
+        apikey = CF::cfString("CoinbaseApiKey");
+        secret = CF::cfString("CoinbaseSecret");
+        pass = CF::cfString("CoinbasePassphrase");
+        http = CF::cfString("CoinbaseRestUrl");
+        ws = CF::cfString("CoinbaseWebsocketUrl");
+        json k = FN::wJet(CF::cfString("CoinbaseRestUrl").append("/products/").append(symbol));
         if (k.find("quote_increment") != k.end()) {
           minTick = stod(k["quote_increment"].get<string>());
           minSize = stod(k["base_min_size"].get<string>());
@@ -43,10 +67,15 @@ namespace K {
   };
   class GwBitfinex: public Gw {
     public:
-      mExchange exchange() { return mExchange::Bitfinex; };
-      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()])); };
+      mExchange exchange = mExchange::Bitfinex;
       void fetch() {
-        json k = FN::wJet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol()));
+        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]));
+        target = CF::cfString("BitfinexOrderDestination");
+        apikey = CF::cfString("BitfinexKey");
+        secret = CF::cfString("BitfinexSecret");
+        http = CF::cfString("BitfinexHttpUrl");
+        ws = CF::cfString("BitfinexWebsocketUrl");
+        json k = FN::wJet(CF::cfString("BitfinexHttpUrl").append("/pubticker/").append(symbol));
         if (k.find("last_price") != k.end()) {
           istringstream os(string("1e-").append(to_string(5-k["last_price"].get<string>().find("."))));
           os >> minTick;
@@ -57,12 +86,20 @@ namespace K {
   };
   class GwKorbit: public Gw {
     public:
-      mExchange exchange() { return mExchange::Korbit; };
-      string symbol() { return FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()])); };
+      mExchange exchange = mExchange::Korbit;
       void fetch() {
+        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
+        target = CF::cfString("KorbitOrderDestination");
+        apikey = CF::cfString("KorbitApiKey");
+        secret = CF::cfString("KorbitSecretKey");
+        user = CF::cfString("KorbitUsername");
+        pass = CF::cfString("KorbitPassword");
+        http = CF::cfString("KorbitHttpUrl");
+        ws = CF::cfString("");
+        wS = CF::cfString("");
         json k = FN::wJet(CF::cfString("KorbitHttpUrl").append("/constants"));
-        if (k.find(symbol().substr(0,3).append("TickSize")) != k.end()) {
-          minTick = k[symbol().substr(0,3).append("TickSize")];
+        if (k.find(symbol.substr(0,3).append("TickSize")) != k.end()) {
+          minTick = k[symbol.substr(0,3).append("TickSize")];
           minSize = 0.015;
         }
       };
@@ -70,13 +107,19 @@ namespace K {
   };
   class GwHitBtc: public Gw {
     public:
-      mExchange exchange() { return mExchange::HitBtc; };
-      string symbol() { return string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]); };
+      mExchange exchange = mExchange::HitBtc;
       void fetch() {
+        symbol = string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]);
+        target = CF::cfString("HitBtcOrderDestination");
+        apikey = CF::cfString("HitBtcApiKey");
+        secret = CF::cfString("HitBtcSecret");
+        http = CF::cfString("HitBtcPullUrl");
+        ws = CF::cfString("HitBtcOrderEntryUrl");
+        wS = CF::cfString("HitBtcMarketDataUrl");
         json k = FN::wJet(CF::cfString("HitBtcPullUrl").append("/api/1/public/symbols"));
         if (k.find("symbols") != k.end())
           for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
-            if ((*it)["symbol"].get<string>() == symbol()) {
+            if ((*it)["symbol"].get<string>() == symbol) {
               minTick = stod((*it)["step"].get<string>());
               minSize = stod((*it)["lot"].get<string>());
               break;
@@ -86,12 +129,17 @@ namespace K {
   };
   class GwPoloniex: public Gw {
     public:
-      mExchange exchange() { return mExchange::Poloniex; };
-      string symbol() { return string(mCurrency[CF::cfQuote()]).append("_").append(mCurrency[CF::cfBase()]); };
+      mExchange exchange = mExchange::Poloniex;
       void fetch() {
+        symbol = string(mCurrency[CF::cfQuote()]).append("_").append(mCurrency[CF::cfBase()]);
+        string target = CF::cfString("PoloniexOrderDestination");
+        apikey = CF::cfString("PoloniexApiKey");
+        secret = CF::cfString("PoloniexSecretKey");
+        http = CF::cfString("PoloniexHttpUrl");
+        ws = CF::cfString("PoloniexWebsocketUrl");
         json k = FN::wJet(CF::cfString("PoloniexHttpUrl").append("/public?command=returnTicker"));
-        if (k.find(symbol()) != k.end()) {
-          istringstream os(string("1e-").append(to_string(6-k[symbol()]["last"].get<string>().find("."))));
+        if (k.find(symbol) != k.end()) {
+          istringstream os(string("1e-").append(to_string(6-k[symbol]["last"].get<string>().find("."))));
           os >> minTick;
           minSize = 0.01;
         }
@@ -121,10 +169,10 @@ namespace K {
       static void main(Local<Object> exports) {
         gw = Gw::E(CF::cfExchange());
         gw->fetch();
-        if (!gw->minTick) { cout << FN::uiT() << "GW Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol() << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "GW Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " allows client IP." << endl; }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
-        cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol() << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
+        cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
         if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
         gwPos_.data = gw;
         if (uv_timer_start(&gwPos_, gwPos__, 0, 7500)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
@@ -154,7 +202,7 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k_ = Array::New(isolate);
         Local<Object> k = Object::New(isolate);
-        k->Set(FN::v8S("exchange"), Number::New(isolate, (double)gw->exchange()));
+        k->Set(FN::v8S("exchange"), Number::New(isolate, (double)gw->exchange));
         Local<Object> o = Object::New(isolate);
         o->Set(FN::v8S("base"), Number::New(isolate, (double)CF::cfBase()));
         o->Set(FN::v8S("quote"), Number::New(isolate, (double)CF::cfQuote()));
@@ -240,12 +288,12 @@ namespace K {
       static void _gwExchange(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange()));
+        args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange));
       };
       static void _gwSymbol(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol()));
+        args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol));
       };
   };
 }

@@ -27,7 +27,7 @@ namespace K {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
         if (cfRepo.find(k) == cfRepo.end()) {
           if (r) {
-            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration." << endl;
+            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration. See https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist for latest example." << endl;
             exit(1);
           } else return "";
         }
@@ -63,7 +63,7 @@ namespace K {
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k ==  "null") return mExchange::Null;
-        cout << FN::uiT() << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE." << endl;
+        cout << FN::uiT() << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information." << endl;
         exit(1);
       };
     private:
