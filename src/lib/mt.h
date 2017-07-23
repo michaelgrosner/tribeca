@@ -19,7 +19,7 @@ namespace K {
       static void main(Local<Object> exports) {
         EV::evOn("MarketTradeGateway", [](Local<Object> o) {
           mGWmt t(
-            gw->exchange(),
+            gw->exchange,
             CF::cfBase(),
             CF::cfQuote(),
             o->Get(FN::v8S("price"))->NumberValue(),
