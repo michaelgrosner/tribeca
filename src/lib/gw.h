@@ -82,8 +82,8 @@ namespace K {
         Local<Object> k = Object::New(isolate);
         k->Set(FN::v8S("exchange"), Number::New(isolate, (double)gw->exchange));
         Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("base"), Number::New(isolate, (double)CF::cfBase()));
-        o->Set(FN::v8S("quote"), Number::New(isolate, (double)CF::cfQuote()));
+        o->Set(FN::v8S("base"), Number::New(isolate, (double)gw->base));
+        o->Set(FN::v8S("quote"), Number::New(isolate, (double)gw->quote));
         k->Set(FN::v8S("pair"), o);
         k->Set(FN::v8S("environment"), FN::v8S(isolate, CF::cfString("BotIdentifier").substr(savedQuotingMode?4:0)));
         k->Set(FN::v8S("matryoshka"), FN::v8S(isolate, CF::cfString("MatryoshkaUrl")));
@@ -177,7 +177,7 @@ namespace K {
   class GwNull: public Gw {
     public:
       void fetch() {
-        symbol = string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]);
+        symbol = string(mCurrency[base]).append("_").append(mCurrency[quote]);
         minTick = 0.01;
         minSize = 0.01;
       };
@@ -190,7 +190,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::OkCoin;
-        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
+        symbol = FN::S2l(string(mCurrency[base]).append("_").append(mCurrency[quote]));
         target = CF::cfString("OkCoinOrderDestination");
         apikey = CF::cfString("OkCoinApiKey");
         secret = CF::cfString("OkCoinSecretKey");
@@ -212,7 +212,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::Coinbase;
-        symbol = string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]);
+        symbol = string(mCurrency[base]).append("-").append(mCurrency[quote]);
         target = CF::cfString("CoinbaseOrderDestination");
         apikey = CF::cfString("CoinbaseApiKey");
         secret = CF::cfString("CoinbaseSecret");
@@ -231,7 +231,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::Bitfinex;
-        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]));
+        symbol = FN::S2l(string(mCurrency[base]).append(mCurrency[quote]));
         target = CF::cfString("BitfinexOrderDestination");
         apikey = CF::cfString("BitfinexKey");
         secret = CF::cfString("BitfinexSecret");
@@ -250,7 +250,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::Korbit;
-        symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
+        symbol = FN::S2l(string(mCurrency[base]).append("_").append(mCurrency[quote]));
         target = CF::cfString("KorbitOrderDestination");
         apikey = CF::cfString("KorbitApiKey");
         secret = CF::cfString("KorbitSecretKey");
@@ -269,7 +269,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::HitBtc;
-        symbol = string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]);
+        symbol = string(mCurrency[base]).append(mCurrency[quote]);
         target = CF::cfString("HitBtcOrderDestination");
         apikey = CF::cfString("HitBtcApiKey");
         secret = CF::cfString("HitBtcSecret");
@@ -291,7 +291,7 @@ namespace K {
     public:
       void fetch() {
         exchange = mExchange::Poloniex;
-        symbol = string(mCurrency[CF::cfQuote()]).append("_").append(mCurrency[CF::cfBase()]);
+        symbol = string(mCurrency[quote]).append("_").append(mCurrency[base]);
         string target = CF::cfString("PoloniexOrderDestination");
         apikey = CF::cfString("PoloniexApiKey");
         secret = CF::cfString("PoloniexSecretKey");
@@ -304,7 +304,14 @@ namespace K {
           minSize = 0.01;
         }
       };
-      void pos() { };
+      void pos() {
+        string p = string("command=returnCompleteBalances&nonce=").append(to_string(FN::T()));
+        json k = FN::wJet(string(http).append("/tradingApi"), p, apikey, FN::oHmac512(p, secret));
+        if (k.find(mCurrency[base]) == k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl;
+        else for (json::iterator it = k.begin(); it != k.end(); ++it)
+          if (it.key() == mCurrency[quote] || it.key() == mCurrency[base])
+            GW::gwPosUp(stod(k[it.key()]["available"].get<string>()), stod(k[it.key()]["onOrders"].get<string>()), FN::S2mC(it.key()));
+      };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;

@@ -375,31 +375,6 @@ class PoloniexHttp {
   }
 }
 
-class PoloniexPositionGateway implements Interfaces.IPositionGateway {
-  private trigger = async () => {
-    await new Promise<number>((resolve, reject) => {
-      this._http.post("returnCompleteBalances", {}).then(msg => {
-        const symbols: string[] = this._gwSymbol.split('_');
-        for (var i = symbols.length;i--;) {
-          if (!(<any>msg.data) || !(<any>msg.data)[symbols[i]])
-            console.error(new Date().toISOString().slice(11, -1), 'poloniex', 'Missing symbol', symbols[i]);
-          else this._evUp('PositionGateway', new Models.CurrencyPosition(parseFloat((<any>msg.data)[symbols[i]].available), parseFloat((<any>msg.data)[symbols[i]].onOrders), Models.toCurrency(symbols[i])));
-          resolve(1);
-        }
-      });
-    });
-  };
-
-  constructor(
-    private _evUp,
-    private _http: PoloniexHttp,
-    private _gwSymbol
-  ) {
-    setInterval(this.trigger, 15000);
-    setTimeout(this.trigger, 10);
-  }
-}
-
 export class Poloniex extends Interfaces.CombinedGateway {
   constructor(
     gwSymbol,
@@ -409,7 +384,6 @@ export class Poloniex extends Interfaces.CombinedGateway {
     const socket = new PoloniexWebsocket(cfString, gwSymbol);
     const http = new PoloniexHttp(cfString, new PoloniexMessageSigner(cfString));
     new PoloniexMarketDataGateway(_evUp, socket, http, gwSymbol);
-    new PoloniexPositionGateway(_evUp, http, gwSymbol);
     super(
       cfString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(_evUp, http, gwSymbol, socket)

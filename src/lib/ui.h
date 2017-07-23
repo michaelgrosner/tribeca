@@ -11,8 +11,8 @@ namespace K {
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   int iOSR60 = 0;
   bool uiOPT = true;
-  double uiMDT = 0;
-  double uiDDT = 0;
+  unsigned long uiMDT = 0;
+  unsigned long uiDDT = 0;
   string uiNOTE = "";
   string uiNK64 = "";
   Persistent<Function> socket_;
