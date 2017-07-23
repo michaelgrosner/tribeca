@@ -44,7 +44,7 @@ namespace K {
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
         if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
         gwPos_.data = gw;
-        if (uv_timer_start(&gwPos_, gwPos__, 0, 7500)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
+        if (uv_timer_start(&gwPos_, gwPos__, 0, 15000)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
@@ -188,8 +188,8 @@ namespace K {
   };
   class GwOkCoin: public Gw {
     public:
-      mExchange exchange = mExchange::OkCoin;
       void fetch() {
+        exchange = mExchange::OkCoin;
         symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
         target = CF::cfString("OkCoinOrderDestination");
         apikey = CF::cfString("OkCoinApiKey");
@@ -199,12 +199,27 @@ namespace K {
         minTick = "btc" == symbol.substr(0,3) ? 0.01 : 0.001;
         minSize = 0.01;
       };
-      void pos() { };
+      void pos() {
+        // string p = string("api_key=").append(apikey);
+        // string p_ = string(p).append("&secret_key=").append(secret);
+        // unsigned char digest[MD5_DIGEST_LENGTH];
+        // MD5((unsigned char*)p_.data(), p_.length(), (unsigned char*)&digest);
+        // char mdS[33];
+        // for(int i = 0; i < 16; i++) sprintf(&mdS[i*2], "%02x", (unsigned int)digest[i]);
+        // json k = FN::wJet(string(http).append("userinfo.do"), p.append("&sign=").append(FN::S2u(mdS)));
+        // if (k["result"] == true) {
+          // json free = k["info"]["funds"]["free"];
+          // json freezed = k["info"]["funds"]["freezed"];
+          // for (json::iterator it = free.begin(); it != free.end(); ++it)
+            // if (symbol.find(it.key()) != string::npos)
+              // GW::gwPosUp(stod(free[it.key()].get<string>()), stod(freezed[it.key()].get<string>()), FN::S2mC(it.key()));
+        // }
+      };
   };
   class GwCoinbase: public Gw {
     public:
-      mExchange exchange = mExchange::Coinbase;
       void fetch() {
+        exchange = mExchange::Coinbase;
         symbol = string(mCurrency[CF::cfBase()]).append("-").append(mCurrency[CF::cfQuote()]);
         target = CF::cfString("CoinbaseOrderDestination");
         apikey = CF::cfString("CoinbaseApiKey");
@@ -222,8 +237,8 @@ namespace K {
   };
   class GwBitfinex: public Gw {
     public:
-      mExchange exchange = mExchange::Bitfinex;
       void fetch() {
+        exchange = mExchange::Bitfinex;
         symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]));
         target = CF::cfString("BitfinexOrderDestination");
         apikey = CF::cfString("BitfinexKey");
@@ -241,8 +256,8 @@ namespace K {
   };
   class GwKorbit: public Gw {
     public:
-      mExchange exchange = mExchange::Korbit;
       void fetch() {
+        exchange = mExchange::Korbit;
         symbol = FN::S2l(string(mCurrency[CF::cfBase()]).append("_").append(mCurrency[CF::cfQuote()]));
         target = CF::cfString("KorbitOrderDestination");
         apikey = CF::cfString("KorbitApiKey");
@@ -260,8 +275,8 @@ namespace K {
   };
   class GwHitBtc: public Gw {
     public:
-      mExchange exchange = mExchange::HitBtc;
       void fetch() {
+        exchange = mExchange::HitBtc;
         symbol = string(mCurrency[CF::cfBase()]).append(mCurrency[CF::cfQuote()]);
         target = CF::cfString("HitBtcOrderDestination");
         apikey = CF::cfString("HitBtcApiKey");
@@ -282,8 +297,8 @@ namespace K {
   };
   class GwPoloniex: public Gw {
     public:
-      mExchange exchange = mExchange::Poloniex;
       void fetch() {
+        exchange = mExchange::Poloniex;
         symbol = string(mCurrency[CF::cfQuote()]).append("_").append(mCurrency[CF::cfBase()]);
         string target = CF::cfString("PoloniexOrderDestination");
         apikey = CF::cfString("PoloniexApiKey");

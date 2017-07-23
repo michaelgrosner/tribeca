@@ -18,6 +18,11 @@ namespace K {
         transform(k.begin(), k.end(), k.begin(), ::tolower);
         return k;
       };
+      static string S2u(string k) {
+        transform(k.begin(), k.end(), k.begin(), ::toupper);
+        return k;
+      };
+      static int S2mC(string k);
       static double T() {
         return chrono::milliseconds(chrono::seconds(time(NULL))).count();
       };
@@ -60,15 +65,21 @@ namespace K {
         curl_global_cleanup();
         return k_;
       };
-      static string wPost(string k, string p) {
+      static json wJet(string k, string p) {
+        return json::parse(wGet(k, p));
+      };
+      static string wGet(string k, string p) {
         string k_;
         CURL* curl;
         curl_global_init(CURL_GLOBAL_ALL);
         curl = curl_easy_init();
         if (curl) {
+          struct curl_slist *h = NULL;
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          h = curl_slist_append(h, "Content-Type: application/x-www-form-urlencoded");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
