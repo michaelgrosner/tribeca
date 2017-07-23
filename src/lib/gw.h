@@ -139,7 +139,7 @@ namespace K {
         bool newMode = gwConn != mConnectivityStatus::Connected ? false : savedQuotingMode;
         if (newMode != gwState) {
           gwState = newMode;
-          cout << FN::uiT() << "GW changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
           UI::uiSend(isolate, uiTXT::ActiveState, Boolean::New(isolate, gwState)->ToObject());
         }
       }
@@ -201,19 +201,11 @@ namespace K {
       };
       void pos() {
         string p = string("api_key=").append(apikey);
-        string p_ = string(p).append("&secret_key=").append(secret);
-        unsigned char digest[MD5_DIGEST_LENGTH];
-        MD5((unsigned char*)p_.data(), p_.length(), (unsigned char*)&digest);
-        char mdS[33];
-        for(int i = 0; i < 16; i++) sprintf(&mdS[i*2], "%02x", (unsigned int)digest[i]);
-        json k = FN::wJet(string(http).append("userinfo.do"), p.append("&sign=").append(FN::S2u(mdS)));
-        if (k["result"] == true) {
-          json free = k["info"]["funds"]["free"];
-          json freezed = k["info"]["funds"]["freezed"];
-          for (json::iterator it = free.begin(); it != free.end(); ++it)
-            if (symbol.find(it.key()) != string::npos)
-              GW::gwPosUp(stod(free[it.key()].get<string>()), stod(freezed[it.key()].get<string>()), FN::S2mC(it.key()));
-        }
+        json k = FN::wJet(string(http).append("userinfo.do"), p.append("&sign=").append(FN::oMd5(string(p).append("&secret_key=").append(secret))));
+        if (k["result"] != true) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl;
+        else for (json::iterator it = k["info"]["funds"]["free"].begin(); it != k["info"]["funds"]["free"].end(); ++it)
+          if (symbol.find(it.key()) != string::npos)
+            GW::gwPosUp(stod(k["info"]["funds"]["free"][it.key()].get<string>()), stod(k["info"]["funds"]["freezed"][it.key()].get<string>()), FN::S2mC(it.key()));
       };
   };
   class GwCoinbase: public Gw {
