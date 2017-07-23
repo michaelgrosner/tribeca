@@ -19,7 +19,6 @@
 
 #include <sqlite3.h>
 
-#include <openssl/md5.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <uv.h>
@@ -28,6 +27,7 @@
 using namespace std;
 using namespace v8;
 
+#include <openssl/md5.h>
 #include "json.h"
 #include "_dec.h"
 #include "_b64.h"

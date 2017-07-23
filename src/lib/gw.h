@@ -265,11 +265,11 @@ namespace K {
         user = CF::cfString("KorbitUsername");
         pass = CF::cfString("KorbitPassword");
         http = CF::cfString("KorbitHttpUrl");
-          json k = FN::wJet(CF::cfString("KorbitHttpUrl").append("/constants"));
-          if (k.find(symbol.substr(0,3).append("TickSize")) != k.end()) {
-            minTick = k[symbol.substr(0,3).append("TickSize")];
-            minSize = 0.015;
-          }
+        json k = FN::wJet(CF::cfString("KorbitHttpUrl").append("/constants"));
+        if (k.find(symbol.substr(0,3).append("TickSize")) != k.end()) {
+          minTick = k[symbol.substr(0,3).append("TickSize")];
+          minSize = 0.015;
+        }
       };
       void pos() { };
   };
