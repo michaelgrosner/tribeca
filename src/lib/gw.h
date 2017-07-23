@@ -285,7 +285,19 @@ namespace K {
               break;
             }
       };
-      void pos() { };
+      void pos() {
+        if (http.find("demo") == string::npos) {
+          string p = string("apikey=").append(apikey).append("&nonce=").append(to_string(FN::T()));
+          json k = FN::wJet(string(http).append("/api/1/trading/balance?").append(p), p, FN::oHmac512(string("/api/1/trading/balance?").append(p), secret));
+          if (k.find("balance") != k.end())
+            for (json::iterator it = k["balance"].begin(); it != k["balance"].end(); ++it)
+              if ((*it)["currency_code"].get<string>() == mCurrency[base] || (*it)["currency_code"].get<string>() == mCurrency[quote])
+                GW::gwPosUp((*it)["cash"], (*it)["reserved"], FN::S2mC((*it)["currency_code"]));
+        } else {
+          GW::gwPosUp(500, 50, base);
+          GW::gwPosUp(500, 50, quote);
+        }
+      };
   };
   class GwPoloniex: public Gw {
     public:
@@ -309,7 +321,7 @@ namespace K {
         json k = FN::wJet(string(http).append("/tradingApi"), p, apikey, FN::oHmac512(p, secret));
         if (k.find(mCurrency[base]) == k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl;
         else for (json::iterator it = k.begin(); it != k.end(); ++it)
-          if (it.key() == mCurrency[quote] || it.key() == mCurrency[base])
+          if (it.key() == mCurrency[base] || it.key() == mCurrency[quote])
             GW::gwPosUp(stod(k[it.key()]["available"].get<string>()), stod(k[it.key()]["onOrders"].get<string>()), FN::S2mC(it.key()));
       };
   };
