@@ -458,29 +458,6 @@ class BitfinexHttp {
     }
 }
 
-interface BitfinexPositionResponseItem {
-    type: string;
-    currency: string;
-    amount: string;
-    available: string;
-}
-
-class BitfinexPositionGateway implements Interfaces.IPositionGateway {
-    private onRefreshPositions = () => {
-        this._http.post<{}, BitfinexPositionResponseItem[]>("balances", {}).then(res => {
-            res.data.filter(x => x.type === "exchange").forEach(p => {
-                var amt = parseFloat(p.available);
-                this._evUp('PositionGateway', new Models.CurrencyPosition(amt, parseFloat(p.amount) - amt, Models.toCurrency(p.currency)));
-            });
-        });
-    }
-
-    constructor(private _evUp, private _http: BitfinexHttp) {
-        setInterval(this.onRefreshPositions, 15000);
-        this.onRefreshPositions();
-    }
-}
-
 export class Bitfinex extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
@@ -497,7 +474,6 @@ export class Bitfinex extends Interfaces.CombinedGateway {
             : new NullGateway.NullOrderGateway(_evUp);
 
         new BitfinexMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
-        new BitfinexPositionGateway(_evUp, http);
         super(
           orderGateway
         );

@@ -38,7 +38,7 @@ namespace K {
         gw->base = CF::cfBase();
         gw->quote = CF::cfQuote();
         gw->fetch();
-        if (!gw->minTick) { cout << FN::uiT() << "GW Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " allows client IP." << endl; }
         savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
@@ -244,7 +244,16 @@ namespace K {
           minSize = 0.01;
         }
       };
-      void pos() { };
+      void pos() {
+        string p;
+        B64::Encode(string("{\"request\":\"/v1/balances\",\"nonce\":\"").append(to_string(FN::T()*1000)).append("\"}"), &p);
+        json k = FN::wJet(string(http).append("/balances"), p, apikey, FN::oHmac384(p, secret), true);
+        if (k.find("message") != k.end()) {
+          if (k["message"]=="Nonce is too small.") pos();
+          else cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["message"] << endl;
+        } else for (json::iterator it = k.begin(); it != k.end(); ++it) if ((*it)["type"] == "exchange")
+          GW::gwPosUp(stod((*it)["available"].get<string>()), stod((*it)["amount"].get<string>()) - stod((*it)["available"].get<string>()), FN::S2mC((*it)["currency"]));
+      };
   };
   class GwKorbit: public Gw {
     public:
@@ -289,10 +298,10 @@ namespace K {
         if (http.find("demo") == string::npos) {
           string p = string("apikey=").append(apikey).append("&nonce=").append(to_string(FN::T()));
           json k = FN::wJet(string(http).append("/api/1/trading/balance?").append(p), p, FN::oHmac512(string("/api/1/trading/balance?").append(p), secret));
-          if (k.find("balance") != k.end())
-            for (json::iterator it = k["balance"].begin(); it != k["balance"].end(); ++it)
-              if ((*it)["currency_code"].get<string>() == mCurrency[base] || (*it)["currency_code"].get<string>() == mCurrency[quote])
-                GW::gwPosUp((*it)["cash"], (*it)["reserved"], FN::S2mC((*it)["currency_code"]));
+          if (k.find("balance") == k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl;
+          else for (json::iterator it = k["balance"].begin(); it != k["balance"].end(); ++it)
+            if ((*it)["currency_code"] == mCurrency[base] || (*it)["currency_code"] == mCurrency[quote])
+              GW::gwPosUp((*it)["cash"], (*it)["reserved"], FN::S2mC((*it)["currency_code"]));
         } else {
           GW::gwPosUp(500, 50, base);
           GW::gwPosUp(500, 50, quote);
@@ -333,7 +342,7 @@ namespace K {
     else if (e == mExchange::Korbit) return new GwKorbit;
     else if (e == mExchange::HitBtc) return new GwHitBtc;
     else if (e == mExchange::Poloniex) return new GwPoloniex;
-    cout << FN::uiT() << "No gateway provided for exchange \"" << CF::cfString("EXCHANGE") << "\"." << endl;
+    cout << FN::uiT() << "Errrror: No gateway provided for exchange \"" << CF::cfString("EXCHANGE") << "\"." << endl;
     exit(1);
   };
 }
