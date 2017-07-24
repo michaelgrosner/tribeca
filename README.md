@@ -123,7 +123,7 @@ Feel free to change the suggested filename `K`. Also you can run `make png` as m
 
 4. Delete the now useless `.json` file and restart the application.
 
-Just remember, even if your api keys are now binary encrypted, they can be easily readable with tools like `identify -verbose etc/K.png`; so keep the png in a secure location always, never share it.
+5. Keep the png file in a secure location always, never share it. Even if your api keys are now binary encrypted, they can be easily readable with tools like `identify -verbose etc/K.png`.
 
 ### Application Usage
 
