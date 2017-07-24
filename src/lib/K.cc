@@ -27,6 +27,7 @@
 using namespace std;
 using namespace v8;
 
+#include <openssl/hmac.h>
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 #include "json.h"

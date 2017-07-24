@@ -225,7 +225,17 @@ namespace K {
           minSize = stod(k["base_min_size"].get<string>());
         }
       };
-      void pos() { };
+      void pos() {
+        unsigned long t = FN::T() / 1000;
+        string p;
+        B64::Decode(secret, &p);
+        B64::Encode(FN::oHmac256(string(to_string(t)).append("GET/accounts"), p), &p);
+        json k = FN::wJet(string(http).append("/accounts"), to_string(t), apikey, p, pass);
+        if (k.find("message") != k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["message"] << endl;
+        else for (json::iterator it = k.begin(); it != k.end(); ++it)
+          if ((*it)["currency"] == mCurrency[base] || (*it)["currency"] == mCurrency[quote])
+            GW::gwPosUp(stod((*it)["available"].get<string>()), stod((*it)["hold"].get<string>()), FN::S2mC((*it)["currency"]));
+      };
   };
   class GwBitfinex: public Gw {
     public:
@@ -314,7 +324,7 @@ namespace K {
         json k = FN::wJet(string(http).append("/api/1/public/symbols"));
         if (k.find("symbols") != k.end())
           for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
-            if ((*it)["symbol"].get<string>() == symbol) {
+            if ((*it)["symbol"] == symbol) {
               minTick = stod((*it)["step"].get<string>());
               minSize = stod((*it)["lot"].get<string>());
               break;

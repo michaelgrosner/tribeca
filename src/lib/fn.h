@@ -45,10 +45,20 @@ namespace K {
           << "." << milliseconds.count() << microseconds.count() << " ";
         return T.str();
       };
+      static string oHex(string k) {
+       int len = k.length();
+        string k_;
+        for(int i=0; i< len; i+=2) {
+          string byte = k.substr(i,2);
+          char chr = (char) (int)strtol(byte.data(), NULL, 16);
+          k_.push_back(chr);
+        }
+        return k_;
+      };
       static string oMd5(string k) {
         unsigned char digest[MD5_DIGEST_LENGTH];
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-        char k_[33];
+        char k_[16*2+1];
         for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return S2u(k_);
       };
@@ -59,18 +69,25 @@ namespace K {
         for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
+      static string oHmac256(string p, string s) {
+        unsigned char* digest;
+        digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
+        char k_[SHA256_DIGEST_LENGTH*2+1];
+        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return oHex(k_);
+      };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[64*2+1];
-        for(int i = 0; i < 64; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        char k_[SHA512_DIGEST_LENGTH*2+1];
+        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac384(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[48*2+1];
-        for(int i = 0; i < 48; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        char k_[SHA384_DIGEST_LENGTH*2+1];
+        for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static json wJet(string k) {
@@ -222,6 +239,30 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
+      static json wJet(string k, string t, string a, string s, string p) {
+        return json::parse(wGet(k, t, a, s, p));
+      };
+      static string wGet(string k, string t, string a, string s, string p) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
         return k_;
