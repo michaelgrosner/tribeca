@@ -316,7 +316,7 @@ class DisplayOrder {
                                                     Not Connected
                                                 </span>
                                             </th>
-                                            <th [hidden]="(notepad||'').indexOf('donate')==-1" style="width:121px;"></th>
+                                            <th style="width:121px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -419,7 +419,7 @@ class DisplayOrder {
                                                     (click)="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
-                                            <td [hidden]="(notepad||'').indexOf('donate')==-1" style="text-align: right;border-bottom: 3px solid #A0A0A0;">
+                                            <td style="text-align: right;border-bottom: 3px solid #A0A0A0;">
                                                 <div id="coinwidget-bitcoin-1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u"></div>
                                             </td>
                                         </tr>
@@ -765,32 +765,13 @@ class ClientComponent implements OnInit {
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
     if (!(<any>window).CoinWidgetCom) (function(d, script) {
-        script = d.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.onload = (/*btc.blockr.io/api/v1/address/txs/*/) => {
-          (<any>window).CoinWidgetCom.go({
-            wallet_address: '1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u',
-            currency: 'bitcoin',
-            counter: 'count',
-            lbl_button: 'Support',
-            lbl_count: 'Donations',
-            lbl_amount: 'BTC',
-            lbl_address: 'Support the PUBLIC development of K.js',
-            qrcode: true,
-            alignment: 'bl',
-            decimals: 8,
-            size: "small",
-            color: "dark",
-            countdownFrom: "0",
-            element: "#coinwidget-bitcoin-1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u",
-            onShow: function(){},
-            onHide: function(){}
-          });
-        };
-        script.src = 'https://blockr.io/js_external/coinwidget/coin.js';
-        d.getElementsByTagName('head')[0].appendChild(script);
-      }(document));
+      script = d.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.onload = (/*btc.blockr.io/api/v1/address/txs/*/) => {(<any>window).CoinWidgetCom.go({wallet_address: '1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u',currency: 'bitcoin',counter: 'count',lbl_button: '&#x1F44A;',lbl_count: 'Donations',lbl_amount: 'BTC',lbl_address: 'Support the PUBLIC development of K.js',qrcode: true,alignment: 'bl',decimals: 8,size: "small",color: "dark",countdownFrom: "0",element: "#coinwidget-bitcoin-1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u",onShow: function(){},onHide: function(){}});};
+      script.src = 'https://blockr.io/js_external/coinwidget/coin.js';
+      d.getElementsByTagName('head')[0].appendChild(script);
+    }(document));
   }
 }
 
