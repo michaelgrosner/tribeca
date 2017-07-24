@@ -121,6 +121,9 @@ enc: dist/img/K.png build/K.msg
 dec: dist/img/K.png
 	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;/^$$/d;1d;s/Version:.*//' | gpg -d > build/K.msg
 
+md5: src build
+	find src -type f -exec md5sum "{}" + > build/K.md5
+
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
