@@ -22,6 +22,7 @@ help:
 	#   make K          - compile K node module        #
 	#                                                  #
 	#   make config     - initialize config file       #
+	#   make packages   - install dependencies         #
 	#   make stunnel    - initialize stunnel daemon    #
 	#   PNG=% make png  - inject config file into PNG  #
 	#   make clean-db   - remove K database files      #
@@ -92,6 +93,13 @@ clean-db: /data/db/K*
 
 config: etc/K.json.dist
 	test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json
+
+packages:
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python gzip imagemagick \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python gzip libpng-devel imagemagick) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :)) \
+	&& (sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db) && make \
+	&& openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem && sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/ && make stunnel
 
 stunnel:
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
