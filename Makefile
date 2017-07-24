@@ -94,7 +94,7 @@ config: etc/K.json.dist
 	test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json
 
 stunnel:
-	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf || :
+	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
 
 server: node_modules/.bin/tsc src/server src/share app
 	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
