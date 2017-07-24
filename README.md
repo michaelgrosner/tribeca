@@ -55,7 +55,9 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
 
-`npm` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But before, it will install all local dependencies in `node_modules` folder and will compile TypeScript in `src` folder to CommonJS in `app` folder if it was not already done before.
+`npm start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `npm install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
+
+Feel free to run `npm stop` or `npm restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
 Troubleshooting:
 
