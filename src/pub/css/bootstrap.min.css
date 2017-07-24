@@ -105,3 +105,5 @@ address {margin-bottom:0px;}input:invalid { border:1px #ff8e7a solid; }
 }
 table.marketQuoting {font-size:12px;}
 .COINWIDGETCOM_WINDOW {background:rgba(0,255,0,0.25)!important;}
+.COINWIDGETCOM_BUTTON_BITCOIN span {font-size:25px;}
+.COINWIDGETCOM_BUTTON_BITCOIN img {display:none!important;}
