@@ -13,16 +13,13 @@ export class MarketFiltration {
   constructor(
       private _minTick: number,
       private _orderBroker: Broker.OrderBroker,
-      private _marketBroker: Broker.MarketDataBroker,
       private _evOn,
       private _evUp
   ) {
-    this._evOn('MarketDataBroker', this.filterFullMarket);
+    this._evOn('MarketDataBroker', mkt => this.filterFullMarket(mkt));
   }
 
-  private filterFullMarket = () => {
-    var mkt = this._marketBroker.currentBook;
-
+  private filterFullMarket = (mkt) => {
     if (mkt == null || !mkt.bids.length || !mkt.asks.length) {
       this.latestFilteredMarket = null;
       return;

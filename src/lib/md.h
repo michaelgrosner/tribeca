@@ -1,5 +1,5 @@
-#ifndef K_MT_H_
-#define K_MT_H_
+#ifndef K_MD_H_
+#define K_MD_H_
 
 namespace K {
   struct mGWmt {
@@ -14,7 +14,8 @@ namespace K {
       exchange(e_), base(b_), quote(q_), price(p_), size(s_), time(t_), make_side(m_) {}
   };
   vector<mGWmt> mGWmt_;
-  class MT {
+  Persistent<Object> mGWmkt;
+  class MD {
     public:
       static void main(Local<Object> exports) {
         EV::evOn("MarketTradeGateway", [](Local<Object> o) {
@@ -32,13 +33,33 @@ namespace K {
           EV::evUp("MarketTrade");
           UI::uiSend(Isolate::GetCurrent(), uiTXT::MarketTrade, v8mGWmt(t));
         });
-        UI::uiSnap(uiTXT::MarketTrade, &onSnap);
+        EV::evOn("MarketDataGateway", [](Local<Object> o) {
+          Isolate* isolate = Isolate::GetCurrent();
+          EV::evUp("MarketDataBroker", o);
+          UI::uiSend(isolate, uiTXT::MarketData, o, true);
+          mGWmkt.Reset(isolate, o);
+        });
+        EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
+          Isolate* isolate = Isolate::GetCurrent();
+          if ((mConnectivityStatus)c->NumberValue() == mConnectivityStatus::Disconnected) {
+            EV::evUp("MarketDataBroker", Array::New(isolate));
+            UI::uiSend(isolate, uiTXT::MarketData, Array::New(isolate), true);
+          }
+        });
+        UI::uiSnap(uiTXT::MarketData, &onSnapBook);
+        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
       };
     private:
-      static Local<Value> onSnap(Local<Value> z) {
+      static Local<Value> onSnapTrade(Local<Value> z) {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Array> k = Array::New(isolate);
         for (unsigned i=0; i<mGWmt_.size(); ++i) k->Set(i, v8mGWmt(mGWmt_[i]));
+        return k;
+      };
+      static Local<Value> onSnapBook(Local<Value> z) {
+        Isolate* isolate = Isolate::GetCurrent();
+        Local<Array> k = Array::New(isolate);
+        k->Set(0, Local<Object>::New(isolate, mGWmkt));
         return k;
       };
       static Local<Object> v8mGWmt(mGWmt t) {
