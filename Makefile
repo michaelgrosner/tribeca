@@ -22,6 +22,7 @@ help:
 	#   make K          - compile K node module        #
 	#                                                  #
 	#   make config     - initialize config file       #
+	#   PNG=% make png  - inject config file into PNG  #
 	#   make cleandb    - remove K database files      #
 	#                                                  #
 	#   make server     - compile K server src         #
