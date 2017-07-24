@@ -69,11 +69,10 @@ json: build
 
 quickfix: build
 	(test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || ( \
-		curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build  \
-		&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure && make                     \
-		&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                  \
-		&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      \
-	)
+	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build  \
+	&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure && make                     \
+	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                  \
+	&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      )
 
 Linux: build app/server/lib
 ifdef ABIv
@@ -101,7 +100,7 @@ packages:
 	&& (sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db) && make \
 	&& openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem && sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/ && make stunnel
 
-stunnel:
+stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
 
 server: node_modules/.bin/tsc src/server src/share app
@@ -117,7 +116,7 @@ bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/clien
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 
 changelog: .git
-	git --no-pager log --graph --oneline @..@{u}
+	@echo && git --no-pager log --graph --oneline @..@{u}
 
 test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
