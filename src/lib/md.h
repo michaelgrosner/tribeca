@@ -33,18 +33,14 @@ namespace K {
           EV::evUp("MarketTrade");
           UI::uiSend(Isolate::GetCurrent(), uiTXT::MarketTrade, v8mGWmt(t));
         });
+        Isolate* isolate = exports->GetIsolate();
+        mGWmkt.Reset(isolate, Object::New(isolate));
         EV::evOn("MarketDataGateway", [](Local<Object> o) {
-          Isolate* isolate = Isolate::GetCurrent();
-          EV::evUp("MarketDataBroker", o);
-          UI::uiSend(isolate, uiTXT::MarketData, o, true);
-          mGWmkt.Reset(isolate, o);
+          v8mGWmkt(o);
         });
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
-          Isolate* isolate = Isolate::GetCurrent();
-          if ((mConnectivityStatus)c->NumberValue() == mConnectivityStatus::Disconnected) {
-            EV::evUp("MarketDataBroker", Array::New(isolate));
-            UI::uiSend(isolate, uiTXT::MarketData, Array::New(isolate), true);
-          }
+          if ((mConnectivityStatus)c->NumberValue() == mConnectivityStatus::Disconnected)
+            v8mGWmkt();
         });
         UI::uiSnap(uiTXT::MarketData, &onSnapBook);
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
@@ -61,6 +57,16 @@ namespace K {
         Local<Array> k = Array::New(isolate);
         k->Set(0, Local<Object>::New(isolate, mGWmkt));
         return k;
+      };
+      static void v8mGWmkt() {
+        Isolate* isolate = Isolate::GetCurrent();
+        v8mGWmkt(Object::New(isolate));
+      }
+      static void v8mGWmkt(Local<Object> o) {
+        Isolate* isolate = Isolate::GetCurrent();
+        EV::evUp("MarketDataBroker", o);
+        UI::uiSend(isolate, uiTXT::MarketData, o, true);
+        mGWmkt.Reset(isolate, o);
       };
       static Local<Object> v8mGWmt(mGWmt t) {
         Isolate* isolate = Isolate::GetCurrent();
