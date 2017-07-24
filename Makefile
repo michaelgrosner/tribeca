@@ -115,6 +115,12 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
 
+enc: dist/img/K.png build/K.msg
+	convert dist/img/K.png -set "K.msg" "[`cat build/K.msg | gpg -e -r 0xFA101D1FC3B39DE0 -a`" K: dist/img/K.png 2>/dev/null || :
+
+dec: dist/img/K.png
+	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;/^$$/d;1d;s/Version:.*//' | gpg -d > build/K.msg
+
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
