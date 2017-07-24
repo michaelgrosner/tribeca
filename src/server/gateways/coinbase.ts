@@ -39,14 +39,6 @@ interface CoinbaseOrderAck {
     message?: string;
 }
 
-interface CoinbaseAccountInformation {
-    id: string;
-    balance: string;
-    hold: string;
-    available: string;
-    currency: string;
-}
-
 class CoinbaseMarketDataGateway implements Interfaces.IMarketDataGateway {
     private onMessage = (data: CoinbaseOrder) => {
       if (data.type == 'match' || data.type == 'open') {
@@ -489,33 +481,6 @@ ResetOnLogon=Y`
     }
 }
 
-class CoinbasePositionGateway implements Interfaces.IPositionGateway {
-    private onTick = () => {
-        this._authClient.getAccounts((err?: Error, resp?: any, data?: CoinbaseAccountInformation[]|{message: string}) => {
-            try {
-              if (Array.isArray(data)) {
-                    data.forEach(d => this._evUp('PositionGateway', new Models.CurrencyPosition(
-                      parseFloat(d.available),
-                      parseFloat(d.hold),
-                      Models.toCurrency(d.currency)
-                    )));
-                }
-                else console.warn(new Date().toISOString().slice(11, -1), 'coinbase', 'Unable to read Coinbase positions', data);
-            } catch (error) {
-                console.error(new Date().toISOString().slice(11, -1), 'coinbase', error, 'Exception while reading Coinbase positions', data)
-            }
-        });
-    };
-
-    constructor(
-      private _evUp,
-      private _authClient: Gdax.AuthenticatedClient
-    ) {
-        setInterval(this.onTick, 7500);
-        this.onTick();
-    }
-}
-
 export class Coinbase extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
@@ -533,7 +498,6 @@ export class Coinbase extends Interfaces.CombinedGateway {
         const orderEventEmitter: Gdax.OrderbookSync = new Gdax.OrderbookSync(gwSymbol, cfString("CoinbaseRestUrl"), cfString("CoinbaseWebsocketUrl"), authClient);
 
         new CoinbaseMarketDataGateway(_evUp, orderEventEmitter, authClient);
-        new CoinbasePositionGateway(_evUp, authClient);
 
         super(
           cfString("CoinbaseOrderDestination") == "Coinbase"
