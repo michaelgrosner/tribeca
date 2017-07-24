@@ -46,7 +46,7 @@ using namespace dec;
 #include "ui.h"
 #include "qp.h"
 #include "gw.h"
-#include "mt.h"
+#include "md.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;namespace K {;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,7 +58,7 @@ using namespace dec;
 ;;;;;;UI::main(exports);;        ;;;;;;;
 ;;;;;;QP::main(exports);;    ;;    ;;;;;
 ;;;;;;GW::main(exports);;    ;;;;    ;;;
-;;;;;;MT::main(exports);;    ;;;;    ;;;
+;;;;;;MD::main(exports);;    ;;;;    ;;;
 ;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;    ;;;
 ;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -98,18 +98,10 @@ const orderBroker = new Broker.OrderBroker(
   initTrades
 );
 
-const marketBroker = new Broker.MarketDataBroker(
-  bindings.uiSnap,
-  bindings.uiSend,
-  bindings.evOn,
-  bindings.evUp
-);
-
 const fvEngine = new FairValue.FairValueEngine(
   new MarketFiltration.MarketFiltration(
     bindings.gwMinTick(),
     orderBroker,
-    marketBroker,
     bindings.evOn,
     bindings.evUp
   ),

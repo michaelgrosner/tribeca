@@ -4,31 +4,6 @@ import Interfaces = require("./interfaces");
 import FairValue = require("./fair-value");
 import moment = require("moment");
 
-export class MarketDataBroker {
-  public get currentBook(): Models.Market { return this._currentBook; }
-
-  private _currentBook: Models.Market = null;
-  private handleMarketData = (book: Models.Market) => {
-      this._currentBook = book;
-      this._evUp('MarketDataBroker');
-      this._uiSend(Models.Topics.MarketData, this.currentBook, true);
-  };
-
-  constructor(
-    private _uiSnap,
-    private _uiSend,
-    private _evOn,
-    private _evUp
-  ) {
-    _uiSnap(Models.Topics.MarketData, () => this.currentBook === null ? []: [this.currentBook]);
-
-    this._evOn('MarketDataGateway', this.handleMarketData);
-    this._evOn('GatewayMarketConnect', s => {
-      if (s == Models.ConnectivityStatus.Disconnected) this._currentBook = null;
-    });
-  }
-}
-
 class OrderStateCache {
   public allOrders = new Map<string, Models.OrderStatusReport>();
   public exchIdsToClientIds = new Map<string, string>();
