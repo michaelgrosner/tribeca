@@ -16,9 +16,6 @@ export interface IOrderEntryGateway {
     cancelAllOpenOrders() : Promise<number>;
 }
 
-export interface IPositionGateway {
-}
-
 export class CombinedGateway {
     constructor(public oe: IOrderEntryGateway) { }
 }
