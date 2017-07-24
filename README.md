@@ -101,7 +101,7 @@ To run multiple instances using a collection of config files:
 
     2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration) also); this value will also be used as the `uid` of the process executed by `forever`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
