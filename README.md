@@ -113,15 +113,17 @@ If you dont like to have your `etc/*.json` files with plain text, you can encryp
 
 1. Download any PNG file that you like and place it at `etc/` folder.
 
-2. Rename the `*.png` filename to match the `*.json* filename (for example if you have a `etc/K.json` file you can rename your png file to `etc/K.png`).
+2. Rename the `*.png` filename to match the `*.json` filename (for example if you have a `etc/K.json` file you can rename your png file to `etc/K.png`).
 
 3. Once you have your json file all configured and your png file renamed equal than the json file (lets say the files are named `K`):
 ```
  $ PNG=K make png
 ```
-Feel free to change the suggested filename `K`, also you can run this as many times as you update your original json file.
+Feel free to change the suggested filename `K`. Also you can run `make png` as many times as you update your original json file, always with `PNG` environment variable matching the filename of both json and png files.
 
 4. Delete the now useless `.json` file and restart the application.
+
+Just remember, even if your api keys are now binary encrypted, they can be easily readable with tools like `identify -verbose etc/K.png`; so keep the png in a secure location always, never share it.
 
 ### Application Usage
 
