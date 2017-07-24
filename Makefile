@@ -24,7 +24,7 @@ help:
 	#   make config     - initialize config file       #
 	#   make stunnel    - initialize stunnel daemon    #
 	#   PNG=% make png  - inject config file into PNG  #
-	#   make cleandb    - remove K database files      #
+	#   make clean-db   - remove K database files      #
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
@@ -87,7 +87,7 @@ endif
 clean: build
 	rm -rf build
 
-cleandb: /data/db/K*
+clean-db: /data/db/K*
 	rm -rf /data/db/K*.db
 
 config: etc/K.json.dist
@@ -139,4 +139,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean cleandb stunnel config server client pub bundle changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel config server client pub bundle changelog test test-cov send-cov png png-check enc dec md5 asandwich
