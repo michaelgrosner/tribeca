@@ -8,7 +8,7 @@ G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
   -Ibuild/json-$(V_JSO)                                                                       \
-src/lib/K.cc -lsqlite3 -lcurl
+src/lib/K.cc -lsqlite3 -lz -lpng -lcurl
 
 all: K
 
@@ -115,11 +115,18 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
 
+png: etc/${PNG}.png etc/${PNG}.json
+	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
+	@$(MAKE) png-check -s
+
+png-check: etc/${PNG}.png
+	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
+
 enc: dist/img/K.png build/K.msg
 	convert dist/img/K.png -set "K.msg" "[`cat build/K.msg | gpg -e -r 0xFA101D1FC3B39DE0 -a`" K: dist/img/K.png 2>/dev/null || :
 
-dec: dist/img/K.png
-	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;/^$$/d;1d;s/Version:.*//' | gpg -d > build/K.msg
+dec: dist/img/K.png build
+	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;1d;s/Version:.*//' | sed -e :a -e '/./,$$!d;/^\n*$$/{$$d;N;ba' -e '}' | gpg -d > build/K.msg
 
 md5: src build
 	find src -type f -exec md5sum "{}" + > build/K.md5
@@ -127,4 +134,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean cleandb config server client pub bundle changelog test test-cov send-cov asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean cleandb config server client pub bundle changelog test test-cov send-cov png png-check enc dec md5 asandwich

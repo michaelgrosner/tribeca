@@ -91,7 +91,7 @@ Please note, an "instance" is in fact a config file under `etc` folder; using a 
 
 You can list the current instances running anytime with `npm run list`.
 
-Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined) will use the default config file `etc/K.json`.
+Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined) will use the default config file `etc/K.json` or `etc/K.png`.
 
 To run multiple instances using a collection of config files:
 
@@ -101,11 +101,27 @@ To run multiple instances using a collection of config files:
 
     2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `npm start --K.js:config=X.json`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run; this value will also be used as the `uid` of the process executed by `forever`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
 After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `npm run startall`, `npm run stopall` and `npm run restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
+
+### Steganographic configuration
+
+If you dont like to have your `etc/*.json` files with plain text, you can encrypt them behind any PNG image:
+
+1. Download any PNG file that you like and place it at `etc/` folder.
+
+2. Rename the `*.png` filename to match the `*.json* filename (for example if you have a `etc/K.json` file you can rename your png file to `etc/K.png`).
+
+3. Once you have your json file all configured and your png file renamed equal than the json file (lets say the files are named `K`):
+```
+ $ PNG=K make png
+```
+Feel free to change the suggested filename `K`, also you can run this as many times as you update your original json file.
+
+4. Delete the now useless `.json` file and restart the application.
 
 ### Application Usage
 
@@ -165,7 +181,7 @@ To ignore the output, execute the application in the background with `forever st
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect K.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
-Passing a config filename is possible with ENV var `KCONFIG` like for example `KCONFIG=X.json nodejs K.js`.
+Passing a config filename is possible with ENV var `KCONFIG` like for example `KCONFIG=X nodejs K.js`.
 
 ### Unreleased Changelog:
 

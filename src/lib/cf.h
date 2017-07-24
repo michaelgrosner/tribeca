@@ -12,13 +12,50 @@ namespace K {
           ifstream file_("package.json");
           pkRepo = json::parse(string((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>()));
         } else { cout << FN::uiT() << "Errrror: CF package.json not found." << endl; exit(1); }
-        string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K.json");
-        cFname = string("etc/").append(k);
+        string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K");
+        cFname = string("etc/").append(k).append(".json");
+        string cfname = string("etc/").append(k).append(".png");
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
           cfRepo = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
-          cout << FN::uiT() << "CF settings loaded from " << k << " OK." << endl;
-        } else cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
+          cout << FN::uiT() << "CF settings loaded from JSON file " << k << " OK." << endl;
+        } else if (access(cfname.data(), F_OK) != -1) {
+          cFname = cfname;
+          png_structp png_ptr;
+          png_infop info_ptr;
+          unsigned char sig[8];
+          FILE *fp;
+          if(!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "Errrror: Could not find and open file " << k << "." << endl; }
+          else {
+            fread(sig, 1, 8, fp);
+            if(!png_check_sig(sig, 8)) { cout << FN::uiT() << "Errrror: Not a PNG file." << endl; }
+            else {
+              png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+              info_ptr = png_create_info_struct(png_ptr);
+              if(!png_ptr) { cout << FN::uiT() << "Errrror: Could not allocate memory." << endl; }
+              else {
+                if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << "Errrror: PNG error." << endl; }
+                else {
+                  png_init_io(png_ptr, fp);
+                  png_set_sig_bytes(png_ptr, 8);
+                  png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+                  png_textp text_ptr;
+                  int num_text;
+                  png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
+                  string conf;
+                  for(int i = 0; i < num_text; i++)
+                    if(strcmp("K.conf", text_ptr[i].key) == 0)
+                      conf = text_ptr[i].text;
+                  if (conf.length()) {
+                    cfRepo = json::parse(conf);
+                    cout << FN::uiT() << "CF settings loaded from PNG file " << k << " OK." << endl;
+                  } else cout << FN::uiT() << "CF no data found inside PNG file " << k << "." << endl;
+                }
+              }
+            }
+          }
+        }
+        if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
