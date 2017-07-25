@@ -118,16 +118,24 @@ stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
 
 server: node_modules/.bin/tsc src/server src/share app
-	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
+	@echo -n Building server files..
+	@./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
+	@echo " done"
 
 client: node_modules/.bin/tsc src/client src/share app
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
+	@echo -n Building client dynamic files..
+	@./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
+	@echo " done"
 
 pub: src/pub app/pub
-	cp -R src/pub/* app/pub/
+	@echo -n Building client static files..
+	@cp -R src/pub/* app/pub/
+	@echo " done"
 
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
+	@echo -n Building client bundle file..
+	@./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
+	@echo " done"
 
 diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
