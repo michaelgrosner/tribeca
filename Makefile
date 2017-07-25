@@ -113,7 +113,7 @@ reinstall: .git src
 	git fetch
 	git merge FETCH_HEAD
 	npm install
-	$(MAKE) test -s
+	@$(MAKE) test -s
 	./node_modules/.bin/forever restartall
 	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
