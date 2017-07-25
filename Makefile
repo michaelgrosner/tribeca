@@ -25,7 +25,7 @@ help:
 	#   make config     - copy distributed config file #
 	#   PNG=% make png  - inject config file into PNG  #
 	#   make stunnel    - run ssl tunnel daemon        #
-	#   make stunnel    - download gdax ssl cert       #
+	#   make gdax       - download gdax ssl cert       #
 	#                                                  #
 	#   make diff       - show commits and versions    #
 	#   make changelog  - show commits                 #
