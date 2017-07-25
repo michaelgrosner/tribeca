@@ -16,7 +16,6 @@ help:
 	#                                                  #
 	# Available commands inside K top level directory: #
 	#   make help       - show this help               #
-	#   make changelog  - show remote commits          #
 	#                                                  #
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
