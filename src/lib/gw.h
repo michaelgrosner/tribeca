@@ -252,7 +252,7 @@ namespace K {
           string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
           unsigned int i = 0;
           for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
-            if (*it == '0') i++; else if (*it == '.') continue; else break;
+            if (*it == '0' || *it == '.') i++; else break;
           stringstream os(string("1e-").append(to_string(i)));
           os >> minTick;
           minSize = 0.01;
