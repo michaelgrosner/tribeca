@@ -25,7 +25,11 @@ help:
 	#   make packages   - install dependencies         #
 	#   make stunnel    - initialize stunnel daemon    #
 	#   PNG=% make png  - inject config file into PNG  #
-	#   make clean-db   - remove K database files      #
+	#                                                  #
+	#   make diff       - show commits and versions    #
+	#   make changelog  - show commits                 #
+	#   make latest     - show commits and reinstall   #
+	#   make reinstall  - reinstall from remote git    #
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
