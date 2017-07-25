@@ -21,10 +21,11 @@ help:
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
 	#                                                  #
-	#   make config     - initialize config file       #
 	#   make packages   - install dependencies         #
-	#   make stunnel    - initialize stunnel daemon    #
+	#   make config     - copy distributed config file #
 	#   PNG=% make png  - inject config file into PNG  #
+	#   make stunnel    - run ssl tunnel daemon        #
+	#   make stunnel    - download gdax ssl cert       #
 	#                                                  #
 	#   make diff       - show commits and versions    #
 	#   make changelog  - show commits                 #
@@ -100,9 +101,12 @@ config: etc/K.json.dist
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python gzip imagemagick \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python gzip libpng-devel imagemagick) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :)) \
-	&& (sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db) && make \
-	&& openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem && sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/ && make stunnel
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :))
+	sudo mkdir -p /data/db/
+	sudo chown `id -u` /data/db
+	$(MAKE)
+	$(MAKE) gdax -s
+	$(MAKE) stunnel -s
 
 reinstall: .git src
 	rm -rf app
@@ -116,6 +120,12 @@ reinstall: .git src
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
+
+gdax:
+	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem
+	sudo rm -rf /usr/local/etc/stunnel
+	sudo mkdir -p /usr/local/etc/stunnel/
+	sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/
 
 server: node_modules/.bin/tsc src/server src/share app
 	@echo -n Building server files..
@@ -142,7 +152,7 @@ diff: .git
 	@$(MAKE) changelog -s
 
 latest: .git diff
-	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && make reinstall || :
+	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && $(MAKE) reinstall || :
 
 changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade because both versions are equal.
@@ -177,4 +187,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel config packages reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel gdax config packages reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
