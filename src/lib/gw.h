@@ -25,7 +25,7 @@ namespace K {
       virtual void pos() = 0;
   };
   uv_timer_t gwPos_;
-  bool savedQuotingMode = false;
+  bool gwAutoStart = false;
   bool gwState = false;
   mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
   mConnectivityStatus gwMDConn = mConnectivityStatus::Disconnected;
@@ -40,8 +40,8 @@ namespace K {
         gw->fetch();
         if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << CF::cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " allows client IP." << endl; }
-        savedQuotingMode = "auto" == CF::cfString("BotIdentifier").substr(0,4);
-        cout << FN::uiT() << "GW " << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (savedQuotingMode ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
+        gwAutoStart = "auto" == CF::cfString("BotIdentifier").substr(0,4);
+        cout << FN::uiT() << "GW " << setprecision(8) << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
         if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
         gwPos_.data = gw;
         if (uv_timer_start(&gwPos_, gwPos__, 0, 15000)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
@@ -85,7 +85,7 @@ namespace K {
         o->Set(FN::v8S("base"), Number::New(isolate, (double)gw->base));
         o->Set(FN::v8S("quote"), Number::New(isolate, (double)gw->quote));
         k->Set(FN::v8S("pair"), o);
-        k->Set(FN::v8S("environment"), FN::v8S(isolate, CF::cfString("BotIdentifier").substr(savedQuotingMode?4:0)));
+        k->Set(FN::v8S("environment"), FN::v8S(isolate, CF::cfString("BotIdentifier").substr(gwAutoStart?4:0)));
         k->Set(FN::v8S("matryoshka"), FN::v8S(isolate, CF::cfString("MatryoshkaUrl")));
         k->Set(FN::v8S("homepage"), FN::v8S(isolate, CF::cfPKString("homepage")));
         k->Set(FN::v8S("minTick"), Number::New(isolate, gw->minTick));
@@ -106,8 +106,8 @@ namespace K {
       };
       static Local<Value> onHandState(Local<Value> s) {
         Isolate* isolate = Isolate::GetCurrent();
-        if (s->BooleanValue() != savedQuotingMode) {
-          savedQuotingMode = s->BooleanValue();
+        if (s->BooleanValue() != gwAutoStart) {
+          gwAutoStart = s->BooleanValue();
           gwUpState();
           Local<Object> o = Object::New(isolate);
           o->Set(FN::v8S("state"), Boolean::New(isolate, gwState));
@@ -136,7 +136,7 @@ namespace K {
       };
       static void gwUpState() {
         Isolate* isolate = Isolate::GetCurrent();
-        bool newMode = gwConn != mConnectivityStatus::Connected ? false : savedQuotingMode;
+        bool newMode = gwConn != mConnectivityStatus::Connected ? false : gwAutoStart;
         if (newMode != gwState) {
           gwState = newMode;
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
@@ -249,7 +249,11 @@ namespace K {
         ws = CF::cfString("BitfinexWebsocketUrl");
         json k = FN::wJet(string(http).append("/pubticker/").append(symbol));
         if (k.find("last_price") != k.end()) {
-          istringstream os(string("1e-").append(to_string(5-k["last_price"].get<string>().find("."))));
+          string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
+          unsigned int k__ = 0;
+          for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
+            if (*it == '0') k__++; else if (*it == '.') continue; else break;
+          stringstream os(string("1e-").append(to_string(k__)));
           os >> minTick;
           minSize = 0.01;
         }
