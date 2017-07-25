@@ -103,13 +103,13 @@ To run multiple instances using a collection of config files:
 
     2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration) also); this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `forever`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
 After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `npm run startall`, `npm run stopall` and `npm run restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
-### Steganographic configuration
+### Steganographic configuration files
 
 If you dont like to have your `etc/*.json` files with plain text, you can encrypt them behind any PNG image:
 
@@ -125,7 +125,7 @@ Feel free to change the suggested filename `K`. Also you can run `make png` as m
 
 4. Delete the now useless `.json` file and restart the application.
 
-5. Keep the png file in a secure location always, never share it. Even if your api keys are now binary encrypted, they can be easily readable with tools like `identify -verbose etc/K.png`.
+5. Keep your `.png` file in a secure location always, never share it. Even if your api keys and api secrets are now binary encrypted, they can still be easily readable with tools like `identify -verbose etc/K.png`.
 
 ### Application Usage
 
