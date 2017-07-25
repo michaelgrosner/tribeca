@@ -250,10 +250,10 @@ namespace K {
         json k = FN::wJet(string(http).append("/pubticker/").append(symbol));
         if (k.find("last_price") != k.end()) {
           string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
-          unsigned int k__ = 0;
+          unsigned int i = 0;
           for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
-            if (*it == '0') k__++; else if (*it == '.') continue; else break;
-          stringstream os(string("1e-").append(to_string(k__)));
+            if (*it == '0') i++; else if (*it == '.') continue; else break;
+          stringstream os(string("1e-").append(to_string(i)));
           os >> minTick;
           minSize = 0.01;
         }

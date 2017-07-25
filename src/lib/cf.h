@@ -41,7 +41,7 @@ namespace K {
                 png_textp text_ptr;
                 int num_text;
                 png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
-                string conf;
+                string conf = "";
                 for(int i = 0; i < num_text; i++)
                   if(strcmp("K.conf", text_ptr[i].key) == 0)
                     conf = text_ptr[i].text;
