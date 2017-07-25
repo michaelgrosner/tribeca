@@ -164,9 +164,7 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
-	cd test
-	cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage
-	./node_modules/.bin/istanbul-coveralls
+	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
