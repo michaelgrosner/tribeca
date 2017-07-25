@@ -62,10 +62,10 @@
     "config": "K"
   },
   "scripts": {
-    "diff": "_() { echo $2 $3 version: `git rev-parse $1`; }; git remote update && _ @ Local running && _ @{u} Latest remote && make changelog",
-    "latest": "_() { git rev-parse $1; }; npm run diff && test `_ @` != `_ @{u}` && npm run reinstall || echo Already running latest `_ @{u}` version!",
-    "reinstall": "rm -rf app && git fetch && git merge FETCH_HEAD && npm install && make test && forever restartall && make stunnel",
-    "postreinstall": "# ..done! Please refresh the GUI if is currently opened in your browser.",
+    "diff": "# npm run diff is DEPRECATED, use instead: make diff",
+    "latest": "# npm run latest is DEPRECATED, use instead: make latest",
+    "reinstall": "# npm run reinstall is DEPRECATED, use instead: make reinstall",
+    "test-stunnel": "# npm run test-stunnel is DEPRECATED, use instead: make stunnel",
     "preinstall": "make packages",
     "postinstall": "make server client pub bundle",
     "list": "forever list",

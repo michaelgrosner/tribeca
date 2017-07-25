@@ -100,6 +100,16 @@ packages:
 	&& (sudo mkdir -p /data/db/ && sudo chown `id -u` /data/db) && make \
 	&& openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem && sudo rm -rf /usr/local/etc/stunnel && sudo mkdir -p /usr/local/etc/stunnel/ && sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/ && make stunnel
 
+reinstall: .git src
+	rm -rf app
+	git fetch
+	git merge FETCH_HEAD
+	npm install
+	$(MAKE) test -s
+	./node_modules/.bin/forever restartall
+	$(MAKE) stunnel -s
+	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
+
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
 
@@ -115,8 +125,15 @@ pub: src/pub app/pub
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 
+diff: .git
+	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
+	@$(MAKE) changelog -s
+
+latest: .git diff
+	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && npm run reinstall || :
+
 changelog: .git
-	@echo && git --no-pager log --graph --oneline @..@{u}
+	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade because both versions are equal. && echo
 
 test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
@@ -125,7 +142,9 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
-	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
+	cd test
+	cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage
+	./node_modules/.bin/istanbul-coveralls
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
@@ -146,4 +165,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel config server client pub bundle changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel config packages reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
