@@ -30,6 +30,7 @@ help:
 	#   make changelog  - show commits                 #
 	#   make latest     - show commits and reinstall   #
 	#   make reinstall  - reinstall from remote git    #
+	#   make clean-db   - remove databases             #
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
