@@ -1,5 +1,5 @@
 ### K.png.dist
-see [PNG configuration files](https://github.com/ctubio/Krypto-trading-bot#steganographic-configuration-files). This sample PNG file is conveniently disposed in case you don't have any other handy, just remove the `.dist` extension.
+see [PNG configuration files](https://github.com/ctubio/Krypto-trading-bot#steganographic-configuration-files). This sample PNG file is conveniently disposed in case you don't have any other handy.
 
 ### K.json.dist
 Sample configuration file, must be located inside `etc` folder, to initialize your configurations:
