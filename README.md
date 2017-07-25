@@ -65,7 +65,7 @@ Troubleshooting:
 
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
- * Run `rm -rf node_modules && npm install` if the application stops working after `npm run latest` (sometimes outdated dependencies are not deleted).
+ * Run `rm -rf node_modules && npm install` if the application stops working after `make latest` (sometimes outdated dependencies are not deleted).
 
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
 
@@ -81,9 +81,9 @@ See [etc](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc) folder.
 
 ### Upgrade to the latest commit
 
-Feel free anytime to check if there are new modifications with `npm run diff`.
+Feel free anytime to check if there are new modifications with `make diff`.
 
-Once you decide that is time to upgrade, execute `npm run latest` to download and install the latest modifications in your remote branch (or directly `npm run reinstall` to skip the display of the new commit messages).
+Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the display of the new commit messages).
 
 After install the latest version, all running instances will be restarted.
 
