@@ -106,7 +106,7 @@ packages:
 	sudo chown `id -u` /data/db
 	$(MAKE)
 	$(MAKE) gdax -s
-	$(MAKE) stunnel -s
+	@$(MAKE) stunnel -s
 
 reinstall: .git src
 	rm -rf app
@@ -115,7 +115,7 @@ reinstall: .git src
 	npm install
 	$(MAKE) test -s
 	./node_modules/.bin/forever restartall
-	$(MAKE) stunnel -s
+	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
 stunnel: dist/K-stunnel.conf
