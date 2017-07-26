@@ -2,21 +2,6 @@
 #define K_UI_H_
 
 namespace K {
-  uWS::Hub hub(0, true);
-  uv_check_t loop;
-  uv_timer_t uiD_;
-  Persistent<Function> noop;
-  typedef Local<Value> (*uiCb)(Local<Value>);
-  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<CopyablePersistentTraits<Object>::CopyablePersistent>> D; int u = 0; };
-  uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  int iOSR60 = 0;
-  bool uiOPT = true;
-  unsigned long uiMDT = 0;
-  unsigned long uiDDT = 0;
-  string uiNOTE = "";
-  string uiNK64 = "";
-  Persistent<Function> socket_;
-  Persistent<Object> _app_state;
   class UI {
     public:
       static void main(Local<Object> exports) {
@@ -29,8 +14,6 @@ namespace K {
           B64::Encode(name.append(":").append(key), &uiNK64);
           uiNK64 = string("Basic ").append(uiNK64);
         }
-        srand(time(0));
-        uiNOTE = rand() % 2 ? "Avoid this app to go private, donate!" : "3 privatization offers refused, donate!";
         uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           sess->u++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
