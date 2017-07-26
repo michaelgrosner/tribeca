@@ -161,7 +161,7 @@ diff: .git
 	@$(MAKE) changelog -s
 
 latest: .git diff
-	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && $(MAKE) reinstall -s || :
+	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && $(MAKE) reinstall || :
 
 changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade because both versions are equal.
