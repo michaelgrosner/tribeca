@@ -7,7 +7,7 @@ G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-  -Ibuild/json-$(V_JSO)                         -L./dist -Wl,-rpath,$${PWD}/dist              \
+  -Ibuild/json-$(V_JSO)                         -L./dist -Wl,-rpath,./dist              \
 src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
 
 all: K
