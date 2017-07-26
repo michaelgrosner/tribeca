@@ -20,16 +20,19 @@ help:
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
 	#                                                  #
-	#   make packages   - install dependencies         #
+	#   make install    - install K application        #
+	#   make docker     - install K application        #
+	#   make reinstall  - upgrade K application        #
+	#   make packages   - provide K application        #
+	#                                                  #
+	#   make latest     - show commits and reinstall   #
+	#   make diff       - show commits and versions    #
+	#   make changelog  - show commits                 #
+	#                                                  #
 	#   make config     - copy distributed config file #
 	#   PNG=% make png  - inject config file into PNG  #
 	#   make stunnel    - run ssl tunnel daemon        #
 	#   make gdax       - download gdax ssl cert       #
-	#                                                  #
-	#   make diff       - show commits and versions    #
-	#   make changelog  - show commits                 #
-	#   make latest     - show commits and reinstall   #
-	#   make reinstall  - reinstall from remote git    #
 	#   make clean-db   - remove databases             #
 	#                                                  #
 	#   make server     - compile K server src         #
@@ -117,11 +120,21 @@ packages:
 	$(MAKE) gdax -s
 	@$(MAKE) stunnel -s
 
+install:
+	@$(MAKE) packages
+	@npm install
+	@$(MAKE) server client pub bundle
+
+docker:
+	@$(MAKE) packages
+	@npm install --unsafe-perm
+	@$(MAKE) server client pub bundle
+
 reinstall: .git src
 	rm -rf app
 	git fetch
 	git merge FETCH_HEAD
-	npm install
+	@$(MAKE) install
 	@$(MAKE) test -s
 	./node_modules/.bin/forever restartall
 	@$(MAKE) stunnel -s
@@ -194,4 +207,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel gdax config packages reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel gdax config packages install docker reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich

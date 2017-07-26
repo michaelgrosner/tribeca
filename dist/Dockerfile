@@ -11,7 +11,7 @@ WORKDIR K
 # Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
 #RUN rm -rf dist/sslcert
 
-RUN npm install --unsafe-perm
+RUN make docker
 
 EXPOSE 3000 5000
 

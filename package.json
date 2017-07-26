@@ -66,8 +66,6 @@
     "latest": "# npm run latest is DEPRECATED, use instead: make latest",
     "reinstall": "# npm run reinstall is DEPRECATED, use instead: make reinstall",
     "test-stunnel": "# npm run test-stunnel is DEPRECATED, use instead: make stunnel",
-    "preinstall": "make packages",
-    "postinstall": "make server client pub bundle",
     "list": "forever list",
     "restartall": "forever restartall",
     "stopall": "forever stopall",

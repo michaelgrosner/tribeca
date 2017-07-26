@@ -55,17 +55,15 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
 
-`npm start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `npm install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
+`npm start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
 
 Feel free to run `npm stop` or `npm restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
 Troubleshooting:
 
- * Do not install or execute the application as root; if you really want to install as root use `npm install --unsafe-perm`.
-
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
- * Run `rm -rf node_modules && npm install` if the application stops working after `make latest` (sometimes outdated dependencies are not deleted).
+ * Run `rm -rf node_modules && make install` if the application stops working after `make latest` (sometimes outdated dependencies are not deleted).
 
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
 
@@ -175,9 +173,7 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 
 Feel free to run `make test` anytime.
 
-To rebuild the application with your modifications, please run `npm install` or directly `npm run postinstall`.
-
-To rebuild the C++ shared objects with your modifications, please run `make`.
+To rebuild the application with your modifications, see `make `help` and choose a target.
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K`.
 
@@ -185,7 +181,7 @@ To ignore the output, execute the application in the background with `forever st
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect K.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
-Passing a config filename is possible with ENV var `KCONFIG` like for example `KCONFIG=X nodejs K.js`.
+Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X nodejs K.js`.
 
 ### Unreleased Changelog:
 
