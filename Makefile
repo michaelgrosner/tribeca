@@ -93,10 +93,10 @@ lib:
 	@$(MAKE) lib`(uname -s)`
 
 libLinux:
-	g++ -o dist/libK.so -std=c++11 -O3 -x c++ -shared -fPIC -static-libstdc++ -static-libgcc -s build/K*
+	g++ -o dist/libK.so -std=c++11 -O3 -x c++ -shared -fPIC -static-libstdc++ -static-libgcc -s build/K* -lsqlite3
 
 libDarwin:
-	g++ -o dist/libK.dylib -std=c++11 -O3 -x c++ -shared -fPIC -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup build/K*
+	g++ -o dist/libK.dylib -std=c++11 -O3 -x c++ -shared -fPIC -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup build/K* -lsqlite3
 
 clean: build
 	rm -rf build
