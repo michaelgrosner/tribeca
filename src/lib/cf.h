@@ -2,9 +2,6 @@
 #define K_CF_H_
 
 namespace K {
-  string cFname;
-  json cfRepo;
-  json pkRepo;
   class CF {
     public:
       static void main(Local<Object> exports) {
