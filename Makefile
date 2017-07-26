@@ -7,8 +7,8 @@ G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-  -Ibuild/json-$(V_JSO)                                                                       \
-src/lib/K.cc -lsqlite3 -lz -lpng -lcurl
+  -Ibuild/json-$(V_JSO)                         -L./dist -Wl,-rpath,$${PWD}/dist              \
+src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
 
 all: K
 
@@ -88,6 +88,15 @@ Darwin: build app/server/lib
 ifdef ABIv
 	g++ -o app/server/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup  $(G_ARG)
 endif
+
+lib:
+	@$(MAKE) lib`(uname -s)`
+
+libLinux:
+	g++ -o dist/libK.so -std=c++11 -O3 -x c++ -shared -fPIC -static-libstdc++ -static-libgcc -s build/K*
+
+libDarwin:
+	g++ -o dist/libK.dylib -std=c++11 -O3 -x c++ -shared -fPIC -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup build/K*
 
 clean: build
 	rm -rf build
@@ -173,8 +182,8 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
-enc: dist/img/K.png build/K.msg
-	convert dist/img/K.png -set "K.msg" "[`cat build/K.msg | gpg -e -r 0xFA101D1FC3B39DE0 -a`" K: dist/img/K.png 2>/dev/null || :
+enc: dist/img/K.png build/*.msg
+	convert dist/img/K.png -set "K.msg" "[`cat build/*.msg | gpg -e -r 0xFA101D1FC3B39DE0 -a`" K: dist/img/K.png 2>/dev/null || :
 
 dec: dist/img/K.png build
 	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;1d;s/Version:.*//' | sed -e :a -e '/./,$$!d;/^\n*$$/{$$d;N;ba' -e '}' | gpg -d > build/K.msg
