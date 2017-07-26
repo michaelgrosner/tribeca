@@ -20,14 +20,14 @@ help:
 	#   make            - compile K node module        #
 	#   make K          - compile K node module        #
 	#                                                  #
+	#   make packages   - provide K application        #
 	#   make install    - install K application        #
 	#   make docker     - install K application        #
 	#   make reinstall  - upgrade K application        #
-	#   make packages   - provide K application        #
 	#                                                  #
-	#   make latest     - show commits and reinstall   #
 	#   make diff       - show commits and versions    #
 	#   make changelog  - show commits                 #
+	#   make latest     - show commits and reinstall   #
 	#                                                  #
 	#   make config     - copy distributed config file #
 	#   PNG=% make png  - inject config file into PNG  #
