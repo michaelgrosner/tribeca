@@ -27,3 +27,6 @@ If you run `docker ps`, you should see K.js container running.
 
 ### K-stunnel.conf
 To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
+
+### K libs
+Experimental precompiled useless libs for linux and darwin.
