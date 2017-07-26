@@ -121,8 +121,8 @@ config: etc/K.json.dist
 
 packages:
 	test -z "`command -v npm`" && (curl -0 -L https://npmjs.org/install.sh | sudo sh) || :
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python gzip imagemagick \
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python gzip libpng-devel imagemagick) \
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python curl gzip imagemagick \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python curl gzip libpng-devel imagemagick) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :))
 	sudo mkdir -p /data/db/
 	sudo chown `id -u` /data/db
