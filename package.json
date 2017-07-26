@@ -72,7 +72,7 @@
     "startall": "ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % npm start --$npm_package_name:config=%",
     "restart": "npm stop --$npm_package_name:config=$npm_package_config_config && npm start --$npm_package_name:config=$npm_package_config_config",
     "stop": "forever stop -a -l /dev/null $npm_package_config_config || :",
-    "start": "test -d app || npm install && KCONFIG=$npm_package_config_config forever start --minUptime 1 --spinSleepTime 21000 --uid $npm_package_config_config -a -l /dev/null K.js && make stunnel"
+    "start": "test -d app || make install && KCONFIG=$npm_package_config_config forever start --minUptime 1 --spinSleepTime 21000 --uid $npm_package_config_config -a -l /dev/null K.js && make stunnel"
   },
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
   "bugs": "https://github.com/ctubio/Krypto-trading-bot/issues",
