@@ -169,10 +169,10 @@ restart:
 	@$(MAKE) start
 
 stop:
-	forever stop -a -l /dev/null $(KCONFIG) || :
+	./node_modules/.bin/forever stop -a -l /dev/null $(KCONFIG) || :
 
 start:
-	test -d app || make install && forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js && make stunnel
+	test -d app || make install && ./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js && make stunnel
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
