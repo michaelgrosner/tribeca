@@ -184,22 +184,22 @@ gdax:
 	sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/
 
 server: node_modules/.bin/tsc src/server src/share app
-	@echo -n Building server files..
+	@echo Building server files..
 	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
 	@echo DONE
 
 client: node_modules/.bin/tsc src/client src/share app
-	@echo -n Building client dynamic files..
+	@echo Building client dynamic files..
 	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
 	@echo DONE
 
 pub: src/pub app/pub
-	@echo -n Building client static files..
+	@echo Building client static files..
 	cp -R src/pub/* app/pub/
 	@echo DONE
 
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
-	@echo -n Building client bundle file..
+	@echo Building client bundle file..
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 	@echo DONE
 
