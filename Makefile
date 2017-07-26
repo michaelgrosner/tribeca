@@ -151,23 +151,23 @@ gdax:
 
 server: node_modules/.bin/tsc src/server src/share app
 	@echo -n Building server files..
-	@./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
-	@echo " done"
+	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
+	@echo DONE
 
 client: node_modules/.bin/tsc src/client src/share app
 	@echo -n Building client dynamic files..
-	@./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
-	@echo " done"
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
+	@echo DONE
 
 pub: src/pub app/pub
 	@echo -n Building client static files..
-	@cp -R src/pub/* app/pub/
-	@echo " done"
+	cp -R src/pub/* app/pub/
+	@echo DONE
 
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
 	@echo -n Building client bundle file..
-	@./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
-	@echo " done"
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
+	@echo DONE
 
 diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
