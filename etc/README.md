@@ -1,6 +1,3 @@
-### K.png.dist
-see [PNG configuration files](https://github.com/ctubio/Krypto-trading-bot#steganographic-configuration-files). This sample PNG file is conveniently disposed in case you don't have any other handy.
-
 ### K.json.dist
 Sample configuration file, must be located inside `etc` folder, to initialize your configurations:
 ```
@@ -59,4 +56,7 @@ If you set in your exchange the `OrderDestination` value as `Null`, all API call
 
 These options are also valid environment variables for the [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) file.
 
-As additional non-mandatory options, all quoting parameters (or some of them) can be added to the config file too (in case you need to preconfigure multiple instances, or if you have database issues, or simply if you want to easily persist your desired quoting parameters [see the valid option names at [defaultQuotingParameters](https://github.com/ctubio/Krypto-trading-bot/blob/master/src/server/main.ts#L40)]). Once parameters are saved into the database, the database values will be used instead of these default options.
+As additional non-mandatory options, all quoting parameters (or just some of them if you wish) can be added to the config file too (in case you need to preconfigure multiple instances, or if you don't have a database, or simply if you want to easily persist your desired quoting parameters [see the valid option names at [defaultQuotingParameters](https://github.com/ctubio/Krypto-trading-bot/blob/master/src/server/main.ts#L40)]). Once parameters are saved into the database, the database values will be used instead of these default options.
+
+### K.png.dist
+see [PNG configuration files](https://github.com/ctubio/Krypto-trading-bot#steganographic-configuration-files). This sample PNG file is conveniently disposed in case you don't have any other handy.
