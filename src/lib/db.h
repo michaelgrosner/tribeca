@@ -2,13 +2,11 @@
 #define K_DB_H_
 
 namespace K {
-  sqlite3* db;
-  string dbFpath;
   class DB {
     public:
       static void main(Local<Object> exports) {
         dbFpath = string("/data/db/K.").append(to_string((int)CF::cfExchange())).append(".").append(to_string(CF::cfBase())).append(".").append(to_string(CF::cfQuote())).append(".db");
-        if (sqlite3_open(dbFpath.data(), &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
+        if (sqlite3_open(dbFpath, &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
         cout << FN::uiT() << "DB " << dbFpath << " loaded OK." << endl;
         NODE_SET_METHOD(exports, "dbLoad", DB::_load);
         NODE_SET_METHOD(exports, "dbInsert", DB::_insert);
