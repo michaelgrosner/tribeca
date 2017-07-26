@@ -63,7 +63,7 @@
     "latest": "# npm run latest is DEPRECATED, use instead: make latest",
     "reinstall": "# npm run reinstall is DEPRECATED, use instead: make reinstall",
     "test-stunnel": "# npm run test-stunnel is DEPRECATED, use instead: make stunnel",
-    "list": "forever list",
+    "list": "# npm run list is DEPRECATED, use instead: make list",
     "restartall": "# npm run restartall is DEPRECATED, use instead: make restartall",
     "stopall": "# npm run stopall is DEPRECATED, use instead: make stopall",
     "startall": "# npm run startall is DEPRECATED, use instead: make startall",
