@@ -1,7 +1,8 @@
-V_UWS := 0.14.3
-V_JSO := v2.1.1
-V_QF  := v.1.14.4
-G_ARG := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node          \
+KCONFIG ?= K
+V_UWS   := 0.14.3
+V_JSO   := v2.1.1
+V_QF    := v.1.14.4
+G_ARG   := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node          \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
@@ -25,6 +26,14 @@ help:
 	#   make docker     - install K application        #
 	#   make reinstall  - upgrade K application        #
 	#                                                  #
+	#   make list       - show K instances             #
+	#   make start      - start K instance             #
+	#   make stop       - stop K instance              #
+	#   make restart    - restart K instance           #
+	#   make startall   - start all K instances        #
+	#   make stopall    - stop all K instances         #
+	#   make restartall - restart all K instances      #
+	#                                                  #
 	#   make diff       - show commits and versions    #
 	#   make changelog  - show commits                 #
 	#   make latest     - show commits and reinstall   #
@@ -33,7 +42,7 @@ help:
 	#   PNG=% make png  - inject config file into PNG  #
 	#   make stunnel    - run ssl tunnel daemon        #
 	#   make gdax       - download gdax ssl cert       #
-	#   make clean-db   - remove databases             #
+	#   make cleandb   - remove databases              #
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
@@ -104,7 +113,7 @@ libDarwin:
 clean: build
 	rm -rf build
 
-clean-db: /data/db/K*
+cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
 
 config: etc/K.json.dist
@@ -140,6 +149,30 @@ reinstall: .git src
 	./node_modules/.bin/forever restartall
 	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
+
+
+list:
+	./node_modules/.bin/forever list
+
+restartall:
+	./node_modules/.bin/forever restartall
+
+stopall:
+	./node_modules/.bin/forever stopall
+
+startall:
+	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
+	@$(MAKE) list -s
+
+restart:
+	@$(MAKE) stop
+	@$(MAKE) start
+
+stop:
+	forever stop -a -l /dev/null $(KCONFIG) || :
+
+start:
+	test -d app || make install && forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js && make stunnel
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
@@ -208,4 +241,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin clean clean-db stunnel gdax config packages install docker reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich

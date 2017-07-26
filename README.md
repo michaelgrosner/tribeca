@@ -48,14 +48,14 @@ Run in any location that you wish (feel free to customize the suggested folder n
  $ cd K
  $ cp etc/K.json.dist etc/K.json
  $ vim etc/K.json
- $ npm start
+ $ make start
 ```
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
 
-`npm start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
+`make start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
 
-Feel free to run `npm stop` or `npm restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
+Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
 Troubleshooting:
 
@@ -67,7 +67,7 @@ Troubleshooting:
 
  Optional:
 
- * Install the system daemon script `dist/K-init.sh` (to make use of `service K start` from anywhere instead of `cd path/to/K && npm start`) see [dist](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist) folder.
+ * Install the system daemon script `dist/K-init.sh` (to make use of `service K start` from anywhere instead of `cd path/to/K && make start`) see [dist](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist) folder.
 
  * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
@@ -87,9 +87,9 @@ After install the latest version, all running instances will be restarted.
 
 Please note, an "instance" is in fact a config file under `etc` folder; using a single machine and the same source folder, you can run as many instances as config files you have in `etc` folder (limited by the available free RAM).
 
-You can list the current instances running anytime with `npm run list`.
+You can list the current instances running anytime with `make list`.
 
-Simple commands like `npm start`, `npm stop` or `npm restart` (without any config file defined) will use the default config file `etc/K.json` or `etc/K.png`.
+Simple commands like `make start`, `make stop` or `make restart` (without any config file defined) will use the default config file `etc/K.json` or `etc/K.png`.
 
 To run multiple instances using a collection of config files:
 
@@ -99,11 +99,11 @@ To run multiple instances using a collection of config files:
 
     2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `npm start --K.js:config=X`, also the commands `npm stop` and `npm restart` allow the parameter `--K.js:config=`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `KCONFIG=X make start`, also the commands `make stop` and `make restart` allow the environment variable `KCONFIG`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `forever`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
-After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `npm run startall`, `npm run stopall` and `npm run restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
+After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `make startall`, `make stopall` and `make restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
 ### Steganographic configuration files
 
@@ -175,13 +175,15 @@ To rebuild the application with your modifications, see `make help` and choose a
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K`.
 
-To ignore the output, execute the application in the background with `forever start K.js` or with the alias `npm start`.
+To ignore the output, execute the application in the background with `forever start K.js` or with the alias `make start`.
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect K.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
 Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X nodejs K.js`.
 
 ### Unreleased Changelog:
+
+Added Makefile to replace npm scripts.
 
 Added PNG files as configuration files.
 
