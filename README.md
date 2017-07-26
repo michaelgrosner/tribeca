@@ -111,7 +111,7 @@ After multiple config files are setup under `etc` folder, to control them all to
 
 ### Steganographic configuration files
 
-If you dont like to have your `etc/*.json` files with plain text, you can encrypt them behind any PNG image:
+If you dont like to have your `etc/*.json` files in plain text, you can encrypt them behind any PNG image:
 
 1. Download any PNG file that you like and place it at `etc/` folder.
 
