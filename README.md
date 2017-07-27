@@ -41,8 +41,9 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
+1. Ensure your target machine has installed node v7 or v8 (see `node -v` or `nodejs -v`), g++ will be installed automatically.
 
-Run in any location that you wish (feel free to customize the suggested folder name `K`):
+2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
  $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
  $ cd K
