@@ -105,10 +105,10 @@ lib:
 	@$(MAKE) lib`(uname -s)`
 
 libLinux:
-	g++ -o dist/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -O3 -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -O3 -x c++ -shared -fPIC build/K*
 
 libDarwin:
-	g++ -o dist/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -O3 -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -O3 -x c++ -shared -fPIC build/K*
 
 clean: build
 	rm -rf build
@@ -123,6 +123,7 @@ packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python curl gzip imagemagick\
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python curl gzip libpng-devel imagemagick) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :))
+	sudo cp dist/libK* /usr/lib
 	sudo mkdir -p /data/db/
 	sudo chown `id -u` /data/db
 	$(MAKE)
