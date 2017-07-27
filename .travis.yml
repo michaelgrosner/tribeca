@@ -32,7 +32,7 @@ before_install:
 
 install:
   - make config
-  - npm install
+  - make install
 
 script: make test-cov
 
