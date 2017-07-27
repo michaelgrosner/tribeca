@@ -2,7 +2,7 @@ KCONFIG ?= K
 V_UWS   := 0.14.3
 V_JSO   := v2.1.1
 V_QF    := v.1.14.4
-G_ARG   := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node        \
+G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node        \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
@@ -105,10 +105,10 @@ lib:
 	@$(MAKE) lib`(uname -s)`
 
 libLinux:
-	g++ -o dist/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -O3 -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
 
 libDarwin:
-	g++ -o dist/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -O3 -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
 
 clean: build
 	rm -rf build
