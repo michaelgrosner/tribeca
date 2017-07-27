@@ -117,7 +117,7 @@ cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
 
 config: etc/K.json.dist
-	test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json
+	@test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json && echo DONE
 
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python curl gzip imagemagick\
@@ -171,7 +171,9 @@ stop:
 	./node_modules/.bin/forever stop -a -l /dev/null $(KCONFIG) || :
 
 start:
-	test -d app || make install && ./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js && make stunnel
+	@test -d app || $(MAKE) install
+  ./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js
+  @$(MAKE) stunnel -s
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
