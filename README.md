@@ -41,7 +41,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
-1. Ensure your target machine has installed node v7 or v8 (see `node -v` or `nodejs -v`), g++ will be installed automatically.
+1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/) v7 or v8 (see `node -v` or `nodejs -v`).
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
