@@ -10,6 +10,7 @@ G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/no
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
   -Ibuild/json-$(V_JSO)                         -L$(PWD)/dist -Wl,-rpath,$(PWD)/dist          \
 src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
+LD_LIBRARY_PATH+=:$(PWD)/dist
 
 all: K
 
