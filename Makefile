@@ -172,8 +172,8 @@ stop:
 
 start:
 	@test -d app || $(MAKE) install
-  ./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js
-  @$(MAKE) stunnel -s
+	./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js
+	@$(MAKE) stunnel -s
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
