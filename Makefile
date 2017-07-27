@@ -141,6 +141,7 @@ docker:
 
 reinstall: .git src
 	rm -rf app
+	git checkout .
 	git fetch
 	git merge FETCH_HEAD
 	@$(MAKE) install
