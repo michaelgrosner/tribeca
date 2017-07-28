@@ -69,6 +69,7 @@ K: src/lib/K.cc
 	@g++-4.9 --version
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
+	@$(MAKE) dist
 
 node: build
 ifndef NODEv
