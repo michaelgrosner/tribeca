@@ -154,7 +154,6 @@ reinstall: .git src
 	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
-
 list:
 	./node_modules/.bin/forever list
 
