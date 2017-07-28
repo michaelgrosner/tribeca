@@ -4,12 +4,13 @@ V_PNG   := 1.6.31
 V_JSO   := v2.1.1
 V_QF    := v.1.14.4
 G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node            \
+  -Ibuild/libpng-$(V_PNG)                       -Ibuild/json-$(V_JSO)                         \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-  -Ibuild/json-$(V_JSO)                         -Ldist/lib -Wl,-rpath,'$$ORIGIN'              \
+  -Ldist/lib -Wl,-rpath,'$$ORIGIN'                                                            \
 src/lib/K.cc -lsqlite3 -lz -lK -lpng16 -lcurl
 
 all: K
