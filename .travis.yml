@@ -21,14 +21,7 @@ before_install:
   - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed || :;
   - sed -i "s/^    \"hacktimer.*$//" package.json;
   - sed -i "/\"hacktimer/,+4d" package-lock.json;
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-      sudo apt-get update;
-      sudo apt-get install gcc-4.9;
-      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50;
-      sudo apt-get install g++-4.9;
-      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50;
-    fi
+  - test $TRAVIS_OS_NAME == "linux" && make dev || :;
 
 install:
   - make config

@@ -54,6 +54,7 @@ help:
 	#   make test       - run tests                    #
 	#   make test-cov   - run tests and coverage       #
 	#   make send-cov   - send coverage                #
+	#   make dev        - provide dev box              #
 	#                                                  #
 	#   make node       - download node src files      #
 	#   make json       - download json src files      #
@@ -228,6 +229,14 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
+
+dev:
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
+	sudo apt-get update;
+	sudo apt-get install gcc-4.9;
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50;
+	sudo apt-get install g++-4.9;
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50;
 
 png16:
 	test -d build/libpng-$(V_PNG) || (curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build && cd build/libpng-$(V_PNG) && ./autogen.sh && ./configure --prefix=$(PWD)/build/libpng-$(V_PNG) && make && sudo make install && cp lib/libpng16* ../../app/server/lib)
