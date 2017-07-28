@@ -8,7 +8,7 @@ G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/no
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-  -Ibuild/json-$(V_JSO)                         -Ldist/lib -Wl,-rpath,'$$ORIGIN'                \
+  -Ibuild/json-$(V_JSO)                         -Ldist/lib -Wl,-rpath,'$$ORIGIN'              \
 src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
 
 all: K
@@ -62,9 +62,6 @@ help:
 
 K: src/lib/K.cc
 	@g++ --version
-	$(MAKE) quickfix
-	$(MAKE) json
-	$(MAKE) uws
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
 
@@ -101,6 +98,9 @@ endif
 
 dist:
 	mkdir -p build app/server/lib
+	$(MAKE) quickfix
+	$(MAKE) json
+	$(MAKE) uws
 	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
 
 lib:
