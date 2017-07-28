@@ -2,15 +2,14 @@ KCONFIG ?= K
 V_UWS   := 0.14.3
 V_JSO   := v2.1.1
 V_QF    := v.1.14.4
-G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node        \
+G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node            \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
-  -Ibuild/json-$(V_JSO)                         -L$(PWD)/dist -Wl,-rpath,$(PWD)/dist          \
+  -Ibuild/json-$(V_JSO)                         -Ldist/lib -Wl,-rpath,'$$ORIGIN'                \
 src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
-LD_LIBRARY_PATH+=:$(PWD)/dist
 
 all: K
 
@@ -69,7 +68,6 @@ K: src/lib/K.cc
 	$(MAKE) uws
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
-	for K in app/server/lib/K*node; do chmod +x $$K; done
 
 node: build
 ifndef NODEv
@@ -94,22 +92,25 @@ quickfix: build
 
 Linux: build app/server/lib
 ifdef ABIv
-	g++ -o app/server/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
+	g++ -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
 endif
 
 Darwin: build app/server/lib
 ifdef ABIv
-	g++ -o app/server/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup  $(G_ARG)
+	g++ -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 endif
+
+dist: app/server/lib
+	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
 
 lib:
 	@$(MAKE) lib`(uname -s)`
 
 libLinux:
-	g++ -o dist/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/lib/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
 
 libDarwin:
-	g++ -o dist/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
 
 clean: build
 	rm -rf build
@@ -126,7 +127,7 @@ packages:
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :))
 	sudo mkdir -p /data/db/
 	sudo chown `id -u` /data/db
-	$(MAKE)
+	$(MAKE) dist
 	$(MAKE) gdax -s
 	@$(MAKE) stunnel -s
 
