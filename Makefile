@@ -170,11 +170,12 @@ stopall:
 
 startall:
 	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
-	@$(MAKE) list -s
+	$(MAKE) list -s
 
 restart:
-	@$(MAKE) stop
-	@$(MAKE) start
+	$(MAKE) stop -s
+	$(MAKE) start -s
+	$(MAKE) list -s
 
 stop:
 	./node_modules/.bin/forever stop -a -l /dev/null $(KCONFIG) || :
