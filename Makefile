@@ -54,7 +54,7 @@ help:
 	#   make test       - run tests                    #
 	#   make test-cov   - run tests and coverage       #
 	#   make send-cov   - send coverage                #
-	#   make dev        - provide dev box              #
+	#   make travis     - provide travis dev box       #
 	#                                                  #
 	#   make node       - download node src files      #
 	#   make json       - download json src files      #
@@ -66,6 +66,7 @@ help:
 
 K: src/lib/K.cc
 	@g++ --version
+	@g++-4.9 --version
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
 
@@ -92,12 +93,12 @@ quickfix: build
 
 Linux: build
 ifdef ABIv
-	g++ -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
+	g++-4.9 -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
 endif
 
 Darwin: build
 ifdef ABIv
-	g++ -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
+	g++-4.9 -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 endif
 
 dist:
@@ -112,10 +113,10 @@ lib:
 	@$(MAKE) lib`(uname -s)`
 
 libLinux:
-	g++ -o dist/lib/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
+	g++-4.9 -o dist/lib/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
 
 libDarwin:
-	g++ -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
+	g++-4.9 -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
 
 clean: build
 	rm -rf build
@@ -230,13 +231,13 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
 
-dev:
-	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-	sudo apt-get update;
-	sudo apt-get install gcc-4.9;
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50;
-	sudo apt-get install g++-4.9;
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50;
+travis:
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo apt-get update
+	sudo apt-get install gcc-4.9
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50
+	sudo apt-get install g++-4.9
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50
 
 png16:
 	test -d build/libpng-$(V_PNG) || (curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build && cd build/libpng-$(V_PNG) && ./autogen.sh && ./configure --prefix=$(PWD)/build/libpng-$(V_PNG) && make && sudo make install && cp lib/libpng16* ../../app/server/lib)
@@ -260,4 +261,4 @@ md5: src build
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K quickfix uws json node Linux Darwin dist clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
+.PHONY: K quickfix uws json node Linux Darwin dist clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker travis reinstall server client pub bundle diff latest changelog test test-cov send-cov png png-check enc dec md5 asandwich
