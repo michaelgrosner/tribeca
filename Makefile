@@ -62,7 +62,6 @@ help:
 
 K: src/lib/K.cc
 	@g++ --version
-	mkdir -p build app/server/lib
 	$(MAKE) quickfix
 	$(MAKE) json
 	$(MAKE) uws
@@ -90,17 +89,18 @@ quickfix: build
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                  \
 	&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      )
 
-Linux: build app/server/lib
+Linux: build
 ifdef ABIv
 	g++ -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
 endif
 
-Darwin: build app/server/lib
+Darwin: build
 ifdef ABIv
 	g++ -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 endif
 
-dist: app/server/lib
+dist:
+	mkdir -p build app/server/lib
 	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
 
 lib:
