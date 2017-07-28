@@ -1,5 +1,6 @@
 KCONFIG ?= K
 V_UWS   := 0.14.3
+V_PNG   := 1.6.31
 V_JSO   := v2.1.1
 V_QF    := v.1.14.4
 G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node            \
@@ -9,7 +10,7 @@ G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/no
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
   -Ibuild/json-$(V_JSO)                         -Ldist/lib -Wl,-rpath,'$$ORIGIN'              \
-src/lib/K.cc -lsqlite3 -lz -lK -lpng -lcurl
+src/lib/K.cc -lsqlite3 -lz -lK -lpng16 -lcurl
 
 all: K
 
@@ -100,6 +101,7 @@ dist:
 	mkdir -p build app/server/lib
 	$(MAKE) quickfix
 	$(MAKE) json
+	$(MAKE) png16
 	$(MAKE) uws
 	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
 
@@ -122,9 +124,9 @@ config: etc/K.json.dist
 	@test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json && echo DONE
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev libpng-dev openssl stunnel python curl gzip imagemagick\
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python curl gzip libpng-devel imagemagick) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv libpng stunnel python curl gzip imagemagick || brew upgrade || :))
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev openssl stunnel python curl gzip imagemagick\
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python curl gzip imagemagick) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :))
 	sudo mkdir -p /data/db/
 	sudo chown `id -u` /data/db
 	$(MAKE) dist
@@ -225,6 +227,9 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
+
+png16:
+	test -d build/libpng-$(V_PNG) || (curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build && cd build/libpng-$(V_PNG) && ./autogen.sh && ./configure --prefix=$(PWD)/build/libpng-$(V_PNG) && make && sudo make install && cp lib/libpng* ../../app/server/lib)
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
