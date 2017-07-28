@@ -43,7 +43,7 @@ help:
 	#   PNG=% make png  - inject config file into PNG  #
 	#   make stunnel    - run ssl tunnel daemon        #
 	#   make gdax       - download gdax ssl cert       #
-	#   make cleandb   - remove databases              #
+	#   make cleandb    - remove databases              #
 	#                                                  #
 	#   make server     - compile K server src         #
 	#   make client     - compile K client src         #
@@ -56,6 +56,7 @@ help:
 	#                                                  #
 	#   make node       - download node src files      #
 	#   make json       - download json src files      #
+	#   make png16      - download png16 src files     #
 	#   make uws        - download uws src files       #
 	#   make quickfix   - download quickfix src files  #
 	#   make clean      - remove external src files    #
