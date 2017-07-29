@@ -2,6 +2,25 @@
 #define K_GW_H_
 
 namespace K {
+  struct mGWbt {
+    double price;
+    double size;
+    mSide make_side;
+    mGWbt(double p_, double s_, mSide m_):
+      price(p_), size(s_), make_side(m_) {}
+  };
+  struct mGWbl {
+    double price;
+    double size;
+    mGWbl(double p_, double s_):
+      price(p_), size(s_) {}
+  };
+  struct mGWbls {
+    vector<mGWbl> bids;
+    vector<mGWbl> asks;
+    mGWbls(vector<mGWbl> b_, vector<mGWbl> a_):
+      bids(b_), asks(a_) {}
+  };
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -23,8 +42,10 @@ namespace K {
       int base = 0;
       virtual void fetch() = 0;
       virtual void pos() = 0;
+      virtual void book() = 0;
   };
   uv_timer_t gwPos_;
+  uv_timer_t gwBook_;
   bool gwAutoStart = false;
   bool gwState = false;
   mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
@@ -44,13 +65,17 @@ namespace K {
         cout << FN::uiT() << "GW " << setprecision(8) << fixed << CF::cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
         if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
         gwPos_.data = gw;
-        if (uv_timer_start(&gwPos_, gwPos__, 0, 15000)) { cout << FN::uiT() << "Errrror: UV gwPos_ start timer failed." << endl; exit(1); }
+        if (uv_timer_start(&gwPos_, [](uv_timer_t *handle) {
+          Gw* gw = (Gw*) handle->data;
+          gw->pos();
+        }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
         EV::evOn("GatewayOrderConnect", [](Local<Object> c) {
           gwCon__(mGatewayType::OrderEntry, (mConnectivityStatus)c->NumberValue());
         });
+        gw->book();
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
@@ -62,10 +87,6 @@ namespace K {
         NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
       };
-      static void gwPos__(uv_timer_t *handle) {
-        Gw* gw = (Gw*) handle->data;
-        gw->pos();
-      };
       static void gwPosUp(double amount, double held, int currency) {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
@@ -74,6 +95,43 @@ namespace K {
         o->Set(FN::v8S("heldAmount"), Number::New(isolate, held));
         o->Set(FN::v8S("currency"), Number::New(isolate, currency));
         EV::evUp("PositionGateway", o);
+      };
+      static void gwBookUp(mConnectivityStatus k) {
+        Isolate* isolate = Isolate::GetCurrent();
+        EV::evUp("GatewayMarketConnect", Number::New(isolate, (double)k));
+      };
+      static void gwLevelUp(mGWbls ls) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        Local<Object> b = Array::New(isolate);
+        Local<Object> a = Array::New(isolate);
+        int i = 0;
+        for (vector<mGWbl>::iterator it = ls.bids.begin(); it != ls.bids.end(); ++it) {
+          Local<Object> b_ = Object::New(isolate);
+          b_->Set(FN::v8S("price"), Number::New(isolate, (*it).price));
+          b_->Set(FN::v8S("size"), Number::New(isolate, (*it).size));
+          b->Set(i++, b_);
+        }
+        i = 0;
+        for (vector<mGWbl>::iterator it = ls.asks.begin(); it != ls.asks.end(); ++it) {
+          Local<Object> a_ = Object::New(isolate);
+          a_->Set(FN::v8S("price"), Number::New(isolate, (*it).price));
+          a_->Set(FN::v8S("size"), Number::New(isolate, (*it).size));
+          a->Set(i++, a_);
+        }
+        o->Set(FN::v8S("bids"), b);
+        o->Set(FN::v8S("asks"), a);
+        EV::evUp("MarketDataGateway", o);
+      };
+      static void gwTradeUp(mGWbt t) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("price"), Number::New(isolate, t.price));
+        o->Set(FN::v8S("size"), Number::New(isolate, t.size));
+        o->Set(FN::v8S("make_side"), Number::New(isolate, (double)t.make_side));
+        EV::evUp("MarketTradeGateway", o);
       };
     private:
       static Local<Value> onSnapProduct(Local<Value> z) {
@@ -185,6 +243,47 @@ namespace K {
         GW::gwPosUp(500, 50, base);
         GW::gwPosUp(500, 50, quote);
       };
+      void book() {
+        GW::gwBookUp(mConnectivityStatus::Connected);
+        if (uv_timer_init(uv_default_loop(), &gwBook_)) { cout << FN::uiT() << "Errrror: GW gwBook_ init timer failed." << endl; exit(1); }
+        gwBook_.data = this;
+        if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
+          GwNull* gw = (GwNull*) handle->data;
+          srand(time(0));
+          GW::gwLevelUp(gw->genLevels());
+          if (rand() % 2) GW::gwTradeUp(gw->genTrades());
+        }, 0, 13000)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
+      };
+      mGWbls genLevels() {
+        vector<mGWbl> a;
+        vector<mGWbl> b;
+        for (unsigned i=0; i<13; ++i) {
+          mGWbl lb(
+            SD::roundNearest(1000 + -1 * 100 * ((rand() % (160000-120000)) / 10000.0), 0.01),
+            (rand() % (160000-120000)) / 10000.0
+          );
+          mGWbl la(
+            SD::roundNearest(1000 + 1 * 100 * ((rand() % (160000-120000)) / 10000.0), 0.01),
+            (rand() % (160000-120000)) / 10000.0
+          );
+          b.push_back(lb);
+          a.push_back(la);
+        }
+        sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*1; });
+        sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*1 < b_.price*1; });
+        mGWbls ls(b, a);
+        return ls;
+      };
+      mGWbt genTrades() {
+        mSide side = rand() % 2 ? mSide::Bid : mSide::Ask;
+        int sign = side == mSide::Ask ? 1 : -1;
+        mGWbt t(
+          SD::roundNearest(1000 + sign * 100 * ((rand() % (160000-120000)) / 10000.0), 0.01),
+          (rand() % (160000-120000)) / 10000.0,
+          side
+        );
+        return t;
+      };
   };
   class GwOkCoin: public Gw {
     public:
@@ -207,6 +306,7 @@ namespace K {
           if (symbol.find(it.key()) != string::npos)
             GW::gwPosUp(stod(k["info"]["funds"]["free"][it.key()].get<string>()), stod(k["info"]["funds"]["freezed"][it.key()].get<string>()), FN::S2mC(it.key()));
       };
+      void book() {};
   };
   class GwCoinbase: public Gw {
     public:
@@ -236,6 +336,7 @@ namespace K {
           if ((*it)["currency"] == mCurrency[base] || (*it)["currency"] == mCurrency[quote])
             GW::gwPosUp(stod((*it)["available"].get<string>()), stod((*it)["hold"].get<string>()), FN::S2mC((*it)["currency"]));
       };
+      void book() {};
   };
   class GwBitfinex: public Gw {
     public:
@@ -268,6 +369,7 @@ namespace K {
         } else for (json::iterator it = k.begin(); it != k.end(); ++it) if ((*it)["type"] == "exchange")
           GW::gwPosUp(stod((*it)["available"].get<string>()), stod((*it)["amount"].get<string>()) - stod((*it)["available"].get<string>()), FN::S2mC((*it)["currency"]));
       };
+      void book() {};
   };
   class GwKorbit: public Gw {
     public:
@@ -313,6 +415,7 @@ namespace K {
           GW::gwPosUp(amount, held, FN::S2mC(it->first));
         }
       };
+      void book() {};
   };
   class GwHitBtc: public Gw {
     public:
@@ -347,6 +450,7 @@ namespace K {
           GW::gwPosUp(500, 50, quote);
         }
       };
+      void book() {};
   };
   class GwPoloniex: public Gw {
     public:
@@ -373,6 +477,7 @@ namespace K {
           if (it.key() == mCurrency[base] || it.key() == mCurrency[quote])
             GW::gwPosUp(stod(k[it.key()]["available"].get<string>()), stod(k[it.key()]["onOrders"].get<string>()), FN::S2mC(it.key()));
       };
+      void book() {};
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;

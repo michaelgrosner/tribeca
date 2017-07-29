@@ -27,6 +27,9 @@ namespace K {
             Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
         }
       };
+      static void evUp(string k, Local<Number> o) {
+        EV::evUp(k, o->ToObject());
+      }
       static void evUp(string k, Local<Object> o) {
         if (ev.cb.find(k) != ev.cb.end()) {
           for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
