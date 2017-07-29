@@ -257,8 +257,7 @@ namespace K {
         }
         sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*-1; });
         sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*1 < b_.price*1; });
-        mGWbls ls(b, a);
-        return ls;
+        return mGWbls(b, a);
       };
       mGWbt genTrades() {
         mSide side = rand() % 2 ? mSide::Bid : mSide::Ask;
@@ -408,12 +407,14 @@ namespace K {
       void refresh() {
         if (!token_time_) {
           json k = FN::wJet(string(http).append("/oauth2/access_token"), string("client_id=").append(apikey).append("&client_secret=").append(secret).append("&username=").append(user).append("&password=").append(pass).append("&grant_type=password"), token_, "", false, true);
+          if (k.find("expires_in") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication failed, got no response." << endl; return; }
           token_time_ = (k["expires_in"].get<int>() * 1000) + FN::T();
           token_ = k["access_token"];
           token_refresh_ = k["refresh_token"];
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication successful, new token expires at " << to_string(token_time_) << "." << endl;
         } else if (FN::T()+60 > token_time_) {
           json k = FN::wJet(string(http).append("/oauth2/access_token"), string("client_id=").append(apikey).append("&client_secret=").append(secret).append("&refresh_token=").append(token_refresh_).append("&grant_type=refresh_token"), token_, "", false, true);
+          if (k.find("expires_in") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication failed, got no response." << endl; return; }
           token_time_ = (k["expires_in"].get<int>() * 1000) + FN::T();
           token_ = k["access_token"];
           token_refresh_ = k["refresh_token"];
@@ -443,8 +444,7 @@ namespace K {
           a.push_back(la);
           if (++i == 13) break;
         }
-        mGWbls ls(b, a);
-        return ls;
+        return mGWbls(b, a);
       };
       vector<mGWbt> getTrades() {
         vector<mGWbt> v;
