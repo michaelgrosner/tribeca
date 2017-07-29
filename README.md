@@ -21,11 +21,32 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian 8, CentOS 7 or macOS 10.12 instance is recommended.
+Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated Debian, CentOS or macOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
 The web UI is compatible with most web browsers/devices/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
+
+## Table of contents
+
+- [Compatible Exchanges](#compatible-exchanges)
+- [Docker Installation](#docker-installation)
+- [Manual Installation](#manual-installation)
+- [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
+- [Multiple instances party time](#multiple-instances-party-time)
+- [Steganographic configuration files](#steganographic-configuration-files)
+- [Application Usage](#application-usage)
+- [Web UI](#web-ui)
+- [Databases](#databases)
+- [Charts](#charts)
+- [Test units and Build notes](#test-units-and-build-notes)
+- [Unreleased Changelog](#unreleased-changelog)
+- [Release 3.0 Changelog](#release-30-changelog)
+- [Release 2.0 Changelog](#release-20-changelog)
+- [Release 1.0 Changelog](#release-10-changelog)
+- [Donations](#donations)
+- [Help](#help)
+- [Issues](#issues)
 
 ### Compatible Exchanges
 
@@ -245,3 +266,13 @@ nope, this project doesn't have maintenance costs. but you can donate to your fa
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
 or donate your time with programming or financial suggestions in the topical IRC channel [##tradingBot](https://kiwiirc.com/client/irc.domirc.net:6697/?theme=cli##tradingBot) at irc.domirc.net on port 6697 (SSL), or 6667 (plain) or feel free to make any question, but questions technically are not donations.
+
+### Help
+
+If you need support contact me at [21.co/analpaper](https://21.co/analpaper/).
+
+### Issues
+
+To request new features open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Feature%20request) and explain your improvement.
+
+To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all the relevant log messages (run `nodejs K.js` to see the output).

@@ -1,10 +1,10 @@
 KCONFIG ?= K
 V_UWS   := 0.14.3
 V_PNG   := 1.6.31
-V_JSO   := v2.1.1
+V_JSON  := v2.1.1
 V_QF    := v.1.14.4
 G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node            \
-  -Ibuild/libpng-$(V_PNG)                       -Ibuild/json-$(V_JSO)                         \
+  -Ibuild/libpng-$(V_PNG)                       -Ibuild/json-$(V_JSON)                        \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp       \
@@ -83,7 +83,7 @@ uws: build
 	test -d build/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build
 
 json: build
-	test -f build/json-$(V_JSO)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSO)/json.hpp -o build/json-$(V_JSO)/json.h)
+	test -f build/json-$(V_JSON)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp -o build/json-$(V_JSON)/json.h)
 
 quickfix: build
 	(test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || ( \

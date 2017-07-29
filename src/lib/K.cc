@@ -40,8 +40,9 @@ using namespace dec;
 
 #include "fn.h"
 #include "ev.h"
-#include "sd.h"
 #include "km.h"
+#include "sd.h"
+#include "kv.h"
 #include "cf.h"
 #include "db.h"
 #include "ui.h"

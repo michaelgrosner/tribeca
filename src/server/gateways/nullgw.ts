@@ -62,42 +62,12 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
     }
 }
 
-
-class NullMarketDataGateway implements Interfaces.IMarketDataGateway {
-    constructor(private _evUp) {
-        setTimeout(() => this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 500);
-        setInterval(() => this._evUp('MarketDataGateway', this.generateMarketData()), 5000);
-        setInterval(() => this._evUp('MarketTradeGateway', this.genMarketTrade()), 15000);
-    }
-
-    private getPrice = (sign: number) => Utils.roundNearest(1000 + sign * 100 * Math.random(), 0.01);
-
-    private genMarketTrade = () => {
-        const side = (Math.random() > .5 ? Models.Side.Bid : Models.Side.Ask);
-        const sign = Models.Side.Ask === side ? 1 : -1;
-        return new Models.GatewayMarketTrade(this.getPrice(sign), Math.random(), side);
-    }
-
-    private genSingleLevel = (sign: number) => new Models.MarketSide(this.getPrice(sign), Math.random());
-
-    private readonly Depth: number = 25;
-    private generateMarketData = () => {
-       const genSide = (sign: number) => {
-          var s = [];
-          for (var i = this.Depth;i--;) s.push(this.genSingleLevel(sign));
-          return s.sort((a, b) => sign*a.price<sign*b.price?1:(sign*a.price>sign*b.price?-1:0));
-       };
-       return new Models.Market(genSide(-1), genSide(1));
-    };
-}
-
 export class NullGateway extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
       _evUp
     ) {
-        new NullMarketDataGateway(_evUp);
         super(
           new NullOrderGateway(_evUp)
         );
