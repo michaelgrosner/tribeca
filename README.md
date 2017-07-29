@@ -27,27 +27,6 @@ Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in 
 
 The web UI is compatible with most web browsers/devices/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
-## Table of contents
-
-- [Compatible Exchanges](#compatible-exchanges)
-- [Docker Installation](#docker-installation)
-- [Manual Installation](#manual-installation)
-- [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
-- [Multiple instances party time](#multiple-instances-party-time)
-- [Steganographic configuration files](#steganographic-configuration-files)
-- [Application Usage](#application-usage)
-- [Web UI](#web-ui)
-- [Databases](#databases)
-- [Charts](#charts)
-- [Test units and Build notes](#test-units-and-build-notes)
-- [Unreleased Changelog](#unreleased-changelog)
-- [Release 3.0 Changelog](#release-30-changelog)
-- [Release 2.0 Changelog](#release-20-changelog)
-- [Release 1.0 Changelog](#release-10-changelog)
-- [Donations](#donations)
-- [Help](#help)
-- [Issues](#issues)
-
 ### Compatible Exchanges
 
 ||with Post-Only Orders support|without Post-Only|
@@ -56,6 +35,34 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 |**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
 
 All currency pairs are supported, otherwise please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20currency%20pair) to easily include any missing currency that you would like.
+
+## README
+- Documentation
+  - [README](#readme)
+  - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md)
+- Installation
+  - [Docker Installation](#docker-installation)
+  - [Manual Installation](#manual-installation)
+  - [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
+  - [Multiple instances party time](#multiple-instances-party-time)
+  - [Steganographic configuration files](#steganographic-configuration-files)
+- Information
+  - [Compatible Exchanges](#compatible-exchanges)
+  - [Configuration](#configuration)
+  - [Application Usage](#application-usage)
+  - [Web UI](#web-ui)
+  - [Databases](#databases)
+  - [Charts](#charts)
+- Development
+  - [Test units and Build notes](#test-units-and-build-notes)
+  - [Unreleased Changelog](#unreleased-changelog)
+  - [Release 3.0 Changelog](#release-30-changelog)
+  - [Release 2.0 Changelog](#release-20-changelog)
+  - [Release 1.0 Changelog](#release-10-changelog)
+- Humans and Milk Mammals
+  - [Donations](#donations)
+  - [Help](#help)
+  - [Issues](#issues)
 
 ### Docker Installation
 
