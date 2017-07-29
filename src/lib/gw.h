@@ -244,16 +244,14 @@ namespace K {
         vector<mGWbl> a;
         vector<mGWbl> b;
         for (unsigned i=0; i<13; ++i) {
-          mGWbl lb(
+          b.push_back(mGWbl(
             SD::roundNearest(1000 + -1 * 100 * ((rand() % (160000-120000)) / 10000.0), 0.01),
             (rand() % (160000-120000)) / 10000.0
-          );
-          mGWbl la(
+          ));
+          a.push_back(mGWbl(
             SD::roundNearest(1000 + 1 * 100 * ((rand() % (160000-120000)) / 10000.0), 0.01),
             (rand() % (160000-120000)) / 10000.0
-          );
-          b.push_back(lb);
-          a.push_back(la);
+          ));
         }
         sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*-1; });
         sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*1 < b_.price*1; });
@@ -428,20 +426,18 @@ namespace K {
         if (k.find("timestamp") == k.end())  {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
         int i = 0;
         for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
-          mGWbl lb(
+          b.push_back(mGWbl(
             stod((*it)["/0"_json_pointer].get<string>()),
             stod((*it)["/1"_json_pointer].get<string>())
-          );
-          b.push_back(lb);
+          ));
           if (++i == 13) break;
         }
         i = 0;
         for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
-          mGWbl la(
+          a.push_back(mGWbl(
             stod((*it)["/0"_json_pointer].get<string>()),
             stod((*it)["/1"_json_pointer].get<string>())
-          );
-          a.push_back(la);
+          ));
           if (++i == 13) break;
         }
         return mGWbls(b, a);
@@ -449,14 +445,12 @@ namespace K {
       vector<mGWbt> getTrades() {
         vector<mGWbt> v;
         json k = FN::wJet(string(http).append("/transactions?time=minute&currency_pair=").append(symbol));
-        for (json::iterator it = k.begin(); it != k.end(); ++it) {
-          mGWbt t(
+        for (json::iterator it = k.begin(); it != k.end(); ++it)
+          v.push_back(mGWbt(
             stod((*it)["price"].get<string>()),
             stod((*it)["amount"].get<string>()),
             mSide::Ask
-          );
-          v.push_back(t);
-        }
+          ));
         return v;
       };
   };
