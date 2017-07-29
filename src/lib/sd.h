@@ -6,6 +6,10 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         NODE_SET_METHOD(exports, "computeStdevs", SD::ComputeStdevs);
+        NODE_SET_METHOD(exports, "roundUp", SD::RoundUp);
+        NODE_SET_METHOD(exports, "roundDown", SD::RoundDown);
+        NODE_SET_METHOD(exports, "roundNearest", SD::RoundNearest);
+        NODE_SET_METHOD(exports, "roundSide", SD::RoundSide);
       };
       static void ComputeStdevs(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
@@ -40,6 +44,36 @@ namespace K {
         }
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
+      };
+      static void RoundUp(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        double value = args[0]->NumberValue();
+        double minTick = args[1]->NumberValue();
+        Local<Number> num = Number::New(isolate, ceil(value / minTick) * minTick);
+        args.GetReturnValue().Set(num);
+      };
+
+      static void RoundDown(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        double value = args[0]->NumberValue();
+        double minTick = args[1]->NumberValue();
+        Local<Number> num = Number::New(isolate, floor(value / minTick) * minTick);
+        args.GetReturnValue().Set(num);
+      };
+
+      static void RoundNearest(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        double value = args[0]->NumberValue();
+        double minTick = args[1]->NumberValue();
+        Local<Number> num = Number::New(isolate, round(value / minTick) * minTick);
+        args.GetReturnValue().Set(num);
+      };
+
+      static void RoundSide(const FunctionCallbackInfo<Value> &args) {
+        mSide side = (mSide)args[2]->NumberValue();
+        if (side == mSide::Bid) SD::RoundDown(args);
+        else if (side == mSide::Ask) SD::RoundUp(args);
+        else SD::RoundNearest(args);
       };
   };
 }
