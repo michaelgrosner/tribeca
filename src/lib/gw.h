@@ -269,7 +269,7 @@ namespace K {
           b.push_back(lb);
           a.push_back(la);
         }
-        sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*1; });
+        sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*-1; });
         sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*1 < b_.price*1; });
         mGWbls ls(b, a);
         return ls;
