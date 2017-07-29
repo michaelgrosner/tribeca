@@ -337,6 +337,7 @@ namespace K {
           unsigned int i = 0;
           for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
             if (*it == '0') i++; else if (*it == '.') continue; else break;
+          if (stod(k["last_price"].get<string>())<0.0001) i++;
           stringstream os(string("1e-").append(to_string(i>8?8:i)));
           os >> minTick;
           minSize = 0.01;
