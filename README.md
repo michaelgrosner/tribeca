@@ -208,7 +208,7 @@ To ignore the output, execute the application in the background with `forever st
 
 To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect K.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
 
-Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X nodejs K.js`.
+Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X node K`.
 
 ### Unreleased Changelog:
 

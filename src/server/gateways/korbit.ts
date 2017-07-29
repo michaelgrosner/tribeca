@@ -35,40 +35,6 @@ interface Cancel extends SignedMessage {
     currency_pair?: string;
 }
 
-class KorbitMarketDataGateway implements Interfaces.IMarketDataGateway {
-    private triggerMarketTrades = () => {
-        this._http.get("transactions", {currency_pair: this._gwSymbol, time: 'minute'}, true).then(msg => {
-            if (!(<any>msg.data).length) return;
-            for (let i = (<any>msg.data).length;i--;) {
-              var px = parseFloat((<any>msg.data)[i].price);
-              var amt = parseFloat((<any>msg.data)[i].amount);
-              var side = Models.Side.Ask;
-              var mt = new Models.GatewayMarketTrade(px, amt, side);
-              this._evUp('MarketTradeGateway', mt);
-            }
-        });
-    };
-
-    private static GetLevel = (n: [any, any]) : Models.MarketSide =>
-        new Models.MarketSide(parseFloat(n[0]), parseFloat(n[1]));
-
-    private triggerOrderBook = () => {
-        this._http.get("orderbook", {currency_pair: this._gwSymbol, category: 'all'}, true).then(msg => {
-            if (!(<any>msg.data).timestamp) return;
-            this._evUp('MarketDataGateway', new Models.Market(
-              (<any>msg.data).bids.slice(0,13).map(KorbitMarketDataGateway.GetLevel),
-              (<any>msg.data).asks.slice(0,13).map(KorbitMarketDataGateway.GetLevel)
-            ));
-        });
-    };
-
-    constructor(private _evUp, private _http : KorbitHttp, private _gwSymbol) {
-        setInterval(this.triggerMarketTrades, 60000);
-        setInterval(this.triggerOrderBook, 1000);
-        setTimeout(()=>this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 10);
-    }
-}
-
 class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     generateClientOrderId = (): string => new Date().valueOf().toString().substr(-9);
 
@@ -319,7 +285,6 @@ export class Korbit extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new KorbitOrderEntryGateway(_evUp, http, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new KorbitMarketDataGateway(_evUp, http, gwSymbol);
         super(
             orderGateway
         );
