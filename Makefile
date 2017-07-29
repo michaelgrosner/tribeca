@@ -30,11 +30,11 @@ help:
 	#                                                  #
 	#   make list       - show K instances             #
 	#   make start      - start K instance             #
+	#   make startall   - start K instances            #
 	#   make stop       - stop K instance              #
+	#   make stopall    - stop K instances             #
 	#   make restart    - restart K instance           #
-	#   make startall   - start all K instances        #
-	#   make stopall    - stop all K instances         #
-	#   make restartall - restart all K instances      #
+	#   make restartall - restart K instances          #
 	#                                                  #
 	#   make diff       - show commits and versions    #
 	#   make changelog  - show commits                 #

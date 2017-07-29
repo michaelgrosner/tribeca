@@ -84,69 +84,6 @@ class PoloniexWebsocket {
   }
 }
 
-class PoloniexMarketDataGateway implements Interfaces.IMarketDataGateway {
-  private onTrade = (trade: Models.Timestamped<any>) => {
-    this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
-      parseFloat(trade.data.rate),
-      parseFloat(trade.data.amount),
-      trade.data.type === "sell" ? Models.Side.Ask : Models.Side.Bid
-    ));
-  };
-
-  private mkt: Models.Market = new Models.Market([], []);
-
-  private onDepth = (depth: Models.Timestamped<any>) => {
-    const side = depth.data.type+'s';
-    this.mkt[side] = this.mkt[side].filter(a => a.price != parseFloat(depth.data.rate));
-    if (typeof depth.data.amount !== 'undefined')
-      this.mkt[side].push(new Models.MarketSide(parseFloat(depth.data.rate), parseFloat(depth.data.amount)));
-    this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
-    this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
-    const _bids = this.mkt.bids.slice(0, 13);
-    const _asks = this.mkt.asks.slice(0, 13);
-    if (_bids.length && _asks.length)
-      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
-  };
-
-  private onDepthSnapshot = (mkt: Models.Timestamped<any>) => {
-    this.mkt = mkt.data;
-    const _bids = this.mkt.bids.slice(0, 13);
-    const _asks = this.mkt.asks.slice(0, 13);
-    if (_bids.length && _asks.length)
-      this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
-  };
-
-  constructor(
-    private _evUp,
-    socket: PoloniexWebsocket,
-    http: PoloniexHttp,
-    gwSymbol
-  ) {
-    // socket.setHandler('newTrade', this.onTrade);
-    // socket.setHandler('orderBookModify', this.onDepth);
-    // socket.setHandler('orderBookRemove', this.onDepth);
-    socket.setHandler('orderBookSnapshot', this.onDepthSnapshot);
-    // socket.ConnectChanged.on(cs => this.ConnectChanged.trigger(cs));
-    setTimeout(()=>this._evUp('GatewayMarketConnect', Models.ConnectivityStatus.Connected), 10);
-    setInterval(async ()=>{
-      await new Promise<number>((resolve, reject) => {
-        http.get('returnOrderBook&depth=13&currencyPair='+gwSymbol).then(msg => {
-          if (!(<any>msg.data).seq) return reject(0);
-          var kwargs = parseFloat((<any>msg.data).seq);
-          const _mkt = new Models.Market([], []);
-          (<any>msg.data).bids.forEach(x => _mkt.bids.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
-          (<any>msg.data).asks.forEach(x => _mkt.asks.push(new Models.MarketSide(parseFloat(x[0]), parseFloat(x[1]))));
-          _mkt.bids = _mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 27);
-          _mkt.asks = _mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 27);
-          var args = [{type:'orderBookSnapshot',data:_mkt}];
-          socket.seqQueueMsg(args, kwargs);
-          resolve(1);
-        });
-      });
-    }, 2222);
-  }
-}
-
 class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
   generateClientOrderId = (): string => new Date().valueOf().toString().substr(-11);
 
@@ -383,7 +320,7 @@ export class Poloniex extends Interfaces.CombinedGateway {
   ) {
     const socket = new PoloniexWebsocket(cfString, gwSymbol);
     const http = new PoloniexHttp(cfString, new PoloniexMessageSigner(cfString));
-    new PoloniexMarketDataGateway(_evUp, socket, http, gwSymbol);
+
     super(
       cfString("PoloniexOrderDestination") == "Poloniex"
         ? <Interfaces.IOrderEntryGateway>new PoloniexOrderEntryGateway(_evUp, http, gwSymbol, socket)

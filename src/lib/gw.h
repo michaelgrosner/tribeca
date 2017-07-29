@@ -334,10 +334,9 @@ namespace K {
         json k = FN::wJet(string(http).append("/pubticker/").append(symbol));
         if (k.find("last_price") != k.end()) {
           string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
-          unsigned int i = 0;
+          unsigned int i = (stod(k["last_price"].get<string>())<0.00001) ? 1 : 0;
           for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
             if (*it == '0') i++; else if (*it == '.') continue; else break;
-          if (stod(k["last_price"].get<string>())<0.0001) i++;
           stringstream os(string("1e-").append(to_string(i>8?8:i)));
           os >> minTick;
           minSize = 0.01;
@@ -395,7 +394,7 @@ namespace K {
         if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
           GwKorbit* gw = (GwKorbit*) handle->data;
           GW::gwLevelUp(gw->getLevels());
-        }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
+        }, 0, 2222)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
         if (uv_timer_init(uv_default_loop(), &gwBookTrade_)) { cout << FN::uiT() << "Errrror: GW gwBookTrade_ init timer failed." << endl; exit(1); }
         gwBookTrade_.data = this;
         if (uv_timer_start(&gwBookTrade_, [](uv_timer_t *handle) {
@@ -515,7 +514,58 @@ namespace K {
           if (it.key() == mCurrency[base] || it.key() == mCurrency[quote])
             GW::gwPosUp(stod(k[it.key()]["available"].get<string>()), stod(k[it.key()]["onOrders"].get<string>()), FN::S2mC(it.key()));
       };
-      void book() {};
+      void book() {
+        GW::gwBookUp(mConnectivityStatus::Connected);
+        if (uv_timer_init(uv_default_loop(), &gwBook_)) { cout << FN::uiT() << "Errrror: GW gwBook_ init timer failed." << endl; exit(1); }
+        gwBook_.data = this;
+        if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
+          GwPoloniex* gw = (GwPoloniex*) handle->data;
+          GW::gwLevelUp(gw->getLevels());
+        }, 0, 2222)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
+        if (uv_timer_init(uv_default_loop(), &gwBookTrade_)) { cout << FN::uiT() << "Errrror: GW gwBookTrade_ init timer failed." << endl; exit(1); }
+        gwBookTrade_.data = this;
+        if (uv_timer_start(&gwBookTrade_, [](uv_timer_t *handle) {
+          GwPoloniex* gw = (GwPoloniex*) handle->data;
+          GW::gwTradeUp(gw->getTrades());
+        }, 0, 60000)) { cout << FN::uiT() << "Errrror: GW gwBookTrade_ start timer failed." << endl; exit(1); }
+      };
+      mGWbls getLevels() {
+        vector<mGWbl> a;
+        vector<mGWbl> b;
+        json k = FN::wJet(string(http).append("/public?command=returnOrderBook&depth=13&currencyPair=").append(symbol));
+        if (k.find("error") != k.end())  { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return mGWbls(b, a); }
+        if (k.find("seq") == k.end())  {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
+        int i = 0;
+        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
+          b.push_back(mGWbl(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            (*it)["/1"_json_pointer].get<double>()
+          ));
+          if (++i == 13) break;
+        }
+        i = 0;
+        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
+          a.push_back(mGWbl(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            (*it)["/1"_json_pointer].get<double>()
+          ));
+          if (++i == 13) break;
+        }
+        return mGWbls(b, a);
+      };
+      vector<mGWbt> getTrades() {
+        vector<mGWbt> v;
+        unsigned long t = FN::T();
+        json k = FN::wJet(string(http).append("/public?command=returnTradeHistory&currencyPair=").append(symbol).append("&start=").append(to_string((int)((t-60000)/1000))).append("&end=").append(to_string(t)));
+        if (k.find("error") != k.end())  { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return v; }
+        for (json::iterator it = k.begin(); it != k.end(); ++it)
+          v.push_back(mGWbt(
+            stod((*it)["rate"].get<string>()),
+            stod((*it)["amount"].get<string>()),
+            (*it)["type"].get<string>() == "buy" ? mSide::Bid : mSide::Ask
+          ));
+        return v;
+      };
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
