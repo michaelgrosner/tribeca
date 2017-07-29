@@ -66,7 +66,6 @@ help:
 
 K: src/lib/K.cc
 	@g++ --version
-	@g++-4.9 --version
 	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
 	@$(MAKE) dist
@@ -99,7 +98,7 @@ endif
 
 Darwin: build
 ifdef ABIv
-	g++-4.9 -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
+	g++ -o dist/lib/K.darwin.$(ABIv).node -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 endif
 
 dist:
@@ -117,7 +116,7 @@ libLinux:
 	g++-4.9 -o dist/lib/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K* -lsqlite3
 
 libDarwin:
-	g++-4.9 -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
+	g++ -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K* -lsqlite3
 
 clean: build
 	rm -rf build
