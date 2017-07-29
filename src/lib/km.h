@@ -56,6 +56,25 @@ namespace K {
     WalletChart = 'C',
     EWMAChart = 'D'
   };
+  struct mGWbt {
+    double price;
+    double size;
+    mSide make_side;
+    mGWbt(double p_, double s_, mSide m_):
+      price(p_), size(s_), make_side(m_) {}
+  };
+  struct mGWbl {
+    double price;
+    double size;
+    mGWbl(double p_, double s_):
+      price(p_), size(s_) {}
+  };
+  struct mGWbls {
+    vector<mGWbl> bids;
+    vector<mGWbl> asks;
+    mGWbls(vector<mGWbl> b_, vector<mGWbl> a_):
+      bids(b_), asks(a_) {}
+  };
 }
 
 #endif

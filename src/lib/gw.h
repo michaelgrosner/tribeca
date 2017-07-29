@@ -2,25 +2,6 @@
 #define K_GW_H_
 
 namespace K {
-  struct mGWbt {
-    double price;
-    double size;
-    mSide make_side;
-    mGWbt(double p_, double s_, mSide m_):
-      price(p_), size(s_), make_side(m_) {}
-  };
-  struct mGWbl {
-    double price;
-    double size;
-    mGWbl(double p_, double s_):
-      price(p_), size(s_) {}
-  };
-  struct mGWbls {
-    vector<mGWbl> bids;
-    vector<mGWbl> asks;
-    mGWbls(vector<mGWbl> b_, vector<mGWbl> a_):
-      bids(b_), asks(a_) {}
-  };
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -46,6 +27,7 @@ namespace K {
   };
   uv_timer_t gwPos_;
   uv_timer_t gwBook_;
+  uv_timer_t gwBookTrade_;
   bool gwAutoStart = false;
   bool gwState = false;
   mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
@@ -124,6 +106,10 @@ namespace K {
         o->Set(FN::v8S("asks"), a);
         EV::evUp("MarketDataGateway", o);
       };
+      static void gwTradeUp(vector<mGWbt> k) {
+        for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
+          gwTradeUp(*it);
+      }
       static void gwTradeUp(mGWbt t) {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
@@ -392,6 +378,34 @@ namespace K {
         }
       };
       void pos() {
+        refresh();
+        json k = FN::wJet(string(http).append("/user/wallet?currency_pair=").append(symbol), token_, true);
+        map<string, vector<double>> wallet;
+        if (k.find("available") == k.end()) {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl; return; }
+        for (json::iterator it = k["available"].begin(); it != k["available"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
+        for (json::iterator it = k["pendingOrders"].begin(); it != k["pendingOrders"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
+        for (map<string, vector<double>>::iterator it=wallet.begin(); it!=wallet.end(); ++it) {
+          double amount; double held;
+          for (unsigned i=0; i<it->second.size(); ++i) if (i==0) amount = it->second[i]; else if (i==1) held = it->second[i];
+          GW::gwPosUp(amount, held, FN::S2mC(it->first));
+        }
+      };
+      void book() {
+        GW::gwBookUp(mConnectivityStatus::Connected);
+        if (uv_timer_init(uv_default_loop(), &gwBook_)) { cout << FN::uiT() << "Errrror: GW gwBook_ init timer failed." << endl; exit(1); }
+        gwBook_.data = this;
+        if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
+          GwKorbit* gw = (GwKorbit*) handle->data;
+          GW::gwLevelUp(gw->getLevels());
+        }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
+        if (uv_timer_init(uv_default_loop(), &gwBookTrade_)) { cout << FN::uiT() << "Errrror: GW gwBookTrade_ init timer failed." << endl; exit(1); }
+        gwBookTrade_.data = this;
+        if (uv_timer_start(&gwBookTrade_, [](uv_timer_t *handle) {
+          GwKorbit* gw = (GwKorbit*) handle->data;
+          GW::gwTradeUp(gw->getTrades());
+        }, 0, 60000)) { cout << FN::uiT() << "Errrror: GW gwBookTrade_ start timer failed." << endl; exit(1); }
+      };
+      void refresh() {
         if (!token_time_) {
           json k = FN::wJet(string(http).append("/oauth2/access_token"), string("client_id=").append(apikey).append("&client_secret=").append(secret).append("&username=").append(user).append("&password=").append(pass).append("&grant_type=password"), token_, "", false, true);
           token_time_ = (k["expires_in"].get<int>() * 1000) + FN::T();
@@ -405,17 +419,46 @@ namespace K {
           token_refresh_ = k["refresh_token"];
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Authentication refresh successful, new token expires at " << to_string(token_time_) << "." << endl;
         }
-        json k = FN::wJet(string(http).append("/user/wallet?currency_pair=").append(symbol), token_, true);
-        map<string, vector<double>> wallet;
-        for (json::iterator it = k["available"].begin(); it != k["available"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
-        for (json::iterator it = k["pendingOrders"].begin(); it != k["pendingOrders"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
-        for (map<string, vector<double>>::iterator it=wallet.begin(); it!=wallet.end(); ++it) {
-          double amount; double held;
-          for (unsigned i=0; i<it->second.size(); ++i) if (i==0) amount = it->second[i]; else if (i==1) held = it->second[i];
-          GW::gwPosUp(amount, held, FN::S2mC(it->first));
-        }
       };
-      void book() {};
+      mGWbls getLevels() {
+        vector<mGWbl> a;
+        vector<mGWbl> b;
+        json k = FN::wJet(string(http).append("/orderbook?category=all&currency_pair=").append(symbol));
+        if (k.find("timestamp") == k.end())  {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
+        int i = 0;
+        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
+          mGWbl lb(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            stod((*it)["/1"_json_pointer].get<string>())
+          );
+          b.push_back(lb);
+          if (++i == 13) break;
+        }
+        i = 0;
+        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
+          mGWbl la(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            stod((*it)["/1"_json_pointer].get<string>())
+          );
+          a.push_back(la);
+          if (++i == 13) break;
+        }
+        mGWbls ls(b, a);
+        return ls;
+      };
+      vector<mGWbt> getTrades() {
+        vector<mGWbt> v;
+        json k = FN::wJet(string(http).append("/transactions?time=minute&currency_pair=").append(symbol));
+        for (json::iterator it = k.begin(); it != k.end(); ++it) {
+          mGWbt t(
+            stod((*it)["price"].get<string>()),
+            stod((*it)["amount"].get<string>()),
+            mSide::Ask
+          );
+          v.push_back(t);
+        }
+        return v;
+      };
   };
   class GwHitBtc: public Gw {
     public:
