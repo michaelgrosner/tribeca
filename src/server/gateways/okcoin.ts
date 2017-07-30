@@ -160,52 +160,6 @@ class OkCoinWebsocket {
     }
 }
 
-class OkCoinMarketDataGateway implements Interfaces.IMarketDataGateway {
-    private onTrade = (trades : Models.Timestamped<[string,string,string,string,string][]>) => {
-        trades.data.forEach(trade => {
-          this._evUp('MarketTradeGateway', new Models.GatewayMarketTrade(
-            parseFloat(trade[1]),
-            parseFloat(trade[2]),
-            trade[4] === "ask" ? Models.Side.Ask : Models.Side.Bid
-          ));
-        });
-    };
-
-    private static GetLevel = (n: [any, any]) : Models.MarketSide =>
-        new Models.MarketSide(parseFloat(n[0]), parseFloat(n[1]));
-
-    private onDepth = (depth : Models.Timestamped<OkCoinDepthMessage>) => {
-        var msg = depth.data;
-
-        var bids = msg.bids.slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
-        var asks = msg.asks.reverse().slice(0,13).map(OkCoinMarketDataGateway.GetLevel);
-
-        this._evUp('MarketDataGateway', new Models.Market(bids, asks));
-    };
-
-    constructor(
-      private _evOn,
-      private _evUp,
-      socket: OkCoinWebsocket,
-      gwSymbol
-    ) {
-        var _symbolReversed = gwSymbol.split('_').reverse().join('_');
-        var depthChannel = "ok_sub_spot" + _symbolReversed + "_depth_20";
-        var tradesChannel = "ok_sub_spot" + _symbolReversed + "_trades";
-        socket.setHandler(depthChannel, this.onDepth);
-        socket.setHandler(tradesChannel, this.onTrade);
-
-        this._evOn('GatewaySocketConnect', cs => {
-            this._evUp('GatewayMarketConnect', cs);
-
-            if (cs == Models.ConnectivityStatus.Connected) {
-                socket.send(depthChannel, null);
-                socket.send(tradesChannel, null);
-            }
-        });
-    }
-}
-
 class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     private chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     generateClientOrderId = (): string => {
@@ -476,7 +430,6 @@ export class OkCoin extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new OkCoinOrderEntryGateway(_evOn, _evUp, http, socket, signer, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new OkCoinMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
         super(
           orderGateway
         );
