@@ -378,8 +378,8 @@ namespace K {
     public:
       bool stillAlive;
       map<int, string> chan;
-      vector<mGWbl> a_;
       vector<mGWbl> b_;
+      vector<mGWbl> a_;
       void fetch() {
         exchange = mExchange::Bitfinex;
         symbol = FN::S2l(string(mCurrency[base]).append(mCurrency[quote]));
@@ -583,6 +583,9 @@ namespace K {
   };
   class GwHitBtc: public Gw {
     public:
+      bool snap = false;
+      vector<mGWbl> a_;
+      vector<mGWbl> b_;
       void fetch() {
         exchange = mExchange::HitBtc;
         symbol = string(mCurrency[base]).append(mCurrency[quote]);
@@ -614,7 +617,68 @@ namespace K {
           GW::gwPosUp(500, 50, quote);
         }
       };
-      void book() {};
+      void book() {
+        hub.onConnection([&](uWS::WebSocket<uWS::CLIENT> *w, uWS::HttpRequest req) {
+          GW::gwBookUp(mConnectivityStatus::Connected);
+        });
+        hub.onDisconnection([](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) { GW::gwBookUp(mConnectivityStatus::Disconnected); });
+        hub.onError([](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; });
+        hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
+          json k = json::parse(string(message, length));
+          if (k["MarketDataIncrementalRefresh"].is_object()) {
+            k = k["MarketDataIncrementalRefresh"];
+            if (!snap || symbol != k["symbol"]) return;
+            for (json::iterator it = k["bid"].begin(); it != k["bid"].end(); ++it) {
+              double p = stod((*it)["price"].get<string>());
+              double s = (*it)["size"].get<double>();
+              if (s) b_.push_back(mGWbl(p, s * minSize));
+              else for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
+                if ((*it_).price == p) it_ = b_.erase(it_); else ++it_;
+            }
+            for (json::iterator it = k["ask"].begin(); it != k["ask"].end(); ++it) {
+              double p = stod((*it)["price"].get<string>());
+              double s = (*it)["size"].get<double>();
+              if (s) a_.push_back(mGWbl(p, s * minSize));
+              else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
+                if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
+            }
+            sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
+            sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
+          }
+          else if (k["MarketDataSnapshotFullRefresh"].is_object()) {
+            k = k["MarketDataSnapshotFullRefresh"];
+            if (symbol != k["symbol"]) return;
+            snap = true;
+            b_.clear();
+            a_.clear();
+            for (json::iterator it = k["bid"].begin(); it != k["bid"].end(); ++it) {
+              b_.push_back(mGWbl(
+                stod((*it)["price"].get<string>()),
+                (*it)["size"].get<double>() * minSize
+              ));
+              if (b_.size() == 13) break;
+            }
+            for (json::iterator it = k["ask"].begin(); it != k["ask"].end(); ++it) {
+              a_.push_back(mGWbl(
+                stod((*it)["price"].get<string>()),
+                (*it)["size"].get<double>() * minSize
+              ));
+              if (a_.size() == 13) break;
+            }
+          }
+          if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
+          if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
+          vector<mGWbl> b__;
+          vector<mGWbl> a__;
+          for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
+            if (b__.size() < 13) b__.push_back(*it); else break;
+          for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
+            if (a__.size() < 13) a__.push_back(*it); else break;
+          if (a__.size() && b__.size())
+            GW::gwLevelUp(mGWbls(b__, a__));
+        });
+        hub.connect(wS, nullptr);
+      };
   };
   class GwPoloniex: public Gw {
     public:
