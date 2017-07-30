@@ -17,24 +17,6 @@ function encodeTimeInForce(tif: Models.TimeInForce, type: Models.OrderType) {
     throw new Error("unsupported tif " + Models.TimeInForce[tif] + " and order type " + Models.OrderType[type]);
 }
 
-function getJSON<T>(url: string, qs?: any) : Promise<T> {
-    return new Promise((resolve, reject) => {
-        request({url: url, qs: qs}, (err: Error, resp, body) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                try {
-                    resolve(JSON.parse(body));
-                }
-                catch (e) {
-                    reject(e);
-                }
-            }
-        });
-    });
-}
-
 class BitfinexWebsocket {
 	send = <T>(channel: string, parameters: any, cb?: () => void) => {
         var subsReq: any;
@@ -146,64 +128,6 @@ class BitfinexWebsocket {
           } else this._stillAlive = false;
           this._ws.send(this._serializedHeartping);
         }, 7000);
-    }
-}
-
-class BitfinexMarketDataGateway implements Interfaces.IMarketDataGateway {
-    private onTrade = (trades: Models.Timestamped<any[]>) => {
-        trades.data.forEach(trade => {
-            if (trade=='tu') return;
-            var px = trade[3];
-            var sz = Math.abs(trade[2]);
-            var time = trades.time.getTime();
-            var side = trade[2] > 0 ? Models.Side.Bid : Models.Side.Ask;
-            var mt = new Models.GatewayMarketTrade(px, sz, side);
-            this._evUp('MarketTradeGateway', mt);
-        });
-    };
-
-    private mkt = new Models.Market([], []);
-
-    private onDepth = (depth : Models.Timestamped<any>) => {
-        depth.data.forEach(x => {
-          var side = x[2] > 0 ? 'bids' : 'asks';
-          this.mkt[side] = this.mkt[side].filter(a => a.price != x[0]);
-          if (x[1]) this.mkt[side].push(new Models.MarketSide(x[0], Math.abs(x[2])));
-        });
-        this.mkt.bids = this.mkt.bids.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price < b.price ? 1 : (a.price > b.price ? -1 : 0)).slice(0, 21);
-        this.mkt.asks = this.mkt.asks.sort((a: Models.MarketSide, b: Models.MarketSide) => a.price > b.price ? 1 : (a.price < b.price ? -1 : 0)).slice(0, 21);
-
-        let _bids = this.mkt.bids.slice(0, 13);
-        let _asks = this.mkt.asks.slice(0, 13);
-        if (_bids.length && _asks.length)
-          this._evUp('MarketDataGateway', new Models.Market(_bids, _asks));
-    };
-
-    constructor(
-      private _evOn,
-      private _evUp,
-      private _socket: BitfinexWebsocket,
-      private _gwSymbol
-    ) {
-        var depthChannel = "book";
-        var tradesChannel = "trades";
-        _socket.setHandler(depthChannel, this.onDepth);
-        _socket.setHandler(tradesChannel, this.onTrade);
-
-        this._evOn('GatewaySocketConnect', cs => {
-            this._evUp('GatewayMarketConnect', cs);
-
-            if (cs == Models.ConnectivityStatus.Connected) {
-                _socket.send(depthChannel, {
-                  'symbol': 't'+_gwSymbol.toUpperCase(),
-                  'prec': 'P0',
-                  'freq': 'F0'
-                });
-                _socket.send(tradesChannel, {
-                  'symbol': 't'+_gwSymbol.toUpperCase()
-                });
-            }
-        });
     }
 }
 
@@ -473,7 +397,6 @@ export class Bitfinex extends Interfaces.CombinedGateway {
             ? <Interfaces.IOrderEntryGateway>new BitfinexOrderEntryGateway(_evOn, _evUp, http, socket, signer, gwSymbol)
             : new NullGateway.NullOrderGateway(_evUp);
 
-        new BitfinexMarketDataGateway(_evOn, _evUp, socket, gwSymbol);
         super(
           orderGateway
         );
