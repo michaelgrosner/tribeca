@@ -107,24 +107,6 @@ interface MarketTrade {
     amount : number;
 }
 
-function getJSON<T>(url: string, qs?: any) : Promise<T> {
-    return new Promise((resolve, reject) => {
-        request({url: url, qs: qs}, (err: Error, resp, body) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                try {
-                    resolve(JSON.parse(body));
-                }
-                catch (e) {
-                    reject(e);
-                }
-            }
-        });
-    });
-}
-
 class SideMarketData {
     private _data : Map<string, Models.MarketSide>;
     private _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
