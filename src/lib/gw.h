@@ -376,9 +376,9 @@ namespace K {
             else if (k["event"] == "info") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Info " << k << endl;
             else if (k["event"] == "subscribed") chan[k["chanId"]] = k["channel"];
           } else if (k.is_array()) {
-            if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "hb") stillAlive = true;
-            else if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
-            else if (k["/0"_json_pointer].is_number() && chan.find(k["/0"_json_pointer].get<int>()) != chan.end()) {
+            if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer] == "hb") stillAlive = true;
+            else if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer] == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
+            else if (k["/0"_json_pointer].is_number() && chan.find(k["/0"_json_pointer]) != chan.end()) {
               if (chan[k["/0"_json_pointer]] == "book") {
                 if (k["/1/0"_json_pointer].is_number()) k["/1"_json_pointer] = { k["/1"_json_pointer] };
                 if (k["/1/0"_json_pointer].is_array())
