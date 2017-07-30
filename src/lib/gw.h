@@ -370,16 +370,16 @@ namespace K {
         hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
           json k = json::parse(string(message, length));
           if (k.find("event") != k.end()) {
-            if (k["event"].get<string>() == "pong") stillAlive = true;
-            else if (k["event"].get<string>() == "ping") { string m = string("{\"event\":\"pong\"}"); w->send(m.data(), m.length(), uWS::OpCode::TEXT); }
-            else if (k["event"].get<string>() == "error") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << k << endl;
-            else if (k["event"].get<string>() == "info") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Info " << k << endl;
-            else if (k["event"].get<string>() == "subscribed") chan[k["chanId"].get<int>()] = k["channel"].get<string>();
+            if (k["event"] == "pong") stillAlive = true;
+            else if (k["event"] == "ping") { string m = string("{\"event\":\"pong\"}"); w->send(m.data(), m.length(), uWS::OpCode::TEXT); }
+            else if (k["event"] == "error") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << k << endl;
+            else if (k["event"] == "info") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Info " << k << endl;
+            else if (k["event"] == "subscribed") chan[k["chanId"]] = k["channel"];
           } else if (k.is_array()) {
             if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "hb") stillAlive = true;
             else if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
             else if (k["/0"_json_pointer].is_number() && chan.find(k["/0"_json_pointer].get<int>()) != chan.end()) {
-              if (chan[k["/0"_json_pointer].get<int>()] == "book") {
+              if (chan[k["/0"_json_pointer]] == "book") {
                 if (k["/1/0"_json_pointer].is_number()) k["/1"_json_pointer] = { k["/1"_json_pointer] };
                 if (k["/1/0"_json_pointer].is_array())
                   for (json::iterator it = k["/1"_json_pointer].begin(); it != k["/1"_json_pointer].end(); ++it) {
@@ -410,7 +410,7 @@ namespace K {
                   if (a__.size() < 13) a__.push_back(*it); else break;
                 if (a__.size() && b__.size())
                   GW::gwLevelUp(mGWbls(b__, a__));
-              } else if (chan[k["/0"_json_pointer].get<int>()] == "trades") {
+              } else if (chan[k["/0"_json_pointer]] == "trades") {
                 if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "te")
                   k["/1"_json_pointer] = { k["/2"_json_pointer] };
                 if (k["/1"_json_pointer].is_array()) {
