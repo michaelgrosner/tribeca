@@ -17,12 +17,12 @@ namespace K {
           string("CREATE TABLE ").append(k).append("("                                                            \
             "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL,"                                          \
             "json  BLOB                                       NOT NULL,"                                          \
-            "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);").data(),
+            "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"),
           NULL, NULL, &zErrMsg
         );
         string json = "[";
         sqlite3_exec(db,
-          string("SELECT json FROM ").append(k).append(" ORDER BY time DESC;").data(),
+          string("SELECT json FROM ").append(k).append(" ORDER BY time DESC;"),
           cb, (void*)&json, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
@@ -48,7 +48,7 @@ namespace K {
             time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
           ) ) : "").append((!r.length() || r == "{}") ? "" : string("INSERT INTO ")
             .append(string(1, (char)k)).append(" (id,json) VALUES(").append(id).append(",'")
-            .append(r).append("');")).data(),
+            .append(r).append("');")),
           NULL, NULL, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);

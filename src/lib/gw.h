@@ -2,38 +2,6 @@
 #define K_GW_H_
 
 namespace K {
-  class Gw {
-    public:
-      static Gw *E(mExchange e);
-      mExchange exchange = mExchange::Null;
-      double makeFee = 0;
-      double takeFee = 0;
-      double minTick = 0;
-      double minSize = 0;
-      string symbol = "";
-      string target = "";
-      string apikey = "";
-      string secret = "";
-      string user = "";
-      string pass = "";
-      string http = "";
-      string ws = "";
-      string wS = "";
-      int quote = 0;
-      int base = 0;
-      virtual void fetch() = 0;
-      virtual void pos() = 0;
-      virtual void book() = 0;
-  };
-  uv_timer_t gwPos_;
-  uv_timer_t gwBook_;
-  uv_timer_t gwBookTrade_;
-  bool gwAutoStart = false;
-  bool gwState = false;
-  mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
-  mConnectivityStatus gwMDConn = mConnectivityStatus::Disconnected;
-  mConnectivityStatus gwEOConn = mConnectivityStatus::Disconnected;
-  Gw* gw;
   class GW {
     public:
       static void main(Local<Object> exports) {
@@ -305,13 +273,13 @@ namespace K {
           w->send(m.data(), m.length(), uWS::OpCode::TEXT);
         });
         hub.onDisconnection([](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) { GW::gwBookUp(mConnectivityStatus::Disconnected); });
-        hub.onError([](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; });
+        hub.onError([&](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; hub.connect(ws, nullptr); });
         hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
           json k = json::parse(string(message, length));
           if (k.is_array()) {
             k = k["/0"_json_pointer];
             if (k.find("channel") != k.end()) {
-              if (k["channel"] == "addChannel") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS addChannel " << (k["data"]["result"]?"OK":"FAILED") << " " << k["data"]["channel"] << endl;
+              if (k["channel"] == "addChannel") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << (k["data"]["result"]?"true":"false") << " " << k["data"]["channel"] << endl;
               else if (k["channel"] == chanM) {
                 vector<mGWbl> a;
                 vector<mGWbl> b;
@@ -346,6 +314,10 @@ namespace K {
   };
   class GwCoinbase: public Gw {
     public:
+      double seq = 0;
+      vector<mGWbl> a_;
+      vector<mGWbl> b_;
+      vector<json> q_;
       void fetch() {
         exchange = mExchange::Coinbase;
         symbol = string(mCurrency[base]).append("-").append(mCurrency[quote]);
@@ -372,7 +344,100 @@ namespace K {
           if ((*it)["currency"] == mCurrency[base] || (*it)["currency"] == mCurrency[quote])
             GW::gwPosUp(stod((*it)["available"].get<string>()), stod((*it)["hold"].get<string>()), FN::S2mC((*it)["currency"]));
       };
-      void book() {};
+      void book() {
+        hub.onConnection([&](uWS::WebSocket<uWS::CLIENT> *w, uWS::HttpRequest req) {
+          GW::gwBookUp(mConnectivityStatus::Connected);
+          unsigned long t = FN::T() / 1000;
+          string p;
+          B64::Decode(secret, &p);
+          B64::Encode(FN::oHmac256(string(to_string(t)).append("GET/users/self"), p), &p);
+          string m = string("{\"type\":\"subscribe\",\"product_ids\":[\"").append(symbol).append("\"],\"signature\":\"").append(p).append("\",\"key\":\"").append(apikey).append("\",\"passphrase\":\"").append(pass).append("\",\"timestamp\":\"").append(to_string(t)).append("\"}");
+          w->send(m.data(), m.length(), uWS::OpCode::TEXT);
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming book levels." << endl;
+        });
+        hub.onDisconnection([](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) { GW::gwBookUp(mConnectivityStatus::Disconnected); });
+        hub.onError([&](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; hub.connect(ws, nullptr); });
+        hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
+          json k = json::parse(string(message, length));
+          if (k.find("type") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Message Error " << k << endl; return; }
+          else if (k.find("message") != k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << k["type"] << k["message"] << endl; return; }
+          else if (k.find("sequence") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Message Error " << k << endl; return; }
+          else {
+            if (!seq) { q_.push_back(k); return; }
+            else if (k["sequence"].get<double>() <= seq) return;
+            else if (k["sequence"].get<double>() != seq + 1) return getLevels();
+            seq = k["sequence"];
+            bool s = k["side"] == "buy";
+            double a = stod(k["size"].is_string() ? k["size"].get<string>() : k["remaining_size"].get<string>());
+            double p = stod(k["price"].get<string>());
+            if (k["type"]=="open") {
+              bool it__ = false;
+              if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
+                if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
+              } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
+                if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
+              }
+              if (!it__) {
+                if (s) b_.push_back(mGWbl(p, a));
+                else a_.push_back(mGWbl(p, a));
+              }
+            } else if (k["type"]=="done" || k["type"]=="match") {
+              if (k["type"]=="match") GW::gwTradeUp(mGWbt(p, a, s ? mSide::Bid : mSide::Ask));
+              if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
+                if ((*it_).price == p) (*it_).size -= a; ++it_;
+              } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
+                if ((*it_).price == p) (*it_).size -= a; ++it_;
+              }
+            }
+            if (s) {
+              for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
+                if ((*it_).size <= 0.00000001) it_ = b_.erase(it_); else ++it_;
+            } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
+              if ((*it_).size <= 0.00000001) it_ = a_.erase(it_); else ++it_;
+            sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
+            sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
+            if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
+            if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
+            vector<mGWbl> b__;
+            vector<mGWbl> a__;
+            for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
+              if (b__.size() < 13) b__.push_back(*it); else break;
+            for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
+              if (a__.size() < 13) a__.push_back(*it); else break;
+            if (a__.size() && b__.size())
+              GW::gwLevelUp(mGWbls(b__, a__));
+          }
+        });
+        hub.connect(ws, nullptr);
+        getLevels();
+      };
+      void getLevels() {
+        seq = 0;
+        q_.clear();
+        unsigned long t = FN::T() / 1000;
+        string p;
+        B64::Decode(secret, &p);
+        B64::Encode(FN::oHmac256(string(to_string(t)).append("GET/accounts"), p), &p);
+        json k = FN::wJet(string(http).append("/products/").append(symbol).append("/book?level=2"), to_string(t), apikey, p, pass);
+        if (k.find("sequence") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return; }
+        seq = k["sequence"];
+        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
+          b_.push_back(mGWbl(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            stod((*it)["/1"_json_pointer].get<string>())
+          ));
+          if (b_.size() == 13) break;
+        }
+        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
+          a_.push_back(mGWbl(
+            stod((*it)["/0"_json_pointer].get<string>()),
+            stod((*it)["/1"_json_pointer].get<string>())
+          ));
+          if (a_.size() == 13) break;
+        }
+        if (a_.size() && b_.size())
+          GW::gwLevelUp(mGWbls(b_, a_));
+      };
   };
   class GwBitfinex: public Gw {
     public:
@@ -418,7 +483,7 @@ namespace K {
           w->send(m.data(), m.length(), uWS::OpCode::TEXT);
         });
         hub.onDisconnection([](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) { GW::gwBookUp(mConnectivityStatus::Disconnected); });
-        hub.onError([](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; });
+        hub.onError([&](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; hub.connect(ws, nullptr); });
         hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
           json k = json::parse(string(message, length));
           if (k.find("event") != k.end()) {
@@ -426,7 +491,7 @@ namespace K {
             else if (k["event"] == "ping") { string m = string("{\"event\":\"pong\"}"); w->send(m.data(), m.length(), uWS::OpCode::TEXT); }
             else if (k["event"] == "error") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << k << endl;
             else if (k["event"] == "info") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Info " << k << endl;
-            else if (k["event"] == "subscribed") chan[k["chanId"]] = k["channel"];
+            else if (k["event"] == "subscribed") { chan[k["chanId"]] = k["channel"]; cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << k["chanId"] << ":" << k["channel"] << endl; }
           } else if (k.is_array()) {
             if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer] == "hb") stillAlive = true;
             else if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer] == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
@@ -507,7 +572,7 @@ namespace K {
         refresh();
         json k = FN::wJet(string(http).append("/user/wallet?currency_pair=").append(symbol), token_, true);
         map<string, vector<double>> wallet;
-        if (k.find("available") == k.end()) {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl; return; }
+        if (k.find("available") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl; return; }
         for (json::iterator it = k["available"].begin(); it != k["available"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
         for (json::iterator it = k["pendingOrders"].begin(); it != k["pendingOrders"].end(); ++it) wallet[(*it)["currency"].get<string>()].push_back(stod((*it)["value"].get<string>()));
         for (map<string, vector<double>>::iterator it=wallet.begin(); it!=wallet.end(); ++it) {
@@ -552,7 +617,7 @@ namespace K {
         vector<mGWbl> a;
         vector<mGWbl> b;
         json k = FN::wJet(string(http).append("/orderbook?category=all&currency_pair=").append(symbol));
-        if (k.find("timestamp") == k.end())  {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
+        if (k.find("timestamp") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
         for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
           b.push_back(mGWbl(
             stod((*it)["/0"_json_pointer].get<string>()),
@@ -620,9 +685,10 @@ namespace K {
       void book() {
         hub.onConnection([&](uWS::WebSocket<uWS::CLIENT> *w, uWS::HttpRequest req) {
           GW::gwBookUp(mConnectivityStatus::Connected);
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming book levels." << endl;
         });
         hub.onDisconnection([](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) { GW::gwBookUp(mConnectivityStatus::Disconnected); });
-        hub.onError([](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; });
+        hub.onError([&](void *user) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error." << endl; hub.connect(wS, nullptr); });
         hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
           json k = json::parse(string(message, length));
           if (k["MarketDataIncrementalRefresh"].is_object()) {
@@ -724,8 +790,8 @@ namespace K {
         vector<mGWbl> a;
         vector<mGWbl> b;
         json k = FN::wJet(string(http).append("/public?command=returnOrderBook&depth=13&currencyPair=").append(symbol));
-        if (k.find("error") != k.end())  { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return mGWbls(b, a); }
-        if (k.find("seq") == k.end())  {  cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
+        if (k.find("error") != k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return mGWbls(b, a); }
+        if (k.find("seq") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
         for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
           b.push_back(mGWbl(
             stod((*it)["/0"_json_pointer].get<string>()),
@@ -746,7 +812,7 @@ namespace K {
         vector<mGWbt> v;
         unsigned long t = FN::T();
         json k = FN::wJet(string(http).append("/public?command=returnTradeHistory&currencyPair=").append(symbol).append("&start=").append(to_string((int)((t-60000)/1000))).append("&end=").append(to_string(t)));
-        if (k.find("error") != k.end())  { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return v; }
+        if (k.find("error") != k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return v; }
         for (json::iterator it = k.begin(); it != k.end(); ++it)
           v.push_back(mGWbt(
             stod((*it)["rate"].get<string>()),

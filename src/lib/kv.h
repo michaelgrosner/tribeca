@@ -14,7 +14,7 @@ namespace K {
   sqlite3* db;
   string dbFpath;
   int sqlite3_open(string f, sqlite3** db);
-  int sqlite3_exec(sqlite3** db, string q);
+  int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
   uWS::Hub hub(0, true);
   uv_check_t loop;
   uv_timer_t uiD_;
@@ -30,6 +30,38 @@ namespace K {
   string uiNK64 = "";
   Persistent<Function> socket_;
   Persistent<Object> _app_state;
+  class Gw {
+    public:
+      static Gw *E(mExchange e);
+      mExchange exchange = mExchange::Null;
+      double makeFee = 0;
+      double takeFee = 0;
+      double minTick = 0;
+      double minSize = 0;
+      string symbol = "";
+      string target = "";
+      string apikey = "";
+      string secret = "";
+      string user = "";
+      string pass = "";
+      string http = "";
+      string ws = "";
+      string wS = "";
+      int quote = 0;
+      int base = 0;
+      virtual void fetch() = 0;
+      virtual void pos() = 0;
+      virtual void book() = 0;
+  };
+  uv_timer_t gwPos_;
+  uv_timer_t gwBook_;
+  uv_timer_t gwBookTrade_;
+  bool gwAutoStart = false;
+  bool gwState = false;
+  mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
+  mConnectivityStatus gwMDConn = mConnectivityStatus::Disconnected;
+  mConnectivityStatus gwEOConn = mConnectivityStatus::Disconnected;
+  Gw* gw;
 }
 
 #endif

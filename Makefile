@@ -152,6 +152,7 @@ reinstall: .git src
 	git checkout .
 	git fetch
 	git merge FETCH_HEAD
+	@rm -rf node_modules/hacktimer
 	@$(MAKE) install
 	@$(MAKE) test -s
 	./node_modules/.bin/forever restartall
