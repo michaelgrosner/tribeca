@@ -315,8 +315,8 @@ namespace K {
   class GwCoinbase: public Gw {
     public:
       double seq = 0;
-      vector<mGWbl> a_;
-      vector<mGWbl> b_;
+      map<double, map<string, double>> a_;
+      map<double, map<string, double>> b_;
       vector<json> q_;
       void fetch() {
         exchange = mExchange::Coinbase;
@@ -369,32 +369,44 @@ namespace K {
       };
       void getLevels() {
         seq = 0;
+        b_.clear();
+        a_.clear();
         unsigned long t = FN::T() / 1000;
         string p;
         B64::Decode(secret, &p);
         B64::Encode(FN::oHmac256(string(to_string(t)).append("GET/accounts"), p), &p);
-        json k = FN::wJet(string(http).append("/products/").append(symbol).append("/book?level=2"), to_string(t), apikey, p, pass);
+        json k = FN::wJet(string(http).append("/products/").append(symbol).append("/book?level=3"), to_string(t), apikey, p, pass);
         if (k.find("sequence") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return; }
         seq = k["sequence"];
-        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
-          b_.push_back(mGWbl(
-            stod((*it)["/0"_json_pointer].get<string>()),
-            stod((*it)["/1"_json_pointer].get<string>())
-          ));
-          if (b_.size() == 13) break;
-        }
-        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
-          a_.push_back(mGWbl(
-            stod((*it)["/0"_json_pointer].get<string>()),
-            stod((*it)["/1"_json_pointer].get<string>())
-          ));
-          if (a_.size() == 13) break;
-        }
-        if (a_.size() && b_.size())
-          GW::gwLevelUp(mGWbls(b_, a_));
+        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it)
+          b_[decimal_cast<8>((*it)["/0"_json_pointer].get<string>()).getAsDouble()][(*it)["/2"_json_pointer].get<string>()] = decimal_cast<8>((*it)["/1"_json_pointer].get<string>()).getAsDouble();
+        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it)
+          a_[decimal_cast<8>((*it)["/0"_json_pointer].get<string>()).getAsDouble()][(*it)["/2"_json_pointer].get<string>()] = decimal_cast<8>((*it)["/1"_json_pointer].get<string>()).getAsDouble();
+        getBook();
         for (vector<json>::iterator it = q_.begin(); it != q_.end(); ++it)
           getTrades(*it);
         q_.clear();
+      };
+      void getBook() {
+        if (b_.size() && a_.size()) {
+          vector<mGWbl> b__;
+          vector<mGWbl> a__;
+          for (map<double, map<string, double>>::reverse_iterator it = b_.rbegin(); it != b_.rend(); ++it) {
+            double bsize = decimal_cast<8>(0).getAsDouble();
+            for (map<string, double>::iterator it_ = it->second.begin(); it_ != it->second.end(); ++it_)
+              bsize += it_->second;
+            b__.push_back(mGWbl(it->first, bsize));
+            if (b__.size() == 13) break;
+          }
+          for (map<double, map<string, double>>::iterator it = a_.begin(); it != a_.end(); ++it) {
+            double asize = decimal_cast<8>(0).getAsDouble();
+            for (map<string, double>::iterator it_ = it->second.begin(); it_ != it->second.end(); ++it_)
+              asize += it_->second;
+            a__.push_back(mGWbl(it->first, asize));
+            if (a__.size() == 13) break;
+          }
+          GW::gwLevelUp(mGWbls(b__, a__));
+        }
       };
       void getTrades(json k) {
         if (!seq) { q_.push_back(k); return; }
@@ -403,44 +415,44 @@ namespace K {
         seq = k["sequence"];
         if (k["type"]=="received") return;
         bool s = k["side"] == "buy";
-        double a = stod(k["size"].is_string() ? k["size"].get<string>() : k["remaining_size"].get<string>());
-        double p = stod(k["price"].get<string>());
-        if (k["type"]=="open") {
-          bool it__ = false;
-          if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
-            if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
-          } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
-            if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
+        if (k["type"]=="done") {
+          double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
+          if (s && b_.find(p) != b_.end() && b_[p].find(k["order_id"].get<string>()) != b_[p].end()) {
+            b_[p].erase(k["order_id"].get<string>());
+            if (!b_[p].size()) b_.erase(p);
+          } else if (!s && a_.find(p) != a_.end() && a_[p].find(k["order_id"].get<string>()) != a_[p].end()) {
+            a_[p].erase(k["order_id"].get<string>());
+            if (!a_[p].size()) a_.erase(p);
           }
-          if (!it__) {
-            if (s) b_.push_back(mGWbl(p, a));
-            else a_.push_back(mGWbl(p, a));
+        } else if (k["type"]=="open") {
+          double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
+          double a = decimal_cast<8>(k["remaining_size"].get<string>()).getAsDouble();
+          if (s) b_[p][k["order_id"].get<string>()] = a;
+          else a_[p][k["order_id"].get<string>()] = a;
+        } else if (k["type"]=="match") {
+          double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
+          double a = decimal_cast<8>(k["size"].is_string() ? k["size"].get<string>() : k["remaining_size"].get<string>()).getAsDouble();
+          string oi = k["maker_order_id"].get<string>();
+          GW::gwTradeUp(mGWbt(p, a, s ? mSide::Bid : mSide::Ask));
+          if (s && b_.find(p) != b_.end() && b_[p].find(oi) != b_[p].end()) {
+            if (b_[p][oi] == a) {
+              b_[p].erase(oi);
+              if (!b_[p].size()) b_.erase(p);
+            } else b_[p][oi] -= a;
+          } else if (!s && a_.find(p) != a_.end() && a_[p].find(oi) != a_[p].end()) {
+            if (a_[p][oi] == a) {
+              a_[p].erase(oi);
+              if (!a_[p].size()) a_.erase(p);
+            } else a_[p][oi] -= a;
           }
-        } else if (k["type"]=="done" || k["type"]=="match") {
-          if (k["type"]=="match") GW::gwTradeUp(mGWbt(p, a, s ? mSide::Bid : mSide::Ask));
-          if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
-            if ((*it_).price == p) (*it_).size -= a; ++it_;
-          } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
-            if ((*it_).price == p) (*it_).size -= a; ++it_;
-          }
+        } else if (k["type"]=="change") {
+          double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
+          double a = decimal_cast<8>(k["new_size"].get<string>()).getAsDouble();
+          string oi = k["order_id"].get<string>();
+          if (s && b_.find(p) != b_.end() && b_[p].find(oi) != b_[p].end()) b_[p][oi] = a;
+          else if (!s && a_.find(p) != a_.end() && a_[p].find(oi) != a_[p].end()) a_[p][oi] = a;
         }
-        if (s) {
-          for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
-            if ((*it_).size <= 0.00000001) it_ = b_.erase(it_); else ++it_;
-        } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
-          if ((*it_).size <= 0.00000001) it_ = a_.erase(it_); else ++it_;
-        sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-        sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
-        if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
-        if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
-        vector<mGWbl> b__;
-        vector<mGWbl> a__;
-        for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
-          if (b__.size() < 13) b__.push_back(*it); else break;
-        for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
-          if (a__.size() < 13) a__.push_back(*it); else break;
-        if (a__.size() && b__.size())
-          GW::gwLevelUp(mGWbls(b__, a__));
+        getBook();
       };
   };
   class GwBitfinex: public Gw {
