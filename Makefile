@@ -155,6 +155,7 @@ reinstall: .git src
 	@rm -rf node_modules/hacktimer
 	@$(MAKE) install
 	@$(MAKE) test -s
+	@git checkout .
 	./node_modules/.bin/forever restartall
 	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
