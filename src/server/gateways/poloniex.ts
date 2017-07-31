@@ -167,11 +167,6 @@ class PoloniexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     })();
   };
 
-  replaceOrder = (replace : Models.OrderStatusReport) => {
-      this.cancelOrder(replace);
-      this.sendOrder(replace);
-  };
-
   private onTrade = (trade: Models.Timestamped<any>) => {
     this._evUp('OrderUpdateGateway', <Models.OrderStatusUpdate>{
       exchangeId: trade.data.orderNumber,

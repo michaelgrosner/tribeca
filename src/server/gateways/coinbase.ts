@@ -101,10 +101,6 @@ class CoinbaseOrderEntryGateway implements Interfaces.IOrderEntryGateway {
       });
     };
 
-    replaceOrder = (replace: Models.OrderStatusReport) => {
-        this.cancelOrder(replace);
-        this.sendOrder(replace);
-    };
     sendOrder = (order: Models.OrderStatusReport) => {
         if (this._FIXHeader) return this.sendFIXOrder(order);
 

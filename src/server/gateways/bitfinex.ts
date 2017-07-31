@@ -208,11 +208,6 @@ class BitfinexOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         });
     };
 
-    replaceOrder = (replace: Models.OrderStatusReport) => {
-        this.cancelOrder(replace);
-        this.sendOrder(replace);
-    };
-
     private static GetOrderStatus(r: string) {
         switch(r.split(' ')[0]) {
           case 'ACTIVE': return Models.OrderStatus.Working;

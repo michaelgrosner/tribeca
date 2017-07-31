@@ -102,11 +102,6 @@ class KorbitOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         });
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) => {
-        this.cancelOrder(replace);
-        this.sendOrder(replace);
-    };
-
     private triggerUserTades = () => {
         this._http.get('user/transactions', {currency_pair: this._gwSymbol, category: 'fills'}).then(msg => {
             if (!(<any>msg.data).length) return;

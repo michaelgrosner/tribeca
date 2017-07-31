@@ -31,11 +31,6 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         this.raiseTimeEvent(cancel);
     }
 
-    replaceOrder(replace: Models.OrderStatusReport) {
-        this.cancelOrder(replace);
-        this.sendOrder(replace);
-    }
-
     private trigger(orderId: string, status: Models.OrderStatus, order?: Models.OrderStatusReport) {
         var rpt: Models.OrderStatusUpdate = {
             orderId: orderId,

@@ -112,20 +112,6 @@ export class OrderBroker {
         this._oeGateway.sendOrder(this.updateOrderState(rpt));
     };
 
-    replaceOrder = (replace : Models.CancelReplaceOrder) => { /* nobody calls broker.replaceOrder */
-        const rpt = this.orderCache.allOrders.get(replace.origOrderId);
-        if (!rpt) throw new Error("Unknown order, cannot replace " + replace.origOrderId);
-
-        const report : Models.OrderStatusUpdate = {
-            orderId: replace.origOrderId,
-            orderStatus: Models.OrderStatus.Working,
-            price: Utils.roundSide(replace.price, this._minTick, rpt.side),
-            quantity: replace.quantity
-        };
-
-        this._oeGateway.replaceOrder(this.updateOrderState(rpt));
-    };
-
     cancelOrder = (cancel: Models.OrderCancel) => {
         const rpt = this.orderCache.allOrders.get(cancel.origOrderId);
         if (!rpt) {

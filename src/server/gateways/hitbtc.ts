@@ -115,11 +115,6 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             // });
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) => {
-        this.cancelOrder(replace);
-        return this.sendOrder(replace);
-    };
-
     sendOrder = (order : Models.OrderStatusReport) => {
         const hitBtcOrder : NewOrder = {
             clientOrderId: order.orderId,
