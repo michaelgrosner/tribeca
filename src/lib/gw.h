@@ -416,13 +416,18 @@ namespace K {
         if (k["type"]=="received") return;
         bool s = k["side"] == "buy";
         if (k["type"]=="done") {
-          double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
-          if (s && b_.find(p) != b_.end() && b_[p].find(k["order_id"].get<string>()) != b_[p].end()) {
-            b_[p].erase(k["order_id"].get<string>());
-            if (!b_[p].size()) b_.erase(p);
-          } else if (!s && a_.find(p) != a_.end() && a_[p].find(k["order_id"].get<string>()) != a_[p].end()) {
-            a_[p].erase(k["order_id"].get<string>());
-            if (!a_[p].size()) a_.erase(p);
+          if (s) for (map<double, map<string, double>>::iterator it = b_.begin(); it != b_.end();) {
+            if (b_[it->first].find(k["order_id"].get<string>()) != b_[it->first].end()) {
+              b_[it->first].erase(k["order_id"].get<string>());
+              if (!b_[it->first].size()) it = b_.erase(it);
+              else ++it;
+            } else ++it;
+          } else for (map<double, map<string, double>>::iterator it = a_.begin(); it != a_.end();) {
+            if (a_[it->first].find(k["order_id"].get<string>()) != a_[it->first].end()) {
+              a_[it->first].erase(k["order_id"].get<string>());
+              if (!a_[it->first].size()) it = a_.erase(it);
+              else ++it;
+            } else ++it;
           }
         } else if (k["type"]=="open") {
           double p = decimal_cast<8>(k["price"].get<string>()).getAsDouble();
