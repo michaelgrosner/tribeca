@@ -271,7 +271,6 @@ export class Korbit extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
-      _evOn,
       _evUp
     ) {
         var http = new KorbitHttp(cfString, new KorbitMessageSigner(cfString));

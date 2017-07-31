@@ -334,7 +334,6 @@ export class HitBtc extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
-      _evOn,
       _evUp,
       lot
     ) {

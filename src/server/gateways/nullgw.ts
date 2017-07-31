@@ -59,8 +59,6 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
 
 export class NullGateway extends Interfaces.CombinedGateway {
     constructor(
-      gwSymbol,
-      cfString,
       _evUp
     ) {
         super(
