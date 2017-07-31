@@ -273,11 +273,6 @@ class OkCoinOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         });
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) => {
-        this.cancelOrder(replace);
-        this.sendOrder(replace);
-    };
-
     private static getStatus(status: number) : Models.OrderStatus {
         // status: -1: cancelled, 0: pending, 1: partially filled, 2: fully filled, 4: cancel request in process
         switch (status) {
