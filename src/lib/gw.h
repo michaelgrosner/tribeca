@@ -362,58 +362,13 @@ namespace K {
           if (k.find("type") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Message Error " << k << endl; return; }
           else if (k.find("message") != k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << k["type"] << k["message"] << endl; return; }
           else if (k.find("sequence") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Message Error " << k << endl; return; }
-          else {
-            if (!seq) { q_.push_back(k); return; }
-            else if (k["sequence"].get<double>() <= seq) return;
-            else if (k["sequence"].get<double>() != seq + 1) return getLevels();
-            seq = k["sequence"];
-            bool s = k["side"] == "buy";
-            double a = stod(k["size"].is_string() ? k["size"].get<string>() : k["remaining_size"].get<string>());
-            double p = stod(k["price"].get<string>());
-            if (k["type"]=="open") {
-              bool it__ = false;
-              if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
-                if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
-              } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
-                if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
-              }
-              if (!it__) {
-                if (s) b_.push_back(mGWbl(p, a));
-                else a_.push_back(mGWbl(p, a));
-              }
-            } else if (k["type"]=="done" || k["type"]=="match") {
-              if (k["type"]=="match") GW::gwTradeUp(mGWbt(p, a, s ? mSide::Bid : mSide::Ask));
-              if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
-                if ((*it_).price == p) (*it_).size -= a; ++it_;
-              } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
-                if ((*it_).price == p) (*it_).size -= a; ++it_;
-              }
-            }
-            if (s) {
-              for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
-                if ((*it_).size <= 0.00000001) it_ = b_.erase(it_); else ++it_;
-            } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
-              if ((*it_).size <= 0.00000001) it_ = a_.erase(it_); else ++it_;
-            sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-            sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
-            if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
-            if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
-            vector<mGWbl> b__;
-            vector<mGWbl> a__;
-            for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
-              if (b__.size() < 13) b__.push_back(*it); else break;
-            for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
-              if (a__.size() < 13) a__.push_back(*it); else break;
-            if (a__.size() && b__.size())
-              GW::gwLevelUp(mGWbls(b__, a__));
-          }
+          else getTrades(k);
         });
         hub.connect(ws, nullptr);
         getLevels();
       };
       void getLevels() {
         seq = 0;
-        q_.clear();
         unsigned long t = FN::T() / 1000;
         string p;
         B64::Decode(secret, &p);
@@ -437,6 +392,55 @@ namespace K {
         }
         if (a_.size() && b_.size())
           GW::gwLevelUp(mGWbls(b_, a_));
+        for (vector<json>::iterator it = q_.begin(); it != q_.end(); ++it)
+          getTrades(*it);
+        q_.clear();
+      };
+      void getTrades(json k) {
+        if (!seq) { q_.push_back(k); return; }
+        else if (k["sequence"].get<double>() <= seq) return;
+        else if (k["sequence"].get<double>() != seq + 1) return getLevels();
+        seq = k["sequence"];
+        if (k["type"]=="received") return;
+        bool s = k["side"] == "buy";
+        double a = stod(k["size"].is_string() ? k["size"].get<string>() : k["remaining_size"].get<string>());
+        double p = stod(k["price"].get<string>());
+        if (k["type"]=="open") {
+          bool it__ = false;
+          if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
+            if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
+          } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
+            if ((*it_).price == p) { (*it_).size += a; it__ = true; } ++it_;
+          }
+          if (!it__) {
+            if (s) b_.push_back(mGWbl(p, a));
+            else a_.push_back(mGWbl(p, a));
+          }
+        } else if (k["type"]=="done" || k["type"]=="match") {
+          if (k["type"]=="match") GW::gwTradeUp(mGWbt(p, a, s ? mSide::Bid : mSide::Ask));
+          if (s) for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();) {
+            if ((*it_).price == p) (*it_).size -= a; ++it_;
+          } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();) {
+            if ((*it_).price == p) (*it_).size -= a; ++it_;
+          }
+        }
+        if (s) {
+          for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
+            if ((*it_).size <= 0.00000001) it_ = b_.erase(it_); else ++it_;
+        } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
+          if ((*it_).size <= 0.00000001) it_ = a_.erase(it_); else ++it_;
+        sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
+        sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
+        if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
+        if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
+        vector<mGWbl> b__;
+        vector<mGWbl> a__;
+        for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
+          if (b__.size() < 13) b__.push_back(*it); else break;
+        for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
+          if (a__.size() < 13) a__.push_back(*it); else break;
+        if (a__.size() && b__.size())
+          GW::gwLevelUp(mGWbls(b__, a__));
       };
   };
   class GwBitfinex: public Gw {
