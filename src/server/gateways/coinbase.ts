@@ -397,7 +397,6 @@ export class Coinbase extends Interfaces.CombinedGateway {
     constructor(
       gwSymbol,
       cfString,
-      _evOn,
       _evUp
     ) {
         const authClient: Gdax.AuthenticatedClient = new Gdax.AuthenticatedClient(
