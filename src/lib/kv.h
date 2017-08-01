@@ -52,6 +52,12 @@ namespace K {
       virtual void fetch() = 0;
       virtual void pos() = 0;
       virtual void book() = 0;
+      virtual void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) = 0;
+      virtual void cancel(string oI, unsigned long oT) = 0;
+      virtual void cancelAll() = 0;
+      virtual string clientId() = 0;
+      bool cancelByClientId = 0;
+      bool supportCancelAll = 0;
   };
   uv_timer_t gwPos_;
   uv_timer_t gwBook_;

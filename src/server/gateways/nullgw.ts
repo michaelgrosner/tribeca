@@ -56,13 +56,3 @@ export class NullOrderGateway implements Interfaces.IOrderEntryGateway {
         setTimeout(() => this._evUp('GatewayOrderConnect', Models.ConnectivityStatus.Connected), 500);
     }
 }
-
-export class NullGateway extends Interfaces.CombinedGateway {
-    constructor(
-      _evUp
-    ) {
-        super(
-          new NullOrderGateway(_evUp)
-        );
-    }
-}

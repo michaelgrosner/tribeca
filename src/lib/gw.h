@@ -36,14 +36,20 @@ namespace K {
         NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
         NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
         NODE_SET_METHOD(exports, "gwSymbol", GW::_gwSymbol);
+        NODE_SET_METHOD(exports, "gwCancelByClientId", GW::_gwCancelByClientId);
+        NODE_SET_METHOD(exports, "gwSupportCancelAll", GW::_gwSupportCancelAll);
+        NODE_SET_METHOD(exports, "gwClientId", GW::_gwClientId);
+        NODE_SET_METHOD(exports, "gwCancelAll", GW::_gwCancelAll);
+        NODE_SET_METHOD(exports, "gwCancel", GW::_gwCancel);
+        NODE_SET_METHOD(exports, "gwSend", GW::_gwSend);
       };
       static void gwPosUp(double amount, double held, int currency) {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("amount"), Number::New(isolate, amount));
-        o->Set(FN::v8S("heldAmount"), Number::New(isolate, held));
-        o->Set(FN::v8S("currency"), Number::New(isolate, currency));
+        o->Set(FN::v8S(isolate, "amount"), Number::New(isolate, amount));
+        o->Set(FN::v8S(isolate, "heldAmount"), Number::New(isolate, held));
+        o->Set(FN::v8S(isolate, "currency"), Number::New(isolate, currency));
         EV::evUp("PositionGateway", o);
       };
       static void gwBookUp(mConnectivityStatus k) {
@@ -60,19 +66,19 @@ namespace K {
         int i = 0;
         for (vector<mGWbl>::iterator it = ls.bids.begin(); it != ls.bids.end(); ++it) {
           Local<Object> b_ = Object::New(isolate);
-          b_->Set(FN::v8S("price"), Number::New(isolate, (*it).price));
-          b_->Set(FN::v8S("size"), Number::New(isolate, (*it).size));
+          b_->Set(FN::v8S(isolate, "price"), Number::New(isolate, (*it).price));
+          b_->Set(FN::v8S(isolate, "size"), Number::New(isolate, (*it).size));
           b->Set(i++, b_);
         }
         i = 0;
         for (vector<mGWbl>::iterator it = ls.asks.begin(); it != ls.asks.end(); ++it) {
           Local<Object> a_ = Object::New(isolate);
-          a_->Set(FN::v8S("price"), Number::New(isolate, (*it).price));
-          a_->Set(FN::v8S("size"), Number::New(isolate, (*it).size));
+          a_->Set(FN::v8S(isolate, "price"), Number::New(isolate, (*it).price));
+          a_->Set(FN::v8S(isolate, "size"), Number::New(isolate, (*it).size));
           a->Set(i++, a_);
         }
-        o->Set(FN::v8S("bids"), b);
-        o->Set(FN::v8S("asks"), a);
+        o->Set(FN::v8S(isolate, "bids"), b);
+        o->Set(FN::v8S(isolate, "asks"), a);
         EV::evUp("MarketDataGateway", o);
       };
       static void gwTradeUp(vector<mGWbt> k) {
@@ -83,10 +89,38 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("price"), Number::New(isolate, t.price));
-        o->Set(FN::v8S("size"), Number::New(isolate, t.size));
-        o->Set(FN::v8S("make_side"), Number::New(isolate, (double)t.make_side));
+        o->Set(FN::v8S(isolate, "price"), Number::New(isolate, t.price));
+        o->Set(FN::v8S(isolate, "size"), Number::New(isolate, t.size));
+        o->Set(FN::v8S(isolate, "make_side"), Number::New(isolate, (double)t.make_side));
         EV::evUp("MarketTradeGateway", o);
+      };
+      static void gwOrderUp(mConnectivityStatus k) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        EV::evUp("GatewayOrderConnect", Number::New(isolate, (double)k));
+      };
+      static void gwOrderUp(string oI, string oE, mORS oS, unsigned long oT) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, oI));
+        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)oS));
+        o->Set(FN::v8S(isolate, "exchangeId"), FN::v8S(isolate, oE));
+        o->Set(FN::v8S(isolate, "computationalLatency"), Number::New(isolate, FN::T() - oT));
+        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
+        EV::evUp("OrderUpdateGateway", o);
+      };
+      static void gwOrderUp(string oI, mORS oS, double oP, double oQ, mLiquidity oL) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, oI));
+        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)oS));
+        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
+        o->Set(FN::v8S(isolate, "lastPrice"), Number::New(isolate, oP));
+        o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, oQ));
+        o->Set(FN::v8S(isolate, "liquidity"), Number::New(isolate, (double)oL));
+        EV::evUp("OrderUpdateGateway", o);
       };
     private:
       static Local<Value> onSnapProduct(Local<Value> z) {
@@ -186,20 +220,60 @@ namespace K {
         HandleScope scope(isolate);
         args.GetReturnValue().Set(FN::v8S(isolate, gw->symbol));
       };
+      static void _gwCancelByClientId(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        args.GetReturnValue().Set(Boolean::New(isolate, gw->cancelByClientId));
+      };
+      static void _gwSupportCancelAll(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        args.GetReturnValue().Set(Boolean::New(isolate, gw->supportCancelAll));
+      };
+      static void _gwSend(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Object> o = args[0]->ToObject();
+        string oI = FN::S8v(o->Get(FN::v8S(isolate, "orderId"))->ToString());
+        unsigned long oT = o->Get(FN::v8S(isolate, "time"))->NumberValue();
+        double oP = decimal_cast<8>(o->Get(FN::v8S(isolate, "price"))->NumberValue()).getAsDouble();
+        double oQ = decimal_cast<8>(o->Get(FN::v8S(isolate, "quantity"))->NumberValue()).getAsDouble();
+        mTimeInForce oTIF  = (mTimeInForce)o->Get(FN::v8S(isolate, "timeInForce"))->NumberValue();
+        gw->send(oI, oP, oQ, oTIF, oT);
+      };
+      static void _gwCancel(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Object> o = args[0]->ToObject();
+        string oI = FN::S8v(o->Get(FN::v8S(isolate, "orderId"))->ToString());
+        unsigned long oT = o->Get(FN::v8S(isolate, "time"))->NumberValue();
+        gw->cancel(oI, oT);
+      };
+      static void _gwCancelAll(const FunctionCallbackInfo<Value> &args) {
+        gw->cancelAll();
+      };
+      static void _gwClientId(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        args.GetReturnValue().Set(FN::v8S(isolate, gw->clientId()));
+      };
   };
   class GwNull: public Gw {
     public:
+      bool cancelByClientId = true;
+      bool supportCancelAll = false;
       void fetch() {
         symbol = string(mCurrency[base]).append("_").append(mCurrency[quote]);
         minTick = 0.01;
         minSize = 0.01;
       };
       void pos() {
-        GW::gwPosUp(500, 50, base);
-        GW::gwPosUp(500, 50, quote);
+        GW::gwPosUp(5, 0, base);
+        GW::gwPosUp(5000, 0, quote);
       };
       void book() {
         GW::gwBookUp(mConnectivityStatus::Connected);
+        GW::gwOrderUp(mConnectivityStatus::Connected);
         if (uv_timer_init(uv_default_loop(), &gwBook_)) { cout << FN::uiT() << "Errrror: GW gwBook_ init timer failed." << endl; exit(1); }
         gwBook_.data = this;
         if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
@@ -207,7 +281,7 @@ namespace K {
           srand(time(0));
           GW::gwLevelUp(gw->genLevels());
           if (rand() % 2) GW::gwTradeUp(gw->genTrades());
-        }, 0, 13000)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
+        }, 0, 2000)) { cout << FN::uiT() << "Errrror: GW gwBook_ start timer failed." << endl; exit(1); }
       };
       mGWbls genLevels() {
         vector<mGWbl> a;
@@ -223,7 +297,7 @@ namespace K {
           ));
         }
         sort(b.begin(), b.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*-1 < b_.price*-1; });
-        sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price*1 < b_.price*1; });
+        sort(a.begin(), a.end(), [](const mGWbl &a_, const mGWbl &b_) { return a_.price < b_.price; });
         return mGWbls(b, a);
       };
       mGWbt genTrades() {
@@ -236,9 +310,22 @@ namespace K {
         );
         return t;
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {
+        if (oTIF == mTimeInForce::IOC) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " doesn't work with IOC." << endl; exit(1); }
+        GW::gwOrderUp(oI, oI, mORS::Working, oT);
+        srand(time(0));
+        if (rand() % 2) GW::gwOrderUp(oI, mORS::Working, oP, oQ, rand() % 2 ? mLiquidity::Make : mLiquidity::Take);
+      }
+      void cancel(string oI, unsigned long oT) {
+        GW::gwOrderUp(oI, oI, mORS::Complete, oT);
+      }
+      void cancelAll() {}
+      string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
   };
   class GwOkCoin: public Gw {
     public:
+      bool cancelByClientId = false;
+      bool supportCancelAll = false;
       string symbolr = "";
       string chanM = "";
       string chanT = "";
@@ -311,9 +398,15 @@ namespace K {
         });
         hub.connect(ws, nullptr);
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   class GwCoinbase: public Gw {
     public:
+      bool cancelByClientId = false;
+      bool supportCancelAll = false;
       double seq = 0;
       map<double, map<string, double>> a_;
       map<double, map<string, double>> b_;
@@ -459,9 +552,15 @@ namespace K {
         }
         getBook();
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   class GwBitfinex: public Gw {
     public:
+      bool cancelByClientId = false;
+      bool supportCancelAll = false;
       bool stillAlive;
       map<int, string> chan;
       vector<mGWbl> b_;
@@ -537,7 +636,7 @@ namespace K {
                     }
                   }
                 sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-                sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
+                sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price < b__.price; });
                 if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
                 if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
                 vector<mGWbl> b__;
@@ -568,9 +667,15 @@ namespace K {
         });
         hub.connect(ws, nullptr);
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   class GwKorbit: public Gw {
     public:
+      bool cancelByClientId = false;
+      bool supportCancelAll = false;
       unsigned long token_time_ = 0;
       string token_ = "";
       string token_refresh_ = "";
@@ -666,9 +771,15 @@ namespace K {
           ));
         return v;
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   class GwHitBtc: public Gw {
     public:
+      bool cancelByClientId = true;
+      bool supportCancelAll = false;
       bool snap = false;
       vector<mGWbl> a_;
       vector<mGWbl> b_;
@@ -730,7 +841,7 @@ namespace K {
                 if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
             }
             sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-            sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*1 < b__.price*1; });
+            sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price < b__.price; });
           }
           else if (k["MarketDataSnapshotFullRefresh"].is_object()) {
             k = k["MarketDataSnapshotFullRefresh"];
@@ -766,9 +877,15 @@ namespace K {
         });
         hub.connect(wS, nullptr);
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   class GwPoloniex: public Gw {
     public:
+      bool cancelByClientId = false;
+      bool supportCancelAll = false;
       void fetch() {
         exchange = mExchange::Poloniex;
         symbol = string(mCurrency[quote]).append("_").append(mCurrency[base]);
@@ -842,6 +959,10 @@ namespace K {
           ));
         return v;
       };
+      void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) {}
+      void cancel(string oI, unsigned long oT) {}
+      void cancelAll() {}
+      string clientId() { return ""; }
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
