@@ -367,6 +367,13 @@ namespace K {
             k = k["/0"_json_pointer];
             if (k.find("channel") != k.end()) {
               if (k["channel"] == "addChannel") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << (k["data"]["result"]?"true":"false") << " " << k["data"]["channel"] << endl;
+              else if (k["channel"] == chanT)
+                for (json::iterator it = k["data"].begin(); it != k["data"].end(); ++it)
+                  GW::gwTradeUp(mGWbt(
+                    stod((*it)["/1"_json_pointer].get<string>()),
+                    stod((*it)["/2"_json_pointer].get<string>()),
+                    (*it)["/4"_json_pointer].get<string>() > "bid" ? mSide::Bid : mSide::Ask
+                  ));
               else if (k["channel"] == chanM) {
                 vector<mGWbl> a;
                 vector<mGWbl> b;
@@ -384,15 +391,9 @@ namespace K {
                   ));
                   if (a.size() == 13) break;
                 }
-                GW::gwLevelUp(mGWbls(b, a));
+                if (a.size() && b.size())
+                  GW::gwLevelUp(mGWbls(b, a));
               }
-              else if (k["channel"] == chanT)
-                for (json::iterator it = k["data"].begin(); it != k["data"].end(); ++it)
-                  GW::gwTradeUp(mGWbt(
-                    stod((*it)["/1"_json_pointer].get<string>()),
-                    stod((*it)["/2"_json_pointer].get<string>()),
-                    (*it)["/4"_json_pointer].get<string>() > "bid" ? mSide::Bid : mSide::Ask
-                  ));
             }
           }
         });
@@ -872,7 +873,7 @@ namespace K {
             if (b__.size() < 13) b__.push_back(*it); else break;
           for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
             if (a__.size() < 13) a__.push_back(*it); else break;
-          if (a__.size() && b__.size())
+          if (b__.size() && a__.size())
             GW::gwLevelUp(mGWbls(b__, a__));
         });
         hub.connect(wS, nullptr);

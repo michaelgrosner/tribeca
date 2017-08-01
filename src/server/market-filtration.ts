@@ -20,10 +20,7 @@ export class MarketFiltration {
   }
 
   private filterFullMarket = (mkt) => {
-    if (mkt == null || !mkt.bids.length || !mkt.asks.length) {
-      this.latestFilteredMarket = null;
-      return;
-    }
+    if (mkt == null || typeof mkt.bids == "undefined" || typeof mkt.asks == "undefined" || !mkt.bids.length || !mkt.asks.length) return;
 
     var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
     var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
