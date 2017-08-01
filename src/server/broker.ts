@@ -339,7 +339,7 @@ export class OrderBroker {
       private _takeFee,
       private _minTick,
       private _exchange,
-      private _oeGateway : Interfaces.IOrderEntryGateway,
+      private _oeGateway,
       private _dbInsert,
       private _uiSnap,
       private _uiHand,

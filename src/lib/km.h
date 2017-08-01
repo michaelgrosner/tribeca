@@ -12,7 +12,9 @@ namespace K {
     "SC", "SJCX", "STR", "STRAT", "SYS", "VIA", "VRC", "VTC", "XBC", "XCP", "XPM", "XVC", "USD", "USDT",
     "EOS", "SAN", "OMG", "PAY" };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry, Position };
+  enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivityStatus: unsigned int { Connected, Disconnected };
+  enum class mLiquidity: unsigned int { Make, Take };
   enum class mSide: unsigned int { Bid, Ask, Unknown };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
