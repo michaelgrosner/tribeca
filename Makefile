@@ -109,15 +109,6 @@ dist:
 	$(MAKE) uws
 	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
 
-lib:
-	@$(MAKE) lib`(uname -s)`
-
-libLinux:
-	g++-4.9 -o dist/lib/libK.so -std=c++11 -static-libstdc++ -static-libgcc -s -x c++ -shared -fPIC build/K*
-
-libDarwin:
-	g++ -o dist/lib/libK.dylib -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup -x c++ -shared -fPIC build/K*
-
 clean: build
 	rm -rf build
 
@@ -252,12 +243,6 @@ png: etc/${PNG}.png etc/${PNG}.json
 
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
-
-enc: dist/img/K.png build/*.msg
-	convert dist/img/K.png -set "K.msg" "[`cat build/*.msg | gpg -e -r 0xFA101D1FC3B39DE0 -a`" K: dist/img/K.png 2>/dev/null || :
-
-dec: dist/img/K.png build
-	identify -verbose dist/img/K.png | sed 's/.*\[//;s/^ .*//g;1d;s/Version:.*//' | sed -e :a -e '/./,$$!d;/^\n*$$/{$$d;N;ba' -e '}' | gpg -d > build/K.msg
 
 md5: src build
 	find src -type f -exec md5sum "{}" + > build/K.md5
