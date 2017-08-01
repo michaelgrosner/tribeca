@@ -63,6 +63,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Donations](#donations)
   - [Help](#help)
   - [Issues](#issues)
+  - [Votes](#votes)
 
 ### Docker Installation
 
@@ -283,3 +284,14 @@ If you need support contact me at [21.co/analpaper](https://21.co/analpaper/).
 To request new features open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Feature%20request) and explain your improvement.
 
 To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all the relevant log messages (run `nodejs K.js` to see the output).
+
+### Votes
+
+What exchange you don't want to be deleted from the bot?
+
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/GDAX)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/GDAX/vote)
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Bitfinex)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Bitfinex/vote)
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/OkCoin)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/OkCoin/vote)
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/HitBTC)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/HitBTC/vote)
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Korbit)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Korbit/vote)
+[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Poloniex)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPDVWMZ5HV97PK0QWPJ23QWE/Poloniex/vote)
