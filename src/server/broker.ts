@@ -190,7 +190,7 @@ export class OrderBroker {
             orig = osr;
         } else {
             orig = this.orderCache.allOrders.get(osr.orderId);
-            if (typeof orig === "undefined" && osr.exchangeId) {
+            if (typeof orig === "undefined" && typeof osr.exchangeId !== "undefined" && osr.exchangeId) {
                 const secondChance = this.orderCache.exchIdsToClientIds.get(osr.exchangeId);
                 if (typeof secondChance !== "undefined") {
                     osr.orderId = secondChance;
@@ -351,6 +351,7 @@ export class OrderBroker {
         this.tradesMemory = initTrades;
         this.orderCache = new OrderStateCache();
 
+        this._oeGateway.cancelAllOpenOrders();
         setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
 
         _uiSnap(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));

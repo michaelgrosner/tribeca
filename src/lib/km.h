@@ -2,6 +2,9 @@
 #define K_KM_H_
 
 namespace K {
+  static const char alphanum[] = "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz";
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   vector<string> mCurrency = {
     "BTC", "LTC", "EUR", "GBP", "CNY", "CAD", "ETH", "ETC", "BFX", "RRT", "ZEC", "BCN", "DASH", "DOGE",
@@ -15,6 +18,7 @@ namespace K {
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivityStatus: unsigned int { Connected, Disconnected };
   enum class mLiquidity: unsigned int { Make, Take };
+  enum class mOrderType: unsigned int { Limit, Market };
   enum class mSide: unsigned int { Bid, Ask, Unknown };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };

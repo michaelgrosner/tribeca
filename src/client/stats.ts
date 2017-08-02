@@ -516,7 +516,7 @@ export class StatsComponent implements OnInit {
   }
 
   private updateMarket = (update: Models.Market) => {
-    if (update && update.bids.length && update.asks.length)
+    if (update && update.bids && update.bids.length && update.asks && update.asks.length)
       this.width = (update.asks[0].price - update.bids[0].price) / 2;
   }
 
