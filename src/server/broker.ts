@@ -297,9 +297,9 @@ export class OrderBroker {
 
             this._uiSend(Models.Topics.TradesChart, new Models.TradeChart(o.lastPrice, o.side, o.lastQuantity, Math.round(value * 100) / 100, o.isPong));
 
-            if (params.cleanPongsAuto>0) {
-              const cleanTime = o.time - (params.cleanPongsAuto * 864e5);
-              var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => x.Kqty >= x.quantity && x.time < cleanTime);
+            if (params.cleanPongsAuto != 0) {
+              const cleanTime = o.time - (Math.abs(params.cleanPongsAuto) * 864e5);
+              var cleanTrades = this.tradesMemory.filter((x: Models.Trade) => (params.cleanPongsAuto < 0 ? true : x.Kqty >= x.quantity) && x.time < cleanTime);
               var goWhile = true;
               while (goWhile && cleanTrades.length) {
                 var cleanTrade = cleanTrades.shift();

@@ -390,7 +390,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;">
                                                 <input class="form-control input-sm"
-                                                   type="number" step="1" min="0"
+                                                   type="number" step="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.cleanPongsAuto">
                                             </td>
