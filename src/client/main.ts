@@ -747,7 +747,10 @@ class ClientComponent implements OnInit {
         ? 'https://gdax.com/trade/'+this.pair_name.join('-')
         : (this.exchange_name=='Bitfinex'
             ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
-            : null
+            : (this.exchange_name=='HitBtc'
+              ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
+              : null
+            )
           )
       );
     this.exchange_orders = this.exchange_name=='OkCoin'
@@ -756,7 +759,10 @@ class ClientComponent implements OnInit {
         ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
         : (this.exchange_name=='Bitfinex'
           ? 'https://www.bitfinex.com/reports/orders'
-          : null
+          : (this.exchange_name=='HitBtc'
+            ? 'https://hitbtc.com/reports/orders'
+            : null
+          )
         )
       );
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
