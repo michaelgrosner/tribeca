@@ -3,7 +3,7 @@ V_UWS   := 0.14.3
 V_PNG   := 1.6.31
 V_JSON  := v2.1.1
 V_QF    := v.1.14.4
-G_ARG   := -std=c++11 -DUSE_LIBUV -shared -fPIC -Ibuild/node-$(NODEv)/include/node            \
+G_ARG   := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/include/node        \
   -Ibuild/libpng-$(V_PNG)                       -Ibuild/json-$(V_JSON)                        \
   -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp \
   build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp \
