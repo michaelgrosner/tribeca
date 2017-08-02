@@ -2,6 +2,7 @@
 #define K_FN_H_
 
 namespace K {
+  CURL* curl;
   typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
   class FN {
     public:
@@ -95,7 +96,6 @@ namespace K {
       };
       static string wGet(string k) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
@@ -113,7 +113,6 @@ namespace K {
       };
       static string wGet(string k, string p) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -135,7 +134,6 @@ namespace K {
       };
       static string wGet(string k, string t, bool auth) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -156,7 +154,6 @@ namespace K {
       };
       static string wGet(string k, string p, string s) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -177,7 +174,6 @@ namespace K {
       };
       static string wGet(string k, string p, string s, bool post) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -199,7 +195,6 @@ namespace K {
       };
       static string wGet(string k, string p, string a, string s) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -223,7 +218,6 @@ namespace K {
       };
       static string wGet(string k, string p, string a, string s, bool post) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -247,7 +241,6 @@ namespace K {
       };
       static string wGet(string k, string p, string t, string s, bool post, bool auth) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -270,7 +263,6 @@ namespace K {
       };
       static string wGet(string k, string t, string a, string s, string p) {
         string k_;
-        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;

@@ -76,18 +76,18 @@ namespace K {
             JSON Json;
             HandleScope hs(isolate);
             Local<Value> reply;
-            string m = string(message).substr(2, length-2);
+            string m = string(message, length).substr(2, length-2);
             MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
-            if (sess->cb.find(string(message).substr(0,2)) != sess->cb.end()) {
-              reply = (*sess->cb[string(message).substr(0,2)])(uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
+            if (sess->cb.find(string(message, 2)) != sess->cb.end()) {
+              reply = (*sess->cb[string(message, 2)])(uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
               if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-                webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+                webSocket->send(string(message, 2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
             }
-            if (sess->_cb.find(string(message).substr(0,2)) != sess->_cb.end()) {
+            if (sess->_cb.find(string(message ,2)) != sess->_cb.end()) {
               Local<Value> argv[] = {uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
-              reply = Local<Function>::New(isolate, sess->_cb[string(message).substr(0,2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+              reply = Local<Function>::New(isolate, sess->_cb[string(message, 2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
               if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-                webSocket->send(string(message).substr(0,2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+                webSocket->send(string(message, 2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
             }
           }
         });

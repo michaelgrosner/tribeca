@@ -979,11 +979,11 @@ namespace K {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
             if ((*it)["lastQuantity"].get<double>() > 0 && (*it)["execReportType"] == "trade") {
               (*it)["lastQuantity"] = (*it)["lastQuantity"].get<double>() * minSize;
-            } else { (*it)["lastPrice"] = 0; (*it)["lastQuantity"] = 0; }
+            } else { (*it)["lastPrice"] = "0"; (*it)["lastQuantity"] = 0; }
             (*it)["cumQuantity"] = (*it)["cumQuantity"].is_number() ? (*it)["cumQuantity"].get<double>() * minSize : 0;
-            (*it)["averagePrice"] = (*it)["averagePrice"].is_number() ? (*it)["averagePrice"].get<double>() : 0;
-            GW::gwOrderUp((*it)["clientOrderId"], (*it)["orderId"] != "N/A" ? (*it)["orderId"] : (*it)["clientOrderId"], getOS(*it), (*it)["lastPrice"], (*it)["lastQuantity"], (*it)["cumQuantity"], (*it)["averagePrice"]);
-          }
+            (*it)["averagePrice"] = (*it)["averagePrice"].is_string() ? (*it)["averagePrice"].get<string>() : "0";
+            GW::gwOrderUp((*it)["clientOrderId"].get<string>(), (*it)["orderId"].get<string>() != "N/A" ? (*it)["orderId"].get<string>() : (*it)["clientOrderId"].get<string>(), getOS(*it), stod((*it)["lastPrice"].get<string>() == "" ? "0" : (*it)["lastPrice"].get<string>()), (*it)["lastQuantity"], (*it)["cumQuantity"], stod((*it)["averagePrice"].get<string>()));
+           }
         } else if (k.find("CancelReject") != k.end())
           GW::gwOrderUp(k["CancelReject"]["clientOrderId"], mORS::Cancelled);
       }
