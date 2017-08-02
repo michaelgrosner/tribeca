@@ -20,10 +20,10 @@ namespace K {
           gw->pos();
         }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
-          gwCon__(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
+          _gwCon_(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
         });
         EV::evOn("GatewayOrderConnect", [](Local<Object> c) {
-          gwCon__(mGatewayType::OrderEntry, (mConnectivityStatus)c->NumberValue());
+          _gwCon_(mGatewayType::OrderEntry, (mConnectivityStatus)c->NumberValue());
         });
         gw->book();
         gw_ = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
@@ -196,7 +196,7 @@ namespace K {
         }
         return (Local<Value>)Undefined(isolate);
       };
-      static void gwCon__(mGatewayType gwT, mConnectivityStatus gwS) {
+      static void _gwCon_(mGatewayType gwT, mConnectivityStatus gwS) {
         if (gwT == mGatewayType::MarketData) {
           if (gwMDConn == gwS) return;
           gwMDConn = gwS;
@@ -519,23 +519,23 @@ namespace K {
       };
       void getBook() {
         if (b_.size() && a_.size()) {
-          vector<mGWbl> b__;
-          vector<mGWbl> a__;
+          vector<mGWbl> _b_;
+          vector<mGWbl> _a_;
           for (map<double, map<string, double>>::reverse_iterator it = b_.rbegin(); it != b_.rend(); ++it) {
             double bsize = decimal_cast<8>(0).getAsDouble();
             for (map<string, double>::iterator it_ = it->second.begin(); it_ != it->second.end(); ++it_)
               bsize += it_->second;
-            b__.push_back(mGWbl(it->first, bsize));
-            if (b__.size() == 13) break;
+            _b_.push_back(mGWbl(it->first, bsize));
+            if (_b_.size() == 13) break;
           }
           for (map<double, map<string, double>>::iterator it = a_.begin(); it != a_.end(); ++it) {
             double asize = decimal_cast<8>(0).getAsDouble();
             for (map<string, double>::iterator it_ = it->second.begin(); it_ != it->second.end(); ++it_)
               asize += it_->second;
-            a__.push_back(mGWbl(it->first, asize));
-            if (a__.size() == 13) break;
+            _a_.push_back(mGWbl(it->first, asize));
+            if (_a_.size() == 13) break;
           }
-          GW::gwLevelUp(mGWbls(b__, a__));
+          GW::gwLevelUp(mGWbls(_b_, _a_));
         }
       };
       void getTrades(json k) {
@@ -672,18 +672,18 @@ namespace K {
                         if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
                     }
                   }
-                sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-                sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price < b__.price; });
+                sort(b_.begin(), b_.end(), [](const mGWbl &_a_, const mGWbl &_b_) { return _a_.price*-1 < _b_.price*-1; });
+                sort(a_.begin(), a_.end(), [](const mGWbl &_a_, const mGWbl &_b_) { return _a_.price < _b_.price; });
                 if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
                 if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
-                vector<mGWbl> b__;
-                vector<mGWbl> a__;
+                vector<mGWbl> _b_;
+                vector<mGWbl> _a_;
                 for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
-                  if (b__.size() < 13) b__.push_back(*it); else break;
+                  if (_b_.size() < 13) _b_.push_back(*it); else break;
                 for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
-                  if (a__.size() < 13) a__.push_back(*it); else break;
-                if (a__.size() && b__.size())
-                  GW::gwLevelUp(mGWbls(b__, a__));
+                  if (_a_.size() < 13) _a_.push_back(*it); else break;
+                if (_a_.size() && _b_.size())
+                  GW::gwLevelUp(mGWbls(_b_, _a_));
               } else if (chan[k["/0"_json_pointer]] == "trades") {
                 if (k["/1"_json_pointer].is_string() && k["/1"_json_pointer].get<string>() == "te")
                   k["/1"_json_pointer] = { k["/2"_json_pointer] };
@@ -906,8 +906,8 @@ namespace K {
                 else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
                   if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
               }
-              sort(b_.begin(), b_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price*-1 < b__.price*-1; });
-              sort(a_.begin(), a_.end(), [](const mGWbl &a__, const mGWbl &b__) { return a__.price < b__.price; });
+              sort(b_.begin(), b_.end(), [](const mGWbl &_a_, const mGWbl &_b_) { return _a_.price*-1 < _b_.price*-1; });
+              sort(a_.begin(), a_.end(), [](const mGWbl &_a_, const mGWbl &_b_) { return _a_.price < _b_.price; });
             }
             else if (k["MarketDataSnapshotFullRefresh"].is_object()) {
               k = k["MarketDataSnapshotFullRefresh"];
@@ -932,14 +932,14 @@ namespace K {
             }
             if (b_.size()>21) b_.resize(21, mGWbl(0, 0));
             if (a_.size()>21) a_.resize(21, mGWbl(0, 0));
-            vector<mGWbl> b__;
-            vector<mGWbl> a__;
+            vector<mGWbl> _b_;
+            vector<mGWbl> _a_;
             for (vector<mGWbl>::iterator it = b_.begin(); it != b_.end(); ++it)
-              if (b__.size() < 13) b__.push_back(*it); else break;
+              if (_b_.size() < 13) _b_.push_back(*it); else break;
             for (vector<mGWbl>::iterator it = a_.begin(); it != a_.end(); ++it)
-              if (a__.size() < 13) a__.push_back(*it); else break;
-            if (b__.size() && a__.size())
-              GW::gwLevelUp(mGWbls(b__, a__));
+              if (_a_.size() < 13) _a_.push_back(*it); else break;
+            if (_b_.size() && _a_.size())
+              GW::gwLevelUp(mGWbls(_b_, _a_));
           } else if (u == 2) {
             if (k.find("error") != k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Error " << k["error"] << endl;
             else orderUp(k);

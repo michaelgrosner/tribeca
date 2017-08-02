@@ -101,7 +101,7 @@ namespace K {
         if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
         uiD_.data = isolate;
         EV::evOn("QuotingParameters", [](Local<Object> qp_) {
-          uiD__(qp_->Get(FN::v8S("delayUI"))->NumberValue());
+          _uiD_(qp_->Get(FN::v8S("delayUI"))->NumberValue());
         });
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
@@ -113,7 +113,7 @@ namespace K {
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
       };
-      static void uiD__(double d) {
+      static void _uiD_(double d) {
         if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
