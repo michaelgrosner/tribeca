@@ -52,8 +52,8 @@ namespace K {
       virtual void fetch() = 0;
       virtual void pos() = 0;
       virtual void book() = 0;
-      virtual void send(string oI, double oP, double oQ, mTimeInForce oTIF, unsigned long oT) = 0;
-      virtual void cancel(string oI, unsigned long oT) = 0;
+      virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) = 0;
+      virtual void cancel(string oI, mSide oS, unsigned long oT) = 0;
       virtual void cancelAll() = 0;
       virtual string clientId() = 0;
       bool cancelByClientId = 0;
@@ -68,6 +68,7 @@ namespace K {
   mConnectivityStatus gwMDConn = mConnectivityStatus::Disconnected;
   mConnectivityStatus gwEOConn = mConnectivityStatus::Disconnected;
   Gw* gw;
+  Gw* gw_;
 }
 
 #endif

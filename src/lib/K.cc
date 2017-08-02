@@ -47,7 +47,8 @@ using namespace dec;
 #include "db.h"
 #include "ui.h"
 #include "qp.h"
-#include "md.h"
+#include "mg.h"
+#include "og.h"
 #include "gw.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,10 +60,10 @@ using namespace dec;
 ;;;;;;DB::main(exports);;        ;;;;;;;
 ;;;;;;UI::main(exports);;        ;;;;;;;
 ;;;;;;QP::main(exports);;    ;;    ;;;;;
-;;;;;;MD::main(exports);;    ;;;;    ;;;
+;;;;;;MG::main(exports);;    ;;;;    ;;;
 ;;;;;;GW::main(exports);;    ;;;;    ;;;
-;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;    ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    ;;;
+;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 NODE_MODULE(K, K::main)

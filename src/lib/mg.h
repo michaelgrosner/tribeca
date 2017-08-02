@@ -1,5 +1,5 @@
-#ifndef K_MD_H_
-#define K_MD_H_
+#ifndef K_MG_H_
+#define K_MG_H_
 
 namespace K {
   struct mGWmt {
@@ -15,7 +15,7 @@ namespace K {
   };
   vector<mGWmt> mGWmt_;
   Persistent<Object> mGWmkt;
-  class MD {
+  class MG {
     public:
       static void main(Local<Object> exports) {
         EV::evOn("MarketTradeGateway", [](Local<Object> o) {

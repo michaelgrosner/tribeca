@@ -172,6 +172,28 @@ namespace K {
         }
         return k_;
       };
+      static json wJet(string k, string p, string s, bool post) {
+        return json::parse(wGet(k, p, s, post));
+      };
+      static string wGet(string k, string p, string s, bool post) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          curl_easy_cleanup(curl);
+        }
+        return k_;
+      };
       static json wJet(string k, string p, string a, string s) {
         return json::parse(wGet(k, p, a, s));
       };
