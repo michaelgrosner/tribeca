@@ -438,7 +438,12 @@ namespace K {
       void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
       void cancel(string oI, mSide oS, unsigned long oT) {}
       void cancelAll() {}
-      string clientId() { return ""; }
+      string clientId() {
+        srand(time(0));
+        char s[8];
+        for (int i = 0; i < 8; ++i) s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+        return string(s, 8);
+      }
   };
   class GwCoinbase: public Gw {
     public:
@@ -707,7 +712,7 @@ namespace K {
       void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
       void cancel(string oI, mSide oS, unsigned long oT) {}
       void cancelAll() {}
-      string clientId() { return ""; }
+      string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
   };
   class GwKorbit: public Gw {
     public:
@@ -811,7 +816,7 @@ namespace K {
       void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
       void cancel(string oI, mSide oS, unsigned long oT) {}
       void cancelAll() {}
-      string clientId() { return ""; }
+      string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
   };
   class GwHitBtc: public Gw {
     public:
@@ -1075,7 +1080,7 @@ namespace K {
       void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
       void cancel(string oI, mSide oS, unsigned long oT) {}
       void cancelAll() {}
-      string clientId() { return ""; }
+      string clientId() { string t = to_string(FN::T()); return t.size()>11?t.substr(t.size()-11):t; }
   };
   Gw *Gw::E(mExchange e) {
     if (e == mExchange::Null) return new GwNull;
