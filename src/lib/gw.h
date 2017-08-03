@@ -100,12 +100,14 @@ namespace K {
         HandleScope scope(isolate);
         EV::evUp("GatewayOrderConnect", Number::New(isolate, (int)k));
       };
-      static void gwOrderUp(string oI, mORS oS) {
+      static void gwOrderUp(string oI, string oE, mORS oS) {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, oI));
+        if (oI.length()) o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, oI));
+        if (oE.length()) o->Set(FN::v8S(isolate, "exchangeId"), FN::v8S(isolate, oE));
         o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)oS));
+        if (oS == mORS::Cancelled) o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, 0));
         o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
         EV::evUp("OrderUpdateGateway", o);
       };
@@ -274,16 +276,18 @@ namespace K {
         mSide oS = (mSide)o->Get(FN::v8S(isolate, "side"))->NumberValue();
         mOrderType oLM = (mOrderType)o->Get(FN::v8S(isolate, "type"))->NumberValue();
         mTimeInForce oTIF = (mTimeInForce)o->Get(FN::v8S(isolate, "timeInForce"))->NumberValue();
-        gw_->send(oI, oS, oP, oQ, oLM, oTIF, oT);
+        bool oPO = o->Get(FN::v8S(isolate, "preferPostOnly"))->BooleanValue();
+        gw_->send(oI, oS, oP, oQ, oLM, oTIF, oPO, oT);
       };
       static void _gwCancel(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         Local<Object> o = args[0]->ToObject();
         string oI = FN::S8v(o->Get(FN::v8S(isolate, "orderId"))->ToString());
+        string oE = o->Get(FN::v8S(isolate, "exchangeId"))->IsUndefined() ? "" : FN::S8v(o->Get(FN::v8S(isolate, "exchangeId"))->ToString());
         mSide oS = (mSide)o->Get(FN::v8S(isolate, "side"))->NumberValue();
         unsigned long oT = o->Get(FN::v8S(isolate, "time"))->NumberValue();
-        gw_->cancel(oI, oS, oT);
+        gw_->cancel(oI, oE, oS, oT);
       };
       static void _gwCancelAll(const FunctionCallbackInfo<Value> &args) {
         gw_->cancelAll();
@@ -346,14 +350,14 @@ namespace K {
         );
         return t;
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {
         if (oTIF == mTimeInForce::IOC) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " doesn't work with IOC." << endl; exit(1); }
         GW::gwOrderUp(oI, oI, mORS::Working, oT);
         srand(time(0));
         if (rand() % 2) GW::gwOrderUp(oI, mORS::Working, oP, oQ, rand() % 2 ? mLiquidity::Make : mLiquidity::Take);
       }
-      void cancel(string oI, mSide oS, unsigned long oT) {
-        GW::gwOrderUp(oI, oI, mORS::Complete, oT);
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {
+        GW::gwOrderUp(oI, oE, mORS::Complete, oT);
       }
       void cancelAll() {}
       string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
@@ -435,8 +439,8 @@ namespace K {
         });
         hub.connect(ws, nullptr);
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
-      void cancel(string oI, mSide oS, unsigned long oT) {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {}
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {}
       void cancelAll() {}
       string clientId() {
         srand(time(0));
@@ -594,8 +598,8 @@ namespace K {
         }
         getBook();
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
-      void cancel(string oI, mSide oS, unsigned long oT) {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {}
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {}
       void cancelAll() {}
       string clientId() { return ""; }
   };
@@ -709,8 +713,8 @@ namespace K {
         });
         hub.connect(ws, nullptr);
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
-      void cancel(string oI, mSide oS, unsigned long oT) {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {}
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {}
       void cancelAll() {}
       string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
   };
@@ -813,8 +817,8 @@ namespace K {
           ));
         return v;
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
-      void cancel(string oI, mSide oS, unsigned long oT) {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {}
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {}
       void cancelAll() {}
       string clientId() { string t = to_string(FN::T()); return t.size()>9?t.substr(t.size()-9):t; }
   };
@@ -953,14 +957,14 @@ namespace K {
         hub.connect(wS, (void*)1);
         hub.connect(ws, (void*)2);
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {
         string p_;
         string p = string("{\"nonce\":").append(to_string(++seq)).append(",\"payload\":{\"NewOrder\":{\"clientOrderId\":\"").append(oI).append("\",\"symbol\":\"").append(symbol).append("\",\"side\":\"").append(oS == mSide::Bid ? "buy" : "sell").append("\",\"quantity\":\"").append(to_string(oQ / minSize)).append("\",\"type\":\"").append(mOrderType::Limit == oLM ? "limit" : "market").append("\",\"price\":\"").append(to_string(oP)).append("\",\"timeInForce\":\"").append(oTIF == mTimeInForce::FOK ? "FOK" : (oTIF == mTimeInForce::GTC ? "GTC" : "IOC")).append("\"}}}");
         B64::Encode(FN::oHex(FN::oHmac512(p, secret)), &p_);
         string m = string("{\"apikey\":\"").append(apikey).append("\",\"signature\":\"").append(p_).append("\",\"message\":").append(p).append("}");
         ows->send(m.data(), m.length(), uWS::OpCode::TEXT);
       }
-      void cancel(string oI, mSide oS, unsigned long oT) {
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {
         string p_;
         string p = string("{\"nonce\":").append(to_string(++seq)).append(",\"payload\":{\"OrderCancel\":{\"clientOrderId\":\"").append(oI).append("\",\"cancelRequestClientOrderId\":\"").append(oI).append("C\",\"symbol\":\"").append(symbol).append("\",\"side\":\"").append(oS == mSide::Bid ? "buy" : "sell").append("\"}}}");
         B64::Encode(FN::oHex(FN::oHmac512(p, secret)), &p_);
@@ -990,7 +994,7 @@ namespace K {
             GW::gwOrderUp((*it)["clientOrderId"].get<string>(), (*it)["orderId"].get<string>() != "N/A" ? (*it)["orderId"].get<string>() : (*it)["clientOrderId"].get<string>(), getOS(*it), stod((*it)["lastPrice"].get<string>() == "" ? "0" : (*it)["lastPrice"].get<string>()), (*it)["lastQuantity"], (*it)["cumQuantity"], stod((*it)["averagePrice"].get<string>()));
            }
         } else if (k.find("CancelReject") != k.end())
-          GW::gwOrderUp(k["CancelReject"]["clientOrderId"], mORS::Cancelled);
+          GW::gwOrderUp(k["CancelReject"]["clientOrderId"], "", mORS::Cancelled);
       }
       mORS getOS(json k) {
         string k_ = k["execReportType"];
@@ -1029,6 +1033,7 @@ namespace K {
       };
       void book() {
         GW::gwBookUp(mConnectivityStatus::Connected);
+        GW::gwOrderUp(mConnectivityStatus::Connected);
         if (uv_timer_init(uv_default_loop(), &gwBook_)) { cout << FN::uiT() << "Errrror: GW gwBook_ init timer failed." << endl; exit(1); }
         gwBook_.data = this;
         if (uv_timer_start(&gwBook_, [](uv_timer_t *handle) {
@@ -1047,22 +1052,25 @@ namespace K {
         vector<mGWbl> b;
         json k = FN::wJet(string(http).append("/public?command=returnOrderBook&depth=13&currencyPair=").append(symbol));
         if (k.find("error") != k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Warning " << k["error"] << endl; return mGWbls(b, a); }
-        if (k.find("seq") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
-        for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
-          b.push_back(mGWbl(
-            stod((*it)["/0"_json_pointer].get<string>()),
-            (*it)["/1"_json_pointer].get<double>()
-          ));
-          if (b.size() == 13) break;
-        }
-        for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
-          a.push_back(mGWbl(
-            stod((*it)["/0"_json_pointer].get<string>()),
-            (*it)["/1"_json_pointer].get<double>()
-          ));
-          if (a.size() == 13) break;
-        }
-        return mGWbls(b, a);
+        else if (k.find("seq") == k.end()) { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read book levels." << endl; return mGWbls(b, a); }
+        if (k.find("bids") != k.end())
+          for (json::iterator it = k["bids"].begin(); it != k["bids"].end(); ++it) {
+            b.push_back(mGWbl(
+              stod((*it)["/0"_json_pointer].get<string>()),
+              (*it)["/1"_json_pointer].get<double>()
+            ));
+            if (b.size() == 13) break;
+          }
+        if (k.find("asks") != k.end())
+          for (json::iterator it = k["asks"].begin(); it != k["asks"].end(); ++it) {
+            a.push_back(mGWbl(
+              stod((*it)["/0"_json_pointer].get<string>()),
+              (*it)["/1"_json_pointer].get<double>()
+            ));
+            if (a.size() == 13) break;
+          }
+        if (b.size() && a.size())
+          return mGWbls(b, a);
       };
       vector<mGWbt> getTrades() {
         vector<mGWbt> v;
@@ -1077,9 +1085,25 @@ namespace K {
           ));
         return v;
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, unsigned long oT) {}
-      void cancel(string oI, mSide oS, unsigned long oT) {}
-      void cancelAll() {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {
+        string p = string("command=").append(oS == mSide::Bid ? "buy" : "sell").append("&nonce=").append(to_string(FN::T())).append("&currencyPair=").append(symbol).append("&rate=").append(to_string(oP)).append("&amount=").append(to_string(oQ)).append("&fillOrKill=").append(to_string(oTIF == mTimeInForce::FOK ? 1 : 0)).append("&immediateOrCancel=").append(to_string(oTIF == mTimeInForce::IOC ? 1 : 0)).append("&postOnly=").append(to_string(oPO ? 1 : 0));
+        json k = FN::wJet(string(http).append("/tradingApi"), p, apikey, FN::oHmac512(p, secret));
+        if (k.find("orderNumber") == k.end()) GW::gwOrderUp(oI, "", mORS::Cancelled);
+        else GW::gwOrderUp(oI, to_string(k["orderNumber"].get<int>()), mORS::Working, oP, oQ, (double)0, (double)0);
+      }
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {
+        string p = string("command=cancelOrder").append("&nonce=").append(to_string(FN::T())).append("&orderNumber=").append(oE);
+        json k = FN::wJet(string(http).append("/tradingApi"), p, apikey, FN::oHmac512(p, secret));
+        if (k.find("success") == k.end() or k["success"] != 1) return;
+        GW::gwOrderUp(oI, oE, mORS::Cancelled);
+      }
+      void cancelAll() {
+        string p = string("command=returnOpenOrders").append("&nonce=").append(to_string(FN::T())).append("&currencyPair=").append(symbol);
+        json k = FN::wJet(string(http).append("/tradingApi"), p, apikey, FN::oHmac512(p, secret));
+        if (!k.is_array()) return;
+        for (json::iterator it = k.begin(); it != k.end(); ++it)
+          cancel("", k["orderNumber"].get<string>(), mSide::Unknown, (unsigned long)0);
+      }
       string clientId() { string t = to_string(FN::T()); return t.size()>11?t.substr(t.size()-11):t; }
   };
   Gw *Gw::E(mExchange e) {

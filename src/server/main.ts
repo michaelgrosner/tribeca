@@ -71,9 +71,9 @@ const gateway = (() => {
     case Models.Exchange.Coinbase: return new Coinbase.Coinbase(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
     case Models.Exchange.OkCoin: return new OkCoin.OkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
     case Models.Exchange.Bitfinex: return new Bitfinex.Bitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.Poloniex: return new Poloniex.Poloniex(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
     case Models.Exchange.Korbit: return new Korbit.Korbit(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
-    case Models.Exchange.HitBtc: return {oe:{sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll}};
+    case Models.Exchange.HitBtc:
+    case Models.Exchange.Poloniex:
     case Models.Exchange.Null: return {oe:{sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll}};
     default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
   }
