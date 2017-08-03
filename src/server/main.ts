@@ -17,8 +17,6 @@ import request = require('request');
 import Coinbase = require("./gateways/coinbase");
 import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
-import Poloniex = require("./gateways/poloniex");
-import Korbit = require("./gateways/korbit");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
@@ -69,10 +67,10 @@ const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Objec
 const gateway = (() => {
   switch (bindings.cfmExchange()) {
     case Models.Exchange.Coinbase: return new Coinbase.Coinbase(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
-    case Models.Exchange.OkCoin: return new OkCoin.OkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
     case Models.Exchange.Bitfinex: return new Bitfinex.Bitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.Korbit: return new Korbit.Korbit(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
+    case Models.Exchange.OkCoin: return new OkCoin.OkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
     case Models.Exchange.HitBtc:
+    case Models.Exchange.Korbit:
     case Models.Exchange.Poloniex:
     case Models.Exchange.Null: return {oe:{sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll}};
     default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
