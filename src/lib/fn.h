@@ -106,6 +106,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p) {
@@ -127,6 +128,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, bool auth) {
@@ -147,6 +149,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string s) {
@@ -167,6 +170,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string s, bool post) {
@@ -188,6 +192,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s) {
@@ -211,6 +216,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post) {
@@ -234,6 +240,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post, bool auth) {
@@ -256,6 +263,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p) {
@@ -279,6 +287,7 @@ namespace K {
           if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
           curl_easy_cleanup(curl);
         }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
