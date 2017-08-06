@@ -188,7 +188,7 @@ namespace K {
         srand(time(0));
         char s[15];
         for (int i = 0; i < 15; ++i) s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
-        return string(s, 15).append(to_string(++seq));
+        return string(to_string(++seq)).append(string(s, 15));
       }
       void orderUp(json k) {
         if (k.find("ExecutionReport") != k.end()) {
