@@ -125,7 +125,7 @@ namespace K {
                     GW::gwLevelUp(mGWbls(b, a));
                 }
                 else if ((*it)["channel"] == chanTq) {
-                    GW::gwOrderUp(mGWoa("", to_string((*it)["data"]["orderId"].get<int>()), getOS(*it), stod((*it)["data"]["sigTradePrice"].is_string() ? (*it)["data"]["sigTradePrice"].get<string>() : "0"), stod((*it)["data"]["sigTradeAmount"].is_string() ? (*it)["data"]["sigTradeAmount"].get<string>() : "0"), 0, 0, stod((*it)["data"]["averagePrice"].get<string>())));
+                  GW::gwOrderUp(mGWoa("", to_string((*it)["data"]["orderId"].get<int>()), getOS(*it), stod((*it)["data"]["sigTradePrice"].is_string() ? (*it)["data"]["sigTradePrice"].get<string>() : "0"), stod((*it)["data"]["sigTradeAmount"].is_string() ? (*it)["data"]["sigTradeAmount"].get<string>() : "0"), 0, 0, stod((*it)["data"]["averagePrice"].get<string>())));
                 }
                 else if ((*it)["channel"] == chanS) {
                   if (!(*it)["data"].is_object()) return;

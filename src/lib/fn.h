@@ -6,21 +6,13 @@ namespace K {
   typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
   class FN {
     public:
-      static string S2l(string k) {
-        transform(k.begin(), k.end(), k.begin(), ::tolower);
-        return k;
-      };
-      static string S2u(string k) {
-        transform(k.begin(), k.end(), k.begin(), ::toupper);
-        return k;
-      };
       static int S2mC(string k);
+      static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
+      static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
       static Local<String> v8S(string k) { return String::NewFromUtf8(Isolate::GetCurrent(), k.data()); };
       static Local<String> v8S(Isolate* isolate, string k) { return String::NewFromUtf8(isolate, k.data()); };
       static string S8v(Local<String> k) { return string(*String::Utf8Value(k)); };
-      static unsigned long T() {
-        return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
-      };
+      static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
