@@ -6,6 +6,7 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         Isolate* isolate = exports->GetIsolate();
+        CF::internal(exports);
         string name = CF::cfString("WebClientUsername");
         string key = CF::cfString("WebClientPassword");
         uiGroup->setUserData(new uiSess);
@@ -112,6 +113,7 @@ namespace K {
         NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
         NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
+        CF::external();
       };
       static void _uiD_(double d) {
         if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }

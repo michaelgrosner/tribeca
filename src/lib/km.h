@@ -40,6 +40,41 @@ namespace K {
     CleanAllClosedOrders = 'y', CleanAllOrders = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
+  class Gw {
+    public:
+      static Gw *E(mExchange e);
+      mExchange exchange = mExchange::Null;
+      double makeFee = 0;
+      double takeFee = 0;
+      double minTick = 0;
+      double minSize = 0;
+      string symbol = "";
+      string target = "";
+      string apikey = "";
+      string secret = "";
+      string user = "";
+      string pass = "";
+      string http = "";
+      string ws = "";
+      string wS = "";
+      int quote = 0;
+      int base = 0;
+      virtual void config() = 0;
+      virtual void pos() = 0;
+      virtual void book() = 0;
+      virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0;
+      virtual void cancel(string oI, string oE, mSide oS, unsigned long oT) = 0;
+      virtual void cancelAll() = 0;
+      virtual string clientId() = 0;
+      bool cancelByClientId = 0;
+      bool supportCancelAll = 0;
+  };
+  struct mGWp {
+    double amount;
+    double held;
+    int currency;
+    mGWp(double amount, double held, int currency);
+  };
   struct mGWbt {
     double price;
     double size;
@@ -55,6 +90,40 @@ namespace K {
     vector<mGWbl> bids;
     vector<mGWbl> asks;
     mGWbls(vector<mGWbl> bids, vector<mGWbl> asks);
+  };
+  struct mGWos {
+    string oI;
+    string oE;
+    mORS oS;
+    mGWos(string oI, string oE, mORS oS);
+  };
+  struct mGWol {
+    string oI;
+    mORS oS;
+    double oP;
+    double oQ;
+    mLiquidity oL;
+    mGWol(string oI, mORS oS, double oP, double oQ, mLiquidity oL);
+  };
+  struct mGWoS {
+    string oI;
+    string oE;
+    mORS os;
+    double oP;
+    double oQ;
+    mSide oS;
+    mGWoS(string oI, string oE, mORS os, double oP, double oQ, mSide oS);
+  };
+  struct mGWoa {
+    string oI;
+    string oE;
+    mORS os;
+    double oP;
+    double oQ;
+    double oLQ;
+    double oC;
+    double oA;
+    mGWoa(string oI, string oE, mORS os, double oP, double oQ, double oLQ, double oC, double oA);
   };
 }
 
