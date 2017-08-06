@@ -95,14 +95,15 @@ namespace K {
                     }
                   cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << (*it) << endl;
                 }
-                else if ((*it)["channel"] == "addChannel") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << (*it)["data"]["channel"].get<string>() << " " << ((*it)["data"]["result"] ? "true" : "false") << endl;
-                else if ((*it)["channel"] == chanTm)
+                else if ((*it)["channel"] == "addChannel") { cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << (*it)["data"]["channel"].get<string>() << " " << ((*it)["data"]["result"] ? "true" : "false") << endl; }
+                else if ((*it)["channel"] == chanTm) {
                   for (json::iterator it_ = (*it)["data"].begin(); it_ != (*it)["data"].end(); ++it_)
                     GW::gwTradeUp(mGWbt(
                       stod((*it_)["/1"_json_pointer].get<string>()),
                       stod((*it_)["/2"_json_pointer].get<string>()),
                       (*it_)["/4"_json_pointer].get<string>() > "bid" ? mSide::Bid : mSide::Ask
                     ));
+                }
                 else if ((*it)["channel"] == chanM) {
                   vector<mGWbl> a;
                   vector<mGWbl> b;
@@ -123,8 +124,9 @@ namespace K {
                   if (a.size() && b.size())
                     GW::gwLevelUp(mGWbls(b, a));
                 }
-                else if ((*it)["channel"] == chanTq)
+                else if ((*it)["channel"] == chanTq) {
                     GW::gwOrderUp(mGWoa("", to_string((*it)["data"]["orderId"].get<int>()), getOS(*it), stod((*it)["data"]["sigTradePrice"].is_string() ? (*it)["data"]["sigTradePrice"].get<string>() : "0"), stod((*it)["data"]["sigTradeAmount"].is_string() ? (*it)["data"]["sigTradeAmount"].get<string>() : "0"), 0, 0, stod((*it)["data"]["averagePrice"].get<string>())));
+                }
                 else if ((*it)["channel"] == chanS) {
                   if (!(*it)["data"].is_object()) return;
                   for (vector<map<string, double>>::iterator it_ = oIQ.begin(); it_ != oIQ.end();) {

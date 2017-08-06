@@ -69,8 +69,7 @@ namespace K {
             ));
             if (a.size() == 13) break;
           }
-        if (b.size() && a.size())
-          return mGWbls(b, a);
+        return mGWbls(b, a);
       };
       vector<mGWbt> getTrades() {
         vector<mGWbt> v;
