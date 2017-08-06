@@ -4,7 +4,7 @@
 namespace K {
   class CF {
     public:
-      static void main(Local<Object> exports) {
+      static void internal(Local<Object> exports) {
         if (access("package.json", F_OK) != -1) {
           ifstream file_("package.json");
           pkRepo = json::parse(string((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>()));
@@ -54,6 +54,16 @@ namespace K {
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
         NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
+      };
+      static void external() {
+        gw = Gw::E(cfExchange());
+        gw->base = cfBase();
+        gw->quote = cfQuote();
+        gw->config();
+        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
+        gwAutoStart = "auto" == cfString("BotIdentifier").substr(0,4);
+        cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
       };
       static string cfString(string k, bool r = true) {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));

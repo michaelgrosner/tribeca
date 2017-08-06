@@ -36,10 +36,10 @@ namespace K {
           if (k.find("balance") == k.end()) cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Unable to read wallet data positions." << endl;
           else for (json::iterator it = k["balance"].begin(); it != k["balance"].end(); ++it)
             if ((*it)["currency_code"] == mCurrency[base] || (*it)["currency_code"] == mCurrency[quote])
-              GW::gwPosUp((*it)["cash"], (*it)["reserved"], FN::S2mC((*it)["currency_code"]));
+              GW::gwPosUp(mGWp((*it)["cash"], (*it)["reserved"], FN::S2mC((*it)["currency_code"])));
         } else {
-          GW::gwPosUp(500, 50, base);
-          GW::gwPosUp(500, 50, quote);
+          GW::gwPosUp(mGWp(500, 50, base));
+          GW::gwPosUp(mGWp(500, 50, quote));
         }
       };
       void book() {
@@ -203,10 +203,10 @@ namespace K {
             }
             (*it)["cumQuantity"] = (*it)["cumQuantity"].is_number() ? (*it)["cumQuantity"].get<double>() * minSize : 0;
             (*it)["averagePrice"] = (*it)["averagePrice"].is_string() ? (*it)["averagePrice"].get<string>() : "0";
-            GW::gwOrderUp((*it)["clientOrderId"].get<string>(), (*it)["orderId"].get<string>() != "N/A" ? (*it)["orderId"].get<string>() : (*it)["clientOrderId"].get<string>(), getOS(*it), stod((*it)["lastPrice"].get<string>() == "" ? "0" : (*it)["lastPrice"].get<string>()), (*it)["leavesQuantity"].is_number() ? (*it)["leavesQuantity"].get<double>() * minSize : 0, (*it)["lastQuantity"], (*it)["cumQuantity"], stod((*it)["averagePrice"].get<string>()));
+            GW::gwOrderUp(mGWoa((*it)["clientOrderId"].get<string>(), (*it)["orderId"].get<string>() != "N/A" ? (*it)["orderId"].get<string>() : (*it)["clientOrderId"].get<string>(), getOS(*it), stod((*it)["lastPrice"].get<string>() == "" ? "0" : (*it)["lastPrice"].get<string>()), (*it)["leavesQuantity"].is_number() ? (*it)["leavesQuantity"].get<double>() * minSize : 0, (*it)["lastQuantity"], (*it)["cumQuantity"], stod((*it)["averagePrice"].get<string>())));
            }
         } else if (k.find("CancelReject") != k.end())
-          GW::gwOrderUp(k["CancelReject"]["clientOrderId"], "", mORS::Cancelled);
+          GW::gwOrderUp(mGWos(k["CancelReject"]["clientOrderId"], "", mORS::Cancelled));
       }
       mORS getOS(json k) {
         string k_ = k["execReportType"];

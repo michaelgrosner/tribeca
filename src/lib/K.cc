@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include <chrono>
 #include <locale>
 #include <math.h>
@@ -16,7 +17,9 @@
 #include <node_object_wrap.h>
 
 #include <curl/curl.h>
-
+#include <openssl/hmac.h>
+#include <openssl/sha.h>
+#include <openssl/md5.h>
 #include <sqlite3.h>
 
 #include <openssl/ssl.h>
@@ -27,10 +30,7 @@
 using namespace std;
 using namespace v8;
 
-#include <png.h>
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-#include <openssl/md5.h>
+#include "png.h"
 #include "json.h"
 #include "_dec.h"
 #include "_b64.h"
@@ -50,20 +50,28 @@ using namespace dec;
 #include "mg.h"
 #include "og.h"
 #include "gw.h"
+#include "g0.h"
+#include "g1.h"
+#include "g2.h"
+#include "g3.h"
+#include "g4.h"
+#include "g5.h"
+#include "g6.h"
+#include "gx.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;namespace K {;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;void main(Local<Object> exports) {;;
 ;;;;;;EV::main(exports);;;;;;;;;;;;;;;;;
 ;;;;;;SD::main(exports);;    ;;;;    ;;;
-;;;;;;CF::main(exports);;    ;;    ;;;;;
+;;;;;;UI::main(exports);;    ;;    ;;;;;
 ;;;;;;DB::main(exports);;        ;;;;;;;
-;;;;;;UI::main(exports);;        ;;;;;;;
-;;;;;;QP::main(exports);;    ;;    ;;;;;
-;;;;;;MG::main(exports);;    ;;;;    ;;;
+;;;;;;QP::main(exports);;        ;;;;;;;
+;;;;;;MG::main(exports);;    ;;    ;;;;;
 ;;;;;;OG::main(exports);;    ;;;;    ;;;
-;;;;;;GW::main(exports);;;;;;;;;;    ;;;
-;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;GW::main(exports);;    ;;;;    ;;;
+;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;    ;;;
 ;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 NODE_MODULE(K, K::main)

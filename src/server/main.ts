@@ -15,7 +15,6 @@ require('events').EventEmitter.prototype._maxListeners = 30;
 import request = require('request');
 
 import Coinbase = require("./gateways/coinbase");
-import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
 import Utils = require("./utils");
 import Broker = require("./broker");
@@ -68,7 +67,7 @@ const gateway = (() => {
   switch (bindings.cfmExchange()) {
     case Models.Exchange.Coinbase: return new Coinbase.Coinbase(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
     case Models.Exchange.Bitfinex: return new Bitfinex.Bitfinex(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
-    case Models.Exchange.OkCoin: return new OkCoin.OkCoin(bindings.gwSymbol(), bindings.cfString, bindings.evOn, bindings.evUp);
+    case Models.Exchange.OkCoin:
     case Models.Exchange.HitBtc:
     case Models.Exchange.Korbit:
     case Models.Exchange.Poloniex:

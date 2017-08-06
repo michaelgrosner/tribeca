@@ -6,15 +6,6 @@ namespace K {
   typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
   class FN {
     public:
-      static Local<String> v8S(string k) {
-        return String::NewFromUtf8(Isolate::GetCurrent(), k.data());
-      };
-      static Local<String> v8S(Isolate* isolate, string k) {
-        return String::NewFromUtf8(isolate, k.data());
-      };
-      static string S8v(Local<String> k) {
-        return string(*String::Utf8Value(k));
-      };
       static string S2l(string k) {
         transform(k.begin(), k.end(), k.begin(), ::tolower);
         return k;
@@ -24,6 +15,9 @@ namespace K {
         return k;
       };
       static int S2mC(string k);
+      static Local<String> v8S(string k) { return String::NewFromUtf8(Isolate::GetCurrent(), k.data()); };
+      static Local<String> v8S(Isolate* isolate, string k) { return String::NewFromUtf8(isolate, k.data()); };
+      static string S8v(Local<String> k) { return string(*String::Utf8Value(k)); };
       static unsigned long T() {
         return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
       };
@@ -103,7 +97,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -125,7 +119,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -146,7 +140,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -167,7 +161,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -189,7 +183,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -213,7 +207,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -237,7 +231,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -260,7 +254,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -284,7 +278,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;;
+          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
