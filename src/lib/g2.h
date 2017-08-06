@@ -81,8 +81,8 @@ namespace K {
         hub.onMessage([&](uWS::WebSocket<uWS::CLIENT> *w, char *message, size_t length, uWS::OpCode opCode) {
           json k = json::parse(string(message, length));
           if (k.is_array()) {
-            for (json::iterator it = k.begin(); it != k.end(); ++it)
-              if ((*it).find("channel") != (*it).end())
+            for (json::iterator it = k.begin(); it != k.end(); ++it) {
+              if ((*it).find("channel") != (*it).end()) {
                 if ((!(*it)["result"].is_null() and !(*it)["result"]) or !(*it)["error_code"].is_null()) {
                   if (!(*it)["error_code"].is_null() && ((*it)["error_code"] == 10010 or (*it)["error_code"] == 10010))
                     for (vector<map<string, double>>::iterator it_ = oIQ.begin(); it_ != oIQ.end();) {
@@ -143,6 +143,8 @@ namespace K {
                   if (!(*it)["data"].is_object() or !(*it)["data"]["order_id"].is_number()) return;
                   GW::gwOrderUp(mGWos("", to_string((*it)["data"]["order_id"].get<int>()), mORS::Cancelled));
                 }
+              }
+            }
           } else cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << k << endl;
         });
         hub.connect(ws, nullptr);
