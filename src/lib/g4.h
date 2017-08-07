@@ -170,7 +170,7 @@ namespace K {
           string p_;
           B64::Encode(string("{\"request\":\"/v1/order/cancel\",\"order_id\":").append(to_string((*it)["id"].get<long>())).append(",\"nonce\":\"").append(to_string(FN::T()*1000)).append("\"}"), &p_);
           json k_ = FN::wJet(string(http).append("/order/cancel"), p_, apikey, FN::oHmac384(p_, secret), true);
-          if (k_.is_string()) GW::gwOrderUp(mGWos("", to_string((*it)["id"].get<long>()), mORS::Cancelled));
+          if (k_["message"].is_string()) GW::gwOrderUp(mGWos("", to_string((*it)["id"].get<long>()), mORS::Cancelled));
         }
       }
       string clientId() { string t = to_string(FN::T()); return string(to_string(++seq)).append(t.size()>7?t.substr(t.size()-7):t); }
