@@ -93,10 +93,10 @@ namespace K {
                 if (k["/1/0"_json_pointer].is_number()) k["/1"_json_pointer] = { k["/1"_json_pointer] };
                 if (k["/1/0"_json_pointer].is_array())
                   for (json::iterator it = k["/1"_json_pointer].begin(); it != k["/1"_json_pointer].end(); ++it) {
-                    string k_ = k.dump();
+                    string k_ = (*it).dump();
                     string p_ = k_.substr(k_.find_last_of("[")+1);
                     double p = decimal_cast<8>(p_.substr(0, p_.find(","))).getAsDouble();
-                    bool c = (*it)["/1"_json_pointer].get<int>() != 0;
+                    bool c = (*it)["/1"_json_pointer].get<int>() > 0;
                     bool s = (*it)["/2"_json_pointer].get<double>() > 0;
                     p_ = k_.substr(k_.find_last_of(",")+1);
                     p_ = p_.substr(0, p_.find("]"));
