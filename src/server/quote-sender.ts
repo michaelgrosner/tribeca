@@ -80,11 +80,19 @@ export class QuoteSender {
     var quotesInMemoryNew = 0;
     var quotesInMemoryWorking = 0;
     var quotesInMemoryDone = 0;
+    var oIx = [];
+    var oIt = new Date().getTime();
     this._orderBroker.orderCache.allOrders.forEach(x => {
-      if (x.orderStatus === Models.OrderStatus.New) ++quotesInMemoryNew;
+      if (x.orderStatus === Models.OrderStatus.New) {
+        if (!x.exchangeId && oIt-10000>x.time)
+          oIx.push(x.orderId)
+        else ++quotesInMemoryNew;
+      }
       else if (x.orderStatus === Models.OrderStatus.Working) ++quotesInMemoryWorking;
       else ++quotesInMemoryDone;
     });
+    while(oIx.length) this._orderBroker.orderCache.allOrders.delete(oIx.pop());
+
     if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && quotesInMemoryNew === this._latestStatus.quotesInMemoryNew && quotesInMemoryWorking === this._latestStatus.quotesInMemoryWorking && quotesInMemoryDone === this._latestStatus.quotesInMemoryDone) return;
 
     this._latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
