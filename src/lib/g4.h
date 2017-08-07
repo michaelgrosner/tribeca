@@ -88,8 +88,10 @@ namespace K {
             if (k["/1"_json_pointer].is_string() and k["/1"_json_pointer] == "hb") stillAlive = true;
             else if (k["/1"_json_pointer].is_string() and k["/1"_json_pointer] == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
             else if (k["/0"_json_pointer].is_number() and chan.find(k["/0"_json_pointer]) != chan.end()) {
-              if (chan[k["/0"_json_pointer]] == "auth" and k["/1"_json_pointer].is_string() and (k["/1"_json_pointer] == "ou" or k["/1"_json_pointer] == "oc")) { GW::gwOrderUp(mGWoa(to_string(k["/2/2"_json_pointer].get<long>()), to_string(k["/2/0"_json_pointer].get<long>()), getOS(k), k["/2/16"_json_pointer].get<double>(), abs(k["/2/6"_json_pointer].get<double>()), abs(abs(k["/2/7"_json_pointer].get<double>()) - abs(k["/2/6"_json_pointer].get<double>())), abs(abs(k["/2/7"_json_pointer].get<double>()) - abs(k["/2/6"_json_pointer].get<double>())), k["/2/17"_json_pointer].get<double>())); }
-              else if (chan[k["/0"_json_pointer]] == "book") {
+              if (chan[k["/0"_json_pointer]] == "auth" and k["/1"_json_pointer].is_string() and (k["/1"_json_pointer] == "ou" or k["/1"_json_pointer] == "oc")) {
+                  if ((int)getOS(k)==3) GW::gwOrderUp(mGWos(to_string(k["/2/2"_json_pointer].get<long>()), "", mORS::Cancelled));
+                  else GW::gwOrderUp(mGWoa(to_string(k["/2/2"_json_pointer].get<long>()), to_string(k["/2/0"_json_pointer].get<long>()), getOS(k), k["/2/16"_json_pointer].get<double>(), abs(k["/2/6"_json_pointer].get<double>()), abs(abs(k["/2/7"_json_pointer].get<double>()) - abs(k["/2/6"_json_pointer].get<double>())), abs(abs(k["/2/7"_json_pointer].get<double>()) - abs(k["/2/6"_json_pointer].get<double>())), k["/2/17"_json_pointer].get<double>()));
+              } else if (chan[k["/0"_json_pointer]] == "book") {
                 if (k["/1/0"_json_pointer].is_number()) k["/1"_json_pointer] = { k["/1"_json_pointer] };
                 if (k["/1/0"_json_pointer].is_array())
                   for (json::iterator it = k["/1"_json_pointer].begin(); it != k["/1"_json_pointer].end(); ++it) {
@@ -150,6 +152,7 @@ namespace K {
       }
       void cancel(string oI, string oE, mSide oS, unsigned long oT) {
         string m = string("[0,\"oc\",null,{\"id\":").append(oE).append("}]");
+        GW::gwOrderUp(mGWos(oI, "", mORS::Cancelled));
         ows->send(m.data(), m.length(), uWS::OpCode::TEXT);
       }
       void cancelAll() {
