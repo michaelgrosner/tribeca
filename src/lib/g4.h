@@ -44,8 +44,6 @@ namespace K {
       void book() {
         hub.onConnection([&](uWS::WebSocket<uWS::CLIENT> *w, uWS::HttpRequest req) {
           ows = w;
-          GW::gwBookUp(mConnectivityStatus::Connected);
-          GW::gwOrderUp(mConnectivityStatus::Connected);
           string pn = to_string(FN::T()*1000);
           string pp = string("AUTH").append(pn);
           string m = string("{\"event\":\"auth\",\"filter\":[\"trading\"],\"apiKey\":\"").append(apikey).append("\",\"authNonce\":\"").append(pn).append("\",\"authPayload\":\"").append(pp).append("\",\"authSig\":\"").append(FN::oHmac384(pp, secret)).append("\"").append("}");
@@ -54,8 +52,10 @@ namespace K {
           w->send(m.data(), m.length(), uWS::OpCode::TEXT);
           m = string("{\"event\":\"subscribe\",\"channel\":\"trades\",\"symbol\":\"t").append(FN::S2u(symbol)).append("\"}");
           w->send(m.data(), m.length(), uWS::OpCode::TEXT);
+          GW::gwBookUp(mConnectivityStatus::Connected);
         });
         hub.onDisconnection([&](uWS::WebSocket<uWS::CLIENT> *w, int code, char *message, size_t length) {
+          GW::gwOrderUp(mConnectivityStatus::Disconnected);
           GW::gwBookUp(mConnectivityStatus::Disconnected);
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Disconnected, reconnecting.." << endl;
           if (uv_timer_init(uv_default_loop(), &gwRec_)) { cout << FN::uiT() << "Errrror: GW gwRec_ init timer failed." << endl; exit(1); }
@@ -66,6 +66,7 @@ namespace K {
           }, 5000, 0)) { cout << FN::uiT() << "Errrror: GW gwRec_ start timer failed." << endl; exit(1); }
         });
         hub.onError([&](void *u) {
+          GW::gwOrderUp(mConnectivityStatus::Disconnected);
           GW::gwBookUp(mConnectivityStatus::Disconnected);
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error, reconnecting.." << endl;
           if (uv_timer_init(uv_default_loop(), &gwRec_)) { cout << FN::uiT() << "Errrror: GW gwRec_ init timer failed." << endl; exit(1); }
@@ -83,7 +84,14 @@ namespace K {
             else if (k["event"] == "error") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Error " << k << endl;
             else if (k["event"] == "info") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Info " << k << endl;
             else if (k["event"] == "subscribed") { chan[k["chanId"]] = k["channel"]; cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming channel " << k["chanId"] << ":" << k["channel"] << endl; }
-            else if (k["event"] == "auth") { if (k["status"]!="OK") w->close(); else { chan[k["chanId"]] = "auth"; cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming orders " << k["status"] << (k["msg"].is_string() ? string(" ").append(k["msg"]) : " 0:\"auth\"" ) << endl; } }
+            else if (k["event"] == "auth") {
+              if (k["status"] != "OK") w->close();
+              else {
+                chan[k["chanId"]] = "auth";
+                GW::gwOrderUp(mConnectivityStatus::Connected);
+                cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Streaming orders " << k["status"] << (k["msg"].is_string() ? string(" ").append(k["msg"]) : " 0:\"auth\"" ) << endl;
+              }
+            }
           } else if (k.is_array()) {
             if (k["/1"_json_pointer].is_string() and k["/1"_json_pointer] == "hb") stillAlive = true;
             else if (k["/1"_json_pointer].is_string() and k["/1"_json_pointer] == "n") cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " WS Notice " << k << endl;
@@ -152,13 +160,18 @@ namespace K {
       }
       void cancel(string oI, string oE, mSide oS, unsigned long oT) {
         string m = string("[0,\"oc\",null,{\"id\":").append(oE).append("}]");
-        GW::gwOrderUp(mGWos(oI, "", mORS::Cancelled));
         ows->send(m.data(), m.length(), uWS::OpCode::TEXT);
       }
       void cancelAll() {
         string p;
-        B64::Encode(string("{\"request\":\"/v1/order/cancel/all\",\"nonce\":\"").append(to_string(FN::T()*1000)).append("\"}"), &p);
-        FN::wGet(string(http).append("/order/cancel/all"), p, apikey, FN::oHmac384(p, secret), true);
+        B64::Encode(string("{\"request\":\"/v1/orders\",\"nonce\":\"").append(to_string(FN::T()*1000)).append("\"}"), &p);
+        json k = FN::wJet(string(http).append("/orders"), p, apikey, FN::oHmac384(p, secret), true);
+        if (k.is_array()) for (json::iterator it = k.begin(); it != k.end(); ++it) {
+          string p_;
+          B64::Encode(string("{\"request\":\"/v1/order/cancel\",\"order_id\":").append(to_string((*it)["id"].get<long>())).append(",\"nonce\":\"").append(to_string(FN::T()*1000)).append("\"}"), &p_);
+          json k_ = FN::wJet(string(http).append("/order/cancel"), p_, apikey, FN::oHmac384(p_, secret), true);
+          if (k_.is_string()) GW::gwOrderUp(mGWos("", to_string((*it)["id"].get<long>()), mORS::Cancelled));
+        }
       }
       string clientId() { string t = to_string(FN::T()); return string(to_string(++seq)).append(t.size()>7?t.substr(t.size()-7):t); }
       mORS getOS(json k) {
