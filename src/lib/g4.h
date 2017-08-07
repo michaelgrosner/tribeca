@@ -93,19 +93,23 @@ namespace K {
                 if (k["/1/0"_json_pointer].is_number()) k["/1"_json_pointer] = { k["/1"_json_pointer] };
                 if (k["/1/0"_json_pointer].is_array())
                   for (json::iterator it = k["/1"_json_pointer].begin(); it != k["/1"_json_pointer].end(); ++it) {
-                    double p = (*it)["/0"_json_pointer].get<double>();
-                    bool c = (*it)["/1"_json_pointer].get<double>() > 0;
+                    string k_ = k.dump();
+                    string p_ = k_.substr(k_.find_last_of("[")+1);
+                    double p = decimal_cast<8>(p_.substr(0, p_.find(","))).getAsDouble();
+                    bool c = (*it)["/1"_json_pointer].get<int>() != 0;
                     bool s = (*it)["/2"_json_pointer].get<double>() > 0;
-                    double a = abs((*it)["/2"_json_pointer].get<double>());
+                    p_ = k_.substr(k_.find_last_of(",")+1);
+                    p_ = p_.substr(0, p_.find("]"));
+                    if (p_.substr(0,1)=="-") p_ = p_.substr(1);
+                    double a = decimal_cast<8>(p_).getAsDouble();
+                    if (s) {
+                      for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
+                        if ((*it_).price == p) it_ = b_.erase(it_); else ++it_;
+                    } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
+                      if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
                     if (c) {
                       if (s) b_.push_back(mGWbl(p, a));
                       else a_.push_back(mGWbl(p, a));
-                    } else {
-                      if (s) {
-                        for (vector<mGWbl>::iterator it_ = b_.begin(); it_ != b_.end();)
-                          if ((*it_).price == p) it_ = b_.erase(it_); else ++it_;
-                      } else for (vector<mGWbl>::iterator it_ = a_.begin(); it_ != a_.end();)
-                        if ((*it_).price == p) it_ = a_.erase(it_); else ++it_;
                     }
                   }
                 sort(b_.begin(), b_.end(), [](const mGWbl &_a_, const mGWbl &_b_) { return _a_.price*-1 < _b_.price*-1; });
