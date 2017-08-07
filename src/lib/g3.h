@@ -169,9 +169,21 @@ namespace K {
         }
         getBook();
       };
-      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {}
-      void cancel(string oI, string oE, mSide oS, unsigned long oT) {}
-      void cancelAll() {}
+      void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) {
+
+      }
+      void cancel(string oI, string oE, mSide oS, unsigned long oT) {
+
+      }
+      void cancelAll() {
+        unsigned long t = FN::T() / 1000;
+        string p;
+        B64::Decode(secret, &p);
+        B64::Encode(FN::oHmac256(string(to_string(t)).append("DELETE/orders"), p), &p);
+        json k = FN::wJet(string(http).append("/orders"), to_string(t), apikey, p, pass, true);
+        if (k.is_array()) for (json::iterator it = k.begin(); it != k.end(); ++it)
+          GW::gwOrderUp(mGWos("", *it, mORS::Cancelled));
+      }
       string clientId() { return ""; }
   };
 }

@@ -276,6 +276,31 @@ namespace K {
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
+      static json wJet(string k, string t, string a, string s, string p, bool d) {
+        return json::parse(wGet(k, t, a, s, p, d));
+      };
+      static string wGet(string k, string t, string a, string s, string p, bool d) {
+        string k_;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
+          h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) cout << "CURL wGed failed " << curl_easy_strerror(r) << endl;
+          curl_easy_cleanup(curl);
+        }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        return k_;
+      };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
