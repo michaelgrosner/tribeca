@@ -322,7 +322,8 @@ export class OrderBroker {
 
     private updateOrderStatusInMemory = (osr : Models.OrderStatusReport) => {
         if (osr.orderStatus != Models.OrderStatus.Cancelled && osr.orderStatus != Models.OrderStatus.Complete) {
-          this.orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
+          if (typeof osr.exchangeId !== "undefined" && osr.exchangeId)
+            this.orderCache.exchIdsToClientIds.set(osr.exchangeId, osr.orderId);
           this.orderCache.allOrders.set(osr.orderId, osr);
         } else {
           this.orderCache.exchIdsToClientIds.delete(osr.exchangeId);
