@@ -21,7 +21,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js (v7 or v8). Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a 64bit dedicated Debian, CentOS or macOS instance is recommended.
+Runs on the latest node.js v8. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a 64bit dedicated Debian, CentOS or macOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
@@ -60,6 +60,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Release 2.0 Changelog](#release-20-changelog)
   - [Release 1.0 Changelog](#release-10-changelog)
 - Humans and Milk Mammals
+  - [Unlock](#donations)
   - [Donations](#donations)
   - [Help](#help)
   - [Issues](#issues)
@@ -70,7 +71,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
-1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/) v7 or v8 (see `node -v` or `nodejs -v`).
+1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/) v8 (see `node -v` or `nodejs -v`).
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
@@ -266,6 +267,14 @@ Added a bit of love to Kira.
 ### Release 1.0 Changelog:
 
 see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
+
+### Unlock
+
+The bot has all features unlocked, but to support further development by ctubio, the plan soOn is to lock some features.
+
+To unlock all features currently nothing has to be done, but maybe, soOn, a payment of 0.12100000 BTC will be required.
+
+You can always choose to not support further development of the bot by ctubio, just keep running some old commit and do not upgrade.
 
 ### Donations
 
