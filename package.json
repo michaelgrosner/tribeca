@@ -27,7 +27,6 @@
     "browserify": "^14.4.0",
     "core-js": "^2.4.1",
     "es6-shim": "^0.35.3",
-    "eventemitter3": "^2.0.3",
     "forever": "^0.15.3",
     "hacktimer": "^1.1.3",
     "jquery": "^3.2.1",
@@ -39,7 +38,6 @@
     "ts-helpers": "^1.1.2",
     "typescript": "2.3.4",
     "uglify-es": "^3.0.25",
-    "uws": "^8.14.0",
     "zone.js": "^0.8.14"
   },
   "devDependencies": {
