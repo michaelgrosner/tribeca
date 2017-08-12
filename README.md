@@ -60,7 +60,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Release 2.0 Changelog](#release-20-changelog)
   - [Release 1.0 Changelog](#release-10-changelog)
 - Humans and Milk Mammals
-  - [Unlock](#donations)
+  - [Unlock](#unlock)
   - [Donations](#donations)
   - [Help](#help)
   - [Issues](#issues)
