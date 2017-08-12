@@ -125,6 +125,16 @@ namespace K {
     double oA;
     mGWoa(string oI, string oE, mORS os, double oP, double oQ, double oLQ, double oC, double oA);
   };
+  struct mGWmt {
+    mExchange exchange;
+    int base;
+    int quote;
+    double price;
+    double size;
+    unsigned long time;
+    mSide make_side;
+    mGWmt(mExchange exchange, int base, int quote, double price, double size, double time, mSide make_side);
+  };
 }
 
 #endif
