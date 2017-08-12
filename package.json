@@ -47,7 +47,7 @@
     "istanbul": "^1.0.0-alpha",
     "istanbul-coveralls": "^1.0.3",
     "mocha": "^3.5.0",
-    "ts-node": "^3.2.0"
+    "ts-node": "^3.3.0"
   },
   "main": "./K.js",
   "scripts": {
