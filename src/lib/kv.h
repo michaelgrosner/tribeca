@@ -2,6 +2,7 @@
 #define K_KV_H_
 
 namespace K {
+  string A;
   int FN::S2mC(string k) { k = FN::S2u(k); for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i; cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl; exit(1); };
   Persistent<Object> qpRepo;
   string cFname;
@@ -11,7 +12,7 @@ namespace K {
   string dbFpath;
   int sqlite3_open(string f, sqlite3** db);
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
-  uWS::Hub hub(0, true);
+  static uWS::Hub hub(0, true);
   uv_check_t loop;
   uv_timer_t uiD_;
   Persistent<Function> noop;
@@ -29,7 +30,9 @@ namespace K {
   uv_timer_t gwRec_;
   uv_timer_t gwPos_;
   uv_timer_t gwBook_;
-  uv_timer_t gwBookTrade_;
+  uv_timer_t gwTrade_;
+  uv_async_t gwFix_;
+  pthread_mutex_t gwMutex_;
   bool gwAutoStart = false;
   bool gwState = false;
   mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
@@ -37,6 +40,8 @@ namespace K {
   mConnectivityStatus gwEOConn = mConnectivityStatus::Disconnected;
   Gw* gw;
   Gw* gw_;
+  vector<mGWmt> mGWmt_;
+  Persistent<Object> mGWmkt;
 }
 
 #endif

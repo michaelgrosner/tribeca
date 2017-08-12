@@ -137,6 +137,7 @@ namespace K {
         app_state->Set(FN::v8S("hour"), Number::New(isolate, localtime(&rawtime)->tm_hour));
         app_state->Set(FN::v8S("freq"), Number::New(isolate, iOSR60 / 2));
         app_state->Set(FN::v8S("dbsize"), Number::New(isolate, DB::dbSize()));
+        app_state->Set(FN::v8S("a"), FN::v8S(A));
         _app_state.Reset(isolate, app_state);
         iOSR60 = 0;
         uiSend(isolate, uiTXT::ApplicationState, app_state);

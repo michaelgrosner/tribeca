@@ -14,7 +14,6 @@ bindings.uiLoop(noop);
 require('events').EventEmitter.prototype._maxListeners = 30;
 import request = require('request');
 
-import Coinbase = require("./gateways/coinbase");
 import Utils = require("./utils");
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
@@ -62,19 +61,6 @@ const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(
 const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
 
-const gateway = (() => {
-  switch (bindings.cfmExchange()) {
-    case Models.Exchange.Coinbase: return new Coinbase.Coinbase(bindings.gwSymbol(), bindings.cfString, bindings.evUp);
-    case Models.Exchange.Bitfinex:
-    case Models.Exchange.OkCoin:
-    case Models.Exchange.HitBtc:
-    case Models.Exchange.Korbit:
-    case Models.Exchange.Poloniex:
-    case Models.Exchange.Null: return {oe:{sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll}};
-    default: throw new Error("no gateway provided for exchange " + bindings.cfmExchange());
-  }
-})();
-
 const orderBroker = new Broker.OrderBroker(
   bindings.qpRepo,
   bindings.cfmCurrencyPair(),
@@ -82,7 +68,7 @@ const orderBroker = new Broker.OrderBroker(
   bindings.gwTakeFee(),
   bindings.gwMinTick(),
   bindings.gwExchange(),
-  gateway.oe,
+  {sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll},
   bindings.dbInsert,
   bindings.uiSnap,
   bindings.uiHand,

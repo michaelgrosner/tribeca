@@ -2,19 +2,6 @@
 #define K_MG_H_
 
 namespace K {
-  struct mGWmt {
-    mExchange exchange;
-    int base;
-    int quote;
-    double price;
-    double size;
-    unsigned long time;
-    mSide make_side;
-    mGWmt(mExchange e_, int b_, int q_, double p_, double s_, double t_, mSide m_):
-      exchange(e_), base(b_), quote(q_), price(p_), size(s_), time(t_), make_side(m_) {}
-  };
-  vector<mGWmt> mGWmt_;
-  Persistent<Object> mGWmkt;
   class MG {
     public:
       static void main(Local<Object> exports) {

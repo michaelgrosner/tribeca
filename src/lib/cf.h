@@ -52,7 +52,6 @@ namespace K {
         }
         if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         NODE_SET_METHOD(exports, "cfString", CF::_cfString);
-        NODE_SET_METHOD(exports, "cfmExchange", CF::_cfmExchange);
         NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
       };
       static void external() {
@@ -111,11 +110,6 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(FN::v8S(cfString(FN::S8v(args[0]->ToString()))));
-      };
-      static void _cfmExchange(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        args.GetReturnValue().Set(Number::New(isolate, (double)cfExchange()));
       };
       static void _cfmCurrencyPair(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

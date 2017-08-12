@@ -26,10 +26,11 @@ import {SubscriberFactory} from './shared_directives';
         <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
-        <td [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
-        <td [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td [ngClass]="level.askClass"><div style="float:left;"><div [ngClass]="level.askClassVisual">&nbsp;</div></div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
+        <td *ngIf="i == 1 && levels.length == 5" colspan="4"><div class="text-danger" style="height:156px;"><br />Do you want to <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels?<br>and send/cancel orders under milliseconds?<br /><br />Send 0.12100000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br />Wait 2 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.12100000 BTC --></div></td>
+        <td *ngIf="i != 1 || levels.length != 5" [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
+        <td *ngIf="i != 1 || levels.length != 5" [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
+        <td *ngIf="i != 1 || levels.length != 5" [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
+        <td *ngIf="i != 1 || levels.length != 5" [ngClass]="level.askClass"><div style="float:left;"><div [ngClass]="level.askClassVisual">&nbsp;</div></div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
       </tr>
     </table></div>`
 })
@@ -53,6 +54,7 @@ export class MarketQuotingComponent implements OnInit {
   public noAskReason: string;
   private targetBasePosition: number;
   private sideAPRSafety: string;
+  public a: string;
   @Input() product: Models.ProductState;
 
   @Input() set connected(connected: boolean) {
@@ -74,7 +76,8 @@ export class MarketQuotingComponent implements OnInit {
       [Models.Topics.MarketData, this.updateMarket, this.clearMarket],
       [Models.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
       [Models.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-      [Models.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition]
+      [Models.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition],
+      [Models.Topics.ApplicationState, this.updateAddress, this.clearAddress]
     ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)
@@ -92,9 +95,17 @@ export class MarketQuotingComponent implements OnInit {
     this.sideAPRSafety = null;
   }
 
+  private clearAddress = () => {
+    this.a = "";
+  }
+
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
+  }
+
+  private updateAddress = (A) => {
+    this.a = A.a;
   }
 
   private clearQuoteStatus = () => {
