@@ -11,7 +11,7 @@ G_ARG   := -std=c++11 -DUSE_LIBUV -O3 -shared -fPIC -Ibuild/node-$(NODEv)/includ
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp      \
   -Lbuild/libpng-$(V_PNG)/lib -Ldist/lib -Wl,-rpath,'$$ORIGIN'                                \
-src/lib/K.cc -lsqlite3 -lz -lK -lpng16 -lcurl
+src/lib/K.cc -lsqlite3 -lz -lK -lpng16 -lcurl -lquickfix
 
 all: K
 
@@ -66,13 +66,11 @@ help:
 
 K: src/lib/K.cc
 	@g++ --version
-	NODEv=v7.1.0 ABIv=51 $(MAKE) node `(uname -s)`
 	NODEv=v8.1.2 ABIv=57 $(MAKE) node `(uname -s)`
 	@$(MAKE) dist -s
 
 node: build
 ifndef NODEv
-	@NODEv=v7.1.0 $(MAKE) $@
 	@NODEv=v8.1.2 $(MAKE) $@
 else
 	test -d build/node-$(NODEv) || curl https://nodejs.org/dist/$(NODEv)/node-$(NODEv)-headers.tar.gz | tar xz -C build
