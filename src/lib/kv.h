@@ -12,7 +12,7 @@ namespace K {
   string dbFpath;
   int sqlite3_open(string f, sqlite3** db);
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
-  static uWS::Hub hub(0, true);
+  uWS::Hub hub(0, true);
   uv_check_t loop;
   uv_timer_t uiD_;
   Persistent<Function> noop;
