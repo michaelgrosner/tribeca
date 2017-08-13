@@ -33,7 +33,7 @@ export class SafetyCalculator {
       private _fvEngine: FairValue.FairValueEngine,
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
-      private _orderBroker: Broker.OrderBroker,
+      private _tradesMemory,
       private _uiSnap,
       private _uiSend,
       private _evOn,
@@ -84,7 +84,7 @@ export class SafetyCalculator {
         var sellPq = 0;
         var _buyPq = 0;
         var _sellPq = 0;
-        var trades = this._orderBroker.tradesMemory;
+        var trades = this._tradesMemory;
         var widthPong = (params.widthPercentage)
             ? params.widthPongPercentage * fv.price / 100
             : params.widthPong;

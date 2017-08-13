@@ -12,7 +12,9 @@ export class QuoteSender {
   private _brokerState: boolean = false;
   constructor(
     private _quotingEngine: QuotingEngine.QuotingEngine,
-    private _orderBroker: Broker.OrderBroker,
+    private _allOrders,
+    private _cancelOrder,
+    private _sendOrder,
     private _minTick,
     private _qpRepo,
     private _uiSnap,
@@ -82,7 +84,7 @@ export class QuoteSender {
     var quotesInMemoryDone = 0;
     var oIx = [];
     var oIt = new Date().getTime();
-    this._orderBroker.orderCache.allOrders.forEach(x => {
+    this._allOrders.forEach(x => {
       if (x.orderStatus === Models.OrderStatus.New) {
         if (!x.exchangeId && oIt-10000>x.time)
           oIx.push(x.orderId)
@@ -91,7 +93,7 @@ export class QuoteSender {
       else if (x.orderStatus === Models.OrderStatus.Working) ++quotesInMemoryWorking;
       else ++quotesInMemoryDone;
     });
-    while(oIx.length) this._orderBroker.orderCache.allOrders.delete(oIx.pop());
+    while(oIx.length) this._allOrders.delete(oIx.pop());
 
     if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && quotesInMemoryNew === this._latestStatus.quotesInMemoryNew && quotesInMemoryWorking === this._latestStatus.quotesInMemoryWorking && quotesInMemoryDone === this._latestStatus.quotesInMemoryDone) return;
 
@@ -120,7 +122,7 @@ export class QuoteSender {
 
   private orderCacheSide = (side: Models.Side, sort: boolean) => {
     let orderSide = [];
-    this._orderBroker.orderCache.allOrders.forEach(x => {
+    this._allOrders.forEach(x => {
       if (side === x.side) orderSide.push(x);
     });
     if (sort) {
@@ -181,7 +183,7 @@ export class QuoteSender {
       } else return;
     }
 
-    this._orderBroker.sendOrder(new Models.SubmitNewOrder(
+    this._sendOrder(new Models.SubmitNewOrder(
       side,
       q.size,
       Models.OrderType.Limit,
@@ -199,19 +201,19 @@ export class QuoteSender {
         ? price < x.price
         : price > x.price
     ).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId))
+      this._cancelOrder(new Models.OrderCancel(x.orderId))
     );
   };
 
   private stopWorstQuote = (side: Models.Side) => {
     const orderSide = this.orderCacheSide(side, true);
     if (orderSide.length)
-      this._orderBroker.cancelOrder(new Models.OrderCancel(orderSide.shift().orderId));
+      this._cancelOrder(new Models.OrderCancel(orderSide.shift().orderId));
   };
 
   private stopAllQuotes = (side: Models.Side) => {
     this.orderCacheSide(side, false).forEach(x =>
-      this._orderBroker.cancelOrder(new Models.OrderCancel(x.orderId))
+      this._cancelOrder(new Models.OrderCancel(x.orderId))
     );
   };
 }
