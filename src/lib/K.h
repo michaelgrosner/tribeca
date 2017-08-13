@@ -25,7 +25,6 @@
 #include <openssl/md5.h>
 #include <sqlite3.h>
 #include "quickfix/Application.h"
-#include "quickfix/MessageCracker.h"
 #include "quickfix/FileStore.h"
 #include "quickfix/SocketInitiator.h"
 #include "quickfix/SessionSettings.h"
