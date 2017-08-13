@@ -91,7 +91,7 @@ quickfix: build
 
 Linux: build
 ifdef ABIv
-	g++-4.9 -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
+	g++ -o dist/lib/K.linux.$(ABIv).node -static-libstdc++ -static-libgcc -s $(G_ARG)
 endif
 
 Darwin: build
