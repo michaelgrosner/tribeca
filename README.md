@@ -218,7 +218,7 @@ Added Makefile to replace npm scripts.
 
 Added PNG files as configuration files.
 
-Updated books, wallets and tickers out of javascript (all exchanges).
+Updated gateways out of javascript (all exchanges).
 
 Added built-in C++ WWW Server to replace expressjs and socketio.
 
