@@ -21,7 +21,7 @@ export class OrderBroker {
         }
     }
 
-    cleanClosedOrders() {
+    private cleanClosedOrders() {
       var lateCleans : {[id: string] : boolean} = {};
       for(var i = 0;i<this.tradesMemory.length;i++) {
         if (this.tradesMemory[i].Kqty+0.0001 >= this.tradesMemory[i].quantity) {
@@ -43,7 +43,7 @@ export class OrderBroker {
       }
     }
 
-    cleanTrade(tradeId: string) {
+    private cleanTrade(tradeId: string) {
       var lateCleans : {[id: string] : boolean} = {};
       for(var i = 0;i<this.tradesMemory.length;i++) {
         if (this.tradesMemory[i].tradeId == tradeId) {
@@ -65,7 +65,7 @@ export class OrderBroker {
       }
     }
 
-    cleanOrders() {
+    private cleanOrders() {
       var lateCleans : {[id: string] : boolean} = {};
       for(var i = 0;i<this.tradesMemory.length;i++) {
         lateCleans[this.tradesMemory[i].tradeId] = true;
@@ -184,7 +184,7 @@ export class OrderBroker {
       }
     };
 
-    public updateOrderState = (osr: Models.OrderStatusUpdate): Models.OrderStatusReport => {
+    private updateOrderState = (osr: Models.OrderStatusUpdate): Models.OrderStatusReport => {
         let orig: Models.OrderStatusUpdate;
         if (osr.orderStatus === Models.OrderStatus.New) {
             orig = osr;
