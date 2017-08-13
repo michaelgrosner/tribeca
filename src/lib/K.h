@@ -33,7 +33,6 @@
 #include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
 #include "quickfix/fix42/OrderCancelReject.h"
-#include "quickfix/fix42/OrderCancelReplaceRequest.h"
 
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
