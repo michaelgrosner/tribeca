@@ -7,6 +7,7 @@ namespace K {
       static void main(Local<Object> exports) {
         Isolate* isolate = exports->GetIsolate();
         CF::internal(exports);
+        int port = stoi(CF::cfString("WebClientListenPort"));
         string name = CF::cfString("WebClientUsername");
         string key = CF::cfString("WebClientPassword");
         uiGroup->setUserData(new uiSess);
@@ -92,7 +93,6 @@ namespace K {
             }
           }
         });
-        int port = stoi(CF::cfString("WebClientListenPort"));
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
           cout << FN::uiT() << "UI ready over HTTPS on external port " << to_string(port) << "." << endl;
