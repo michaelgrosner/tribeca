@@ -55,11 +55,6 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const initTrades = bindings.dbLoad(Models.Topics.Trades);
-const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
-const initMkt = bindings.dbLoad(Models.Topics.MarketData);
-const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition);
-
 const orderBroker = new Broker.OrderBroker(
   bindings.qpRepo,
   bindings.cfmCurrencyPair(),
@@ -74,13 +69,15 @@ const orderBroker = new Broker.OrderBroker(
   bindings.uiSend,
   bindings.evOn,
   bindings.evUp,
-  initTrades
+  bindings.dbLoad(Models.Topics.Trades)
 );
+
+const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
 
 const fvEngine = new FairValue.FairValueEngine(
   new MarketFiltration.MarketFiltration(
     bindings.gwMinTick(),
-    orderBroker,
+    orderBroker.orderCache.allOrders,
     bindings.evOn,
     bindings.evUp
   ),
@@ -97,7 +94,7 @@ const positionBroker = new Broker.PositionBroker(
   bindings.qpRepo,
   bindings.cfmCurrencyPair(),
   bindings.gwExchange(),
-  orderBroker,
+  orderBroker.orderCache.allOrders,
   fvEngine,
   bindings.uiSnap,
   bindings.uiSend,
@@ -121,7 +118,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
     bindings.qpRepo,
     bindings.dbInsert,
     bindings.computeStdevs,
-    initMkt
+    bindings.dbLoad(Models.Topics.MarketData)
   ),
   new PositionManagement.TargetBasePositionManager(
     bindings.gwMinTick(),
@@ -134,13 +131,13 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
     bindings.uiSend,
     bindings.evOn,
     bindings.evUp,
-    initTBP
+    bindings.dbLoad(Models.Topics.TargetBasePosition)
   ),
   new Safety.SafetyCalculator(
     fvEngine,
     bindings.qpRepo,
     positionBroker,
-    orderBroker,
+    orderBroker.tradesMemory,
     bindings.uiSnap,
     bindings.uiSend,
     bindings.evOn,
@@ -152,7 +149,9 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
 
 new QuoteSender.QuoteSender(
   quotingEngine,
-  orderBroker,
+  orderBroker.orderCache.allOrders,
+  orderBroker.cancelOrder,
+  orderBroker.sendOrder,
   bindings.gwMinTick(),
   bindings.qpRepo,
   bindings.uiSnap,

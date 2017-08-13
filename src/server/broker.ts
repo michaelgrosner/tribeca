@@ -453,7 +453,7 @@ export class PositionBroker {
         var amount = o.side == Models.Side.Ask
           ? this._report.baseAmount + this._report.baseHeldAmount
           : this._report.quoteAmount + this._report.quoteHeldAmount;
-        this._orderBroker.orderCache.allOrders.forEach(x => {
+        this._allOrders.forEach(x => {
           if (x.side !== o.side) return;
           let held = x.quantity * (x.side == Models.Side.Bid ? x.price : 1);
           if (amount>=held) {
@@ -472,7 +472,7 @@ export class PositionBroker {
       private _qpRepo,
       private _pair,
       private _exchange,
-      private _orderBroker: OrderBroker,
+      private _allOrders,
       private _fvEngine: FairValue.FairValueEngine,
       private _uiSnap,
       private _uiSend,
