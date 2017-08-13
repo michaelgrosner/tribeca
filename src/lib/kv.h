@@ -31,6 +31,7 @@ namespace K {
   uv_timer_t gwPos_;
   uv_timer_t gwBook_;
   uv_timer_t gwTrade_;
+  uv_timer_t gwCancelAll_;
   uv_async_t gwFix_;
   pthread_mutex_t gwMutex_;
   bool gwAutoStart = false;

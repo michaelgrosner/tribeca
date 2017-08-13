@@ -352,9 +352,6 @@ export class OrderBroker {
         this.tradesMemory = initTrades;
         this.orderCache = new OrderStateCache();
 
-        this._oeGateway.cancelAllOpenOrders();
-        setInterval(() => { if (this._qpRepo().cancelOrdersAuto) this._oeGateway.cancelAllOpenOrders(); }, moment.duration(5, 'minutes'));
-
         _uiSnap(Models.Topics.Trades, () => this.tradesMemory.map(t => Object.assign(t, { loadedFromDB: true})).slice(-1000));
         _uiSnap(Models.Topics.OrderStatusReports, () => {
           let orderCache = [];
