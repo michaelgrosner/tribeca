@@ -202,7 +202,7 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 
 Feel free to run `make test` anytime.
 
-To rebuild the application with your modifications, see `make help` and choose a target (on Linux `g++-4.9` is required).
+To rebuild the application with your modifications, see `make help` and choose a target.
 
 To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K`.
 
