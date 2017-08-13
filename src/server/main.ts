@@ -55,10 +55,10 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const initTrades = bindings.dbLoad(Models.Topics.Trades).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
-const initRfv = bindings.dbLoad(Models.Topics.EWMAChart).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
-const initMkt = bindings.dbLoad(Models.Topics.MarketData).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
-const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition).map(x => Object.assign(x, {time: new Date(x.time).getTime()}));
+const initTrades = bindings.dbLoad(Models.Topics.Trades);
+const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
+const initMkt = bindings.dbLoad(Models.Topics.MarketData);
+const initTBP = bindings.dbLoad(Models.Topics.TargetBasePosition);
 
 const orderBroker = new Broker.OrderBroker(
   bindings.qpRepo,
