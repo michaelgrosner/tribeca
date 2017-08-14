@@ -85,8 +85,7 @@ json: build
 quickfix: build
 	(test -f dist/lib/libquickfix.so || test -f dist/lib/libquickfix.dylib) || ( \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build  \
-	&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure --with-mysql=no             \
-  && LDFLAGS="-static-libstdc++ -static-libgcc -L -Wl,-rpath,'$$ORIGIN'" make     \
+	&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure && make                     \
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                  \
 	&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      )
 
@@ -102,11 +101,11 @@ endif
 
 dist:
 	mkdir -p build app/server/lib
-	$(MAKE) quickfix
 	$(MAKE) json
 	$(MAKE) png16
 	$(MAKE) uws
 	for K in dist/lib/*; do chmod +x $$K && cp $$K app/server/lib; done
+	sudo cp dist/lib/libstdc++.so.6.0.22 dist/lib/libmysqlclient.* /usr/lib/x86_64-linux-gnu/
 
 clean: build
 	rm -rf build
