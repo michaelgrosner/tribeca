@@ -83,9 +83,10 @@ json: build
 	test -f build/json-$(V_JSON)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp -o build/json-$(V_JSON)/json.h)
 
 quickfix: build
-	(test -f /usr/local/lib/libquickfix.so || test -f /usr/local/lib/libquickfix.dylib) || ( \
+	(test -f dist/lib/libquickfix.so || test -f dist/lib/libquickfix.dylib) || ( \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build  \
-	&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure && make                     \
+	&& cd build/quickfix-$(V_QF) && ./bootstrap && ./configure --with-mysql=no             \
+  && LDFLAGS="-static-libstdc++ -static-libgcc -L -Wl,-rpath,'$$ORIGIN'" make     \
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                  \
 	&& (test -f /sbin/ldconfig && sudo ldconfig || :)                                      )
 
@@ -105,7 +106,7 @@ dist:
 	$(MAKE) json
 	$(MAKE) png16
 	$(MAKE) uws
-	for K in dist/lib/*K*; do chmod +x $$K && cp $$K app/server/lib; done
+	for K in dist/lib/*; do chmod +x $$K && cp $$K app/server/lib; done
 
 clean: build
 	rm -rf build
