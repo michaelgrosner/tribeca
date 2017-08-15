@@ -33,6 +33,17 @@ namespace K {
       static double roundNearest(double value, double minTick) {
         return round(value / minTick) * minTick;
       };
+      static double roundUp(double value, double minTick) {
+        return ceil(value / minTick) * minTick;
+      };
+      static double roundDown(double value, double minTick) {
+        return floor(value / minTick) * minTick;
+      };
+      static double roundSide(double oP, double minTick, mSide oS) {
+        if (oS == mSide::Bid) return return roundDown(oP, minTick);
+        else if (oS == mSide::Ask) return roundUp(oP, minTick);
+        else return roundNearest(oP, minTick);
+      };
     private:
       static double ComputeStdev(double a[], int n, double f, double *mean) {
         if (n == 0) return 0.0;
@@ -51,14 +62,14 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         double value = args[0]->NumberValue();
         double minTick = args[1]->NumberValue();
-        Local<Number> num = Number::New(isolate, ceil(value / minTick) * minTick);
+        Local<Number> num = Number::New(isolate, SD::roundUp(value, minTick));
         args.GetReturnValue().Set(num);
       };
       static void _RoundDown(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         double value = args[0]->NumberValue();
         double minTick = args[1]->NumberValue();
-        Local<Number> num = Number::New(isolate, floor(value / minTick) * minTick);
+        Local<Number> num = Number::New(isolate, SD::roundDown(value, minTick));
         args.GetReturnValue().Set(num);
       };
       static void _RoundNearest(const FunctionCallbackInfo<Value> &args) {
