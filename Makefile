@@ -105,7 +105,7 @@ dist:
 	$(MAKE) png16
 	$(MAKE) uws
 	for K in dist/lib/*; do chmod +x $$K && cp $$K app/server/lib; done
-	sudo cp dist/lib/libstdc++.so.6.0.22 dist/lib/libmysqlclient.* /usr/lib/x86_64-linux-gnu/
+	sudo cp dist/lib/libstdc++.so.6.0.22 dist/lib/libmysqlclient.* /usr/lib/x86_64-linux-gnu/ || :
 
 clean: build
 	rm -rf build
