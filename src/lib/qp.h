@@ -112,16 +112,11 @@ namespace K {
             if (k != "") qpRepo_->Set(props->Get(i)->ToString(), Number::New(isolate, stod(k)));
           }
         }
-        Local<Value> qpa = DB::load(isolate, string(1, (char)uiTXT::QuotingParametersChange));
-        if (FN::S8v(qpa->ToString()).length()) {
-          Local<Object> qp_ = qpa->ToObject()->Get(0)->ToObject();
-          maybe_props = qp_->GetOwnPropertyNames(Context::New(isolate));
-          if (!maybe_props.IsEmpty()) {
-            props = maybe_props.ToLocalChecked();
-            for(uint32_t i=0; i < props->Length(); i++)
-              qpRepo_->Set(props->Get(i)->ToString(), qp_->Get(props->Get(i)->ToString())->ToNumber());
-          }
-        }
+        json qpa = DB::load(uiTXT::QuotingParametersChange);
+        if (qpa.size())
+          for (json::iterator it = qpa["/0"_json_pointer].begin(); it != qpa["/0"_json_pointer].end(); ++it)
+            if (it.value().is_number()) qpRepo_->Set(FN::v8S(it.key()), Number::New(isolate, it.value()));
+            else if (it.value().is_boolean()) qpRepo_->Set(FN::v8S(it.key()), Boolean::New(isolate, it.value()));
         qpRepo.Reset(isolate, qpRepo_);
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
@@ -132,13 +127,15 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         args.GetReturnValue().Set(Local<Object>::New(isolate, qpRepo));
       };
-      static Local<Value> onSnap(Local<Value> z) {
+      static json onSnap(Local<Value> z) {
+        json k;
+        JSON Json;
         Isolate* isolate = Isolate::GetCurrent();
-        Local<Array> k = Array::New(isolate);
-        k->Set(0, Local<Object>::New(isolate, qpRepo));
+        k.push_back(json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), Local<Object>::New(isolate, qpRepo)).ToLocalChecked())));
         return k;
       };
-      static Local<Value> onHand(Local<Value> o_) {
+      static json onHand(Local<Value> o_) {
+        json k;
         Isolate* isolate = Isolate::GetCurrent();
         Local<Object> o = o_->ToObject();
         if (o->Get(FN::v8S("buySize"))->NumberValue() > 0
@@ -156,8 +153,9 @@ namespace K {
           DB::insert(uiTXT::QuotingParametersChange, o);
           EV::evUp("QuotingParameters", o);
         }
-        UI::uiSend(isolate, uiTXT::QuotingParametersChange, o);
-        return (Local<Value>)Undefined(isolate);
+        JSON Json;
+        UI::uiSend(uiTXT::QuotingParametersChange, json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), o).ToLocalChecked())));
+        return k;
       };
   };
 }

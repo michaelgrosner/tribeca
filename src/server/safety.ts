@@ -84,7 +84,7 @@ export class SafetyCalculator {
         var sellPq = 0;
         var _buyPq = 0;
         var _sellPq = 0;
-        var trades = this._tradesMemory;
+        var trades = this._tradesMemory();
         var widthPong = (params.widthPercentage)
             ? params.widthPongPercentage * fv.price / 100
             : params.widthPong;

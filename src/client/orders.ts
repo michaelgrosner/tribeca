@@ -18,8 +18,8 @@ export class OrdersComponent implements OnInit {
 
   @Input() product: Models.ProductState;
 
-  @Input() set connected(connected: boolean) {
-    if (connected) return;
+  @Input() set online(online: boolean) {
+    if (online) return;
     if (!this.gridOptions.api) return;
     this.gridOptions.api.setRowData([]);
     setTimeout(()=>this.gridOptions.api.refreshView(),0);

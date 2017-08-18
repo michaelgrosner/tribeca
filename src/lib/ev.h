@@ -3,7 +3,7 @@
 
 namespace K {
   typedef void (*evCb)(Local<Object>);
-  struct Ev { map<string, vector<CopyablePersistentTraits<Function>::CopyablePersistent>> _cb; map<string, vector<evCb>> cb; } ev;
+  struct Ev { map<string, vector<CopyablePersistentTraits<Function>::CopyablePersistent>> _cb; map<string, vector<evCb>> cb; } static ev;
   class EV {
     public:
       static void main(Local<Object> exports) {
@@ -28,7 +28,7 @@ namespace K {
         }
       };
       static void evUp(string k, Local<Number> o) {
-        EV::evUp(k, o->ToObject());
+        evUp(k, o->ToObject());
       }
       static void evUp(string k, Local<Object> o) {
         if (ev.cb.find(k) != ev.cb.end()) {
@@ -38,6 +38,7 @@ namespace K {
         if (ev._cb.find(k) != ev._cb.end()) {
           Isolate* isolate = Isolate::GetCurrent();
           Local<Value> argv[] = {o};
+          JSON Json;
           for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
             Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
         }

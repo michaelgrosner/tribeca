@@ -55,29 +55,12 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const orderBroker = new Broker.OrderBroker(
-  bindings.qpRepo,
-  bindings.cfmCurrencyPair(),
-  bindings.gwMakeFee(),
-  bindings.gwTakeFee(),
-  bindings.gwMinTick(),
-  bindings.gwExchange(),
-  {sendOrder:bindings.gwSend,cancelOrder:bindings.gwCancel,cancelsByClientOrderId:bindings.gwCancelByClientId(),generateClientOrderId:bindings.gwClientId,supportsCancelAllOpenOrders:bindings.gwSupportCancelAll,cancelAllOpenOrders:bindings.gwCancelAll},
-  bindings.dbInsert,
-  bindings.uiSnap,
-  bindings.uiHand,
-  bindings.uiSend,
-  bindings.evOn,
-  bindings.evUp,
-  bindings.dbLoad(Models.Topics.Trades)
-);
-
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
 
 const fvEngine = new FairValue.FairValueEngine(
   new MarketFiltration.MarketFiltration(
     bindings.gwMinTick(),
-    orderBroker.orderCache.allOrders,
+    bindings.allOrders,
     bindings.evOn,
     bindings.evUp
   ),
@@ -94,7 +77,7 @@ const positionBroker = new Broker.PositionBroker(
   bindings.qpRepo,
   bindings.cfmCurrencyPair(),
   bindings.gwExchange(),
-  orderBroker.orderCache.allOrders,
+  bindings.allOrders,
   fvEngine,
   bindings.uiSnap,
   bindings.uiSend,
@@ -137,7 +120,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
     fvEngine,
     bindings.qpRepo,
     positionBroker,
-    orderBroker.tradesMemory,
+    bindings.tradesMemory,
     bindings.uiSnap,
     bindings.uiSend,
     bindings.evOn,
@@ -149,9 +132,10 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
 
 new QuoteSender.QuoteSender(
   quotingEngine,
-  orderBroker.orderCache.allOrders,
-  orderBroker.cancelOrder,
-  orderBroker.sendOrder,
+  bindings.allOrders,
+  bindings.allOrdersDelete,
+  bindings.cancelOrder,
+  bindings.sendOrder,
   bindings.gwMinTick(),
   bindings.qpRepo,
   bindings.uiSnap,
@@ -160,7 +144,7 @@ new QuoteSender.QuoteSender(
 );
 
 happyEnding = () => {
-  orderBroker.cancelOpenOrders();
+  bindings.cancelOpenOrders();
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
 };
 

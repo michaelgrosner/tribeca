@@ -38,7 +38,7 @@ export class MarketFiltration {
         copiedMkts.push(new Models.MarketSide(mkts[i].price, mkts[i].size))
     }
 
-    this._allOrders.forEach(x => {
+    this._allOrders().forEach(x => {
       if (x.side !== s) return;
       for (var i = 0; i < copiedMkts.length; i++) {
         if (Math.abs(x.price - copiedMkts[i].price) < this._minTick)

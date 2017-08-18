@@ -11,26 +11,27 @@ namespace K {
         NODE_SET_METHOD(exports, "dbLoad", DB::_load);
         NODE_SET_METHOD(exports, "dbInsert", DB::_insert);
       };
-      static Local<Value> load(Isolate* isolate, string k) {
+      static json load(uiTXT k) {
+        return load(string(1, (char)k));
+      };
+      static json load(string k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
-          string("CREATE TABLE ").append(k).append("("                                                            \
-            "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL,"                                          \
-            "json  BLOB                                       NOT NULL,"                                          \
-            "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"),
+          string("CREATE TABLE ").append(k).append("("                 \
+          "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL," \
+          "json  BLOB                                       NOT NULL," \
+          "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"),
           NULL, NULL, &zErrMsg
         );
-        string json = "[";
+        string j = "[";
         sqlite3_exec(db,
           string("SELECT json FROM ").append(k).append(" ORDER BY time DESC;"),
-          cb, (void*)&json, &zErrMsg
+          cb, (void*)&j, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
-        if (json[strlen(json.data()) - 1] == ',') json.pop_back();
-        JSON Json;
-        MaybeLocal<Value> array = Json.Parse(isolate->GetCurrentContext(), FN::v8S(json.append("]").data()));
-        return array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked();
+        if (j[strlen(j.data()) - 1] == ',') j.pop_back();
+        return json::parse(j.append("]"));
       };
       static void insert(uiTXT k, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
         Isolate* isolate = Isolate::GetCurrent();
@@ -54,15 +55,14 @@ namespace K {
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
       };
-      static size_t dbSize() {
-        struct stat st;
-        return stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
-      };
     private:
       static void _load(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        args.GetReturnValue().Set(load(isolate, string(*String::Utf8Value(args[0]->ToString()))));
+        json k = load(FN::S8v(args[0]->ToString()));
+        JSON Json;
+        MaybeLocal<Value> array = Json.Parse(isolate->GetCurrentContext(), FN::v8S(k.dump().data()));
+        args.GetReturnValue().Set(array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked());
       };
       static void _insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
@@ -70,8 +70,8 @@ namespace K {
         insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
       };
       static int cb(void *param, int argc, char **argv, char **azColName) {
-        string* json = reinterpret_cast<string*>(param);
-        for (int i=0; i<argc; i++) json->append(argv[i]).append(",");
+        string* j = reinterpret_cast<string*>(param);
+        for (int i=0; i<argc; i++) j->append(argv[i]).append(",");
         return 0;
       };
   };
