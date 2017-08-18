@@ -18,7 +18,7 @@ namespace K {
           mGWmt_.push_back(t);
           if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
           EV::evUp("MarketTrade");
-          UI::uiSend(Isolate::GetCurrent(), uiTXT::MarketTrade, v8mGWmt(t));
+          UI::uiSend(uiTXT::MarketTrade, v8mGWmt(t));
         });
         Isolate* isolate = exports->GetIsolate();
         mGWmkt.Reset(isolate, Object::New(isolate));
@@ -33,16 +33,19 @@ namespace K {
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
       };
     private:
-      static Local<Value> onSnapTrade(Local<Value> z) {
+      static json onSnapTrade(Local<Value> z) {
+        json k;
+        JSON Json;
         Isolate* isolate = Isolate::GetCurrent();
-        Local<Array> k = Array::New(isolate);
-        for (unsigned i=0; i<mGWmt_.size(); ++i) k->Set(i, v8mGWmt(mGWmt_[i]));
+        for (unsigned i=0; i<mGWmt_.size(); ++i)
+          k.push_back(v8mGWmt(mGWmt_[i]));
         return k;
       };
-      static Local<Value> onSnapBook(Local<Value> z) {
+      static json onSnapBook(Local<Value> z) {
+        json k;
+        JSON Json;
         Isolate* isolate = Isolate::GetCurrent();
-        Local<Array> k = Array::New(isolate);
-        k->Set(0, Local<Object>::New(isolate, mGWmkt));
+        k.push_back(json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), Local<Object>::New(isolate, mGWmkt)).ToLocalChecked())));
         return k;
       };
       static void v8mGWmkt() {
@@ -52,21 +55,19 @@ namespace K {
       static void v8mGWmkt(Local<Object> o) {
         Isolate* isolate = Isolate::GetCurrent();
         EV::evUp("MarketDataBroker", o);
-        UI::uiSend(isolate, uiTXT::MarketData, o, true);
+        JSON Json;
+        UI::uiSend(uiTXT::MarketData, json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), o).ToLocalChecked())), true);
         mGWmkt.Reset(isolate, o);
       };
-      static Local<Object> v8mGWmt(mGWmt t) {
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("exchange"), Number::New(isolate, (double)t.exchange));
-        Local<Object> k = Object::New(isolate);
-        k->Set(FN::v8S("base"), Number::New(isolate, (double)t.base));
-        k->Set(FN::v8S("quote"), Number::New(isolate, (double)t.quote));
-        o->Set(FN::v8S("pair"), k);
-        o->Set(FN::v8S("price"), Number::New(isolate, t.price));
-        o->Set(FN::v8S("size"), Number::New(isolate, t.size));
-        o->Set(FN::v8S("time"), Number::New(isolate, t.time));
-        o->Set(FN::v8S("make_side"), Number::New(isolate, (double)t.make_side));
+      static json v8mGWmt(mGWmt t) {
+        json o = {
+          {"exchange", (double)t.exchange},
+          {"pair", {{"base", (double)t.base}, {"quote", (double)t.quote}}},
+          {"price", t.price},
+          {"size", t.size},
+          {"time", t.time},
+          {"make_size", (double)t.make_side}
+        };
         return o;
       };
   };

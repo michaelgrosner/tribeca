@@ -2,8 +2,6 @@
 #define K_FN_H_
 
 namespace K {
-  CURL* curl;
-  typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
   class FN {
     public:
       static int S2mC(string k);
@@ -14,6 +12,7 @@ namespace K {
       static string S8v(Local<String> k) { return string(*String::Utf8Value(k)); };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
+        typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
         fnT days = chrono::duration_cast<fnT>(t);
@@ -82,6 +81,7 @@ namespace K {
       };
       static string wGet(string k) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
@@ -100,6 +100,7 @@ namespace K {
       };
       static string wGet(string k, string p) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -122,6 +123,7 @@ namespace K {
       };
       static string wGet(string k, string t, bool auth) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -143,6 +145,7 @@ namespace K {
       };
       static string wGet(string k, string p, string s) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -164,6 +167,7 @@ namespace K {
       };
       static string wGet(string k, string p, string s, bool post) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -186,6 +190,7 @@ namespace K {
       };
       static string wGet(string k, string p, string a, string s) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -210,6 +215,7 @@ namespace K {
       };
       static string wGet(string k, string p, string a, string s, bool post) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -234,6 +240,7 @@ namespace K {
       };
       static string wGet(string k, string p, string t, string s, bool post, bool auth) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -257,6 +264,7 @@ namespace K {
       };
       static string wGet(string k, string t, string a, string s, string p) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
@@ -281,6 +289,7 @@ namespace K {
       };
       static string wGet(string k, string t, string a, string s, string p, bool d) {
         string k_;
+        CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;

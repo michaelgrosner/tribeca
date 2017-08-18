@@ -164,19 +164,15 @@ export interface OrderStatusReport {
     orderId : any;
     exchangeId : any;
     orderStatus : OrderStatus;
-    rejectMessage : string;
     time : number;
     lastQuantity : number;
     lastPrice : number;
     leavesQuantity : number;
-    cumQuantity : number;
-    averagePrice : number;
     liquidity : Liquidity;
     exchange : Exchange;
     computationalLatency : number;
     isPong : boolean;
     preferPostOnly: boolean;
-    source: OrderSource;
 }
 
 export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }

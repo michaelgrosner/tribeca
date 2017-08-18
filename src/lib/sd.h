@@ -40,7 +40,7 @@ namespace K {
         return floor(value / minTick) * minTick;
       };
       static double roundSide(double oP, double minTick, mSide oS) {
-        if (oS == mSide::Bid) return return roundDown(oP, minTick);
+        if (oS == mSide::Bid) return roundDown(oP, minTick);
         else if (oS == mSide::Ask) return roundUp(oP, minTick);
         else return roundNearest(oP, minTick);
       };

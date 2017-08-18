@@ -57,8 +57,8 @@ export class MarketQuotingComponent implements OnInit {
   public a: string;
   @Input() product: Models.ProductState;
 
-  @Input() set connected(connected: boolean) {
-    if (connected) return;
+  @Input() set online(online: boolean) {
+    if (online) return;
     this.clearQuote();
     this.updateQuoteClass();
   }

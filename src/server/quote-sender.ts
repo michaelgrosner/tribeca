@@ -12,6 +12,7 @@ export class QuoteSender {
   constructor(
     private _quotingEngine: QuotingEngine.QuotingEngine,
     private _allOrders,
+    private _allOrdersDelete,
     private _cancelOrder,
     private _sendOrder,
     private _minTick,
@@ -83,7 +84,7 @@ export class QuoteSender {
     var quotesInMemoryDone = 0;
     var oIx = [];
     var oIt = new Date().getTime();
-    this._allOrders.forEach(x => {
+    this._allOrders().forEach(x => {
       if (x.orderStatus === Models.OrderStatus.New) {
         if (!x.exchangeId && oIt-10000>x.time)
           oIx.push(x.orderId)
@@ -92,7 +93,7 @@ export class QuoteSender {
       else if (x.orderStatus === Models.OrderStatus.Working) ++quotesInMemoryWorking;
       else ++quotesInMemoryDone;
     });
-    while(oIx.length) this._allOrders.delete(oIx.pop());
+    while(oIx.length) this._allOrdersDelete(oIx.pop());
 
     if (bidStatus === this._latestStatus.bidStatus && askStatus === this._latestStatus.askStatus && quotesInMemoryNew === this._latestStatus.quotesInMemoryNew && quotesInMemoryWorking === this._latestStatus.quotesInMemoryWorking && quotesInMemoryDone === this._latestStatus.quotesInMemoryDone) return;
 
@@ -121,7 +122,7 @@ export class QuoteSender {
 
   private orderCacheSide = (side: Models.Side, sort: boolean) => {
     let orderSide = [];
-    this._allOrders.forEach(x => {
+    this._allOrders().forEach(x => {
       if (side === x.side) orderSide.push(x);
     });
     if (sort) {
@@ -182,16 +183,7 @@ export class QuoteSender {
       } else return;
     }
 
-    this._sendOrder(new Models.SubmitNewOrder(
-      side,
-      q.size,
-      Models.OrderType.Limit,
-      price,
-      Models.TimeInForce.GTC,
-      q.isPong,
-      true,
-      Models.OrderSource.Quote
-    ));
+    this._sendOrder(side, price, q.size, Models.OrderType.Limit, Models.TimeInForce.GTC, q.isPong, true);
   };
 
   private stopWorstsQuotes = (side: Models.Side, price: number) => {
@@ -200,19 +192,19 @@ export class QuoteSender {
         ? price < x.price
         : price > x.price
     ).forEach(x =>
-      this._cancelOrder(new Models.OrderCancel(x.orderId))
+      this._cancelOrder(x.orderId)
     );
   };
 
   private stopWorstQuote = (side: Models.Side) => {
     const orderSide = this.orderCacheSide(side, true);
     if (orderSide.length)
-      this._cancelOrder(new Models.OrderCancel(orderSide.shift().orderId));
+      this._cancelOrder(orderSide.shift().orderId);
   };
 
   private stopAllQuotes = (side: Models.Side) => {
     this.orderCacheSide(side, false).forEach(x =>
-      this._cancelOrder(new Models.OrderCancel(x.orderId))
+      this._cancelOrder(x.orderId)
     );
   };
 }

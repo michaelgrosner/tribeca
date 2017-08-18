@@ -2,6 +2,14 @@
 #define K_CF_H_
 
 namespace K {
+  static Gw* gw;
+  static Gw* gW;
+  static string dbFpath;
+  static bool gwAutoStart = false;
+  static Persistent<Object> qpRepo;
+  static json pkRepo;
+  static json cfRepo;
+  static string cFname;
   class CF {
     public:
       static void internal(Local<Object> exports) {
