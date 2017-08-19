@@ -448,7 +448,7 @@ class DisplayOrder {
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                                <market-quoting [online]="!!pair.active.display" [product]="product"></market-quoting>
+                                <market-quoting [online]="!!pair.active.display.state" [product]="product"></market-quoting>
                             </div>
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
@@ -519,7 +519,7 @@ class DisplayOrder {
                                   </div>
                                 </div>
                                 <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">
-                                  <order-list [online]="!!pair.active.display" [product]="product"></order-list>
+                                  <order-list [online]="!!pair.active.display.state" [product]="product"></order-list>
                                 </div>
                               </div>
                               <div class="row">
