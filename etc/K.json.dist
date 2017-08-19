@@ -46,5 +46,5 @@
     "HitBtcSecret": "NULL",
     "HitBtcOrderDestination": "HitBtc",
 
-    "delayUI": "0"
+    "delayUI": "3"
 }
