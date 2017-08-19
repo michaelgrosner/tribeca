@@ -76,7 +76,7 @@ namespace K {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
         if (cfRepo.find(k) == cfRepo.end()) {
           if (r) {
-            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration. See https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist for latest example." << endl;
+            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration."<< endl << "See https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist" << endl;
             exit(1);
           } else return "";
         }

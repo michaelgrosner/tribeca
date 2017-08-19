@@ -18,11 +18,11 @@ namespace K {
             gw->pos();
           }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         }).detach();
-        EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
-          _gwCon_(mGatewayType::MarketData, (mConnectivityStatus)c->NumberValue());
+        EV::evOn("GatewayMarketConnect", [](json k) {
+          _gwCon_(mGatewayType::MarketData, (mConnectivityStatus)k["/0"_json_pointer].get<int>());
         });
-        EV::evOn("GatewayOrderConnect", [](Local<Object> c) {
-          _gwCon_(mGatewayType::OrderEntry, (mConnectivityStatus)c->NumberValue());
+        EV::evOn("GatewayOrderConnect", [](json k) {
+          _gwCon_(mGatewayType::OrderEntry, (mConnectivityStatus)k["/0"_json_pointer].get<int>());
         });
         gw->book();
         gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
@@ -35,108 +35,82 @@ namespace K {
         NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
       };
       static void gwPosUp(mGWp k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S(isolate, "amount"), Number::New(isolate, k.amount));
-        o->Set(FN::v8S(isolate, "heldAmount"), Number::New(isolate, k.held));
-        o->Set(FN::v8S(isolate, "currency"), Number::New(isolate, k.currency));
-        EV::evUp("PositionGateway", o);
+        EV::evUp("PositionGateway", {
+          {"amount", k.amount},
+          {"heldAmount", k.held},
+          {"currency", k.currency}
+        });
       };
       static void gwBookUp(mConnectivityStatus k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        EV::evUp("GatewayMarketConnect", Number::New(isolate, (int)k));
+        EV::evUp("GatewayMarketConnect", {(int)k});
       };
       static void gwLevelUp(mGWbls k) {
         Isolate* isolate = Isolate::GetCurrent();
         HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        Local<Object> b = Array::New(isolate);
-        Local<Object> a = Array::New(isolate);
-        int i = 0;
-        for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it) {
-          Local<Object> b_ = Object::New(isolate);
-          b_->Set(FN::v8S(isolate, "price"), Number::New(isolate, (*it).price));
-          b_->Set(FN::v8S(isolate, "size"), Number::New(isolate, (*it).size));
-          b->Set(i++, b_);
-        }
-        i = 0;
-        for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it) {
-          Local<Object> a_ = Object::New(isolate);
-          a_->Set(FN::v8S(isolate, "price"), Number::New(isolate, (*it).price));
-          a_->Set(FN::v8S(isolate, "size"), Number::New(isolate, (*it).size));
-          a->Set(i++, a_);
-        }
-        o->Set(FN::v8S(isolate, "bids"), b);
-        o->Set(FN::v8S(isolate, "asks"), a);
-        EV::evUp("MarketDataGateway", o);
+        json b;
+        json a;
+        for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
+          b.push_back({{"price", (*it).price}, {"size", (*it).size}});
+        for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
+          a.push_back({{"price", (*it).price}, {"size", (*it).size}});
+        EV::evUp("MarketDataGateway", {
+          {"bids", b},
+          {"asks", a}
+        });
       };
       static void gwTradeUp(vector<mGWbt> k) {
         for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
           gwTradeUp(*it);
       }
       static void gwTradeUp(mGWbt k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S(isolate, "price"), Number::New(isolate, k.price));
-        o->Set(FN::v8S(isolate, "size"), Number::New(isolate, k.size));
-        o->Set(FN::v8S(isolate, "make_side"), Number::New(isolate, (double)k.make_side));
-        EV::evUp("MarketTradeGateway", o);
+        EV::evUp("MarketTradeGateway", {
+          {"price", k.price},
+          {"size", k.size},
+          {"make_side", (int)k.make_side}
+        });
       };
       static void gwOrderUp(mConnectivityStatus k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        EV::evUp("GatewayOrderConnect", Number::New(isolate, (int)k));
+        EV::evUp("GatewayOrderConnect", {(int)k});
       };
       static void gwOrderUp(mGWos k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        if (k.oI.length()) o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, k.oI));
-        if (k.oE.length()) o->Set(FN::v8S(isolate, "exchangeId"), FN::v8S(isolate, k.oE));
-        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)k.oS));
-        if (k.oS == mORS::Cancelled) o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, 0));
-        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
+        json o;
+        if (k.oI.length()) o["orderId"] = k.oI;
+        if (k.oE.length()) o["exchangeId"] = k.oE;
+        o["orderStatus"] = (int)k.oS;
+        if (k.oS == mORS::Cancelled) o["lastQuantity"] = 0;
+        o["time"] = FN::T();
         EV::evUp("OrderUpdateGateway", o);
       };
       static void gwOrderUp(mGWol k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, k.oI));
-        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)k.oS));
-        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
-        o->Set(FN::v8S(isolate, "lastPrice"), Number::New(isolate, k.oP));
-        o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, k.oQ));
-        o->Set(FN::v8S(isolate, "liquidity"), Number::New(isolate, (double)k.oL));
-        EV::evUp("OrderUpdateGateway", o);
+        EV::evUp("OrderUpdateGateway", {
+          {"orderId", k.oI},
+          {"orderStatus", (int)k.oS},
+          {"lastPrice", k.oP},
+          {"lastQuantity", k.oQ},
+          {"liquidity", (int)k.oL},
+          {"time", FN::T()}
+        });
       };
       static void gwOrderUp(mGWoS k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        if (k.oI.length()) o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, k.oI));
-        if (k.oE.length()) o->Set(FN::v8S(isolate, "exchangeId"), FN::v8S(isolate, k.oE));
-        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)k.os));
-        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
-        o->Set(FN::v8S(isolate, "lastPrice"), Number::New(isolate, k.oP));
-        o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, k.oQ));
-        o->Set(FN::v8S(isolate, "side"), Number::New(isolate, (int)k.oS));
+        json o;
+        if (k.oI.length()) o["orderId"] = k.oI;
+        if (k.oE.length()) o["exchangeId"] = k.oE;
+        o["orderStatus"] = (int)k.os;
+        o["lastPrice"] = k.oP;
+        o["lastQuantity"] = k.oQ;
+        o["side"] = (int)k.oS;
+        o["time"] = FN::T();
         EV::evUp("OrderUpdateGateway", o);
       };
       static void gwOrderUp(mGWoa k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S(isolate, "orderId"), FN::v8S(isolate, k.oI));
-        if (k.oE.length()) o->Set(FN::v8S(isolate, "exchangeId"), FN::v8S(isolate, k.oE));
-        o->Set(FN::v8S(isolate, "orderStatus"), Number::New(isolate, (int)k.os));
-        o->Set(FN::v8S(isolate, "time"), Number::New(isolate, FN::T()));
-        if (k.oP) o->Set(FN::v8S(isolate, "lastPrice"), Number::New(isolate, k.oP));
-        o->Set(FN::v8S(isolate, "lastQuantity"), Number::New(isolate, k.oLQ));
-        o->Set(FN::v8S(isolate, "leavesQuantity"), Number::New(isolate, k.oQ));
+        json o;
+        o["orderId"] = k.oI;
+        if (k.oE.length()) o["exchangeId"] = k.oE;
+        o["orderStatus"] = (int)k.os;
+        if (k.oP) o["lastPrice"] = k.oP;
+        o["lastQuantity"] = k.oLQ;
+        o["leavesQuantity"] = k.oQ;
+        o["time"] = FN::T();
         EV::evUp("OrderUpdateGateway", o);
       };
     private:
@@ -160,11 +134,6 @@ namespace K {
         if (k["state"].get<bool>() != gwAutoStart) {
           gwAutoStart = k["state"].get<bool>();
           gwUpState();
-          Isolate* isolate = Isolate::GetCurrent();
-          Local<Object> o = Object::New(isolate);
-          o->Set(FN::v8S("state"), Boolean::New(isolate, gwState));
-          o->Set(FN::v8S("status"), Number::New(isolate, (int)gwConn));
-          EV::evUp("ExchangeConnect", o);
         }
         return {};
       };
@@ -179,21 +148,19 @@ namespace K {
         gwConn = gwMDConn == mConnectivityStatus::Connected && gwEOConn == mConnectivityStatus::Connected
           ? mConnectivityStatus::Connected : mConnectivityStatus::Disconnected;
         gwUpState();
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("state"), Boolean::New(isolate, gwState));
-        o->Set(FN::v8S("status"), Number::New(isolate, (int)gwConn));
-        EV::evUp("ExchangeConnect", o);
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConn}});
       };
       static void gwUpState() {
-        Isolate* isolate = Isolate::GetCurrent();
         bool newMode = gwConn != mConnectivityStatus::Connected ? false : gwAutoStart;
         if (newMode != gwState) {
           gwState = newMode;
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
           UI::uiSend(uiTXT::ActiveState, {{"state", gwState}});
         }
+        EV::evUp("ExchangeConnect", {
+          {"state", gwState},
+          {"status", (int)gwConn}
+        });
       }
       static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

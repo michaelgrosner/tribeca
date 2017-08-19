@@ -3,19 +3,19 @@
 
 namespace K {
   static vector<mGWmt> mGWmt_;
-  static Persistent<Object> mGWmkt;
+  static json mGWmkt;
   class MG {
     public:
       static void main(Local<Object> exports) {
-        EV::evOn("MarketTradeGateway", [](Local<Object> o) {
+        EV::evOn("MarketTradeGateway", [](json k) {
           mGWmt t(
             gw->exchange,
             gw->base,
             gw->quote,
-            o->Get(FN::v8S("price"))->NumberValue(),
-            o->Get(FN::v8S("size"))->NumberValue(),
+            k["price"].get<double>(),
+            k["size"].get<double>(),
             FN::T(),
-            (mSide)o->Get(FN::v8S("make_side"))->NumberValue()
+            (mSide)k["make_side"].get<int>()
           );
           mGWmt_.push_back(t);
           if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
@@ -23,13 +23,12 @@ namespace K {
           UI::uiSend(uiTXT::MarketTrade, v8mGWmt(t));
         });
         Isolate* isolate = exports->GetIsolate();
-        mGWmkt.Reset(isolate, Object::New(isolate));
-        EV::evOn("MarketDataGateway", [](Local<Object> o) {
+        EV::evOn("MarketDataGateway", [](json o) {
           v8mGWmkt(o);
         });
-        EV::evOn("GatewayMarketConnect", [](Local<Object> c) {
-          if ((mConnectivityStatus)c->NumberValue() == mConnectivityStatus::Disconnected)
-            v8mGWmkt();
+        EV::evOn("GatewayMarketConnect", [](json k) {
+          if ((mConnectivityStatus)k["/0"_json_pointer].get<int>() == mConnectivityStatus::Disconnected)
+            v8mGWmkt({});
         });
         UI::uiSnap(uiTXT::MarketData, &onSnapBook);
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
@@ -44,20 +43,12 @@ namespace K {
         return k;
       };
       static json onSnapBook(json z) {
-        JSON Json;
-        Isolate* isolate = Isolate::GetCurrent();
-        return {json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), Local<Object>::New(isolate, mGWmkt)).ToLocalChecked()))};
+        return { mGWmkt };
       };
-      static void v8mGWmkt() {
-        Isolate* isolate = Isolate::GetCurrent();
-        v8mGWmkt(Object::New(isolate));
-      }
-      static void v8mGWmkt(Local<Object> o) {
-        Isolate* isolate = Isolate::GetCurrent();
-        EV::evUp("MarketDataBroker", o);
-        JSON Json;
-        UI::uiSend(uiTXT::MarketData, json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), o).ToLocalChecked())), true);
-        mGWmkt.Reset(isolate, o);
+      static void v8mGWmkt(json k) {
+        mGWmkt = k;
+        EV::evUp("MarketDataBroker", k);
+        UI::uiSend(uiTXT::MarketData, k, true);
       };
       static json v8mGWmt(mGWmt t) {
         json o = {

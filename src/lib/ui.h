@@ -110,7 +110,7 @@ namespace K {
               Local<Value> argv[] = {v.is_null() ? (Local<Value>)Undefined(isolate) : (Local<Value>)Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, v.dump())).ToLocalChecked()};
               Local<Value> reply = Local<Function>::New(isolate, sess->_cb[string(message, 2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
               if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-                webSocket->send(string(message, 2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
+                webSocket->send(string(message, 2).append(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
             }
           }
         });
@@ -122,8 +122,8 @@ namespace K {
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
         uiD_.data = isolate;
-        EV::evOn("QuotingParameters", [](Local<Object> qp_) {
-          _uiD_(qp_->Get(FN::v8S("delayUI"))->NumberValue());
+        EV::evOn("QuotingParameters", [](json k) {
+          _uiD_(k["delayUI"].get<double>());
         });
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
