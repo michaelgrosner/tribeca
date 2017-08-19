@@ -45,8 +45,6 @@ namespace K {
         EV::evUp("GatewayMarketConnect", {(int)k});
       };
       static void gwLevelUp(mGWbls k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
         json b;
         json a;
         for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)

@@ -635,7 +635,7 @@ class ClientComponent implements OnInit {
 
     this.changeNotepad = (content:string) => this.fireFactory
       .getFire(Models.Topics.Notepad)
-      .fire(content);
+      .fire([content]);
 
     this.toggleConfigs = (showConfigs:boolean) => {
       this.fireFactory
