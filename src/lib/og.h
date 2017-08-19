@@ -349,6 +349,7 @@ namespace K {
       };
       static Local<Object> v8ogTM_(json j, bool fromDB = false) {
         Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
         o->Set(FN::v8S("tradeId"), FN::v8S(j["tradeId"].get<string>()));
         o->Set(FN::v8S("time"), Number::New(isolate, j["time"].get<unsigned long>()));
