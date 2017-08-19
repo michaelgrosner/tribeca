@@ -50,6 +50,10 @@ namespace K {
     {"audio",                         false},
     {"delayUI",                       7}
   };
+  static vector<string> boolQP = {
+    "widthPercentage", "quotingStdevBollingerBands", "quotingEwmaProtection", "percentageValues",
+    "widthPercentage", "bestWidth", "buySizeMax", "sellSizeMax", "cancelOrdersAuto", "audio"
+  };
   class QP {
     public:
       static void main(Local<Object> exports) {
@@ -106,26 +110,8 @@ namespace K {
         return o;
       };
       static void cleanBool() {
-        if (qpRepo["widthPercentage"].is_number())
-          qpRepo["widthPercentage"] = qpRepo["widthPercentage"].get<int>() != 0;
-        if (qpRepo["quotingStdevBollingerBands"].is_number())
-          qpRepo["quotingStdevBollingerBands"] = qpRepo["quotingStdevBollingerBands"].get<int>() != 0;
-        if (qpRepo["quotingEwmaProtection"].is_number())
-          qpRepo["quotingEwmaProtection"] = qpRepo["quotingEwmaProtection"].get<int>() != 0;
-        if (qpRepo["percentageValues"].is_number())
-          qpRepo["percentageValues"] = qpRepo["percentageValues"].get<int>() != 0;
-        if (qpRepo["widthPercentage"].is_number())
-          qpRepo["widthPercentage"] = qpRepo["widthPercentage"].get<int>() != 0;
-        if (qpRepo["bestWidth"].is_number())
-          qpRepo["bestWidth"] = qpRepo["bestWidth"].get<int>() != 0;
-        if (qpRepo["buySizeMax"].is_number())
-          qpRepo["buySizeMax"] = qpRepo["buySizeMax"].get<int>() != 0;
-        if (qpRepo["sellSizeMax"].is_number())
-          qpRepo["sellSizeMax"] = qpRepo["sellSizeMax"].get<int>() != 0;
-        if (qpRepo["cancelOrdersAuto"].is_number())
-          qpRepo["cancelOrdersAuto"] = qpRepo["cancelOrdersAuto"].get<int>() != 0;
-        if (qpRepo["audio"].is_number())
-          qpRepo["audio"] = qpRepo["audio"].get<int>() != 0;
+        for (vector<string>::iterator it = boolQP.begin(); it != boolQP.end(); ++it)
+          if (qpRepo[*it].is_number()) qpRepo[*it] = qpRepo[*it].get<int>() != 0;
       };
   };
 }
