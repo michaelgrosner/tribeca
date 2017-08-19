@@ -70,7 +70,7 @@ namespace K {
         cleanBool();
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
-        EV::evUp("QuotingParameters", v8qp(qpRepo));
+        EV::evUp("QuotingParameters", qpRepo);
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
@@ -93,11 +93,9 @@ namespace K {
             k["widthPercentage"] = false;
           qpRepo = k;
           cleanBool();
-          Local<Object> o = v8qp(k);
-          DB::insert(uiTXT::QuotingParametersChange, o);
-          EV::evUp("QuotingParameters", o);
+          DB::insert(uiTXT::QuotingParametersChange, v8qp(k));
+          EV::evUp("QuotingParameters", k);
         }
-        JSON Json;
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};
       };

@@ -27,8 +27,8 @@ namespace K {
         UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
         UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
-        EV::evOn("OrderUpdateGateway", [](Local<Object> k) {
-          updateOrderState(_v8ogO_(k));
+        EV::evOn("OrderUpdateGateway", [](json k) {
+          updateOrderState(k);
         });
         NODE_SET_METHOD(exports, "tradesMemory", OG::_tradesMemory);
         NODE_SET_METHOD(exports, "allOrders", OG::_allOrders);
@@ -63,8 +63,7 @@ namespace K {
             if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
           }
         }
-        Local<Object> o_ = v8ogO_(o);
-        EV::evUp("OrderUpdateBroker", o_);
+        EV::evUp("OrderUpdateBroker", o);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
         if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
           toHistory(o);
@@ -239,7 +238,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        EV::evUp("OrderTradeBroker", v8ogTM_(trade));
+        EV::evUp("OrderTradeBroker", trade);
         if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
           double widthPong = qpRepo["widthPercentage"].get<bool>()
             ? qpRepo["widthPongPercentage"].get<double>() * trade["price"].get<double>() / 100
@@ -252,9 +251,8 @@ namespace K {
             ) matches[(*it)["price"].get<double>()] = (*it)["tradeId"].get<string>();
           matchPong(matches, ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
         } else {
-          Local<Object> t_ = v8ogTM_(trade);
           UI::uiSend(uiTXT::Trades, trade);
-          DB::insert(uiTXT::Trades, t_, false, trade["tradeId"].get<string>());
+          DB::insert(uiTXT::Trades, v8ogTM_(trade), false, trade["tradeId"].get<string>());
           tradesMemory.push_back(trade);
         }
         json t = {
@@ -281,15 +279,13 @@ namespace K {
             (*it)["quantity"] = (*it)["quantity"].get<double>() + pong["quantity"].get<double>();
             (*it)["value"] = (*it)["value"].get<double>() + pong["value"].get<double>();
             (*it)["loadedFromDB"] = false;
-            Local<Object> t_ = v8ogTM_(*it);
             UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, t_, false, (*it)["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, v8ogTM_(*it), false, (*it)["tradeId"].get<string>());
             break;
           }
           if (!eq) {
-            Local<Object> t_ = v8ogTM_(pong);
             UI::uiSend(uiTXT::Trades, pong);
-            DB::insert(uiTXT::Trades, t_, false, pong["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, v8ogTM_(pong), false, pong["tradeId"].get<string>());
             tradesMemory.push_back(pong);
           }
         }
@@ -307,9 +303,8 @@ namespace K {
           if ((*it)["quantity"].get<double>()<=(*it)["Kqty"].get<double>())
             (*it)["Kdiff"] = abs(((*it)["quantity"].get<double>()*(*it)["price"].get<double>())-((*it)["Kqty"].get<double>()*(*it)["Kprice"].get<double>()));
           (*it)["loadedFromDB"] = false;
-          Local<Object> t_ = v8ogTM_(*it);
           UI::uiSend(uiTXT::Trades, *it);
-          DB::insert(uiTXT::Trades, t_, false, (*it)["tradeId"].get<string>());
+          DB::insert(uiTXT::Trades, v8ogTM_(*it), false, (*it)["tradeId"].get<string>());
           break;
         }
         return (*pong)["quantity"].get<double>() > 0;
@@ -395,7 +390,6 @@ namespace K {
       };
       static Local<Object> v8ogO_(json j) {
         Isolate* isolate = Isolate::GetCurrent();
-        // HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
         if (!j["orderId"].is_null()) o->Set(FN::v8S("orderId"), FN::v8S(j["orderId"].get<string>()));
         if (!j["exchangeId"].is_null()) o->Set(FN::v8S("exchangeId"), FN::v8S(j["exchangeId"].get<string>()));
@@ -421,31 +415,6 @@ namespace K {
         if (!j["isPong"].is_null()) o->Set(FN::v8S("isPong"), Boolean::New(isolate, j["isPong"].get<bool>()));
         if (!j["preferPostOnly"].is_null()) o->Set(FN::v8S("preferPostOnly"), Boolean::New(isolate, j["preferPostOnly"].get<bool>()));
         return o;
-      };
-      static json _v8ogO_(Local<Object> o) {
-        json j;
-        if (!o->Get(FN::v8S("orderId"))->IsUndefined()) j["orderId"] = FN::S8v(o->Get(FN::v8S("orderId"))->ToString());
-        if (!o->Get(FN::v8S("exchangeId"))->IsUndefined()) j["exchangeId"] = FN::S8v(o->Get(FN::v8S("exchangeId"))->ToString());
-        if (!o->Get(FN::v8S("time"))->IsUndefined()) j["time"] = o->Get(FN::v8S("time"))->NumberValue();
-        if (!o->Get(FN::v8S("exchange"))->IsUndefined()) j["exchange"] = (int)o->Get(FN::v8S("exchange"))->NumberValue();
-        if (!o->Get(FN::v8S("pair"))->IsUndefined()) j["pair"] = {
-          {"base", (int)o->Get(FN::v8S("pair"))->ToObject()->Get(FN::v8S("base"))->NumberValue()},
-          {"quote", (int)o->Get(FN::v8S("pair"))->ToObject()->Get(FN::v8S("quote"))->NumberValue()}
-        };
-        if (!o->Get(FN::v8S("side"))->IsUndefined()) j["side"] = (int)o->Get(FN::v8S("side"))->NumberValue();
-        if (!o->Get(FN::v8S("price"))->IsUndefined()) j["price"] = o->Get(FN::v8S("price"))->NumberValue();
-        if (!o->Get(FN::v8S("quantity"))->IsUndefined()) j["quantity"] = o->Get(FN::v8S("quantity"))->NumberValue();
-        if (!o->Get(FN::v8S("type"))->IsUndefined()) j["type"] = (int)o->Get(FN::v8S("type"))->NumberValue();
-        if (!o->Get(FN::v8S("timeInForce"))->IsUndefined()) j["timeInForce"] = (int)o->Get(FN::v8S("timeInForce"))->NumberValue();
-        if (!o->Get(FN::v8S("orderStatus"))->IsUndefined()) j["orderStatus"] = (int)o->Get(FN::v8S("orderStatus"))->NumberValue();
-        if (!o->Get(FN::v8S("lastQuantity"))->IsUndefined()) j["lastQuantity"] = o->Get(FN::v8S("lastQuantity"))->NumberValue();
-        if (!o->Get(FN::v8S("lastPrice"))->IsUndefined()) j["lastPrice"] = o->Get(FN::v8S("lastPrice"))->NumberValue();
-        if (!o->Get(FN::v8S("leavesQuantity"))->IsUndefined()) j["leavesQuantity"] = o->Get(FN::v8S("leavesQuantity"))->NumberValue();
-        if (!o->Get(FN::v8S("computationalLatency"))->IsUndefined()) j["computationalLatency"] = o->Get(FN::v8S("computationalLatency"))->NumberValue();
-        if (!o->Get(FN::v8S("liquidity"))->IsUndefined()) j["liquidity"] = (int)o->Get(FN::v8S("liquidity"))->NumberValue();
-        if (!o->Get(FN::v8S("isPong"))->IsUndefined()) j["isPong"] = o->Get(FN::v8S("isPong"))->BooleanValue();
-        if (!o->Get(FN::v8S("preferPostOnly"))->IsUndefined()) j["preferPostOnly"] = o->Get(FN::v8S("preferPostOnly"))->BooleanValue();
-        return j;
       };
   };
 }
