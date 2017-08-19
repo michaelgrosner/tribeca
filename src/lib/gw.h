@@ -140,33 +140,25 @@ namespace K {
         EV::evUp("OrderUpdateGateway", o);
       };
     private:
-      static json onSnapProduct(Local<Value> z) {
-        json k;
-        k.push_back({
+      static json onSnapProduct(json z) {
+        return {{
           {"exchange", (double)gw->exchange},
           {"pair", {{"base", (double)gw->base}, {"quote", (double)gw->quote}}},
           {"environment", CF::cfString("BotIdentifier").substr(gwAutoStart?4:0)},
           {"matryoshka", CF::cfString("MatryoshkaUrl")},
           {"homepage", CF::cfPKString("homepage")},
           {"minTick", gw->minTick},
-        });
-        return k;
+        }};
       };
-      static json onSnapStatus(Local<Value> z) {
-        json k;
-        k.push_back({{"status", (int)gwConn}});
-        return k;
+      static json onSnapStatus(json z) {
+        return {{{"status", (int)gwConn}}};
       };
-      static json onSnapState(Local<Value> z) {
-        json k;
-        k.push_back({{"state", gwState}});
-        return k;
+      static json onSnapState(json z) {
+        return {{{"state", gwState}}};
       };
-      static json onHandState(Local<Value> s_) {
-        json k;
-        Local<Object> s = s_->ToObject();
-        if (s->Get(FN::v8S("state"))->BooleanValue() != gwAutoStart) {
-          gwAutoStart = s->Get(FN::v8S("state"))->BooleanValue();
+      static json onHandState(json k) {
+        if (k["state"].get<bool>() != gwAutoStart) {
+          gwAutoStart = k["state"].get<bool>();
           gwUpState();
           Isolate* isolate = Isolate::GetCurrent();
           Local<Object> o = Object::New(isolate);
@@ -174,7 +166,7 @@ namespace K {
           o->Set(FN::v8S("status"), Number::New(isolate, (int)gwConn));
           EV::evUp("ExchangeConnect", o);
         }
-        return k;
+        return {};
       };
       static void _gwCon_(mGatewayType gwT, mConnectivityStatus gwS) {
         if (gwT == mGatewayType::MarketData) {
