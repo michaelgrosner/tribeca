@@ -28,13 +28,13 @@ namespace K {
         }
       };
       static void evUp(string k, json o) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
         if (ev.cb.find(k) != ev.cb.end()) {
           for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
             (*cb)(o);
         }
         if (ev._cb.find(k) != ev._cb.end()) {
-          Isolate* isolate = Isolate::GetCurrent();
-          HandleScope scope(isolate);
           JSON Json;
           Local<Value> argv[] = {(Local<Value>)Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, o.dump())).ToLocalChecked()};
           for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
