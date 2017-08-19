@@ -61,12 +61,12 @@ namespace K {
       };
       static json v8mGWmt(mGWmt t) {
         json o = {
-          {"exchange", (double)t.exchange},
-          {"pair", {{"base", (double)t.base}, {"quote", (double)t.quote}}},
+          {"exchange", (int)t.exchange},
+          {"pair", {{"base", t.base}, {"quote", t.quote}}},
           {"price", t.price},
           {"size", t.size},
           {"time", t.time},
-          {"make_size", (double)t.make_side}
+          {"make_size", (int)t.make_side}
         };
         return o;
       };

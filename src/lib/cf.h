@@ -123,8 +123,8 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("base"), Number::New(isolate, (double)cfBase()));
-        o->Set(FN::v8S("quote"), Number::New(isolate, (double)cfQuote()));
+        o->Set(FN::v8S("base"), Number::New(isolate, cfBase()));
+        o->Set(FN::v8S("quote"), Number::New(isolate, cfQuote()));
         args.GetReturnValue().Set(o);
       };
   };

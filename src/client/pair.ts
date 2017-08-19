@@ -41,17 +41,17 @@ class FormViewModel<T> {
   };
 }
 
-class QuotingButtonViewModel extends FormViewModel<boolean> {
+class QuotingButtonViewModel extends FormViewModel<any> {
   constructor(
-    sub: Subscribe.ISubscribe<boolean>,
-    fire: Subscribe.IFire<boolean>
+    sub: Subscribe.ISubscribe<any>,
+    fire: Subscribe.IFire<any>
   ) {
-    super(false, sub, fire, d => !d);
+    super({state:false}, sub, fire, d => {return {state:!d.state};});
   }
 
   public getClass = () => {
     if (this.pending) return "btn btn-warning";
-    if (this.display) return "btn btn-success";
+    if (this.display.state) return "btn btn-success";
     return "btn btn-danger";
   }
 }
@@ -148,13 +148,13 @@ export class DisplayPair {
           this.connectionMessage = 'Disconnected from server';
   }
 
-  private setExchangeStatus = (cs: Models.ConnectivityStatus) => {
-      this.connectedToExchange = cs == Models.ConnectivityStatus.Connected;
+  private setExchangeStatus = (cs) => {
+      this.connectedToExchange = cs.status == Models.ConnectivityStatus.Connected;
       this.setStatus();
   };
 
-  private setServerStatus = (cs: boolean) => {
-      this.connectedToServer = cs;
+  private setServerStatus = (cs) => {
+      this.connectedToServer = cs.status;
       this.setStatus();
   };
 }

@@ -154,23 +154,24 @@ namespace K {
       };
       static json onSnapStatus(Local<Value> z) {
         json k;
-        k.push_back((double)gwConn);
+        k.push_back({{"status", (int)gwConn}});
         return k;
       };
       static json onSnapState(Local<Value> z) {
         json k;
-        k.push_back(gwState);
+        k.push_back({{"state", gwState}});
         return k;
       };
-      static json onHandState(Local<Value> s) {
+      static json onHandState(Local<Value> s_) {
         json k;
-        if (s->BooleanValue() != gwAutoStart) {
-          gwAutoStart = s->BooleanValue();
+        Local<Object> s = s_->ToObject();
+        if (s->Get(FN::v8S("state"))->BooleanValue() != gwAutoStart) {
+          gwAutoStart = s->Get(FN::v8S("state"))->BooleanValue();
           gwUpState();
           Isolate* isolate = Isolate::GetCurrent();
           Local<Object> o = Object::New(isolate);
           o->Set(FN::v8S("state"), Boolean::New(isolate, gwState));
-          o->Set(FN::v8S("status"), Number::New(isolate, (double)gwConn));
+          o->Set(FN::v8S("status"), Number::New(isolate, (int)gwConn));
           EV::evUp("ExchangeConnect", o);
         }
         return k;
@@ -189,9 +190,9 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         Local<Object> o = Object::New(isolate);
         o->Set(FN::v8S("state"), Boolean::New(isolate, gwState));
-        o->Set(FN::v8S("status"), Number::New(isolate, (double)gwConn));
+        o->Set(FN::v8S("status"), Number::New(isolate, (int)gwConn));
         EV::evUp("ExchangeConnect", o);
-        UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (double)gwConn}});
+        UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConn}});
       };
       static void gwUpState() {
         Isolate* isolate = Isolate::GetCurrent();
