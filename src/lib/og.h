@@ -2,18 +2,19 @@
 #define K_OG_H_
 
 namespace K {
+  uv_timer_t gwCancelAll_;
+  static json tradesMemory;
+  static map<string, void*> toCancel;
+  static map<string, json> allOrders;
+  static map<string, string> allOrdersIds;
   class OG {
     public:
       static void main(Local<Object> exports) {
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwCancelAll_)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ init timer failed." << endl; exit(1); }
-          gwCancelAll_.data = gw;
+          gwCancelAll_.data = NULL;
           if (uv_timer_start(&gwCancelAll_, [](uv_timer_t *handle) {
-            Gw* gw = (Gw*) handle->data;
-            Isolate* isolate = Isolate::GetCurrent();
-            HandleScope scope(isolate);
-            Local<Object> o = Local<Object>::New(isolate, qpRepo);
-            if (o->Get(FN::v8S("cancelOrdersAuto"))->BooleanValue())
+            if (qpRepo["cancelOrdersAuto"].get<bool>())
               gW->cancelAll();
           }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ start timer failed." << endl; exit(1); }
         }).detach();
@@ -27,7 +28,7 @@ namespace K {
         UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
         EV::evOn("OrderUpdateGateway", [](Local<Object> k) {
-          OG::updateOrderState(_v8ogO_(k));
+          updateOrderState(_v8ogO_(k));
         });
         NODE_SET_METHOD(exports, "tradesMemory", OG::_tradesMemory);
         NODE_SET_METHOD(exports, "allOrders", OG::_allOrders);
@@ -70,10 +71,10 @@ namespace K {
         return o;
       };
     private:
-      static json onSnapOrders(Local<Value> z) {
+      static json onSnapOrders(json z) {
         return ogO(false);
       };
-      static json onSnapTrades(Local<Value> z) {
+      static json onSnapTrades(json z) {
         return ogT(true);
       };
       static void _tradesMemory(const FunctionCallbackInfo<Value>& args) {
@@ -92,46 +93,37 @@ namespace K {
           if (mORS::New == (mORS)it->second["orderStatus"].get<int>() or mORS::Working == (mORS)it->second["orderStatus"].get<int>())
             cancelOrder(it->first);
       };
-      static json onHandCancelOrder(Local<Value> o_) {
-        json k;
-        Local<Object> o = o_->ToObject();
-        cancelOrder(FN::S8v(o->ToObject()->Get(FN::v8S("orderId"))->ToString()));
-        return k;
+      static json onHandCancelOrder(json k) {
+        cancelOrder(k["orderId"].get<string>());
+        return {};
       };
-      static json onHandCancelAllOrders(Local<Value> o_) {
-        json k;
+      static json onHandCancelAllOrders(json k) {
         cancelOpenOrders();
-        return k;
+        return {};
       };
-      static json onHandCleanAllClosedOrders(Local<Value> o_) {
-        json k;
+      static json onHandCleanAllClosedOrders(json k) {
         cleanClosedOrders();
-        return k;
+        return {};
       };
-      static json onHandCleanAllOrders(Local<Value> o_) {
-        json k;
+      static json onHandCleanAllOrders(json k) {
         cleanOrders();
-        return k;
+        return {};
       };
-      static json onHandCleanTrade(Local<Value> o_) {
-        json k;
-        Local<Object> o = o_->ToObject();
-        cleanTrade(FN::S8v(o->Get(FN::v8S("tradeId"))->ToString()));
-        return k;
+      static json onHandCleanTrade(json k) {
+        cleanTrade(k["tradeId"].get<string>());
+        return {};
       };
-      static json onHandSubmitNewOrder(Local<Value> o_) {
-        json k;
-        Local<Object> o = o_->ToObject();
+      static json onHandSubmitNewOrder(json k) {
         sendOrder(
-          FN::S8v(o->Get(FN::v8S("side"))->ToString()) == "Ask" ? mSide::Ask : mSide::Bid,
-          o->Get(FN::v8S("price"))->NumberValue(),
-          o->Get(FN::v8S("quantity"))->NumberValue(),
-          (mOrderType)o->Get(FN::v8S("orderType"))->NumberValue(),
-          (mTimeInForce)o->Get(FN::v8S("timeInForce"))->NumberValue(),
-          o->Get(FN::v8S("isPong"))->BooleanValue(),
-          o->Get(FN::v8S("preferPostOnly"))->BooleanValue()
+          k["side"].get<string>() == "Ask" ? mSide::Ask : mSide::Bid,
+          k["price"].get<double>(),
+          k["quantity"].get<double>(),
+          (mOrderType)k["orderType"].get<int>(),
+          (mTimeInForce)k["timeInForce"].get<int>(),
+          k["isPong"].get<bool>(),
+          k["preferPostOnly"].get<bool>()
         );
-        return k;
+        return {};
       };
       static void _sendOrder(const FunctionCallbackInfo<Value>& args) {
         sendOrder(
@@ -248,20 +240,17 @@ namespace K {
           {"loadedFromDB", false},
         };
         EV::evUp("OrderTradeBroker", v8ogTM_(trade));
-        Isolate* isolate = Isolate::GetCurrent();
-        // HandleScope scope(isolate);
-        Local<Object> p = Local<Object>::New(isolate, qpRepo);
-        if ((mQuotingMode)p->Get(FN::v8S("mode"))->NumberValue() == mQuotingMode::Boomerang or (mQuotingMode)p->Get(FN::v8S("mode"))->NumberValue() == mQuotingMode::HamelinRat or (mQuotingMode)p->Get(FN::v8S("mode"))->NumberValue() == mQuotingMode::AK47) {
-          double widthPong = p->Get(FN::v8S("widthPercentage"))->BooleanValue()
-            ? p->Get(FN::v8S("widthPongPercentage"))->NumberValue() * trade["price"].get<double>() / 100
-            : p->Get(FN::v8S("widthPong"))->NumberValue();
+        if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
+          double widthPong = qpRepo["widthPercentage"].get<bool>()
+            ? qpRepo["widthPongPercentage"].get<double>() * trade["price"].get<double>() / 100
+            : qpRepo["widthPong"].get<double>();
           map<double, string> matches;
           for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
             if ((*it)["quantity"].get<double>() - (*it)["Kqty"].get<double>() > 0
               and (mSide)(*it)["side"].get<int>() == ((mSide)trade["side"].get<int>() == mSide::Bid ? mSide::Ask : mSide::Bid)
               and ((mSide)trade["side"].get<int>() == mSide::Bid ? ((*it)["price"].get<double>() > (trade["price"].get<double>() + widthPong)) : ((*it)["price"].get<double>() < (trade["price"].get<double>() - widthPong)))
             ) matches[(*it)["price"].get<double>()] = (*it)["tradeId"].get<string>();
-          matchPong(matches, ((mPongAt)p->Get(FN::v8S("pongAt"))->NumberValue() == mPongAt::LongPingFair or (mPongAt)p->Get(FN::v8S("pongAt"))->NumberValue() == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
+          matchPong(matches, ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
         } else {
           Local<Object> t_ = v8ogTM_(trade);
           UI::uiSend(uiTXT::Trades, trade);
@@ -276,7 +265,7 @@ namespace K {
           {"pong", o["isPong"].get<bool>()}
         };
         UI::uiSend(uiTXT::TradesChart, t);
-        cleanAuto(o["time"].get<unsigned long>(), p->Get(FN::v8S("cleanPongsAuto"))->NumberValue());
+        cleanAuto(o["time"].get<unsigned long>(), qpRepo["cleanPongsAuto"].get<double>());
       };
       static void matchPong(map<double, string> matches, bool reverse, json pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {

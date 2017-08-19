@@ -51,7 +51,6 @@ using namespace dec;
 #include "ev.h"
 #include "km.h"
 #include "sd.h"
-#include "kv.h"
 #include "cf.h"
 #include "db.h"
 #include "ui.h"

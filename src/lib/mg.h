@@ -2,6 +2,8 @@
 #define K_MG_H_
 
 namespace K {
+  static vector<mGWmt> mGWmt_;
+  static Persistent<Object> mGWmkt;
   class MG {
     public:
       static void main(Local<Object> exports) {
@@ -33,7 +35,7 @@ namespace K {
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
       };
     private:
-      static json onSnapTrade(Local<Value> z) {
+      static json onSnapTrade(json z) {
         json k;
         JSON Json;
         Isolate* isolate = Isolate::GetCurrent();
@@ -41,12 +43,10 @@ namespace K {
           k.push_back(v8mGWmt(mGWmt_[i]));
         return k;
       };
-      static json onSnapBook(Local<Value> z) {
-        json k;
+      static json onSnapBook(json z) {
         JSON Json;
         Isolate* isolate = Isolate::GetCurrent();
-        k.push_back(json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), Local<Object>::New(isolate, mGWmkt)).ToLocalChecked())));
-        return k;
+        return {json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), Local<Object>::New(isolate, mGWmkt)).ToLocalChecked()))};
       };
       static void v8mGWmkt() {
         Isolate* isolate = Isolate::GetCurrent();

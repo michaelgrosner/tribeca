@@ -4,7 +4,7 @@
 namespace K {
   string A();
   static uWS::Hub hub(0, true);
-  typedef json (*uiCb)(Local<Value>);
+  typedef json (*uiCb)(json);
   struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static uv_check_t loop;
@@ -81,8 +81,14 @@ namespace K {
             if (url.length() > 0) {
               content << ifstream (string("app/pub").append(url)).rdbuf();
             } else {
-              document = "HTTP/1.1 404 Not Found\r\n";
-              content << "Today, is a beautiful day.";
+              srand(time(0));
+              if (rand() % 21) {
+                document = "HTTP/1.1 418 I'm a teapot\r\n";
+                content << "Today, can i haz chocolate milk?";
+              } else {
+                document = "HTTP/1.1 404 Not Found\r\n";
+                content << "Today, is a beautiful day.";
+              }
             }
             document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
             res->write(document.data(), document.length());
@@ -90,17 +96,18 @@ namespace K {
         });
         uiGroup->onMessage([isolate, sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length > 1) {
-            JSON Json;
             HandleScope hs(isolate);
             string m = string(message, length).substr(2, length-2);
-            MaybeLocal<Value> v = (length > 2 && (m[0] == '[' || m[0] == '{')) ? Json.Parse(isolate->GetCurrentContext(), FN::v8S(m.data())) : FN::v8S(length > 2 ? m.data() : "");
+            json v;
+            if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
             if (sess->cb.find(string(message, 2)) != sess->cb.end()) {
-              json reply = (*sess->cb[string(message, 2)])(uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked())));
+              json reply = (*sess->cb[string(message, 2)])(v);
               if (!reply.is_null() && uiBIT::SNAP == (uiBIT)message[0])
                 webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
             }
             if (sess->_cb.find(string(message ,2)) != sess->_cb.end()) {
-              Local<Value> argv[] = {uiBIT::SNAP == (uiBIT)message[0] ? (Local<Value>)Undefined(isolate) : ((m == "true" || m == "false") ? (Local<Value>)Boolean::New(isolate, m == "true") : (v.IsEmpty() ? (Local<Value>)String::Empty(isolate) : v.ToLocalChecked()))};
+              JSON Json;
+              Local<Value> argv[] = {v.is_null() ? (Local<Value>)Undefined(isolate) : (Local<Value>)Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, v.dump())).ToLocalChecked()};
               Local<Value> reply = Local<Function>::New(isolate, sess->_cb[string(message, 2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
               if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
                 webSocket->send(string(message, 2).append(*String::Utf8Value(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
@@ -147,11 +154,13 @@ namespace K {
         time_t rawtime;
         time(&rawtime);
         struct stat st;
-        app_state["memory"] = heapStatistics.total_heap_size();
-        app_state["hour"] = localtime(&rawtime)->tm_hour;
-        app_state["freq"] = iOSR60 / 2;
-        app_state["dbsize"] = stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size;
-        app_state["a"] = A();
+        app_state = {
+          {"memory", heapStatistics.total_heap_size()},
+          {"hour", localtime(&rawtime)->tm_hour},
+          {"freq", iOSR60 / 2},
+          {"dbsize", stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size},
+          {"a", A()}
+        };
         iOSR60 = 0;
         uiSend(uiTXT::ApplicationState, app_state);
       };
@@ -183,30 +192,22 @@ namespace K {
         uiDDT = FN::T();
         uiDD(handle);
       };
-      static json onSnapApp(Local<Value> z) {
-        json k;
-        k.push_back(app_state);
-        return k;
+      static json onSnapApp(json z) {
+        return { app_state };
       };
-      static json onSnapNote(Local<Value> z) {
-        json k;
-        k.push_back(uiNOTE);
-        return k;
+      static json onSnapNote(json z) {
+        return { uiNOTE };
       };
-      static json onHandNote(Local<Value> o_) {
-        json k;
-        uiNOTE = FN::S8v(o_->ToString());
-        return k;
+      static json onHandNote(json k) {
+        uiNOTE = k["/0"_json_pointer].get<string>();
+        return {};
       };
-      static json onSnapOpt(Local<Value> z) {
-        json k;
-        k.push_back(uiOPT);
-        return k;
+      static json onSnapOpt(json z) {
+        return { uiOPT };
       };
-      static json onHandOpt(Local<Value> o_) {
-        json k;
-        uiOPT = o_->BooleanValue();
-        return k;
+      static json onHandOpt(json k) {
+        uiOPT = k["/0"_json_pointer].get<bool>();
+        return {};
       };
       static void uiSnap(uiTXT k, uiCb cb) {
         uiOn(uiBIT::SNAP, k, cb);
@@ -267,8 +268,7 @@ namespace K {
         Isolate* isolate = Isolate::GetCurrent();
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
-        Local<Object> qp_ = Local<Object>::New(isolate, qpRepo);
-        if (!qp_->Get(FN::v8S(isolate, "delayUI"))->NumberValue()) return uiUp(k, o);
+        if (!qpRepo["delayUI"].get<double>()) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
