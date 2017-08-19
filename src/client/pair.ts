@@ -153,8 +153,8 @@ export class DisplayPair {
       this.setStatus();
   };
 
-  private setServerStatus = (cs) => {
-      this.connectedToServer = cs.status;
+  private setServerStatus = (cs: boolean) => {
+      this.connectedToServer = cs;
       this.setStatus();
   };
 }
