@@ -63,7 +63,6 @@ namespace K {
           }
         }
         Local<Object> o_ = v8ogO_(o);
-        JSON Json;
         EV::evUp("OrderUpdateBroker", o_);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
         if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
