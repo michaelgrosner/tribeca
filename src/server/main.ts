@@ -11,7 +11,6 @@ const bindings = ((K) => { try {
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
 bindings.uiLoop(noop);
 
-require('events').EventEmitter.prototype._maxListeners = 30;
 import request = require('request');
 
 import Broker = require("./broker");
