@@ -68,25 +68,18 @@ namespace K {
       static void filter() {
         mGWmktF = mGWmkt;
         if (mGWmktF.is_null() or mGWmktF["bids"].is_null() or mGWmktF["asks"].is_null()) return;
-        for (json::iterator it = mGWmktF["bids"].begin(); it != mGWmktF["bids"].end();) {
-          for (map<string, json>::iterator it_ = allOrders.begin(); it_ != allOrders.end(); ++it_)
-            if (mSide::Bid == (mSide)it_->second["side"].get<int>() and abs((*it)["price"].get<double>() - it_->second["price"].get<double>()) < gw->minTick)
-              (*it)["size"] = (*it)["size"].get<double>() - it_->second["quantity"].get<double>();
-          if ((*it)["size"].get<double>() > gw->minTick) ++it;
-          else it = mGWmktF["bids"].erase(it);
-        }
-        for (json::iterator it = mGWmktF["asks"].begin(); it != mGWmktF["asks"].end();) {
-          for (map<string, json>::iterator it_ = allOrders.begin(); it_ != allOrders.end(); ++it_)
-            if (mSide::Ask == (mSide)it_->second["side"].get<int>() and abs((*it)["price"].get<double>() - it_->second["price"].get<double>()) < gw->minTick)
-              (*it)["size"] = (*it)["size"].get<double>() - it_->second["quantity"].get<double>();
-          if ((*it)["size"].get<double>() > gw->minTick) ++it;
-          else it = mGWmktF["asks"].erase(it);
-        }
-        if (mGWmktF["bids"].is_null() or mGWmktF["asks"].is_null()) {
-          mGWmktF = {{"bids", {}}, {"asks", {}}};
-          return;
-        }
-        EV::evUp("FilteredMarket");
+        for (map<string, json>::iterator it_ = allOrders.begin(); it_ != allOrders.end(); ++it_)
+          filter(mSide::Bid == (mSide)it_->second["side"].get<int>() ? "bids" : "asks", it_->second);
+        if (!mGWmktF["bids"].is_null() and !mGWmktF["asks"].is_null())
+          EV::evUp("FilteredMarket");
+      };
+      static void filter(string k, json o) {
+        for (json::iterator it = mGWmktF[k].begin(); it != mGWmktF[k].end();)
+          if (abs((*it)["price"].get<double>() - o["price"].get<double>()) < gw->minTick) {
+            (*it)["size"] = (*it)["size"].get<double>() - o["quantity"].get<double>();
+            if ((*it)["size"].get<double>() < gw->minTick) mGWmktF[k].erase(it);
+            break;
+          } else ++it;
       };
   };
 }
