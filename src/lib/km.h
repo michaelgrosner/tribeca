@@ -117,11 +117,11 @@ namespace K {
   struct mGWoa {
     string oI;
     string oE;
-    mORS os;
+    mORS oS;
     double oP;
     double oQ;
     double oLQ;
-    mGWoa(string oI, string oE, mORS os, double oP, double oQ, double oLQ);
+    mGWoa(string oI, string oE, mORS oS, double oP, double oQ, double oLQ);
   };
   struct mGWmt {
     mExchange exchange;

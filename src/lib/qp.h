@@ -57,7 +57,6 @@ namespace K {
   class QP {
     public:
       static void main(Local<Object> exports) {
-        Isolate* isolate = exports->GetIsolate();
         for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {
           string k = CF::cfString(it.key(), false);
           if (k != "") defQP[it.key()] = k;
@@ -73,8 +72,15 @@ namespace K {
         EV::evUp("QuotingParameters", qpRepo);
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
+    private:
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
-        args.GetReturnValue().Set(v8qp(qpRepo));
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        for (json::iterator it = qpRepo.begin(); it != qpRepo.end(); ++it)
+          if (it.value().is_number()) o->Set(FN::v8S(it.key()), Number::New(isolate, it.value()));
+          else if (it.value().is_boolean()) o->Set(FN::v8S(it.key()), Boolean::New(isolate, it.value()));
+        args.GetReturnValue().Set(o);
       };
       static json onSnap(json z) {
         return { qpRepo };
@@ -93,19 +99,11 @@ namespace K {
             k["widthPercentage"] = false;
           qpRepo = k;
           cleanBool();
-          DB::insert(uiTXT::QuotingParametersChange, v8qp(k));
+          DB::insert(uiTXT::QuotingParametersChange, k);
           EV::evUp("QuotingParameters", k);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};
-      };
-      static Local<Object> v8qp(json k) {
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate);
-        for (json::iterator it = k.begin(); it != k.end(); ++it)
-          if (it.value().is_number()) o->Set(FN::v8S(it.key()), Number::New(isolate, it.value()));
-          else if (it.value().is_boolean()) o->Set(FN::v8S(it.key()), Boolean::New(isolate, it.value()));
-        return o;
       };
       static void cleanBool() {
         for (vector<string>::iterator it = boolQP.begin(); it != boolQP.end(); ++it)

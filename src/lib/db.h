@@ -36,23 +36,15 @@ namespace K {
         if (j[strlen(j.data()) - 1] == ',') j.pop_back();
         return json::parse(j.append("]"));
       };
-      static void insert(uiTXT k, Local<Object> o, bool rm = true, string id = "NULL", long time = 0) {
-        Isolate* isolate = Isolate::GetCurrent();
+      static void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
         char* zErrMsg = 0;
-        string r;
-        MaybeLocal<Array> maybe_props = o->GetOwnPropertyNames(Context::New(isolate));
-        if (!maybe_props.IsEmpty()) {
-          JSON Json;
-          MaybeLocal<String> r_ = Json.Stringify(isolate->GetCurrentContext(), o);
-          r = FN::S8v(r_.ToLocalChecked());
-        } else r = "";
         sqlite3_exec(db,
           string((rm || id != "NULL" || time) ? string("DELETE FROM ").append(string(1, (char)k))
           .append(id != "NULL" ? string(" WHERE id = ").append(id).append(";") : (
             time ? string(" WHERE time < ").append(to_string(time)).append(";") : ";"
-          ) ) : "").append((!r.length() || r == "{}") ? "" : string("INSERT INTO ")
+          ) ) : "").append(o.is_null() ? "" : string("INSERT INTO ")
             .append(string(1, (char)k)).append(" (id,json) VALUES(").append(id).append(",'")
-            .append(r).append("');")),
+            .append(o.dump()).append("');")),
           NULL, NULL, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
@@ -70,7 +62,8 @@ namespace K {
       static void _insert(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
-        insert((uiTXT)FN::S8v(args[0]->ToString())[0], args[1]->IsUndefined() ? Object::New(isolate) : args[1]->ToObject(), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
+        JSON Json;
+        insert((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(args[1]->IsUndefined() ? "{}" : FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
       };
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);

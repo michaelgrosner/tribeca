@@ -36,8 +36,6 @@ namespace K {
     private:
       static json onSnapTrade(json z) {
         json k;
-        JSON Json;
-        Isolate* isolate = Isolate::GetCurrent();
         for (unsigned i=0; i<mGWmt_.size(); ++i)
           k.push_back(v8mGWmt(mGWmt_[i]));
         return k;
