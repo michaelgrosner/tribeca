@@ -51,8 +51,8 @@ namespace K {
     {  "delayUI",                       7                                      }
   };
   static vector<string> boolQP = {
-    "widthPercentage", "quotingStdevBollingerBands", "quotingEwmaProtection", "percentageValues",
-    "widthPercentage", "bestWidth", "buySizeMax", "sellSizeMax", "cancelOrdersAuto", "audio"
+    "widthPercentage", "bestWidth", "sellSizeMax", "buySizeMax", "percentageValues",
+    "quotingEwmaProtection", "quotingStdevBollingerBands", "cancelOrdersAuto", "audio"
   };
   class QP {
     public:

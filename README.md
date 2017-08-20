@@ -305,3 +305,7 @@ What exchange you don't want to be deleted from the bot?
 [![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Korbit)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Korbit/vote)
 [![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Poloniex)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Poloniex/vote)
 [![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Delete%20all%2C%20my%20exchange%20is%20none%20of%20these.)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Delete%20all%2C%20my%20exchange%20is%20none%20of%20these./vote)
+
+### like yesterday, since 0day and ∞
+
+[![bcn](https://user-images.githubusercontent.com/1634027/29495722-1d924018-85c5-11e7-8d61-d83f5716ae9e.jpg)](https://en.wikipedia.org/wiki/2017_Barcelona_attack#/media/File:Barcelona_La_Rambla_-_2011-04-23_05_-_JTCurses.jpg)
