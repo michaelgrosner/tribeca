@@ -50,6 +50,7 @@ export class QuotingEngine {
 
     constructor(
       private _fvEngine: FairValue.FairValueEngine,
+      private _mgFilter,
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
       private _minTick: number,
@@ -294,7 +295,7 @@ export class QuotingEngine {
             return;
         }
 
-        const filteredMkt = this._fvEngine.filtration.latestFilteredMarket;
+        const filteredMkt = this._mgFilter();
         if (filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             this.latestQuote = null;
             return;
