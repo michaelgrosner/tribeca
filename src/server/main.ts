@@ -19,7 +19,6 @@ import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import FairValue = require("./fair-value");
-import MarketFiltration = require("./market-filtration");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import QuotingEngine = require("./quoting-engine");
@@ -57,12 +56,7 @@ process.on("exit", (code) => {
 const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
 
 const fvEngine = new FairValue.FairValueEngine(
-  new MarketFiltration.MarketFiltration(
-    bindings.gwMinTick(),
-    bindings.allOrders,
-    bindings.evOn,
-    bindings.evUp
-  ),
+  bindings.mgFilter,
   bindings.gwMinTick(),
   bindings.qpRepo,
   bindings.uiSnap,
@@ -86,6 +80,7 @@ const positionBroker = new Broker.PositionBroker(
 
 const quotingEngine = new QuotingEngine.QuotingEngine(
   fvEngine,
+  bindings.mgFilter,
   bindings.qpRepo,
   positionBroker,
   bindings.gwMinTick(),
@@ -97,6 +92,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
   ),
   new Statistics.STDEVProtectionCalculator(
     fvEngine,
+    bindings.mgFilter,
     bindings.qpRepo,
     bindings.dbInsert,
     bindings.computeStdevs,

@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Broker = require("./broker");
-import MarketFiltration = require("./market-filtration");
 
 export class FairValueEngine {
   private _latest: Models.FairValue = null;
@@ -16,7 +15,7 @@ export class FairValueEngine {
   }
 
   constructor(
-    public filtration: MarketFiltration.MarketFiltration,
+    private _mgFilter,
     private _minTick: number,
     private _qpRepo,
     private _uiSnap,
@@ -34,7 +33,7 @@ export class FairValueEngine {
   }
 
   private recalcFairValue = () => {
-    const mkt: Models.Market = this.filtration.latestFilteredMarket;
+    const mkt: Models.Market = this._mgFilter();
     if (mkt && mkt.asks.length && mkt.bids.length)
       this.latestFairValue = new Models.FairValue(Utils.roundNearest(
         this._qpRepo().fvModel == Models.FairValueModel.BBO

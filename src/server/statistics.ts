@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import MarketFiltration = require("./market-filtration");
 import FairValue = require("./fair-value");
 import moment = require("moment");
 
@@ -103,6 +102,7 @@ export class STDEVProtectionCalculator {
 
     constructor(
       private _fv: FairValue.FairValueEngine,
+      private _mgFilter,
       private _qpRepo,
       private _dbInsert,
       private _computeStdevs,
@@ -143,7 +143,7 @@ export class STDEVProtectionCalculator {
     };
 
     private onTick = () => {
-        const filteredMkt = this._fv.filtration.latestFilteredMarket;
+        const filteredMkt = this._mgFilter();
         if (this._fv.latestFairValue === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             console.warn(new Date().toISOString().slice(11, -1), 'stdev', 'Unable to compute value');
             return;
