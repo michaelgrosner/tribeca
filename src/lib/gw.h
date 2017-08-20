@@ -104,7 +104,7 @@ namespace K {
         json o;
         o["orderId"] = k.oI;
         if (k.oE.length()) o["exchangeId"] = k.oE;
-        o["orderStatus"] = (int)k.os;
+        o["orderStatus"] = (int)k.oS;
         if (k.oP) o["lastPrice"] = k.oP;
         o["lastQuantity"] = k.oLQ;
         o["leavesQuantity"] = k.oQ;

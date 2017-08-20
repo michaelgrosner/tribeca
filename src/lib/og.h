@@ -77,7 +77,15 @@ namespace K {
         return ogT(true);
       };
       static void _tradesMemory(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(v8ogTM(args.GetIsolate(), false));
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Array> k = Array::New(isolate);
+        int i;
+        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
+          if (i>1000) break;
+          k->Set(i++, v8ogTM_(*it, false));
+        }
+        args.GetReturnValue().Set(k);
       };
       static void _allOrders(const FunctionCallbackInfo<Value>& args) {
         args.GetReturnValue().Set(v8ogO(args.GetIsolate(), true));
@@ -185,7 +193,7 @@ namespace K {
           else {
             (*it)["Kqty"] = -1;
             UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, Object::New(Isolate::GetCurrent()), false, (*it)["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, {}, false, (*it)["tradeId"].get<string>());
             it = tradesMemory.erase(it);
           }
         }
@@ -194,7 +202,7 @@ namespace K {
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           (*it)["Kqty"] = -1;
           UI::uiSend(uiTXT::Trades, *it);
-          DB::insert(uiTXT::Trades, Object::New(Isolate::GetCurrent()), false, (*it)["tradeId"].get<string>());
+          DB::insert(uiTXT::Trades, {}, false, (*it)["tradeId"].get<string>());
           it = tradesMemory.erase(it);
         }
       };
@@ -204,7 +212,7 @@ namespace K {
           else {
             (*it)["Kqty"] = -1;
             UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, Object::New(Isolate::GetCurrent()), false, (*it)["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, {}, false, (*it)["tradeId"].get<string>());
             it = tradesMemory.erase(it);
           }
         }
@@ -252,7 +260,7 @@ namespace K {
           matchPong(matches, ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
         } else {
           UI::uiSend(uiTXT::Trades, trade);
-          DB::insert(uiTXT::Trades, v8ogTM_(trade), false, trade["tradeId"].get<string>());
+          DB::insert(uiTXT::Trades, trade, false, trade["tradeId"].get<string>());
           tradesMemory.push_back(trade);
         }
         json t = {
@@ -280,17 +288,19 @@ namespace K {
             (*it)["value"] = (*it)["value"].get<double>() + pong["value"].get<double>();
             (*it)["loadedFromDB"] = false;
             UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, v8ogTM_(*it), false, (*it)["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, *it, false, (*it)["tradeId"].get<string>());
             break;
           }
           if (!eq) {
             UI::uiSend(uiTXT::Trades, pong);
-            DB::insert(uiTXT::Trades, v8ogTM_(pong), false, pong["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, pong, false, pong["tradeId"].get<string>());
             tradesMemory.push_back(pong);
           }
         }
       };
       static bool matchPong(string match, json* pong) {
+        Isolate* isolate = Isolate::GetCurrent();
+        HandleScope hs(isolate);
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           if ((*it)["tradeId"].get<string>() != match) continue;
           double Kqty = fmin((*pong)["quantity"].get<double>(), (*it)["quantity"].get<double>() - (*it)["Kqty"].get<double>());
@@ -304,7 +314,7 @@ namespace K {
             (*it)["Kdiff"] = abs(((*it)["quantity"].get<double>()*(*it)["price"].get<double>())-((*it)["Kqty"].get<double>()*(*it)["Kprice"].get<double>()));
           (*it)["loadedFromDB"] = false;
           UI::uiSend(uiTXT::Trades, *it);
-          DB::insert(uiTXT::Trades, v8ogTM_(*it), false, (*it)["tradeId"].get<string>());
+          DB::insert(uiTXT::Trades, *it, false, (*it)["tradeId"].get<string>());
           break;
         }
         return (*pong)["quantity"].get<double>() > 0;
@@ -316,7 +326,7 @@ namespace K {
           if ((*it)["time"].get<unsigned long>() < pT_ and (pT < 0 or (*it)["Kqty"].get<double>() >= (*it)["quantity"].get<double>())) {
             (*it)["Kqty"] = -1;
             UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, Object::New(Isolate::GetCurrent()), false, (*it)["tradeId"].get<string>());
+            DB::insert(uiTXT::Trades, {}, false, (*it)["tradeId"].get<string>());
             it = tradesMemory.erase(it);
           } else ++it;
         }
@@ -338,18 +348,8 @@ namespace K {
         }
         return k;
       };
-      static Local<Array> v8ogTM(Isolate* isolate, bool fromDB) {
-        Local<Array> k = Array::New(isolate);
-        int i;
-        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
-          if (i>1000) break;
-          k->Set(i++, v8ogTM_(*it, fromDB));
-        }
-        return k;
-      };
       static Local<Object> v8ogTM_(json j, bool fromDB = false) {
         Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
         Local<Object> o = Object::New(isolate);
         o->Set(FN::v8S("tradeId"), FN::v8S(j["tradeId"].get<string>()));
         o->Set(FN::v8S("time"), Number::New(isolate, j["time"].get<unsigned long>()));
