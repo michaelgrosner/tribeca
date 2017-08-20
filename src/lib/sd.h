@@ -19,16 +19,16 @@ namespace K {
         Local<Float64Array> seqD = args[3].As<Float64Array>();
         double factor = args[4]->NumberValue();
         double mean = 0;
-        Local<Object> obj = Object::New(isolate);
-        obj->Set(FN::v8S("fv"),       Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
-        obj->Set(FN::v8S("fvMean"),   Number::New(isolate, mean));
-        obj->Set(FN::v8S("tops"),     Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, &mean)));
-        obj->Set(FN::v8S("topsMean"), Number::New(isolate, mean));
-        obj->Set(FN::v8S("bid"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, &mean)));
-        obj->Set(FN::v8S("bidMean"),  Number::New(isolate, mean));
-        obj->Set(FN::v8S("ask"),      Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, &mean)));
-        obj->Set(FN::v8S("askMean"),  Number::New(isolate, mean));
-        args.GetReturnValue().Set(obj);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("fv"), Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqA->Buffer()->GetContents().Data()), seqA->Length(), factor, &mean)));
+        o->Set(FN::v8S("fvMean"), Number::New(isolate, mean));
+        o->Set(FN::v8S("tops"), Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqB->Buffer()->GetContents().Data()), seqB->Length(), factor, &mean)));
+        o->Set(FN::v8S("topsMean"), Number::New(isolate, mean));
+        o->Set(FN::v8S("bid"), Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqC->Buffer()->GetContents().Data()), seqC->Length(), factor, &mean)));
+        o->Set(FN::v8S("bidMean"), Number::New(isolate, mean));
+        o->Set(FN::v8S("ask"), Number::New(isolate, SD::ComputeStdev(reinterpret_cast<double*>(seqD->Buffer()->GetContents().Data()), seqD->Length(), factor, &mean)));
+        o->Set(FN::v8S("askMean"), Number::New(isolate, mean));
+        args.GetReturnValue().Set(o);
       };
       static double roundNearest(double value, double minTick) {
         return round(value / minTick) * minTick;
@@ -60,24 +60,15 @@ namespace K {
       };
       static void _RoundUp(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
-        double value = args[0]->NumberValue();
-        double minTick = args[1]->NumberValue();
-        Local<Number> num = Number::New(isolate, SD::roundUp(value, minTick));
-        args.GetReturnValue().Set(num);
+        args.GetReturnValue().Set(Number::New(isolate, SD::roundUp(args[0]->NumberValue(), args[1]->NumberValue())));
       };
       static void _RoundDown(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
-        double value = args[0]->NumberValue();
-        double minTick = args[1]->NumberValue();
-        Local<Number> num = Number::New(isolate, SD::roundDown(value, minTick));
-        args.GetReturnValue().Set(num);
+        args.GetReturnValue().Set(Number::New(isolate, SD::roundDown(args[0]->NumberValue(), args[1]->NumberValue())));
       };
       static void _RoundNearest(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
-        double value = args[0]->NumberValue();
-        double minTick = args[1]->NumberValue();
-        Local<Number> num = Number::New(isolate, SD::roundNearest(value, minTick));
-        args.GetReturnValue().Set(num);
+        args.GetReturnValue().Set(Number::New(isolate, SD::roundNearest(args[0]->NumberValue(), args[1]->NumberValue())));
       };
       static void _RoundSide(const FunctionCallbackInfo<Value> &args) {
         mSide side = (mSide)args[2]->NumberValue();

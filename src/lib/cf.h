@@ -30,14 +30,14 @@ namespace K {
           png_infop info_ptr;
           unsigned char sig[8];
           FILE *fp;
-          if(!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "Errrror: Could not find and open file " << k << "." << endl; }
+          if (!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "Errrror: Could not find and open file " << k << "." << endl; }
           else {
             fread(sig, 1, 8, fp);
-            if(!png_check_sig(sig, 8)) { cout << FN::uiT() << "Errrror: Not a PNG file." << endl; }
+            if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "Errrror: Not a PNG file." << endl; }
             else {
               png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
               info_ptr = png_create_info_struct(png_ptr);
-              if(!png_ptr) { cout << FN::uiT() << "Errrror: Could not allocate memory." << endl; }
+              if (!png_ptr) { cout << FN::uiT() << "Errrror: Could not allocate memory." << endl; }
               else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << "Errrror: PNG error." << endl; }
               else {
                 png_init_io(png_ptr, fp);
@@ -47,8 +47,8 @@ namespace K {
                 int num_text;
                 png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
                 string conf = "";
-                for(int i = 0; i < num_text; i++)
-                  if(strcmp("K.conf", text_ptr[i].key) == 0)
+                for (int i = 0; i < num_text; i++)
+                  if (strcmp("K.conf", text_ptr[i].key) == 0)
                     conf = text_ptr[i].text;
                 if (conf.length()) {
                   cfRepo = json::parse(conf);
