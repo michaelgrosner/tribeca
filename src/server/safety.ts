@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Broker = require("./broker");
 import moment = require('moment');
 import PositionManagement = require("./position-management");
 
@@ -31,7 +30,7 @@ export class SafetyCalculator {
     constructor(
       private _fvEngine,
       private _qpRepo,
-      private _positionBroker: Broker.PositionBroker,
+      private _positionBroker,
       private _tradesMemory,
       private _uiSnap,
       private _uiSend,
@@ -62,10 +61,10 @@ export class SafetyCalculator {
     }
 
     private computeQtyLimit = () => {
-        var fv = this._fvEngine();
-        if (!fv || !this.targetPosition.latestTargetPosition || !this._positionBroker.latestReport) return;
+        const fv = this._fvEngine();
+        const latestPosition = this._positionBroker();
+        if (!fv || !this.targetPosition.latestTargetPosition || latestPosition === null) return;
         const params = this._qpRepo();
-        const latestPosition = this._positionBroker.latestReport;
         let buySize: number  = (params.percentageValues && latestPosition != null)
             ? params.buySizePercentage * latestPosition.value / 100
             : params.buySize;

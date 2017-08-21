@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
 import moment = require("moment");
-import Broker = require("./broker");
 
 export class TargetBasePositionManager {
   public sideAPR: string;
@@ -34,7 +33,7 @@ export class TargetBasePositionManager {
     private _fvEngine,
     private _ewma: Statistics.EWMATargetPositionCalculator,
     private _qpRepo,
-    private _positionBroker: Broker.PositionBroker,
+    private _positionBroker,
     private _uiSnap,
     private _uiSend,
     private _evOn,
@@ -62,15 +61,16 @@ export class TargetBasePositionManager {
 
   private recomputeTargetPosition = () => {
     const params = this._qpRepo();
-    if (params === null || this._positionBroker.latestReport === null) {
+    const latestReport = this._positionBroker();
+    if (params === null || latestReport === null) {
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Unable to compute tbp [ qp | pos ] = [', !!params, '|', !!this._positionBroker.latestReport, ']');
       return;
     }
     const targetBasePosition: number = (params.autoPositionMode === Models.AutoPositionMode.Manual)
       ? (params.percentageValues
-        ? params.targetBasePositionPercentage * this._positionBroker.latestReport.value / 100
+        ? params.targetBasePositionPercentage * latestReport.value / 100
         : params.targetBasePosition)
-      : ((1 + this._newTargetPosition) / 2) * this._positionBroker.latestReport.value;
+      : ((1 + this._newTargetPosition) / 2) * latestReport.value;
 
     if (this._latest === null || Math.abs(this._latest.tbp - targetBasePosition) > 1e-4 || this.sideAPR !== this._latest.sideAPR) {
       this._latest = new Models.TargetBasePositionValue(targetBasePosition, this.sideAPR);
