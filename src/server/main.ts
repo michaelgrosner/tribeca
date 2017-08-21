@@ -50,58 +50,56 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const quotingEngine = new QuotingEngine.QuotingEngine(
-  bindings.mgFairV,
-  bindings.mgFilter,
-  bindings.qpRepo,
-  bindings.pgRepo,
-  bindings.gwMinTick(),
-  bindings.gwMinSize(),
-  new Statistics.EWMAProtectionCalculator(
-    bindings.mgFairV,
-    bindings.qpRepo,
-    bindings.evUp
-  ),
-  new Statistics.STDEVProtectionCalculator(
+new QuoteSender.QuoteSender(
+  new QuotingEngine.QuotingEngine(
     bindings.mgFairV,
     bindings.mgFilter,
     bindings.qpRepo,
-    bindings.dbInsert,
-    bindings.computeStdevs,
-    bindings.dbLoad(Models.Topics.MarketData)
-  ),
-  new PositionManagement.TargetBasePositionManager(
+    bindings.pgRepo,
     bindings.gwMinTick(),
-    bindings.dbInsert,
-    bindings.mgFairV,
-    new Statistics.EWMATargetPositionCalculator(
+    bindings.gwMinSize(),
+    new Statistics.EWMAProtectionCalculator(
+      bindings.mgFairV,
       bindings.qpRepo,
-      bindings.dbLoad(Models.Topics.EWMAChart)
+      bindings.evUp
     ),
-    bindings.qpRepo,
-    bindings.pgRepo,
-    bindings.uiSnap,
-    bindings.uiSend,
-    bindings.evOn,
-    bindings.evUp,
-    bindings.dbLoad(Models.Topics.TargetBasePosition)
-  ),
-  new Safety.SafetyCalculator(
-    bindings.mgFairV,
-    bindings.qpRepo,
-    bindings.pgRepo,
-    bindings.tradesMemory,
-    bindings.uiSnap,
-    bindings.uiSend,
+    new Statistics.STDEVProtectionCalculator(
+      bindings.mgFairV,
+      bindings.mgFilter,
+      bindings.qpRepo,
+      bindings.dbInsert,
+      bindings.computeStdevs,
+      bindings.dbLoad(Models.Topics.MarketData)
+    ),
+    new PositionManagement.TargetBasePositionManager(
+      bindings.gwMinTick(),
+      bindings.dbInsert,
+      bindings.mgFairV,
+      new Statistics.EWMATargetPositionCalculator(
+        bindings.qpRepo,
+        bindings.dbLoad(Models.Topics.EWMAChart)
+      ),
+      bindings.qpRepo,
+      bindings.pgRepo,
+      bindings.uiSnap,
+      bindings.uiSend,
+      bindings.evOn,
+      bindings.evUp,
+      bindings.dbLoad(Models.Topics.TargetBasePosition)
+    ),
+    new Safety.SafetyCalculator(
+      bindings.mgFairV,
+      bindings.qpRepo,
+      bindings.pgRepo,
+      bindings.tradesMemory,
+      bindings.uiSnap,
+      bindings.uiSend,
+      bindings.evOn,
+      bindings.evUp
+    ),
     bindings.evOn,
     bindings.evUp
   ),
-  bindings.evOn,
-  bindings.evUp
-);
-
-new QuoteSender.QuoteSender(
-  quotingEngine,
   bindings.allOrders,
   bindings.allOrdersDelete,
   bindings.cancelOrder,
