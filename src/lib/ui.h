@@ -216,6 +216,8 @@ namespace K {
         uiOn(uiBIT::MSG, k, cb);
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->u == 0) return;
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
