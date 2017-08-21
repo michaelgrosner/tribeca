@@ -59,7 +59,11 @@ namespace K {
       static void main(Local<Object> exports) {
         for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {
           string k = CF::cfString(it.key(), false);
-          if (k != "") defQP[it.key()] = k;
+          if (k != "") {
+            if (it.value().is_number()) defQP[it.key()] = stod(k);
+            else if (it.value().is_boolean()) defQP[it.key()] = (FN::S2u(k) == "TRUE" or k == "1");
+            else defQP[it.key()] = k;
+          }
         }
         qpRepo = defQP;
         json qpa = DB::load(uiTXT::QuotingParametersChange);

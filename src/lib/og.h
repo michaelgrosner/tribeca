@@ -355,8 +355,8 @@ namespace K {
         o->Set(FN::v8S("time"), Number::New(isolate, j["time"].get<unsigned long>()));
         o->Set(FN::v8S("exchange"), Number::New(isolate, j["exchange"].get<int>()));
         Local<Object> o_ = Object::New(isolate);
-        o_->Set(FN::v8S("base"), Number::New(isolate, j["pair"]["base"].get<int>()));
-        o_->Set(FN::v8S("quote"), Number::New(isolate, j["pair"]["quote"].get<int>()));
+        o_->Set(FN::v8S("base"), Number::New(isolate, j["/pair/base"_json_pointer].get<int>()));
+        o_->Set(FN::v8S("quote"), Number::New(isolate, j["/pair/quote"_json_pointer].get<int>()));
         o->Set(FN::v8S("pair"), o_);
         o->Set(FN::v8S("side"), Number::New(isolate, j["side"].get<int>()));
         o->Set(FN::v8S("price"), Number::New(isolate, j["price"].get<double>()));
@@ -398,8 +398,8 @@ namespace K {
         if (!j["exchange"].is_null()) o->Set(FN::v8S("exchange"), Number::New(isolate, j["exchange"].get<int>()));
         if (!j["pair"].is_null()) {
           Local<Object> o_ = Object::New(isolate);
-          o_->Set(FN::v8S("base"), Number::New(isolate, j["pair"]["base"].get<int>()));
-          o_->Set(FN::v8S("quote"), Number::New(isolate, j["pair"]["quote"].get<int>()));
+          o_->Set(FN::v8S("base"), Number::New(isolate, j["/pair/base"_json_pointer].get<int>()));
+          o_->Set(FN::v8S("quote"), Number::New(isolate, j["/pair/quote"_json_pointer].get<int>()));
           o->Set(FN::v8S("pair"), o_);
         }
         if (!j["side"].is_null()) o->Set(FN::v8S("side"), Number::New(isolate, j["side"].get<double>()));
