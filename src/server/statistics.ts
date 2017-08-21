@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import FairValue = require("./fair-value");
 import moment = require("moment");
 
 function computeEwma(newValue: number, previous: number, periods: number): number {
@@ -67,7 +66,7 @@ export class EWMATargetPositionCalculator {
 
 export class EWMAProtectionCalculator {
   constructor(
-    private _fv: FairValue.FairValueEngine,
+    private _fvEngine,
     private _qpRepo,
     private _evUp
   ) {
@@ -75,12 +74,13 @@ export class EWMAProtectionCalculator {
   }
 
   private onTick = () => {
-    if (this._fv.latestFairValue === null) {
+    var fv = this._fvEngine();
+    if (!fv) {
       console.warn(new Date().toISOString().slice(11, -1), 'ewma', 'Unable to compute value');
       return;
     }
 
-    this.setLatest(computeEwma(this._fv.latestFairValue.price, this._latest, this._qpRepo().quotingEwmaProtectionPeridos));
+    this.setLatest(computeEwma(fv, this._latest, this._qpRepo().quotingEwmaProtectionPeridos));
   };
 
   private _latest: number = null;
@@ -101,7 +101,7 @@ export class STDEVProtectionCalculator {
     public get latest() { return this._latest; }
 
     constructor(
-      private _fv: FairValue.FairValueEngine,
+      private _fvEngine,
       private _mgFilter,
       private _qpRepo,
       private _dbInsert,
@@ -144,12 +144,13 @@ export class STDEVProtectionCalculator {
 
     private onTick = () => {
         const filteredMkt = this._mgFilter();
-        if (this._fv.latestFairValue === null || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
+        const fv = this._fvEngine();
+        if (!fv || filteredMkt == null || !filteredMkt.bids.length || !filteredMkt.asks.length) {
             console.warn(new Date().toISOString().slice(11, -1), 'stdev', 'Unable to compute value');
             return;
         }
         const params = this._qpRepo();
-        this._lastFV.push(this._fv.latestFairValue.price);
+        this._lastFV.push(fv);
         this._lastTops.push(filteredMkt.bids[0].price, filteredMkt.asks[0].price);
         this._lastBids.push(filteredMkt.bids[0].price);
         this._lastAsks.push(filteredMkt.asks[0].price);
@@ -160,6 +161,6 @@ export class STDEVProtectionCalculator {
 
         this.onSave();
 
-        this._dbInsert(Models.Topics.MarketData, new Models.MarketStats(this._fv.latestFairValue.price, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date().getTime()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
+        this._dbInsert(Models.Topics.MarketData, new Models.MarketStats(fv, filteredMkt.bids[0].price, filteredMkt.asks[0].price, new Date().getTime()), false, undefined, new Date().getTime() - 1000 * params.quotingStdevProtectionPeriods);
     };
 }

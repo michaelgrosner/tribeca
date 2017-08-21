@@ -18,7 +18,6 @@ import QuoteSender = require("./quote-sender");
 import Models = require("../share/models");
 import Interfaces = require("./interfaces");
 import Safety = require("./safety");
-import FairValue = require("./fair-value");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
 import QuotingEngine = require("./quoting-engine");
@@ -53,25 +52,12 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const initRfv = bindings.dbLoad(Models.Topics.EWMAChart);
-
-const fvEngine = new FairValue.FairValueEngine(
-  bindings.mgFilter,
-  bindings.gwMinTick(),
-  bindings.qpRepo,
-  bindings.uiSnap,
-  bindings.uiSend,
-  bindings.evOn,
-  bindings.evUp,
-  initRfv
-);
-
 const positionBroker = new Broker.PositionBroker(
   bindings.qpRepo,
   bindings.cfmCurrencyPair(),
   bindings.gwExchange(),
   bindings.allOrders,
-  fvEngine,
+  bindings.mgFairV,
   bindings.uiSnap,
   bindings.uiSend,
   bindings.evOn,
@@ -79,19 +65,19 @@ const positionBroker = new Broker.PositionBroker(
 );
 
 const quotingEngine = new QuotingEngine.QuotingEngine(
-  fvEngine,
+  bindings.mgFairV,
   bindings.mgFilter,
   bindings.qpRepo,
   positionBroker,
   bindings.gwMinTick(),
   bindings.gwMinSize(),
   new Statistics.EWMAProtectionCalculator(
-    fvEngine,
+    bindings.mgFairV,
     bindings.qpRepo,
     bindings.evUp
   ),
   new Statistics.STDEVProtectionCalculator(
-    fvEngine,
+    bindings.mgFairV,
     bindings.mgFilter,
     bindings.qpRepo,
     bindings.dbInsert,
@@ -101,8 +87,11 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
   new PositionManagement.TargetBasePositionManager(
     bindings.gwMinTick(),
     bindings.dbInsert,
-    fvEngine,
-    new Statistics.EWMATargetPositionCalculator(bindings.qpRepo, initRfv),
+    bindings.mgFairV,
+    new Statistics.EWMATargetPositionCalculator(
+      bindings.qpRepo,
+      bindings.dbLoad(Models.Topics.EWMAChart)
+    ),
     bindings.qpRepo,
     positionBroker,
     bindings.uiSnap,
@@ -112,7 +101,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
     bindings.dbLoad(Models.Topics.TargetBasePosition)
   ),
   new Safety.SafetyCalculator(
-    fvEngine,
+    bindings.mgFairV,
     bindings.qpRepo,
     positionBroker,
     bindings.tradesMemory,

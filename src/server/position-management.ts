@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Statistics = require("./statistics");
-import FairValue = require("./fair-value");
 import moment = require("moment");
 import Broker = require("./broker");
 
@@ -32,7 +31,7 @@ export class TargetBasePositionManager {
   constructor(
     private _minTick: number,
     private _dbInsert,
-    private _fvAgent: FairValue.FairValueEngine,
+    private _fvEngine,
     private _ewma: Statistics.EWMATargetPositionCalculator,
     private _qpRepo,
     private _positionBroker: Broker.PositionBroker,
@@ -83,11 +82,12 @@ export class TargetBasePositionManager {
   };
 
   private updateEwmaValues = () => {
-    if (this._fvAgent.latestFairValue === null) {
+    const fv = this._fvEngine();
+    if (!fv) {
       console.info(new Date().toISOString().slice(11, -1), 'tbp', 'Unable to update ewma');
       return;
     }
-    this.fairValue = this._fvAgent.latestFairValue.price;
+    this.fairValue = fv;
 
     this.newShort = this._ewma.addNewShortValue(this.fairValue);
     this.newMedium = this._ewma.addNewMediumValue(this.fairValue);
