@@ -2,7 +2,6 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
 import PositionManagement = require("./position-management");
-import Broker = require("./broker");
 import Statistics = require("./statistics");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
@@ -51,7 +50,7 @@ export class QuotingEngine {
       private _fvEngine,
       private _mgFilter,
       private _qpRepo,
-      private _positionBroker: Broker.PositionBroker,
+      private _positionBroker,
       private _minTick: number,
       private _minSize: number,
       private _ewma: Statistics.EWMAProtectionCalculator,
@@ -79,7 +78,8 @@ export class QuotingEngine {
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: number) {
-        if (this._targetPosition.latestTargetPosition === null || this._positionBroker.latestReport === null) return null;
+        const latestPosition = this._positionBroker();
+        if (this._targetPosition.latestTargetPosition === null || latestPosition === null) return null;
         const targetBasePosition = this._targetPosition.latestTargetPosition.tbp;
 
         const params = this._qpRepo();
@@ -89,7 +89,6 @@ export class QuotingEngine {
         const widthPong = (params.widthPercentage)
           ? params.widthPongPercentage * fv / 100
           : params.widthPong;
-        const latestPosition = this._positionBroker.latestReport;
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv;
         let buySize: number = params.percentageValues

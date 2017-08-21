@@ -13,7 +13,6 @@ bindings.uiLoop(noop);
 
 import request = require('request');
 
-import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
 import Models = require("../share/models");
 import Safety = require("./safety");
@@ -51,23 +50,11 @@ process.on("exit", (code) => {
   console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
 });
 
-const positionBroker = new Broker.PositionBroker(
-  bindings.qpRepo,
-  bindings.cfmCurrencyPair(),
-  bindings.gwExchange(),
-  bindings.allOrders,
-  bindings.mgFairV,
-  bindings.uiSnap,
-  bindings.uiSend,
-  bindings.evOn,
-  bindings.evUp
-);
-
 const quotingEngine = new QuotingEngine.QuotingEngine(
   bindings.mgFairV,
   bindings.mgFilter,
   bindings.qpRepo,
-  positionBroker,
+  bindings.pgRepo,
   bindings.gwMinTick(),
   bindings.gwMinSize(),
   new Statistics.EWMAProtectionCalculator(
@@ -92,7 +79,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
       bindings.dbLoad(Models.Topics.EWMAChart)
     ),
     bindings.qpRepo,
-    positionBroker,
+    bindings.pgRepo,
     bindings.uiSnap,
     bindings.uiSend,
     bindings.evOn,
@@ -102,7 +89,7 @@ const quotingEngine = new QuotingEngine.QuotingEngine(
   new Safety.SafetyCalculator(
     bindings.mgFairV,
     bindings.qpRepo,
-    positionBroker,
+    bindings.pgRepo,
     bindings.tradesMemory,
     bindings.uiSnap,
     bindings.uiSend,

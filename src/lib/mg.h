@@ -79,8 +79,8 @@ namespace K {
       static void filter() {
         mGWmktF = mGWmkt;
         if (mGWmktF.is_null() or mGWmktF["bids"].is_null() or mGWmktF["asks"].is_null()) return;
-        for (map<string, json>::iterator it_ = allOrders.begin(); it_ != allOrders.end(); ++it_)
-          filter(mSide::Bid == (mSide)it_->second["side"].get<int>() ? "bids" : "asks", it_->second);
+        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
         if (!mGWmktF["bids"].is_null() and !mGWmktF["asks"].is_null()) {
           fairV();
           EV::evUp("FilteredMarket");
