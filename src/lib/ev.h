@@ -21,6 +21,7 @@ namespace K {
         }
         if (ev._cb.find(k) != ev._cb.end()) {
           Isolate* isolate = Isolate::GetCurrent();
+          HandleScope scope(isolate);
           Local<Object> o = Object::New(isolate);
           Local<Value> argv[] = {o};
           for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)

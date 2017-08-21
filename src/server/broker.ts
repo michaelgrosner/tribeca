@@ -1,5 +1,4 @@
 import Models = require("../share/models");
-import FairValue = require("./fair-value");
 
 export class PositionBroker {
     private _lastPositions: any[] = [];
@@ -18,13 +17,13 @@ export class PositionBroker {
         if (!this._currencies[this._pair.base] || !this._currencies[this._pair.quote]) return;
         var basePosition = this.getPosition(this._pair.base);
         var quotePosition = this.getPosition(this._pair.quote);
-        var fv = this._fvEngine.latestFairValue;
-        if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || fv === null) return;
+        var fv = this._fvEngine();
+        if (typeof basePosition === "undefined" || typeof quotePosition === "undefined" || !fv) return;
 
         const baseAmount = basePosition.amount;
         const quoteAmount = quotePosition.amount;
-        const baseValue = baseAmount + quoteAmount / fv.price + basePosition.heldAmount + quotePosition.heldAmount / fv.price;
-        const quoteValue = baseAmount * fv.price + quoteAmount + basePosition.heldAmount * fv.price + quotePosition.heldAmount;
+        const baseValue = baseAmount + quoteAmount / fv + basePosition.heldAmount + quotePosition.heldAmount / fv;
+        const quoteValue = baseAmount * fv + quoteAmount + basePosition.heldAmount * fv + quotePosition.heldAmount;
 
         const timeNow = new Date();
         const now = timeNow.getTime();
@@ -81,7 +80,7 @@ export class PositionBroker {
       private _pair,
       private _exchange,
       private _allOrders,
-      private _fvEngine: FairValue.FairValueEngine,
+      private _fvEngine,
       private _uiSnap,
       private _uiSend,
       private _evOn,

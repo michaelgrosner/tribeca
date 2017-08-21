@@ -2,7 +2,7 @@
 #define K_OG_H_
 
 namespace K {
-  uv_timer_t gwCancelAll_;
+  static uv_timer_t gwCancelAll_;
   static json tradesMemory;
   static map<string, void*> toCancel;
   static map<string, json> allOrders;

@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
-import FairValue = require("./fair-value");
 import PositionManagement = require("./position-management");
 import Broker = require("./broker");
 import Statistics = require("./statistics");
@@ -49,7 +48,7 @@ export class QuotingEngine {
     private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
 
     constructor(
-      private _fvEngine: FairValue.FairValueEngine,
+      private _fvEngine,
       private _mgFilter,
       private _qpRepo,
       private _positionBroker: Broker.PositionBroker,
@@ -79,20 +78,20 @@ export class QuotingEngine {
       setInterval(this.recalcQuote, moment.duration(1, "seconds"));
     }
 
-    private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
+    private computeQuote(filteredMkt: Models.Market, fv: number) {
         if (this._targetPosition.latestTargetPosition === null || this._positionBroker.latestReport === null) return null;
         const targetBasePosition = this._targetPosition.latestTargetPosition.tbp;
 
         const params = this._qpRepo();
         const widthPing = (params.widthPercentage)
-          ? params.widthPingPercentage * fv.price / 100
+          ? params.widthPingPercentage * fv / 100
           : params.widthPing;
         const widthPong = (params.widthPercentage)
-          ? params.widthPongPercentage * fv.price / 100
+          ? params.widthPongPercentage * fv / 100
           : params.widthPong;
         const latestPosition = this._positionBroker.latestReport;
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
-        const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv.price;
+        const totalQuotePosition = (latestPosition.quoteAmount + latestPosition.quoteHeldAmount) / fv;
         let buySize: number = params.percentageValues
              ? params.buySizePercentage * latestPosition.value / 100
              : params.buySize;
@@ -104,7 +103,7 @@ export class QuotingEngine {
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
           sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
 
-        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv.price, widthPing, buySize, sellSize, params.mode, this._minTick));
+        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv, widthPing, buySize, sellSize, params.mode, this._minTick));
 
         if (unrounded === null) return null;
         const _unroundedBidSz = unrounded.bidSz;
@@ -135,7 +134,7 @@ export class QuotingEngine {
           : params.positionDivergence;
 
         if (superTradesMultipliers[1] > 1) {
-          if (!params.buySizeMax) unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv.price) / 2);
+          if (!params.buySizeMax) unrounded.bidSz = Math.min(superTradesMultipliers[1]*buySize, (latestPosition.quoteAmount / fv) / 2);
           if (!params.sellSizeMax) unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
         }
 
@@ -150,7 +149,7 @@ export class QuotingEngine {
             unrounded.askSz = null;
             if (params.aggressivePositionRebalancing !== Models.APR.Off) {
               sideAPR = 'Bid';
-              if (!params.buySizeMax) unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv.price) / 2);
+              if (!params.buySizeMax) unrounded.bidSz = Math.min(params.aprMultiplier*buySize, targetBasePosition - totalBasePosition, (latestPosition.quoteAmount / fv) / 2);
             }
         }
         else if (totalBasePosition > targetBasePosition + pDiv) {
@@ -169,7 +168,7 @@ export class QuotingEngine {
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fvMean' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'topsMean' : 'askMean' )
-              ]: fv.price) + this._stdev.latest[
+              ]: fv) + this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'ask' )
@@ -179,7 +178,7 @@ export class QuotingEngine {
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fvMean' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'topsMean' : 'bidMean' )
-              ]  : fv.price) - this._stdev.latest[
+              ]  : fv) - this._stdev.latest[
                 (params.quotingStdevProtection === Models.STDEV.OnFV || params.quotingStdevProtection === Models.STDEV.OnFVAPROff)
                   ? 'fv' : ((params.quotingStdevProtection === Models.STDEV.OnTops || params.quotingStdevProtection === Models.STDEV.OnTopsAPROff)
                     ? 'tops' : 'bid' )
@@ -208,7 +207,7 @@ export class QuotingEngine {
             for (var fai = 0; fai < filteredMkt.asks.length; fai++)
               if (filteredMkt.asks[fai].price > unrounded.askPx) {
                 let bestAsk: number = filteredMkt.asks[fai].price - this._minTick;
-                if (bestAsk > fv.price) {
+                if (bestAsk > fv) {
                   unrounded.askPx = bestAsk;
                   break;
                 }
@@ -217,7 +216,7 @@ export class QuotingEngine {
             for (var fbi = 0; fbi < filteredMkt.bids.length; fbi++)
               if (filteredMkt.bids[fbi].price < unrounded.bidPx) {
                 let bestBid: number = filteredMkt.bids[fbi].price + this._minTick;
-                if (bestBid < fv.price) {
+                if (bestBid < fv) {
                   unrounded.bidPx = bestBid;
                   break;
                 }
@@ -289,8 +288,8 @@ export class QuotingEngine {
         this.latestQuoteAskStatus = Models.QuoteStatus.MissingData;
         this.latestQuoteBidStatus = Models.QuoteStatus.MissingData;
 
-        const fv = this._fvEngine.latestFairValue;
-        if (fv == null) {
+        const fv = this._fvEngine();
+        if (!fv) {
             this.latestQuote = null;
             return;
         }
