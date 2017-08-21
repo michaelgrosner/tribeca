@@ -16,7 +16,6 @@ import request = require('request');
 import Broker = require("./broker");
 import QuoteSender = require("./quote-sender");
 import Models = require("../share/models");
-import Interfaces = require("./interfaces");
 import Safety = require("./safety");
 import PositionManagement = require("./position-management");
 import Statistics = require("./statistics");
