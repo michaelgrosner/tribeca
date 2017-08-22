@@ -16,7 +16,7 @@ namespace K {
   static unsigned long uiDDT = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
-  static json app_state;
+  static json uiSTATE;
   class UI {
     public:
       static void main(Local<Object> exports) {
@@ -154,7 +154,7 @@ namespace K {
         time_t rawtime;
         time(&rawtime);
         struct stat st;
-        app_state = {
+        uiSTATE = {
           {"memory", heapStatistics.total_heap_size()},
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", iOSR60 / 2},
@@ -162,7 +162,7 @@ namespace K {
           {"a", A()}
         };
         iOSR60 = 0;
-        uiSend(uiTXT::ApplicationState, app_state);
+        uiSend(uiTXT::ApplicationState, uiSTATE);
       };
       static void uiD(uv_timer_t *handle) {
         Isolate* isolate = (Isolate*) handle->data;
@@ -193,7 +193,7 @@ namespace K {
         uiDD(handle);
       };
       static json onSnapApp(json z) {
-        return { app_state };
+        return { uiSTATE };
       };
       static json onSnapNote(json z) {
         return { uiNOTE };
