@@ -1,42 +1,5 @@
 import Models = require("../share/models");
-import Utils = require("./utils");
 import moment = require("moment");
-
-function computeEwma(newValue: number, previous: number, periods: number): number {
-  if (previous !== null) {
-      const alpha = 2 / (periods + 1);
-      return alpha * newValue + (1 - alpha) * previous;
-  }
-
-  return newValue;
-}
-
-export class EWMAProtectionCalculator {
-  constructor(
-    private _fvEngine,
-    private _qpRepo,
-    private _evUp
-  ) {
-    setInterval(this.onTick, moment.duration(1, "minutes"));
-  }
-
-  private onTick = () => {
-    var fv = this._fvEngine();
-    if (!fv) {
-      console.warn(new Date().toISOString().slice(11, -1), 'ewma', 'Unable to compute value');
-      return;
-    }
-
-    this.setLatest(computeEwma(fv, this._latest, this._qpRepo().quotingEwmaProtectionPeridos));
-  };
-
-  private _latest: number = null;
-  public get latest() { return this._latest; }
-  private setLatest = (v: number) => {
-    this._latest = v;
-    this._evUp('EWMAProtectionCalculator');
-  };
-}
 
 export class STDEVProtectionCalculator {
     private _lastBids: number[] = [];

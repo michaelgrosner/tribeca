@@ -2,18 +2,30 @@
 #define K_MG_H_
 
 namespace K {
+  static uv_timer_t mgEwmaP_;
   static vector<mGWmt> mGWmt_;
   static json mGWmkt;
   static json mGWmktFilter;
-  static double mGWfairV = 0;
-  static double mGWEwmaL = 0;
-  static double mGWEwmaM = 0;
-  static double mGWEwmaS = 0;
-  static vector<double> mGWSMA3;
+  static double mgfairV = 0;
+  static double mgEwmaL = 0;
+  static double mgEwmaM = 0;
+  static double mgEwmaS = 0;
+  static double mgEwmaP = 0;
+  static vector<double> mgSMA3;
   class MG {
     public:
       static void main(Local<Object> exports) {
         load();
+        thread([&]() {
+          if (uv_timer_init(uv_default_loop(), &mgEwmaP_)) { cout << FN::uiT() << "Errrror: GW mgEwmaP_ init timer failed." << endl; exit(1); }
+          mgEwmaP_.data = gw;
+          if (uv_timer_start(&mgEwmaP_, [](uv_timer_t *handle) {
+            if (mgfairV) {
+              mgEwmaP = calcEwma(mgfairV, mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
+              EV::evUp("EWMAProtectionCalculator");
+            } else cout << FN::uiT() << "EWMA notice: missing fair value." << endl;
+          }, 0, 60000)) { cout << FN::uiT() << "Errrror: GW mgEwmaP_ start timer failed." << endl; exit(1); }
+        }).detach();
         EV::evOn("MarketTradeGateway", [](json k) {
           mGWmt t(
             gw->exchange,
@@ -47,43 +59,47 @@ namespace K {
         NODE_SET_METHOD(exports, "mgEwmaMedium", MG::_mgEwmaMedium);
         NODE_SET_METHOD(exports, "mgEwmaShort", MG::_mgEwmaShort);
         NODE_SET_METHOD(exports, "mgTBP", MG::_mgTBP);
+        NODE_SET_METHOD(exports, "mgEwmaProtection", MG::_mgEwmaProtection);
       };
     private:
       static void load() {
         json k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
           if (k["/0/fairValue"_json_pointer].is_number())
-            mGWfairV = k["/0/fairValue"_json_pointer].get<double>();
+            mgfairV = k["/0/fairValue"_json_pointer].get<double>();
           if (k["/0/ewmaLong"_json_pointer].is_number())
-            mGWEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
+            mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
           if (k["/0/ewmaMedium"_json_pointer].is_number())
-            mGWEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
+            mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
           if (k["/0/ewmaShort"_json_pointer].is_number())
-            mGWEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
+            mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
         }
       };
+      static void _mgEwmaProtection(const FunctionCallbackInfo<Value>& args) {
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaP));
+      };
       static void _mgEwmaLong(const FunctionCallbackInfo<Value>& args) {
-        mGWEwmaL = calcEwma(args[0]->NumberValue(), mGWEwmaL, qpRepo["longEwmaPeridos"].get<int>());
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mGWEwmaL));
+        mgEwmaL = calcEwma(args[0]->NumberValue(), mgEwmaL, qpRepo["longEwmaPeridos"].get<int>());
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaL));
       };
       static void _mgEwmaMedium(const FunctionCallbackInfo<Value>& args) {
-        mGWEwmaM = calcEwma(args[0]->NumberValue(), mGWEwmaM, qpRepo["mediumEwmaPeridos"].get<int>());
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mGWEwmaM));
+        mgEwmaM = calcEwma(args[0]->NumberValue(), mgEwmaM, qpRepo["mediumEwmaPeridos"].get<int>());
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaM));
       };
       static void _mgEwmaShort(const FunctionCallbackInfo<Value>& args) {
-        mGWEwmaS = calcEwma(args[0]->NumberValue(), mGWEwmaL, qpRepo["shortEwmaPeridos"].get<int>());
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mGWEwmaS));
+        mgEwmaS = calcEwma(args[0]->NumberValue(), mgEwmaL, qpRepo["shortEwmaPeridos"].get<int>());
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaS));
       };
       static void _mgTBP(const FunctionCallbackInfo<Value>& args) {
-        mGWSMA3.push_back(args[0]->NumberValue());
+        mgSMA3.push_back(args[0]->NumberValue());
         double newLong = args[1]->NumberValue();
         double newMedium = args[2]->NumberValue();
         double newShort = args[3]->NumberValue();
-        if (mGWSMA3.size()>3) mGWSMA3.erase(mGWSMA3.begin(), mGWSMA3.end()-3);
+        if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;
-        for (vector<double>::iterator it = mGWSMA3.begin(); it != mGWSMA3.end(); ++it)
+        for (vector<double>::iterator it = mgSMA3.begin(); it != mgSMA3.end(); ++it)
           SMA3 += *it;
-        SMA3 /= mGWSMA3.size();
+        SMA3 /= mgSMA3.size();
         double newTargetPosition = 0;
         if ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::EWMA_LMS) {
           double newTrend = ((SMA3 * 100 / newLong) - 100);
@@ -101,7 +117,7 @@ namespace K {
         args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, mGWmktFilter.dump())).ToLocalChecked());
       };
       static void _mgFairV(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mGWfairV));
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgfairV));
       };
       static json onSnapTrade(json z) {
         json k;
@@ -110,7 +126,7 @@ namespace K {
         return k;
       };
       static json onSnapFair(json z) {
-        return {{{"price", mGWfairV}}};
+        return {{{"price", mgfairV}}};
       };
       static void mktUp(json k) {
         mGWmkt = k;
@@ -148,16 +164,16 @@ namespace K {
       };
       static void fairV() {
         if (mGWmktFilter.is_null() or mGWmktFilter["/bids/0"_json_pointer].is_null() or mGWmktFilter["/asks/0"_json_pointer].is_null()) return;
-        double mGWfairV_ = mGWfairV;
-        mGWfairV = SD::roundNearest(
+        double mgfairV_ = mgfairV;
+        mgfairV = SD::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)qpRepo["fvModel"].get<int>()
             ? (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>()) / 2
             : (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() * mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>() * mGWmktFilter["/bids/0/size"_json_pointer].get<double>()) / (mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/size"_json_pointer].get<double>()),
           gw->minTick
         );
-        if (!mGWfairV or (mGWfairV_ and abs(mGWfairV - mGWfairV_) < gw->minTick)) return;
+        if (!mgfairV or (mgfairV_ and abs(mgfairV - mgfairV_) < gw->minTick)) return;
         EV::evUp("FairValue");
-        UI::uiSend(uiTXT::FairValue, {{"price", mGWfairV}}, true);
+        UI::uiSend(uiTXT::FairValue, {{"price", mgfairV}}, true);
       };
       static double calcEwma(double newValue, double previous, int periods) {
         if (previous) {
