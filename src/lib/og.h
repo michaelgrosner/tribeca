@@ -10,6 +10,7 @@ namespace K {
   class OG {
     public:
       static void main(Local<Object> exports) {
+        load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwCancelAll_)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ init timer failed." << endl; exit(1); }
           gwCancelAll_.data = NULL;
@@ -18,7 +19,6 @@ namespace K {
               gW->cancelAll();
           }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ start timer failed." << endl; exit(1); }
         }).detach();
-        tradesMemory = DB::load(uiTXT::Trades);
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
         UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
         UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
@@ -70,6 +70,9 @@ namespace K {
         return o;
       };
     private:
+      static void load() {
+        tradesMemory = DB::load(uiTXT::Trades);
+      };
       static json onSnapOrders(json z) {
         return ogO(false);
       };
