@@ -13,17 +13,7 @@ namespace K {
   class MG {
     public:
       static void main(Local<Object> exports) {
-        json fv = DB::load(uiTXT::EWMAChart);
-        if (fv.size()) {
-          if (fv["/0/fairValue"_json_pointer].is_number())
-            mGWfairV = fv["/0/fairValue"_json_pointer].get<double>();
-          if (fv["/0/ewmaLong"_json_pointer].is_number())
-            mGWEwmaL = fv["/0/ewmaLong"_json_pointer].get<double>();
-          if (fv["/0/ewmaMedium"_json_pointer].is_number())
-            mGWEwmaM = fv["/0/ewmaMedium"_json_pointer].get<double>();
-          if (fv["/0/ewmaShort"_json_pointer].is_number())
-            mGWEwmaS = fv["/0/ewmaShort"_json_pointer].get<double>();
-        }
+        load();
         EV::evOn("MarketTradeGateway", [](json k) {
           mGWmt t(
             gw->exchange,
@@ -59,6 +49,19 @@ namespace K {
         NODE_SET_METHOD(exports, "mgTBP", MG::_mgTBP);
       };
     private:
+      static void load() {
+        json k = DB::load(uiTXT::EWMAChart);
+        if (k.size()) {
+          if (k["/0/fairValue"_json_pointer].is_number())
+            mGWfairV = k["/0/fairValue"_json_pointer].get<double>();
+          if (k["/0/ewmaLong"_json_pointer].is_number())
+            mGWEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
+          if (k["/0/ewmaMedium"_json_pointer].is_number())
+            mGWEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
+          if (k["/0/ewmaShort"_json_pointer].is_number())
+            mGWEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
+        }
+      };
       static void _mgEwmaLong(const FunctionCallbackInfo<Value>& args) {
         mGWEwmaL = calcEwma(args[0]->NumberValue(), mGWEwmaL, qpRepo["longEwmaPeridos"].get<int>());
         args.GetReturnValue().Set(Number::New(args.GetIsolate(), mGWEwmaL));

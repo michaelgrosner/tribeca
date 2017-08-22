@@ -57,6 +57,14 @@ namespace K {
   class QP {
     public:
       static void main(Local<Object> exports) {
+        load();
+        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
+        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
+        EV::evUp("QuotingParameters", qpRepo);
+        NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
+      }
+    private:
+      static void load() {
         for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {
           string k = CF::cfString(it.key(), false);
           if (k != "") {
@@ -71,12 +79,7 @@ namespace K {
           for (json::iterator it = qpa["/0"_json_pointer].begin(); it != qpa["/0"_json_pointer].end(); ++it)
             qpRepo[it.key()] = it.value();
         cleanBool();
-        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
-        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
-        EV::evUp("QuotingParameters", qpRepo);
-        NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
-      }
-    private:
+      };
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
