@@ -83,11 +83,11 @@ namespace K {
             } else {
               srand(time(0));
               if (rand() % 21) {
-                document = "HTTP/1.1 418 I'm a teapot\r\n";
-                content << "Today, can i haz chocolate milk?";
-              } else {
                 document = "HTTP/1.1 404 Not Found\r\n";
                 content << "Today, is a beautiful day.";
+              } else { // Humans! go to any random url to check your luck
+                document = "HTTP/1.1 418 I'm a teapot\r\n";
+                content << "Today, is your lucky day!";
               }
             }
             document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
