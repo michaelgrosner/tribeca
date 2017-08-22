@@ -11,59 +11,6 @@ function computeEwma(newValue: number, previous: number, periods: number): numbe
   return newValue;
 }
 
-export class EWMATargetPositionCalculator {
-  constructor(
-    private _qpRepo,
-    initRfv: Models.RegularFairValue[]
-  ) {
-    if (initRfv !== null && initRfv.length) {
-      this.latestLong = initRfv[0].ewmaLong;
-      this.latestMedium = initRfv[0].ewmaMedium;
-      this.latestShort = initRfv[0].ewmaShort;
-    }
-  }
-  private _SMA3: number[] = [];
-
-  private latestLong: number = null;
-  private latestMedium: number = null;
-  private latestShort: number = null;
-
-  computeTBP(value: number, newLong: number, newMedium: number, newShort: number): number {
-    this._SMA3.push(value);
-    this._SMA3 = this._SMA3.slice(-3);
-    const SMA3 = this._SMA3.reduce((a,b) => a+b) / this._SMA3.length;
-
-    let newTargetPosition: number = 0;
-    const params = this._qpRepo();
-    if (params.autoPositionMode === Models.AutoPositionMode.EWMA_LMS) {
-      const newTrend = ((SMA3 * 100 / newLong) - 100);
-      const newEwmacrossing = ((newShort * 100 / newMedium) - 100);
-      newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / params.ewmaSensiblityPercentage);
-    } else if (params.autoPositionMode === Models.AutoPositionMode.EWMA_LS) {
-      newTargetPosition = ((newShort * 100/ newLong) - 100) * (1 / params.ewmaSensiblityPercentage);
-    }
-    if (newTargetPosition > 1) newTargetPosition = 1;
-    else if (newTargetPosition < -1) newTargetPosition = -1;
-
-    return newTargetPosition;
-  }
-
-  addNewShortValue(value: number): number {
-    this.latestShort = computeEwma(value, this.latestShort, this._qpRepo().shortEwmaPeridos);
-    return this.latestShort;
-  }
-
-  addNewMediumValue(value: number): number {
-    this.latestMedium = computeEwma(value, this.latestMedium, this._qpRepo().mediumEwmaPeridos);
-    return this.latestMedium;
-  }
-
-  addNewLongValue(value: number): number {
-    this.latestLong = computeEwma(value, this.latestLong, this._qpRepo().longEwmaPeridos);
-    return this.latestLong;
-  }
-}
-
 export class EWMAProtectionCalculator {
   constructor(
     private _fvEngine,
