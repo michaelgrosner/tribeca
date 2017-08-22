@@ -26,8 +26,12 @@ namespace K {
         t -= milliseconds;
         auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
         stringstream T;
-        T << hours.count() << ":" << minutes.count() << ":" << seconds.count()
-          << "." << milliseconds.count() << microseconds.count() << " ";
+        T << setfill('0')
+          << setw(2) << hours.count() << ":"
+          << setw(2) << minutes.count() << ":"
+          << setw(2) << seconds.count() << "."
+          << setw(3) << milliseconds.count()
+          << setw(3) << microseconds.count() << " ";
         return T.str();
       };
       static string oHex(string k) {
