@@ -58,11 +58,7 @@ new QuoteSender.QuoteSender(
     bindings.pgRepo,
     bindings.gwMinTick(),
     bindings.gwMinSize(),
-    new Statistics.EWMAProtectionCalculator(
-      bindings.mgFairV,
-      bindings.qpRepo,
-      bindings.evUp
-    ),
+    bindings.mgEwmaProtection,
     new Statistics.STDEVProtectionCalculator(
       bindings.mgFairV,
       bindings.mgFilter,

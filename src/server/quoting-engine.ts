@@ -53,7 +53,7 @@ export class QuotingEngine {
       private _positionBroker,
       private _minTick: number,
       private _minSize: number,
-      private _ewma: Statistics.EWMAProtectionCalculator,
+      private _ewma,
       private _stdev: Statistics.STDEVProtectionCalculator,
       private _targetPosition: PositionManagement.TargetBasePositionManager,
       private _safeties: Safety.SafetyCalculator,
@@ -65,7 +65,7 @@ export class QuotingEngine {
 
       this._evOn('EWMAProtectionCalculator', () => {
         this.recalcQuote();
-        _targetPosition.quoteEwma = _ewma.latest;
+        _targetPosition.quoteEwma = _ewma();
         _targetPosition.widthStdev = _stdev.latest;
       });
       this._evOn('FilteredMarket', this.recalcQuote);
@@ -137,9 +137,10 @@ export class QuotingEngine {
           if (!params.sellSizeMax) unrounded.askSz = Math.min(superTradesMultipliers[1]*sellSize, latestPosition.baseAmount / 2);
         }
 
-        if (params.quotingEwmaProtection && this._ewma.latest !== null) {
-            unrounded.askPx = Math.max(this._ewma.latest, unrounded.askPx);
-            unrounded.bidPx = Math.min(this._ewma.latest, unrounded.bidPx);
+        const ewma = this._ewma();
+        if (params.quotingEwmaProtection && ewma) {
+            unrounded.askPx = Math.max(ewma, unrounded.askPx);
+            unrounded.bidPx = Math.min(ewma, unrounded.bidPx);
         }
 
         if (totalBasePosition < targetBasePosition - pDiv) {

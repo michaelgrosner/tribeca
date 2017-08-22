@@ -31,11 +31,11 @@ namespace K {
       };
       static void posUp(json k) {
         if (!k.is_null()) pgCur[k["currency"].get<int>()] = k;
-        if (!mGWfairV or pgCur.find(gw->base) == pgCur.end() or pgCur.find(gw->quote) == pgCur.end() or pgCur[gw->base].is_null() or pgCur[gw->quote].is_null()) return;
+        if (!mgfairV or pgCur.find(gw->base) == pgCur.end() or pgCur.find(gw->quote) == pgCur.end() or pgCur[gw->base].is_null() or pgCur[gw->quote].is_null()) return;
         double baseAmount = pgCur[gw->base]["amount"].get<double>();
         double quoteAmount = pgCur[gw->quote]["amount"].get<double>();
-        double baseValue = baseAmount + quoteAmount / mGWfairV + pgCur[gw->base]["heldAmount"].get<double>() + pgCur[gw->quote]["heldAmount"].get<double>() / mGWfairV;
-        double quoteValue = baseAmount * mGWfairV + quoteAmount + pgCur[gw->base]["heldAmount"].get<double>() * mGWfairV + pgCur[gw->quote]["heldAmount"].get<double>();
+        double baseValue = baseAmount + quoteAmount / mgfairV + pgCur[gw->base]["heldAmount"].get<double>() + pgCur[gw->quote]["heldAmount"].get<double>() / mgfairV;
+        double quoteValue = baseAmount * mgfairV + quoteAmount + pgCur[gw->base]["heldAmount"].get<double>() * mgfairV + pgCur[gw->quote]["heldAmount"].get<double>();
         unsigned long now = FN::T();
         pgDiff.push_back({
           {"baseValue", baseValue},
