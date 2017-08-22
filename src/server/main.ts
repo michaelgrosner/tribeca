@@ -75,10 +75,10 @@ new QuoteSender.QuoteSender(
       bindings.gwMinTick(),
       bindings.dbInsert,
       bindings.mgFairV,
-      new Statistics.EWMATargetPositionCalculator(
-        bindings.qpRepo,
-        bindings.dbLoad(Models.Topics.EWMAChart)
-      ),
+      bindings.mgEwmaShort,
+      bindings.mgEwmaMedium,
+      bindings.mgEwmaLong,
+      bindings.mgTBP,
       bindings.qpRepo,
       bindings.pgRepo,
       bindings.uiSnap,

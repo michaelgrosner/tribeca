@@ -31,7 +31,10 @@ export class TargetBasePositionManager {
     private _minTick: number,
     private _dbInsert,
     private _fvEngine,
-    private _ewma: Statistics.EWMATargetPositionCalculator,
+    private _mgEwmaShort,
+    private _mgEwmaMedium,
+    private _mgEwmaLong,
+    private _mgTBP,
     private _qpRepo,
     private _positionBroker,
     private _uiSnap,
@@ -89,10 +92,10 @@ export class TargetBasePositionManager {
     }
     this.fairValue = fv;
 
-    this.newShort = this._ewma.addNewShortValue(this.fairValue);
-    this.newMedium = this._ewma.addNewMediumValue(this.fairValue);
-    this.newLong = this._ewma.addNewLongValue(this.fairValue);
-    this._newTargetPosition = this._ewma.computeTBP(this.fairValue, this.newLong, this.newMedium, this.newShort);
+    this.newShort = this._mgEwmaShort(this.fairValue);
+    this.newMedium = this._mgEwmaMedium(this.fairValue);
+    this.newLong = this._mgEwmaLong(this.fairValue);
+    this._newTargetPosition = this._mgTBP(this.fairValue, this.newLong, this.newMedium, this.newShort);
     // console.info(new Date().toISOString().slice(11, -1), 'tbp', 'recalculated ewma [ FV | L | M | S ] = [',this.fairValue,'|',this.newLong,'|',this.newMedium,'|',this.newShort,']');
     this.recomputeTargetPosition();
 
