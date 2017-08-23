@@ -2,7 +2,7 @@
 #define K_MG_H_
 
 namespace K {
-  static uv_timer_t mgEwmaP_;
+  static uv_timer_t mgStats_;
   static vector<mGWmt> mGWmt_;
   static json mGWmkt;
   static json mGWmktFilter;
@@ -12,19 +12,35 @@ namespace K {
   static double mgEwmaS = 0;
   static double mgEwmaP = 0;
   static vector<double> mgSMA3;
+  static vector<double> mgStatFV;
+  static vector<double> mgStatBid;
+  static vector<double> mgStatAsk;
+  static vector<double> mgStatTop;
+  static double mgStdevFV;
+  static double mgStdevFVMean;
+  static double mgStdevBid;
+  static double mgStdevBidMean;
+  static double mgStdevAsk;
+  static double mgStdevAskMean;
+  static double mgStdevTop;
+  static double mgStdevTopMean;
+  int mgT = 0;
   class MG {
     public:
       static void main(Local<Object> exports) {
         load();
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &mgEwmaP_)) { cout << FN::uiT() << "Errrror: GW mgEwmaP_ init timer failed." << endl; exit(1); }
-          mgEwmaP_.data = gw;
-          if (uv_timer_start(&mgEwmaP_, [](uv_timer_t *handle) {
+          if (uv_timer_init(uv_default_loop(), &mgStats_)) { cout << FN::uiT() << "Errrror: GW mgStats_ init timer failed." << endl; exit(1); }
+          mgStats_.data = gw;
+          if (uv_timer_start(&mgStats_, [](uv_timer_t *handle) {
             if (mgfairV) {
-              mgEwmaP = calcEwma(mgfairV, mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
-              EV::evUp("EWMAProtectionCalculator");
-            } else cout << FN::uiT() << "EWMA notice: missing fair value." << endl;
-          }, 0, 60000)) { cout << FN::uiT() << "Errrror: GW mgEwmaP_ start timer failed." << endl; exit(1); }
+              if (++mgT == 60) {
+                mgT = 0;
+                ewmaUp();
+              }
+              stdevUp();
+            } else cout << FN::uiT() << "Market Stats notice: missing fair value." << endl;
+          }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW mgStats_ start timer failed." << endl; exit(1); }
         }).detach();
         EV::evOn("MarketTradeGateway", [](json k) {
           mGWmt t(
@@ -60,6 +76,7 @@ namespace K {
         NODE_SET_METHOD(exports, "mgEwmaShort", MG::_mgEwmaShort);
         NODE_SET_METHOD(exports, "mgTBP", MG::_mgTBP);
         NODE_SET_METHOD(exports, "mgEwmaProtection", MG::_mgEwmaProtection);
+        NODE_SET_METHOD(exports, "mgStdevProtection", MG::_mgStdevProtection);
       };
     private:
       static void load() {
@@ -74,9 +91,49 @@ namespace K {
           if (k["/0/ewmaShort"_json_pointer].is_number())
             mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
         }
+        json k_ = DB::load(uiTXT::MarketData);
+        if (k_.size()) {
+          for (json::iterator it = k_.begin(); it != k_.end(); ++it) {
+            mgStatFV.push_back((*it)["fv"].get<double>());
+            mgStatBid.push_back((*it)["bid"].get<double>());
+            mgStatAsk.push_back((*it)["ask"].get<double>());
+            mgStatTop.push_back((*it)["bid"].get<double>());
+            mgStatTop.push_back((*it)["ask"].get<double>());
+          }
+          calcStdev();
+        }
+      };
+      static void stdevUp() {
+        if (!mgfairV or empty()) return;
+        mgStatFV.push_back(mgfairV);
+        mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
+        mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
+        mgStatTop.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
+        mgStatTop.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
+        calcStdev();
+        DB::insert(uiTXT::MarketData, {
+          {"fv", mgfairV},
+          {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
+          {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
+          {"time", FN::T()},
+        }, false, "NULL", FN::T() - 1000 * qpRepo["quotingStdevProtectionPeriods"].get<int>());
       };
       static void _mgEwmaProtection(const FunctionCallbackInfo<Value>& args) {
         args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaP));
+      };
+      static void _mgStdevProtection(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("fv"), Number::New(isolate, mgStdevFV));
+        o->Set(FN::v8S("fvMean"), Number::New(isolate, mgStdevFVMean));
+        o->Set(FN::v8S("tops"), Number::New(isolate, mgStdevTop));
+        o->Set(FN::v8S("topsMean"), Number::New(isolate, mgStdevTopMean));
+        o->Set(FN::v8S("bid"), Number::New(isolate, mgStdevBid));
+        o->Set(FN::v8S("bidMean"), Number::New(isolate, mgStdevBidMean));
+        o->Set(FN::v8S("ask"), Number::New(isolate, mgStdevAsk));
+        o->Set(FN::v8S("askMean"), Number::New(isolate, mgStdevAskMean));
+        args.GetReturnValue().Set(o);
       };
       static void _mgEwmaLong(const FunctionCallbackInfo<Value>& args) {
         mgEwmaL = calcEwma(args[0]->NumberValue(), mgEwmaL, qpRepo["longEwmaPeridos"].get<int>());
@@ -144,12 +201,22 @@ namespace K {
         };
         return o;
       };
+      static void ewmaUp() {
+        mgEwmaP = calcEwma(mgfairV, mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
+        EV::evUp("EWMAProtectionCalculator");
+      };
+      static bool empty() {
+        return (mGWmktFilter.is_null()
+          or mGWmktFilter["bids"].is_null()
+          or mGWmktFilter["asks"].is_null()
+        );
+      };
       static void filter() {
         mGWmktFilter = mGWmkt;
-        if (mGWmktFilter.is_null() or mGWmktFilter["bids"].is_null() or mGWmktFilter["asks"].is_null()) return;
+        if (empty()) return;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
-        if (!mGWmktFilter["bids"].is_null() and !mGWmktFilter["asks"].is_null()) {
+        if (!empty()) {
           fairV();
           EV::evUp("FilteredMarket");
         }
@@ -163,7 +230,8 @@ namespace K {
           } else ++it;
       };
       static void fairV() {
-        if (mGWmktFilter.is_null() or mGWmktFilter["/bids/0"_json_pointer].is_null() or mGWmktFilter["/asks/0"_json_pointer].is_null()) return;
+        // if (mGWmktFilter.is_null() or mGWmktFilter["/bids/0"_json_pointer].is_null() or mGWmktFilter["/asks/0"_json_pointer].is_null()) return;
+        if (empty()) return;
         double mgfairV_ = mgfairV;
         mgfairV = SD::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)qpRepo["fvModel"].get<int>()
@@ -174,6 +242,40 @@ namespace K {
         if (!mgfairV or (mgfairV_ and abs(mgfairV - mgfairV_) < gw->minTick)) return;
         EV::evUp("FairValue");
         UI::uiSend(uiTXT::FairValue, {{"price", mgfairV}}, true);
+      };
+      static void cleanStdev() {
+        int periods = qpRepo["quotingStdevProtectionPeriods"].get<int>();
+        if (mgStatFV.size()>periods) mgStatFV.erase(mgStatFV.begin(), mgStatFV.end()-periods);
+        if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
+        if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
+        if (mgStatTop.size()>periods*2) mgStatTop.erase(mgStatTop.begin(), mgStatTop.end()-(periods*2));
+      };
+      static void calcStdev() {
+        cleanStdev();
+        if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
+        double factor = qpRepo["quotingStdevProtectionFactor"].get<double>();
+        double mean = 0;
+        mgStdevFV = calcStdev(mgStatFV, mgStatFV.size(), factor, &mean);
+        mgStdevFVMean = mean;
+        mgStdevBid = calcStdev(mgStatBid, mgStatBid.size(), factor, &mean);
+        mgStdevBidMean = mean;
+        mgStdevAsk = calcStdev(mgStatAsk, mgStatAsk.size(), factor, &mean);
+        mgStdevAskMean = mean;
+        mgStdevTop = calcStdev(mgStatTop, mgStatTop.size(), factor, &mean);
+        mgStdevTopMean = mean;
+      };
+      static double calcStdev(vector<double> a, int n, double f, double *mean) {
+        if (n == 0) return 0.0;
+        double sum = 0;
+        for (int i = 0; i < n; ++i) sum += a[i];
+        *mean = sum / n;
+        double sq_diff_sum = 0;
+        for (int i = 0; i < n; ++i) {
+          double diff = a[i] - *mean;
+          sq_diff_sum += diff * diff;
+        }
+        double variance = sq_diff_sum / n;
+        return sqrt(variance) * f;
       };
       static double calcEwma(double newValue, double previous, int periods) {
         if (previous) {

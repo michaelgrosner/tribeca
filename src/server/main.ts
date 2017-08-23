@@ -17,7 +17,6 @@ import QuoteSender = require("./quote-sender");
 import Models = require("../share/models");
 import Safety = require("./safety");
 import PositionManagement = require("./position-management");
-import Statistics = require("./statistics");
 import QuotingEngine = require("./quoting-engine");
 
 let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
@@ -59,14 +58,7 @@ new QuoteSender.QuoteSender(
     bindings.gwMinTick(),
     bindings.gwMinSize(),
     bindings.mgEwmaProtection,
-    new Statistics.STDEVProtectionCalculator(
-      bindings.mgFairV,
-      bindings.mgFilter,
-      bindings.qpRepo,
-      bindings.dbInsert,
-      bindings.computeStdevs,
-      bindings.dbLoad(Models.Topics.MarketData)
-    ),
+    bindings.mgStdevProtection,
     new PositionManagement.TargetBasePositionManager(
       bindings.gwMinTick(),
       bindings.dbInsert,
