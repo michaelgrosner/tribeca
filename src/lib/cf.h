@@ -132,12 +132,12 @@ namespace K {
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
           gw->symbol = string(mCurrency[gw->base]).append("-").append(mCurrency[gw->quote]);
-          gw->target = CF::cfString("CoinbaseOrderDestination");
-          gw->apikey = CF::cfString("CoinbaseApiKey");
-          gw->secret = CF::cfString("CoinbaseSecret");
-          gw->pass = CF::cfString("CoinbasePassphrase");
-          gw->http = CF::cfString("CoinbaseRestUrl");
-          gw->ws = CF::cfString("CoinbaseWebsocketUrl");
+          gw->target = cfString("CoinbaseOrderDestination");
+          gw->apikey = cfString("CoinbaseApiKey");
+          gw->secret = cfString("CoinbaseSecret");
+          gw->pass = cfString("CoinbasePassphrase");
+          gw->http = cfString("CoinbaseRestUrl");
+          gw->ws = cfString("CoinbaseWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
           if (k.find("quote_increment") != k.end()) {
             gw->minTick = stod(k["quote_increment"].get<string>());
@@ -145,12 +145,12 @@ namespace K {
           }
         } else if (e == mExchange::HitBtc) {
           gw->symbol = string(mCurrency[gw->base]).append(mCurrency[gw->quote]);
-          gw->target = CF::cfString("HitBtcOrderDestination");
-          gw->apikey = CF::cfString("HitBtcApiKey");
-          gw->secret = CF::cfString("HitBtcSecret");
-          gw->http = CF::cfString("HitBtcPullUrl");
-          gw->ws = CF::cfString("HitBtcOrderEntryUrl");
-          gw->wS = CF::cfString("HitBtcMarketDataUrl");
+          gw->target = cfString("HitBtcOrderDestination");
+          gw->apikey = cfString("HitBtcApiKey");
+          gw->secret = cfString("HitBtcSecret");
+          gw->http = cfString("HitBtcPullUrl");
+          gw->ws = cfString("HitBtcOrderEntryUrl");
+          gw->wS = cfString("HitBtcMarketDataUrl");
           json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
           if (k.find("symbols") != k.end())
             for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
@@ -161,11 +161,11 @@ namespace K {
               }
         } else if (e == mExchange::Bitfinex) {
           gw->symbol = FN::S2l(string(mCurrency[gw->base]).append(mCurrency[gw->quote]));
-          gw->target = CF::cfString("BitfinexOrderDestination");
-          gw->apikey = CF::cfString("BitfinexKey");
-          gw->secret = CF::cfString("BitfinexSecret");
-          gw->http = CF::cfString("BitfinexHttpUrl");
-          gw->ws = CF::cfString("BitfinexWebsocketUrl");
+          gw->target = cfString("BitfinexOrderDestination");
+          gw->apikey = cfString("BitfinexKey");
+          gw->secret = cfString("BitfinexSecret");
+          gw->http = cfString("BitfinexHttpUrl");
+          gw->ws = cfString("BitfinexWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
             string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
@@ -178,21 +178,21 @@ namespace K {
           }
         } else if (e == mExchange::OkCoin) {
           gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
-          gw->target = CF::cfString("OkCoinOrderDestination");
-          gw->apikey = CF::cfString("OkCoinApiKey");
-          gw->secret = CF::cfString("OkCoinSecretKey");
-          gw->http = CF::cfString("OkCoinHttpUrl");
-          gw->ws = CF::cfString("OkCoinWsUrl");
+          gw->target = cfString("OkCoinOrderDestination");
+          gw->apikey = cfString("OkCoinApiKey");
+          gw->secret = cfString("OkCoinSecretKey");
+          gw->http = cfString("OkCoinHttpUrl");
+          gw->ws = cfString("OkCoinWsUrl");
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
         } else if (e == mExchange::Korbit) {
           gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
-          gw->target = CF::cfString("KorbitOrderDestination");
-          gw->apikey = CF::cfString("KorbitApiKey");
-          gw->secret = CF::cfString("KorbitSecretKey");
-          gw->user = CF::cfString("KorbitUsername");
-          gw->pass = CF::cfString("KorbitPassword");
-          gw->http = CF::cfString("KorbitHttpUrl");
+          gw->target = cfString("KorbitOrderDestination");
+          gw->apikey = cfString("KorbitApiKey");
+          gw->secret = cfString("KorbitSecretKey");
+          gw->user = cfString("KorbitUsername");
+          gw->pass = cfString("KorbitPassword");
+          gw->http = cfString("KorbitHttpUrl");
           json k = FN::wJet(string(gw->http).append("/constants"));
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
             gw->minTick = k[gw->symbol.substr(0,3).append("TickSize")];
@@ -200,11 +200,11 @@ namespace K {
           }
         } else if (e == mExchange::Poloniex) {
           gw->symbol = string(mCurrency[gw->quote]).append("_").append(mCurrency[gw->base]);
-          gw->target = CF::cfString("PoloniexOrderDestination");
-          gw->apikey = CF::cfString("PoloniexApiKey");
-          gw->secret = CF::cfString("PoloniexSecretKey");
-          gw->http = CF::cfString("PoloniexHttpUrl");
-          gw->ws = CF::cfString("PoloniexWebsocketUrl");
+          gw->target = cfString("PoloniexOrderDestination");
+          gw->apikey = cfString("PoloniexApiKey");
+          gw->secret = cfString("PoloniexSecretKey");
+          gw->http = cfString("PoloniexHttpUrl");
+          gw->ws = cfString("PoloniexWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
           if (k.find(gw->symbol) != k.end()) {
             istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
