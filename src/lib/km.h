@@ -59,7 +59,7 @@ namespace K {
       string wS = "";
       int quote = 0;
       int base = 0;
-      virtual void config() = 0;
+      virtual mExchange config() = 0;
       virtual void pos() = 0;
       virtual void book() = 0;
       virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0;
