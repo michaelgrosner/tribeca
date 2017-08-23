@@ -66,11 +66,7 @@ namespace K {
         gw = Gw::E(cfExchange());
         gw->base = cfBase();
         gw->quote = cfQuote();
-        gw->config();
-        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
-        else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
-        gwAutoStart = "auto" == cfString("BotIdentifier").substr(0,4);
-        cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl << "- pair: " << gw->symbol << endl << "- minTick: " << gw->minTick << endl << "- minSize: " << gw->minSize << endl << "- makeFee: " << gw->makeFee << endl << "- takeFee: " << gw->takeFee << endl;
+        cfExchange(gw->config());
       };
       static string cfString(string k, bool r = true) {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
@@ -132,6 +128,104 @@ namespace K {
         o->Set(FN::v8S("base"), Number::New(isolate, cfBase()));
         o->Set(FN::v8S("quote"), Number::New(isolate, cfQuote()));
         args.GetReturnValue().Set(o);
+      };
+      static void cfExchange(mExchange e) {
+        if (e == mExchange::Coinbase) {
+          gw->symbol = string(mCurrency[gw->base]).append("-").append(mCurrency[gw->quote]);
+          gw->target = CF::cfString("CoinbaseOrderDestination");
+          gw->apikey = CF::cfString("CoinbaseApiKey");
+          gw->secret = CF::cfString("CoinbaseSecret");
+          gw->pass = CF::cfString("CoinbasePassphrase");
+          gw->http = CF::cfString("CoinbaseRestUrl");
+          gw->ws = CF::cfString("CoinbaseWebsocketUrl");
+          json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
+          if (k.find("quote_increment") != k.end()) {
+            gw->minTick = stod(k["quote_increment"].get<string>());
+            gw->minSize = stod(k["base_min_size"].get<string>());
+          }
+        } else if (e == mExchange::HitBtc) {
+          gw->symbol = string(mCurrency[gw->base]).append(mCurrency[gw->quote]);
+          gw->target = CF::cfString("HitBtcOrderDestination");
+          gw->apikey = CF::cfString("HitBtcApiKey");
+          gw->secret = CF::cfString("HitBtcSecret");
+          gw->http = CF::cfString("HitBtcPullUrl");
+          gw->ws = CF::cfString("HitBtcOrderEntryUrl");
+          gw->wS = CF::cfString("HitBtcMarketDataUrl");
+          json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
+          if (k.find("symbols") != k.end())
+            for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
+              if ((*it)["symbol"] == gw->symbol) {
+                gw->minTick = stod((*it)["step"].get<string>());
+                gw->minSize = stod((*it)["lot"].get<string>());
+                break;
+              }
+        } else if (e == mExchange::Bitfinex) {
+          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append(mCurrency[gw->quote]));
+          gw->target = CF::cfString("BitfinexOrderDestination");
+          gw->apikey = CF::cfString("BitfinexKey");
+          gw->secret = CF::cfString("BitfinexSecret");
+          gw->http = CF::cfString("BitfinexHttpUrl");
+          gw->ws = CF::cfString("BitfinexWebsocketUrl");
+          json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
+          if (k.find("last_price") != k.end()) {
+            string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
+            unsigned int i = stod(k["last_price"].get<string>())<0.00001 ? 1 : 0;
+            for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
+              if (*it == '0') i++; else if (*it == '.') continue; else break;
+            stringstream os(string("1e-").append(to_string(i>8?8:i)));
+            os >> gw->minTick;
+            gw->minSize = 0.01;
+          }
+        } else if (e == mExchange::OkCoin) {
+          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
+          gw->target = CF::cfString("OkCoinOrderDestination");
+          gw->apikey = CF::cfString("OkCoinApiKey");
+          gw->secret = CF::cfString("OkCoinSecretKey");
+          gw->http = CF::cfString("OkCoinHttpUrl");
+          gw->ws = CF::cfString("OkCoinWsUrl");
+          gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
+          gw->minSize = 0.01;
+        } else if (e == mExchange::Korbit) {
+          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
+          gw->target = CF::cfString("KorbitOrderDestination");
+          gw->apikey = CF::cfString("KorbitApiKey");
+          gw->secret = CF::cfString("KorbitSecretKey");
+          gw->user = CF::cfString("KorbitUsername");
+          gw->pass = CF::cfString("KorbitPassword");
+          gw->http = CF::cfString("KorbitHttpUrl");
+          json k = FN::wJet(string(gw->http).append("/constants"));
+          if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
+            gw->minTick = k[gw->symbol.substr(0,3).append("TickSize")];
+            gw->minSize = 0.015;
+          }
+        } else if (e == mExchange::Poloniex) {
+          gw->symbol = string(mCurrency[gw->quote]).append("_").append(mCurrency[gw->base]);
+          gw->target = CF::cfString("PoloniexOrderDestination");
+          gw->apikey = CF::cfString("PoloniexApiKey");
+          gw->secret = CF::cfString("PoloniexSecretKey");
+          gw->http = CF::cfString("PoloniexHttpUrl");
+          gw->ws = CF::cfString("PoloniexWebsocketUrl");
+          json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
+          if (k.find(gw->symbol) != k.end()) {
+            istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
+            os >> gw->minTick;
+            gw->minSize = 0.01;
+          }
+        } else if (e == mExchange::Null) {
+          gw->symbol = string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]);
+          gw->minTick = 0.01;
+          gw->minSize = 0.01;
+        }
+        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
+        gwAutoStart = "auto" == cfString("BotIdentifier").substr(0,4);
+        cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
+          << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl
+          << "- pair: " << gw->symbol << endl
+          << "- minTick: " << gw->minTick << endl
+          << "- minSize: " << gw->minSize << endl
+          << "- makeFee: " << gw->makeFee << endl
+          << "- takeFee: " << gw->takeFee << endl;
       };
   };
 }
