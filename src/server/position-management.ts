@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Statistics = require("./statistics");
 import moment = require("moment");
 
 export class TargetBasePositionManager {
