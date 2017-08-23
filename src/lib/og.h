@@ -156,7 +156,7 @@ namespace K {
           {"leavesQuantity", oQ},
           {"type", (int)oLM},
           {"isPong", oIP},
-          {"price", SD::roundSide(oP, gw->minTick, oS)},
+          {"price", FN::roundSide(oP, gw->minTick, oS)},
           {"timeInForce", (int)oTIF},
           {"orderStatus", (int)mORS::New},
           {"preferPostOnly", oPO}
