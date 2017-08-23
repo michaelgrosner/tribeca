@@ -5,18 +5,10 @@ import moment = require("moment");
 export class TargetBasePositionManager {
   public sideAPR: string;
 
-  private newWidth: Models.IStdev = null;
-  private newQuote: number = null;
   private newShort: number = null;
   private newMedium: number = null;
   private newLong: number = null;
   private fairValue: number = null;
-  public set quoteEwma(quoteEwma: number) {
-    this.newQuote = quoteEwma;
-  }
-  public set widthStdev(widthStdev: Models.IStdev) {
-    this.newWidth = widthStdev;
-  }
 
   private _newTargetPosition: number = 0;
   private _lastPosition: number = null;
@@ -34,6 +26,8 @@ export class TargetBasePositionManager {
     private _mgEwmaMedium,
     private _mgEwmaLong,
     private _mgTBP,
+    private _ewmaP,
+    private _stdevP,
     private _qpRepo,
     private _positionBroker,
     private _uiSnap,
@@ -49,8 +43,8 @@ export class TargetBasePositionManager {
 
     _uiSnap(Models.Topics.TargetBasePosition, () => [this._latest]);
     _uiSnap(Models.Topics.EWMAChart, () => [this.fairValue?new Models.EWMAChart(
-      this.newWidth,
-      this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
+      this._stdevP(),
+      this._ewmaP()?Utils.roundNearest(this._ewmaP(), this._minTick):null,
       this.newShort?Utils.roundNearest(this.newShort, this._minTick):null,
       this.newMedium?Utils.roundNearest(this.newMedium, this._minTick):null,
       this.newLong?Utils.roundNearest(this.newLong, this._minTick):null,
@@ -99,8 +93,8 @@ export class TargetBasePositionManager {
     this.recomputeTargetPosition();
 
     this._uiSend(Models.Topics.EWMAChart, new Models.EWMAChart(
-      this.newWidth,
-      this.newQuote?Utils.roundNearest(this.newQuote, this._minTick):null,
+      this._stdevP(),
+      this._ewmaP()?Utils.roundNearest(this._ewmaP(), this._minTick):null,
       Utils.roundNearest(this.newShort, this._minTick),
       Utils.roundNearest(this.newMedium, this._minTick),
       Utils.roundNearest(this.newLong, this._minTick),
