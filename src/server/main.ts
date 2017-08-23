@@ -67,6 +67,8 @@ new QuoteSender.QuoteSender(
       bindings.mgEwmaMedium,
       bindings.mgEwmaLong,
       bindings.mgTBP,
+      bindings.mgEwmaProtection,
+      bindings.mgStdevProtection,
       bindings.qpRepo,
       bindings.pgRepo,
       bindings.uiSnap,
