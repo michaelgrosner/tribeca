@@ -2,7 +2,6 @@ const packageConfig = require("./../package.json");
 
 import assert = require("assert");
 import Utils = require("../src/server/utils");
-import Statistics = require("../src/server/statistics");
 import Benchmark = require('benchmark');
 
 // const bindings = ((K) => { try {
