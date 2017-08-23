@@ -31,14 +31,15 @@ namespace K {
         load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &mgStats_)) { cout << FN::uiT() << "Errrror: GW mgStats_ init timer failed." << endl; exit(1); }
-          mgStats_.data = gw;
+          mgStats_.data = NULL;
           if (uv_timer_start(&mgStats_, [](uv_timer_t *handle) {
             if (mgfairV) {
               if (++mgT == 60) {
                 mgT = 0;
-                ewmaUp();
+                // updateEwmaValues();
+                ewmaPUp();
               }
-              stdevUp();
+              stdevPUp();
             } else cout << FN::uiT() << "Market Stats notice: missing fair value." << endl;
           }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW mgStats_ start timer failed." << endl; exit(1); }
         }).detach();
@@ -103,7 +104,7 @@ namespace K {
           calcStdev();
         }
       };
-      static void stdevUp() {
+      static void stdevPUp() {
         if (!mgfairV or empty()) return;
         mgStatFV.push_back(mgfairV);
         mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
@@ -144,7 +145,7 @@ namespace K {
         args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaM));
       };
       static void _mgEwmaShort(const FunctionCallbackInfo<Value>& args) {
-        mgEwmaS = calcEwma(args[0]->NumberValue(), mgEwmaL, qpRepo["shortEwmaPeridos"].get<int>());
+        mgEwmaS = calcEwma(args[0]->NumberValue(), mgEwmaS, qpRepo["shortEwmaPeridos"].get<int>());
         args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaS));
       };
       static void _mgTBP(const FunctionCallbackInfo<Value>& args) {
@@ -201,7 +202,7 @@ namespace K {
         };
         return o;
       };
-      static void ewmaUp() {
+      static void ewmaPUp() {
         mgEwmaP = calcEwma(mgfairV, mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
         EV::evUp("EWMAProtectionCalculator");
       };
