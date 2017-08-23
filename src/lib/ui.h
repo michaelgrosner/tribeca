@@ -218,14 +218,15 @@ namespace K {
       static void uiSend(uiTXT k, json o, bool h = false) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
-        if (h) uiHold(k, o);
-        else uiUp(k, o);
-      };
-      static void uiUp(uiTXT k, json o) {
         if (k == uiTXT::MarketData) {
           if (uiMDT+369 > FN::T()) return;
           uiMDT = FN::T();
         }
+        if (h) uiHold(k, o);
+        else uiUp(k, o);
+      };
+    private:
+      static void uiUp(uiTXT k, json o) {
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
@@ -235,7 +236,6 @@ namespace K {
         if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
         sess->cb[k] = cb;
       };
-    private:
       static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
         _uiOn(args, uiBIT::SNAP);
       };
@@ -267,7 +267,6 @@ namespace K {
         uiUp((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
       };
       static void uiHold(uiTXT k, json o) {
-        Isolate* isolate = Isolate::GetCurrent();
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
         if (!qpRepo["delayUI"].get<double>()) return uiUp(k, o);
