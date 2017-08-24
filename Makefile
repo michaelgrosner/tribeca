@@ -119,7 +119,9 @@ config: etc/K.json.dist
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev libsqlite3-dev libcurl4-openssl-dev libssl-dev openssl stunnel python curl gzip imagemagick\
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel zlib-devel sqlite-devel libcurl-devel openssl openssl-devel zlib-devel stunnel python curl gzip imagemagick) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :))
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :)) \
+ 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl openssl stunnel python gzip imagemagick)
+
 	sudo mkdir -p /data/db/
 	sudo chown `id -u` /data/db
 	$(MAKE) dist
