@@ -3,7 +3,6 @@
 
 namespace K {
   int mgT = 0;
-  static uv_timer_t mgStats_;
   static vector<mGWmt> mGWmt_;
   static json mGWmkt;
   static json mGWmktFilter;
@@ -30,20 +29,6 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         load();
-        thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &mgStats_)) { cout << FN::uiT() << "Errrror: GW mgStats_ init timer failed." << endl; exit(1); }
-          mgStats_.data = NULL;
-          if (uv_timer_start(&mgStats_, [](uv_timer_t *handle) {
-            if (mgfairV) {
-              if (++mgT == 60) {
-                mgT = 0;
-                ewmaPUp();
-                ewmaUp();
-              }
-              stdevPUp();
-            } else cout << FN::uiT() << "Market Stats notice: missing fair value." << endl;
-          }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW mgStats_ start timer failed." << endl; exit(1); }
-        }).detach();
         EV::evOn("MarketTradeGateway", [](json k) {
           tradeUp(k);
         });
@@ -90,8 +75,16 @@ namespace K {
           calcStdev();
         }
       };
+      static void calc() {
+        if (++mgT == 60) {
+          mgT = 0;
+          ewmaPUp();
+          ewmaUp();
+        }
+        stdevPUp();
+      };
       static void stdevPUp() {
-        if (!mgfairV or empty()) return;
+        if (empty()) return;
         mgStatFV.push_back(mgfairV);
         mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
         mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
