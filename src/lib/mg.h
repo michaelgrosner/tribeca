@@ -190,10 +190,10 @@ namespace K {
         return o;
       };
       static void ewmaUp() {
-        mgEwmaL = calcEwma(mgfairV, mgEwmaL, qpRepo["longEwmaPeridos"].get<int>());
-        mgEwmaM = calcEwma(mgfairV, mgEwmaM, qpRepo["mediumEwmaPeridos"].get<int>());
-        mgEwmaS = calcEwma(mgfairV, mgEwmaS, qpRepo["shortEwmaPeridos"].get<int>());
-        mgTargetPos = calcTargetPos();
+        calcEwma(&mgEwmaL, qpRepo["longEwmaPeridos"].get<int>());
+        calcEwma(&mgEwmaM, qpRepo["mediumEwmaPeridos"].get<int>());
+        calcEwma(&mgEwmaS, qpRepo["shortEwmaPeridos"].get<int>());
+        calcTargetPos();
         EV::evUp("PositionBroker");
         UI::uiSend(uiTXT::EWMAChart, {
           {"stdevWidth", {
@@ -220,7 +220,7 @@ namespace K {
         });
       };
       static void ewmaPUp() {
-        mgEwmaP = calcEwma(mgfairV, mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
+        calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
         EV::evUp("EWMAProtectionCalculator");
       };
       static bool empty() {
@@ -271,18 +271,14 @@ namespace K {
       static void calcStdev() {
         cleanStdev();
         if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
-        double factor = qpRepo["quotingStdevProtectionFactor"].get<double>();
-        double mean = 0;
-        mgStdevFV = calcStdev(mgStatFV, mgStatFV.size(), factor, &mean);
-        mgStdevFVMean = mean;
-        mgStdevBid = calcStdev(mgStatBid, mgStatBid.size(), factor, &mean);
-        mgStdevBidMean = mean;
-        mgStdevAsk = calcStdev(mgStatAsk, mgStatAsk.size(), factor, &mean);
-        mgStdevAskMean = mean;
-        mgStdevTop = calcStdev(mgStatTop, mgStatTop.size(), factor, &mean);
-        mgStdevTopMean = mean;
+        double k = qpRepo["quotingStdevProtectionFactor"].get<double>();
+        mgStdevFV = calcStdev(mgStatFV, k, &mgStdevFVMean);
+        mgStdevBid = calcStdev(mgStatBid, k, &mgStdevBidMean);
+        mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
+        mgStdevTop = calcStdev(mgStatTop, k, &mgStdevTopMean);
       };
-      static double calcStdev(vector<double> a, int n, double f, double *mean) {
+      static double calcStdev(vector<double> a, double f, double *mean) {
+        int n = a.size();
         if (n == 0) return 0.0;
         double sum = 0;
         for (int i = 0; i < n; ++i) sum += a[i];
@@ -295,14 +291,13 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      static double calcEwma(double newValue, double previous, int periods) {
-        if (previous > 0) {
+      static void calcEwma(double *k, int periods) {
+        if (*k) {
           double alpha = (double)2 / (periods + 1);
-          return alpha * newValue + (1 - alpha) * previous;
-        }
-        return newValue;
+          *k = alpha * mgfairV + (1 - alpha) * *k;
+        } else *k = mgfairV;
       };
-      static double calcTargetPos() {
+      static void calcTargetPos() {
         mgSMA3.push_back(mgfairV);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;
@@ -318,7 +313,7 @@ namespace K {
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qpRepo["ewmaSensiblityPercentage"].get<double>());
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
-        return newTargetPosition;
+        mgTargetPos = newTargetPosition;
       };
   };
 }
