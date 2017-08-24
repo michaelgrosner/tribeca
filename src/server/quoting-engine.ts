@@ -73,7 +73,6 @@ export class QuotingEngine {
 
     private computeQuote(filteredMkt: Models.Market, fv: number) {
         const latestPosition = this._positionBroker();
-        if (this._pgTargetBasePos() == 0 || latestPosition === null) return null;
         const targetBasePosition = this._pgTargetBasePos();
 
         const params = this._qpRepo();
