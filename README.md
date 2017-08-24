@@ -310,5 +310,15 @@ What exchange you don't want to be deleted from the bot?
 
 [![bcn](https://user-images.githubusercontent.com/1634027/29495722-1d924018-85c5-11e7-8d61-d83f5716ae9e.jpg)](https://en.wikipedia.org/wiki/2017_Barcelona_attack#/media/File:Barcelona_La_Rambla_-_2011-04-23_05_-_JTCurses.jpg)
 
-every new day we sing:
+### every new day we sing:
+
  - https://www.youtube.com/watch?v=g--fsK6aLf8
+ - https://www.youtube.com/watch?v=Rom4qWtEkMA
+ - https://www.youtube.com/watch?v=wXHm9Yl5tRM
+ - https://www.youtube.com/watch?v=KKpcQIfIAi8
+ - https://www.youtube.com/watch?v=pZAmer0EmMQ
+ - https://www.youtube.com/watch?v=lwspxyzOfkY
+ - https://www.youtube.com/watch?v=vofff0Ei3kk
+ - https://www.youtube.com/watch?v=4Ois3zB7SJ4
+ - https://www.youtube.com/watch?v=_wGDcWD1E1A
+ - https://www.youtube.com/watch?v=DVg2EJvvlF8

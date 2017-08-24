@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import Safety = require("./safety");
-import PositionManagement = require("./position-management");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
@@ -54,12 +53,12 @@ export class QuotingEngine {
       private _minSize: number,
       private _ewmaP,
       private _stdevP,
-      private _targetPosition: PositionManagement.TargetBasePositionManager,
+      private _pgTargetBasePos,
+      private _pgSideAPR,
       private _safeties: Safety.SafetyCalculator,
       private _evOn,
       private _evUp
     ) {
-      this._safeties.targetPosition = this._targetPosition;
       this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
 
       this._evOn('EWMAProtectionCalculator', this.recalcQuote);
@@ -74,8 +73,8 @@ export class QuotingEngine {
 
     private computeQuote(filteredMkt: Models.Market, fv: number) {
         const latestPosition = this._positionBroker();
-        if (this._targetPosition.latestTargetPosition === null || latestPosition === null) return null;
-        const targetBasePosition = this._targetPosition.latestTargetPosition.tbp;
+        if (this._pgTargetBasePos() == 0 || latestPosition === null) return null;
+        const targetBasePosition = this._pgTargetBasePos();
 
         const params = this._qpRepo();
         const widthPing = (params.widthPercentage)
@@ -111,7 +110,7 @@ export class QuotingEngine {
         this.latestQuoteAskStatus = Models.QuoteStatus.UnknownHeld;
         this.latestQuoteBidStatus = Models.QuoteStatus.UnknownHeld;
 
-        let sideAPR: string;
+        let sideAPR: string = '';
         let superTradesMultipliers = (params.superTrades &&
           widthPing * params.sopWidthMultiplier < filteredMkt.asks[0].price - filteredMkt.bids[0].price
         ) ? [
@@ -180,7 +179,7 @@ export class QuotingEngine {
               ], unrounded.bidPx);
         }
 
-        this._targetPosition.sideAPR = sideAPR;
+        this._pgSideAPR(sideAPR);
 
         if (params.mode === Models.QuotingMode.PingPong || params.mode === Models.QuotingMode.HamelinRat || params.mode === Models.QuotingMode.Boomerang || params.mode === Models.QuotingMode.AK47) {
           if (unrounded.askSz && safety.buyPing && (
