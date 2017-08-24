@@ -17,14 +17,14 @@ namespace K {
   static vector<double> mgStatBid;
   static vector<double> mgStatAsk;
   static vector<double> mgStatTop;
-  static double mgStdevFV;
-  static double mgStdevFVMean;
-  static double mgStdevBid;
-  static double mgStdevBidMean;
-  static double mgStdevAsk;
-  static double mgStdevAskMean;
-  static double mgStdevTop;
-  static double mgStdevTopMean;
+  static double mgStdevFV = 0;
+  static double mgStdevFVMean = 0;
+  static double mgStdevBid = 0;
+  static double mgStdevBidMean = 0;
+  static double mgStdevAsk = 0;
+  static double mgStdevAskMean = 0;
+  static double mgStdevTop = 0;
+  static double mgStdevTopMean = 0;
   static double mgTargetPos = 0;
   class MG {
     public:

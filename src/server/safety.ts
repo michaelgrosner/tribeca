@@ -59,8 +59,8 @@ export class SafetyCalculator {
 
     private computeQtyLimit = () => {
         const fv = this._fvEngine();
+        if (!fv) return;
         const latestPosition = this._positionBroker();
-        if (!fv || !this._pgTargetBasePos() || latestPosition === null) return;
         const params = this._qpRepo();
         let buySize: number  = (params.percentageValues && latestPosition != null)
             ? params.buySizePercentage * latestPosition.value / 100
