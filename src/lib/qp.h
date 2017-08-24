@@ -74,9 +74,9 @@ namespace K {
           }
         }
         qpRepo = defQP;
-        json qpa = DB::load(uiTXT::QuotingParametersChange);
-        if (qpa.size())
-          for (json::iterator it = qpa["/0"_json_pointer].begin(); it != qpa["/0"_json_pointer].end(); ++it)
+        json qp = DB::load(uiTXT::QuotingParametersChange);
+        if (qp.size())
+          for (json::iterator it = qp["/0"_json_pointer].begin(); it != qp["/0"_json_pointer].end(); ++it)
             qpRepo[it.key()] = it.value();
         cleanBool();
       };

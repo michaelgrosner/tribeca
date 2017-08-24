@@ -136,6 +136,94 @@ namespace K {
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
         CF::external();
       };
+      static void uiSnap(uiTXT k, uiCb cb) {
+        uiOn(uiBIT::SNAP, k, cb);
+      };
+      static void uiHand(uiTXT k, uiCb cb) {
+        uiOn(uiBIT::MSG, k, cb);
+      };
+      static void uiSend(uiTXT k, json o, bool h = false) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->u == 0) return;
+        if (k == uiTXT::MarketData) {
+          if (uiMDT+369 > FN::T()) return;
+          uiMDT = FN::T();
+        }
+        if (h) uiHold(k, o);
+        else uiUp(k, o);
+      };
+    private:
+      static json onSnapApp(json z) {
+        return { uiSTATE };
+      };
+      static json onSnapNote(json z) {
+        return { uiNOTE };
+      };
+      static json onHandNote(json k) {
+        uiNOTE = k["/0"_json_pointer].get<string>();
+        return {};
+      };
+      static json onSnapOpt(json z) {
+        return { uiOPT };
+      };
+      static json onHandOpt(json k) {
+        uiOPT = k["/0"_json_pointer].get<bool>();
+        return {};
+      };
+      static void uiUp(uiTXT k, json o) {
+        string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
+        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+      };
+      static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        string k = string(1, (char)k_).append(string(1, (char)_k));
+        if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+        sess->cb[k] = cb;
+      };
+      static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
+        _uiOn(args, uiBIT::SNAP);
+      };
+      static void _uiHand(const FunctionCallbackInfo<Value>& args) {
+        _uiOn(args, uiBIT::MSG);
+      };
+      static void _uiOn(const FunctionCallbackInfo<Value>& args, uiBIT k_) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        Isolate *isolate = args.GetIsolate();
+        string k = string(1, (char)k_).append(*String::Utf8Value(args[0]->ToString()));
+        if (sess->_cb.find(k) != sess->_cb.end())
+          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use only a single unique message handler for each different topic")));
+        Persistent<Function> *_cb = &sess->_cb[k];
+        _cb->Reset(isolate, Local<Function>::Cast(args[1]));
+      };
+      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->u == 0) return;
+        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) {
+          Isolate* isolate = args.GetIsolate();
+          JSON Json;
+          uiHold((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
+        } else _uiUp(args);
+      };
+      static void _uiUp(const FunctionCallbackInfo<Value>& args) {
+        if (args[1]->IsUndefined()) return;
+        Isolate* isolate = args.GetIsolate();
+        JSON Json;
+        uiUp((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
+      };
+      static void uiHold(uiTXT k, json o) {
+        bool isOSR = k == uiTXT::OrderStatusReports;
+        if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
+        if (!qpRepo["delayUI"].get<double>()) return uiUp(k, o);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
+          if (!isOSR) sess->D[k].clear();
+          else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
+            if ((*it)["orderId"].get<string>() == o["orderId"].get<string>())
+              it = sess->D[k].erase(it);
+            else ++it;
+        }
+        sess->D[k].push_back(o);
+      };
       static void _uiD_(double d) {
         if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -191,94 +279,6 @@ namespace K {
         if (uiDDT+60000 > FN::T()) return;
         uiDDT = FN::T();
         uiDD(handle);
-      };
-      static json onSnapApp(json z) {
-        return { uiSTATE };
-      };
-      static json onSnapNote(json z) {
-        return { uiNOTE };
-      };
-      static json onHandNote(json k) {
-        uiNOTE = k["/0"_json_pointer].get<string>();
-        return {};
-      };
-      static json onSnapOpt(json z) {
-        return { uiOPT };
-      };
-      static json onHandOpt(json k) {
-        uiOPT = k["/0"_json_pointer].get<bool>();
-        return {};
-      };
-      static void uiSnap(uiTXT k, uiCb cb) {
-        uiOn(uiBIT::SNAP, k, cb);
-      };
-      static void uiHand(uiTXT k, uiCb cb) {
-        uiOn(uiBIT::MSG, k, cb);
-      };
-      static void uiSend(uiTXT k, json o, bool h = false) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->u == 0) return;
-        if (k == uiTXT::MarketData) {
-          if (uiMDT+369 > FN::T()) return;
-          uiMDT = FN::T();
-        }
-        if (h) uiHold(k, o);
-        else uiUp(k, o);
-      };
-    private:
-      static void uiUp(uiTXT k, json o) {
-        string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
-        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
-      };
-      static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        string k = string(1, (char)k_).append(string(1, (char)_k));
-        if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-        sess->cb[k] = cb;
-      };
-      static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
-        _uiOn(args, uiBIT::SNAP);
-      };
-      static void _uiHand(const FunctionCallbackInfo<Value>& args) {
-        _uiOn(args, uiBIT::MSG);
-      };
-      static void _uiOn(const FunctionCallbackInfo<Value>& args, uiBIT k_) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        Isolate *isolate = args.GetIsolate();
-        string k = string(1, (char)k_).append(*String::Utf8Value(args[0]->ToString()));
-        if (sess->_cb.find(k) != sess->_cb.end())
-          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use only a single unique message handler for each different topic")));
-        Persistent<Function> *_cb = &sess->_cb[k];
-        _cb->Reset(isolate, Local<Function>::Cast(args[1]));
-      };
-      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->u == 0) return;
-        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) {
-          Isolate* isolate = args.GetIsolate();
-          JSON Json;
-          uiHold((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
-        } else _uiUp(args);
-      };
-      static void _uiUp(const FunctionCallbackInfo<Value>& args) {
-        if (args[1]->IsUndefined()) return;
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        uiUp((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
-      };
-      static void uiHold(uiTXT k, json o) {
-        bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
-        if (!qpRepo["delayUI"].get<double>()) return uiUp(k, o);
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
-          if (!isOSR) sess->D[k].clear();
-          else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
-            if ((*it)["orderId"].get<string>() == o["orderId"].get<string>())
-              it = sess->D[k].erase(it);
-            else ++it;
-        }
-        sess->D[k].push_back(o);
       };
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

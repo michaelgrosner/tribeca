@@ -3,24 +3,71 @@
 
 namespace K {
   static json pgPos;
+  static uv_timer_t pgStats_;
   static vector<json> pgDiff;
   static map<int, json> pgCur;
+  static double pgTargetBasePos = 0;
+  static string pgSideAPR = "";
+  static string pgSideAPR_ = "!=";
   class PG {
     public:
       static void main(Local<Object> exports) {
+        load();
+        thread([&]() {
+          if (uv_timer_init(uv_default_loop(), &pgStats_)) { cout << FN::uiT() << "Errrror: GW pgStats_ init timer failed." << endl; exit(1); }
+          pgStats_.data = NULL;
+          if (uv_timer_start(&pgStats_, [](uv_timer_t *handle) {
+            if (mgfairV) calc();
+            else cout << FN::uiT() << "Unable to calculate stats, missing fair value." << endl;
+          }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW pgStats_ start timer failed." << endl; exit(1); }
+        }).detach();
         EV::evOn("PositionGateway", [](json k) {
           posUp(k);
-        });
-        EV::evOn("OrderUpdateBroker", [](json k) {
-          orderUp(k);
         });
         EV::evOn("FairValue", [](json k) {
           posUp({});
         });
+        EV::evOn("OrderUpdateBroker", [](json k) {
+          orderUp(k);
+        });
+        EV::evOn("QuotingParameters", [](json k) {
+          calcTargetBasePos();
+        });
+        EV::evOn("PositionBroker", [](json k) {
+          calcTargetBasePos();
+        });
         UI::uiSnap(uiTXT::Position, &onSnapPos);
+        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
+        NODE_SET_METHOD(exports, "pgTargetBasePos", PG::_pgTargetBasePos);
+        NODE_SET_METHOD(exports, "pgSideAPR", PG::_pgSideAPR);
         NODE_SET_METHOD(exports, "pgRepo", PG::_pgRepo);
       };
     private:
+      static void load() {
+        json k = DB::load(uiTXT::TargetBasePosition);
+        if (k.size()) {
+          if (k["/0/tbp"_json_pointer].is_number())
+            pgTargetBasePos = k["/0/tbp"_json_pointer].get<double>();
+          if (k["/0/sideAPR"_json_pointer].is_string())
+            pgSideAPR = k["/0/sideAPR"_json_pointer].get<string>();
+        }
+        cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << " loaded from DB." << endl;
+      };
+      static void calc() {
+        MG::calc();
+      };
+      static json onSnapTargetBasePos(json z) {
+        return {{
+          {"tbp", pgTargetBasePos},
+          {"sideAPR", pgSideAPR}
+        }};
+      };
+      static void _pgTargetBasePos(const FunctionCallbackInfo<Value>& args) {
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), pgTargetBasePos));
+      };
+      static void _pgSideAPR(const FunctionCallbackInfo<Value>& args) {
+        pgSideAPR = FN::S8v(args[0]->ToString());
+      };
       static void _pgRepo(const FunctionCallbackInfo<Value>& args) {
         Isolate* isolate = args.GetIsolate();
         JSON Json;
@@ -71,7 +118,7 @@ namespace K {
           ) return;
         }
         pgPos = pos;
-        if (!eq) EV::evUp("PositionBroker");
+        if (!eq) calcTargetBasePos();
         UI::uiSend(uiTXT::Position, pos, true);
       };
       static void orderUp(json k) {
@@ -95,6 +142,24 @@ namespace K {
             ? k["/pair/base"_json_pointer].get<int>()
             : k["/pair/quote"_json_pointer].get<int>()}
         });
+      };
+      static void calcTargetBasePos() {
+        if (pgPos.is_null()) {
+          cout << FN::uiT() << "Position Stats notice: missing market data." << endl;
+          return;
+        }
+        double targetBasePosition = ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::Manual)
+          ? (qpRepo["percentageValues"].get<bool>()
+            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 100
+            : qpRepo["targetBasePosition"].get<double>())
+          : ((1 + mgTargetPos) / 2) * pgPos["value"].get<double>();
+        if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
+        pgTargetBasePos = targetBasePosition;
+        pgSideAPR_ = pgSideAPR;
+        EV::evUp("TargetPosition");
+        UI::uiSend(uiTXT::TargetBasePosition, {{"tbp", pgTargetBasePos},{"sideAPR", pgSideAPR}}, true);
+        DB::insert(uiTXT::TargetBasePosition, {{"tbp", pgTargetBasePos},{"sideAPR", pgSideAPR}});
+        cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
       };
   };
 }

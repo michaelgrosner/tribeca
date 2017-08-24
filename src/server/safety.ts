@@ -1,7 +1,5 @@
 import Models = require("../share/models");
-import Utils = require("./utils");
 import moment = require('moment');
-import PositionManagement = require("./position-management");
 
 interface ITrade {
     price: number;
@@ -25,13 +23,12 @@ export class SafetyCalculator {
     private _buys: ITrade[] = [];
     private _sells: ITrade[] = [];
 
-    public targetPosition: PositionManagement.TargetBasePositionManager;
-
     constructor(
       private _fvEngine,
       private _qpRepo,
       private _positionBroker,
       private _tradesMemory,
+      private _pgTargetBasePos,
       private _uiSnap,
       private _uiSend,
       private _evOn,
@@ -62,8 +59,8 @@ export class SafetyCalculator {
 
     private computeQtyLimit = () => {
         const fv = this._fvEngine();
+        if (!fv) return;
         const latestPosition = this._positionBroker();
-        if (!fv || !this.targetPosition.latestTargetPosition || latestPosition === null) return;
         const params = this._qpRepo();
         let buySize: number  = (params.percentageValues && latestPosition != null)
             ? params.buySizePercentage * latestPosition.value / 100
@@ -71,7 +68,7 @@ export class SafetyCalculator {
         let sellSize: number = (params.percentageValues && latestPosition != null)
               ? params.sellSizePercentage * latestPosition.value / 100
               : params.sellSize;
-        const targetBasePosition = this.targetPosition.latestTargetPosition.tbp;
+        const targetBasePosition = this._pgTargetBasePos();
         const totalBasePosition = latestPosition.baseAmount + latestPosition.baseHeldAmount;
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.buySizeMax) buySize = Math.max(buySize, targetBasePosition - totalBasePosition);
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax) sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
