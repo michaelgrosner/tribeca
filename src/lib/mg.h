@@ -50,6 +50,14 @@ namespace K {
         NODE_SET_METHOD(exports, "mgEwmaProtection", MG::_mgEwmaProtection);
         NODE_SET_METHOD(exports, "mgStdevProtection", MG::_mgStdevProtection);
       };
+      static void calcStats() {
+        if (++mgT == 60) {
+          mgT = 0;
+          ewmaPUp();
+          ewmaUp();
+        }
+        stdevPUp();
+      };
     private:
       static void load() {
         json k = DB::load(uiTXT::EWMAChart);
@@ -74,14 +82,6 @@ namespace K {
           }
           calcStdev();
         }
-      };
-      static void calc() {
-        if (++mgT == 60) {
-          mgT = 0;
-          ewmaPUp();
-          ewmaUp();
-        }
-        stdevPUp();
       };
       static void stdevPUp() {
         if (empty()) return;

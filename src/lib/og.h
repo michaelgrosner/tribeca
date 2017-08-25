@@ -30,7 +30,6 @@ namespace K {
         EV::evOn("OrderUpdateGateway", [](json k) {
           updateOrderState(k);
         });
-        NODE_SET_METHOD(exports, "tradesMemory", OG::_tradesMemory);
         NODE_SET_METHOD(exports, "allOrders", OG::_allOrders);
         NODE_SET_METHOD(exports, "allOrdersDelete", OG::_allOrdersDelete);
         NODE_SET_METHOD(exports, "sendOrder", OG::_sendOrder);
@@ -73,22 +72,13 @@ namespace K {
       static void load() {
         tradesMemory = DB::load(uiTXT::Trades);
       };
+      static json onSnapTrades(json z) {
+        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+          (*it)["loadedFromDB"] = true;
+        return tradesMemory;
+      };
       static json onSnapOrders(json z) {
         return ogO(false);
-      };
-      static json onSnapTrades(json z) {
-        return ogT(true);
-      };
-      static void _tradesMemory(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        Local<Array> k = Array::New(isolate);
-        int i;
-        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
-          if (i>1000) break;
-          k->Set(i++, v8ogTM_(*it, false));
-        }
-        args.GetReturnValue().Set(k);
       };
       static void _allOrders(const FunctionCallbackInfo<Value>& args) {
         args.GetReturnValue().Set(v8ogO(args.GetIsolate(), true));
@@ -339,41 +329,6 @@ namespace K {
           if (!k["exchangeId"].is_null()) allOrdersIds[k["exchangeId"].get<string>()] = k["orderId"].get<string>();
           allOrders[k["orderId"].get<string>()] = k;
         } else allOrdersDelete(k["orderId"].get<string>(), k["exchangeId"].is_null() ? "" : k["exchangeId"].get<string>());
-      };
-      static json ogT(bool fromDB) {
-        json k;
-        int i = 0;
-        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
-          if (i++>1000) break;
-          json t = *it;
-          if (fromDB) t["loadedFromDB"] = true;
-          k.push_back(t);
-        }
-        return k;
-      };
-      static Local<Object> v8ogTM_(json j, bool fromDB = false) {
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("tradeId"), FN::v8S(j["tradeId"].get<string>()));
-        o->Set(FN::v8S("time"), Number::New(isolate, j["time"].get<unsigned long>()));
-        o->Set(FN::v8S("exchange"), Number::New(isolate, j["exchange"].get<int>()));
-        Local<Object> o_ = Object::New(isolate);
-        o_->Set(FN::v8S("base"), Number::New(isolate, j["/pair/base"_json_pointer].get<int>()));
-        o_->Set(FN::v8S("quote"), Number::New(isolate, j["/pair/quote"_json_pointer].get<int>()));
-        o->Set(FN::v8S("pair"), o_);
-        o->Set(FN::v8S("side"), Number::New(isolate, j["side"].get<int>()));
-        o->Set(FN::v8S("price"), Number::New(isolate, j["price"].get<double>()));
-        o->Set(FN::v8S("quantity"), Number::New(isolate, j["quantity"].get<double>()));
-        o->Set(FN::v8S("value"), Number::New(isolate, j["value"].get<double>()));
-        o->Set(FN::v8S("Ktime"), Number::New(isolate, j["Ktime"].is_null() ? 0 : j["Ktime"].get<unsigned long>()));
-        o->Set(FN::v8S("Kqty"), Number::New(isolate, j["Kqty"].get<double>()));
-        o->Set(FN::v8S("Kprice"), Number::New(isolate, j["Kprice"].get<double>()));
-        o->Set(FN::v8S("Kvalue"), Number::New(isolate, j["Kvalue"].get<double>()));
-        o->Set(FN::v8S("Kdiff"), Number::New(isolate, j["Kdiff"].get<double>()));
-        o->Set(FN::v8S("feeCharged"), Number::New(isolate, j["feeCharged"].is_null() ? 0 : j["feeCharged"].get<double>()));
-        o->Set(FN::v8S("liquidity"), Number::New(isolate, j["feeCharged"].is_null() ? (int)mLiquidity::Make : j["liquidity"].get<int>()));
-        o->Set(FN::v8S("loadedFromDB"), Boolean::New(isolate, fromDB?true:j["loadedFromDB"].get<bool>()));
-        return o;
       };
       static json ogO(bool all) {
         json k;
