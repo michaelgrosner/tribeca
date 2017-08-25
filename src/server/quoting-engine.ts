@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import Safety = require("./safety");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
@@ -55,7 +54,7 @@ export class QuotingEngine {
       private _stdevP,
       private _pgTargetBasePos,
       private _pgSideAPR,
-      private _safeties: Safety.SafetyCalculator,
+      private _safeties,
       private _evOn,
       private _evUp
     ) {
@@ -101,7 +100,7 @@ export class QuotingEngine {
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
 
-        const safety = this._safeties.latest;
+        const safety = this._safeties();
         if (safety === null) {
             return null;
         }
