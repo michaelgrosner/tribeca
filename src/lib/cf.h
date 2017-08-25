@@ -168,11 +168,12 @@ namespace K {
           gw->ws = cfString("BitfinexWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
-            string k_ = to_string(stod(k["last_price"].get<string>()) / 10000);
-            unsigned int i = stod(k["last_price"].get<string>())<0.00001 ? 1 : 0;
-            for (string::iterator it=k_.begin(); it!=k_.end(); ++it)
-              if (*it == '0') i++; else if (*it == '.') continue; else break;
-            stringstream os(string("1e-").append(to_string(i>8?8:i)));
+            stringstream price_;
+            price_ << scientific << stod(k["last_price"].get<string>());
+            string _price_ = price_.str();
+            for (string::iterator it=_price_.begin(); it!=_price_.end();)
+              if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
+            stringstream os(string("1e").append(to_string(stod(_price_)-4)));
             os >> gw->minTick;
             gw->minSize = 0.01;
           }
