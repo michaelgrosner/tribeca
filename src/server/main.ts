@@ -5,7 +5,7 @@ const bindings = ((K) => { try {
   console.log(K.join('.'));
   return require('./lib/'+K.join('.'));
 } catch (e) {
-  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 7)
+  if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 8)
     throw new Error('K requires Node.js v7.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
@@ -13,9 +13,8 @@ bindings.uiLoop(noop);
 
 import request = require('request');
 
-import QuoteSender = require("./quote-sender");
 import Models = require("../share/models");
-import Safety = require("./safety");
+import QuoteSender = require("./quote-sender");
 import QuotingEngine = require("./quoting-engine");
 
 let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
@@ -60,17 +59,7 @@ new QuoteSender.QuoteSender(
     bindings.mgStdevProtection,
     bindings.pgTargetBasePos,
     bindings.pgSideAPR,
-    new Safety.SafetyCalculator(
-      bindings.mgFairV,
-      bindings.qpRepo,
-      bindings.pgRepo,
-      bindings.tradesMemory,
-      bindings.pgTargetBasePos,
-      bindings.uiSnap,
-      bindings.uiSend,
-      bindings.evOn,
-      bindings.evUp
-    ),
+    bindings.pgSafety,
     bindings.evOn,
     bindings.evUp
   ),
