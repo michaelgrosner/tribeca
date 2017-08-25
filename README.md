@@ -322,3 +322,4 @@ What exchange you don't want to be deleted from the bot?
  - https://www.youtube.com/watch?v=4Ois3zB7SJ4
  - https://www.youtube.com/watch?v=_wGDcWD1E1A
  - https://www.youtube.com/watch?v=DVg2EJvvlF8
+ - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
