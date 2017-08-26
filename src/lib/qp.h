@@ -63,6 +63,11 @@ namespace K {
         EV::evUp("QuotingParameters", qpRepo);
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
+      static bool matchPings() {
+        return (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang
+          or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat
+          or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47;
+      };
     private:
       static void load() {
         for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {

@@ -83,46 +83,6 @@ namespace K {
           calcStdev();
         }
       };
-      static void stdevPUp() {
-        if (empty()) return;
-        mgStatFV.push_back(mgfairV);
-        mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
-        mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
-        mgStatTop.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
-        mgStatTop.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
-        calcStdev();
-        DB::insert(uiTXT::MarketData, {
-          {"fv", mgfairV},
-          {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
-          {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
-          {"time", FN::T()},
-        }, false, "NULL", FN::T() - 1000 * qpRepo["quotingStdevProtectionPeriods"].get<int>());
-      };
-      static void _mgEwmaProtection(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaP));
-      };
-      static void _mgStdevProtection(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("fv"), Number::New(isolate, mgStdevFV));
-        o->Set(FN::v8S("fvMean"), Number::New(isolate, mgStdevFVMean));
-        o->Set(FN::v8S("tops"), Number::New(isolate, mgStdevTop));
-        o->Set(FN::v8S("topsMean"), Number::New(isolate, mgStdevTopMean));
-        o->Set(FN::v8S("bid"), Number::New(isolate, mgStdevBid));
-        o->Set(FN::v8S("bidMean"), Number::New(isolate, mgStdevBidMean));
-        o->Set(FN::v8S("ask"), Number::New(isolate, mgStdevAsk));
-        o->Set(FN::v8S("askMean"), Number::New(isolate, mgStdevAskMean));
-        args.GetReturnValue().Set(o);
-      };
-      static void _mgFilter(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, mGWmktFilter.dump())).ToLocalChecked());
-      };
-      static void _mgFairV(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgfairV));
-      };
       static json onSnapTrade(json z) {
         json k;
         for (unsigned i=0; i<mGWmt_.size(); ++i)
@@ -150,6 +110,21 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"fairValue", mgfairV}
         }};
+      };
+      static void stdevPUp() {
+        if (empty()) return;
+        mgStatFV.push_back(mgfairV);
+        mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
+        mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
+        mgStatTop.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
+        mgStatTop.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
+        calcStdev();
+        DB::insert(uiTXT::MarketData, {
+          {"fv", mgfairV},
+          {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
+          {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
+          {"time", FN::T()},
+        }, false, "NULL", FN::T() - 1000 * qpRepo["quotingStdevProtectionPeriods"].get<int>());
       };
       static void tradeUp(json k) {
         mGWmt t(
@@ -308,6 +283,32 @@ namespace K {
         else if (newTargetPosition < -1) newTargetPosition = -1;
         mgTargetPos = newTargetPosition;
       };
+      static void _mgEwmaProtection(const FunctionCallbackInfo<Value>& args) {
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaP));
+      };
+      static void _mgStdevProtection(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        Local<Object> o = Object::New(isolate);
+        o->Set(FN::v8S("fv"), Number::New(isolate, mgStdevFV));
+        o->Set(FN::v8S("fvMean"), Number::New(isolate, mgStdevFVMean));
+        o->Set(FN::v8S("tops"), Number::New(isolate, mgStdevTop));
+        o->Set(FN::v8S("topsMean"), Number::New(isolate, mgStdevTopMean));
+        o->Set(FN::v8S("bid"), Number::New(isolate, mgStdevBid));
+        o->Set(FN::v8S("bidMean"), Number::New(isolate, mgStdevBidMean));
+        o->Set(FN::v8S("ask"), Number::New(isolate, mgStdevAsk));
+        o->Set(FN::v8S("askMean"), Number::New(isolate, mgStdevAskMean));
+        args.GetReturnValue().Set(o);
+      };
+      static void _mgFilter(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        JSON Json;
+        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, mGWmktFilter.dump())).ToLocalChecked());
+      };
+      static void _mgFairV(const FunctionCallbackInfo<Value>& args) {
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgfairV));
+      };
+
   };
 }
 

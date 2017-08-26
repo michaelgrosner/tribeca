@@ -63,6 +63,18 @@ namespace K {
         }
         cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << " loaded from DB." << endl;
       };
+      static json onSnapPos(json z) {
+        return { pgPos };
+      };
+      static json onSnapSafety(json z) {
+        return { pgSafety };
+      };
+      static json onSnapTargetBasePos(json z) {
+        return {{
+          {"tbp", pgTargetBasePos},
+          {"sideAPR", pgSideAPR}
+        }};
+      };
       static void calc() {
         MG::calcStats();
         calcSafety();
@@ -83,88 +95,34 @@ namespace K {
         double widthPong = qpRepo["widthPercentage"].get<bool>()
           ? qpRepo["widthPongPercentage"].get<double>() * mgfairV / 100
           : qpRepo["widthPong"].get<double>();
-        double buyPing = 0;
-        double sellPong = 0;
-        double buyPq = 0;
-        double sellPq = 0;
-        double _buyPq = 0;
-        double _sellPq = 0;
         map<double, json> tradesBuy;
         map<double, json> tradesSell;
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
           if ((mSide)(*it)["side"].get<int>() == mSide::Bid)
             tradesBuy[(*it)["price"].get<double>()] = *it;
           else tradesSell[(*it)["price"].get<double>()] = *it;
-        if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingAggressive) {
-          for (map<double, json>::iterator it = tradesBuy.begin(); it != tradesBuy.end(); ++it) {
-            if (buyPq<sellSize and (!mgfairV or (mgfairV>it->second["price"].get<double>() and mgfairV-widthPong<it->second["price"].get<double>())) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _buyPq = fmin(sellSize - buyPq, it->second["quantity"].get<double>());
-              buyPing += it->second["price"].get<double>() * _buyPq;
-              buyPq += _buyPq;
-            }
-            if (buyPq>=sellSize) break;
-          }
-          if (!buyPq) for (map<double, json>::reverse_iterator it = tradesBuy.rbegin(); it != tradesBuy.rend(); ++it) {
-            if (buyPq<sellSize and (!mgfairV or mgfairV>it->second["price"].get<double>()) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _buyPq = fmin(sellSize - buyPq, it->second["quantity"].get<double>());
-              buyPing += it->second["price"].get<double>() * _buyPq;
-              buyPq += _buyPq;
-            }
-            if (buyPq>=sellSize) break;
-          }
-        } else if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive)
-          for (map<double, json>::iterator it = tradesBuy.begin(); it != tradesBuy.end(); ++it) {
-            if (buyPq<sellSize and (!mgfairV or mgfairV>it->second["price"].get<double>()) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _buyPq = fmin(sellSize - buyPq, it->second["quantity"].get<double>());
-              buyPing += it->second["price"].get<double>() * _buyPq;
-              buyPq += _buyPq;
-            }
-            if (buyPq>=sellSize) break;
-          }
-        if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingAggressive) {
-          for (map<double, json>::iterator it = tradesSell.begin(); it != tradesSell.end(); ++it) {
-            if (sellPq<buySize and (!mgfairV or (mgfairV<it->second["price"].get<double>() and mgfairV+widthPong>it->second["price"].get<double>())) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _sellPq = fmin(buySize - sellPq, it->second["quantity"].get<double>());
-              sellPong += it->second["price"].get<double>() * _sellPq;
-              sellPq += _sellPq;
-            }
-            if (sellPq>=buySize) break;
-          }
-          if (!sellPq) for (map<double, json>::reverse_iterator it = tradesSell.rbegin(); it != tradesSell.rend(); ++it) {
-            if (sellPq<buySize and (!mgfairV or mgfairV<it->second["price"].get<double>()) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _sellPq = fmin(buySize - sellPq, it->second["quantity"].get<double>());
-              sellPong += it->second["price"].get<double>() * _sellPq;
-              sellPq += _sellPq;
-            }
-            if (sellPq>=buySize) break;
-          }
-        } else if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive)
-          for (map<double, json>::iterator it = tradesSell.begin(); it != tradesSell.end(); ++it) {
-            if (sellPq<buySize and (!mgfairV or mgfairV<it->second["price"].get<double>()) and (((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::Boomerang and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::HamelinRat and (mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) or it->second["Kqty"].get<double>()<it->second["quantity"].get<double>())) {
-              _sellPq = fmin(buySize - sellPq, it->second["quantity"].get<double>());
-              sellPong += it->second["price"].get<double>() * _sellPq;
-              sellPq += _sellPq;
-            }
-            if (sellPq>=buySize) break;
-          }
-        if (buyPq) buyPing /= buyPq;
-        if (sellPq) sellPong /= sellPq;
-        cleanTrades();
-        while (pgBuys.size() and pgSells.size()) {
-          json buy = pgBuys.rbegin()->second;
-          json sell = pgSells.begin()->second;
-          if (sell["price"].get<double>() < buy["price"].get<double>()) break;
-          double buyQty = buy["quantity"].get<double>();
-          double sellQty = sell["quantity"].get<double>();
-          buy["quantity"] = buyQty - sellQty;
-          sell["quantity"] = sellQty - buyQty;
-          if (buy["quantity"].get<double>() < gw->minSize)
-            pgBuys.erase(--pgBuys.rbegin().base());
-          if (sell["quantity"].get<double>() < gw->minSize)
-            pgSells.erase(pgSells.begin());
+        double buyPing = 0;
+        double sellPong = 0;
+        double buyQty = 0;
+        double sellQty = 0;
+        if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingFair
+          or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingAggressive
+        ) {
+          matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
+          matchBestPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong);
+          if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
+          if (!sellQty) matchFirstPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong*-1);
+        } else if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair
+          or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive
+        ) {
+          matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+          matchLastPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong, true);
         }
-        double sumBuys = sumTrades(&pgBuys);
-        double sumSells = sumTrades(&pgSells);
+        if (buyQty) buyPing /= buyQty;
+        if (sellQty) sellPong /= sellQty;
+        clean();
+        double sumBuys = sum(&pgBuys);
+        double sumSells = sum(&pgSells);
         json safety = {
           {"buy", sumBuys / buySize},
           {"sell", sumSells / sellSize},
@@ -182,6 +140,38 @@ namespace K {
           UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
         }
       };
+      static void matchFirstPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
+      };
+      static void matchBestPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(QP::matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
+      };
+      static void matchLastPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(QP::matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
+      };
+      static void matchPing(bool matchPings, bool first, bool last, map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        int dir = width > 0 ? 1 : -1;
+        if (reverse) for (map<double, json>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
+          if (matchPing(matchPings, first, last, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+            break;
+        } else for (map<double, json>::iterator it = trades->begin(); it != trades->end(); ++it)
+          if (matchPing(matchPings, first, last, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+            break;
+      };
+      static bool matchPing(bool matchPings, bool first, bool last, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
+        if (reverse) { fv *= -1; price *= -1; width *= -1; }
+        if (*qty < qtyMax
+          and (last ? fv > price : true)
+          and (first ? (reverse ? fv - width : fv + width) < price : true)
+          and (!matchPings or KqtyTrade < qtyTrade)
+        ) matchPing(ping, qty, qtyMax, qtyTrade, priceTrade);
+        return *qty >= qtyMax;
+      };
+      static void matchPing(double* ping, double* qty, double qtyMax, double qtyTrade, double priceTrade) {
+        double qty_ = fmin(qtyMax - *qty, qtyTrade);
+        *ping += priceTrade * qty_;
+        *qty += qty_;
+      }
       static void tradeUp(json k) {
         json k_ = {
           {"price", k["price"].get<double>()},
@@ -192,49 +182,36 @@ namespace K {
           pgBuys[k["price"].get<double>()] = k_;
         else pgSells[k["price"].get<double>()] = k_;
       };
-      static void cleanTrades() {
-        cleanTrades(&pgBuys);
-        cleanTrades(&pgSells);
+      static void clean() {
+        expire(&pgBuys);
+        expire(&pgSells);
+        skip();
       };
-      static json cleanTrades(map<double, json>* k) {
+      static json expire(map<double, json>* k) {
         unsigned long now = FN::T();
         for (map<double, json>::iterator it = k->begin(); it != k->end();)
           if (it->second["time"].get<unsigned long>() + qpRepo["tradeRateSeconds"].get<double>() * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
-      static double sumTrades(map<double, json>* k) {
+      static void skip() {
+        while (pgBuys.size() and pgSells.size()) {
+          json buy = pgBuys.rbegin()->second;
+          json sell = pgSells.begin()->second;
+          if (sell["price"].get<double>() < buy["price"].get<double>()) break;
+          double buyQty = buy["quantity"].get<double>();
+          buy["quantity"] = buyQty - sell["quantity"].get<double>();
+          sell["quantity"] = sell["quantity"].get<double>() - buyQty;
+          if (buy["quantity"].get<double>() < gw->minSize)
+            pgBuys.erase(--pgBuys.rbegin().base());
+          if (sell["quantity"].get<double>() < gw->minSize)
+            pgSells.erase(pgSells.begin());
+        }
+      };
+      static double sum(map<double, json>* k) {
         double sum = 0;
         for (map<double, json>::iterator it = k->begin(); it != k->end(); ++it)
           sum += it->second["quantity"].get<double>();
         return sum;
-      };
-      static json onSnapTargetBasePos(json z) {
-        return {{
-          {"tbp", pgTargetBasePos},
-          {"sideAPR", pgSideAPR}
-        }};
-      };
-      static void _pgTargetBasePos(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), pgTargetBasePos));
-      };
-      static void _pgSideAPR(const FunctionCallbackInfo<Value>& args) {
-        pgSideAPR = FN::S8v(args[0]->ToString());
-      };
-      static void _pgRepo(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, pgPos.dump())).ToLocalChecked());
-      };
-      static void _pgSafety(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, pgSafety.dump())).ToLocalChecked());
-      };
-      static json onSnapPos(json z) {
-        return { pgPos };
-      };
-      static json onSnapSafety(json z) {
-        return { pgSafety };
       };
       static void posUp(json k) {
         if (!k.is_null()) pgWallet[k["currency"].get<int>()] = k;
@@ -318,6 +295,22 @@ namespace K {
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
         cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
+      };
+      static void _pgTargetBasePos(const FunctionCallbackInfo<Value>& args) {
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), pgTargetBasePos));
+      };
+      static void _pgSideAPR(const FunctionCallbackInfo<Value>& args) {
+        pgSideAPR = FN::S8v(args[0]->ToString());
+      };
+      static void _pgRepo(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        JSON Json;
+        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, pgPos.dump())).ToLocalChecked());
+      };
+      static void _pgSafety(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
+        JSON Json;
+        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, pgSafety.dump())).ToLocalChecked());
       };
   };
 }
