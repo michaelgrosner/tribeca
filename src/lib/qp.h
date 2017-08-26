@@ -2,7 +2,7 @@
 #define K_QP_H_
 
 namespace K {
-  static json defQP {
+  json defQP {
     {  "widthPing",                     2                                      },
     {  "widthPingPercentage",           decimal_cast<2>("0.25").getAsDouble()  },
     {  "widthPong",                     2                                      },
@@ -50,7 +50,7 @@ namespace K {
     {  "audio",                         false                                  },
     {  "delayUI",                       7                                      }
   };
-  static vector<string> boolQP = {
+  vector<string> boolQP = {
     "widthPercentage", "bestWidth", "sellSizeMax", "buySizeMax", "percentageValues",
     "quotingEwmaProtection", "quotingStdevBollingerBands", "cancelOrdersAuto", "audio"
   };

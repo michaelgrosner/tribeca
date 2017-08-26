@@ -2,16 +2,16 @@
 #define K_PG_H_
 
 namespace K {
-  static json pgPos;
-  static json pgSafety;
-  static uv_timer_t pgStats_;
-  static map<double, json> pgBuys;
-  static map<double, json> pgSells;
-  static map<int, json> pgWallet;
-  static vector<json> pgProfit;
-  static double pgTargetBasePos = 0;
-  static string pgSideAPR = "";
-  static string pgSideAPR_ = "!=";
+  json pgPos;
+  json pgSafety;
+  uv_timer_t pgStats_;
+  map<double, json> pgBuys;
+  map<double, json> pgSells;
+  map<int, json> pgWallet;
+  vector<json> pgProfit;
+  double pgTargetBasePos = 0;
+  string pgSideAPR = "";
+  string pgSideAPR_ = "!=";
   class PG {
     public:
       static void main(Local<Object> exports) {
