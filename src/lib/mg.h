@@ -62,18 +62,17 @@ namespace K {
       static void load() {
         json k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
-          if (k["/0/fairValue"_json_pointer].is_number())
-            mgfairV = k["/0/fairValue"_json_pointer].get<double>();
-          if (k["/0/ewmaLong"_json_pointer].is_number())
+          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["longEwmaPeriods"].get<int>()>FN::T()))
             mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
-          if (k["/0/ewmaMedium"_json_pointer].is_number())
+          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["mediumEwmaPeriods"].get<int>()>FN::T()))
             mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
-          if (k["/0/ewmaShort"_json_pointer].is_number())
+          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()>FN::T()))
             mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
         }
         k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
+            if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()<FN::T()) continue;
             mgStatFV.push_back((*it)["fv"].get<double>());
             mgStatBid.push_back((*it)["bid"].get<double>());
             mgStatAsk.push_back((*it)["ask"].get<double>());
@@ -158,9 +157,9 @@ namespace K {
         return o;
       };
       static void ewmaUp() {
-        calcEwma(&mgEwmaL, qpRepo["longEwmaPeridos"].get<int>());
-        calcEwma(&mgEwmaM, qpRepo["mediumEwmaPeridos"].get<int>());
-        calcEwma(&mgEwmaS, qpRepo["shortEwmaPeridos"].get<int>());
+        calcEwma(&mgEwmaL, qpRepo["longEwmaPeriods"].get<int>());
+        calcEwma(&mgEwmaM, qpRepo["mediumEwmaPeriods"].get<int>());
+        calcEwma(&mgEwmaS, qpRepo["shortEwmaPeriods"].get<int>());
         calcTargetPos();
         EV::evUp("PositionBroker");
         UI::uiSend(uiTXT::EWMAChart, {
@@ -181,14 +180,14 @@ namespace K {
           {"fairValue", mgfairV}
         }, true);
         DB::insert(uiTXT::EWMAChart, {
-          {"fairValue", mgfairV},
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
-          {"ewmaShort", mgEwmaS}
+          {"ewmaShort", mgEwmaS},
+          {"time", FN::T()}
         });
       };
       static void ewmaPUp() {
-        calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeridos"].get<int>());
+        calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeriods"].get<int>());
         EV::evUp("EWMAProtectionCalculator");
       };
       static bool empty() {

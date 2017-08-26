@@ -203,19 +203,19 @@ class DisplayOrder {
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.longEwmaPeridos">
+                                                   [(ngModel)]="pair.quotingParameters.display.longEwmaPeriods">
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==2">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.mediumEwmaPeridos">
+                                                   [(ngModel)]="pair.quotingParameters.display.mediumEwmaPeriods">
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.shortEwmaPeridos">
+                                                   [(ngModel)]="pair.quotingParameters.display.shortEwmaPeriods">
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                                 <input class="form-control input-sm"
@@ -347,7 +347,7 @@ class DisplayOrder {
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeridos">
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeriods">
                                             </td>
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"

@@ -322,10 +322,10 @@ export interface QuotingParameters {
     bullets?: number;
     range?: number;
     ewmaSensiblityPercentage?: number;
-    longEwmaPeridos?: number;
-    mediumEwmaPeridos?: number;
-    shortEwmaPeridos?: number;
-    quotingEwmaProtectionPeridos?: number;
+    longEwmaPeriods?: number;
+    mediumEwmaPeriods?: number;
+    shortEwmaPeriods?: number;
+    quotingEwmaProtectionPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
