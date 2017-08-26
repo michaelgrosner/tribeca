@@ -6,7 +6,7 @@ namespace K {
   static vector<mGWmt> mGWmt_;
   static json mGWmkt;
   static json mGWmktFilter;
-  static double mgfairV = 0;
+  static double mgFairValue = 0;
   static double mgEwmaL = 0;
   static double mgEwmaM = 0;
   static double mgEwmaS = 0;
@@ -89,7 +89,7 @@ namespace K {
         return k;
       };
       static json onSnapFair(json z) {
-        return {{{"price", mgfairV}}};
+        return {{{"price", mgFairValue}}};
       };
       static json onSnapEwma(json z) {
         return {{
@@ -107,19 +107,19 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
-          {"fairValue", mgfairV}
+          {"fairValue", mgFairValue}
         }};
       };
       static void stdevPUp() {
         if (empty()) return;
-        mgStatFV.push_back(mgfairV);
+        mgStatFV.push_back(mgFairValue);
         mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
         mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
         mgStatTop.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
         mgStatTop.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
         calcStdev();
         DB::insert(uiTXT::MarketData, {
-          {"fv", mgfairV},
+          {"fv", mgFairValue},
           {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
           {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
           {"time", FN::T()},
@@ -177,7 +177,7 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
-          {"fairValue", mgfairV}
+          {"fairValue", mgFairValue}
         }, true);
         DB::insert(uiTXT::EWMAChart, {
           {"ewmaLong", mgEwmaL},
@@ -217,16 +217,16 @@ namespace K {
       static void fairV() {
         // if (mGWmktFilter.is_null() or mGWmktFilter["/bids/0"_json_pointer].is_null() or mGWmktFilter["/asks/0"_json_pointer].is_null()) return;
         if (empty()) return;
-        double mgfairV_ = mgfairV;
-        mgfairV = FN::roundNearest(
+        double mgFairValue_ = mgFairValue;
+        mgFairValue = FN::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)qpRepo["fvModel"].get<int>()
             ? (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>()) / 2
             : (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() * mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>() * mGWmktFilter["/bids/0/size"_json_pointer].get<double>()) / (mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/size"_json_pointer].get<double>()),
           gw->minTick
         );
-        if (!mgfairV or (mgfairV_ and abs(mgfairV - mgfairV_) < gw->minTick)) return;
+        if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
         EV::evUp("FairValue");
-        UI::uiSend(uiTXT::FairValue, {{"price", mgfairV}}, true);
+        UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
       static void cleanStdev() {
         int periods = qpRepo["quotingStdevProtectionPeriods"].get<int>();
@@ -261,11 +261,11 @@ namespace K {
       static void calcEwma(double *k, int periods) {
         if (*k) {
           double alpha = (double)2 / (periods + 1);
-          *k = alpha * mgfairV + (1 - alpha) * *k;
-        } else *k = mgfairV;
+          *k = alpha * mgFairValue + (1 - alpha) * *k;
+        } else *k = mgFairValue;
       };
       static void calcTargetPos() {
-        mgSMA3.push_back(mgfairV);
+        mgSMA3.push_back(mgFairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;
         for (vector<double>::iterator it = mgSMA3.begin(); it != mgSMA3.end(); ++it)
@@ -305,7 +305,7 @@ namespace K {
         args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, mGWmktFilter.dump())).ToLocalChecked());
       };
       static void _mgFairV(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgfairV));
+        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgFairValue));
       };
 
   };

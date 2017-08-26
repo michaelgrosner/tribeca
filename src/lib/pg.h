@@ -20,7 +20,7 @@ namespace K {
           if (uv_timer_init(uv_default_loop(), &pgStats_)) { cout << FN::uiT() << "Errrror: GW pgStats_ init timer failed." << endl; exit(1); }
           pgStats_.data = NULL;
           if (uv_timer_start(&pgStats_, [](uv_timer_t *handle) {
-            if (mgfairV) {
+            if (mgFairValue) {
               MG::calc();
               calc();
             } else cout << FN::uiT() << "Unable to calculate stats, missing fair value." << endl;
@@ -37,14 +37,14 @@ namespace K {
         });
         EV::evOn("QuotingParameters", [](json k) {
           calcTargetBasePos();
-          if (mgfairV) calcSafety();
+          if (mgFairValue) calcSafety();
         });
         EV::evOn("PositionBroker", [](json k) {
           calcTargetBasePos();
         });
         EV::evOn("OrderTradeBroker", [](json k) {
           tradeUp(k);
-          if (mgfairV) calcSafety();
+          if (mgFairValue) calcSafety();
         });
         UI::uiSnap(uiTXT::Position, &onSnapPos);
         UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
@@ -103,7 +103,7 @@ namespace K {
         if (qpRepo["sellSizeMax"].get<bool>() and (mAPR)qpRepo["aggressivePositionRebalancing"].get<int>() != mAPR::Off)
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         double widthPong = qpRepo["widthPercentage"].get<bool>()
-          ? qpRepo["widthPongPercentage"].get<double>() * mgfairV / 100
+          ? qpRepo["widthPongPercentage"].get<double>() * mgFairValue / 100
           : qpRepo["widthPong"].get<double>();
         map<double, json> tradesBuy;
         map<double, json> tradesSell;
@@ -153,10 +153,10 @@ namespace K {
       static void matchPing(bool matchPings, bool near, bool far, map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<double, json>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
             break;
         } else for (map<double, json>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
             break;
       };
       static bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
@@ -216,11 +216,11 @@ namespace K {
       };
       static void posUp(json k) {
         if (!k.is_null()) pgWallet[k["currency"].get<int>()] = k;
-        if (!mgfairV or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end() or pgWallet[gw->base].is_null() or pgWallet[gw->quote].is_null()) return;
+        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end() or pgWallet[gw->base].is_null() or pgWallet[gw->quote].is_null()) return;
         double baseAmount = pgWallet[gw->base]["amount"].get<double>();
         double quoteAmount = pgWallet[gw->quote]["amount"].get<double>();
-        double baseValue = baseAmount + quoteAmount / mgfairV + pgWallet[gw->base]["heldAmount"].get<double>() + pgWallet[gw->quote]["heldAmount"].get<double>() / mgfairV;
-        double quoteValue = baseAmount * mgfairV + quoteAmount + pgWallet[gw->base]["heldAmount"].get<double>() * mgfairV + pgWallet[gw->quote]["heldAmount"].get<double>();
+        double baseValue = baseAmount + quoteAmount / mgFairValue + pgWallet[gw->base]["heldAmount"].get<double>() + pgWallet[gw->quote]["heldAmount"].get<double>() / mgFairValue;
+        double quoteValue = baseAmount * mgFairValue + quoteAmount + pgWallet[gw->base]["heldAmount"].get<double>() * mgFairValue + pgWallet[gw->quote]["heldAmount"].get<double>();
         unsigned long now = FN::T();
         pgProfit.push_back({
           {"baseValue", baseValue},
