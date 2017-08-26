@@ -285,7 +285,7 @@ namespace K {
         if (pgPos.is_null()) { cout << FN::uiT() << "Unable to calculate TBP, missing market data." << endl; return; }
         double targetBasePosition = ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::Manual)
           ? (qpRepo["percentageValues"].get<bool>()
-            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 100
+            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 1e+2
             : qpRepo["targetBasePosition"].get<double>())
           : ((1 + mgTargetPos) / 2) * pgPos["value"].get<double>();
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
@@ -295,7 +295,7 @@ namespace K {
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
-        cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
+        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos["value"].get<double>() * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
       };
       static void _pgTargetBasePos(const FunctionCallbackInfo<Value>& args) {
         args.GetReturnValue().Set(Number::New(args.GetIsolate(), pgTargetBasePos));
