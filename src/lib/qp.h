@@ -64,26 +64,26 @@ namespace K {
         NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
       static bool matchPings() {
-        return (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang
-          or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat
-          or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47;
+        mQuotingMode k = (mQuotingMode)qpRepo["mode"].get<int>();
+        return k == mQuotingMode::Boomerang
+            or k == mQuotingMode::HamelinRat
+            or k == mQuotingMode::AK47;
       };
     private:
       static void load() {
         for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {
           string k = CF::cfString(it.key(), false);
-          if (k != "") {
-            if (it.value().is_number()) defQP[it.key()] = stod(k);
-            else if (it.value().is_boolean()) defQP[it.key()] = (FN::S2u(k) == "TRUE" or k == "1");
-            else defQP[it.key()] = k;
-          }
+          if (k == "") continue;
+          if (it.value().is_number()) defQP[it.key()] = stod(k);
+          else if (it.value().is_boolean()) defQP[it.key()] = (FN::S2u(k) == "TRUE" or k == "1");
+          else defQP[it.key()] = k;
         }
         qpRepo = defQP;
         json qp = DB::load(uiTXT::QuotingParametersChange);
         if (qp.size())
           for (json::iterator it = qp["/0"_json_pointer].begin(); it != qp["/0"_json_pointer].end(); ++it)
             qpRepo[it.key()] = it.value();
-        cleanBool();
+        clean();
       };
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
@@ -110,14 +110,14 @@ namespace K {
           if ((mQuotingMode)k["mode"].get<int>() == mQuotingMode::Depth)
             k["widthPercentage"] = false;
           qpRepo = k;
-          cleanBool();
+          clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
           EV::evUp("QuotingParameters", k);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};
       };
-      static void cleanBool() {
+      static void clean() {
         for (vector<string>::iterator it = boolQP.begin(); it != boolQP.end(); ++it)
           if (qpRepo[*it].is_number()) qpRepo[*it] = qpRepo[*it].get<int>() != 0;
       };

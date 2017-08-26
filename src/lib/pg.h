@@ -20,8 +20,10 @@ namespace K {
           if (uv_timer_init(uv_default_loop(), &pgStats_)) { cout << FN::uiT() << "Errrror: GW pgStats_ init timer failed." << endl; exit(1); }
           pgStats_.data = NULL;
           if (uv_timer_start(&pgStats_, [](uv_timer_t *handle) {
-            if (mgfairV) calc();
-            else cout << FN::uiT() << "Unable to calculate stats, missing fair value." << endl;
+            if (mgfairV) {
+              MG::calc();
+              calc();
+            } else cout << FN::uiT() << "Unable to calculate stats, missing fair value." << endl;
           }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW pgStats_ start timer failed." << endl; exit(1); }
         }).detach();
         EV::evOn("PositionGateway", [](json k) {
@@ -76,11 +78,19 @@ namespace K {
         }};
       };
       static void calc() {
-        MG::calcStats();
-        calcSafety();
-      };
-      static void calcSafety() {
         if (pgPos.is_null()) return;
+        json safety = calcSafety();
+        if (pgSafety.is_null()
+          or abs(safety["combined"].get<double>() - pgSafety["combined"].get<double>()) > 1e-3
+          or abs(safety["buyPing"].get<double>() - pgSafety["buyPing"].get<double>()) >= 1e-2
+          or abs(safety["sellPong"].get<double>() - pgSafety["sellPong"].get<double>()) >= 1e-2
+        ) {
+          pgSafety = safety;
+          EV::evUp("Safety");
+          UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
+        }
+      };
+      static json calcSafety() {
         double buySize = qpRepo["percentageValues"].get<bool>()
           ? qpRepo["buySizePercentage"].get<double>() * pgPos["value"].get<double>() / 100
           : qpRepo["buySize"].get<double>();
@@ -123,22 +133,13 @@ namespace K {
         clean();
         double sumBuys = sum(&pgBuys);
         double sumSells = sum(&pgSells);
-        json safety = {
+        return {
           {"buy", sumBuys / buySize},
           {"sell", sumSells / sellSize},
           {"combined", (sumBuys + sumSells) / (buySize + sellSize)},
           {"buyPing", buyPing},
           {"sellPong", sellPong}
         };
-        if (pgSafety.is_null()
-          or abs(safety["combined"].get<double>() - pgSafety["combined"].get<double>()) > 1e-3
-          or abs(safety["buyPing"].get<double>() - pgSafety["buyPing"].get<double>()) >= 1e-2
-          or abs(safety["sellPong"].get<double>() - pgSafety["sellPong"].get<double>()) >= 1e-2
-        ) {
-          pgSafety = safety;
-          EV::evUp("Safety");
-          UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
-        }
       };
       static void matchFirstPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
@@ -149,20 +150,20 @@ namespace K {
       static void matchLastPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchPing(bool matchPings, bool first, bool last, map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchPing(bool matchPings, bool near, bool far, map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<double, json>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(matchPings, first, last, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
             break;
         } else for (map<double, json>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(matchPings, first, last, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgfairV, dir * it->second["price"].get<double>(), it->second["quantity"].get<double>(), it->second["price"].get<double>(), it->second["Kqty"].get<double>(), reverse))
             break;
       };
-      static bool matchPing(bool matchPings, bool first, bool last, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
+      static bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
         if (reverse) { fv *= -1; price *= -1; width *= -1; }
         if (*qty < qtyMax
-          and (last ? fv > price : true)
-          and (first ? (reverse ? fv - width : fv + width) < price : true)
+          and (far ? fv > price : true)
+          and (near ? (reverse ? fv - width : fv + width) < price : true)
           and (!matchPings or KqtyTrade < qtyTrade)
         ) matchPing(ping, qty, qtyMax, qtyTrade, priceTrade);
         return *qty >= qtyMax;
@@ -183,11 +184,11 @@ namespace K {
         else pgSells[k["price"].get<double>()] = k_;
       };
       static void clean() {
-        expire(&pgBuys);
-        expire(&pgSells);
+        if (pgBuys.size()) expire(&pgBuys);
+        if (pgSells.size()) expire(&pgSells);
         skip();
       };
-      static json expire(map<double, json>* k) {
+      static void expire(map<double, json>* k) {
         unsigned long now = FN::T();
         for (map<double, json>::iterator it = k->begin(); it != k->end();)
           if (it->second["time"].get<unsigned long>() + qpRepo["tradeRateSeconds"].get<double>() * 1e+3 > now) ++it;
