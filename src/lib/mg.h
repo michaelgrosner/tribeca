@@ -50,7 +50,7 @@ namespace K {
         NODE_SET_METHOD(exports, "mgEwmaProtection", MG::_mgEwmaProtection);
         NODE_SET_METHOD(exports, "mgStdevProtection", MG::_mgStdevProtection);
       };
-      static void calcStats() {
+      static void calc() {
         if (++mgT == 60) {
           mgT = 0;
           ewmaPUp();
