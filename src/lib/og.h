@@ -2,11 +2,11 @@
 #define K_OG_H_
 
 namespace K {
-  static uv_timer_t gwCancelAll_;
-  static json tradesMemory;
-  static map<string, void*> toCancel;
-  static map<string, json> allOrders;
-  static map<string, string> allOrdersIds;
+  uv_timer_t gwCancelAll_;
+  json tradesMemory;
+  map<string, void*> toCancel;
+  map<string, json> allOrders;
+  map<string, string> allOrdersIds;
   class OG {
     public:
       static void main(Local<Object> exports) {

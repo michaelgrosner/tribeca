@@ -3,28 +3,28 @@
 
 namespace K {
   int mgT = 0;
-  static vector<mGWmt> mGWmt_;
-  static json mGWmkt;
-  static json mGWmktFilter;
-  static double mgFairValue = 0;
-  static double mgEwmaL = 0;
-  static double mgEwmaM = 0;
-  static double mgEwmaS = 0;
-  static double mgEwmaP = 0;
-  static vector<double> mgSMA3;
-  static vector<double> mgStatFV;
-  static vector<double> mgStatBid;
-  static vector<double> mgStatAsk;
-  static vector<double> mgStatTop;
-  static double mgStdevFV = 0;
-  static double mgStdevFVMean = 0;
-  static double mgStdevBid = 0;
-  static double mgStdevBidMean = 0;
-  static double mgStdevAsk = 0;
-  static double mgStdevAskMean = 0;
-  static double mgStdevTop = 0;
-  static double mgStdevTopMean = 0;
-  static double mgTargetPos = 0;
+  vector<mGWmt> mGWmt_;
+  json mGWmkt;
+  json mGWmktFilter;
+  double mgFairValue = 0;
+  double mgEwmaL = 0;
+  double mgEwmaM = 0;
+  double mgEwmaS = 0;
+  double mgEwmaP = 0;
+  vector<double> mgSMA3;
+  vector<double> mgStatFV;
+  vector<double> mgStatBid;
+  vector<double> mgStatAsk;
+  vector<double> mgStatTop;
+  double mgStdevFV = 0;
+  double mgStdevFVMean = 0;
+  double mgStdevBid = 0;
+  double mgStdevBidMean = 0;
+  double mgStdevAsk = 0;
+  double mgStdevAskMean = 0;
+  double mgStdevTop = 0;
+  double mgStdevTopMean = 0;
+  double mgTargetPos = 0;
   class MG {
     public:
       static void main(Local<Object> exports) {
