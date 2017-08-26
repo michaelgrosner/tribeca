@@ -57,6 +57,7 @@ using namespace dec;
 #include "og.h"
 #include "mg.h"
 #include "pg.h"
+#include "qe.h"
 #include "gw.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,8 +70,9 @@ using namespace dec;
 ;;;;;;OG::main(exports);;        ;;;;;;;
 ;;;;;;MG::main(exports);;    ;;    ;;;;;
 ;;;;;;PG::main(exports);;    ;;;;    ;;;
-;;;;;;GW::main(exports);;    ;;;;    ;;;
-;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;    ;;;
+;;;;;;QE::main(exports);;    ;;;;    ;;;
+;;;;;;GW::main(exports);;;;;;;;;;    ;;;
+;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
