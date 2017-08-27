@@ -6,7 +6,7 @@ const bindings = ((K) => { try {
   return require('./lib/'+K.join('.'));
 } catch (e) {
   if (process.version.substring(1).split('.').map((n) => parseInt(n))[0] < 8)
-    throw new Error('K requires Node.js v7.0.0 or greater.');
+    throw new Error('K requires Node.js v8.0.0 or greater.');
   else throw new Error(e);
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
 bindings.uiLoop(noop);
