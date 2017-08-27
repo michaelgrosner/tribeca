@@ -215,7 +215,6 @@ namespace K {
           } else ++it;
       };
       static void fairV() {
-        // if (mGWmktFilter.is_null() or mGWmktFilter["/bids/0"_json_pointer].is_null() or mGWmktFilter["/asks/0"_json_pointer].is_null()) return;
         if (empty()) return;
         double mgFairValue_ = mgFairValue;
         mgFairValue = FN::roundNearest(

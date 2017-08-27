@@ -31,6 +31,7 @@ new QuoteSender.QuoteSender(
     bindings.pgTargetBasePos,
     bindings.pgSideAPR,
     bindings.pgSafety,
+    bindings.qeQuote,
     bindings.evOn,
     bindings.evUp
   ),

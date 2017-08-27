@@ -1,7 +1,6 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
 import moment = require('moment');
-import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 
 class QuoteInput {
   constructor(
@@ -52,8 +51,6 @@ export class QuotingEngine {
         this._evUp('Quote');
     }
 
-    private _registry: QuotingStyleRegistry.QuotingStyleRegistry = null;
-
     constructor(
       private _fvEngine,
       private _mgFilter,
@@ -66,11 +63,10 @@ export class QuotingEngine {
       private _pgTargetBasePos,
       private _pgSideAPR,
       private _safeties,
+      private _qeQuote,
       private _evOn,
       private _evUp
     ) {
-      this._registry = new QuotingStyleRegistry.QuotingStyleRegistry();
-
       this._evOn('EWMAProtectionCalculator', this.recalcQuote);
       this._evOn('FilteredMarket', this.recalcQuote);
       this._evOn('QuotingParameters', this.recalcQuote);
@@ -105,7 +101,7 @@ export class QuotingEngine {
         if (params.aggressivePositionRebalancing != Models.APR.Off && params.sellSizeMax)
           sellSize = Math.max(sellSize, totalBasePosition - targetBasePosition);
 
-        const unrounded = this._registry.GenerateQuote(new QuoteInput(filteredMkt, fv, widthPing, buySize, sellSize, params.mode, this._minTick));
+        const unrounded = this._qeQuote(widthPing, buySize, sellSize);
         if (unrounded === null) return;
         const _unroundedBidSz = unrounded.bidSz;
         const _unroundedAskSz = unrounded.askSz;
