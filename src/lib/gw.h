@@ -10,6 +10,7 @@ namespace K {
   class GW {
     public:
       static void main(Local<Object> exports) {
+        evExit = happyEnding;
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
           if (uv_timer_start(&gwPos_, [](uv_timer_t *handle) {
@@ -172,6 +173,11 @@ namespace K {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
         args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange));
+      };
+      static void happyEnding(int code) {
+        cout << FN::uiT() << "Attempting to cancel all open orders, please wait.." << endl;
+        gW->cancelAll();
+        EV::end(code, 2100);
       };
   };
 }

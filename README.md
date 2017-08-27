@@ -276,6 +276,10 @@ To unlock all features currently nothing has to be done, but maybe, soOn, a paym
 
 You can always choose to not support further development of the bot by ctubio, just keep running some old commit and do not upgrade.
 
+The current payment is to support further development by ctubio to fix all bugs on the market you paying against (an alternative [Votes](#votes) system).
+
+To provide exclusivity to proefficient traders, once the bot is bug-free, the payment required may be increased x3.
+
 ### Donations
 
 nope, this project doesn't have maintenance costs. but you can donate to your favorite developer today! (or tomorrow!)
