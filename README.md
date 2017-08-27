@@ -312,7 +312,7 @@ What exchange you don't want to be deleted from the bot?
 
 ### like yesterday, since 0day and ∞
 
-[![bcn](https://user-images.githubusercontent.com/1634027/29495722-1d924018-85c5-11e7-8d61-d83f5716ae9e.jpg)](https://en.wikipedia.org/wiki/2017_Barcelona_attack#/media/File:Barcelona_La_Rambla_-_2011-04-23_05_-_JTCurses.jpg)
+![bcn](https://user-images.githubusercontent.com/1634027/29495722-1d924018-85c5-11e7-8d61-d83f5716ae9e.jpg)
 
 ### every new day we sing:
 
