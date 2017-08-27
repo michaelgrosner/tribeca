@@ -6,6 +6,7 @@
 #include <thread>
 #include <chrono>
 #include <locale>
+#include <time.h>
 #include <math.h>
 #include <iomanip>
 #include <algorithm>
