@@ -17,34 +17,14 @@ import Models = require("../share/models");
 import QuoteSender = require("./quote-sender");
 import QuotingEngine = require("./quoting-engine");
 
-let happyEnding = () => { console.info(new Date().toISOString().slice(11, -1), 'main', 'Error', 'THE END IS NEVER '.repeat(21)+'THE END'); };
-
-const processExit = () => {
-  happyEnding();
-  setTimeout(process.exit, 2000);
-};
-
 process.on("uncaughtException", err => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err);
-  processExit();
+  exit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p);
-  processExit();
-});
-
-process.on("SIGINT", () => {
-  process.stdout.write("\n"+new Date().toISOString().slice(11, -1)+' main Excellent decision! ');
-  request({url: 'https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]',json: true,timeout:3000}, (err, resp, body) => {
-    if (!err && resp.statusCode === 200) process.stdout.write(body.value.joke);
-    process.stdout.write("\n");
-    processExit();
-  });
-});
-
-process.on("exit", (code) => {
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Exit code', code);
+  exit();
 });
 
 new QuoteSender.QuoteSender(
@@ -73,11 +53,6 @@ new QuoteSender.QuoteSender(
   bindings.uiSend,
   bindings.evOn
 );
-
-happyEnding = () => {
-  bindings.cancelOpenOrders();
-  console.info(new Date().toISOString().slice(11, -1), 'main', 'Attempting to cancel all open orders, please wait..');
-};
 
 let highTime = process.hrtime();
 setInterval(() => {
