@@ -314,7 +314,7 @@ namespace K {
       };
       static Local<Array> v8ogO(Isolate* isolate, bool all) {
         Local<Array> k = Array::New(isolate);
-        int i;
+        int i = 0;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (!all and mORS::Working != (mORS)it->second["orderStatus"].get<int>()) continue;
           k->Set(i++, v8ogO_(it->second));

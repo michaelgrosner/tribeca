@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <execinfo.h>
+#include <signal.h>
 
 #include <curl/curl.h>
 #include <openssl/hmac.h>
