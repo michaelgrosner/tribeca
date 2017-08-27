@@ -17,14 +17,15 @@ import Models = require("../share/models");
 import QuoteSender = require("./quote-sender");
 import QuotingEngine = require("./quoting-engine");
 
+
 process.on("uncaughtException", err => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err);
-  exit();
+  process.exit();
 });
 
 process.on("unhandledRejection", (reason, p) => {
   console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p);
-  exit();
+  process.exit();
 });
 
 new QuoteSender.QuoteSender(
