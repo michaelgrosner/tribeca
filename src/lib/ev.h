@@ -13,13 +13,6 @@ namespace K {
         NODE_SET_METHOD(exports, "evOn", EV::_evOn);
         NODE_SET_METHOD(exports, "evUp", EV::_evUp);
       }
-      static void debug(int sig) {
-        void *array[10];
-        size_t size = backtrace(array, 10);
-        fprintf(stderr, "Error signal %d:\n", sig);
-        backtrace_symbols_fd(array, size, STDERR_FILENO);
-        exit(1);
-      };
       static void evOn(string k, evCb cb) {
         ev.cb[k].push_back(cb);
       };
@@ -52,6 +45,15 @@ namespace K {
         }
       };
     private:
+      static void debug(int sig) {
+        void *array[10];
+        size_t size = backtrace(array, 10);
+        cerr << FN::uiT() << "Errrror signal " << sig << " "  << strsignal(sig) << endl;
+        backtrace_symbols_fd(array, size, STDERR_FILENO);
+        cerr << endl << FN::uiT() << "Please, copy and paste this error into a github issue."
+             << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl;
+        exit(1);
+      };
       static void _evOn(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
         HandleScope scope(isolate);
