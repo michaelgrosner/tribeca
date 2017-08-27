@@ -1,4 +1,4 @@
-FROM node:7
+FROM node:8-stretch
 RUN apt-get update
 
 RUN apt-get install -y git sudo

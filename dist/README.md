@@ -20,7 +20,7 @@ To run K.js under winy (or if you love Docker), make use of the [Dockerfile](htt
 ```
  $ cd path/to/Dockerfile
  $ docker build --no-cache -t kjs .
- $ docker run --name Kjs -d kjs
+ $ docker run -p 3000:3000 --name Kjs -d kjs
 ```
 
 If you run `docker ps`, you should see K.js container running.
