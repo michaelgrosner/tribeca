@@ -66,7 +66,7 @@ namespace K {
         end(code, 0);
       };
       static void out(int sig) {
-        cout << endl << FN::uiT() << "Excelent decision!";
+        cout << endl << FN::uiT() << "Excellent decision!";
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         if (k["/value/joke"_json_pointer].is_string()) cout << " " << k["/value/joke"_json_pointer].get<string>() << endl;
         evExit(0);
