@@ -6,7 +6,7 @@ import Depth = require("./depth");
 class NullQuoteGenerator {
   Mode = null;
 
-  GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
+  GenerateQuote = (input): StyleHelpers.GeneratedQuote => {
     return null;
   };
 }
@@ -31,7 +31,7 @@ export class QuotingStyleRegistry {
     ].sort((a,b) => a.Mode > b.Mode ? 1 : (a.Mode < b.Mode ? -1 : 0));
   }
 
-  public GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
+  public GenerateQuote = (input): StyleHelpers.GeneratedQuote => {
     return (this._mapQuoteGenerators[input.mode] || this._nullQuoteGenerator).GenerateQuote(input);
   };
 }

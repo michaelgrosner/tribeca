@@ -4,7 +4,7 @@ import Models = require("../../share/models");
 export class DepthQuoteStyle {
     Mode = Models.QuotingMode.Depth;
 
-    GenerateQuote = (input: StyleHelpers.QuoteInput) : StyleHelpers.GeneratedQuote => {
+    GenerateQuote = (input) : StyleHelpers.GeneratedQuote => {
         const depth = input.widthPing;
 
         let bidPx = input.market.bids[0].price;
