@@ -2,7 +2,18 @@ import Models = require("../share/models");
 import Utils = require("./utils");
 import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
-import {QuoteInput} from "./quoting-styles/helpers";
+
+class QuoteInput {
+  constructor(
+    public market: Models.Market,
+    public fvPrice: number,
+    public widthPing: number,
+    public buySize: number,
+    public sellSize: number,
+    public mode: Models.QuotingMode,
+    public minTickIncrement: number
+  ) {}
+}
 
 const quoteChanged = (o: Models.Quote, n: Models.Quote, tick: number) : boolean => {
    if ((!o && n) || (o && !n)) return true;

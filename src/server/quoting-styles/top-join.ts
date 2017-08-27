@@ -4,7 +4,7 @@ import Models = require("../../share/models");
 export class TopOfTheMarketQuoteStyle {
   Mode = Models.QuotingMode.Top;
 
-  GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
+  GenerateQuote = (input): StyleHelpers.GeneratedQuote => {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
     if (input.mode !== Models.QuotingMode.Join && genQt.bidSz > .2)
@@ -29,7 +29,7 @@ export class TopOfTheMarketQuoteStyle {
 export class InverseTopOfTheMarketQuoteStyle {
   Mode = Models.QuotingMode.InverseTop;
 
-  GenerateQuote = (input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote => {
+  GenerateQuote = (input): StyleHelpers.GeneratedQuote => {
     var genQt = StyleHelpers.getQuoteAtTopOfMarket(input);
 
     var mktWidth = Math.abs(genQt.askPx - genQt.bidPx);
