@@ -187,7 +187,7 @@ gdax:
 
 server: node_modules/.bin/tsc src/server src/share app
 	@echo Building server files..
-	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/server/*/*.ts src/share/*.ts
+	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/share/*.ts
 	@echo DONE
 
 client: node_modules/.bin/tsc src/client src/share app
