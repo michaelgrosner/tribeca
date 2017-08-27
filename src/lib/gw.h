@@ -12,9 +12,7 @@ namespace K {
       static void main(Local<Object> exports) {
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwPos_)) { cout << FN::uiT() << "Errrror: GW gwPos_ init timer failed." << endl; exit(1); }
-          gwPos_.data = gw;
           if (uv_timer_start(&gwPos_, [](uv_timer_t *handle) {
-            Gw* gw = (Gw*) handle->data;
             gw->pos();
           }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         }).detach();

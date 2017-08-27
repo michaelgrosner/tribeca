@@ -18,7 +18,6 @@ namespace K {
         load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &pgStats_)) { cout << FN::uiT() << "Errrror: GW pgStats_ init timer failed." << endl; exit(1); }
-          pgStats_.data = NULL;
           if (uv_timer_start(&pgStats_, [](uv_timer_t *handle) {
             if (mgFairValue) {
               MG::calc();
