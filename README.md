@@ -274,9 +274,9 @@ The bot has all features unlocked, but to support further development by ctubio,
 
 To unlock all features currently nothing has to be done, but maybe, soOn, a payment of 0.12100000 BTC will be required.
 
-You can always choose to not support further development of the bot by ctubio, just keep running some old commit and do not upgrade.
+You can always choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
 
-The current payment is to support further development by ctubio to fix all bugs on the market you paying against (an alternative [Votes](#votes) system).
+The current payment is to support further development by ctubio to fix all bugs on the market you are paying against (an alternative [Votes](#votes) system).
 
 To provide exclusivity to proefficient traders, once the bot is bug-free, the payment required may be increased x3.
 
