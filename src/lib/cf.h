@@ -131,26 +131,12 @@ namespace K {
       };
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
-          gw->symbol = string(mCurrency[gw->base]).append("-").append(mCurrency[gw->quote]);
-          gw->target = cfString("CoinbaseOrderDestination");
-          gw->apikey = cfString("CoinbaseApiKey");
-          gw->secret = cfString("CoinbaseSecret");
-          gw->pass = cfString("CoinbasePassphrase");
-          gw->http = cfString("CoinbaseRestUrl");
-          gw->ws = cfString("CoinbaseWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
           if (k.find("quote_increment") != k.end()) {
             gw->minTick = stod(k["quote_increment"].get<string>());
             gw->minSize = stod(k["base_min_size"].get<string>());
           }
         } else if (e == mExchange::HitBtc) {
-          gw->symbol = string(mCurrency[gw->base]).append(mCurrency[gw->quote]);
-          gw->target = cfString("HitBtcOrderDestination");
-          gw->apikey = cfString("HitBtcApiKey");
-          gw->secret = cfString("HitBtcSecret");
-          gw->http = cfString("HitBtcPullUrl");
-          gw->ws = cfString("HitBtcOrderEntryUrl");
-          gw->wS = cfString("HitBtcMarketDataUrl");
           json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
           if (k.find("symbols") != k.end())
             for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
@@ -160,12 +146,6 @@ namespace K {
                 break;
               }
         } else if (e == mExchange::Bitfinex) {
-          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append(mCurrency[gw->quote]));
-          gw->target = cfString("BitfinexOrderDestination");
-          gw->apikey = cfString("BitfinexKey");
-          gw->secret = cfString("BitfinexSecret");
-          gw->http = cfString("BitfinexHttpUrl");
-          gw->ws = cfString("BitfinexWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
             stringstream price_;
@@ -178,34 +158,15 @@ namespace K {
             gw->minSize = 0.01;
           }
         } else if (e == mExchange::OkCoin) {
-          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
-          gw->target = cfString("OkCoinOrderDestination");
-          gw->apikey = cfString("OkCoinApiKey");
-          gw->secret = cfString("OkCoinSecretKey");
-          gw->http = cfString("OkCoinHttpUrl");
-          gw->ws = cfString("OkCoinWsUrl");
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
         } else if (e == mExchange::Korbit) {
-          gw->symbol = FN::S2l(string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]));
-          gw->target = cfString("KorbitOrderDestination");
-          gw->apikey = cfString("KorbitApiKey");
-          gw->secret = cfString("KorbitSecretKey");
-          gw->user = cfString("KorbitUsername");
-          gw->pass = cfString("KorbitPassword");
-          gw->http = cfString("KorbitHttpUrl");
           json k = FN::wJet(string(gw->http).append("/constants"));
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
             gw->minTick = k[gw->symbol.substr(0,3).append("TickSize")];
             gw->minSize = 0.015;
           }
         } else if (e == mExchange::Poloniex) {
-          gw->symbol = string(mCurrency[gw->quote]).append("_").append(mCurrency[gw->base]);
-          gw->target = cfString("PoloniexOrderDestination");
-          gw->apikey = cfString("PoloniexApiKey");
-          gw->secret = cfString("PoloniexSecretKey");
-          gw->http = cfString("PoloniexHttpUrl");
-          gw->ws = cfString("PoloniexWebsocketUrl");
           json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
           if (k.find(gw->symbol) != k.end()) {
             istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
