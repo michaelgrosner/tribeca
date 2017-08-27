@@ -174,7 +174,6 @@ namespace K {
             gw->minSize = 0.01;
           }
         } else if (e == mExchange::Null) {
-          gw->symbol = string(mCurrency[gw->base]).append("_").append(mCurrency[gw->quote]);
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
