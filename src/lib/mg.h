@@ -229,7 +229,7 @@ namespace K {
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
       static void cleanStdev() {
-        int periods = qpRepo["quotingStdevProtectionPeriods"].get<int>();
+        size_t periods = (size_t)qpRepo["quotingStdevProtectionPeriods"].get<int>();
         if (mgStatFV.size()>periods) mgStatFV.erase(mgStatFV.begin(), mgStatFV.end()-periods);
         if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
         if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);

@@ -7,10 +7,20 @@ namespace K {
   class EV {
     public:
       static void main(Local<Object> exports) {
+        signal(SIGSEGV, debug);
+        signal(SIGABRT, debug);
         Ev *ev = new Ev;
         NODE_SET_METHOD(exports, "evOn", EV::_evOn);
         NODE_SET_METHOD(exports, "evUp", EV::_evUp);
       }
+      static void debug(int sig) {
+        void *array[10];
+        size_t size;
+        size = backtrace(array, 10);
+        fprintf(stderr, "Error: signal %d:\n", sig);
+        backtrace_symbols_fd(array, size, STDERR_FILENO);
+        exit(1);
+      };
       static void evOn(string k, evCb cb) {
         ev.cb[k].push_back(cb);
       };

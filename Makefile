@@ -10,7 +10,7 @@ G_ARG   := -std=c++11 -DUSE_LIBUV -O3 -rdynamic -shared -fPIC -Ibuild/node-$(NOD
   build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp          \
   build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp    \
   build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp         \
-  -Lbuild/libpng-$(V_PNG)/lib -Ldist/lib -Wl,-rpath,'$$ORIGIN'                                   \
+  -Lbuild/libpng-$(V_PNG)/lib -Ldist/lib -Wl,-rpath,'$$ORIGIN' -Wextra                           \
 src/lib/K.cc -lsqlite3 -lpthread -lssl -lcrypto -lz -lK -lpng16 -lquickfix -lcurl
 
 all: K
