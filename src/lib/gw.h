@@ -175,7 +175,7 @@ namespace K {
         args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange));
       };
       static void happyEnding(int code) {
-        cout << FN::uiT() << "GW" << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
         EV::end(code, 2100);
       };
