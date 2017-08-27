@@ -1,3 +1,6 @@
+process.on("uncaughtException", err => { console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err); process.exit(); });
+process.on("unhandledRejection", (reason, p) => { console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p); process.exit(); });
+
 const packageConfig = require("./../../package.json");
 
 const noop = () => {};
@@ -11,22 +14,9 @@ const bindings = ((K) => { try {
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
 bindings.uiLoop(noop);
 
-import request = require('request');
-
 import Models = require("../share/models");
 import QuoteSender = require("./quote-sender");
 import QuotingEngine = require("./quoting-engine");
-
-
-process.on("uncaughtException", err => {
-  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled exception!', err);
-  process.exit();
-});
-
-process.on("unhandledRejection", (reason, p) => {
-  console.error(new Date().toISOString().slice(11, -1), 'main', 'Unhandled rejection!', reason, p);
-  process.exit();
-});
 
 new QuoteSender.QuoteSender(
   new QuotingEngine.QuotingEngine(
