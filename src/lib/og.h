@@ -13,7 +13,6 @@ namespace K {
         load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwCancelAll_)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ init timer failed." << endl; exit(1); }
-          gwCancelAll_.data = NULL;
           if (uv_timer_start(&gwCancelAll_, [](uv_timer_t *handle) {
             if (qpRepo["cancelOrdersAuto"].get<bool>())
               gW->cancelAll();
