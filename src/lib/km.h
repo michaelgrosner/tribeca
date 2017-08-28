@@ -24,6 +24,7 @@ namespace K {
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth };
+  enum class mQuoteStatus: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
   enum class mAPR: unsigned int { Off, Size, SizeWidth };

@@ -45,10 +45,6 @@ namespace K {
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
         UI::uiSnap(uiTXT::FairValue, &onSnapFair);
         UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
-        NODE_SET_METHOD(exports, "mgFilter", MG::_mgFilter);
-        NODE_SET_METHOD(exports, "mgFairV", MG::_mgFairV);
-        NODE_SET_METHOD(exports, "mgEwmaProtection", MG::_mgEwmaProtection);
-        NODE_SET_METHOD(exports, "mgStdevProtection", MG::_mgStdevProtection);
       };
       static void calc() {
         if (++mgT == 60) {
@@ -57,6 +53,12 @@ namespace K {
           ewmaUp();
         }
         stdevPUp();
+      };
+      static bool empty() {
+        return (mGWmktFilter.is_null()
+          or mGWmktFilter["bids"].is_null()
+          or mGWmktFilter["asks"].is_null()
+        );
       };
     private:
       static void load() {
@@ -190,12 +192,6 @@ namespace K {
         calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeriods"].get<int>());
         EV::evUp("EWMAProtectionCalculator");
       };
-      static bool empty() {
-        return (mGWmktFilter.is_null()
-          or mGWmktFilter["bids"].is_null()
-          or mGWmktFilter["asks"].is_null()
-        );
-      };
       static void filter() {
         mGWmktFilter = mGWmkt;
         if (empty()) return;
@@ -281,32 +277,6 @@ namespace K {
         else if (newTargetPosition < -1) newTargetPosition = -1;
         mgTargetPos = newTargetPosition;
       };
-      static void _mgEwmaProtection(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgEwmaP));
-      };
-      static void _mgStdevProtection(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("fv"), Number::New(isolate, mgStdevFV));
-        o->Set(FN::v8S("fvMean"), Number::New(isolate, mgStdevFVMean));
-        o->Set(FN::v8S("tops"), Number::New(isolate, mgStdevTop));
-        o->Set(FN::v8S("topsMean"), Number::New(isolate, mgStdevTopMean));
-        o->Set(FN::v8S("bid"), Number::New(isolate, mgStdevBid));
-        o->Set(FN::v8S("bidMean"), Number::New(isolate, mgStdevBidMean));
-        o->Set(FN::v8S("ask"), Number::New(isolate, mgStdevAsk));
-        o->Set(FN::v8S("askMean"), Number::New(isolate, mgStdevAskMean));
-        args.GetReturnValue().Set(o);
-      };
-      static void _mgFilter(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, mGWmktFilter.dump())).ToLocalChecked());
-      };
-      static void _mgFairV(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), mgFairValue));
-      };
-
   };
 }
 

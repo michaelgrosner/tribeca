@@ -33,7 +33,6 @@ namespace K {
         NODE_SET_METHOD(exports, "allOrdersDelete", OG::_allOrdersDelete);
         NODE_SET_METHOD(exports, "sendOrder", OG::_sendOrder);
         NODE_SET_METHOD(exports, "cancelOrder", OG::_cancelOrder);
-        NODE_SET_METHOD(exports, "cancelOpenOrders", OG::_cancelOpenOrders);
       };
       static json updateOrderState(json k) {
         json o;
@@ -351,9 +350,6 @@ namespace K {
       };
       static void _allOrders(const FunctionCallbackInfo<Value>& args) {
         args.GetReturnValue().Set(v8ogO(args.GetIsolate(), true));
-      };
-      static void _cancelOpenOrders(const FunctionCallbackInfo<Value>& args) {
-        cancelOpenOrders();
       };
       static void _sendOrder(const FunctionCallbackInfo<Value>& args) {
         sendOrder(

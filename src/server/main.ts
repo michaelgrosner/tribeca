@@ -16,25 +16,11 @@ bindings.uiLoop(noop);
 
 import Models = require("../share/models");
 import QuoteSender = require("./quote-sender");
-import QuotingEngine = require("./quoting-engine");
 
 new QuoteSender.QuoteSender(
-  new QuotingEngine.QuotingEngine(
-    bindings.mgFairV,
-    bindings.mgFilter,
-    bindings.qpRepo,
-    bindings.pgRepo,
-    bindings.gwMinTick(),
-    bindings.gwMinSize(),
-    bindings.mgEwmaProtection,
-    bindings.mgStdevProtection,
-    bindings.pgTargetBasePos,
-    bindings.pgSideAPR,
-    bindings.pgSafety,
-    bindings.qeQuote,
-    bindings.evOn,
-    bindings.evUp
-  ),
+  bindings.latestQuote,
+  bindings.latestQuoteBidStatus,
+  bindings.latestQuoteAskStatus,
   bindings.allOrders,
   bindings.allOrdersDelete,
   bindings.cancelOrder,

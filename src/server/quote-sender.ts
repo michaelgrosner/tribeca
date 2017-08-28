@@ -1,6 +1,5 @@
 import Models = require("../share/models");
 import Utils = require("./utils");
-import QuotingEngine = require("./quoting-engine");
 import moment = require("moment");
 
 export class QuoteSender {
@@ -10,7 +9,9 @@ export class QuoteSender {
   private _brokerStatus = Models.ConnectivityStatus.Disconnected;
   private _brokerState: boolean = false;
   constructor(
-    private _quotingEngine: QuotingEngine.QuotingEngine,
+    private _latestQuote,
+    private _latestQuoteBidStatus,
+    private _latestQuoteAskStatus,
     private _allOrders,
     private _allOrdersDelete,
     private _cancelOrder,
@@ -37,7 +38,7 @@ export class QuoteSender {
       ? (a, b) => a.price >= b
       : (a, b) => a.price <= b;
 
-    let qs = this._quotingEngine.latestQuote[oppSide === Models.Side.Bid ? 'bid' : 'ask'];
+    let qs = this._latestQuote()[oppSide === Models.Side.Bid ? 'bid' : 'ask'];
     if (qs && doesQuoteCross(qs.price, px)) {
       console.warn('quotesender', 'crossing quote detected! gen quote at', px, 'would crossed with', Models.Side[oppSide], 'quote at', qs);
       return true;
@@ -46,10 +47,10 @@ export class QuoteSender {
   };
 
   private sendQuote = (): void => {
-    var quote = this._quotingEngine.latestQuote;
+    var quote = this._latestQuote();
 
-    let askStatus = this._quotingEngine.latestQuoteAskStatus;
-    let bidStatus = this._quotingEngine.latestQuoteBidStatus;
+    let askStatus = this._latestQuoteAskStatus();
+    let bidStatus = this._latestQuoteBidStatus();
 
     if (quote !== null && this._brokerStatus === Models.ConnectivityStatus.Connected) {
       if (this._brokerState) {
