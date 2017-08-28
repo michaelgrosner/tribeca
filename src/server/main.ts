@@ -14,7 +14,6 @@ const bindings = ((K) => { try {
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
 bindings.uiLoop(noop);
 
-import Models = require("../share/models");
 import QuoteSender = require("./quote-sender");
 
 new QuoteSender.QuoteSender(
