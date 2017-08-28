@@ -75,10 +75,10 @@ namespace K {
           {"ask", quotesAreSame(quote["askPx"].get<double>(), quote["askSz"].get<double>(), quote["isAskPong"].get<bool>(), mSide::Ask)}
         };
         if ((qeQuote.is_null() and quote.is_null()) or (
-          abs((!qeQuote["bid"].is_null() ? qeQuote["/bid/price"_json_pointer].get<double>() : 0) - (!quote["bid"].is_null() ? quote["/bid/price"_json_pointer].get<double>() : 0)) < gw->minTick
-          and abs((!qeQuote["bid"].is_null() ? qeQuote["/bid/size"_json_pointer].get<double>() : 0) - (!quote["bid"].is_null() ? quote["/bid/size"_json_pointer].get<double>() : 0)) < gw->minSize
-          and abs((!qeQuote["ask"].is_null() ? qeQuote["/ask/price"_json_pointer].get<double>() : 0) - (!quote["ask"].is_null() ? quote["/ask/price"_json_pointer].get<double>() : 0)) < gw->minTick
-          and abs((!qeQuote["ask"].is_null() ? qeQuote["/ask/size"_json_pointer].get<double>() : 0) - (!quote["ask"].is_null() ? quote["/ask/size"_json_pointer].get<double>() : 0)) < gw->minSize
+          abs((qeQuote["bid"].is_null() ? 0 : qeQuote["/bid/price"_json_pointer].get<double>()) - (quote["bid"].is_null() ? 0 : quote["/bid/price"_json_pointer].get<double>())) < gw->minTick
+          and abs((qeQuote["ask"].is_null() ? 0 : qeQuote["/ask/price"_json_pointer].get<double>()) - (quote["ask"].is_null() ? 0 : quote["/ask/price"_json_pointer].get<double>())) < gw->minTick
+          and abs((qeQuote["bid"].is_null() ? 0 : qeQuote["/bid/size"_json_pointer].get<double>()) - (quote["bid"].is_null() ? 0 : quote["/bid/size"_json_pointer].get<double>())) < gw->minSize
+          and abs((qeQuote["ask"].is_null() ? 0 : qeQuote["/ask/size"_json_pointer].get<double>()) - (quote["ask"].is_null() ? 0 : quote["/ask/size"_json_pointer].get<double>())) < gw->minSize
         )) return;
         qeQuote = quote;
         EV::evUp("Quote");
@@ -178,22 +178,23 @@ namespace K {
                 ? ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
                   ? mgStdevFVMean : (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTopsAPROff)
                     ? mgStdevTopMean : mgStdevAskMean )
-                : mgFairValue) + ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
+                : mgFairValue) + (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
                   ? mgStdevFV : (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTopsAPROff)
-                    ? mgStdevTop : mgStdevAsk ),
+                    ? mgStdevTop : mgStdevAsk )),
               rawQuote["askPx"].get<double>()
             );
-          if (rawQuote["bidPx"].get<double>() and ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTop or pgSideAPR != "Bid"))
+          if (rawQuote["bidPx"].get<double>() and ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTop or pgSideAPR != "Bid")) {
             rawQuote["bidPx"] = fmin(
               (qpRepo["quotingStdevBollingerBands"].get<bool>()
                 ? ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
                   ? mgStdevFVMean : (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTopsAPROff)
                     ? mgStdevTopMean : mgStdevBidMean )
-                : mgFairValue) - ((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
+                : mgFairValue) - (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFV or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnFVAPROff)
                   ? mgStdevFV : (((mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTops or (mSTDEV)qpRepo["quotingStdevProtection"].get<int>() == mSTDEV::OnTopsAPROff)
-                    ? mgStdevTop : mgStdevBid ),
+                    ? mgStdevTop : mgStdevBid )),
               rawQuote["bidPx"].get<double>()
             );
+          }
         }
         if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::PingPong or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
           if (rawQuote["askSz"].get<double>() and pgSafety["buyPing"].get<double>() and (
