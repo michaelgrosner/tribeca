@@ -65,7 +65,7 @@ namespace K {
         json k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
-            if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()<FN::T()) continue;
+            if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+qpRepo["quotingStdevProtectionPeriods"].get<int>()*1e+3<FN::T()) continue;
             mgStatFV.push_back((*it)["fv"].get<double>());
             mgStatBid.push_back((*it)["bid"].get<double>());
             mgStatAsk.push_back((*it)["ask"].get<double>());
@@ -77,11 +77,11 @@ namespace K {
         cout << FN::uiT() << "DB loaded " << mgStatFV.size() << " STDEV Periods." << endl;
         k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
-          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["longEwmaPeriods"].get<int>()>FN::T()))
+          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["longEwmaPeriods"].get<int>()*6e+4>FN::T()))
             mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
-          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["mediumEwmaPeriods"].get<int>()>FN::T()))
+          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["mediumEwmaPeriods"].get<int>()*6e+4>FN::T()))
             mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
-          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()>FN::T()))
+          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()*6e+4>FN::T()))
             mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
         }
         cout << FN::uiT() << "DB loaded EWMA Long = " << mgEwmaL << "." << endl;
@@ -129,7 +129,7 @@ namespace K {
           {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
           {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 1000 * qpRepo["quotingStdevProtectionPeriods"].get<int>());
+        }, false, "NULL", FN::T() - 1e+3 * qpRepo["quotingStdevProtectionPeriods"].get<int>());
       };
       static void tradeUp(json k) {
         mGWmt t(
