@@ -30,8 +30,6 @@ namespace K {
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
         NODE_SET_METHOD(exports, "gwMinTick", GW::_gwMinTick);
-        NODE_SET_METHOD(exports, "gwMinSize", GW::_gwMinSize);
-        NODE_SET_METHOD(exports, "gwExchange", GW::_gwExchange);
       };
       static void gwPosUp(mGWp k) {
         EV::evUp("PositionGateway", {
@@ -158,26 +156,16 @@ namespace K {
           {"state", gwState},
           {"status", (int)gwConn}
         });
-      }
-      static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        args.GetReturnValue().Set(Number::New(isolate, gw->minTick));
-      };
-      static void _gwMinSize(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        args.GetReturnValue().Set(Number::New(isolate, gw->minSize));
-      };
-      static void _gwExchange(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        args.GetReturnValue().Set(Number::New(isolate, (double)gw->exchange));
       };
       static void happyEnding(int code) {
         cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
         EV::end(code, 2100);
+      };
+      static void _gwMinTick(const FunctionCallbackInfo<Value> &args) {
+        Isolate* isolate = args.GetIsolate();
+        HandleScope scope(isolate);
+        args.GetReturnValue().Set(Number::New(isolate, gw->minTick));
       };
   };
 }

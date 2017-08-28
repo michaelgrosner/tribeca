@@ -132,7 +132,6 @@ namespace K {
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
-        NODE_SET_METHOD(exports, "uiHand", UI::_uiHand);
         NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
         CF::external();
       };
@@ -182,9 +181,6 @@ namespace K {
       };
       static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
         _uiOn(args, uiBIT::SNAP);
-      };
-      static void _uiHand(const FunctionCallbackInfo<Value>& args) {
-        _uiOn(args, uiBIT::MSG);
       };
       static void _uiOn(const FunctionCallbackInfo<Value>& args, uiBIT k_) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();

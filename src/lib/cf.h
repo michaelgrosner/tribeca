@@ -59,8 +59,6 @@ namespace K {
           }
         }
         if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
-        NODE_SET_METHOD(exports, "cfString", CF::_cfString);
-        NODE_SET_METHOD(exports, "cfmCurrencyPair", CF::_cfmCurrencyPair);
       };
       static void external() {
         gw = Gw::E(cfExchange());
@@ -116,19 +114,6 @@ namespace K {
         exit(1);
       };
     private:
-      static void _cfString(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        args.GetReturnValue().Set(FN::v8S(cfString(FN::S8v(args[0]->ToString()))));
-      };
-      static void _cfmCurrencyPair(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        o->Set(FN::v8S("base"), Number::New(isolate, cfBase()));
-        o->Set(FN::v8S("quote"), Number::New(isolate, cfQuote()));
-        args.GetReturnValue().Set(o);
-      };
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
