@@ -11,8 +11,6 @@ namespace K {
         dbFpath = string("/data/db/K.").append(to_string((int)CF::cfExchange())).append(".").append(to_string(CF::cfBase())).append(".").append(to_string(CF::cfQuote())).append(".db");
         if (sqlite3_open(dbFpath, &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
         cout << FN::uiT() << "DB " << dbFpath << " loaded OK." << endl;
-        NODE_SET_METHOD(exports, "dbLoad", DB::_load);
-        NODE_SET_METHOD(exports, "dbInsert", DB::_insert);
       };
       static json load(uiTXT k) {
         return load(string(1, (char)k));
@@ -51,20 +49,6 @@ namespace K {
         sqlite3_free(zErrMsg);
       };
     private:
-      static void _load(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        json k = load(FN::S8v(args[0]->ToString()));
-        JSON Json;
-        MaybeLocal<Value> array = Json.Parse(isolate->GetCurrentContext(), FN::v8S(k.dump().data()));
-        args.GetReturnValue().Set(array.IsEmpty() ? (Local<Value>)Array::New(isolate) : array.ToLocalChecked());
-      };
-      static void _insert(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        JSON Json;
-        insert((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(args[1]->IsUndefined() ? "{}" : FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())), args[2]->IsUndefined() ? true : args[2]->BooleanValue(), args[3]->IsUndefined() ? "NULL" : FN::S8v(args[3]->ToString()), args[4]->IsUndefined() ? 0 : args[4]->NumberValue());
-      };
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) j->append(argv[i]).append(",");
