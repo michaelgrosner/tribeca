@@ -67,6 +67,7 @@ namespace K {
     private:
       static void load() {
         tradesMemory = DB::load(uiTXT::Trades);
+        cout << FN::uiT() << "DB loaded " << tradesMemory.size() << " historical Trades." << endl;
       };
       static json onSnapTrades(json z) {
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
