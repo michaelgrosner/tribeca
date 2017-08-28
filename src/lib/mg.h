@@ -62,19 +62,7 @@ namespace K {
       };
     private:
       static void load() {
-        json k = DB::load(uiTXT::EWMAChart);
-        if (k.size()) {
-          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["longEwmaPeriods"].get<int>()>FN::T()))
-            mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
-          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["mediumEwmaPeriods"].get<int>()>FN::T()))
-            mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
-          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()>FN::T()))
-            mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
-        }
-        cout << FN::uiT() << "DB loaded EWMA Long = " << mgEwmaL << "." << endl;
-        cout << FN::uiT() << "DB loaded EWMA Medium = " << mgEwmaM << "." << endl;
-        cout << FN::uiT() << "DB loaded EWMA Short = " << mgEwmaS << "." << endl;
-        k = DB::load(uiTXT::MarketData);
+        json k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
             if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()<FN::T()) continue;
@@ -87,6 +75,18 @@ namespace K {
           calcStdev();
         }
         cout << FN::uiT() << "DB loaded " << mgStatFV.size() << " STDEV Periods." << endl;
+        k = DB::load(uiTXT::EWMAChart);
+        if (k.size()) {
+          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["longEwmaPeriods"].get<int>()>FN::T()))
+            mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
+          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["mediumEwmaPeriods"].get<int>()>FN::T()))
+            mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
+          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()>FN::T()))
+            mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
+        }
+        cout << FN::uiT() << "DB loaded EWMA Long = " << mgEwmaL << "." << endl;
+        cout << FN::uiT() << "DB loaded EWMA Medium = " << mgEwmaM << "." << endl;
+        cout << FN::uiT() << "DB loaded EWMA Short = " << mgEwmaS << "." << endl;
       };
       static json onSnapTrade(json z) {
         json k;
