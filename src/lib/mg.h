@@ -71,6 +71,9 @@ namespace K {
           if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+qpRepo["shortEwmaPeriods"].get<int>()>FN::T()))
             mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
         }
+        cout << FN::uiT() << "DB loaded EWMA Long = " << mgEwmaL << "." << endl;
+        cout << FN::uiT() << "DB loaded EWMA Medium = " << mgEwmaM << "." << endl;
+        cout << FN::uiT() << "DB loaded EWMA Short = " << mgEwmaS << "." << endl;
         k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
@@ -83,6 +86,7 @@ namespace K {
           }
           calcStdev();
         }
+        cout << FN::uiT() << "DB loaded " << mgStatFV.size() << " STDEV Periods." << endl;
       };
       static json onSnapTrade(json z) {
         json k;

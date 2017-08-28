@@ -84,6 +84,7 @@ namespace K {
           for (json::iterator it = qp["/0"_json_pointer].begin(); it != qp["/0"_json_pointer].end(); ++it)
             qpRepo[it.key()] = it.value();
         clean();
+        cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp.size() ? "OK" : "OR reading defaults instead") << "." << endl;
       };
       static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();

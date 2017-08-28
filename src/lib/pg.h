@@ -61,7 +61,7 @@ namespace K {
           if (k["/0/sideAPR"_json_pointer].is_string())
             pgSideAPR = k["/0/sideAPR"_json_pointer].get<string>();
         }
-        cout << FN::uiT() << "TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << " loaded from DB." << endl;
+        cout << FN::uiT() << "DB loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };
       static json onSnapPos(json z) {
         return { pgPos };
