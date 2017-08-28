@@ -53,6 +53,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Web UI](#web-ui)
   - [Databases](#databases)
   - [Charts](#charts)
+  - [Cloud Hosting](#cloud-hosting)
 - Development
   - [Test units and Build notes](#test-units-and-build-notes)
   - [Unreleased Changelog](#unreleased-changelog)
@@ -197,6 +198,10 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
  * Amount held in open trades for sell
  * Total amount available and held at both sides in BTC currency
  * Total amount available and held at both sides in Fiat currency
+
+### Cloud Hosting
+
+If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (im user since 2008).
 
 ### Test units and Build notes
 
