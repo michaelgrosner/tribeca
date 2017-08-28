@@ -75,10 +75,10 @@ namespace K {
           {"ask", quotesAreSame(quote["askPx"].get<double>(), quote["askSz"].get<double>(), quote["isAskPong"].get<bool>(), mSide::Ask)}
         };
         if ((qeQuote.is_null() and quote.is_null()) or (
-          abs((qeQuote["/bid/price"_json_pointer].is_number() ? qeQuote["/bid/price"_json_pointer].get<double>() : 0) - (quote["/bid/price"_json_pointer].is_number() ? quote["/bid/price"_json_pointer].get<double>() : 0)) < gw->minTick
-          and abs((qeQuote["/ask/price"_json_pointer].is_number() ? qeQuote["/ask/price"_json_pointer].get<double>() : 0) - (quote["/ask/price"_json_pointer].is_number() ? quote["/ask/price"_json_pointer].get<double>() : 0)) < gw->minTick
-          and abs((qeQuote["/bid/size"_json_pointer].is_number() ? qeQuote["/bid/size"_json_pointer].get<double>() : 0) - (quote["/bid/size"_json_pointer].is_number() ? quote["/bid/size"_json_pointer].get<double>() : 0)) < gw->minSize
-          and abs((qeQuote["/ask/size"_json_pointer].is_number() ? qeQuote["/ask/size"_json_pointer].get<double>() : 0) - (quote["/ask/size"_json_pointer].is_number() ? quote["/ask/size"_json_pointer].get<double>() : 0)) < gw->minSize
+          abs((!qeQuote["bid"].is_null() ? qeQuote["/bid/price"_json_pointer].get<double>() : 0) - (!quote["bid"].is_null() ? quote["/bid/price"_json_pointer].get<double>() : 0)) < gw->minTick
+          and abs((!qeQuote["bid"].is_null() ? qeQuote["/bid/size"_json_pointer].get<double>() : 0) - (!quote["bid"].is_null() ? quote["/bid/size"_json_pointer].get<double>() : 0)) < gw->minSize
+          and abs((!qeQuote["ask"].is_null() ? qeQuote["/ask/price"_json_pointer].get<double>() : 0) - (!quote["ask"].is_null() ? quote["/ask/price"_json_pointer].get<double>() : 0)) < gw->minTick
+          and abs((!qeQuote["ask"].is_null() ? qeQuote["/ask/size"_json_pointer].get<double>() : 0) - (!quote["ask"].is_null() ? quote["/ask/size"_json_pointer].get<double>() : 0)) < gw->minSize
         )) return;
         qeQuote = quote;
         EV::evUp("Quote");
