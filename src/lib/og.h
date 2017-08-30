@@ -29,10 +29,6 @@ namespace K {
         EV::evOn("OrderUpdateGateway", [](json k) {
           updateOrderState(k);
         });
-        NODE_SET_METHOD(exports, "allOrders", OG::_allOrders);
-        NODE_SET_METHOD(exports, "allOrdersDelete", OG::_allOrdersDelete);
-        NODE_SET_METHOD(exports, "sendOrder", OG::_sendOrder);
-        NODE_SET_METHOD(exports, "cancelOrder", OG::_cancelOrder);
       };
       static json updateOrderState(json k) {
         json o;
@@ -64,6 +60,44 @@ namespace K {
           toHistory(o);
         return o;
       };
+      static void allOrdersDelete(string oI, string oE) {
+        map<string, json>::iterator it = allOrders.find(oI);
+        if (it != allOrders.end()) allOrders.erase(it);
+        if (oE != "") {
+          map<string, string>::iterator it_ = allOrdersIds.find(oE);
+          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
+        } else for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
+          if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
+      };
+      static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
+        json o = updateOrderState({
+          {"orderId", gW->clientId()},
+          {"exchange", (int)gw->exchange},
+          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
+          {"side", (int)oS},
+          {"quantity", oQ},
+          {"leavesQuantity", oQ},
+          {"type", (int)oLM},
+          {"isPong", oIP},
+          {"price", FN::roundSide(oP, gw->minTick, oS)},
+          {"timeInForce", (int)oTIF},
+          {"orderStatus", (int)mORS::New},
+          {"preferPostOnly", oPO}
+        });
+        gW->send(o["orderId"].get<string>(), (mSide)o["side"].get<int>(), o["price"].get<double>(), o["quantity"].get<double>(), (mOrderType)o["type"].get<int>(), (mTimeInForce)o["timeInForce"].get<int>(), o["preferPostOnly"].get<bool>(), o["time"].get<unsigned long>());
+      };
+      static void cancelOrder(string k) {
+        if (allOrders.find(k) == allOrders.end()) {
+          updateOrderState(k, mORS::Cancelled);
+          return;
+        }
+        if (!gW->cancelByClientId and allOrders[k]["exchangeId"].is_null()) {
+          toCancel[k] = nullptr;
+          return;
+        }
+        json o = updateOrderState(k, mORS::Working);
+        gW->cancel(o["orderId"].get<string>(), o["exchangeId"].get<string>(), (mSide)o["side"].get<int>(), o["time"].get<unsigned long>());
+      };
     private:
       static void load() {
         tradesMemory = DB::load(uiTXT::Trades);
@@ -75,7 +109,12 @@ namespace K {
         return tradesMemory;
       };
       static json onSnapOrders(json z) {
-        return ogO(false);
+        json k;
+        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+          if (mORS::Working != (mORS)it->second["orderStatus"].get<int>()) continue;
+          k.push_back(it->second);
+        }
+        return k;
       };
       static json onHandCancelOrder(json k) {
         cancelOrder(k["orderId"].get<string>());
@@ -108,44 +147,6 @@ namespace K {
           k["preferPostOnly"].get<bool>()
         );
         return {};
-      };
-      static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
-        json o = updateOrderState({
-          {"orderId", gW->clientId()},
-          {"exchange", (int)gw->exchange},
-          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
-          {"side", (int)oS},
-          {"quantity", oQ},
-          {"leavesQuantity", oQ},
-          {"type", (int)oLM},
-          {"isPong", oIP},
-          {"price", FN::roundSide(oP, gw->minTick, oS)},
-          {"timeInForce", (int)oTIF},
-          {"orderStatus", (int)mORS::New},
-          {"preferPostOnly", oPO}
-        });
-        gW->send(o["orderId"].get<string>(), (mSide)o["side"].get<int>(), o["price"].get<double>(), o["quantity"].get<double>(), (mOrderType)o["type"].get<int>(), (mTimeInForce)o["timeInForce"].get<int>(), o["preferPostOnly"].get<bool>(), o["time"].get<unsigned long>());
-      };
-      static void cancelOrder(string k) {
-        if (allOrders.find(k) == allOrders.end()) {
-          updateOrderState(k, mORS::Cancelled);
-          return;
-        }
-        if (!gW->cancelByClientId and allOrders[k]["exchangeId"].is_null()) {
-          toCancel[k] = nullptr;
-          return;
-        }
-        json o = updateOrderState(k, mORS::Working);
-        gW->cancel(o["orderId"].get<string>(), o["exchangeId"].get<string>(), (mSide)o["side"].get<int>(), o["time"].get<unsigned long>());
-      };
-      static void allOrdersDelete(string oI, string oE) {
-        map<string, json>::iterator it = allOrders.find(oI);
-        if (it != allOrders.end()) allOrders.erase(it);
-        if (oE != "") {
-          map<string, string>::iterator it_ = allOrdersIds.find(oE);
-          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
-        } else for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
-          if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
       };
       static void cancelOpenOrders() {
         if (gW->supportCancelAll)
@@ -303,71 +304,6 @@ namespace K {
           if (!k["exchangeId"].is_null()) allOrdersIds[k["exchangeId"].get<string>()] = k["orderId"].get<string>();
           allOrders[k["orderId"].get<string>()] = k;
         } else allOrdersDelete(k["orderId"].get<string>(), k["exchangeId"].is_null() ? "" : k["exchangeId"].get<string>());
-      };
-      static json ogO(bool all) {
-        json k;
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (!all and mORS::Working != (mORS)it->second["orderStatus"].get<int>()) continue;
-          k.push_back(it->second);
-        }
-        return k;
-      };
-      static Local<Array> v8ogO(Isolate* isolate, bool all) {
-        Local<Array> k = Array::New(isolate);
-        int i = 0;
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (!all and mORS::Working != (mORS)it->second["orderStatus"].get<int>()) continue;
-          k->Set(i++, v8ogO_(it->second));
-        }
-        return k;
-      };
-      static Local<Object> v8ogO_(json j) {
-        Isolate* isolate = Isolate::GetCurrent();
-        Local<Object> o = Object::New(isolate);
-        if (!j["orderId"].is_null()) o->Set(FN::v8S("orderId"), FN::v8S(j["orderId"].get<string>()));
-        if (!j["exchangeId"].is_null()) o->Set(FN::v8S("exchangeId"), FN::v8S(j["exchangeId"].get<string>()));
-        if (!j["time"].is_null()) o->Set(FN::v8S("time"), Number::New(isolate, j["time"].get<unsigned long>()));
-        if (!j["exchange"].is_null()) o->Set(FN::v8S("exchange"), Number::New(isolate, j["exchange"].get<int>()));
-        if (!j["pair"].is_null()) {
-          Local<Object> o_ = Object::New(isolate);
-          o_->Set(FN::v8S("base"), Number::New(isolate, j["/pair/base"_json_pointer].get<int>()));
-          o_->Set(FN::v8S("quote"), Number::New(isolate, j["/pair/quote"_json_pointer].get<int>()));
-          o->Set(FN::v8S("pair"), o_);
-        }
-        if (!j["side"].is_null()) o->Set(FN::v8S("side"), Number::New(isolate, j["side"].get<double>()));
-        if (!j["price"].is_null()) o->Set(FN::v8S("price"), Number::New(isolate, j["price"].get<double>()));
-        if (!j["quantity"].is_null()) o->Set(FN::v8S("quantity"), Number::New(isolate, j["quantity"].get<double>()));
-        if (!j["type"].is_null()) o->Set(FN::v8S("type"), Number::New(isolate, j["type"].get<int>()));
-        if (!j["timeInForce"].is_null()) o->Set(FN::v8S("timeInForce"), Number::New(isolate, j["timeInForce"].get<int>()));
-        if (!j["orderStatus"].is_null()) o->Set(FN::v8S("orderStatus"), Number::New(isolate, j["orderStatus"].get<int>()));
-        if (!j["lastQuantity"].is_null()) o->Set(FN::v8S("lastQuantity"), Number::New(isolate, j["lastQuantity"].get<double>()));
-        if (!j["lastPrice"].is_null()) o->Set(FN::v8S("lastPrice"), Number::New(isolate, j["lastPrice"].get<double>()));
-        if (!j["leavesQuantity"].is_null()) o->Set(FN::v8S("leavesQuantity"), Number::New(isolate, j["leavesQuantity"].get<double>()));
-        if (!j["computationalLatency"].is_null()) o->Set(FN::v8S("computationalLatency"), Number::New(isolate, j["computationalLatency"].get<unsigned long>()));
-        if (!j["liquidity"].is_null()) o->Set(FN::v8S("liquidity"), Number::New(isolate, j["liquidity"].get<int>()));
-        if (!j["isPong"].is_null()) o->Set(FN::v8S("isPong"), Boolean::New(isolate, j["isPong"].get<bool>()));
-        if (!j["preferPostOnly"].is_null()) o->Set(FN::v8S("preferPostOnly"), Boolean::New(isolate, j["preferPostOnly"].get<bool>()));
-        return o;
-      };
-      static void _allOrders(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(v8ogO(args.GetIsolate(), true));
-      };
-      static void _sendOrder(const FunctionCallbackInfo<Value>& args) {
-        sendOrder(
-          (mSide)args[0]->NumberValue(),
-          args[1]->NumberValue(),
-          args[2]->NumberValue(),
-          (mOrderType)args[3]->NumberValue(),
-          (mTimeInForce)args[4]->NumberValue(),
-          args[5]->BooleanValue(),
-          args[6]->BooleanValue()
-        );
-      };
-      static void _cancelOrder(const FunctionCallbackInfo<Value>& args) {
-        cancelOrder(FN::S8v(args[0]->ToString()));
-      };
-      static void _allOrdersDelete(const FunctionCallbackInfo<Value>& args) {
-        allOrdersDelete(FN::S8v(args[0]->ToString()), "");
       };
   };
 }

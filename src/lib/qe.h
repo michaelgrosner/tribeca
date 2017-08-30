@@ -3,12 +3,17 @@
 
 namespace K {
   unsigned int qeT = 0;
+  unsigned int qeTD = 0;
+  uv_timer_t qeD_;
   json qeQuote;
+  json qeStatus;
   mQuoteStatus qeBidStatus = mQuoteStatus::MissingData;
   mQuoteStatus qeAskStatus = mQuoteStatus::MissingData;
   uv_timer_t qeCalc_;
   typedef json (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
+  bool gwState_ = false;
+  mConnectivityStatus gwConn_ = mConnectivityStatus::Disconnected;
   class QE {
     public:
       static void main(Local<Object> exports) {
@@ -23,6 +28,12 @@ namespace K {
             } else cout << FN::uiT() << "Unable to calculate quote, missing fair value." << endl;
           }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW qeCalc_ start timer failed." << endl; exit(1); }
         }).detach();
+        if (uv_timer_init(uv_default_loop(), &qeD_)) { cout << FN::uiT() << "Errrror: UV qeD_ init timer failed." << endl; exit(1); }
+        EV::evOn("ExchangeConnect", [](json k) {
+          gwState_ = k["state"].get<bool>();
+          gwConn_ = (mConnectivityStatus)k["status"].get<int>();
+          send();
+        });
         EV::evOn("EWMAProtectionCalculator", [](json k) {
           calc();
         });
@@ -41,9 +52,7 @@ namespace K {
         EV::evOn("Safety", [](json k) {
           calc();
         });
-        NODE_SET_METHOD(exports, "latestQuote", QE::_latestQuote);
-        NODE_SET_METHOD(exports, "latestQuoteBidStatus", QE::_latestQuoteBidStatus);
-        NODE_SET_METHOD(exports, "latestQuoteAskStatus", QE::_latestQuoteAskStatus);
+        UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
       }
     private:
       static void load() {
@@ -57,6 +66,13 @@ namespace K {
         qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::HamelinRat] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
+      };
+      static json onSnap(json z) {
+        return { qeStatus };
+      };
+      static void qeD(uv_timer_t *handle) {
+        map<mSide, json>* k = (map<mSide, json>*)handle->data;
+        start(k->begin()->first, k->begin()->second);
       };
       static void calc() {
         qeBidStatus = mQuoteStatus::MissingData;
@@ -81,7 +97,73 @@ namespace K {
           and abs((qeQuote["ask"].is_null() ? 0 : qeQuote["/ask/size"_json_pointer].get<double>()) - (quote["ask"].is_null() ? 0 : quote["/ask/size"_json_pointer].get<double>())) < gw->minSize
         )) return;
         qeQuote = quote;
-        EV::evUp("Quote");
+        send();
+      };
+      static void send() {
+        sendQuoteToAPI();
+        sendQuoteToUI();
+      };
+      static void sendQuoteToAPI() {
+        if (qeQuote.is_null() or gwConn_ == mConnectivityStatus::Disconnected) {
+          qeAskStatus = mQuoteStatus::Disconnected;
+          qeBidStatus = mQuoteStatus::Disconnected;
+        } else {
+          if (gwState_) {
+            qeBidStatus = checkCrossedQuotes(mSide::Bid);
+            qeAskStatus = checkCrossedQuotes(mSide::Ask);
+          } else {
+            qeAskStatus = mQuoteStatus::DisabledQuotes;
+            qeBidStatus = mQuoteStatus::DisabledQuotes;
+          }
+          if (qeAskStatus == mQuoteStatus::Live) updateQuote(qeQuote["ask"], mSide::Ask);
+          else stopAllQuotes(mSide::Ask);
+          if (qeBidStatus == mQuoteStatus::Live) updateQuote(qeQuote["bid"], mSide::Bid);
+          else stopAllQuotes(mSide::Bid);
+        }
+      };
+      static void sendQuoteToUI() {
+        unsigned int quotesInMemoryNew = 0;
+        unsigned int quotesInMemoryWorking = 0;
+        unsigned int quotesInMemoryDone = 0;
+        if (!diffStatus() and !diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone))
+          return;
+        qeStatus = {
+          {"bidStatus", (int)qeBidStatus},
+          {"askStatus", (int)qeAskStatus},
+          {"quotesInMemoryNew", quotesInMemoryNew},
+          {"quotesInMemoryWorking", quotesInMemoryWorking},
+          {"quotesInMemoryDone", quotesInMemoryDone}
+        };
+        UI::uiSend(uiTXT::QuoteStatus, qeStatus, true);
+      };
+      static bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
+        vector<string> toDelete;
+        unsigned long T = FN::T();
+        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+          mORS k = (mORS)it->second["orderStatus"].get<int>();
+          if (k == mORS::New) {
+            if (it->second["exchangeId"].is_null() and T-1e+4>it->second["time"].get<unsigned long>())
+              toDelete.push_back(it->first);
+            ++(*qNew);
+          } else if (k == mORS::Working) ++(*qWorking);
+          else ++(*qDone);
+        }
+        for (vector<string>::iterator it = toDelete.begin(); it != toDelete.end(); ++it)
+          OG::allOrdersDelete(*it, "");
+        return diffCounts(*qNew, *qWorking, *qDone);
+      };
+      static bool diffCounts(unsigned int qNew, unsigned int qWorking, unsigned int qDone) {
+        return qeStatus.is_null() or (
+          qNew == qeStatus["quotesInMemoryNew"].get<unsigned int>()
+          and qWorking == qeStatus["quotesInMemoryWorking"].get<unsigned int>()
+          and qDone == qeStatus["quotesInMemoryDone"].get<unsigned int>()
+        );
+      };
+      static bool diffStatus() {
+        return qeStatus.is_null() or (
+          qeBidStatus == (mQuoteStatus)qeStatus["bidStatus"].get<int>()
+          and qeAskStatus == (mQuoteStatus)qeStatus["askStatus"].get<int>()
+        );
       };
       static json quotesAreSame(double price, double size, bool isPong, mSide side) {
         json newQuote = {
@@ -362,16 +444,126 @@ namespace K {
           {"askSz", sellSize}
         };
       };
-      static void _latestQuote(const FunctionCallbackInfo<Value>& args) {
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        args.GetReturnValue().Set(Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, qeQuote.dump())).ToLocalChecked());
+      static mQuoteStatus checkCrossedQuotes(mSide side) {
+        bool bidORask = side == mSide::Bid;
+        if (qeQuote[bidORask?"bid":"ask"].is_null()) return bidORask ? qeBidStatus : qeAskStatus;
+        if (qeQuote[bidORask?"ask":"bid"].is_null()) return mQuoteStatus::Live;
+        double price = qeQuote[bidORask?"/bid/price"_json_pointer:"/ask/price"_json_pointer].get<double>();
+        double ecirp = qeQuote[bidORask?"/ask/price"_json_pointer:"/bid/price"_json_pointer].get<double>();
+        if (bidORask
+          ? price >= ecirp
+          : price <= ecirp
+        ) {
+          cout << FN::uiT() << "QE Crossing quote detected! new " << (bidORask ? "Bid" : "Ask") << "Side quote at " << price << " crossed with " << (bidORask ? "Ask" : "Bid") << "Side quote at " << ecirp << "." << endl;
+          return mQuoteStatus::Crossed;
+        }
+        return mQuoteStatus::Live;
+     };
+      static void updateQuote (json q, mSide side) {
+        multimap<double, json> orderSide = orderCacheSide(side);
+        bool eq = false;
+        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+          if (it->first == q["price"].get<double>()) { eq = true; break; }
+        if ((mQuotingMode)qpRepo["mode"].get<int>() != mQuotingMode::AK47) {
+          if (orderSide.size()) {
+            if (!eq) modify(side, q);
+          } else start(side, q);
+          return;
+        }
+        if (!eq and orderSide.size() >= (size_t)qpRepo["bullets"].get<int>())
+          modify(side, q);
+        else start(side, q);
       };
-      static void _latestQuoteBidStatus(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), (int)qeBidStatus));
+      static multimap<double, json> orderCacheSide(mSide side) {
+        multimap<double, json> orderSide;
+        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mSide)it->second["side"].get<int>() == side)
+            orderSide.insert(pair<double, json>(it->second["price"].get<double>(), it->second));
+        return orderSide;
       };
-      static void _latestQuoteAskStatus(const FunctionCallbackInfo<Value>& args) {
-        args.GetReturnValue().Set(Number::New(args.GetIsolate(), (int)qeAskStatus));
+      static void modify(mSide side, json q) {
+        if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47)
+          stopWorstQuote(side);
+        else stopAllQuotes(side);
+        start(side, q);
+      };
+      static void start(mSide side, json q) {
+        if (qpRepo["delayAPI"].get<double>()) {
+          if (uv_timer_stop(&qeD_)) { cout << FN::uiT() << "Errrror: QE qeD_ stop timer failed." << endl; exit(1); }
+          unsigned long nextStart = qeTD + (6e+4/qpRepo["delayAPI"].get<double>());
+          unsigned long diffStart = nextStart - FN::T();
+          if (diffStart>0) {
+            map<mSide, json> k;
+            k[side] = q;
+            qeD_.data = &k;
+            if (uv_timer_start(&qeD_, qeD, diffStart, 0)) { cout << FN::uiT() << "Errrror: UV qeD_ start timer failed." << endl; exit(1); }
+            return;
+          }
+          qeTD = FN::T();
+        }
+        double price = q["price"].get<double>();
+        multimap<double, json> orderSide = orderCacheSide(side);
+        bool eq = false;
+        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+          if (price == it->first
+            or ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47
+              and (price + (qpRepo["range"].get<double>() - 1e-2)) >= it->first
+              and (price - (qpRepo["range"].get<double>() - 1e-2)) <= it->first)
+          ) { eq = true; break; }
+        if (eq) {
+          if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47 and orderSide.size()<(size_t)qpRepo["bullets"].get<int>()) {
+            double incPrice = (qpRepo["range"].get<double>() * (side == mSide::Bid ? -1 : 1 ));
+            double oldPrice = 0;
+            unsigned int len = 0;
+            if (side == mSide::Bid)
+              calcAK47Increment(orderSide.begin(), orderSide.end(), &price, side, &oldPrice, incPrice, &len);
+            else calcAK47Increment(orderSide.rbegin(), orderSide.rend(), &price, side, &oldPrice, incPrice, &len);
+            if (len==orderSide.size()) price = incPrice + (side == mSide::Bid
+              ? orderSide.rbegin()->second["price"].get<double>()
+              : orderSide.begin()->second["price"].get<double>());
+            eq = false;
+            for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+              if (price == it->first
+                or ((price + (qpRepo["range"].get<double>() - 1e-2)) >= it->first
+                  and (price - (qpRepo["range"].get<double>() - 1e-2)) <= it->first)
+              ) { eq = true; break; }
+            if (eq) return;
+            stopWorstsQuotes(side, q["price"].get<double>());
+            price = FN::roundNearest(price, gw->minTick);
+          } else return;
+        }
+        OG::sendOrder(side, price, q["size"].get<double>(), mOrderType::Limit, mTimeInForce::GTC, q["isPong"].get<bool>(), true);
+      };
+      template <typename Iterator> static void calcAK47Increment(Iterator iter, Iterator last, double* price, mSide side, double* oldPrice, double incPrice, unsigned int* len) {
+        for (;iter != last; ++iter) {
+          if (*oldPrice>0 and (side == mSide::Bid?iter->first<*price:iter->first>*price)) {
+            *price = *oldPrice + incPrice;
+            if (abs(iter->first - *oldPrice)>incPrice) break;
+          }
+          *oldPrice = iter->first;
+          ++(*len);
+        }
+      };
+      static void stopWorstsQuotes(mSide side, double price) {
+        multimap<double, json> orderSide = orderCacheSide(side);
+        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+          if (side == mSide::Bid
+            ? price < it->second["price"].get<double>()
+            : price > it->second["price"].get<double>()
+          ) OG::cancelOrder(it->second["orderId"].get<string>());
+      };
+      static void stopWorstQuote(mSide side) {
+        multimap<double, json> orderSide = orderCacheSide(side);
+        if (orderSide.size())
+          OG::cancelOrder(side == mSide::Bid
+            ? orderSide.begin()->second["orderId"].get<string>()
+            : orderSide.rbegin()->second["orderId"].get<string>()
+          );
+      };
+      static void stopAllQuotes(mSide side) {
+        multimap<double, json> orderSide = orderCacheSide(side);
+        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+          OG::cancelOrder(it->second["orderId"].get<string>());
       };
   };
 }

@@ -14,23 +14,6 @@ const bindings = ((K) => { try {
 }})([packageConfig.name[0], process.platform, process.versions.modules]);
 bindings.uiLoop(noop);
 
-import QuoteSender = require("./quote-sender");
-
-new QuoteSender.QuoteSender(
-  bindings.latestQuote,
-  bindings.latestQuoteBidStatus,
-  bindings.latestQuoteAskStatus,
-  bindings.allOrders,
-  bindings.allOrdersDelete,
-  bindings.cancelOrder,
-  bindings.sendOrder,
-  bindings.gwMinTick(),
-  bindings.qpRepo,
-  bindings.uiSnap,
-  bindings.uiSend,
-  bindings.evOn
-);
-
 let highTime = process.hrtime();
 setInterval(() => {
   const diff = process.hrtime(highTime);

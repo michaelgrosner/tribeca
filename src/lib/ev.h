@@ -2,59 +2,33 @@
 #define K_EV_H_
 
 namespace K {
-  static void (*evExit)(int k);
-  static uv_timer_t evExit_;
+  static uv_timer_t exit_t;
+  static void (*evExit)(int code);
   typedef void (*evCb)(json);
-  struct Ev { map<string, vector<CopyablePersistentTraits<Function>::CopyablePersistent>> _cb; map<string, vector<evCb>> cb; } static ev;
+  static map<string, vector<evCb>> ev;
   class EV {
     public:
       static void main(Local<Object> exports) {
         evExit = happyEnding;
+        signal(SIGINT, quit);
         signal(SIGSEGV, wtf);
         signal(SIGABRT, wtf);
-        signal(SIGINT, out);
-        Ev *ev = new Ev;
-        NODE_SET_METHOD(exports, "evOn", EV::_evOn);
       }
-      static void evOn(string k, evCb cb) {
-        ev.cb[k].push_back(cb);
-      };
-      static void evUp(string k) {
-        if (ev.cb.find(k) != ev.cb.end()) {
-          for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
-            (*cb)({});
-        }
-        if (ev._cb.find(k) != ev._cb.end()) {
-          Isolate* isolate = Isolate::GetCurrent();
-          HandleScope scope(isolate);
-          Local<Object> o = Object::New(isolate);
-          Local<Value> argv[] = {o};
-          for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
-            Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-        }
-      };
+      static void evOn(string k, evCb cb) { ev[k].push_back(cb); };
+      static void evUp(string k) { evUp(k, {}); };
       static void evUp(string k, json o) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope scope(isolate);
-        if (ev.cb.find(k) != ev.cb.end()) {
-          for (vector<evCb>::iterator cb = ev.cb[k].begin(); cb != ev.cb[k].end(); ++cb)
+        if (ev.find(k) != ev.end())
+          for (vector<evCb>::iterator cb = ev[k].begin(); cb != ev[k].end(); ++cb)
             (*cb)(o);
-        }
-        if (ev._cb.find(k) != ev._cb.end()) {
-          JSON Json;
-          Local<Value> argv[] = {(Local<Value>)Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, o.dump())).ToLocalChecked()};
-          for (vector<CopyablePersistentTraits<Function>::CopyablePersistent>::iterator _cb = ev._cb[k].begin(); _cb != ev._cb[k].end(); ++_cb)
-            Local<Function>::New(isolate, *_cb)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-        }
       };
-      static void end(int k, int t) {
-        if (uv_timer_init(uv_default_loop(), &evExit_)) { cout << FN::uiT() << "Errrror: GW evExit_ init timer failed." << endl; exit(1); }
-        evExit_.data = &k;
-        if (uv_timer_start(&evExit_, [](uv_timer_t *handle) {
-          int* k = (int*)handle->data;
-          cout << FN::uiT() << "K exit code " << to_string(*k) << endl;
-          exit(*k);
-        }, t, 0)) { cout << FN::uiT() << "Errrror: GW evExit_ start timer failed." << endl; exit(1); }
+      static void end(int code, int T) {
+        if (uv_timer_init(uv_default_loop(), &exit_t)) { cout << FN::uiT() << "Errrror: EV exit_t init failed." << endl; exit(1); }
+        exit_t.data = &code;
+        if (uv_timer_start(&exit_t, [](uv_timer_t *handle) {
+          int* code = (int*)handle->data;
+          cout << FN::uiT() << "K exit code " << to_string(*code) << endl;
+          exit(*code);
+        }, T, 0)) { cout << FN::uiT() << "Errrror: EV exit_t start failed." << endl; exit(1); }
       };
     private:
       static void happyEnding(int code) {
@@ -64,28 +38,22 @@ namespace K {
         cout << "THE END" << endl;
         end(code, 0);
       };
-      static void out(int sig) {
+      static void quit(int sig) {
         cout << endl << FN::uiT() << "Excellent decision!";
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
-        if (k["/value/joke"_json_pointer].is_string()) cout << " " << k["/value/joke"_json_pointer].get<string>() << endl;
+        if (k["/value/joke"_json_pointer].is_string())
+          cout << " " << k["/value/joke"_json_pointer].get<string>() << endl;
         evExit(0);
       };
       static void wtf(int sig) {
-        void *array[10];
-        size_t size = backtrace(array, 10);
-        cerr << FN::uiT() << "Errrror signal " << sig << " "  << strsignal(sig) << endl;
-        backtrace_symbols_fd(array, size, STDERR_FILENO);
-        cerr << endl << "Please, copy and paste this error into a github issue."
-             << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl;
+        void *k[69];
+        cout << FN::uiT() << "Errrror signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found):" << endl;
+        backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
+        cout << endl << "Yikes!"
+             << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
+             << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+             << endl << endl;
         evExit(1);
-      };
-      static void _evOn(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        string k = FN::S8v(args[0]->ToString());
-        Persistent<Function> _cb;
-        _cb.Reset(isolate, Local<Function>::Cast(args[1]));
-        ev._cb[k].push_back(_cb);
       };
   };
 }
