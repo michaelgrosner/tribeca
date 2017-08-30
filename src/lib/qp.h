@@ -61,7 +61,6 @@ namespace K {
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
         EV::evUp("QuotingParameters", qpRepo);
-        NODE_SET_METHOD(exports, "qpRepo", QP::_qpRepo);
       }
       static bool matchPings() {
         mQuotingMode k = (mQuotingMode)qpRepo["mode"].get<int>();
@@ -85,15 +84,6 @@ namespace K {
             qpRepo[it.key()] = it.value();
         clean();
         cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp.size() ? "OK" : "OR reading defaults instead") << "." << endl;
-      };
-      static void _qpRepo(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        HandleScope scope(isolate);
-        Local<Object> o = Object::New(isolate);
-        for (json::iterator it = qpRepo.begin(); it != qpRepo.end(); ++it)
-          if (it.value().is_number()) o->Set(FN::v8S(it.key()), Number::New(isolate, it.value()));
-          else if (it.value().is_boolean()) o->Set(FN::v8S(it.key()), Boolean::New(isolate, it.value()));
-        args.GetReturnValue().Set(o);
       };
       static json onSnap(json z) {
         return { qpRepo };

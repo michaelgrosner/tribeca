@@ -5,7 +5,7 @@ namespace K {
   string A();
   static uWS::Hub hub(0, true);
   typedef json (*uiCb)(json);
-  struct uiSess { map<string, Persistent<Function>> _cb; map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
+  struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static uv_check_t loop;
   static uv_timer_t uiD_;
@@ -94,9 +94,8 @@ namespace K {
             res->write(document.data(), document.length());
           }
         });
-        uiGroup->onMessage([isolate, sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+        uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length > 1) {
-            HandleScope hs(isolate);
             string m = string(message, length).substr(2, length-2);
             json v;
             if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
@@ -104,13 +103,6 @@ namespace K {
               json reply = (*sess->cb[string(message, 2)])(v);
               if (!reply.is_null() && uiBIT::SNAP == (uiBIT)message[0])
                 webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-            }
-            if (sess->_cb.find(string(message ,2)) != sess->_cb.end()) {
-              JSON Json;
-              Local<Value> argv[] = {v.is_null() ? (Local<Value>)Undefined(isolate) : (Local<Value>)Json.Parse(isolate->GetCurrentContext(), FN::v8S(isolate, v.dump())).ToLocalChecked()};
-              Local<Value> reply = Local<Function>::New(isolate, sess->_cb[string(message, 2)])->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-              if (!reply->IsUndefined() && uiBIT::SNAP == (uiBIT)message[0])
-                webSocket->send(string(message, 2).append(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), reply->ToObject()).ToLocalChecked())).data(), uWS::OpCode::TEXT);
             }
           }
         });
@@ -131,8 +123,6 @@ namespace K {
         UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
-        NODE_SET_METHOD(exports, "uiSnap", UI::_uiSnap);
-        NODE_SET_METHOD(exports, "uiSend", UI::_uiSend);
         CF::external();
       };
       static void uiSnap(uiTXT k, uiCb cb) {
@@ -179,33 +169,6 @@ namespace K {
         if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
         sess->cb[k] = cb;
       };
-      static void _uiSnap(const FunctionCallbackInfo<Value>& args) {
-        _uiOn(args, uiBIT::SNAP);
-      };
-      static void _uiOn(const FunctionCallbackInfo<Value>& args, uiBIT k_) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        Isolate *isolate = args.GetIsolate();
-        string k = string(1, (char)k_).append(*String::Utf8Value(args[0]->ToString()));
-        if (sess->_cb.find(k) != sess->_cb.end())
-          return (void)isolate->ThrowException(Exception::TypeError(FN::v8S("Use only a single unique message handler for each different topic")));
-        Persistent<Function> *_cb = &sess->_cb[k];
-        _cb->Reset(isolate, Local<Function>::Cast(args[1]));
-      };
-      static void _uiSend(const FunctionCallbackInfo<Value> &args) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->u == 0) return;
-        if (args[2]->IsUndefined() ? false : args[2]->BooleanValue()) {
-          Isolate* isolate = args.GetIsolate();
-          JSON Json;
-          uiHold((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
-        } else _uiUp(args);
-      };
-      static void _uiUp(const FunctionCallbackInfo<Value>& args) {
-        if (args[1]->IsUndefined()) return;
-        Isolate* isolate = args.GetIsolate();
-        JSON Json;
-        uiUp((uiTXT)FN::S8v(args[0]->ToString())[0], json::parse(FN::S8v(Json.Stringify(isolate->GetCurrentContext(), args[1]->ToObject()).ToLocalChecked())));
-      };
       static void uiHold(uiTXT k, json o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
@@ -249,8 +212,6 @@ namespace K {
         uiSend(uiTXT::ApplicationState, uiSTATE);
       };
       static void uiD(uv_timer_t *handle) {
-        Isolate* isolate = (Isolate*) handle->data;
-        HandleScope scope(isolate);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
