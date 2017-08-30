@@ -6,9 +6,6 @@ namespace K {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static Local<String> v8S(string k) { return String::NewFromUtf8(Isolate::GetCurrent(), k.data()); };
-      static Local<String> v8S(Isolate* isolate, string k) { return String::NewFromUtf8(isolate, k.data()); };
-      static string S8v(Local<String> k) { return string(*String::Utf8Value(k)); };
       static double roundNearest(double value, double minTick) { return round(value / minTick) * minTick; };
       static double roundUp(double value, double minTick) { return ceil(value / minTick) * minTick; };
       static double roundDown(double value, double minTick) { return floor(value / minTick) * minTick; };
