@@ -16,7 +16,7 @@ namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry, Position };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
-  enum class mConnectivityStatus: unsigned int { Connected, Disconnected };
+  enum class mConnectivity: unsigned int { Connected, Disconnected };
   enum class mLiquidity: unsigned int { Make, Take };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mSide: unsigned int { Bid, Ask, Unknown };

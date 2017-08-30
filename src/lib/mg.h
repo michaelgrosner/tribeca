@@ -36,7 +36,7 @@ namespace K {
           levelUp(o);
         });
         EV::evOn("GatewayMarketConnect", [](json k) {
-          if ((mConnectivityStatus)k["/0"_json_pointer].get<int>() == mConnectivityStatus::Disconnected)
+          if ((mConnectivity)k["/0"_json_pointer].get<int>() == mConnectivity::Disconnected)
             levelUp({});
         });
         EV::evOn("QuotingParameters", [](json k) {

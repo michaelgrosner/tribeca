@@ -4,9 +4,9 @@
 namespace K {
   static uv_timer_t gwPos_;
   static bool gwState = false;
-  static mConnectivityStatus gwConn = mConnectivityStatus::Disconnected;
-  static mConnectivityStatus gwMDConn = mConnectivityStatus::Disconnected;
-  static mConnectivityStatus gwEOConn = mConnectivityStatus::Disconnected;
+  static mConnectivity gwConn = mConnectivity::Disconnected;
+  static mConnectivity gwMDConn = mConnectivity::Disconnected;
+  static mConnectivity gwEOConn = mConnectivity::Disconnected;
   class GW {
     public:
       static void main(Local<Object> exports) {
@@ -18,10 +18,10 @@ namespace K {
           }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         }).detach();
         EV::evOn("GatewayMarketConnect", [](json k) {
-          _gwCon_(mGatewayType::MarketData, (mConnectivityStatus)k["/0"_json_pointer].get<int>());
+          _gwCon_(mGatewayType::MarketData, (mConnectivity)k["/0"_json_pointer].get<int>());
         });
         EV::evOn("GatewayOrderConnect", [](json k) {
-          _gwCon_(mGatewayType::OrderEntry, (mConnectivityStatus)k["/0"_json_pointer].get<int>());
+          _gwCon_(mGatewayType::OrderEntry, (mConnectivity)k["/0"_json_pointer].get<int>());
         });
         gw->book();
         gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
@@ -37,7 +37,7 @@ namespace K {
           {"currency", k.currency}
         });
       };
-      static void gwBookUp(mConnectivityStatus k) {
+      static void gwBookUp(mConnectivity k) {
         EV::evUp("GatewayMarketConnect", {(int)k});
       };
       static void gwLevelUp(mGWbls k) {
@@ -63,7 +63,7 @@ namespace K {
           {"make_side", (int)k.make_side}
         });
       };
-      static void gwOrderUp(mConnectivityStatus k) {
+      static void gwOrderUp(mConnectivity k) {
         EV::evUp("GatewayOrderConnect", {(int)k});
       };
       static void gwOrderUp(mGWos k) {
@@ -131,7 +131,7 @@ namespace K {
         }
         return {};
       };
-      static void _gwCon_(mGatewayType gwT, mConnectivityStatus gwS) {
+      static void _gwCon_(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {
           if (gwMDConn == gwS) return;
           gwMDConn = gwS;
@@ -139,13 +139,13 @@ namespace K {
           if (gwEOConn == gwS) return;
           gwEOConn = gwS;
         }
-        gwConn = gwMDConn == mConnectivityStatus::Connected && gwEOConn == mConnectivityStatus::Connected
-          ? mConnectivityStatus::Connected : mConnectivityStatus::Disconnected;
+        gwConn = gwMDConn == mConnectivity::Connected && gwEOConn == mConnectivity::Connected
+          ? mConnectivity::Connected : mConnectivity::Disconnected;
         gwUpState();
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConn}});
       };
       static void gwUpState() {
-        bool newMode = gwConn != mConnectivityStatus::Connected ? false : gwAutoStart;
+        bool newMode = gwConn != mConnectivity::Connected ? false : gwAutoStart;
         if (newMode != gwState) {
           gwState = newMode;
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
