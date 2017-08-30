@@ -109,13 +109,14 @@ namespace K {
       };
     private:
       static json onSnapProduct(json z) {
+        string k = CF::cfString("BotIdentifier");
         return {{
           {"exchange", (double)gw->exchange},
           {"pair", {{"base", (double)gw->base}, {"quote", (double)gw->quote}}},
-          {"environment", CF::cfString("BotIdentifier").substr(gwAutoStart?4:0)},
-          {"matryoshka", CF::cfString("MatryoshkaUrl")},
-          {"homepage", CF::cfPKString("homepage")},
           {"minTick", gw->minTick},
+          {"environment", k.substr(k.length()>4?(k.substr(0,4) == "auto"?4:0):0)},
+          {"matryoshka", CF::cfString("MatryoshkaUrl")},
+          {"homepage", CF::cfPKString("homepage")}
         }};
       };
       static json onSnapStatus(json z) {
