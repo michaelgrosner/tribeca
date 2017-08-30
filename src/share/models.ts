@@ -111,7 +111,7 @@ export function fromCurrency(c: Currency) : string|undefined {
 }
 
 export enum GatewayType { MarketData, OrderEntry, Position }
-export enum ConnectivityStatus { Connected, Disconnected }
+export enum Connectivity { Connected, Disconnected }
 export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }

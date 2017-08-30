@@ -13,7 +13,7 @@ namespace K {
   typedef json (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
   bool gwState_ = false;
-  mConnectivityStatus gwConn_ = mConnectivityStatus::Disconnected;
+  mConnectivity gwConn_ = mConnectivity::Disconnected;
   class QE {
     public:
       static void main(Local<Object> exports) {
@@ -31,7 +31,7 @@ namespace K {
         if (uv_timer_init(uv_default_loop(), &qeD_)) { cout << FN::uiT() << "Errrror: UV qeD_ init timer failed." << endl; exit(1); }
         EV::evOn("ExchangeConnect", [](json k) {
           gwState_ = k["state"].get<bool>();
-          gwConn_ = (mConnectivityStatus)k["status"].get<int>();
+          gwConn_ = (mConnectivity)k["status"].get<int>();
           send();
         });
         EV::evOn("EWMAProtectionCalculator", [](json k) {
@@ -75,8 +75,6 @@ namespace K {
         start(k->begin()->first, k->begin()->second);
       };
       static void calc() {
-        qeBidStatus = mQuoteStatus::MissingData;
-        qeAskStatus = mQuoteStatus::MissingData;
         if (!mgFairValue or MG::empty()) {
           qeQuote = {};
           return;
@@ -104,7 +102,7 @@ namespace K {
         sendQuoteToUI();
       };
       static void sendQuoteToAPI() {
-        if (qeQuote.is_null() or gwConn_ == mConnectivityStatus::Disconnected) {
+        if (gwConn_ == mConnectivity::Disconnected or qeQuote.is_null()) {
           qeAskStatus = mQuoteStatus::Disconnected;
           qeBidStatus = mQuoteStatus::Disconnected;
         } else {
@@ -153,17 +151,15 @@ namespace K {
         return diffCounts(*qNew, *qWorking, *qDone);
       };
       static bool diffCounts(unsigned int qNew, unsigned int qWorking, unsigned int qDone) {
-        return qeStatus.is_null() or (
-          qNew == qeStatus["quotesInMemoryNew"].get<unsigned int>()
-          and qWorking == qeStatus["quotesInMemoryWorking"].get<unsigned int>()
-          and qDone == qeStatus["quotesInMemoryDone"].get<unsigned int>()
-        );
+        return qeStatus.is_null()
+          or qNew != qeStatus["quotesInMemoryNew"].get<unsigned int>()
+          or qWorking != qeStatus["quotesInMemoryWorking"].get<unsigned int>()
+          or qDone != qeStatus["quotesInMemoryDone"].get<unsigned int>();
       };
       static bool diffStatus() {
-        return qeStatus.is_null() or (
-          qeBidStatus == (mQuoteStatus)qeStatus["bidStatus"].get<int>()
-          and qeAskStatus == (mQuoteStatus)qeStatus["askStatus"].get<int>()
-        );
+        return qeStatus.is_null()
+          or qeBidStatus != (mQuoteStatus)qeStatus["bidStatus"].get<int>()
+          or qeAskStatus != (mQuoteStatus)qeStatus["askStatus"].get<int>();
       };
       static json quotesAreSame(double price, double size, bool isPong, mSide side) {
         json newQuote = {

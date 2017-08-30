@@ -149,7 +149,7 @@ export class DisplayPair {
   }
 
   private setExchangeStatus = (cs) => {
-      this.connectedToExchange = cs.status == Models.ConnectivityStatus.Connected;
+      this.connectedToExchange = cs.status == Models.Connectivity.Connected;
       this.setStatus();
   };
 
