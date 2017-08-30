@@ -75,6 +75,8 @@ namespace K {
         start(k->begin()->first, k->begin()->second);
       };
       static void calc() {
+        qeBidStatus = mQuoteStatus::MissingData;
+        qeAskStatus = mQuoteStatus::MissingData;
         if (!mgFairValue or MG::empty()) {
           qeQuote = {};
           return;
@@ -183,7 +185,7 @@ namespace K {
         return newQuote;
       };
       static json calcQuote() {
-        if (pgPos.is_null()) return {};
+        if (MG::empty() or pgPos.is_null()) return {};
         double widthPing = qpRepo["widthPercentage"].get<bool>()
           ? qpRepo["widthPingPercentage"].get<double>() * mgFairValue / 100
           : qpRepo["widthPing"].get<double>();
