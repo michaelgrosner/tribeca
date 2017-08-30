@@ -19,14 +19,14 @@ namespace K {
       static void main(Local<Object> exports) {
         load();
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &qeCalc_)) { cout << FN::uiT() << "Errrror: GW qeCalc_ init timer failed." << endl; exit(1); }
+          if (uv_timer_init(uv_default_loop(), &qeCalc_)) { cout << FN::uiT() << "Errrror: QE qeCalc_ init timer failed." << endl; exit(1); }
           if (uv_timer_start(&qeCalc_, [](uv_timer_t *handle) {
             if (mgFairValue) {
               MG::calc();
               PG::calc();
               calc();
             } else cout << FN::uiT() << "Unable to calculate quote, missing fair value." << endl;
-          }, 0, 1000)) { cout << FN::uiT() << "Errrror: GW qeCalc_ start timer failed." << endl; exit(1); }
+          }, 0, 1000)) { cout << FN::uiT() << "Errrror: QE qeCalc_ start timer failed." << endl; exit(1); }
         }).detach();
         if (uv_timer_init(uv_default_loop(), &qeD_)) { cout << FN::uiT() << "Errrror: UV qeD_ init timer failed." << endl; exit(1); }
         EV::evOn("ExchangeConnect", [](json k) {
