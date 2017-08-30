@@ -22,9 +22,9 @@ namespace K {
           if (uv_timer_init(uv_default_loop(), &qeCalc_)) { cout << FN::uiT() << "Errrror: QE qeCalc_ init timer failed." << endl; exit(1); }
           if (uv_timer_start(&qeCalc_, [](uv_timer_t *handle) {
             if (mgFairValue) {
-              MG::calc();
-              PG::calc();
-              calc();
+              MG::calcStats();
+              PG::calcSafety();
+              calcQuote();
             } else cout << FN::uiT() << "Unable to calculate quote, missing fair value." << endl;
           }, 0, 1000)) { cout << FN::uiT() << "Errrror: QE qeCalc_ start timer failed." << endl; exit(1); }
         }).detach();
@@ -34,23 +34,26 @@ namespace K {
           gwConn_ = (mConnectivity)k["status"].get<int>();
           send();
         });
-        EV::evOn("EWMAProtectionCalculator", [](json k) {
-          calc();
-        });
-        EV::evOn("FilteredMarket", [](json k) {
-          calc();
-        });
         EV::evOn("QuotingParameters", [](json k) {
-          calc();
+          MG::calcFairValue();
+          PG::calcTargetBasePos();
+          PG::calcSafety();
+          calcQuote();
+          UI::delay(k["delayUI"].get<double>());
         });
         EV::evOn("OrderTradeBroker", [](json k) {
-          calc();
+          PG::addTrade(k);
+          PG::calcSafety();
+          calcQuote();
+        });
+        EV::evOn("EWMAProtectionCalculator", [](json k) {
+          calcQuote();
+        });
+        EV::evOn("FilteredMarket", [](json k) {
+          calcQuote();
         });
         EV::evOn("TargetPosition", [](json k) {
-          calc();
-        });
-        EV::evOn("Safety", [](json k) {
-          calc();
+          calcQuote();
         });
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
       }
@@ -74,14 +77,14 @@ namespace K {
         map<mSide, json>* k = (map<mSide, json>*)handle->data;
         start(k->begin()->first, k->begin()->second);
       };
-      static void calc() {
+      static void calcQuote() {
         qeBidStatus = mQuoteStatus::MissingData;
         qeAskStatus = mQuoteStatus::MissingData;
         if (!mgFairValue or MG::empty()) {
           qeQuote = {};
           return;
         }
-        json quote = calcQuote();
+        json quote = nextQuote();
         if (quote.is_null()) {
           qeQuote = {};
           return;
@@ -184,7 +187,7 @@ namespace K {
         qeT = now;
         return newQuote;
       };
-      static json calcQuote() {
+      static json nextQuote() {
         if (MG::empty() or pgPos.is_null()) return {};
         double widthPing = qpRepo["widthPercentage"].get<bool>()
           ? qpRepo["widthPingPercentage"].get<double>() * mgFairValue / 100
