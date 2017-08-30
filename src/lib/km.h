@@ -14,7 +14,7 @@ namespace K {
     "SC", "SJCX", "STR", "STRAT", "SYS", "VIA", "VRC", "VTC", "XBC", "XCP", "XPM", "XVC", "USD", "USDT",
     "EOS", "SAN", "OMG", "PAY", "BCC", "BCH" };
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
-  enum class mGatewayType: unsigned int { MarketData, OrderEntry, Position };
+  enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Connected, Disconnected };
   enum class mLiquidity: unsigned int { Make, Take };

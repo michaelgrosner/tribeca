@@ -18,7 +18,10 @@ namespace K {
           }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_ start timer failed." << endl; exit(1); }
         }).detach();
         EV::evOn("GatewayMarketConnect", [](json k) {
-          _gwCon_(mGatewayType::MarketData, (mConnectivity)k["/0"_json_pointer].get<int>());
+          mConnectivity conn = (mConnectivity)k["/0"_json_pointer].get<int>();
+          _gwCon_(mGatewayType::MarketData, conn);
+          if (conn == mConnectivity::Disconnected)
+            EV::evUp("MarketDataGateway");
         });
         EV::evOn("GatewayOrderConnect", [](json k) {
           _gwCon_(mGatewayType::OrderEntry, (mConnectivity)k["/0"_json_pointer].get<int>());

@@ -35,18 +35,17 @@ namespace K {
         EV::evOn("MarketDataGateway", [](json o) {
           levelUp(o);
         });
-        EV::evOn("GatewayMarketConnect", [](json k) {
-          if ((mConnectivity)k["/0"_json_pointer].get<int>() == mConnectivity::Disconnected)
-            levelUp({});
-        });
-        EV::evOn("QuotingParameters", [](json k) {
-          fairV();
-        });
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
         UI::uiSnap(uiTXT::FairValue, &onSnapFair);
         UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
       };
-      static void calc() {
+      static bool empty() {
+        return (mGWmktFilter.is_null()
+          or mGWmktFilter["bids"].is_null()
+          or mGWmktFilter["asks"].is_null()
+        );
+      };
+      static void calcStats() {
         if (++mgT == 60) {
           mgT = 0;
           ewmaPUp();
@@ -54,11 +53,18 @@ namespace K {
         }
         stdevPUp();
       };
-      static bool empty() {
-        return (mGWmktFilter.is_null()
-          or mGWmktFilter["bids"].is_null()
-          or mGWmktFilter["asks"].is_null()
+      static void calcFairValue() {
+        if (empty()) return;
+        double mgFairValue_ = mgFairValue;
+        mgFairValue = FN::roundNearest(
+          mFairValueModel::BBO == (mFairValueModel)qpRepo["fvModel"].get<int>()
+            ? (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>()) / 2
+            : (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() * mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>() * mGWmktFilter["/bids/0/size"_json_pointer].get<double>()) / (mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/size"_json_pointer].get<double>()),
+          gw->minTick
         );
+        if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
+        EV::evUp("PositionGateway");
+        UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
       static void load() {
@@ -202,7 +208,7 @@ namespace K {
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
         if (!empty()) {
-          fairV();
+          calcFairValue();
           EV::evUp("FilteredMarket");
         }
       };
@@ -213,19 +219,6 @@ namespace K {
             if ((*it)["size"].get<double>() < gw->minTick) mGWmktFilter[k].erase(it);
             break;
           } else ++it;
-      };
-      static void fairV() {
-        if (empty()) return;
-        double mgFairValue_ = mgFairValue;
-        mgFairValue = FN::roundNearest(
-          mFairValueModel::BBO == (mFairValueModel)qpRepo["fvModel"].get<int>()
-            ? (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>()) / 2
-            : (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() * mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>() * mGWmktFilter["/bids/0/size"_json_pointer].get<double>()) / (mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/size"_json_pointer].get<double>()),
-          gw->minTick
-        );
-        if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        EV::evUp("FairValue");
-        UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
       static void cleanStdev() {
         size_t periods = (size_t)qpRepo["quotingStdevProtectionPeriods"].get<int>();

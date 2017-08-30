@@ -18,6 +18,9 @@ namespace K {
               gW->cancelAll();
           }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ start timer failed." << endl; exit(1); }
         }).detach();
+        EV::evOn("OrderUpdateGateway", [](json k) {
+          updateOrderState(k);
+        });
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
         UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
         UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
@@ -26,39 +29,6 @@ namespace K {
         UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
         UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
-        EV::evOn("OrderUpdateGateway", [](json k) {
-          updateOrderState(k);
-        });
-      };
-      static json updateOrderState(json k) {
-        json o;
-        if ((mORS)k["orderStatus"].get<int>() == mORS::New) o = k;
-        else if (!k["orderId"].is_null() and allOrders.find(k["orderId"].get<string>()) != allOrders.end())
-          o = allOrders[k["orderId"].get<string>()];
-        else if (!k["exchangeId"].is_null() and allOrdersIds.find(k["exchangeId"].get<string>()) != allOrdersIds.end()) {
-          o = allOrders[allOrdersIds[k["exchangeId"].get<string>()]];
-          k["orderId"] = o["orderId"].get<string>();
-        } else return o;
-        for (json::iterator it = k.begin(); it != k.end(); ++it)
-          if (!it.value().is_null()) o[it.key()] = it.value();
-        if (o["time"].is_null()) o["time"] = FN::T();
-        if (o["computationalLatency"].is_null() and (mORS)o["orderStatus"].get<int>() == mORS::Working)
-          o["computationalLatency"] = FN::T() - o["time"].get<unsigned long>();
-        if (!o["computationalLatency"].is_null()) o["time"] = FN::T();
-        toMemory(o);
-        if (!gW->cancelByClientId and !o["exchangeId"].is_null()) {
-          map<string, void*>::iterator it = toCancel.find(o["orderId"].get<string>());
-          if (it != toCancel.end()) {
-            toCancel.erase(it);
-            cancelOrder(o["orderId"].get<string>());
-            if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
-          }
-        }
-        EV::evUp("OrderUpdateBroker", o);
-        UI::uiSend(uiTXT::OrderStatusReports, o, true);
-        if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
-          toHistory(o);
-        return o;
       };
       static void allOrdersDelete(string oI, string oE) {
         map<string, json>::iterator it = allOrders.find(oI);
@@ -147,6 +117,36 @@ namespace K {
           k["preferPostOnly"].get<bool>()
         );
         return {};
+      };
+      static json updateOrderState(json k) {
+        json o;
+        if ((mORS)k["orderStatus"].get<int>() == mORS::New) o = k;
+        else if (!k["orderId"].is_null() and allOrders.find(k["orderId"].get<string>()) != allOrders.end())
+          o = allOrders[k["orderId"].get<string>()];
+        else if (!k["exchangeId"].is_null() and allOrdersIds.find(k["exchangeId"].get<string>()) != allOrdersIds.end()) {
+          o = allOrders[allOrdersIds[k["exchangeId"].get<string>()]];
+          k["orderId"] = o["orderId"].get<string>();
+        } else return o;
+        for (json::iterator it = k.begin(); it != k.end(); ++it)
+          if (!it.value().is_null()) o[it.key()] = it.value();
+        if (o["time"].is_null()) o["time"] = FN::T();
+        if (o["computationalLatency"].is_null() and (mORS)o["orderStatus"].get<int>() == mORS::Working)
+          o["computationalLatency"] = FN::T() - o["time"].get<unsigned long>();
+        if (!o["computationalLatency"].is_null()) o["time"] = FN::T();
+        toMemory(o);
+        if (!gW->cancelByClientId and !o["exchangeId"].is_null()) {
+          map<string, void*>::iterator it = toCancel.find(o["orderId"].get<string>());
+          if (it != toCancel.end()) {
+            toCancel.erase(it);
+            cancelOrder(o["orderId"].get<string>());
+            if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
+          }
+        }
+        EV::evUp("OrderUpdateBroker", o);
+        UI::uiSend(uiTXT::OrderStatusReports, o, true);
+        if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
+          toHistory(o);
+        return o;
       };
       static void cancelOpenOrders() {
         if (gW->supportCancelAll)

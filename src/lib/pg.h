@@ -18,39 +18,53 @@ namespace K {
         EV::evOn("PositionGateway", [](json k) {
           posUp(k);
         });
-        EV::evOn("FairValue", [](json k) {
-          posUp({});
-        });
         EV::evOn("OrderUpdateBroker", [](json k) {
           orderUp(k);
         });
-        EV::evOn("QuotingParameters", [](json k) {
-          calcTargetBasePos();
-          if (mgFairValue) calcSafety();
-        });
         EV::evOn("PositionBroker", [](json k) {
           calcTargetBasePos();
-        });
-        EV::evOn("OrderTradeBroker", [](json k) {
-          tradeUp(k);
-          if (mgFairValue) calcSafety();
         });
         UI::uiSnap(uiTXT::Position, &onSnapPos);
         UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
         UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
       };
-      static void calc() {
-        if (pgPos.is_null()) return;
-        json safety = calcSafety();
+      static void calcSafety() {
+        if (pgPos.is_null() or !mgFairValue) return;
+        json safety = nextSafety();
         if (pgSafety.is_null()
           or abs(safety["combined"].get<double>() - pgSafety["combined"].get<double>()) > 1e-3
           or abs(safety["buyPing"].get<double>() - pgSafety["buyPing"].get<double>()) >= 1e-2
           or abs(safety["sellPong"].get<double>() - pgSafety["sellPong"].get<double>()) >= 1e-2
         ) {
           pgSafety = safety;
-          EV::evUp("Safety");
           UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
         }
+      };
+      static void calcTargetBasePos() {
+        if (pgPos.is_null()) { cout << FN::uiT() << "Unable to calculate TBP, missing market data." << endl; return; }
+        double targetBasePosition = ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::Manual)
+          ? (qpRepo["percentageValues"].get<bool>()
+            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 1e+2
+            : qpRepo["targetBasePosition"].get<double>())
+          : ((1 + mgTargetPos) / 2) * pgPos["value"].get<double>();
+        if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
+        pgTargetBasePos = targetBasePosition;
+        pgSideAPR_ = pgSideAPR;
+        EV::evUp("TargetPosition");
+        json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
+        UI::uiSend(uiTXT::TargetBasePosition, k, true);
+        DB::insert(uiTXT::TargetBasePosition, k);
+        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos["value"].get<double>() * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
+      };
+      static void addTrade(json k) {
+        json k_ = {
+          {"price", k["price"].get<double>()},
+          {"quantity", k["quantity"].get<double>()},
+          {"time", k["time"].get<unsigned long>()}
+        };
+        if ((mSide)k["side"].get<int>() == mSide::Bid)
+          pgBuys[k["price"].get<double>()] = k_;
+        else pgSells[k["price"].get<double>()] = k_;
       };
     private:
       static void load() {
@@ -75,7 +89,7 @@ namespace K {
           {"sideAPR", pgSideAPR}
         }};
       };
-      static json calcSafety() {
+      static json nextSafety() {
         double buySize = qpRepo["percentageValues"].get<bool>()
           ? qpRepo["buySizePercentage"].get<double>() * pgPos["value"].get<double>() / 100
           : qpRepo["buySize"].get<double>();
@@ -157,16 +171,6 @@ namespace K {
         double qty_ = fmin(qtyMax - *qty, qtyTrade);
         *ping += priceTrade * qty_;
         *qty += qty_;
-      }
-      static void tradeUp(json k) {
-        json k_ = {
-          {"price", k["price"].get<double>()},
-          {"quantity", k["quantity"].get<double>()},
-          {"time", k["time"].get<unsigned long>()}
-        };
-        if ((mSide)k["side"].get<int>() == mSide::Bid)
-          pgBuys[k["price"].get<double>()] = k_;
-        else pgSells[k["price"].get<double>()] = k_;
       };
       static void clean() {
         if (pgBuys.size()) expire(&pgBuys);
@@ -265,22 +269,6 @@ namespace K {
             ? k["/pair/base"_json_pointer].get<int>()
             : k["/pair/quote"_json_pointer].get<int>()}
         });
-      };
-      static void calcTargetBasePos() {
-        if (pgPos.is_null()) { cout << FN::uiT() << "Unable to calculate TBP, missing market data." << endl; return; }
-        double targetBasePosition = ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::Manual)
-          ? (qpRepo["percentageValues"].get<bool>()
-            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 1e+2
-            : qpRepo["targetBasePosition"].get<double>())
-          : ((1 + mgTargetPos) / 2) * pgPos["value"].get<double>();
-        if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
-        pgTargetBasePos = targetBasePosition;
-        pgSideAPR_ = pgSideAPR;
-        EV::evUp("TargetPosition");
-        json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
-        UI::uiSend(uiTXT::TargetBasePosition, k, true);
-        DB::insert(uiTXT::TargetBasePosition, k);
-        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos["value"].get<double>() * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
       };
   };
 }

@@ -114,9 +114,6 @@ namespace K {
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
         uiD_.data = isolate;
-        EV::evOn("QuotingParameters", [](json k) {
-          _uiD_(k["delayUI"].get<double>());
-        });
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
@@ -140,6 +137,16 @@ namespace K {
         }
         if (h) uiHold(k, o);
         else uiUp(k, o);
+      };
+      static void delay(double d) {
+        if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        sess->D.clear();
+        if (d) {
+          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
+        } else {
+          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
+        }
       };
     private:
       static json onSnapApp(json z) {
@@ -182,16 +189,6 @@ namespace K {
             else ++it;
         }
         sess->D[k].push_back(o);
-      };
-      static void _uiD_(double d) {
-        if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        sess->D.clear();
-        if (d) {
-          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
-        } else {
-          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
-        }
       };
       static void uiDD(uv_timer_t *handle) {
         Isolate* isolate = (Isolate*) handle->data;
