@@ -2,7 +2,7 @@
 #define K_OG_H_
 
 namespace K {
-  uv_timer_t gwCancelAll_;
+  uv_timer_t gwCancelAll_t;
   json tradesMemory;
   map<string, void*> toCancel;
   map<string, json> allOrders;
@@ -12,13 +12,13 @@ namespace K {
       static void main(Local<Object> exports) {
         load();
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &gwCancelAll_)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ init timer failed." << endl; exit(1); }
-          if (uv_timer_start(&gwCancelAll_, [](uv_timer_t *handle) {
+          if (uv_timer_init(uv_default_loop(), &gwCancelAll_t)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_t init timer failed." << endl; exit(1); }
+          if (uv_timer_start(&gwCancelAll_t, [](uv_timer_t *handle) {
             if (qpRepo["cancelOrdersAuto"].get<bool>())
               gW->cancelAll();
-          }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_ start timer failed." << endl; exit(1); }
+          }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_t start timer failed." << endl; exit(1); }
         }).detach();
-        EV::evOn("OrderUpdateGateway", [](json k) {
+        EV::on(mEvent::OrderUpdateGateway, [](json k) {
           updateOrderState(k);
         });
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
@@ -142,7 +142,7 @@ namespace K {
             if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
           }
         }
-        EV::evUp("OrderUpdateBroker", o);
+        EV::up(mEvent::OrderUpdateBroker, o);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
         if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
           toHistory(o);
@@ -214,7 +214,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        EV::evUp("OrderTradeBroker", trade);
+        EV::up(mEvent::OrderTradeBroker, trade);
         if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
           double widthPong = qpRepo["widthPercentage"].get<bool>()
             ? qpRepo["widthPongPercentage"].get<double>() * trade["price"].get<double>() / 100
@@ -267,8 +267,6 @@ namespace K {
         }
       };
       static bool matchPong(string match, json* pong) {
-        Isolate* isolate = Isolate::GetCurrent();
-        HandleScope hs(isolate);
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           if ((*it)["tradeId"].get<string>() != match) continue;
           double Kqty = fmin((*pong)["quantity"].get<double>(), (*it)["quantity"].get<double>() - (*it)["Kqty"].get<double>());

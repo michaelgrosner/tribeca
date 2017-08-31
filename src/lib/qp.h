@@ -60,7 +60,6 @@ namespace K {
         load();
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
-        EV::evUp("QuotingParameters", qpRepo);
       }
       static bool matchPings() {
         mQuotingMode k = (mQuotingMode)qpRepo["mode"].get<int>();
@@ -103,7 +102,7 @@ namespace K {
           qpRepo = k;
           clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
-          EV::evUp("QuotingParameters", k);
+          EV::up(mEvent::QuotingParameters, k);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};
