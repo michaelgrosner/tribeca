@@ -112,8 +112,6 @@ namespace K {
           cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << "." << endl;
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         if (uv_timer_init(uv_default_loop(), &delayUI_t)) { cout << FN::uiT() << "Errrror: UV delayUI_t init timer failed." << endl; exit(1); }
-        Isolate* isolate = exports->GetIsolate();
-        delayUI_t.data = isolate;
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
@@ -191,15 +189,11 @@ namespace K {
         sess->D[k].push_back(o);
       };
       static void uiDD(uv_timer_t *handle) {
-        Isolate* isolate = (Isolate*) handle->data;
-        HandleScope scope(isolate);
-        HeapStatistics heapStatistics;
-        isolate->GetHeapStatistics(&heapStatistics);
         time_t rawtime;
         time(&rawtime);
         struct stat st;
         uiSTATE = {
-          {"memory", heapStatistics.total_heap_size()},
+          {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", iOSR60 / 2},
           {"dbsize", stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size},

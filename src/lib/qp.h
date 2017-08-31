@@ -58,6 +58,7 @@ namespace K {
     public:
       static void main(Local<Object> exports) {
         load();
+        UI::setDelay(qpRepo["delayUI"].get<double>());
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
       }
