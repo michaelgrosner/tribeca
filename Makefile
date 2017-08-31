@@ -195,11 +195,12 @@ client: node_modules/.bin/tsc src/client app
 pub: src/pub app/pub
 	@echo Building client static files..
 	cp -R src/pub/* app/pub/
+	mkdir app/pub/js/client
 	@echo DONE
 
-bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/client/main.js
+bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
 	@echo Building client bundle file..
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/client/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 	@echo DONE
 
 diff: .git
