@@ -13,12 +13,9 @@ namespace K {
         cout << FN::uiT() << "DB " << dbFpath << " loaded OK." << endl;
       };
       static json load(uiTXT k) {
-        return load(string(1, (char)k));
-      };
-      static json load(string k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
-          string("CREATE TABLE ").append(k).append("("                 \
+          string("CREATE TABLE ").append(string(1, (char)k)).append("("                 \
           "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL," \
           "json  BLOB                                       NOT NULL," \
           "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"),
@@ -26,7 +23,7 @@ namespace K {
         );
         string j = "[";
         sqlite3_exec(db,
-          string("SELECT json FROM ").append(k).append(" ORDER BY time DESC;"),
+          string("SELECT json FROM ").append(string(1, (char)k)).append(" ORDER BY time DESC;"),
           cb, (void*)&j, &zErrMsg
         );
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
