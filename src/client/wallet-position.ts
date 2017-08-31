@@ -52,7 +52,7 @@ export class WalletPositionComponent implements OnInit {
   }
 
   private updatePosition = (o: Models.PositionReport) => {
-    if (typeof o === "undefined" || typeof o.pair === "undefined") return;
+    if (o === null || typeof o === "undefined" || typeof o.pair === "undefined") return;
     this.basePosition = o.baseAmount;
     this.quotePosition = o.quoteAmount;
     this.baseHeldPosition = o.baseHeldAmount;
