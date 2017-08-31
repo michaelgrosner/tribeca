@@ -125,7 +125,6 @@ packages:
 	sudo chown `id -u` /data/db
 	$(MAKE) dist
 	$(MAKE) gdax -s
-	@$(MAKE) stunnel -s
 
 install:
 	@$(MAKE) packages
@@ -147,7 +146,6 @@ reinstall: .git src
 	@$(MAKE) test -s
 	@git checkout .
 	./node_modules/.bin/forever restartall
-	@$(MAKE) stunnel -s
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
 list:
@@ -174,7 +172,6 @@ stop:
 start:
 	@test -d app || $(MAKE) install
 	./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid $(KCONFIG) -a -l /dev/null K.js
-	@$(MAKE) stunnel -s
 
 stunnel: dist/K-stunnel.conf
 	test -z "${SKIP_STUNNEL}`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &

@@ -344,7 +344,6 @@ namespace K {
         FILE* file = fopen("/proc/self/status", "r");
         int result = -1;
         char line[128];
-
         while (fgets(line, 128, file) != NULL)
           if (strncmp(line, "VmRSS:", 6) == 0) {
             result = procSelfStatus(line);
