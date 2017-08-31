@@ -8,7 +8,7 @@ namespace K {
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static uv_check_t loop;
-  static uv_timer_t uiD_;
+  static uv_timer_t delayUI_t;
   static Persistent<Function> noop;
   static int iOSR60 = 0;
   static bool uiOPT = true;
@@ -20,8 +20,7 @@ namespace K {
   class UI {
     public:
       static void main(Local<Object> exports) {
-        Isolate* isolate = exports->GetIsolate();
-        CF::internal(exports);
+        CF::internal();
         int port = stoi(CF::cfString("WebClientListenPort"));
         string name = CF::cfString("WebClientUsername");
         string key = CF::cfString("WebClientPassword");
@@ -112,8 +111,9 @@ namespace K {
         else if (hub.listen(port, nullptr, 0, uiGroup))
           cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << "." << endl;
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
-        if (uv_timer_init(uv_default_loop(), &uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ init timer failed." << endl; exit(1); }
-        uiD_.data = isolate;
+        if (uv_timer_init(uv_default_loop(), &delayUI_t)) { cout << FN::uiT() << "Errrror: UV delayUI_t init timer failed." << endl; exit(1); }
+        Isolate* isolate = exports->GetIsolate();
+        delayUI_t.data = isolate;
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
@@ -138,14 +138,14 @@ namespace K {
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void delay(double d) {
-        if (uv_timer_stop(&uiD_)) { cout << FN::uiT() << "Errrror: UV uiD_ stop timer failed." << endl; exit(1); }
+      static void setDelay(double d) {
+        if (uv_timer_stop(&delayUI_t)) { cout << FN::uiT() << "Errrror: UV delayUI_t stop timer failed." << endl; exit(1); }
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         if (d) {
-          if (uv_timer_start(&uiD_, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiD start timer failed." << endl; exit(1); }
+          if (uv_timer_start(&delayUI_t, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV delayUI_t uiD start timer failed." << endl; exit(1); }
         } else {
-          if (uv_timer_start(&uiD_, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV uiD_ uiDD start timer failed." << endl; exit(1); }
+          if (uv_timer_start(&delayUI_t, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV delayUI_t uiDD start timer failed." << endl; exit(1); }
         }
       };
     private:

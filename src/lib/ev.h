@@ -3,9 +3,9 @@
 
 namespace K {
   static uv_timer_t exit_t;
-  static void (*evExit)(int code);
   typedef void (*evCb)(json);
-  static map<string, vector<evCb>> ev;
+  static void (*evExit)(int code);
+  static map<mEvent, vector<evCb>> ev;
   class EV {
     public:
       static void main(Local<Object> exports) {
@@ -13,10 +13,11 @@ namespace K {
         signal(SIGINT, quit);
         signal(SIGSEGV, wtf);
         signal(SIGABRT, wtf);
-      }
-      static void evOn(string k, evCb cb) { ev[k].push_back(cb); };
-      static void evUp(string k) { evUp(k, {}); };
-      static void evUp(string k, json o) {
+      };
+      static void on(mEvent k, evCb cb) {
+        ev[k].push_back(cb);
+      };
+      static void up(mEvent k, json o = {}) {
         if (ev.find(k) != ev.end())
           for (vector<evCb>::iterator cb = ev[k].begin(); cb != ev[k].end(); ++cb)
             (*cb)(o);

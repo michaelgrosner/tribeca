@@ -12,7 +12,7 @@ namespace K {
   static string cFname;
   class CF {
     public:
-      static void internal(Local<Object> exports) {
+      static void internal() {
         if (access("package.json", F_OK) != -1) {
           ifstream file_("package.json");
           pkRepo = json::parse(string((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>()));
