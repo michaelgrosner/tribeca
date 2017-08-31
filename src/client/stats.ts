@@ -541,6 +541,7 @@ export class StatsComponent implements OnInit {
   }
 
   private updatePosition = (o: Models.PositionReport) => {
+    if (o === null) return;
     let time = new Date().getTime();
     if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = Models.Currency[o.pair.base];
     if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = Models.Currency[o.pair.quote];
