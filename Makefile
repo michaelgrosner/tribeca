@@ -201,6 +201,7 @@ pub: src/pub app/pub
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
 	@echo Building client bundle file..
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
+	rm app/pub/js/*.js
 	@echo DONE
 
 diff: .git
