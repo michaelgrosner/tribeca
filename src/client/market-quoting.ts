@@ -1,7 +1,7 @@
 import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import moment = require('moment');
 
-import Models = require('../share/models');
+import Models = require('./models');
 import {SubscriberFactory} from './shared_directives';
 
 @Component({

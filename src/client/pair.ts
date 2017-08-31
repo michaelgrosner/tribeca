@@ -1,6 +1,6 @@
 import {NgZone} from '@angular/core';
 
-import Models = require('../share/models');
+import Models = require('./models');
 import Subscribe = require('./subscribe');
 import {FireFactory, SubscriberFactory} from './shared_directives';
 
