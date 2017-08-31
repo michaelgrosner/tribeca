@@ -4,7 +4,6 @@
 namespace K {
   int mgT = 0;
   vector<mGWmt> mGWmt_;
-  json mGWmkt;
   json mGWmktFilter;
   double mgFairValue = 0;
   double mgEwmaL = 0;
@@ -153,8 +152,7 @@ namespace K {
         UI::uiSend(uiTXT::MarketTrade, tradeUp(t));
       };
       static void levelUp(json k) {
-        mGWmkt = k;
-        filter();
+        filter(k);
         UI::uiSend(uiTXT::MarketData, k, true);
       };
       static json tradeUp(mGWmt t) {
@@ -202,8 +200,9 @@ namespace K {
         calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeriods"].get<int>());
         EV::up(mEvent::EWMAProtectionCalculator);
       };
-      static void filter() {
-        mGWmktFilter = mGWmkt;
+      static void filter(json k) {
+        mGWmktFilter = (k.is_null() or k["bids"].is_null() or k["asks"].is_null())
+          ? json{{"bids", {}},{"asks", {}}} : k;
         if (empty()) return;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
