@@ -5,7 +5,7 @@ namespace K {
   static uv_timer_t exit_t;
   typedef void (*evCb)(json);
   static void (*evExit)(int code);
-  static map<mEvent, vector<evCb>> ev;
+  static map<unsigned int, vector<evCb>> ev;
   class EV {
     public:
       static void main(Local<Object> exports) {
@@ -15,11 +15,11 @@ namespace K {
         signal(SIGABRT, wtf);
       };
       static void on(mEvent k, evCb cb) {
-        ev[k].push_back(cb);
+        ev[(unsigned int)k].push_back(cb);
       };
       static void up(mEvent k, json o = {}) {
-        if (ev.find(k) != ev.end())
-          for (vector<evCb>::iterator cb = ev[k].begin(); cb != ev[k].end(); ++cb)
+        if (ev.find((unsigned int)k) != ev.end())
+          for (vector<evCb>::iterator cb = ev[(unsigned int)k].begin(); cb != ev[(unsigned int)k].end(); ++cb)
             (*cb)(o);
       };
       static void end(int code, int T) {
