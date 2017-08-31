@@ -1,5 +1,5 @@
 import assert = require("assert");
-import Models = require("../src/share/models");
+import Models = require("../src/client/models");
 
 describe("EWMATargetPositionCalculator", () => {
     it("Should work", () => {
