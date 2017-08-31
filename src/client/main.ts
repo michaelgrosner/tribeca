@@ -16,7 +16,7 @@ require('highcharts/highcharts-more.js')(Highstock);
 
 import moment = require("moment");
 
-import Models = require('../share/models');
+import Models = require('./models');
 import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 import Pair = require('./pair');

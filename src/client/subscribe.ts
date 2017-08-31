@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import Models = require("../share/models");
+import Models = require("./models");
 
 class KSocket extends WebSocket {
   constructor() {

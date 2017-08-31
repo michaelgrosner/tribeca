@@ -4,7 +4,7 @@ import {AgRendererComponent} from 'ag-grid-angular/main';
 import moment = require('moment');
 
 import Subscribe = require("./subscribe");
-import Models = require("../share/models");
+import Models = require("./models");
 
 @Injectable()
 export class FireFactory {

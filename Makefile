@@ -182,14 +182,14 @@ gdax:
 	sudo mkdir -p /usr/local/etc/stunnel/
 	sudo mv fix.gdax.com.pem /usr/local/etc/stunnel/
 
-server: node_modules/.bin/tsc src/server src/share app
+server: node_modules/.bin/tsc src/server app
 	@echo Building server files..
-	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts src/share/*.ts
+	./node_modules/.bin/tsc --alwaysStrict -t ES6 -m commonjs --outDir app src/server/*.ts
 	@echo DONE
 
-client: node_modules/.bin/tsc src/client src/share app
+client: node_modules/.bin/tsc src/client app
 	@echo Building client dynamic files..
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts src/share/*.ts
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts
 	@echo DONE
 
 pub: src/pub app/pub
