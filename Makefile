@@ -195,7 +195,7 @@ client: node_modules/.bin/tsc src/client app
 pub: src/pub app/pub
 	@echo Building client static files..
 	cp -R src/pub/* app/pub/
-	mkdir app/pub/js/client
+	mkdir -p app/pub/js/client
 	@echo DONE
 
 bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
