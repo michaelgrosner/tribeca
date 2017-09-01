@@ -7,7 +7,7 @@ namespace K {
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
   class DB {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         dbFpath = string("/data/db/K.").append(to_string((int)CF::cfExchange())).append(".").append(to_string(CF::cfBase())).append(".").append(to_string(CF::cfQuote())).append(".db");
         if (sqlite3_open(dbFpath, &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
         cout << FN::uiT() << "DB " << dbFpath << " loaded OK." << endl;

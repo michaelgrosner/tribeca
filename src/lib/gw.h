@@ -9,7 +9,7 @@ namespace K {
   static mConnectivity gwEOConn = mConnectivity::Disconnected;
   class GW {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         evExit = happyEnding;
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwPos_t)) { cout << FN::uiT() << "Errrror: GW gwPos_t init timer failed." << endl; exit(1); }

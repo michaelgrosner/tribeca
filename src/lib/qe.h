@@ -16,7 +16,7 @@ namespace K {
   mConnectivity gwConn_ = mConnectivity::Disconnected;
   class QE {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &qeCalc_t)) { cout << FN::uiT() << "Errrror: QE qeCalc_t init timer failed." << endl; exit(1); }

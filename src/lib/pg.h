@@ -13,7 +13,7 @@ namespace K {
   string pgSideAPR_ = "!=";
   class PG {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         load();
         EV::on(mEvent::PositionGateway, [](json k) {
           posUp(k);

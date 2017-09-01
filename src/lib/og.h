@@ -9,7 +9,7 @@ namespace K {
   map<string, string> allOrdersIds;
   class OG {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         load();
         thread([&]() {
           if (uv_timer_init(uv_default_loop(), &gwCancelAll_t)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_t init timer failed." << endl; exit(1); }
