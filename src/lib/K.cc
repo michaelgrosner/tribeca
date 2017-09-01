@@ -31,8 +31,6 @@
 #include "quickfix/fix42/OrderCancelReject.h"
 
 #include <node.h>
-#include <node_buffer.h>
-#include <node_object_wrap.h>
 
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -66,15 +64,15 @@ using namespace dec;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;namespace K {;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;void main(Local<Object> exports) {;;
-;;;;;;EV::main(exports);;;;;;;;;;;;;;;;;
+;;;;;;EV::main();;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;UI::main(exports);;    ;;;;    ;;;
-;;;;;;DB::main(exports);;    ;;    ;;;;;
-;;;;;;QP::main(exports);;        ;;;;;;;
-;;;;;;OG::main(exports);;        ;;;;;;;
-;;;;;;MG::main(exports);;    ;;    ;;;;;
-;;;;;;PG::main(exports);;    ;;;;    ;;;
-;;;;;;QE::main(exports);;    ;;;;    ;;;
-;;;;;;GW::main(exports);;;;;;;;;;    ;;;
+;;;;;;DB::main();;;;;;;;;    ;;    ;;;;;
+;;;;;;QP::main();;;;;;;;;        ;;;;;;;
+;;;;;;OG::main();;;;;;;;;        ;;;;;;;
+;;;;;;MG::main();;;;;;;;;    ;;    ;;;;;
+;;;;;;PG::main();;;;;;;;;    ;;;;    ;;;
+;;;;;;QE::main();;;;;;;;;    ;;;;    ;;;
+;;;;;;GW::main();;;;;;;;;;;;;;;;;    ;;;
 ;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

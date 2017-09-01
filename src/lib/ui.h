@@ -20,6 +20,7 @@ namespace K {
   class UI {
     public:
       static void main(Local<Object> exports) {
+        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         CF::internal();
         int port = stoi(CF::cfString("WebClientListenPort"));
         string name = CF::cfString("WebClientUsername");
@@ -117,7 +118,6 @@ namespace K {
         UI::uiHand(uiTXT::Notepad, &onHandNote);
         UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
-        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
         CF::external();
       };
       static void uiSnap(uiTXT k, uiCb cb) {

@@ -26,7 +26,7 @@ namespace K {
   double mgTargetPos = 0;
   class MG {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         load();
         EV::on(mEvent::MarketTradeGateway, [](json k) {
           tradeUp(k);

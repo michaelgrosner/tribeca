@@ -8,7 +8,7 @@ namespace K {
   static map<unsigned int, vector<evCb>> ev;
   class EV {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         evExit = happyEnding;
         signal(SIGINT, quit);
         signal(SIGSEGV, wtf);

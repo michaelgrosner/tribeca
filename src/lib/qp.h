@@ -56,7 +56,7 @@ namespace K {
   };
   class QP {
     public:
-      static void main(Local<Object> exports) {
+      static void main() {
         load();
         UI::setDelay(qpRepo["delayUI"].get<double>());
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
