@@ -33,9 +33,10 @@ namespace K {
         system("git fetch");
         string k = FN::output("git --no-pager log --oneline @..@{u}");
         int commits = count(k.begin(), k.end(), '\n');
-        cout << "K version " << (!commits ? "0day"
-          : string("-").append(to_string(commits)).append("commit").append(commits > 1?"s:\n":":\n").append(k)
-        ) << endl;
+        cout << "K version " << (!commits ? "0day\n"
+          : string("-").append(to_string(commits)).append("commit")
+            .append(commits > 1?"s:\n":":\n").append(k)
+        );
       };
       static void happyEnding(int code) {
         cout << FN::uiT();
