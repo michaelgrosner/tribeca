@@ -163,7 +163,8 @@ namespace K {
       static void happyEnding(int code) {
         cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
-        EV::end(code, 2100);
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " cancell all open orders DONE" << endl;
+        EV::end(code);
       };
   };
 }
