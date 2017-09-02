@@ -3,14 +3,15 @@
 
 namespace K {
   unsigned int qeT = 0;
-  unsigned int qeTD = 0;
-  uv_timer_t delayAPI_t;
+  unsigned long qeNextT = 0;
+  unsigned long qeSendT = 0;
   json qeQuote;
   json qeStatus;
   mQuoteStatus qeBidStatus = mQuoteStatus::MissingData;
   mQuoteStatus qeAskStatus = mQuoteStatus::MissingData;
   typedef json (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
+  map<mSide, json> qeNextQuote;
   bool gwState_ = false;
   mConnectivity gwConn_ = mConnectivity::Disconnected;
   class QE {
@@ -27,7 +28,6 @@ namespace K {
             this_thread::sleep_for(chrono::seconds(1));
           }
         }).detach();
-        if (uv_timer_init(uv_default_loop(), &delayAPI_t)) { cout << FN::uiT() << "Errrror: UV delayAPI_t init timer failed." << endl; exit(1); }
         EV::on(mEv::ExchangeConnect, [](json k) {
           gwState_ = k["state"].get<bool>();
           gwConn_ = (mConnectivity)k["status"].get<int>();
@@ -70,10 +70,6 @@ namespace K {
       };
       static json onSnap(json z) {
         return { qeStatus };
-      };
-      static void qeD(uv_timer_t *handle) {
-        map<mSide, json>* k = (map<mSide, json>*)handle->data;
-        start(k->begin()->first, k->begin()->second);
       };
       static void calcQuote() {
         qeBidStatus = mQuoteStatus::MissingData;
@@ -488,17 +484,25 @@ namespace K {
       };
       static void start(mSide side, json q) {
         if (qpRepo["delayAPI"].get<double>()) {
-          if (uv_timer_stop(&delayAPI_t)) { cout << FN::uiT() << "Errrror: QE delayAPI_t stop timer failed." << endl; exit(1); }
-          unsigned long nextStart = qeTD + (6e+4/qpRepo["delayAPI"].get<double>());
-          unsigned long diffStart = nextStart - FN::T();
-          if (diffStart>0) {
-            map<mSide, json> k;
-            k[side] = q;
-            delayAPI_t.data = &k;
-            if (uv_timer_start(&delayAPI_t, qeD, diffStart, 0)) { cout << FN::uiT() << "Errrror: UV delayAPI_t start timer failed." << endl; exit(1); }
+          unsigned long nextStart = qeNextT + (6e+4/qpRepo["delayAPI"].get<double>());
+          if ((double)nextStart - (double)FN::T() > 0) {
+            qeNextQuote.clear();
+            qeNextQuote[side] = q;
+            thread([&]() {
+              unsigned int qeSendT_ = ++qeSendT;
+              unsigned long nextStart_ = nextStart;
+              while (qeSendT_ == qeSendT) {
+                if ((double)nextStart_ - (double)FN::T() > 0)
+                  this_thread::sleep_for(chrono::milliseconds(100));
+                else {
+                  start(qeNextQuote.begin()->first, qeNextQuote.begin()->second);
+                  break;
+                }
+              }
+            }).detach();
             return;
           }
-          qeTD = FN::T();
+          qeNextT = FN::T();
         }
         double price = q["price"].get<double>();
         multimap<double, json> orderSide = orderCacheSide(side);
