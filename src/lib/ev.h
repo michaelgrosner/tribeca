@@ -32,7 +32,7 @@ namespace K {
       static void gitReversedVersion() {
         system("git fetch");
         string k = changelog();
-        int commits = count(k.begin(), k.end(), '\n');
+        unsigned int commits = count(k.begin(), k.end(), '\n');
         cout << "K version: " << (!commits ? "0day.\n"
           : string("-").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(k)
@@ -40,7 +40,7 @@ namespace K {
       };
       static void happyEnding(int code) {
         cout << FN::uiT();
-        for(int i = 0; i < 21; ++i)
+        for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << endl;
         end(EXIT_FAILURE);
