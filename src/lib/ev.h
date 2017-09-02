@@ -14,14 +14,14 @@ namespace K {
         signal(SIGABRT, wtf);
         gitReversedVersion();
       };
-      static void on(mEvent k, evCb cb) {
+      static void on(mEv k, evCb cb) {
         ev[(unsigned int)k].push_back(cb);
       };
-      static void up(mEvent k, json o = {}) {
-        unsigned int event = (unsigned int)k;
-        if (ev.find(event) == ev.end()) return;
-        vector<evCb>::iterator cb = ev[event].begin();
-        for (;cb != ev[event].end(); ++cb)
+      static void up(mEv k, json o = {}) {
+        unsigned int kEv = (unsigned int)k;
+        if (ev.find(kEv) == ev.end()) return;
+        vector<evCb>::iterator cb = ev[kEv].begin();
+        for (;cb != ev[kEv].end(); ++cb)
           (*cb)(o);
       };
       static void end(int code) {
@@ -52,7 +52,7 @@ namespace K {
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
-        cout << FN::uiT() << "Errrror: EV signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found)" << endl;
+        cout << FN::uiT() << "Errrror: EV signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found)." << endl;
         if (latest()) report(); else upgrade();
         evExit(EXIT_FAILURE);
       };

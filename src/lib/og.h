@@ -18,7 +18,7 @@ namespace K {
               gW->cancelAll();
           }, 0, 300000)) { cout << FN::uiT() << "Errrror: GW gwCancelAll_t start timer failed." << endl; exit(1); }
         }).detach();
-        EV::on(mEvent::OrderUpdateGateway, [](json k) {
+        EV::on(mEv::OrderUpdateGateway, [](json k) {
           updateOrderState(k);
         });
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
@@ -142,7 +142,7 @@ namespace K {
             if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
           }
         }
-        EV::up(mEvent::OrderUpdateBroker, o);
+        EV::up(mEv::OrderUpdateBroker, o);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
         if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
           toHistory(o);
@@ -214,7 +214,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        EV::up(mEvent::OrderTradeBroker, trade);
+        EV::up(mEv::OrderTradeBroker, trade);
         if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
           double widthPong = qpRepo["widthPercentage"].get<bool>()
             ? qpRepo["widthPongPercentage"].get<double>() * trade["price"].get<double>() / 100

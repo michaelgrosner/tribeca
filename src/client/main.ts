@@ -766,7 +766,7 @@ class ClientComponent implements OnInit {
     this.homepage = pa.homepage;
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
-    console.log("%cK %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
+    console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"\n%c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
   }
 }
 

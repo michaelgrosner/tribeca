@@ -28,10 +28,10 @@ namespace K {
     public:
       static void main() {
         load();
-        EV::on(mEvent::MarketTradeGateway, [](json k) {
+        EV::on(mEv::MarketTradeGateway, [](json k) {
           tradeUp(k);
         });
-        EV::on(mEvent::MarketDataGateway, [](json o) {
+        EV::on(mEv::MarketDataGateway, [](json o) {
           levelUp(o);
         });
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
@@ -62,7 +62,7 @@ namespace K {
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        EV::up(mEvent::PositionGateway);
+        EV::up(mEv::PositionGateway);
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
@@ -148,7 +148,7 @@ namespace K {
         );
         mGWmt_.push_back(t);
         if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
-        EV::up(mEvent::MarketTrade);
+        EV::up(mEv::MarketTrade);
         UI::uiSend(uiTXT::MarketTrade, tradeUp(t));
       };
       static void levelUp(json k) {
@@ -171,7 +171,7 @@ namespace K {
         calcEwma(&mgEwmaM, qpRepo["mediumEwmaPeriods"].get<int>());
         calcEwma(&mgEwmaS, qpRepo["shortEwmaPeriods"].get<int>());
         calcTargetPos();
-        EV::up(mEvent::PositionBroker);
+        EV::up(mEv::PositionBroker);
         UI::uiSend(uiTXT::EWMAChart, {
           {"stdevWidth", {
             {"fv", mgStdevFV},
@@ -198,7 +198,7 @@ namespace K {
       };
       static void ewmaPUp() {
         calcEwma(&mgEwmaP, qpRepo["quotingEwmaProtectionPeriods"].get<int>());
-        EV::up(mEvent::EWMAProtectionCalculator);
+        EV::up(mEv::EWMAProtectionCalculator);
       };
       static void filter(json k) {
         mGWmktFilter = (k.is_null() or k["bids"].is_null() or k["asks"].is_null())
@@ -208,7 +208,7 @@ namespace K {
           filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
         if (!empty()) {
           calcFairValue();
-          EV::up(mEvent::FilteredMarket);
+          EV::up(mEv::FilteredMarket);
         }
       };
       static void filter(string k, json o) {

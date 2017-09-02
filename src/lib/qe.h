@@ -29,30 +29,30 @@ namespace K {
           }, 0, 1000)) { cout << FN::uiT() << "Errrror: QE qeCalc_t start timer failed." << endl; exit(1); }
         }).detach();
         if (uv_timer_init(uv_default_loop(), &delayAPI_t)) { cout << FN::uiT() << "Errrror: UV delayAPI_t init timer failed." << endl; exit(1); }
-        EV::on(mEvent::ExchangeConnect, [](json k) {
+        EV::on(mEv::ExchangeConnect, [](json k) {
           gwState_ = k["state"].get<bool>();
           gwConn_ = (mConnectivity)k["status"].get<int>();
           send();
         });
-        EV::on(mEvent::QuotingParameters, [](json k) {
+        EV::on(mEv::QuotingParameters, [](json k) {
           MG::calcFairValue();
           PG::calcTargetBasePos();
           PG::calcSafety();
           calcQuote();
           UI::setDelay(k["delayUI"].get<double>());
         });
-        EV::on(mEvent::OrderTradeBroker, [](json k) {
+        EV::on(mEv::OrderTradeBroker, [](json k) {
           PG::addTrade(k);
           PG::calcSafety();
           calcQuote();
         });
-        EV::on(mEvent::EWMAProtectionCalculator, [](json k) {
+        EV::on(mEv::EWMAProtectionCalculator, [](json k) {
           calcQuote();
         });
-        EV::on(mEvent::FilteredMarket, [](json k) {
+        EV::on(mEv::FilteredMarket, [](json k) {
           calcQuote();
         });
-        EV::on(mEvent::TargetPosition, [](json k) {
+        EV::on(mEv::TargetPosition, [](json k) {
           calcQuote();
         });
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);

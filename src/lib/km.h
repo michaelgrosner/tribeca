@@ -30,7 +30,7 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  enum class mEvent: unsigned int {
+  enum class mEv: unsigned int {
     GatewayMarketConnect, GatewayOrderConnect, ExchangeConnect, MarketDataGateway,
     PositionGateway, MarketTradeGateway, OrderUpdateGateway, TargetPosition,
     OrderUpdateBroker, PositionBroker, OrderTradeBroker, QuotingParameters,
