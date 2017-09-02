@@ -2,7 +2,6 @@
 #define K_GW_H_
 
 namespace K {
-  static uv_timer_t gw_t;
   static bool gwState = false;
   static mConnectivity gwConn = mConnectivity::Disconnected;
   static mConnectivity gwMDConn = mConnectivity::Disconnected;
@@ -13,14 +12,14 @@ namespace K {
       static void main() {
         evExit = happyEnding;
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &gw_t)) { cout << FN::uiT() << "Errrror: GW gw_t init timer failed." << endl; exit(1); }
-          if (uv_timer_start(&gw_t, [](uv_timer_t *handle) {
+          while (true) {
             if (qpRepo["cancelOrdersAuto"].get<bool>() and ++gwCancelAll == 20) {
               gwCancelAll = 0;
               gW->cancelAll();
             }
             gw->pos();
-          }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gw_t start timer failed." << endl; exit(1); }
+            this_thread::sleep_for(chrono::seconds(15));
+          }
         }).detach();
         EV::on(mEv::GatewayMarketConnect, [](json k) {
           mConnectivity conn = (mConnectivity)k["/0"_json_pointer].get<int>();
