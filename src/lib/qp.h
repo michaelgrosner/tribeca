@@ -58,7 +58,7 @@ namespace K {
     public:
       static void main() {
         load();
-        UI::setDelay();
+        UI::delay();
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
       }
@@ -104,7 +104,7 @@ namespace K {
           clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
           EV::up(mEv::QuotingParameters, k);
-          UI::setDelay();
+          UI::delay();
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};

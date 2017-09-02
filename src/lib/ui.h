@@ -135,17 +135,17 @@ namespace K {
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void setDelay() {
+      static void delay() {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         thread([&]() {
           unsigned int appPushT_ = ++appPushT;
-          double delay = qpRepo["delayUI"].get<double>();
-          int delay_ = delay ? (int)(delay*1000) : 60000;
+          double k = qpRepo["delayUI"].get<double>();
+          int timeout = k ? (int)(k*1e+3) : 6e+4;
           while (appPushT_ == appPushT) {
-            if (delay) appPush();
+            if (k) appPush();
             else appState();
-            this_thread::sleep_for(chrono::milliseconds(delay_));
+            this_thread::sleep_for(chrono::milliseconds(timeout));
           }
         }).detach();
       };
