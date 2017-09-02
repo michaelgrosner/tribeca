@@ -8,12 +8,13 @@ namespace K {
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static uv_check_t loop;
-  static uv_timer_t delayUI_t;
   static Persistent<Function> noop;
-  static int iOSR60 = 0;
+  static unsigned int iOSR60 = 0;
   static bool uiOPT = true;
   static unsigned long uiMDT = 0;
-  static unsigned long uiDDT = 0;
+  static unsigned long appStateT = 0;
+  static unsigned int appPushT = 0;
+  static unsigned int appPushT_ = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
   static json uiSTATE;
@@ -112,7 +113,6 @@ namespace K {
         else if (hub.listen(port, nullptr, 0, uiGroup))
           cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << "." << endl;
         else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
-        if (uv_timer_init(uv_default_loop(), &delayUI_t)) { cout << FN::uiT() << "Errrror: UV delayUI_t init timer failed." << endl; exit(1); }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
@@ -136,15 +136,19 @@ namespace K {
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void setDelay(double d) {
-        if (uv_timer_stop(&delayUI_t)) { cout << FN::uiT() << "Errrror: UV delayUI_t stop timer failed." << endl; exit(1); }
+      static void setDelay() {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
-        if (d) {
-          if (uv_timer_start(&delayUI_t, uiD, 0, d * 1000)) { cout << FN::uiT() << "Errrror: UV delayUI_t uiD start timer failed." << endl; exit(1); }
-        } else {
-          if (uv_timer_start(&delayUI_t, uiDD, 0, 60000)) { cout << FN::uiT() << "Errrror: UV delayUI_t uiDD start timer failed." << endl; exit(1); }
-        }
+        thread([&]() {
+          unsigned int appPushT_ = ++appPushT;
+          double delay = qpRepo["delayUI"].get<double>();
+          int delay_ = delay ? (int)(delay*1000) : 60000;
+          while (appPushT_ == appPushT) {
+            if (delay) appPush();
+            else appState();
+            this_thread::sleep_for(chrono::milliseconds(delay_));
+          }
+        }).detach();
       };
     private:
       static json onSnapApp(json z) {
@@ -188,7 +192,7 @@ namespace K {
         }
         sess->D[k].push_back(o);
       };
-      static void uiDD(uv_timer_t *handle) {
+      static void appState() {
         time_t rawtime;
         time(&rawtime);
         struct stat st;
@@ -202,7 +206,7 @@ namespace K {
         iOSR60 = 0;
         uiSend(uiTXT::ApplicationState, uiSTATE);
       };
-      static void uiD(uv_timer_t *handle) {
+      static void appPush() {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
@@ -224,9 +228,9 @@ namespace K {
             uiUp(uiTXT::OrderStatusReports, k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
-        if (uiDDT+60000 > FN::T()) return;
-        uiDDT = FN::T();
-        uiDD(handle);
+        if (appStateT+60000 > FN::T()) return;
+        appStateT = FN::T();
+        appState();
       };
       static void uiLoop(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
