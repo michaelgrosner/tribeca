@@ -15,13 +15,13 @@ namespace K {
     public:
       static void main() {
         load();
-        EV::on(mEvent::PositionGateway, [](json k) {
+        EV::on(mEv::PositionGateway, [](json k) {
           posUp(k);
         });
-        EV::on(mEvent::OrderUpdateBroker, [](json k) {
+        EV::on(mEv::OrderUpdateBroker, [](json k) {
           orderUp(k);
         });
-        EV::on(mEvent::PositionBroker, [](json k) {
+        EV::on(mEv::PositionBroker, [](json k) {
           calcTargetBasePos();
         });
         UI::uiSnap(uiTXT::Position, &onSnapPos);
@@ -50,7 +50,7 @@ namespace K {
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
-        EV::up(mEvent::TargetPosition);
+        EV::up(mEv::TargetPosition);
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);

@@ -103,7 +103,7 @@ namespace K {
           qpRepo = k;
           clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
-          EV::up(mEvent::QuotingParameters, k);
+          EV::up(mEv::QuotingParameters, k);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
         return {};

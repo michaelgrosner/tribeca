@@ -17,13 +17,13 @@ namespace K {
             gw->pos();
           }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_t start timer failed." << endl; exit(1); }
         }).detach();
-        EV::on(mEvent::GatewayMarketConnect, [](json k) {
+        EV::on(mEv::GatewayMarketConnect, [](json k) {
           mConnectivity conn = (mConnectivity)k["/0"_json_pointer].get<int>();
           _gwCon_(mGatewayType::MarketData, conn);
           if (conn == mConnectivity::Disconnected)
-            EV::up(mEvent::MarketDataGateway);
+            EV::up(mEv::MarketDataGateway);
         });
-        EV::on(mEvent::GatewayOrderConnect, [](json k) {
+        EV::on(mEv::GatewayOrderConnect, [](json k) {
           _gwCon_(mGatewayType::OrderEntry, (mConnectivity)k["/0"_json_pointer].get<int>());
         });
         gw->book();
@@ -34,14 +34,14 @@ namespace K {
         UI::uiHand(uiTXT::ActiveState, &onHandState);
       };
       static void gwPosUp(mGWp k) {
-        EV::up(mEvent::PositionGateway, {
+        EV::up(mEv::PositionGateway, {
           {"amount", k.amount},
           {"heldAmount", k.held},
           {"currency", k.currency}
         });
       };
       static void gwBookUp(mConnectivity k) {
-        EV::up(mEvent::GatewayMarketConnect, {(int)k});
+        EV::up(mEv::GatewayMarketConnect, {(int)k});
       };
       static void gwLevelUp(mGWbls k) {
         json b;
@@ -50,7 +50,7 @@ namespace K {
           b.push_back({{"price", (*it).price}, {"size", (*it).size}});
         for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
           a.push_back({{"price", (*it).price}, {"size", (*it).size}});
-        EV::up(mEvent::MarketDataGateway, {
+        EV::up(mEv::MarketDataGateway, {
           {"bids", b},
           {"asks", a}
         });
@@ -60,14 +60,14 @@ namespace K {
           gwTradeUp(*it);
       }
       static void gwTradeUp(mGWbt k) {
-        EV::up(mEvent::MarketTradeGateway, {
+        EV::up(mEv::MarketTradeGateway, {
           {"price", k.price},
           {"size", k.size},
           {"make_side", (int)k.make_side}
         });
       };
       static void gwOrderUp(mConnectivity k) {
-        EV::up(mEvent::GatewayOrderConnect, {(int)k});
+        EV::up(mEv::GatewayOrderConnect, {(int)k});
       };
       static void gwOrderUp(mGWos k) {
         json o;
@@ -76,10 +76,10 @@ namespace K {
         o["orderStatus"] = (int)k.oS;
         if (k.oS == mORS::Cancelled) o["lastQuantity"] = 0;
         o["time"] = FN::T();
-        EV::up(mEvent::OrderUpdateGateway, o);
+        EV::up(mEv::OrderUpdateGateway, o);
       };
       static void gwOrderUp(mGWol k) {
-        EV::up(mEvent::OrderUpdateGateway, {
+        EV::up(mEv::OrderUpdateGateway, {
           {"orderId", k.oI},
           {"orderStatus", (int)k.oS},
           {"lastPrice", k.oP},
@@ -97,7 +97,7 @@ namespace K {
         o["lastQuantity"] = k.oQ;
         o["side"] = (int)k.oS;
         o["time"] = FN::T();
-        EV::up(mEvent::OrderUpdateGateway, o);
+        EV::up(mEv::OrderUpdateGateway, o);
       };
       static void gwOrderUp(mGWoa k) {
         json o;
@@ -108,7 +108,7 @@ namespace K {
         o["lastQuantity"] = k.oLQ;
         o["leavesQuantity"] = k.oQ;
         o["time"] = FN::T();
-        EV::up(mEvent::OrderUpdateGateway, o);
+        EV::up(mEv::OrderUpdateGateway, o);
       };
     private:
       static json onSnapProduct(json z) {
@@ -155,7 +155,7 @@ namespace K {
           cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
           UI::uiSend(uiTXT::ActiveState, {{"state", gwState}});
         }
-        EV::up(mEvent::ExchangeConnect, {
+        EV::up(mEv::ExchangeConnect, {
           {"state", gwState},
           {"status", (int)gwConn}
         });
