@@ -9,7 +9,6 @@ namespace K {
   json qeStatus;
   mQuoteStatus qeBidStatus = mQuoteStatus::MissingData;
   mQuoteStatus qeAskStatus = mQuoteStatus::MissingData;
-  uv_timer_t qeCalc_t;
   typedef json (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
   bool gwState_ = false;
@@ -19,14 +18,14 @@ namespace K {
       static void main() {
         load();
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &qeCalc_t)) { cout << FN::uiT() << "Errrror: QE qeCalc_t init timer failed." << endl; exit(1); }
-          if (uv_timer_start(&qeCalc_t, [](uv_timer_t *handle) {
+          while (true) {
             if (mgFairValue) {
               MG::calcStats();
               PG::calcSafety();
               calcQuote();
             } else cout << FN::uiT() << "Unable to calculate quote, missing fair value." << endl;
-          }, 0, 1000)) { cout << FN::uiT() << "Errrror: QE qeCalc_t start timer failed." << endl; exit(1); }
+            this_thread::sleep_for(chrono::seconds(1));
+          }
         }).detach();
         if (uv_timer_init(uv_default_loop(), &delayAPI_t)) { cout << FN::uiT() << "Errrror: UV delayAPI_t init timer failed." << endl; exit(1); }
         EV::on(mEv::ExchangeConnect, [](json k) {
@@ -39,7 +38,6 @@ namespace K {
           PG::calcTargetBasePos();
           PG::calcSafety();
           calcQuote();
-          UI::setDelay(k["delayUI"].get<double>());
         });
         EV::on(mEv::OrderTradeBroker, [](json k) {
           PG::addTrade(k);
