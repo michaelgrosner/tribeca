@@ -14,7 +14,6 @@ namespace K {
   static unsigned long uiMDT = 0;
   static unsigned long appStateT = 0;
   static unsigned int appPushT = 0;
-  static unsigned int appPushT_ = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
   static json uiSTATE;
