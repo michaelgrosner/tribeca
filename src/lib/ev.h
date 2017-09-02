@@ -31,7 +31,7 @@ namespace K {
     private:
       static void gitReversedVersion() {
         system("git fetch");
-        string k = FN::output("git --no-pager log --oneline @..@{u}");
+        string k = changelog();
         int commits = count(k.begin(), k.end(), '\n');
         cout << "K version " << (!commits ? "0day\n"
           : string("-").append(to_string(commits)).append("commit")
@@ -60,10 +60,13 @@ namespace K {
       static bool latest() {
         return FN::output("git rev-parse @") == FN::output("git rev-parse @{u}");
       }
+      static string changelog() {
+        return FN::output("git --no-pager log --oneline @..@{u}");
+      }
       static void upgrade() {
         cout << endl << "Hint!"
           << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
-          << endl << FN::output("git --no-pager log --oneline @..@{u}")
+          << endl << changelog()
           << endl << "If you agree, consider to run \"make latest\" prior further execution."
           << endl << endl;
       };
