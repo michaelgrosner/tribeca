@@ -2,20 +2,25 @@
 #define K_GW_H_
 
 namespace K {
-  static uv_timer_t gwPos_t;
+  static uv_timer_t gw_t;
   static bool gwState = false;
   static mConnectivity gwConn = mConnectivity::Disconnected;
   static mConnectivity gwMDConn = mConnectivity::Disconnected;
   static mConnectivity gwEOConn = mConnectivity::Disconnected;
+  static unsigned int gwCancelAll = 0;
   class GW {
     public:
       static void main() {
         evExit = happyEnding;
         thread([&]() {
-          if (uv_timer_init(uv_default_loop(), &gwPos_t)) { cout << FN::uiT() << "Errrror: GW gwPos_t init timer failed." << endl; exit(1); }
-          if (uv_timer_start(&gwPos_t, [](uv_timer_t *handle) {
+          if (uv_timer_init(uv_default_loop(), &gw_t)) { cout << FN::uiT() << "Errrror: GW gw_t init timer failed." << endl; exit(1); }
+          if (uv_timer_start(&gw_t, [](uv_timer_t *handle) {
+            if (qpRepo["cancelOrdersAuto"].get<bool>() and ++gwCancelAll == 20) {
+              gwCancelAll = 0;
+              gW->cancelAll();
+            }
             gw->pos();
-          }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gwPos_t start timer failed." << endl; exit(1); }
+          }, 0, 15000)) { cout << FN::uiT() << "Errrror: GW gw_t start timer failed." << endl; exit(1); }
         }).detach();
         EV::on(mEv::GatewayMarketConnect, [](json k) {
           mConnectivity conn = (mConnectivity)k["/0"_json_pointer].get<int>();
