@@ -53,8 +53,14 @@ namespace K {
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
-        cout << FN::uiT() << "Errrror: EV signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found)." << endl;
-        if (latest()) report(); else upgrade();
+        cout << FN::uiT() << "Errrror: Signal " << sig << " "  << strsignal(sig);
+        if (latest()) {
+          cout << " (Three-Headed Monkey found)." << endl;
+          report();
+        } else {
+          cout << " (deprecated K version found)." << endl;
+          upgrade();
+        }
         evExit(EXIT_FAILURE);
       };
       static bool latest() {
@@ -67,7 +73,7 @@ namespace K {
         cout << endl << "Hint!"
           << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
           << endl << changelog()
-          << endl << "If you agree, consider to run \"make latest\" prior further execution."
+          << endl << "If you agree, consider to run \"make latest\" prior further executions."
           << endl << endl;
       };
       static void report() {
