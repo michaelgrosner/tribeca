@@ -2,10 +2,9 @@
 #define K_EV_H_
 
 namespace K {
-  static uv_timer_t exit_t;
   typedef void (*evCb)(json);
-  static void (*evExit)(int code);
   static map<unsigned int, vector<evCb>> ev;
+  static void (*evExit)(int code);
   class EV {
     public:
       static void main() {
@@ -13,48 +12,67 @@ namespace K {
         signal(SIGINT, quit);
         signal(SIGSEGV, wtf);
         signal(SIGABRT, wtf);
+        gitReversedVersion();
       };
       static void on(mEvent k, evCb cb) {
         ev[(unsigned int)k].push_back(cb);
       };
       static void up(mEvent k, json o = {}) {
-        if (ev.find((unsigned int)k) != ev.end())
-          for (vector<evCb>::iterator cb = ev[(unsigned int)k].begin(); cb != ev[(unsigned int)k].end(); ++cb)
-            (*cb)(o);
+        unsigned int event = (unsigned int)k;
+        if (ev.find(event) == ev.end()) return;
+        vector<evCb>::iterator cb = ev[event].begin();
+        for (;cb != ev[event].end(); ++cb)
+          (*cb)(o);
       };
-      static void end(int code, int T) {
-        if (uv_timer_init(uv_default_loop(), &exit_t)) { cout << FN::uiT() << "Errrror: EV exit_t init failed." << endl; exit(1); }
-        exit_t.data = &code;
-        if (uv_timer_start(&exit_t, [](uv_timer_t *handle) {
-          int* code = (int*)handle->data;
-          cout << FN::uiT() << "K exit code " << to_string(*code) << "." << endl;
-          exit(*code);
-        }, T, 0)) { cout << FN::uiT() << "Errrror: EV exit_t start failed." << endl; exit(1); }
+      static void end(int code) {
+        cout << FN::uiT() << "K exit code " << to_string(code) << "." << endl;
+        exit(code);
       };
     private:
+      static void gitReversedVersion() {
+        system("git fetch");
+        string k = FN::output("git --no-pager log --oneline @..@{u}");
+        int commits = count(k.begin(), k.end(), '\n');
+        cout << "K version " << (!commits ? "0day"
+          : string("-").append(to_string(commits)).append("commit").append(commits > 1?"s:\n":":\n").append(k)
+        ) << endl;
+      };
       static void happyEnding(int code) {
         cout << FN::uiT();
         for(int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << endl;
-        end(code, 0);
+        end(EXIT_FAILURE);
       };
       static void quit(int sig) {
         cout << endl << FN::uiT() << "Excellent decision! ";
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         if (k["/value/joke"_json_pointer].is_string())
           cout << k["/value/joke"_json_pointer].get<string>() << endl;
-        evExit(0);
+        evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
+        cout << FN::uiT() << "Errrror: EV signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found)" << endl;
+        if (latest()) report(); else upgrade();
+        evExit(EXIT_FAILURE);
+      };
+      static bool latest() {
+        return FN::output("git rev-parse @") == FN::output("git rev-parse @{u}");
+      }
+      static void upgrade() {
+        cout << endl << "Hint!"
+          << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
+          << endl << FN::output("git --no-pager log --oneline @..@{u}")
+          << endl << "If you agree, consider to run \"make latest\" prior further execution."
+          << endl << endl;
+      };
+      static void report() {
         void *k[69];
-        cout << FN::uiT() << "Errrror: EV signal " << sig << " "  << strsignal(sig) << " (Three-Headed Monkey found):" << endl;
         backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
         cout << endl << "Yikes!"
-             << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
-             << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-             << endl << endl;
-        evExit(1);
+          << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
+          << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+          << endl << endl;
       };
   };
 }
