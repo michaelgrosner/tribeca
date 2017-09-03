@@ -38,7 +38,6 @@
 #include <uWS.h>
 
 using namespace std;
-using namespace v8;
 
 #include "png.h"
 #include "json.h"
@@ -63,7 +62,7 @@ using namespace dec;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;namespace K {;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;void main(Local<Object> exports) {;;
+;;;;void main(v8::Local<v8::Object> exports) {;;
 ;;;;;;EV::main();;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;UI::main();;;;;    ;;;;    ;;;;;;;
 ;;;;;;DB::main();;;;;    ;;    ;;;;;;;;;
