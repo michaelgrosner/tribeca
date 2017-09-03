@@ -37,7 +37,6 @@ namespace K {
           : string("-").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(k)
         );
-        if (commits) this_thread::sleep_for(chrono::seconds(3));
       };
       static void happyEnding(int code) {
         cout << FN::uiT();
