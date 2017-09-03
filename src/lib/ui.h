@@ -7,8 +7,6 @@ namespace K {
   typedef json (*uiCb)(json);
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  static uv_check_t loop;
-  static Persistent<Function> noop;
   static unsigned int iOSR60 = 0;
   static bool uiOPT = true;
   static unsigned long uiMDT = 0;
@@ -19,8 +17,7 @@ namespace K {
   static json uiSTATE;
   class UI {
     public:
-      static void main(Local<Object> exports) {
-        NODE_SET_METHOD(exports, "uiLoop", UI::uiLoop);
+      static void main() {
         CF::internal();
         int port = stoi(CF::cfString("WebClientListenPort"));
         string name = CF::cfString("WebClientUsername");
@@ -230,18 +227,6 @@ namespace K {
         if (appStateT+60000 > FN::T()) return;
         appStateT = FN::T();
         appState();
-      };
-      static void uiLoop(const FunctionCallbackInfo<Value> &args) {
-        Isolate* isolate = args.GetIsolate();
-        noop.Reset(isolate, Local<Function>::Cast(args[0]));
-        uv_check_init((uv_loop_t *) hub.getLoop(), &loop);
-        loop.data = isolate;
-        uv_check_start(&loop, [](uv_check_t *loop) {
-          Isolate *isolate = (Isolate *) loop->data;
-          HandleScope hs(isolate);
-          node::MakeCallback(isolate, isolate->GetCurrentContext()->Global(), Local<Function>::New(isolate, noop), 0, nullptr);
-        });
-        uv_unref((uv_handle_t *) &loop);
       };
   };
 }
