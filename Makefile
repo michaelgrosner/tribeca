@@ -81,7 +81,7 @@ curl: build
 	test -d build/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build && cd build/curl-$(V_CURL) && ./configure --enable-shared --disable-static --prefix=/tmp/curl --disable-ldap --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl && make)
 
 openssl: build
-	test -d build/openssl-$(V_SSL) || (curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build && cd build/openssl-$(V_SSL) && ./config -fPIC --prefix=/usr/local --openssldir=/usr/local/ssl && make && make install)
+	test -d build/openssl-$(V_SSL) || (curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build && cd build/openssl-$(V_SSL) && ./config -fPIC --prefix=/usr/local --openssldir=/usr/local/ssl && make && sudo make install)
 
 json: build
 	test -f build/json-$(V_JSON)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp -o build/json-$(V_JSON)/json.h)
