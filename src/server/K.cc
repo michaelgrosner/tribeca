@@ -30,15 +30,9 @@
 #include "quickfix/fix42/OrderCancelRequest.h"
 #include "quickfix/fix42/OrderCancelReject.h"
 
-#include <node.h>
-
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <uv.h>
-#include <uWS.h>
-
 using namespace std;
 
+#include "uWS.h"
 #include "png.h"
 #include "json.h"
 #include "_dec.h"
@@ -60,20 +54,17 @@ using namespace dec;
 #include "qe.h"
 #include "gw.h"
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;namespace K {;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;void main(v8::Local<v8::Object> exports) {;;
-;;;;;;EV::main();;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;UI::main();;;;;    ;;;;    ;;;;;;;
-;;;;;;DB::main();;;;;    ;;    ;;;;;;;;;
-;;;;;;QP::main();;;;;        ;;;;;;;;;;;
-;;;;;;OG::main();;;;;        ;;;;;;;;;;;
-;;;;;;MG::main();;;;;    ;;    ;;;;;;;;;
-;;;;;;PG::main();;;;;    ;;;;    ;;;;;;;
-;;;;;;QE::main();;;;;    ;;;;    ;;;;;;;
-;;;;;;GW::main();;;;;;;;;;;;;    ;;;;;;;
-;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-NODE_MODULE(K, K::main)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;int main(int argc, char* argv[]) {;;
+;;;;K::EV::main();;;;;;;;;;;;;;;;;;;;;
+;;;;K::UI::main();;;;    ;;;;    ;;;;;
+;;;;K::DB::main();;;;    ;;    ;;;;;;;
+;;;;K::QP::main();;;;        ;;;;;;;;;
+;;;;K::OG::main();;;;        ;;;;;;;;;
+;;;;K::MG::main();;;;    ;;    ;;;;;;;
+;;;;K::PG::main();;;;    ;;;;    ;;;;;
+;;;;K::QE::main();;;;    ;;;;    ;;;;;
+;;;;K::GW::main();;;;;;;;;;;;    ;;;;;
+;;;;return EXIT_SUCCESS;;;;;;;;;;;;;;;
+;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -69,7 +69,7 @@ namespace K {
         return FN::output("git rev-parse @") == FN::output("git rev-parse @{u}");
       }
       static string changelog() {
-        return FN::output("git --no-pager log --oneline @..@{u}");
+        return FN::output("git --no-pager log --graph --oneline @..@{u}");
       }
       static void upgrade() {
         cout << endl << "Hint!"

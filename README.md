@@ -5,7 +5,7 @@
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K.js`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui), it directly connects to [several cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options). On a decent machine reacts to market data by placing and canceling orders in under milliseconds.
+[`K.sh`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui), it directly connects to [several cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options). On a decent machine reacts to market data by placing and canceling orders in under milliseconds.
 
 [![Build Status](https://img.shields.io/travis/ctubio/Krypto-trading-bot/master.svg?label=test%20build)](https://travis-ci.org/ctubio/Krypto-trading-bot)
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)
@@ -21,7 +21,7 @@
 [![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on the latest node.js v8. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a 64bit dedicated Debian or CentOS instance is recommended.
+Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a 64bit dedicated Debian or CentOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
 
@@ -85,7 +85,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
 
-`make start` will run `K.js` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
+`make start` will run `K.sh` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
@@ -98,8 +98,6 @@ Troubleshooting:
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
 
  Optional:
-
- * Install the system daemon script `dist/K-init.sh` (to make use of `service K start` from anywhere instead of `cd path/to/K && make start`) see [dist](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist) folder.
 
  * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
@@ -165,7 +163,7 @@ Feel free to change the suggested filename `K`. Also you can run `make png` as m
 
 ### Web UI
 
-Once `K.js` is up and running, visit HTTPS port `3000` (or value of `WebClientListenPort`) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
+Once `K` is up and running, visit HTTPS port `3000` (or value of `WebClientListenPort`) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
@@ -209,13 +207,11 @@ Feel free to run `make test` anytime.
 
 To rebuild the application with your modifications, see `make help` and choose a target.
 
-To pipe the output to stdout, execute the application in the foreground with `nodejs K.js` or `node K`.
+To pipe the output to stdout, execute the application in the foreground with `./K.sh`.
 
-To ignore the output, execute the application in the background with `forever start K.js` or with the alias `make start`.
+To ignore the output, execute the application in the background with `forever start -c /bin/sh K.sh` or with the alias `make start`.
 
-To debug the server code with chrome-devtools, attach the node debugger with `nodejs --inspect K.js` (from your local, you can open a ssh tunnel to access it with `ssh -N -L 9229:127.0.0.1:9229 user@host`).
-
-Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X node K`.
+Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X ./K.sh`.
 
 ### Unreleased Changelog:
 
@@ -223,7 +219,7 @@ Added Makefile to replace npm scripts.
 
 Added PNG files as configuration files.
 
-Updated gateways out of javascript (all exchanges).
+Updated quoting engine and gateways without nodejs.
 
 Added built-in C++ WWW Server to replace expressjs and socketio.
 
@@ -301,7 +297,7 @@ If you need installation or usage support contact me at [21.co/analpaper](https:
 
 To request new features open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Feature%20request) and explain your improvement as you consider.
 
-To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all the relevant log messages (run `nodejs K.js` to see the output).
+To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all the relevant log messages (run `./K.sh` to see the output).
 
 ### Votes
 

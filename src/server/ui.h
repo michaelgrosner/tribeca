@@ -3,7 +3,7 @@
 
 namespace K {
   string A();
-  static uWS::Hub hub(0, true);
+  static uWS::Hub hub(0, false);
   typedef json (*uiCb)(json);
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);

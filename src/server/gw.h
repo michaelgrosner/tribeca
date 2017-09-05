@@ -30,12 +30,15 @@ namespace K {
         EV::on(mEv::GatewayOrderConnect, [](json k) {
           _gwCon_(mGatewayType::OrderEntry, (mConnectivity)k["/0"_json_pointer].get<int>());
         });
-        gw->book();
+        thread([&]() {
+          gw->book();
+        }).detach();
         gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
+        hub.run();
       };
       static void gwPosUp(mGWp k) {
         EV::up(mEv::PositionGateway, {
