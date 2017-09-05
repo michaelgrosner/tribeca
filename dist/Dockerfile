@@ -27,8 +27,8 @@ ENV MatryoshkaUrl https://
 # Set options only for your desired EXCHANGE:
 
 ## Coinbase GDAX
-ENV CoinbaseRestUrl https://api-public.sandbox.gdax.com
-ENV CoinbaseWebsocketUrl wss://ws-feed-public.sandbox.gdax.com
+ENV CoinbaseRestUrl https://api.gdax.com
+ENV CoinbaseWebsocketUrl wss://ws-feed.gdax.com
 ENV CoinbasePassphrase NULL
 ENV CoinbaseApiKey NULL
 ENV CoinbaseSecret NULL
@@ -64,9 +64,9 @@ ENV KorbitPassword NULL
 ENV KorbitOrderDestination Korbit
 
 ## HitBtc
-ENV HitBtcPullUrl http://demo-api.hitbtc.com
-ENV HitBtcOrderEntryUrl ws://demo-api.hitbtc.com:8080
-ENV HitBtcMarketDataUrl ws://demo-api.hitbtc.com:80
+ENV HitBtcPullUrl http://api.hitbtc.com
+ENV HitBtcOrderEntryUrl wss://api.hitbtc.com:8080
+ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
 ENV HitBtcApiKey NULL
 ENV HitBtcSecret NULL
 ENV HitBtcOrderDestination HitBtc
@@ -74,4 +74,4 @@ ENV HitBtcOrderDestination HitBtc
 ## Quoting Parameters
 ENV delayUI 3
 
-CMD ["node_modules/.bin/forever", "K.js"]
+CMD ["node_modules/.bin/forever", "-c", "/bin/sh", "K.sh"]
