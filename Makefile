@@ -94,7 +94,7 @@ quickfix: build
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build    \
 	&& patch build/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch     \
 	&& cd build/quickfix-$(V_QF) && ./bootstrap                                              \
-  && ./configure --enable-shared=no --enable-static=yes && make                            \
+	&& ./configure --enable-shared=no --enable-static=yes && make                            \
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                    )
 
 Linux: build
@@ -139,7 +139,7 @@ install:
 docker:
 	@$(MAKE) packages
 	@npm install --unsafe-perm
-	@$(MAKE) client pub bundle K
+	@$(MAKE) client pub bundle
 
 reinstall: .git src
 	rm -rf app
