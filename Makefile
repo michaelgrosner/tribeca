@@ -3,20 +3,26 @@ V_CURL  := 7.55.1
 V_SSL   := 1.1.0f
 V_UWS   := 0.14.3
 V_PNG   := 1.6.31
+V_PSL   := 0.18.0
 V_JSON  := v2.1.1
+V_HTTP  := 1.25.0
+V_IDN   := 2.0.4
+V_ICU   := 59_1
+V_SQL   := 3200100
+V_SSH   := 1.8.0
 V_QF    := v.1.14.4
-G_ARG   := -Wextra -std=c++11 -O3             -Ibuild/json-$(V_JSON)                           \
-  -I$(PWD)/build/openssl-$(V_SSL)/include     -L$(PWD)/build/openssl-$(V_SSL)/lib              \
-  -Ibuild/curl-$(V_CURL)/include/curl         -Lbuild/curl-$(V_CURL)/lib/.libs                 \
-  -Ibuild/libpng-$(V_PNG)                     -Lbuild/libpng-$(V_PNG)/lib                      \
-  -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp  \
-  build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp  \
-  build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp        \
-  build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp  \
-  build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp       \
-  -Lbuild/uWebSockets-$(V_UWS)                  build/quickfix-$(V_QF)/lib/libquickfix.a       \
-  -Lapp/server -Ldist/lib                       -Wl,-rpath,'$$ORIGIN'                          \
-src/server/K.cc -lsqlite3 -lpthread -lK -lpng16 -luWS -lquickfix -lssl -lcrypto -lz -lcurl
+G_ARG   := -Wextra -std=c++11 -O3               -Wl,-rpath,'$$ORIGIN'                             \
+  -Ibuild/curl-$(V_CURL)/include/curl           -Lbuild/curl-$(V_CURL)/lib/.libs                  \
+  -Ibuild/openssl-$(V_SSL)/include              -Lbuild/openssl-$(V_SSL)                          \
+  -Ibuild/json-$(V_JSON)                        -Ibuild/sqlite-autoconf-$(V_SQL)                  \
+src/server/K.cc -pthread -ldl -lssl -lcrypto -lz -lcurl                                           \
+  -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
+  build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp     \
+  build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp           \
+  build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp     \
+  build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp          \
+  build/libpng-$(V_PNG)/lib/libpng16.a          build/sqlite-autoconf-$(V_SQL)/.libs/libsqlite3.a \
+  dist/lib/K-`uname -m`.a                       build/quickfix-$(V_QF)/lib/libquickfix.a
 
 all: K
 
@@ -61,7 +67,12 @@ help:
 	#   make travis     - provide travis dev box       #
 	#                                                  #
 	#   make curl       - download curl src files      #
+	#   make sqlite     - download sqlite src files    #
 	#   make openssl    - download openssl src files   #
+	#   make ssh2       - download ssh2 src files      #
+	#   make idn2       - download idn2 src files      #
+	#   make nghttp2    - download nghttp2 src files   #
+	#   make psl        - download psl src files       #
 	#   make json       - download json src files      #
 	#   make png16      - download png16 src files     #
 	#   make uws        - download uws src files       #
@@ -75,10 +86,28 @@ K: src/server/K.cc
 	chmod +x dist/lib/K-`uname -m`
 
 uws: build
-	test -d build/uWebSockets-$(V_UWS) || (curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build && cd build/uWebSockets-$(V_UWS) && make && sudo make install)
+	test -d build/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build
 
 curl: build
-	test -d build/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build && cd build/curl-$(V_CURL) && ./configure --enable-shared --disable-static --prefix=/tmp/curl --disable-ldap --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl && make)
+	test -d build/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build && cd build/curl-$(V_CURL) && ./configure --enable-shared --disable-static --prefix=/tmp/curl --disable-ldap --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl=$(PWD)/build/openssl-$(V_SSL) && make)
+
+sqlite: build
+	test -d build/sqlite-$(V_SQL) || (curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build && cd build/sqlite-$(V_SQL) && ./configure --enable-static --disable-shared && make)
+
+psl: build
+	test -d build/libpsl-$(V_PSL) || (curl -L https://github.com/rockdaboot/libpsl/releases/download/libpsl-0.18.0/libpsl-$(V_PSL).tar.gz | tar xz -C build && cd build/libpsl-$(V_PSL) && ./configure --enable-runtime=libicu --enable-builtin=libicu && make)
+
+idn: build
+	test -d build/libidn2-$(V_IDN) || (curl -L https://gitlab.com/libidn/libidn2/uploads/15020b7769a7c69cebd38654ddf0648a/libidn2-$(V_IDN).tar.gz | tar xz -C build && cd build/libidn2-$(V_IDN) && ./configure && make)
+
+ssh2: build
+	test -d build/libssh2-$(V_SSH) || (curl -L https://www.libssh2.org/download/libssh2-$(V_SSH).tar.gz | tar xz -C build && cd build/libssh2-$(V_SSH) && ./configure --disable-shared --with-libssl-prefix=$(PWD)/build/openssl-$(V_SSL) && make)
+
+icu: build
+	test -d build/icu || (curl -L http://download.icu-project.org/files/icu4c/59.1/icu4c-$(V_ICU)-src.tgz | tar xz -C build && cd build/icu/source && ./configure --disable-shared --enable-static && make)
+
+nghttp2: build
+	test -d build/nghttp2-$(V_HTTP) || (curl -L https://github.com/nghttp2/nghttp2/releases/download/v1.25.0/nghttp2-$(V_HTTP).tar.gz | tar xz -C build && cd build/nghttp2-$(V_HTTP) && ./configure && make)
 
 openssl: build
 	test -d build/openssl-$(V_SSL) || (curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build && cd build/openssl-$(V_SSL) && ./config -fPIC --prefix=/usr/local --openssldir=/usr/local/ssl && make && sudo make install)
@@ -98,16 +127,14 @@ quickfix: build
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                    )
 
 Linux: build
-	cd dist/lib && ln -f -s libK-`uname -m`.so libK.so
 	g++-6 -o dist/lib/K-`uname -m` -static-libstdc++ -static-libgcc -s $(G_ARG)
 
 Darwin: build
-	cd dist/lib && ln -f -s libK-`uname -m`.dylib libK.dylib
 	g++-6 -o dist/lib/K-`uname -m` -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 
 dist:
 	mkdir -p build app/server
-	$(MAKE) openssl curl uws quickfix json png16
+	$(MAKE) openssl sqlite curl uws quickfix json png16
 	test -f /sbin/ldconfig && sudo ldconfig || :
 	cd app/server && ln -f -s ../../dist/lib/K-`(uname -m)` K
 	# for K in dist/lib/*; do chmod +x $$K && cp $$K app/server; done
