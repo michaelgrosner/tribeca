@@ -15,11 +15,11 @@
 #include <vector>
 #include <map>
 
-#include <sqlite3.h>
-#include <curl/curl.h>
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-#include <openssl/md5.h>
+#include "sqlite3.h"
+#include "curl.h"
+#include "openssl/hmac.h"
+#include "openssl/sha.h"
+#include "openssl/md5.h"
 #include "quickfix/Application.h"
 #include "quickfix/SocketInitiator.h"
 #include "quickfix/FileStore.h"
@@ -29,11 +29,11 @@
 #include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
 #include "quickfix/fix42/OrderCancelReject.h"
+#include "png.h"
+#include "uWS.h"
 
 using namespace std;
 
-#include "uWS.h"
-#include "png.h"
 #include "json.h"
 #include "_dec.h"
 #include "_b64.h"
