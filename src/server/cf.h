@@ -8,8 +8,8 @@ namespace K {
   static bool gwAutoStart = false;
   static json qpRepo;
   static json pkRepo;
-  static json cfRepo;
-  static string cFname;
+  extern json cfRepo;
+  extern string cFname;
   class CF {
     public:
       static void internal() {
