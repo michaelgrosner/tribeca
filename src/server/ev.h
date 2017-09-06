@@ -32,8 +32,9 @@ namespace K {
       static void gitReversedVersion() {
         system("git fetch");
         string k = changelog();
+        string hardware = FN::output("echo -n `uname -m`");
         unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << "K version: " << (!commits ? "0day.\n"
+        cout << "K " << hardware << " version "  << (!commits ? "0day.\n"
           : string("-").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(k)
         );
