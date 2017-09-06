@@ -205,7 +205,8 @@ namespace K {
           ? json{{"bids", {}},{"asks", {}}} : k;
         if (empty()) return;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
+          if (it->second["side"].is_number() and it->second["price"].is_number() and it->second["quantity"].is_number())
+            filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
         if (!empty()) {
           calcFairValue();
           EV::up(mEv::FilteredMarket);
