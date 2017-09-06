@@ -15,8 +15,10 @@
 #include <vector>
 #include <map>
 
-#include "sqlite3.h"
+#include "uWS.h"
+#include "png.h"
 #include "curl.h"
+#include "sqlite3.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 #include "openssl/md5.h"
@@ -29,8 +31,6 @@
 #include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
 #include "quickfix/fix42/OrderCancelReject.h"
-#include "png.h"
-#include "uWS.h"
 
 using namespace std;
 
