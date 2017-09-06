@@ -92,7 +92,7 @@ curl: build
 	test -d build/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build && cd build/curl-$(V_CURL) && ./configure --enable-shared --disable-static --prefix=/tmp/curl --disable-ldap --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl=$(PWD)/build/openssl-$(V_SSL) && make)
 
 sqlite: build
-	test -d build/sqlite-$(V_SQL) || (curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build && cd build/sqlite-$(V_SQL) && ./configure --enable-static --disable-shared && make)
+	test -d build/sqlite-autoconf-$(V_SQL) || (curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build && cd build/sqlite-autoconf-$(V_SQL) && ./configure --enable-static --disable-shared && make)
 
 psl: build
 	test -d build/libpsl-$(V_PSL) || (curl -L https://github.com/rockdaboot/libpsl/releases/download/libpsl-0.18.0/libpsl-$(V_PSL).tar.gz | tar xz -C build && cd build/libpsl-$(V_PSL) && ./configure --enable-runtime=libicu --enable-builtin=libicu && make)
