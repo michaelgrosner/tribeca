@@ -100,13 +100,13 @@ namespace K {
       };
       static json onHandSubmitNewOrder(json k) {
         sendOrder(
-          k["side"].get<string>() == "Ask" ? mSide::Ask : mSide::Bid,
+          k["side"].get<string>() == "Bid" ? mSide::Bid : mSide::Ask,
           k["price"].get<double>(),
           k["quantity"].get<double>(),
-          (mOrderType)k["orderType"].get<int>(),
-          (mTimeInForce)k["timeInForce"].get<int>(),
-          k["isPong"].get<bool>(),
-          k["preferPostOnly"].get<bool>()
+          k["orderType"].get<string>() == "Limit" ? mOrderType::Limit : mOrderType::Market,
+          k["timeInForce"].get<string>() == "GTC" ? mTimeInForce::GTC : (k["timeInForce"].get<string>() == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
+          false,
+          false
         );
         return {};
       };
