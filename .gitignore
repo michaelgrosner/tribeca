@@ -1,7 +1,7 @@
 etc/*.png
 etc/*.json
 app
-build
+build*
 test/coverage
 node_modules
 .DS_Store

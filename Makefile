@@ -1,146 +1,158 @@
 KCONFIG ?= K
+CROSS   ?= `g++ -dumpmachine`
+CXX     ?= $(CROSS)-g++
+CC      ?= $(CROSS)-gcc
+AR      ?= $(CROSS)-ar
 V_CURL  := 7.55.1
 V_SSL   := 1.1.0f
 V_UWS   := 0.14.3
 V_PNG   := 1.6.31
-V_PSL   := 0.18.0
 V_JSON  := v2.1.1
-V_HTTP  := 1.25.0
-V_IDN   := 2.0.4
-V_ICU   := 59_1
 V_SQL   := 3200100
-V_SSH   := 1.8.0
 V_QF    := v.1.14.4
-G_ARG   := -Wextra -std=c++11 -O3               -Wl,-rpath,'$$ORIGIN'                             \
-  -Ibuild/curl-$(V_CURL)/include/curl           -Lbuild/curl-$(V_CURL)/lib/.libs                  \
-  -Ibuild/openssl-$(V_SSL)/include              -Lbuild/openssl-$(V_SSL)                          \
-  -Ibuild/json-$(V_JSON)                        -Ibuild/sqlite-autoconf-$(V_SQL)                  \
-src/server/K.cc -pthread -ldl -lz -lssl -lcrypto -lcurl                                           \
-  -Ibuild/uWebSockets-$(V_UWS)/src              build/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
-  build/uWebSockets-$(V_UWS)/src/Group.cpp      build/uWebSockets-$(V_UWS)/src/Networking.cpp     \
-  build/uWebSockets-$(V_UWS)/src/Hub.cpp        build/uWebSockets-$(V_UWS)/src/Node.cpp           \
-  build/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp     \
-  build/uWebSockets-$(V_UWS)/src/Socket.cpp     build/uWebSockets-$(V_UWS)/src/Epoll.cpp          \
-  build/openssl-$(V_SSL)/libssl.a               build/openssl-$(V_SSL)/libcrypto.a                \
-  build/libpng-$(V_PNG)/.libs/libpng16.a        build/sqlite-autoconf-$(V_SQL)/.libs/libsqlite3.a \
-  dist/lib/K-`uname -m`.a                       build/quickfix-$(V_QF)/lib/libquickfix.a
+V_PSL   := 0.18.0
+V_HTTP  := 1.25.0
+V_ICU   := 59_1
+V_IDN   := 2.0.4
+V_SSH   := 1.8.0
+G_ARG   := -Wextra -std=c++11 -O3                         -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                  \
+  -Ibuild-$(CROSS)/curl-$(V_CURL)/include/curl           -Lbuild-$(CROSS)/curl-$(V_CURL)/lib/.libs                  \
+  -Ibuild-$(CROSS)/openssl-$(V_SSL)/include              -Lbuild-$(CROSS)/openssl-$(V_SSL)                          \
+  -Ibuild-$(CROSS)/json-$(V_JSON)                        -Ibuild-$(CROSS)/sqlite-autoconf-$(V_SQL)                  \
+src/server/K.cc -pthread -ldl -lz -lssl -lcrypto -lcurl -Wl,-rpath,'$$ORIGIN'                                         \
+  -Ibuild-$(CROSS)/uWebSockets-$(V_UWS)/src              build-$(CROSS)/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Group.cpp      build-$(CROSS)/uWebSockets-$(V_UWS)/src/Networking.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Hub.cpp        build-$(CROSS)/uWebSockets-$(V_UWS)/src/Node.cpp           \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build-$(CROSS)/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Socket.cpp     build-$(CROSS)/uWebSockets-$(V_UWS)/src/Epoll.cpp          \
+  build-$(CROSS)/openssl-$(V_SSL)/libssl.a               build-$(CROSS)/openssl-$(V_SSL)/libcrypto.a                \
+  build-$(CROSS)/libpng-$(V_PNG)/.libs/libpng16.a        build-$(CROSS)/sqlite-autoconf-$(V_SQL)/.libs/libsqlite3.a \
+  dist/lib/K-$(CROSS).a                                  build-$(CROSS)/quickfix-$(V_QF)/lib/libquickfix.a
 
 all: K
 
 help:
 	#                                                  #
 	# Available commands inside K top level directory: #
-	#   make help       - show this help               #
+	#  make help         - show this help              #
 	#                                                  #
-	#   make            - compile K node module        #
-	#   make K          - compile K node module        #
+	#  make              - compile K sources           #
+	#  make K            - compile K sources           #
+	#  KALL=1 make K     - compile K sources           #
 	#                                                  #
-	#   make packages   - provide K application        #
-	#   make install    - install K application        #
-	#   make docker     - install K application        #
-	#   make reinstall  - upgrade K application        #
+	#  make dist         - compile K dependencies      #
+	#  KALL=1 make dist  - compile K dependencies      #
+	#  make packages     - provide K dependencies      #
+	#  make install      - install K application       #
+	#  make docker       - install K application       #
+	#  make reinstall    - upgrade K application       #
 	#                                                  #
-	#   make list       - show K instances             #
-	#   make start      - start K instance             #
-	#   make startall   - start K instances            #
-	#   make stop       - stop K instance              #
-	#   make stopall    - stop K instances             #
-	#   make restart    - restart K instance           #
-	#   make restartall - restart K instances          #
+	#  make list         - show K instances            #
+	#  make start        - start K instance            #
+	#  make startall     - start K instances           #
+	#  make stop         - stop K instance             #
+	#  make stopall      - stop K instances            #
+	#  make restart      - restart K instance          #
+	#  make restartall   - restart K instances         #
 	#                                                  #
-	#   make diff       - show commits and versions    #
-	#   make changelog  - show commits                 #
-	#   make latest     - show commits and reinstall   #
+	#  make diff         - show commits and versions   #
+	#  make changelog    - show commits                #
+	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#   make config     - copy distributed config file #
-	#   PNG=% make png  - inject config file into PNG  #
-	#   make stunnel    - run ssl tunnel daemon        #
-	#   make gdax       - download gdax ssl cert       #
-	#   make cleandb    - remove databases             #
+	#  make config       - copy basic config file      #
+	#  PNG=% make png    - inject config file into PNG #
+	#  make stunnel      - run ssl tunnel daemon       #
+	#  make gdax         - download gdax ssl cert      #
+	#  make cleandb      - remove databases            #
 	#                                                  #
-	#   make client     - compile K client src         #
-	#   make pub        - compile K client src         #
-	#   make bundle     - compile K client bundle      #
+	#  make client       - compile K client src        #
+	#  make pub          - compile K client src        #
+	#  make bundle       - compile K client bundle     #
 	#                                                  #
-	#   make test       - run tests                    #
-	#   make test-cov   - run tests and coverage       #
-	#   make send-cov   - send coverage                #
-	#   make travis     - provide travis dev box       #
+	#  make test         - run tests                   #
+	#  make test-cov     - run tests and coverage      #
+	#  make send-cov     - send coverage               #
+	#  make travis       - provide travis dev box      #
 	#                                                  #
-	#   make curl       - download curl src files      #
-	#   make sqlite     - download sqlite src files    #
-	#   make openssl    - download openssl src files   #
-	#   make ssh2       - download ssh2 src files      #
-	#   make idn2       - download idn2 src files      #
-	#   make nghttp2    - download nghttp2 src files   #
-	#   make psl        - download psl src files       #
-	#   make json       - download json src files      #
-	#   make png16      - download png16 src files     #
-	#   make uws        - download uws src files       #
-	#   make quickfix   - download quickfix src files  #
-	#   make clean      - remove external src files    #
+	#  make curl         - download curl src files     #
+	#  make sqlite       - download sqlite src files   #
+	#  make openssl      - download openssl src files  #
+	#  make json         - download json src files     #
+	#  make png16        - download png16 src files    #
+	#  make uws          - download uws src files      #
+	#  make quickfix     - download quickfix src files #
+	#  make clean        - remove external src files   #
+	#  KALL=1 make clean - remove external src files   #
 	#                                                  #
 
 K: src/server/K.cc
-	@g++ --version
-	$(MAKE) `(uname -s)`
-	chmod +x dist/lib/K-`uname -m`
+ifdef KALL
+	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+else
+	@echo $(CROSS)
+	@$(CXX) --version
+	# sudo ln -f -s /usr/bin/gcc /usr/bin/$(CROSS)-gcc-6 || :
+	# sudo ln -f -s /usr/bin/g++ /usr/bin/$(CROSS)-g++-6 || :
+	CROSS=$(CROSS) $(MAKE) `(uname -s)`
+	chmod +x dist/lib/K-$(CROSS)
+endif
 
-uws: build
-	test -d build/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build
+uws: build-$(CROSS)
+	test -d build-$(CROSS)/uWebSockets-$(V_UWS) || curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz | tar xz -C build-$(CROSS)
 
-curl: build
-	test -d build/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build && cd build/curl-$(V_CURL) && ./configure --disable-shared --enable-static --prefix=/tmp/curl --disable-ldap --without-libpsl --without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl=$(PWD)/build/openssl-$(V_SSL) && make)
+curl: build-$(CROSS)
+	test -d build-$(CROSS)/curl-$(V_CURL) || (curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CROSS) && cd build-$(CROSS)/curl-$(V_CURL) && ./configure --host=$(CROSS) --target=$(CROSS) --build=`g++-6 -dumpmachine` --disable-manual --disable-shared --enable-static --prefix=/usr/$(CROSS) --disable-ldap --without-libpsl --without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp --disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 --disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2 --with-ssl=$(PWD)/build-$(CROSS)/openssl-$(V_SSL) && make)
 
-sqlite: build
-	test -d build/sqlite-autoconf-$(V_SQL) || (curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build && cd build/sqlite-autoconf-$(V_SQL) && ./configure --enable-static --disable-shared && make)
+sqlite: build-$(CROSS)
+	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS) && cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && ./configure --host=$(CROSS) --enable-static --disable-shared && make)
 
-psl: build
-	test -d build/libpsl-$(V_PSL) || (curl -L https://github.com/rockdaboot/libpsl/releases/download/libpsl-0.18.0/libpsl-$(V_PSL).tar.gz | tar xz -C build && cd build/libpsl-$(V_PSL) && ./configure --enable-runtime=libicu --enable-builtin=libicu && make)
+openssl: build-$(CROSS)
+	test -d build-$(CROSS)/openssl-$(V_SSL) || (curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS) && cd build-$(CROSS)/openssl-$(V_SSL) && gcc=$(CC) ./config -fPIC --prefix=/usr/$(CROSS) --openssldir=/usr/$(CROSS)/ssl && make && sudo make install)
 
-idn: build
-	test -d build/libidn2-$(V_IDN) || (curl -L https://gitlab.com/libidn/libidn2/uploads/15020b7769a7c69cebd38654ddf0648a/libidn2-$(V_IDN).tar.gz | tar xz -C build && cd build/libidn2-$(V_IDN) && ./configure && make)
-
-ssh2: build
-	test -d build/libssh2-$(V_SSH) || (curl -L https://www.libssh2.org/download/libssh2-$(V_SSH).tar.gz | tar xz -C build && cd build/libssh2-$(V_SSH) && ./configure --disable-shared --with-libssl-prefix=$(PWD)/build/openssl-$(V_SSL) && make)
-
-icu: build
-	test -d build/icu || (curl -L http://download.icu-project.org/files/icu4c/59.1/icu4c-$(V_ICU)-src.tgz | tar xz -C build && cd build/icu/source && ./configure --disable-shared --enable-static && make)
-
-nghttp2: build
-	test -d build/nghttp2-$(V_HTTP) || (curl -L https://github.com/nghttp2/nghttp2/releases/download/v1.25.0/nghttp2-$(V_HTTP).tar.gz | tar xz -C build && cd build/nghttp2-$(V_HTTP) && ./configure && make)
-
-openssl: build
-	test -d build/openssl-$(V_SSL) || (curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build && cd build/openssl-$(V_SSL) && ./config -fPIC --prefix=/usr/local --openssldir=/usr/local/ssl && make && sudo make install)
-
-json: build
-	test -f build/json-$(V_JSON)/json.h || (mkdir -p build/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp -o build/json-$(V_JSON)/json.h)
+json: build-$(CROSS)
+	test -f build-$(CROSS)/json-$(V_JSON)/json.h || (mkdir -p build-$(CROSS)/json-v2.1.1 && curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp -o build-$(CROSS)/json-$(V_JSON)/json.h)
 
 png16:
-	test -d build/libpng-$(V_PNG) || (curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build && cd build/libpng-$(V_PNG) && ./autogen.sh && ./configure && make && sudo make install)
+	test -d build-$(CROSS)/libpng-$(V_PNG) || (curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build-$(CROSS) && cd build-$(CROSS)/libpng-$(V_PNG) && ./autogen.sh && ./configure && make && sudo make install)
 
-quickfix: build
-	test -d build/quickfix-$(V_QF) || ( \
-	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build    \
-	&& patch build/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch     \
-	&& cd build/quickfix-$(V_QF) && ./bootstrap                                              \
+quickfix: build-$(CROSS)
+	test -d build-$(CROSS)/quickfix-$(V_QF) || ( \
+	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS)    \
+	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch     \
+	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                              \
 	&& ./configure --enable-shared=no --enable-static=yes && make                            \
 	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                    )
 
-Linux: build
-	g++-6 -o dist/lib/K-`uname -m` -static-libstdc++ -static-libgcc -s $(G_ARG)
+Linux: build-$(CROSS)
+	$(CXX) -o dist/lib/K-$(CROSS) -static-libstdc++ -static-libgcc -s $(G_ARG)
 
-Darwin: build
-	g++-6 -o dist/lib/K-`uname -m` -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
+Darwin: build-$(CROSS)
+	$(CXX) -o dist/lib/K-$(CROSS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(G_ARG)
 
 dist:
-	mkdir -p build app/server
-	$(MAKE) openssl sqlite curl uws quickfix json png16
+ifdef KALL
+	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+else
+	# sudo ln -f -s /usr/bin/gcc /usr/bin/$(CROSS)-gcc-6 || :
+	# sudo ln -f -s /usr/bin/g++ /usr/bin/$(CROSS)-g++-6 || :
+	mkdir -p build-$(CROSS) app/server
+	CROSS=$(CROSS) $(MAKE) openssl sqlite curl uws quickfix json png16
 	test -f /sbin/ldconfig && sudo ldconfig || :
-	cd app/server && ln -f -s ../../dist/lib/K-`(uname -m)` K
+	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
+endif
 
-clean: build
-	rm -rf build
+clean:
+ifdef KALL
+	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+else
+	rm -rf build-$(CROSS)
+endif
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
@@ -266,8 +278,8 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
-md5: src build
-	find src -type f -exec md5sum "{}" + > build/K.md5
+md5: src
+	find src -type f -exec md5sum "{}" + > src.md5
 
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
