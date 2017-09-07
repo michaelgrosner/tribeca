@@ -1,8 +1,8 @@
 KCONFIG ?= K
 CROSS   ?= `g++ -dumpmachine`
-CXX     ?= $(CROSS)-g++
-CC      ?= $(CROSS)-gcc
-AR      ?= $(CROSS)-ar
+CXX      = $(CROSS)-g++-6
+CC       = $(CROSS)-gcc-6
+AR       = $(CROSS)-ar-6
 V_CURL  := 7.55.1
 V_SSL   := 1.1.0f
 V_UWS   := 0.14.3
@@ -86,11 +86,10 @@ ifdef KALL
 	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
-	@echo $(CROSS)
 	@$(CXX) --version
 	# sudo ln -f -s /usr/bin/gcc /usr/bin/$(CROSS)-gcc-6 || :
 	# sudo ln -f -s /usr/bin/g++ /usr/bin/$(CROSS)-g++-6 || :
-	CROSS=$(CROSS) $(MAKE) `(uname -s)`
+	$(MAKE) CROSS=$(CROSS) `(uname -s)`
 	chmod +x dist/lib/K-$(CROSS)
 endif
 
