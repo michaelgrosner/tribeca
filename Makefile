@@ -166,12 +166,14 @@ packages:
 
 install:
 	@$(MAKE) packages
+	mkdir -p app/server
 	@npm install
 	@$(MAKE) client pub bundle
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
 
 docker:
 	@$(MAKE) packages
+	mkdir -p app/server
 	@npm install --unsafe-perm
 	@$(MAKE) client pub bundle
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
