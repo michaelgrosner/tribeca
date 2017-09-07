@@ -10,7 +10,7 @@ V_PNG   := 1.6.31
 V_JSON  := v2.1.1
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-G_ARG   := -Wextra -std=c++11 -O3                         -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                 \
+G_ARG   := -Wextra -std=c++11 -O3                        -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                  \
   -Ibuild-$(CROSS)/curl-$(V_CURL)/include/curl           -Lbuild-$(CROSS)/curl-$(V_CURL)/lib/.libs                  \
   -Ibuild-$(CROSS)/openssl-$(V_SSL)/include              -Lbuild-$(CROSS)/openssl-$(V_SSL)                          \
   -Ibuild-$(CROSS)/json-$(V_JSON)                        -Ibuild-$(CROSS)/sqlite-autoconf-$(V_SQL)                  \
@@ -167,13 +167,14 @@ packages:
 install:
 	@$(MAKE) packages
 	@npm install
-	@$(MAKE) dist -s
 	@$(MAKE) client pub bundle
+	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
 
 docker:
 	@$(MAKE) packages
 	@npm install --unsafe-perm
 	@$(MAKE) client pub bundle
+	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
 
 reinstall: .git src
 	rm -rf app
