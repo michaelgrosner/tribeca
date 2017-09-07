@@ -85,9 +85,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching previous sold or bought `size`, if any.
 
-  * `AK-47` - Same as `Boomberang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade K.js will cancel all previous trades if those are worst.
+  * `AK-47` - Same as `Boomerang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade K.js will cancel all previous trades if those are worst.
 
-  * `HamelinRat` - Same as `Boomberang` for now (under development).
+  * `HamelinRat` - Same as `Boomerang` for now (under development).
 
   * `Depth` - Use `width` as `depth`. Unlike all other modes, it does not calculate the quote spread based on fair value, instead it walks over all current open orders in the book and places the quote right after `depth` quantity, at both sides.
 
