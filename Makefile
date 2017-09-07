@@ -10,16 +10,11 @@ V_PNG   := 1.6.31
 V_JSON  := v2.1.1
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-V_PSL   := 0.18.0
-V_HTTP  := 1.25.0
-V_ICU   := 59_1
-V_IDN   := 2.0.4
-V_SSH   := 1.8.0
-G_ARG   := -Wextra -std=c++11 -O3                         -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                  \
+G_ARG   := -Wextra -std=c++11 -O3                         -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                 \
   -Ibuild-$(CROSS)/curl-$(V_CURL)/include/curl           -Lbuild-$(CROSS)/curl-$(V_CURL)/lib/.libs                  \
   -Ibuild-$(CROSS)/openssl-$(V_SSL)/include              -Lbuild-$(CROSS)/openssl-$(V_SSL)                          \
   -Ibuild-$(CROSS)/json-$(V_JSON)                        -Ibuild-$(CROSS)/sqlite-autoconf-$(V_SQL)                  \
-src/server/K.cc -pthread -ldl -lz -lssl -lcrypto -lcurl -Wl,-rpath,'$$ORIGIN'                                         \
+src/server/K.cc -pthread -ldl -lz -lssl -lcrypto -lcurl -Wl,-rpath,'$$ORIGIN'                                       \
   -Ibuild-$(CROSS)/uWebSockets-$(V_UWS)/src              build-$(CROSS)/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
   build-$(CROSS)/uWebSockets-$(V_UWS)/src/Group.cpp      build-$(CROSS)/uWebSockets-$(V_UWS)/src/Networking.cpp     \
   build-$(CROSS)/uWebSockets-$(V_UWS)/src/Hub.cpp        build-$(CROSS)/uWebSockets-$(V_UWS)/src/Node.cpp           \
@@ -119,11 +114,11 @@ png16:
 
 quickfix: build-$(CROSS)
 	test -d build-$(CROSS)/quickfix-$(V_QF) || ( \
-	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS)    \
-	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch     \
-	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                              \
-	&& ./configure --enable-shared=no --enable-static=yes && make                            \
-	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                    )
+	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
+	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch  \
+	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                           \
+	&& ./configure --enable-shared=no --enable-static=yes && make                                  \
+	&& sudo make install && sudo cp config.h /usr/local/include/quickfix/                          )
 
 Linux: build-$(CROSS)
 	$(CXX) -o dist/lib/K-$(CROSS) -static-libstdc++ -static-libgcc -s $(G_ARG)
