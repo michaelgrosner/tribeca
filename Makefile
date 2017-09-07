@@ -89,7 +89,7 @@ else
 	@$(CXX) --version
 	# sudo ln -f -s /usr/bin/gcc /usr/bin/$(CROSS)-gcc-6 || :
 	# sudo ln -f -s /usr/bin/g++ /usr/bin/$(CROSS)-g++-6 || :
-	$(MAKE) CROSS=$(CROSS) `(uname -s)`
+	CROSS=$(CROSS) $(MAKE) `(uname -s)`
 	chmod +x dist/lib/K-$(CROSS)
 endif
 
