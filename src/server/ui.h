@@ -7,14 +7,15 @@ namespace K {
   typedef json (*uiCb)(json);
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  static unsigned int iOSR60 = 0;
+  static json uiSTATE;
   static bool uiOPT = true;
+  static unsigned int iOSR60 = 0;
   static unsigned long uiMDT = 0;
-  static unsigned long appStateT = 0;
   static unsigned int appPushT = 0;
+  static unsigned long appStateT = 0;
+  static double delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
-  static json uiSTATE;
   class UI {
     public:
       static void main() {
@@ -132,12 +133,13 @@ namespace K {
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void delay() {
+      static void delay(double delayUI_) {
+        delayUI = delayUI_;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         thread([&]() {
           unsigned int appPushT_ = ++appPushT;
-          double k = qpRepo["delayUI"].get<double>();
+          double k = delayUI;
           int timeout = k ? (int)(k*1e+3) : 6e+4;
           while (appPushT_ == appPushT) {
             if (k) appPush();
@@ -177,7 +179,7 @@ namespace K {
       static void uiHold(uiTXT k, json o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
-        if (!qpRepo["delayUI"].get<double>()) return uiUp(k, o);
+        if (!delayUI) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
@@ -191,12 +193,11 @@ namespace K {
       static void appState() {
         time_t rawtime;
         time(&rawtime);
-        struct stat st;
         uiSTATE = {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", iOSR60 / 2},
-          {"dbsize", stat(dbFpath.data(), &st) != 0 ? 0 : st.st_size},
+          {"dbsize", DB::size()},
           {"a", A()}
         };
         iOSR60 = 0;
