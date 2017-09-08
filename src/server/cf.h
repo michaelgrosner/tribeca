@@ -2,11 +2,11 @@
 #define K_CF_H_
 
 namespace K {
-  extern Gw* gw;
-  extern Gw* gW;
-  extern json pkRepo;
-  extern json cfRepo;
-  extern string cFname;
+  static Gw* gw;
+  static Gw* gW;
+  static json pkRepo;
+  static json cf;
+  static string cFname;
   class CF {
     public:
       static void internal() {
@@ -19,7 +19,7 @@ namespace K {
         string cfname = string("etc/").append(k).append(".png");
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
-          cfRepo = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
+          cf = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
           cout << FN::uiT() << "CF settings loaded from JSON file " << k << " OK." << endl;
         } else if (access(cfname.data(), F_OK) != -1) {
           cFname = cfname;
@@ -48,7 +48,7 @@ namespace K {
                   if (strcmp("K.conf", text_ptr[i].key) == 0)
                     conf = text_ptr[i].text;
                 if (conf.length()) {
-                  cfRepo = json::parse(conf);
+                  cf = json::parse(conf);
                   cout << FN::uiT() << "CF settings loaded from PNG file " << k << " OK." << endl;
                 } else cout << FN::uiT() << "CF no data found inside PNG file " << k << "." << endl;
               }
@@ -62,16 +62,19 @@ namespace K {
         gw->base = cfBase();
         gw->quote = cfQuote();
         cfExchange(gw->config());
+        gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
       static string cfString(string k, bool r = true) {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
-        if (cfRepo.find(k) == cfRepo.end()) {
+        if (cf.find(k) == cf.end()) {
           if (r) {
             cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration."<< endl << endl << FN::uiT() << "Hint! Make sure " << cFname << " exists or see https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist" << endl;
             exit(1);
           } else return "";
         }
-        return (cfRepo[k].is_string()) ? cfRepo[k].get<string>() : to_string(cfRepo[k].get<double>());
+        return cf[k].is_string()
+          ? cf[k].get<string>()
+          : (cf[k].is_number() ? to_string(cf[k].get<double>()) : "");
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {

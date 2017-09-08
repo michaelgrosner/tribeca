@@ -3,8 +3,8 @@
 
 namespace K {
   typedef void (*evCb)(json);
-  extern map<unsigned int, vector<evCb>> ev;
-  extern void (*evExit)(int code);
+  static map<unsigned int, vector<evCb>> ev;
+  static void (*evExit)(int code);
   class EV {
     public:
       static void main() {

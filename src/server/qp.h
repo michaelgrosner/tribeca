@@ -2,7 +2,7 @@
 #define K_QP_H_
 
 namespace K {
-  static json qpRepo;
+  static json qp;
   static json defQP {
     {  "widthPing",                     2                                      },
     {  "widthPingPercentage",           decimal_cast<2>("0.25").getAsDouble()  },
@@ -68,8 +68,26 @@ namespace K {
             or k == mQuotingMode::HamelinRat
             or k == mQuotingMode::AK47;
       };
-      static bool autoCancel() {
-        return getBool("cancelOrdersAuto");
+      static bool getBool(string k) {
+        if (!qp[k].is_boolean()) {
+          cout << FN::uiT() << "Warrrrning: QP " << k << " is not boolean, get a false instead." << endl;
+          return false;
+        }
+        return qp[k].get<bool>();
+      };
+      static int getInt(string k) {
+        if (!qp[k].is_number()) {
+          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
+          return 0;
+        }
+        return qp[k].get<int>();
+      };
+      static double getDouble(string k) {
+        if (!qp[k].is_number()) {
+          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
+          return 0;
+        }
+        return qp[k].get<double>();
       };
     private:
       static void load() {
@@ -80,17 +98,17 @@ namespace K {
           else if (it.value().is_boolean()) defQP[it.key()] = (FN::S2u(k) == "TRUE" or k == "1");
           else defQP[it.key()] = k;
         }
-        qpRepo = defQP;
-        json qp = DB::load(uiTXT::QuotingParametersChange);
-        if (qp.size())
-          for (json::iterator it = qp["/0"_json_pointer].begin(); it != qp["/0"_json_pointer].end(); ++it)
-            qpRepo[it.key()] = it.value();
+        qp = defQP;
+        json qp_ = DB::load(uiTXT::QuotingParametersChange);
+        if (qp_.size())
+          for (json::iterator it = qp_["/0"_json_pointer].begin(); it != qp_["/0"_json_pointer].end(); ++it)
+            qp[it.key()] = it.value();
         clean();
         UI::delay(getDouble("delayUI"));
-        cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp.size() ? "OK" : "OR reading defaults instead") << "." << endl;
+        cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
       };
       static json onSnap(json z) {
-        return { qpRepo };
+        return { qp };
       };
       static json onHand(json k) {
         if (k["buySize"].get<double>() > 0
@@ -104,7 +122,7 @@ namespace K {
         ) {
           if ((mQuotingMode)k["mode"].get<int>() == mQuotingMode::Depth)
             k["widthPercentage"] = false;
-          qpRepo = k;
+          qp = k;
           clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
           EV::up(mEv::QuotingParameters, k);
@@ -115,28 +133,7 @@ namespace K {
       };
       static void clean() {
         for (vector<string>::const_iterator it = boolQP.begin(); it != boolQP.end(); ++it)
-          if (qpRepo[*it].is_number()) qpRepo[*it] = qpRepo[*it].get<int>() != 0;
-      };
-      static bool getBool(string k) {
-        if (!qpRepo[k].is_boolean()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not boolean, get a false instead." << endl;
-          return false;
-        }
-        return qpRepo[k].get<bool>();
-      };
-      static int getInt(string k) {
-        if (!qpRepo[k].is_number()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
-          return 0;
-        }
-        return qpRepo[k].get<int>();
-      };
-      static double getDouble(string k) {
-        if (!qpRepo[k].is_number()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
-          return 0;
-        }
-        return qpRepo[k].get<double>();
+          if (qp[*it].is_number()) qp[*it] = qp[*it].get<int>() != 0;
       };
   };
 }
