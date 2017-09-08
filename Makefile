@@ -4,26 +4,26 @@ CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
 AR       = $(CROSS)-ar-6
 V_CURL  := 7.55.1
+V_Z     := 1.2.11
 V_SSL   := 1.1.0f
 V_UWS   := 0.14.3
 V_PNG   := 1.6.31
 V_JSON  := v2.1.1
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-G_ARG   := -Wextra -std=c++11 -O3                        -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                  \
-  -Ibuild-$(CROSS)/curl-$(V_CURL)/include/curl           -Lbuild-$(CROSS)/curl-$(V_CURL)/lib/.libs                  \
-  -Ibuild-$(CROSS)/openssl-$(V_SSL)/include              -Lbuild-$(CROSS)/openssl-$(V_SSL)                          \
-  -Ibuild-$(CROSS)/json-$(V_JSON)                        -Ibuild-$(CROSS)/sqlite-autoconf-$(V_SQL)                  \
-src/server/K.cc -pthread -ldl -lz -lssl -lcrypto -lcurl -Wl,-rpath,'$$ORIGIN'                                       \
-  -Ibuild-$(CROSS)/uWebSockets-$(V_UWS)/src              build-$(CROSS)/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
-  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Group.cpp      build-$(CROSS)/uWebSockets-$(V_UWS)/src/Networking.cpp     \
-  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Hub.cpp        build-$(CROSS)/uWebSockets-$(V_UWS)/src/Node.cpp           \
-  build-$(CROSS)/uWebSockets-$(V_UWS)/src/WebSocket.cpp  build-$(CROSS)/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp     \
-  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Socket.cpp     build-$(CROSS)/uWebSockets-$(V_UWS)/src/Epoll.cpp          \
-  build-$(CROSS)/openssl-$(V_SSL)/libssl.a               build-$(CROSS)/openssl-$(V_SSL)/libcrypto.a                \
-  build-$(CROSS)/libpng-$(V_PNG)/.libs/libpng16.a        build-$(CROSS)/sqlite-autoconf-$(V_SQL)/.libs/libsqlite3.a \
-  dist/lib/K-$(CROSS).a                                  build-$(CROSS)/quickfix-$(V_QF)/lib/libquickfix.a
-
+G_ARG   := -Wextra -std=c++11 -O3                       -Ibuild-$(CROSS)/quickfix-$(V_QF)/include                  \
+  -Ibuild-$(CROSS)/lib/include/curl                     -Ibuild-$(CROSS)/lib/include                               \
+  -Lbuild-$(CROSS)/lib/lib                              -Ibuild-$(CROSS)/json-$(V_JSON)                            \
+  -Ibuild-$(CROSS)/sqlite-autoconf-$(V_SQL)             src/server/K.cc -pthread -ldl -Wl,-rpath,'$$ORIGIN'        \
+  -Ibuild-$(CROSS)/uWebSockets-$(V_UWS)/src             build-$(CROSS)/uWebSockets-$(V_UWS)/src/Extensions.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Group.cpp     build-$(CROSS)/uWebSockets-$(V_UWS)/src/Networking.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Hub.cpp       build-$(CROSS)/uWebSockets-$(V_UWS)/src/Node.cpp           \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/WebSocket.cpp build-$(CROSS)/uWebSockets-$(V_UWS)/src/HTTPSocket.cpp     \
+  build-$(CROSS)/uWebSockets-$(V_UWS)/src/Socket.cpp    build-$(CROSS)/uWebSockets-$(V_UWS)/src/Epoll.cpp          \
+  dist/lib/K-$(CROSS).a                                 build-$(CROSS)/quickfix-$(V_QF)/lib/libquickfix.a          \
+  build-$(CROSS)/libpng-$(V_PNG)/.libs/libpng16.a       build-$(CROSS)/sqlite-autoconf-$(V_SQL)/.libs/libsqlite3.a \
+  build-$(CROSS)/lib/lib/libz.a                         build-$(CROSS)/lib/lib/libcurl.a                           \
+  build-$(CROSS)/lib/lib/libssl.a                       build-$(CROSS)/lib/lib/libcrypto.a
 all: K
 
 help:
@@ -96,17 +96,6 @@ uws: build-$(CROSS)
 	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
 	| tar xz -C build-$(CROSS)
 
-curl: build-$(CROSS)
-	test -d build-$(CROSS)/curl-$(V_CURL) || (                                                  \
-	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CROSS)      \
-	&& cd build-$(CROSS)/curl-$(V_CURL) && ./configure                                          \
-	--host=$(CROSS) --target=$(CROSS) --build=`g++ -dumpmachine` --disable-manual               \
-	--disable-shared --enable-static --prefix=/usr/$(CROSS) --disable-ldap --without-libpsl     \
-	--without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp          \
-	--disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 \
-	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
-	--with-ssl=$(PWD)/build-$(CROSS)/openssl-$(V_SSL) && make                                   )
-
 sqlite: build-$(CROSS)
 	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                       \
 	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS) \
@@ -116,8 +105,26 @@ sqlite: build-$(CROSS)
 openssl: build-$(CROSS)
 	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                              \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/openssl-$(V_SSL) && gcc=$(CC) ./config                               \
-	-fPIC --prefix=/usr/$(CROSS) --openssldir=/usr/$(CROSS)/ssl && make                       )
+	&& cd build-$(CROSS)/openssl-$(V_SSL) && ./config                                         \
+	-fPIC --prefix=$(PWD)/build-$(CROSS)/lib                                                  \
+	--openssldir=$(PWD)/build-$(CROSS)/lib && make && make install                            )
+
+z: build-$(CROSS)
+	test -d build-$(CROSS)/zlib-$(V_Z) || (                                 \
+	curl -L https://zlib.net/zlib-$(V_Z).tar.gz | tar xz -C build-$(CROSS)  \
+	&& cd build-$(CROSS)/zlib-$(V_Z) && ./configure                         \
+	--prefix=$(PWD)/build-$(CROSS)/lib && make && make install              )
+
+curl: build-$(CROSS)
+	test -d build-$(CROSS)/curl-$(V_CURL) || (                                                          \
+	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CROSS)              \
+	&& cd build-$(CROSS)/curl-$(V_CURL) &&  ./configure                                                 \
+	--host=$(CROSS) --target=$(CROSS) --build=`g++ -dumpmachine` --disable-manual                       \
+	--disable-shared --enable-static --prefix=$(PWD)/build-$(CROSS)/lib --disable-ldap --without-libpsl \
+	--without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp                  \
+	--disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3         \
+	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2                      \
+	--with-zlib=$(PWD)/build-$(CROSS)/lib --with-ssl=$(PWD)/build-$(CROSS)/lib && make && make install  )
 
 json: build-$(CROSS)
 	test -f build-$(CROSS)/json-$(V_JSON)/json.h || (                                \
@@ -125,7 +132,7 @@ json: build-$(CROSS)
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o build-$(CROSS)/json-$(V_JSON)/json.h                                          )
 
-png16:
+png16: build-$(CROSS)
 	test -d build-$(CROSS)/libpng-$(V_PNG) || (                                                     \
 	curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build-$(CROSS)   \
 	&& cd build-$(CROSS)/libpng-$(V_PNG) && ./autogen.sh && ./configure && make                     )
@@ -151,7 +158,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS) app/server
-	CROSS=$(CROSS) $(MAKE) openssl sqlite curl uws quickfix json png16
+	CROSS=$(CROSS) $(MAKE) z openssl sqlite curl uws quickfix json png16
 	test -f /sbin/ldconfig && sudo ldconfig || :
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
 endif
