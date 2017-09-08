@@ -42,10 +42,10 @@ namespace K {
       };
       static void calcTargetBasePos() {
         if (pgPos.is_null()) { cout << FN::uiT() << "Unable to calculate TBP, missing market data." << endl; return; }
-        double targetBasePosition = ((mAutoPositionMode)qpRepo["autoPositionMode"].get<int>() == mAutoPositionMode::Manual)
-          ? (qpRepo["percentageValues"].get<bool>()
-            ? qpRepo["targetBasePositionPercentage"].get<double>() * pgPos["value"].get<double>() / 1e+2
-            : qpRepo["targetBasePosition"].get<double>())
+        double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
+          ? (QP::getBool("percentageValues")
+            ? QP::getDouble("targetBasePositionPercentage") * pgPos["value"].get<double>() / 1e+2
+            : QP::getDouble("targetBasePosition"))
           : ((1 + mgTargetPos) / 2) * pgPos["value"].get<double>();
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
@@ -90,20 +90,20 @@ namespace K {
         }};
       };
       static json nextSafety() {
-        double buySize = qpRepo["percentageValues"].get<bool>()
-          ? qpRepo["buySizePercentage"].get<double>() * pgPos["value"].get<double>() / 100
-          : qpRepo["buySize"].get<double>();
-        double sellSize = qpRepo["percentageValues"].get<bool>()
-          ? qpRepo["sellSizePercentage"].get<double>() * pgPos["value"].get<double>() / 100
-          : qpRepo["sellSize"].get<double>();
+        double buySize = QP::getBool("percentageValues")
+          ? QP::getDouble("buySizePercentage") * pgPos["value"].get<double>() / 100
+          : QP::getDouble("buySize");
+        double sellSize = QP::getBool("percentageValues")
+          ? QP::getDouble("sellSizePercentage") * pgPos["value"].get<double>() / 100
+          : QP::getDouble("sellSize");
         double totalBasePosition = pgPos["baseAmount"].get<double>() + pgPos["baseHeldAmount"].get<double>();
-        if (qpRepo["buySizeMax"].get<bool>() and (mAPR)qpRepo["aggressivePositionRebalancing"].get<int>() != mAPR::Off)
+        if (QP::getBool("buySizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
-        if (qpRepo["sellSizeMax"].get<bool>() and (mAPR)qpRepo["aggressivePositionRebalancing"].get<int>() != mAPR::Off)
+        if (QP::getBool("sellSizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
-        double widthPong = qpRepo["widthPercentage"].get<bool>()
-          ? qpRepo["widthPongPercentage"].get<double>() * mgFairValue / 100
-          : qpRepo["widthPong"].get<double>();
+        double widthPong = QP::getBool("widthPercentage")
+          ? QP::getDouble("widthPongPercentage") * mgFairValue / 100
+          : QP::getDouble("widthPong");
         map<double, json> tradesBuy;
         map<double, json> tradesSell;
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
@@ -114,15 +114,15 @@ namespace K {
         double sellPong = 0;
         double buyQty = 0;
         double sellQty = 0;
-        if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingFair
-          or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::ShortPingAggressive
+        if ((mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingFair
+          or (mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingAggressive
         ) {
           matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
           matchBestPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong);
           if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
           if (!sellQty) matchFirstPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong*-1);
-        } else if ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair
-          or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive
+        } else if ((mPongAt)QP::getInt("pongAt") == mPongAt::LongPingFair
+          or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive
         ) {
           matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
           matchLastPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong, true);
@@ -180,7 +180,7 @@ namespace K {
       static void expire(map<double, json>* k) {
         unsigned long now = FN::T();
         for (map<double, json>::iterator it = k->begin(); it != k->end();)
-          if (it->second["time"].get<unsigned long>() + qpRepo["tradeRateSeconds"].get<double>() * 1e+3 > now) ++it;
+          if (it->second["time"].get<unsigned long>() + QP::getDouble("tradeRateSeconds") * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
       static void skip() {
@@ -217,7 +217,7 @@ namespace K {
           {"time", now }
         });
         for (vector<json>::iterator it = pgProfit.begin(); it != pgProfit.end();)
-          if ((*it)["time"].get<unsigned long>() + (qpRepo["profitHourInterval"].get<double>() * 36e+5) > now) ++it;
+          if ((*it)["time"].get<unsigned long>() + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
           else it = pgProfit.erase(it);
         json pos = {
           {"baseAmount", baseAmount},

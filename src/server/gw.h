@@ -15,7 +15,7 @@ namespace K {
         thread([&]() {
           unsigned int T_5m = 0;
           while (true) {
-            if (QP::autoCancel() and ++T_5m == 20) {
+            if (QP::getBool("cancelOrdersAuto") and ++T_5m == 20) {
               T_5m = 0;
               gW->cancelAll();
             }
@@ -35,7 +35,6 @@ namespace K {
         thread([&]() {
           gw->book();
         }).detach();
-        gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);

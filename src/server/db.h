@@ -2,7 +2,7 @@
 #define K_DB_H_
 
 namespace K {
-  extern sqlite3* db;
+  static sqlite3* db;
   int sqlite3_open(string f, sqlite3** db);
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
   class DB {

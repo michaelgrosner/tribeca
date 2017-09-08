@@ -208,17 +208,17 @@ namespace K {
         };
         cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o["side"].get<int>() == mSide::Bid ? "BUY " : "SELL ") << o["lastQuantity"].get<double>() << " " << mCurrency[gw->base] << " at price " << o["lastPrice"].get<double>() << " " << mCurrency[gw->quote] << endl;
         EV::up(mEv::OrderTradeBroker, trade);
-        if ((mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::Boomerang or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::HamelinRat or (mQuotingMode)qpRepo["mode"].get<int>() == mQuotingMode::AK47) {
-          double widthPong = qpRepo["widthPercentage"].get<bool>()
-            ? qpRepo["widthPongPercentage"].get<double>() * trade["price"].get<double>() / 100
-            : qpRepo["widthPong"].get<double>();
+        if (QP::matchPings()) {
+          double widthPong = QP::getBool("widthPercentage")
+            ? QP::getDouble("widthPongPercentage") * trade["price"].get<double>() / 100
+            : QP::getDouble("widthPong");
           map<double, string> matches;
           for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
             if ((*it)["quantity"].get<double>() - (*it)["Kqty"].get<double>() > 0
               and (mSide)(*it)["side"].get<int>() == ((mSide)trade["side"].get<int>() == mSide::Bid ? mSide::Ask : mSide::Bid)
               and ((mSide)trade["side"].get<int>() == mSide::Bid ? ((*it)["price"].get<double>() > (trade["price"].get<double>() + widthPong)) : ((*it)["price"].get<double>() < (trade["price"].get<double>() - widthPong)))
             ) matches[(*it)["price"].get<double>()] = (*it)["tradeId"].get<string>();
-          matchPong(matches, ((mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingFair or (mPongAt)qpRepo["pongAt"].get<int>() == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
+          matchPong(matches, ((mPongAt)QP::getInt("pongAt") == mPongAt::LongPingFair or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive) ? (mSide)trade["side"].get<int>() == mSide::Ask : (mSide)trade["side"].get<int>() == mSide::Bid, trade);
         } else {
           UI::uiSend(uiTXT::Trades, trade);
           DB::insert(uiTXT::Trades, trade, false, trade["tradeId"].get<string>());
@@ -232,7 +232,7 @@ namespace K {
           {"pong", o["isPong"].get<bool>()}
         };
         UI::uiSend(uiTXT::TradesChart, t);
-        cleanAuto(o["time"].get<unsigned long>(), qpRepo["cleanPongsAuto"].get<double>());
+        cleanAuto(o["time"].get<unsigned long>(), QP::getDouble("cleanPongsAuto"));
       };
       static void matchPong(map<double, string> matches, bool reverse, json pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
