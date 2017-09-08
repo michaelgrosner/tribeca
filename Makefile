@@ -105,15 +105,16 @@ sqlite: build-$(CROSS)
 openssl: build-$(CROSS)
 	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                              \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/openssl-$(V_SSL) && ./config                                         \
+	&& cd build-$(CROSS)/openssl-$(V_SSL) && CC=$(CC) ./config                                \
 	-fPIC --prefix=$(PWD)/build-$(CROSS)/lib                                                  \
 	--openssldir=$(PWD)/build-$(CROSS)/lib && make && make install                            )
 
 z: build-$(CROSS)
-	test -d build-$(CROSS)/zlib-$(V_Z) || (                                 \
-	curl -L https://zlib.net/zlib-$(V_Z).tar.gz | tar xz -C build-$(CROSS)  \
-	&& cd build-$(CROSS)/zlib-$(V_Z) && ./configure                         \
-	--prefix=$(PWD)/build-$(CROSS)/lib && make && make install              )
+	echo $(CC)
+	test -d build-$(CROSS)/zlib-$(V_Z) || (                                \
+	curl -L https://zlib.net/zlib-$(V_Z).tar.gz | tar xz -C build-$(CROSS) \
+	&& cd build-$(CROSS)/zlib-$(V_Z) && CC=$(CC) ./configure               \
+	--prefix=$(PWD)/build-$(CROSS)/lib && make && make install             )
 
 curl: build-$(CROSS)
 	test -d build-$(CROSS)/curl-$(V_CURL) || (                                                          \
