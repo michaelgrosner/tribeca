@@ -3,18 +3,20 @@
 
 namespace K {
   static bool gwState = false;
+  static bool gwAutoStart = false;
   static mConnectivity gwConn = mConnectivity::Disconnected;
   static mConnectivity gwMDConn = mConnectivity::Disconnected;
   static mConnectivity gwEOConn = mConnectivity::Disconnected;
-  static unsigned int gwCancelAll = 0;
   class GW {
     public:
       static void main() {
         evExit = happyEnding;
+        gwAutoStart = CF::autoStart();
         thread([&]() {
+          unsigned int T_5m = 0;
           while (true) {
-            if (qpRepo["cancelOrdersAuto"].get<bool>() and ++gwCancelAll == 20) {
-              gwCancelAll = 0;
+            if (QP::autoCancel() and ++T_5m == 20) {
+              T_5m = 0;
               gW->cancelAll();
             }
             gw->pos();

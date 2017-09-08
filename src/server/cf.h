@@ -2,12 +2,9 @@
 #define K_CF_H_
 
 namespace K {
-  static Gw* gw;
-  static Gw* gW;
-  static string dbFpath;
-  static bool gwAutoStart = false;
-  static json qpRepo;
-  static json pkRepo;
+  extern Gw* gw;
+  extern Gw* gW;
+  extern json pkRepo;
   extern json cfRepo;
   extern string cFname;
   class CF {
@@ -113,6 +110,9 @@ namespace K {
         cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl;
         exit(1);
       };
+      static bool autoStart() {
+        return "auto" == cfString("BotIdentifier").substr(0,4);
+      };
     private:
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
@@ -166,9 +166,8 @@ namespace K {
         }
         if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
-        gwAutoStart = "auto" == cfString("BotIdentifier").substr(0,4);
         cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
-          << "- autoBot: " << (gwAutoStart ? "yes" : "no") << endl
+          << "- autoBot: " << (autoStart() ? "yes" : "no") << endl
           << "- pair: " << gw->symbol << endl
           << "- minTick: " << gw->minTick << endl
           << "- minSize: " << gw->minSize << endl
