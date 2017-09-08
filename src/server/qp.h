@@ -2,7 +2,7 @@
 #define K_QP_H_
 
 namespace K {
-  extern json qpRepo;
+  static json qpRepo;
   static json defQP {
     {  "widthPing",                     2                                      },
     {  "widthPingPercentage",           decimal_cast<2>("0.25").getAsDouble()  },
