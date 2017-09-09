@@ -70,10 +70,9 @@ namespace K {
       static void load() {
         json k = DB::load(uiTXT::TargetBasePosition);
         if (k.size()) {
-          if (k["/0/tbp"_json_pointer].is_number())
-            pgTargetBasePos = k["/0/tbp"_json_pointer].get<double>();
-          if (k["/0/sideAPR"_json_pointer].is_string())
-            pgSideAPR = k["/0/sideAPR"_json_pointer].get<string>();
+          k = k.at(0);
+          pgTargetBasePos = k.value("tbp", 0.0);
+          pgSideAPR = k.value("sideAPR", "");
         }
         cout << FN::uiT() << "DB loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };

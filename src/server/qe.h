@@ -29,8 +29,8 @@ namespace K {
           }
         }).detach();
         EV::on(mEv::ExchangeConnect, [](json k) {
-          gwState_ = k["state"].get<bool>();
-          gwConn_ = (mConnectivity)k["status"].get<int>();
+          gwState_ = k.value("state", false);
+          gwConn_ = (mConnectivity)k.value("status", 0);
           send();
         });
         EV::on(mEv::QuotingParameters, [](json k) {

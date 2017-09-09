@@ -55,10 +55,10 @@ namespace K {
       static void calcFairValue() {
         if (empty()) return;
         double mgFairValue_ = mgFairValue;
-        double topAskPrice = mGWmktFilter.value("/asks/0/price"_json_pointer, 0);
-        double topBidPrice = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
-        double topAskSize = mGWmktFilter.value("/asks/0/size"_json_pointer, 0);
-        double topBidSize = mGWmktFilter.value("/bids/0/size"_json_pointer, 0);
+        double topAskPrice = mGWmktFilter.value("/asks/0/price"_json_pointer, 0.0);
+        double topBidPrice = mGWmktFilter.value("/bids/0/price"_json_pointer, 0.0);
+        double topAskSize = mGWmktFilter.value("/asks/0/size"_json_pointer, 0.0);
+        double topBidSize = mGWmktFilter.value("/bids/0/size"_json_pointer, 0.0);
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         mgFairValue = FN::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)QP::getInt("fvModel")
@@ -75,24 +75,25 @@ namespace K {
         json k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
-            if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+QP::getInt("quotingStdevProtectionPeriods")*1e+3<FN::T()) continue;
-            mgStatFV.push_back(it->value("fv", 0));
-            mgStatBid.push_back(it->value("bid", 0));
-            mgStatAsk.push_back(it->value("ask", 0));
-            mgStatTop.push_back(it->value("bid", 0));
-            mgStatTop.push_back(it->value("ask", 0));
+            if (it->value("time", (unsigned long)0)+QP::getInt("quotingStdevProtectionPeriods")*1e+3<FN::T()) continue;
+            mgStatFV.push_back(it->value("fv", 0.0));
+            mgStatBid.push_back(it->value("bid", 0.0));
+            mgStatAsk.push_back(it->value("ask", 0.0));
+            mgStatTop.push_back(it->value("bid", 0.0));
+            mgStatTop.push_back(it->value("ask", 0.0));
           }
           calcStdev();
         }
         cout << FN::uiT() << "DB loaded " << mgStatFV.size() << " STDEV Periods." << endl;
         k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
-          if (k["/0/ewmaLong"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+QP::getInt("longEwmaPeriods")*6e+4>FN::T()))
-            mgEwmaL = k["/0/ewmaLong"_json_pointer].get<double>();
-          if (k["/0/ewmaMedium"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+QP::getInt("mediumEwmaPeriods")*6e+4>FN::T()))
-            mgEwmaM = k["/0/ewmaMedium"_json_pointer].get<double>();
-          if (k["/0/ewmaShort"_json_pointer].is_number() and (!k["/0/time"_json_pointer].is_number() or k["/0/time"_json_pointer].get<unsigned long>()+QP::getInt("shortEwmaPeriods")*6e+4>FN::T()))
-            mgEwmaS = k["/0/ewmaShort"_json_pointer].get<double>();
+          k = k.at(0);
+          if (k.value("time", (unsigned long)0)+QP::getInt("longEwmaPeriods")*6e+4>FN::T())
+            mgEwmaL = k.value("ewmaLong", 0.0);
+          if (k.value("time", (unsigned long)0)+QP::getInt("mediumEwmaPeriods")*6e+4>FN::T())
+            mgEwmaM = k.value("ewmaMedium", 0.0);
+          if (k.value("time", (unsigned long)0)+QP::getInt("shortEwmaPeriods")*6e+4>FN::T())
+            mgEwmaS = k.value("ewmaShort", 0.0);
         }
         cout << FN::uiT() << "DB loaded EWMA Long = " << mgEwmaL << "." << endl;
         cout << FN::uiT() << "DB loaded EWMA Medium = " << mgEwmaM << "." << endl;
@@ -128,8 +129,8 @@ namespace K {
       };
       static void stdevPUp() {
         if (empty()) return;
-        double topBid = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
-        double topAsk = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
+        double topBid = mGWmktFilter.value("/bids/0/price"_json_pointer, 0.0);
+        double topAsk = mGWmktFilter.value("/bids/0/price"_json_pointer, 0.0);
         if (!topBid or !topAsk) return;
         mgStatFV.push_back(mgFairValue);
         mgStatBid.push_back(topBid);
@@ -149,8 +150,8 @@ namespace K {
           gw->exchange,
           gw->base,
           gw->quote,
-          k.value("price", 0),
-          k.value("size", 0),
+          k.value("price", 0.0),
+          k.value("size", 0.0),
           FN::T(),
           (mSide)k.value("make_side", 0)
         );
@@ -222,9 +223,9 @@ namespace K {
       };
       static void filter(string k, json o) {
         for (json::iterator it = mGWmktFilter[k].begin(); it != mGWmktFilter[k].end();)
-          if (abs((*it)["price"].get<double>() - o["price"].get<double>()) < gw->minTick) {
-            (*it)["size"] = (*it)["size"].get<double>() - o["quantity"].get<double>();
-            if ((*it)["size"].get<double>() < gw->minTick) mGWmktFilter[k].erase(it);
+          if (abs(it->value("price", 0.0) - o.value("price", 0.0)) < gw->minTick) {
+            (*it)["size"] = it->value("size", 0.0) - o.value("quantity", 0.0);
+            if (it->value("size", 0.0) < gw->minTick) mGWmktFilter[k].erase(it);
             break;
           } else ++it;
       };

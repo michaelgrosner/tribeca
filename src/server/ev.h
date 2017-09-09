@@ -45,7 +45,7 @@ namespace K {
           ? " 0day.\n"
           : string(" -").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(k)
-          );
+        );
       };
       static void happyEnding(int code) {
         cout << FN::uiT();
