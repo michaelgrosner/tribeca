@@ -24,13 +24,15 @@ namespace K {
           }
         }).detach();
         EV::on(mEv::GatewayMarketConnect, [](json k) {
-          mConnectivity conn = (mConnectivity)k["/0"_json_pointer].get<int>();
+          if (k.is_null() or !k.size()) return;
+          mConnectivity conn = (mConnectivity)(int)k.at(0);
           _gwCon_(mGatewayType::MarketData, conn);
           if (conn == mConnectivity::Disconnected)
             EV::up(mEv::MarketDataGateway);
         });
         EV::on(mEv::GatewayOrderConnect, [](json k) {
-          _gwCon_(mGatewayType::OrderEntry, (mConnectivity)k["/0"_json_pointer].get<int>());
+          if (k.is_null() or !k.size()) return;
+          _gwCon_(mGatewayType::OrderEntry, (mConnectivity)(int)k.at(0));
         });
         thread([&]() {
           gw->book();
@@ -52,16 +54,12 @@ namespace K {
         EV::up(mEv::GatewayMarketConnect, {(int)k});
       };
       static void gwLevelUp(mGWbls k) {
-        json b;
-        json a;
+        json b, a;
         for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
-          b.push_back({{"price", (*it).price}, {"size", (*it).size}});
+          b.push_back({{"price", it->price}, {"size", it->size}});
         for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
-          a.push_back({{"price", (*it).price}, {"size", (*it).size}});
-        EV::up(mEv::MarketDataGateway, {
-          {"bids", b},
-          {"asks", a}
-        });
+          a.push_back({{"price", it->price}, {"size", it->size}});
+        EV::up(mEv::MarketDataGateway, {{"bids", b}, {"asks", a}});
       };
       static void gwTradeUp(vector<mGWbt> k) {
         for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
@@ -137,8 +135,8 @@ namespace K {
         return {{{"state", gwState}}};
       };
       static json onHandState(json k) {
-        if (k["state"].get<bool>() != gwAutoStart) {
-          gwAutoStart = k["state"].get<bool>();
+        if (k.value("state", false) != gwAutoStart) {
+          gwAutoStart = k.value("state", false);
           gwUpState();
         }
         return {};

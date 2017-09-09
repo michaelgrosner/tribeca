@@ -4,7 +4,7 @@
 namespace K {
   unsigned int qeT = 0;
   unsigned long qeNextT = 0;
-  unsigned long qeSendT = 0;
+  unsigned long qeThread = 0;
   json qeQuote;
   json qeStatus;
   mQuoteStatus qeBidStatus = mQuoteStatus::MissingData;
@@ -489,9 +489,9 @@ namespace K {
             qeNextQuote.clear();
             qeNextQuote[side] = q;
             thread([&]() {
-              unsigned int qeSendT_ = ++qeSendT;
+              unsigned int qeThread_ = ++qeThread;
               unsigned long nextStart_ = nextStart;
-              while (qeSendT_ == qeSendT) {
+              while (qeThread_ == qeThread) {
                 if ((double)nextStart_ - (double)FN::T() > 0)
                   this_thread::sleep_for(chrono::milliseconds(100));
                 else {

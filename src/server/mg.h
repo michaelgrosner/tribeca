@@ -55,10 +55,15 @@ namespace K {
       static void calcFairValue() {
         if (empty()) return;
         double mgFairValue_ = mgFairValue;
+        double topAskPrice = mGWmktFilter.value("/asks/0/price"_json_pointer, 0);
+        double topBidPrice = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
+        double topAskSize = mGWmktFilter.value("/asks/0/size"_json_pointer, 0);
+        double topBidSize = mGWmktFilter.value("/bids/0/size"_json_pointer, 0);
+        if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         mgFairValue = FN::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)QP::getInt("fvModel")
-            ? (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>()) / 2
-            : (mGWmktFilter["/asks/0/price"_json_pointer].get<double>() * mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/price"_json_pointer].get<double>() * mGWmktFilter["/bids/0/size"_json_pointer].get<double>()) / (mGWmktFilter["/asks/0/size"_json_pointer].get<double>() + mGWmktFilter["/bids/0/size"_json_pointer].get<double>()),
+            ? (topAskPrice + topBidPrice) / 2
+            : (topAskPrice * topAskSize + topBidPrice * topBidSize) / (topAskSize + topBidSize),
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
@@ -71,11 +76,11 @@ namespace K {
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
             if ((*it)["time"].is_number() and (*it)["time"].get<unsigned long>()+QP::getInt("quotingStdevProtectionPeriods")*1e+3<FN::T()) continue;
-            mgStatFV.push_back((*it)["fv"].get<double>());
-            mgStatBid.push_back((*it)["bid"].get<double>());
-            mgStatAsk.push_back((*it)["ask"].get<double>());
-            mgStatTop.push_back((*it)["bid"].get<double>());
-            mgStatTop.push_back((*it)["ask"].get<double>());
+            mgStatFV.push_back(it->value("fv", 0));
+            mgStatBid.push_back(it->value("bid", 0));
+            mgStatAsk.push_back(it->value("ask", 0));
+            mgStatTop.push_back(it->value("bid", 0));
+            mgStatTop.push_back(it->value("ask", 0));
           }
           calcStdev();
         }
@@ -123,16 +128,19 @@ namespace K {
       };
       static void stdevPUp() {
         if (empty()) return;
+        double topBid = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
+        double topAsk = mGWmktFilter.value("/bids/0/price"_json_pointer, 0);
+        if (!topBid or !topAsk) return;
         mgStatFV.push_back(mgFairValue);
-        mgStatBid.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
-        mgStatAsk.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
-        mgStatTop.push_back(mGWmktFilter["/bids/0/price"_json_pointer].get<double>());
-        mgStatTop.push_back(mGWmktFilter["/asks/0/price"_json_pointer].get<double>());
+        mgStatBid.push_back(topBid);
+        mgStatAsk.push_back(topAsk);
+        mgStatTop.push_back(topBid);
+        mgStatTop.push_back(topAsk);
         calcStdev();
         DB::insert(uiTXT::MarketData, {
           {"fv", mgFairValue},
-          {"bid", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
-          {"ask", mGWmktFilter["/bids/0/price"_json_pointer].get<double>()},
+          {"bid", topBid},
+          {"ask", topAsk},
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 1e+3 * QP::getInt("quotingStdevProtectionPeriods"));
       };
@@ -141,10 +149,10 @@ namespace K {
           gw->exchange,
           gw->base,
           gw->quote,
-          k["price"].get<double>(),
-          k["size"].get<double>(),
+          k.value("price", 0),
+          k.value("size", 0),
           FN::T(),
-          (mSide)k["make_side"].get<int>()
+          (mSide)k.value("make_side", 0)
         );
         mGWmt_.push_back(t);
         if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());

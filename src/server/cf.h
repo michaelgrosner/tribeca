@@ -5,8 +5,8 @@ namespace K {
   static Gw* gw;
   static Gw* gW;
   static json pkRepo;
-  static json cf;
-  static string cFname;
+  extern json cf;
+  extern string cFname;
   class CF {
     public:
       static void internal() {
@@ -73,15 +73,15 @@ namespace K {
           } else return "";
         }
         return cf[k].is_string()
-          ? cf[k].get<string>()
-          : (cf[k].is_number() ? to_string(cf[k].get<double>()) : "");
+          ? cf.value(k, "")
+          : (cf[k].is_number() ? to_string(cf.value(k, 0)) : "");
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
           cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
           exit(1);
         }
-        return pkRepo[k].get<string>();
+        return pkRepo.value(k, "");
       };
       static int cfBase() {
         string k_ = cfString("TradedPair");
@@ -122,24 +122,22 @@ namespace K {
           system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
           system("stunnel dist/K-stunnel.conf");
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
-          if (k.find("quote_increment") != k.end()) {
-            gw->minTick = stod(k["quote_increment"].get<string>());
-            gw->minSize = stod(k["base_min_size"].get<string>());
-          }
+          gw->minTick = stod(k.value("quote_increment", "0"));
+          gw->minSize = stod(k.value("base_min_size", "0"));
         } else if (e == mExchange::HitBtc) {
           json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
           if (k.find("symbols") != k.end())
             for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
-              if ((*it)["symbol"] == gw->symbol) {
-                gw->minTick = stod((*it)["step"].get<string>());
-                gw->minSize = stod((*it)["lot"].get<string>());
+              if (it->value("symbol", "") == gw->symbol) {
+                gw->minTick = stod(it->value("step", "0"));
+                gw->minSize = stod(it->value("lot", "0"));
                 break;
               }
         } else if (e == mExchange::Bitfinex) {
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
             stringstream price_;
-            price_ << scientific << stod(k["last_price"].get<string>());
+            price_ << scientific << stod(k.value("last_price", "0"));
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
@@ -153,7 +151,7 @@ namespace K {
         } else if (e == mExchange::Korbit) {
           json k = FN::wJet(string(gw->http).append("/constants"));
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
-            gw->minTick = k[gw->symbol.substr(0,3).append("TickSize")];
+            gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0);
             gw->minSize = 0.015;
           }
         } else if (e == mExchange::Poloniex) {
@@ -167,7 +165,7 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to match TradedPair to " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
         cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
           << "- autoBot: " << (autoStart() ? "yes" : "no") << endl
