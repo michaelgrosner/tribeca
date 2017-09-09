@@ -11,6 +11,10 @@ To run K.sh under winy (or if you love Docker), make use of the [Dockerfile](htt
  $ docker build --no-cache -t ksh .
  $ docker run -p 3000:3000 --name Ksh -d ksh
 ```
+If you want to ensure that your data is persisted, mount a local folder into the container's `/data` folder:
+```
+$ docker run -p 3000:3000 -v /path/to/data:/data --name Ksh -d ksh
+```
 
 If you run `docker ps`, you should see K container running.
 
