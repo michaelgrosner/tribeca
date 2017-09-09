@@ -1,6 +1,14 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
+#ifndef K_BUILD
+#define K_BUILD "0"
+#endif
+
+#ifndef K_STAMP
+#define K_STAMP "0"
+#endif
+
 namespace K {
   typedef void (*evCb)(json);
   static map<unsigned int, vector<evCb>> ev;
@@ -32,12 +40,12 @@ namespace K {
       static void gitReversedVersion() {
         system("git fetch");
         string k = changelog();
-        string hardware = FN::output("echo -n `uname -m`");
         unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << "K " << hardware << " version "  << (!commits ? "0day.\n"
-          : string("-").append(to_string(commits)).append("commit")
+        cout << "K " << K_BUILD << " version " << K_STAMP << (!commits
+          ? " 0day.\n"
+          : string(" -").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(k)
-        );
+          );
       };
       static void happyEnding(int code) {
         cout << FN::uiT();
@@ -49,8 +57,7 @@ namespace K {
       static void quit(int sig) {
         cout << endl << FN::uiT() << "Excellent decision! ";
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
-        if (k["/value/joke"_json_pointer].is_string())
-          cout << k["/value/joke"_json_pointer].get<string>() << endl;
+        if (!k.is_null()) cout << k.value("/value/joke"_json_pointer, "") << endl;
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {

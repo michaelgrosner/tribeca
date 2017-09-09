@@ -14,11 +14,13 @@ V_SQL   := 3200100
 V_QF    := v.1.14.4
 KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include  \
   src/server/K.cc -pthread -ldl -Wl,-rpath,'$$ORIGIN'  \
-  $(KLOCAL)/include/uWS/*.cpp                          \
+  -DK_STAMP='"$(shell date --rfc-3339=ns)"'            \
+  -DK_BUILD='"$(CROSS)"'   $(KLOCAL)/include/uWS/*.cpp \
   dist/lib/K-$(CROSS).a    $(KLOCAL)/lib/libquickfix.a \
   $(KLOCAL)/lib/libpng16.a $(KLOCAL)/lib/libsqlite3.a  \
   $(KLOCAL)/lib/libz.a     $(KLOCAL)/lib/libcurl.a     \
-  $(KLOCAL)/lib/libssl.a   $(KLOCAL)/lib/libcrypto.a
+  $(KLOCAL)/lib/libssl.a   $(KLOCAL)/lib/libcrypto.a   \
+
 
 all: K
 
