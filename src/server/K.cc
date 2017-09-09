@@ -15,10 +15,10 @@
 #include <vector>
 #include <map>
 
-#include "uWS.h"
 #include "png.h"
-#include "curl.h"
 #include "sqlite3.h"
+#include "uWS/uWS.h"
+#include "curl/curl.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 #include "openssl/md5.h"
