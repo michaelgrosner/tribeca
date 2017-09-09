@@ -74,7 +74,7 @@ namespace K {
         }
         return cf[k].is_string()
           ? cf.value(k, "")
-          : (cf[k].is_number() ? to_string(cf.value(k, 0)) : "");
+          : (cf[k].is_number() ? to_string(cf.value(k, 0.0)) : "");
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
@@ -151,7 +151,7 @@ namespace K {
         } else if (e == mExchange::Korbit) {
           json k = FN::wJet(string(gw->http).append("/constants"));
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
-            gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0);
+            gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
             gw->minSize = 0.015;
           }
         } else if (e == mExchange::Poloniex) {

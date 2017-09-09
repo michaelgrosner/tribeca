@@ -46,7 +46,16 @@ namespace K {
           {"orderStatus", (int)mORS::New},
           {"preferPostOnly", oPO}
         });
-        gW->send(o["orderId"].get<string>(), (mSide)o["side"].get<int>(), o["price"].get<double>(), o["quantity"].get<double>(), (mOrderType)o["type"].get<int>(), (mTimeInForce)o["timeInForce"].get<int>(), o["preferPostOnly"].get<bool>(), o["time"].get<unsigned long>());
+        gW->send(
+          o.value("orderId", ""),
+          (mSide)o.value("side", 0),
+          o.value("price", 0.0),
+          o.value("quantity", 0.0),
+          (mOrderType)o.value("type", 0),
+          (mTimeInForce)o.value("timeInForce", 0),
+          o.value("preferPostOnly", false),
+          o.value("time", (unsigned long)0)
+        );
       };
       static void cancelOrder(string k) {
         if (allOrders.find(k) == allOrders.end()) {
@@ -58,7 +67,12 @@ namespace K {
           return;
         }
         json o = updateOrderState(k, mORS::Working);
-        gW->cancel(o["orderId"].get<string>(), o["exchangeId"].get<string>(), (mSide)o["side"].get<int>(), o["time"].get<unsigned long>());
+        gW->cancel(
+          o.value("orderId", ""),
+          o.value("exchangeId", ""),
+          (mSide)o.value("side", 0),
+          o.value("time", (unsigned long)0)
+        );
       };
     private:
       static void load() {
@@ -73,13 +87,14 @@ namespace K {
       static json onSnapOrders(json z) {
         json k;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (mORS::Working != (mORS)it->second["orderStatus"].get<int>()) continue;
+          if (mORS::Working != (mORS)it->second.value("orderStatus", 0)) continue;
           k.push_back(it->second);
         }
         return k;
       };
       static json onHandCancelOrder(json k) {
-        cancelOrder(k["orderId"].get<string>());
+        string orderId = k.value("orderId", "");
+        if (orderId!="") cancelOrder(orderId);
         return {};
       };
       static json onHandCancelAllOrders(json k) {
@@ -95,16 +110,17 @@ namespace K {
         return {};
       };
       static json onHandCleanTrade(json k) {
-        cleanTrade(k["tradeId"].get<string>());
+        string tradeId = k.value("tradeId", "");
+        if (tradeId!="") cleanTrade(tradeId);
         return {};
       };
       static json onHandSubmitNewOrder(json k) {
         sendOrder(
-          k["side"].get<string>() == "Bid" ? mSide::Bid : mSide::Ask,
-          k["price"].get<double>(),
-          k["quantity"].get<double>(),
-          k["orderType"].get<string>() == "Limit" ? mOrderType::Limit : mOrderType::Market,
-          k["timeInForce"].get<string>() == "GTC" ? mTimeInForce::GTC : (k["timeInForce"].get<string>() == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
+          k.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
+          k.value("price", 0.0),
+          k.value("quantity", 0.0),
+          k.value("orderType", "") == "Limit" ? mOrderType::Limit : mOrderType::Market,
+          k.value("timeInForce", "") == "GTC" ? mTimeInForce::GTC : (k.value("timeInForce", "") == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
           false,
           false
         );
@@ -112,31 +128,31 @@ namespace K {
       };
       static json updateOrderState(json k) {
         json o;
-        if ((mORS)k["orderStatus"].get<int>() == mORS::New) o = k;
-        else if (!k["orderId"].is_null() and allOrders.find(k["orderId"].get<string>()) != allOrders.end())
-          o = allOrders[k["orderId"].get<string>()];
-        else if (!k["exchangeId"].is_null() and allOrdersIds.find(k["exchangeId"].get<string>()) != allOrdersIds.end()) {
-          o = allOrders[allOrdersIds[k["exchangeId"].get<string>()]];
-          k["orderId"] = o["orderId"].get<string>();
+        if ((mORS)k.value("orderStatus", 0) == mORS::New) o = k;
+        else if (!k["orderId"].is_null() and allOrders.find(k.value("orderId", "")) != allOrders.end())
+          o = allOrders[k.value("orderId", "")];
+        else if (!k["exchangeId"].is_null() and allOrdersIds.find(k.value("exchangeId", "")) != allOrdersIds.end()) {
+          o = allOrders[allOrdersIds[k.value("exchangeId", "")]];
+          k["orderId"] = o.value("orderId", "");
         } else return o;
         for (json::iterator it = k.begin(); it != k.end(); ++it)
           if (!it.value().is_null()) o[it.key()] = it.value();
         if (o["time"].is_null()) o["time"] = FN::T();
-        if (o["computationalLatency"].is_null() and (mORS)o["orderStatus"].get<int>() == mORS::Working)
-          o["computationalLatency"] = FN::T() - o["time"].get<unsigned long>();
+        if (o["computationalLatency"].is_null() and (mORS)o.value("orderStatus", 0) == mORS::Working)
+          o["computationalLatency"] = FN::T() - o.value("time", (unsigned long)0);
         if (!o["computationalLatency"].is_null()) o["time"] = FN::T();
         toMemory(o);
         if (!gW->cancelByClientId and !o["exchangeId"].is_null()) {
-          map<string, void*>::iterator it = toCancel.find(o["orderId"].get<string>());
+          map<string, void*>::iterator it = toCancel.find(o.value("orderId", ""));
           if (it != toCancel.end()) {
             toCancel.erase(it);
-            cancelOrder(o["orderId"].get<string>());
-            if ((mORS)o["orderStatus"].get<int>() == mORS::Working) return o;
+            cancelOrder(o.value("orderId", ""));
+            if ((mORS)o.value("orderStatus", 0) == mORS::Working) return o;
           }
         }
         EV::up(mEv::OrderUpdateBroker, o);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
-        if (!k["lastQuantity"].is_null() and k["lastQuantity"].get<double>() > 0)
+        if (!k["lastQuantity"].is_null() and k.value("lastQuantity", 0.0) > 0)
           toHistory(o);
         return o;
       };
@@ -144,7 +160,7 @@ namespace K {
         if (gW->supportCancelAll)
           return gW->cancelAll();
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          if (mORS::New == (mORS)it->second["orderStatus"].get<int>() or mORS::Working == (mORS)it->second["orderStatus"].get<int>())
+          if (mORS::New == (mORS)it->second.value("orderStatus", 0) or mORS::Working == (mORS)it->second.value("orderStatus", 0))
             cancelOrder(it->first);
       };
       static void cleanClosedOrders() {

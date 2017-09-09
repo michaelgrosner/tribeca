@@ -100,9 +100,11 @@ namespace K {
         }
         qp = defQP;
         json qp_ = DB::load(uiTXT::QuotingParametersChange);
-        if (qp_.size())
-          for (json::iterator it = qp_["/0"_json_pointer].begin(); it != qp_["/0"_json_pointer].end(); ++it)
+        if (qp_.size()) {
+          qp_ = qp_.at(0);
+          for (json::iterator it = qp_.begin(); it != qp_.end(); ++it)
             qp[it.key()] = it.value();
+        }
         clean();
         UI::delay(getDouble("delayUI"));
         cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
@@ -111,14 +113,14 @@ namespace K {
         return { qp };
       };
       static json onHand(json k) {
-        if (k.value("buySize", 0) > 0
-          and k.value("sellSize", 0) > 0
-          and k.value("buySizePercentage", 0) > 0
-          and k.value("sellSizePercentage", 0) > 0
-          and k.value("widthPing", 0) > 0
-          and k.value("widthPong", 0) > 0
-          and k.value("widthPingPercentage", 0) > 0
-          and k.value("widthPongPercentage", 0) > 0
+        if (k.value("buySize", 0.0) > 0
+          and k.value("sellSize", 0.0) > 0
+          and k.value("buySizePercentage", 0.0) > 0
+          and k.value("sellSizePercentage", 0.0) > 0
+          and k.value("widthPing", 0.0) > 0
+          and k.value("widthPong", 0.0) > 0
+          and k.value("widthPingPercentage", 0.0) > 0
+          and k.value("widthPongPercentage", 0.0) > 0
         ) {
           if ((mQuotingMode)k.value("mode", 0) == mQuotingMode::Depth)
             k["widthPercentage"] = false;
