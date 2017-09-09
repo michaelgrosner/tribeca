@@ -365,7 +365,7 @@ namespace K {
           pclose(stream);
         }
         return data;
-      }
+      };
   };
 }
 

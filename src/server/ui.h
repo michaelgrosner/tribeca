@@ -7,13 +7,12 @@ namespace K {
   typedef json (*uiCb)(json);
   struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  static json uiSTATE;
-  static bool uiOPT = true;
-  static unsigned int iOSR60 = 0;
-  static unsigned long uiMDT = 0;
-  static unsigned int appPushT = 0;
-  static unsigned long appStateT = 0;
-  static double delayUI = 0;
+  static bool uiVisibleOpt = true;
+  static unsigned int uiOSR_1m = 0;
+  static unsigned long uiT_MKT = 0;
+  static unsigned long uiT_1m = 0;
+  static unsigned int uiThread = 0;
+  static double ui_delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
   class UI {
@@ -127,21 +126,21 @@ namespace K {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
         if (k == uiTXT::MarketData) {
-          if (uiMDT+369 > FN::T()) return;
-          uiMDT = FN::T();
+          if (uiT_MKT+369 > FN::T()) return;
+          uiT_MKT = FN::T();
         }
         if (h) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void delay(double delayUI_) {
-        delayUI = delayUI_;
+      static void delay(double delayUI) {
+        ui_delayUI = delayUI;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         thread([&]() {
-          unsigned int appPushT_ = ++appPushT;
-          double k = delayUI;
+          unsigned int uiThread_ = ++uiThread;
+          double k = ui_delayUI;
           int timeout = k ? (int)(k*1e+3) : 6e+4;
-          while (appPushT_ == appPushT) {
+          while (uiThread_ == uiThread) {
             if (k) appPush();
             else appState();
             this_thread::sleep_for(chrono::milliseconds(timeout));
@@ -150,20 +149,22 @@ namespace K {
       };
     private:
       static json onSnapApp(json z) {
-        return { uiSTATE };
+        return { serverState() };
       };
       static json onSnapNote(json z) {
         return { uiNOTE };
       };
       static json onHandNote(json k) {
-        uiNOTE = k["/0"_json_pointer].get<string>();
+        if (!k.is_null() and k.size())
+          uiNOTE = k.at(0);
         return {};
       };
       static json onSnapOpt(json z) {
-        return { uiOPT };
+        return { uiVisibleOpt };
       };
       static json onHandOpt(json k) {
-        uiOPT = k["/0"_json_pointer].get<bool>();
+        if (!k.is_null() and k.size())
+          uiVisibleOpt = k.at(0);
         return {};
       };
       static void uiUp(uiTXT k, json o) {
@@ -178,30 +179,32 @@ namespace K {
       };
       static void uiHold(uiTXT k, json o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o["orderStatus"].get<int>()) return (void)++iOSR60;
-        if (!delayUI) return uiUp(k, o);
+        if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
+        if (!ui_delayUI) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
           else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
-            if ((*it)["orderId"].get<string>() == o["orderId"].get<string>())
+            if (it->value("orderId", "") == o.value("orderId", ""))
               it = sess->D[k].erase(it);
             else ++it;
         }
         sess->D[k].push_back(o);
       };
-      static void appState() {
+      static json serverState() {
         time_t rawtime;
         time(&rawtime);
-        uiSTATE = {
+        return {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
-          {"freq", iOSR60 / 2},
+          {"freq", uiOSR_1m / 2},
           {"dbsize", DB::size()},
           {"a", A()}
         };
-        iOSR60 = 0;
-        uiSend(uiTXT::ApplicationState, uiSTATE);
+      };
+      static void appState() {
+        uiSend(uiTXT::ApplicationState, serverState());
+        uiOSR_1m = 0;
       };
       static void appPush() {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -217,7 +220,7 @@ namespace K {
           json k;
           for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
             k.push_back(*it);
-            if (mORS::Working != (mORS)(*it)["orderStatus"].get<int>())
+            if (mORS::Working != (mORS)it->value("orderStatus", 0))
               it = sess->D[uiTXT::OrderStatusReports].erase(it);
             else ++it;
           }
@@ -225,8 +228,8 @@ namespace K {
             uiUp(uiTXT::OrderStatusReports, k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
-        if (appStateT+60000 > FN::T()) return;
-        appStateT = FN::T();
+        if (uiT_1m+60000 > FN::T()) return;
+        uiT_1m = FN::T();
         appState();
       };
   };

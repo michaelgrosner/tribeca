@@ -111,16 +111,16 @@ namespace K {
         return { qp };
       };
       static json onHand(json k) {
-        if (k["buySize"].get<double>() > 0
-          and k["sellSize"].get<double>() > 0
-          and k["buySizePercentage"].get<double>() > 0
-          and k["sellSizePercentage"].get<double>() > 0
-          and k["widthPing"].get<double>() > 0
-          and k["widthPong"].get<double>() > 0
-          and k["widthPingPercentage"].get<double>() > 0
-          and k["widthPongPercentage"].get<double>() > 0
+        if (k.value("buySize", 0) > 0
+          and k.value("sellSize", 0) > 0
+          and k.value("buySizePercentage", 0) > 0
+          and k.value("sellSizePercentage", 0) > 0
+          and k.value("widthPing", 0) > 0
+          and k.value("widthPong", 0) > 0
+          and k.value("widthPingPercentage", 0) > 0
+          and k.value("widthPongPercentage", 0) > 0
         ) {
-          if ((mQuotingMode)k["mode"].get<int>() == mQuotingMode::Depth)
+          if ((mQuotingMode)k.value("mode", 0) == mQuotingMode::Depth)
             k["widthPercentage"] = false;
           qp = k;
           clean();

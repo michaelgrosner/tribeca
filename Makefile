@@ -4,7 +4,7 @@ CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
 AR       = $(CROSS)-ar-6
 KLOCAL   = build-$(CROSS)/local
-V_Z     := 1.2.11
+V_ZLIB  := 1.2.11
 V_PNG   := 1.6.31
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
@@ -65,6 +65,7 @@ help:
 	#  make send-cov     - send coverage               #
 	#  make travis       - provide travis dev box      #
 	#                                                  #
+	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
@@ -94,7 +95,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) z png16 openssl curl json sqlite uws quickfix
+	CROSS=$(CROSS) $(MAKE) zlib png16 openssl curl json sqlite uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -111,16 +112,16 @@ uws: build-$(CROSS)
 	&& cp build-$(CROSS)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
 
 sqlite: build-$(CROSS)
-	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                      \
-	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS)\
-	&& cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(PWD)/$(KLOCAL)    \
+	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                       \
+	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS) \
+	&& cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(PWD)/$(KLOCAL)     \
 	--host=$(CROSS) --enable-static --disable-shared && make && make install )
 
-z: build-$(CROSS)
-	test -d build-$(CROSS)/zlib-$(V_Z) || (                                \
-	curl -L https://zlib.net/zlib-$(V_Z).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/zlib-$(V_Z) && CC=$(CC) ./configure               \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                      )
+zlib: build-$(CROSS)
+	test -d build-$(CROSS)/zlib-$(V_ZLIB) || (                                \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CROSS) \
+	&& cd build-$(CROSS)/zlib-$(V_ZLIB) && CC=$(CC) ./configure               \
+	--prefix=$(PWD)/$(KLOCAL) && make && make install                         )
 
 openssl: build-$(CROSS)
 	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                              \
@@ -300,4 +301,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin z png16 openssl curl quickfix uws json clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
