@@ -77,7 +77,7 @@ namespace K {
     private:
       static void load() {
         tradesMemory = DB::load(uiTXT::Trades);
-        cout << FN::uiT() << "DB loaded " << tradesMemory.size() << " historical Trades." << endl;
+        cout << FN::uiT() << "DB" << RWHITE << " loaded " << tradesMemory.size() << " historical Trades." << endl;
       };
       static json onSnapTrades(json z) {
         for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
@@ -200,10 +200,6 @@ namespace K {
       static void toHistory(json o) {
         double fee = 0;
         double val = abs(o.value("lastPrice", 0.0) * o.value("lastQuantity", 0.0));
-        if (!o["liquidity"].is_null()) {
-          fee = (mLiquidity)o.value("liquidity", 0) == mLiquidity::Make ? gw->makeFee : gw->takeFee;
-          if (fee) val -= ((mSide)o.value("side", 0) == mSide::Bid ? 1 : -1) * fee;
-        }
         json trade = {
           {"tradeId", to_string(FN::T())},
           {"time", o.value("time", (unsigned long)0)},
@@ -213,7 +209,6 @@ namespace K {
           {"quantity", o.value("lastQuantity", 0.0)},
           {"side", o.value("side", 0)},
           {"value", val},
-          {"liquidity", o.value("liquidity", 0)},
           {"Ktime", 0},
           {"Kqty", 0},
           {"Kprice", 0},
@@ -222,7 +217,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("lastPrice", 0.0) << " " << mCurrency[gw->quote] << endl;
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("lastPrice", 0.0) << " " << mCurrency[gw->quote] << " (value " << val << " " << mCurrency[gw->quote] << ")" << endl;
         EV::up(mEv::OrderTradeBroker, trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")

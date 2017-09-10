@@ -38,7 +38,7 @@ namespace K {
       };
     private:
       static void gitReversedVersion() {
-        cout << "K build " << K_BUILD << " " << K_STAMP << "." << endl;
+        cout << RGREEN << "K build " << K_BUILD << " " << K_STAMP << "." << endl;
         system("git fetch");
         string k = changelog();
         unsigned int commits = count(k.begin(), k.end(), '\n');
@@ -62,7 +62,7 @@ namespace K {
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
-        cout << FN::uiT() << "Errrror: Signal " << sig << " "  << strsignal(sig);
+        cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
         if (latest()) {
           cout << " (Three-Headed Monkey found)." << endl;
           report();
@@ -81,7 +81,7 @@ namespace K {
         return FN::output("git --no-pager log --graph --oneline @..@{u}");
       }
       static void upgrade() {
-        cout << endl << "Hint!"
+        cout << endl << RYELLOW << "Hint!"
           << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
           << endl << changelog()
           << endl << "If you agree, consider to run \"make latest\" prior further executions."
@@ -90,7 +90,7 @@ namespace K {
       static void report() {
         void *k[69];
         backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
-        cout << endl << "Yikes!"
+        cout << endl << RRED << "Yikes!"
           << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
           << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << endl << endl;

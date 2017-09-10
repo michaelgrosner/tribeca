@@ -9,7 +9,7 @@ namespace K {
     public:
       static void main(char** args) {
         if (sqlite3_open(path(), &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
-        cout << FN::uiT() << "DB " << path() << " loaded OK." << endl;
+        cout << FN::uiT() << "DB " << RYELLOW << path() << RWHITE << " loaded OK." << endl;
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;

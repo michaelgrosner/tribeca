@@ -156,7 +156,6 @@ export class TradesComponent implements OnInit {
           quantity: t.quantity,
           side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
           value: t.value,
-          liquidity: (t.liquidity === 0 || t.liquidity === 1) ? Models.Liquidity[t.liquidity].charAt(0) : '?',
           Ktime: t.Ktime ? (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)) : null,
           Kqty: t.Kqty ? t.Kqty : null,
           Kprice: t.Kprice ? t.Kprice : null,

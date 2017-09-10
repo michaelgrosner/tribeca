@@ -20,7 +20,7 @@ namespace K {
         if (access(cFname.data(), F_OK) != -1) {
           ifstream file(cFname);
           cf = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
-          cout << FN::uiT() << "CF settings loaded from JSON file " << k << " OK." << endl;
+          cout << FN::uiT() << "CF" << RWHITE <<" settings loaded from JSON file " << RYELLOW << k << RWHITE << " OK." << endl;
         } else if (access(cfname.data(), F_OK) != -1) {
           cFname = cfname;
           png_structp png_ptr;
@@ -166,8 +166,8 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
-        else { cout << FN::uiT() << "GW " << cfString("EXCHANGE") << " allows client IP." << endl; }
-        cout << FN::uiT() << "GW " << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
+        else { cout << FN::uiT() << "GW " << RWHITE << cfString("EXCHANGE") << " allows client IP." << endl; }
+        cout << FN::uiT() << "GW " << RWHITE << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
           << "- autoBot: " << (autoStart() ? "yes" : "no") << endl
           << "- pair: " << gw->symbol << endl
           << "- minTick: " << gw->minTick << endl

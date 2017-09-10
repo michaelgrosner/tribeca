@@ -107,7 +107,7 @@ namespace K {
         }
         clean();
         UI::delay(getDouble("delayUI"));
-        cout << FN::uiT() << "DB loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
+        cout << FN::uiT() << "DB" << RWHITE << " loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
       };
       static json onSnap(json z) {
         return { qp };

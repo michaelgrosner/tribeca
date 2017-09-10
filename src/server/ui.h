@@ -105,10 +105,10 @@ namespace K {
         });
         uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
         if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
-          cout << FN::uiT() << "UI ready over HTTPS on external port " << to_string(port) << "." << endl;
+          cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
-          cout << FN::uiT() << "UI ready over HTTP on external port " << to_string(port) << "." << endl;
-        else { cout << FN::uiT() << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
+          cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
+        else { cout << FN::uiT() << RRED << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);

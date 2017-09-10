@@ -41,7 +41,7 @@ namespace K {
         }
       };
       static void calcTargetBasePos() {
-        if (pgPos.is_null()) { cout << FN::uiT() << "Unable to calculate TBP, missing market data." << endl; return; }
+        if (pgPos.is_null()) { cout << FN::uiT() << RRED << "Unable to calculate TBP, missing market data." << endl; return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
             ? QP::getDouble("targetBasePositionPercentage") * pgPos.value("value", 0.0) / 1e+2
@@ -74,7 +74,7 @@ namespace K {
           pgTargetBasePos = k.value("tbp", 0.0);
           pgSideAPR = k.value("sideAPR", "");
         }
-        cout << FN::uiT() << "DB loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
+        cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };
       static json onSnapPos(json z) {
         return { pgPos };
