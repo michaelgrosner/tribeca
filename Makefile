@@ -53,7 +53,6 @@ help:
 	#                                                  #
 	#  make config       - copy basic config file      #
 	#  PNG=% make png    - inject config file into PNG #
-	#  make stunnel      - run ssl tunnel daemon       #
 	#  make gdax         - download gdax ssl cert      #
 	#  make cleandb      - remove databases            #
 	#                                                  #
@@ -235,12 +234,9 @@ start:
 	@test -d app || $(MAKE) install
 	./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid "$(KCONFIG)" -a -l /dev/null -c /bin/sh K.sh
 
-stunnel: dist/K-stunnel.conf
-	test -z "`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
-
 gdax:
-	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | \
-	openssl x509 -outform PEM > dist/sslcert/fix.gdax.com.pem
+	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \
+	| openssl x509 -outform PEM > dist/sslcert/fix.gdax.com.pem
 
 client: node_modules/.bin/tsc src/client
 	mkdir -p app
@@ -300,4 +296,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list start stop restart startall stopall restartall stunnel gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
