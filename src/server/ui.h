@@ -108,7 +108,7 @@ namespace K {
           cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
         else if (hub.listen(port, nullptr, 0, uiGroup))
           cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
-        else { cout << FN::uiT() << RRED << "Errrror: Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
+        else { cout << FN::uiT() << "IU" << RRED << "Errrror: " << BRED << "Use another UI port number, " << to_string(port) << " seems already in use." << endl; exit(1); }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);

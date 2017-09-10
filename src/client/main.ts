@@ -434,7 +434,7 @@ class DisplayOrder {
                                 <wallet-position [product]="product"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, <a href="#" (click)="toggleStats()">Stats</a></div>
+                                <br/><div><span [hidden]="exchange_name=='HitBtc'"><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, </span><a href="#" (click)="toggleStats()">Stats</a></div>
                                 <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a>
                             </div>
                         </div>

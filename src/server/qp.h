@@ -70,21 +70,21 @@ namespace K {
       };
       static bool getBool(string k) {
         if (!qp[k].is_boolean()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not boolean, get a false instead." << endl;
+          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not boolean, get a false instead." << endl;
           return false;
         }
         return qp[k].get<bool>();
       };
       static int getInt(string k) {
         if (!qp[k].is_number()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
+          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not numeric, get a 0 instead." << endl;
           return 0;
         }
         return qp[k].get<int>();
       };
       static double getDouble(string k) {
         if (!qp[k].is_number()) {
-          cout << FN::uiT() << "Warrrrning: QP " << k << " is not numeric, get a 0 instead." << endl;
+          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not numeric, get a 0 instead." << endl;
           return 0;
         }
         return qp[k].get<double>();

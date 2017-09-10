@@ -38,13 +38,13 @@ namespace K {
       };
     private:
       static void gitReversedVersion() {
-        cout << RGREEN << "K build " << K_BUILD << " " << K_STAMP << "." << endl;
-        system("git fetch");
+        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << endl;
+        FN::output("git fetch");
         string k = changelog();
         unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << "K version " << (!commits ? "0day.\n"
+        cout << BGREEN << "K" << RGREEN " version " << (!commits ? "0day.\n"
           : string("-").append(to_string(commits)).append("commit")
-            .append(commits > 1?"s..":"..").append(k)
+            .append(commits > 1?"s..\n":"..\n").append(BYELLOW).append(k)
         );
       };
       static void happyEnding(int code) {
@@ -81,7 +81,7 @@ namespace K {
         return FN::output("git --no-pager log --graph --oneline @..@{u}");
       }
       static void upgrade() {
-        cout << endl << RYELLOW << "Hint!"
+        cout << endl << BYELLOW << "Hint!" << RYELLOW
           << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
           << endl << changelog()
           << endl << "If you agree, consider to run \"make latest\" prior further executions."
@@ -90,7 +90,7 @@ namespace K {
       static void report() {
         void *k[69];
         backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
-        cout << endl << RRED << "Yikes!"
+        cout << endl << BRED << "Yikes!" << RRED
           << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
           << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << endl << endl;

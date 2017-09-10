@@ -27,15 +27,15 @@ namespace K {
           png_infop info_ptr;
           unsigned char sig[8];
           FILE *fp;
-          if (!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "Errrror: Could not find and open file " << k << "." << endl; }
+          if (!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not find and open file " << k << "." << endl; }
           else {
             fread(sig, 1, 8, fp);
-            if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "Errrror: Not a PNG file." << endl; }
+            if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Not a PNG file." << endl; }
             else {
               png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
               info_ptr = png_create_info_struct(png_ptr);
-              if (!png_ptr) { cout << FN::uiT() << "Errrror: Could not allocate memory." << endl; }
-              else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << "Errrror: PNG error." << endl; }
+              if (!png_ptr) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not allocate memory." << endl; }
+              else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << RRED << " Errrror:" << BRED << " PNG error." << endl; }
               else {
                 png_init_io(png_ptr, fp);
                 png_set_sig_bytes(png_ptr, 8);
@@ -49,13 +49,13 @@ namespace K {
                     conf = text_ptr[i].text;
                 if (conf.length()) {
                   cf = json::parse(conf);
-                  cout << FN::uiT() << "CF settings loaded from PNG file " << k << " OK." << endl;
-                } else cout << FN::uiT() << "CF no data found inside PNG file " << k << "." << endl;
+                  cout << FN::uiT() << "CF" << RWHITE << " Settings loaded from PNG file " << k << " OK." << endl;
+                } else cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " No data found inside PNG file " << k << "." << endl;
               }
             }
           }
         }
-        if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "Warrrrning: CF settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
+        if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
       };
       static void external() {
         gw = Gw::E(cfExchange());
@@ -68,7 +68,7 @@ namespace K {
         if (getenv(k.data()) != NULL) return string(getenv(k.data()));
         if (cf.find(k) == cf.end()) {
           if (r) {
-            cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" configuration."<< endl << endl << FN::uiT() << "Hint! Make sure " << cFname << " exists or see https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist" << endl;
+            cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" configuration."<< endl << endl << FN::uiT() << "Hint! Make sure " << cFname << " exists or see https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist" << endl;
             exit(1);
           } else return "";
         }
@@ -78,7 +78,7 @@ namespace K {
       };
       static string cfPKString(string k) {
         if (pkRepo.find(k) == pkRepo.end()) {
-          cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" package configuration." << endl;
+          cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" package configuration." << endl;
           exit(1);
         }
         return pkRepo.value(k, "");
@@ -86,13 +86,13 @@ namespace K {
       static int cfBase() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(0, k_.find("/"));
-        if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
+        if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         return S2mC(k);
       };
       static int cfQuote() {
         string k_ = cfString("TradedPair");
         string k = k_.substr(k_.find("/")+1);
-        if (k == k_) { cout << FN::uiT() << "Errrror: Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
+        if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         return S2mC(k);
       };
       static mExchange cfExchange() {
@@ -104,13 +104,13 @@ namespace K {
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
-        cout << FN::uiT() << "Errrror: Invalid configuration value \"" << k << "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information." << endl;
+        cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid configuration value \"" << k << "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information." << endl;
         exit(1);
       };
       static int S2mC(string k) {
         k = FN::S2u(k);
         for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i;
-        cout << FN::uiT() << "Errrror: Use of missing \"" << k << "\" currency." << endl;
+        cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" currency." << endl;
         exit(1);
       };
       static bool autoStart() {
@@ -165,7 +165,7 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (!gw->minTick) { cout << FN::uiT() << "Errrror: Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        if (!gw->minTick) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << RWHITE << cfString("EXCHANGE") << " allows client IP." << endl; }
         cout << FN::uiT() << "GW " << RWHITE << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
           << "- autoBot: " << (autoStart() ? "yes" : "no") << endl
