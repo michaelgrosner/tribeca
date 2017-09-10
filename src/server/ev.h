@@ -15,7 +15,7 @@ namespace K {
   static void (*evExit)(int code);
   class EV {
     public:
-      static void main() {
+      static void main(char** args) {
         evExit = happyEnding;
         signal(SIGINT, quit);
         signal(SIGSEGV, wtf);
@@ -38,13 +38,13 @@ namespace K {
       };
     private:
       static void gitReversedVersion() {
+        cout << "K build " << K_BUILD << " " << K_STAMP << "." << endl;
         system("git fetch");
         string k = changelog();
         unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << "K " << K_BUILD << " version " << K_STAMP << (!commits
-          ? " 0day.\n"
-          : string(" -").append(to_string(commits)).append("commit")
-            .append(commits > 1?"s..\n":"..\n").append(k)
+        cout << "K version " << (!commits ? "0day.\n"
+          : string("-").append(to_string(commits)).append("commit")
+            .append(commits > 1?"s..":"..").append(k)
         );
       };
       static void happyEnding(int code) {
@@ -55,9 +55,10 @@ namespace K {
         end(EXIT_FAILURE);
       };
       static void quit(int sig) {
-        cout << endl << FN::uiT() << "Excellent decision! ";
+        cout << endl;
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
-        if (!k.is_null()) cout << k.value("/value/joke"_json_pointer, "") << endl;
+        cout << FN::uiT() << "Excellent decision! "
+          << k.value("/value/joke"_json_pointer, "let's plant a tree instead..") << endl;
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {

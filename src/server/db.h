@@ -7,7 +7,7 @@ namespace K {
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
   class DB {
     public:
-      static void main() {
+      static void main(char** args) {
         if (sqlite3_open(path(), &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
         cout << FN::uiT() << "DB " << path() << " loaded OK." << endl;
       };

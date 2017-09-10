@@ -42,6 +42,8 @@ namespace K {
         return (mGWmktFilter.is_null()
           or mGWmktFilter["bids"].is_null()
           or mGWmktFilter["asks"].is_null()
+          or !mGWmktFilter["bids"].size()
+          or !mGWmktFilter["asks"].size()
         );
       };
       static void calcStats() {
@@ -215,7 +217,7 @@ namespace K {
         if (empty()) return;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           if (it->second["side"].is_number() and it->second["price"].is_number() and it->second["quantity"].is_number())
-            filter(mSide::Bid == (mSide)it->second["side"].get<int>() ? "bids" : "asks", it->second);
+            filter(mSide::Bid == (mSide)it->second.value("side", 0) ? "bids" : "asks", it->second);
         if (!empty()) {
           calcFairValue();
           EV::up(mEv::FilteredMarket);
