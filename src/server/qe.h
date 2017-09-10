@@ -24,7 +24,7 @@ namespace K {
               MG::calcStats();
               PG::calcSafety();
               calcQuote();
-            } else cout << FN::uiT() << "QE Unable to calculate quote, missing fair value." << endl;
+            } else cout << FN::uiT() << "QE" << RRED << " Unable to calculate quote, missing fair value." << endl;
             this_thread::sleep_for(chrono::seconds(1));
           }
         }).detach();

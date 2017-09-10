@@ -90,7 +90,6 @@ namespace K {
           {"orderStatus", (int)k.oS},
           {"lastPrice", k.oP},
           {"lastQuantity", k.oQ},
-          {"liquidity", (int)k.oL},
           {"time", FN::T()}
         });
       };

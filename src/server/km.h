@@ -1,6 +1,23 @@
 #ifndef K_KM_H_
 #define K_KM_H_
 
+#define RBLACK   "\033[0;30m"
+#define RRED     "\033[0;31m"
+#define RGREEN   "\033[0;32m"
+#define RYELLOW  "\033[0;33m"
+#define RBLUE    "\033[0;34m"
+#define RPURLE   "\033[0;35m"
+#define RCYAN    "\033[0;36m"
+#define RWHITE   "\033[0;37m"
+#define BBLACK  "\033[1;30m"
+#define BRED    "\033[1;31m"
+#define BGREEN  "\033[1;32m"
+#define BYELLOW "\033[1;33m"
+#define BBLUE   "\033[1;34m"
+#define BPURLE  "\033[1;35m"
+#define BCYAN   "\033[1;36m"
+#define BWHITE  "\033[1;37m"
+
 namespace K {
   static const char alphanum[] = "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -17,7 +34,6 @@ namespace K {
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Connected, Disconnected };
-  enum class mLiquidity: unsigned int { Make, Take };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mSide: unsigned int { Bid, Ask, Unknown };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
@@ -109,8 +125,7 @@ namespace K {
     mORS oS;
     double oP;
     double oQ;
-    mLiquidity oL;
-    mGWol(string oI, mORS oS, double oP, double oQ, mLiquidity oL);
+    mGWol(string oI, mORS oS, double oP, double oQ);
   };
   struct mGWoS {
     string oI;
