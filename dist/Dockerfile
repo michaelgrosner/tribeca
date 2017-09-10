@@ -13,9 +13,6 @@ WORKDIR K
 
 RUN make docker
 
-RUN make gdax && \
-    mv build-x86_64-linux-gnu/local/etc/stunnel /usr/local/etc/stunnel
-
 EXPOSE 3000 5000
 
 # General config properties. Replace with your own exchange account information:

@@ -4,4 +4,5 @@ app
 build*
 test/coverage
 node_modules
+dist/sslcert/*.pem
 .DS_Store
