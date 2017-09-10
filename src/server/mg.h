@@ -42,6 +42,8 @@ namespace K {
         return (mGWmktFilter.is_null()
           or mGWmktFilter["bids"].is_null()
           or mGWmktFilter["asks"].is_null()
+          or !mGWmktFilter["bids"].is_array()
+          or !mGWmktFilter["asks"].is_array()
           or !mGWmktFilter["bids"].size()
           or !mGWmktFilter["asks"].size()
         );
