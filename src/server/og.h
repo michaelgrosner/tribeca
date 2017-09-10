@@ -23,13 +23,15 @@ namespace K {
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
       };
       static void allOrdersDelete(string oI, string oE) {
-        map<string, json>::iterator it = allOrders.find(oI);
+      map<string, json>::iterator it = allOrders.find(oI);
         if (it != allOrders.end()) allOrders.erase(it);
         if (oE != "") {
           map<string, string>::iterator it_ = allOrdersIds.find(oE);
           if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
-        } else for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
-          if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
+        } else {
+          for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
+            if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
+        }
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         json o = updateOrderState({
@@ -137,10 +139,10 @@ namespace K {
         } else return o;
         for (json::iterator it = k.begin(); it != k.end(); ++it)
           if (!it.value().is_null()) o[it.key()] = it.value();
-        if (o["time"].is_null()) o["time"] = FN::T();
-        if (o["computationalLatency"].is_null() and (mORS)o.value("orderStatus", 0) == mORS::Working)
+        if (o.value("time", (unsigned long)0)==0) o["time"] = FN::T();
+        if (o.value("computationalLatency", (unsigned long)0)==0 and (mORS)o.value("orderStatus", 0) == mORS::Working)
           o["computationalLatency"] = FN::T() - o.value("time", (unsigned long)0);
-        if (!o["computationalLatency"].is_null()) o["time"] = FN::T();
+        if (o.value("computationalLatency", (unsigned long)0)>0) o["time"] = FN::T();
         toMemory(o);
         if (!gW->cancelByClientId and !o["exchangeId"].is_null()) {
           map<string, void*>::iterator it = toCancel.find(o.value("orderId", ""));
@@ -152,7 +154,7 @@ namespace K {
         }
         EV::up(mEv::OrderUpdateBroker, o);
         UI::uiSend(uiTXT::OrderStatusReports, o, true);
-        if (!k["lastQuantity"].is_null() and k.value("lastQuantity", 0.0) > 0)
+        if (k.value("lastQuantity", 0.0) > 0)
           toHistory(o);
         return o;
       };
@@ -303,9 +305,12 @@ namespace K {
       };
       static void toMemory(json k) {
         if ((mORS)k.value("orderStatus", 0) != mORS::Cancelled and (mORS)k.value("orderStatus", 0) != mORS::Complete) {
-          if (!k["exchangeId"].is_null()) allOrdersIds[k.value("exchangeId", "")] = k.value("orderId", "");
+          if (!k["exchangeId"].is_null())
+            allOrdersIds[k.value("exchangeId", "")] = k.value("orderId", "");
           allOrders[k.value("orderId", "")] = k;
-        } else allOrdersDelete(k.value("orderId", ""), k.value("exchangeId", ""));
+        } else {
+          allOrdersDelete(k.value("orderId", ""), k["exchangeId"].is_null()?"":k.value("exchangeId", ""));
+        }
       };
   };
 }

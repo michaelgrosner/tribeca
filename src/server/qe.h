@@ -113,9 +113,11 @@ namespace K {
             qeAskStatus = mQuoteStatus::DisabledQuotes;
             qeBidStatus = mQuoteStatus::DisabledQuotes;
           }
-          if (qeAskStatus == mQuoteStatus::Live) updateQuote(qeQuote["ask"], mSide::Ask);
+          if (qeAskStatus == mQuoteStatus::Live)
+            updateQuote(qeQuote["ask"], mSide::Ask);
           else stopAllQuotes(mSide::Ask);
-          if (qeBidStatus == mQuoteStatus::Live) updateQuote(qeQuote["bid"], mSide::Bid);
+          if (qeBidStatus == mQuoteStatus::Live)
+            updateQuote(qeQuote["bid"], mSide::Bid);
           else stopAllQuotes(mSide::Bid);
         }
       };
@@ -455,7 +457,7 @@ namespace K {
         }
         return mQuoteStatus::Live;
      };
-      static void updateQuote (json q, mSide side) {
+      static void updateQuote(json q, mSide side) {
         multimap<double, json> orderSide = orderCacheSide(side);
         bool eq = false;
         for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
@@ -478,8 +480,9 @@ namespace K {
         return orderSide;
       };
       static void modify(mSide side, json q) {
-        if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::AK47)
+        if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::AK47) {
           stopWorstQuote(side);
+        }
         else stopAllQuotes(side);
         start(side, q);
       };
