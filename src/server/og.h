@@ -217,7 +217,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << ((mSide)o.value("side", 0) == mSide::Bid ? BBLUE : BPURPLE) << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("lastPrice", 0.0) << " " << mCurrency[gw->quote] << " (value " << val << " " << mCurrency[gw->quote] << ")" << endl;
+        cout << FN::uiT() << "GW " << ((mSide)o.value("side", 0) == mSide::Bid ? RCYAN : RPURPLE) << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? BCYAN : BPURPLE) << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("lastPrice", 0.0) << " " << mCurrency[gw->quote] << " (value " << val << " " << mCurrency[gw->quote] << ")" << endl;
         EV::up(mEv::OrderTradeBroker, trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")
