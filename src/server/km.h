@@ -1,14 +1,14 @@
 #ifndef K_KM_H_
 #define K_KM_H_
 
-#define RBLACK   "\033[0;30m"
-#define RRED     "\033[0;31m"
-#define RGREEN   "\033[0;32m"
-#define RYELLOW  "\033[0;33m"
-#define RBLUE    "\033[0;34m"
-#define RPURPLE  "\033[0;35m"
-#define RCYAN    "\033[0;36m"
-#define RWHITE   "\033[0;37m"
+#define RBLACK  "\033[0;30m"
+#define RRED    "\033[0;31m"
+#define RGREEN  "\033[0;32m"
+#define RYELLOW "\033[0;33m"
+#define RBLUE   "\033[0;34m"
+#define RPURPLE "\033[0;35m"
+#define RCYAN   "\033[0;36m"
+#define RWHITE  "\033[0;37m"
 #define BBLACK  "\033[1;30m"
 #define BRED    "\033[1;31m"
 #define BGREEN  "\033[1;32m"
@@ -119,13 +119,6 @@ namespace K {
     string oE;
     mORS oS;
     mGWos(string oI, string oE, mORS oS);
-  };
-  struct mGWol {
-    string oI;
-    mORS oS;
-    double oP;
-    double oQ;
-    mGWol(string oI, mORS oS, double oP, double oQ);
   };
   struct mGWoS {
     string oI;
