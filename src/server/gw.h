@@ -81,17 +81,7 @@ namespace K {
         if (k.oE.length()) o["exchangeId"] = k.oE;
         o["orderStatus"] = (int)k.oS;
         if (k.oS == mORS::Cancelled) o["lastQuantity"] = 0;
-        o["time"] = FN::T();
         EV::up(mEv::OrderUpdateGateway, o);
-      };
-      static void gwOrderUp(mGWol k) {
-        EV::up(mEv::OrderUpdateGateway, {
-          {"orderId", k.oI},
-          {"orderStatus", (int)k.oS},
-          {"lastPrice", k.oP},
-          {"lastQuantity", k.oQ},
-          {"time", FN::T()}
-        });
       };
       static void gwOrderUp(mGWoS k) {
         json o;
@@ -101,7 +91,6 @@ namespace K {
         o["lastPrice"] = k.oP;
         o["lastQuantity"] = k.oQ;
         o["side"] = (int)k.oS;
-        o["time"] = FN::T();
         EV::up(mEv::OrderUpdateGateway, o);
       };
       static void gwOrderUp(mGWoa k) {
@@ -112,7 +101,6 @@ namespace K {
         if (k.oP) o["lastPrice"] = k.oP;
         o["lastQuantity"] = k.oLQ;
         o["leavesQuantity"] = k.oQ;
-        o["time"] = FN::T();
         EV::up(mEv::OrderUpdateGateway, o);
       };
     private:
