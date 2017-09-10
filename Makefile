@@ -239,10 +239,8 @@ stunnel: dist/K-stunnel.conf
 	test -z "`ps axu | grep stunnel | grep -v grep`" && stunnel dist/K-stunnel.conf &
 
 gdax:
-	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | openssl x509 -outform PEM > fix.gdax.com.pem
-	rm -rf $(KLOCAL)/etc/stunnel
-	mkdir -p $(KLOCAL)/etc/stunnel
-	sudo mv fix.gdax.com.pem $(KLOCAL)/etc/stunnel/
+	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null | \
+	openssl x509 -outform PEM > dist/sslcert/fix.gdax.com.pem
 
 client: node_modules/.bin/tsc src/client
 	mkdir -p app
