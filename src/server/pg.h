@@ -41,7 +41,7 @@ namespace K {
         }
       };
       static void calcTargetBasePos() {
-        if (pgPos.is_null()) { cout << FN::uiT() << RRED << "Unable to calculate TBP, missing market data." << endl; return; }
+        if (pgPos.is_null()) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
             ? QP::getDouble("targetBasePositionPercentage") * pgPos.value("value", 0.0) / 1e+2
