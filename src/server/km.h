@@ -120,15 +120,6 @@ namespace K {
     mORS oS;
     mGWos(string oI, string oE, mORS oS);
   };
-  struct mGWoS {
-    string oI;
-    string oE;
-    mORS os;
-    double oP;
-    double oQ;
-    mSide oS;
-    mGWoS(string oI, string oE, mORS os, double oP, double oQ, mSide oS);
-  };
   struct mGWoa {
     string oI;
     string oE;

@@ -83,24 +83,14 @@ namespace K {
         if (k.oS == mORS::Cancelled) o["lastQuantity"] = 0;
         EV::up(mEv::OrderUpdateGateway, o);
       };
-      static void gwOrderUp(mGWoS k) {
+      static void gwOrderUp(mGWoa k) {
         json o;
         if (k.oI.length()) o["orderId"] = k.oI;
         if (k.oE.length()) o["exchangeId"] = k.oE;
-        o["orderStatus"] = (int)k.os;
-        o["lastPrice"] = k.oP;
-        o["lastQuantity"] = k.oQ;
-        o["side"] = (int)k.oS;
-        EV::up(mEv::OrderUpdateGateway, o);
-      };
-      static void gwOrderUp(mGWoa k) {
-        json o;
-        o["orderId"] = k.oI;
-        if (k.oE.length()) o["exchangeId"] = k.oE;
         o["orderStatus"] = (int)k.oS;
         if (k.oP) o["lastPrice"] = k.oP;
-        o["lastQuantity"] = k.oLQ;
         o["leavesQuantity"] = k.oQ;
+        o["lastQuantity"] = k.oLQ;
         EV::up(mEv::OrderUpdateGateway, o);
       };
     private:
