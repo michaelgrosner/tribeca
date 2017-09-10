@@ -101,7 +101,7 @@ else
 endif
 
 Linux: build-$(CROSS)
-	$(CXX) -o dist/lib/K-$(CROSS) -static-libstdc++ -static-libgcc -s $(KARGS)
+	$(CXX) -o dist/lib/K-$(CROSS) -static-libstdc++ -static-libgcc -ggdb $(KARGS)
 
 Darwin: build-$(CROSS)
 	$(CXX) -o dist/lib/K-$(CROSS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(KARGSG)
