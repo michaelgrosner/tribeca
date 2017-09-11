@@ -1,23 +1,6 @@
 #ifndef K_KM_H_
 #define K_KM_H_
 
-#define RBLACK  "\033[0;30m"
-#define RRED    "\033[0;31m"
-#define RGREEN  "\033[0;32m"
-#define RYELLOW "\033[0;33m"
-#define RBLUE   "\033[0;34m"
-#define RPURPLE "\033[0;35m"
-#define RCYAN   "\033[0;36m"
-#define RWHITE  "\033[0;37m"
-#define BBLACK  "\033[1;30m"
-#define BRED    "\033[1;31m"
-#define BGREEN  "\033[1;32m"
-#define BYELLOW "\033[1;33m"
-#define BBLUE   "\033[1;34m"
-#define BPURPLE "\033[1;35m"
-#define BCYAN   "\033[1;36m"
-#define BWHITE  "\033[1;37m"
-
 namespace K {
   static const char alphanum[] = "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

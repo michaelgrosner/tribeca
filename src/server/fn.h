@@ -1,9 +1,85 @@
 #ifndef K_FN_H_
 #define K_FN_H_
 
+#ifndef K_BUILD
+#define K_BUILD "0"
+#endif
+
+#ifndef K_STAMP
+#define K_STAMP "0"
+#endif
+
 namespace K {
+  static char RBLACK[]  = "\033[0;30m";
+  static char RRED[]    = "\033[0;31m";
+  static char RGREEN[]  = "\033[0;32m";
+  static char RYELLOW[] = "\033[0;33m";
+  static char RBLUE[]   = "\033[0;34m";
+  static char RPURPLE[] = "\033[0;35m";
+  static char RCYAN[]   = "\033[0;36m";
+  static char RWHITE[]  = "\033[0;37m";
+  static char BBLACK[]  = "\033[1;30m";
+  static char BRED[]    = "\033[1;31m";
+  static char BGREEN[]  = "\033[1;32m";
+  static char BYELLOW[] = "\033[1;33m";
+  static char BBLUE[]   = "\033[1;34m";
+  static char BPURPLE[] = "\033[1;35m";
+  static char BCYAN[]   = "\033[1;36m";
+  static char BWHITE[]  = "\033[1;37m";
+  static int K_COLORS = 0;
+  static string K_DATABASE = "";
   class FN {
     public:
+      static void main(int argc, char** argv) {
+        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << endl;
+        int k;
+        while (true) {
+          int option_index = 0;
+          static struct option long_options[] = {
+            {"help",     no_argument,       0,         'h'},
+            {"version",  no_argument,       0,         'v'},
+            {"colors",   no_argument,       &K_COLORS,   1},
+            {"database", required_argument, 0,         'd'},
+            {0, 0, 0, 0}
+          };
+          k = getopt_long(argc, argv, "hvd:", long_options, &option_index);
+          if (k == -1) break;
+          switch (k) {
+            case 0: break;
+            case 'd':
+              K_DATABASE = string(optarg);
+              break;
+            case 'h':
+            case '?': cout << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
+              << FN::uiT() << "[arguments]:" << endl
+              << FN::uiT() << RWHITE << "-h, --help            - show this help and quit." << endl
+              << FN::uiT() << RWHITE << "    --colors          - print highlighted output." << endl
+              << FN::uiT() << RWHITE << "-d, --database=PATH   - set user defined database filename," << endl
+              << FN::uiT() << RWHITE << "                        default PATH is /data/db/K.*.*.*.db," << endl
+              << FN::uiT() << RWHITE << "                        any path with a filename is valid," << endl
+              << FN::uiT() << RWHITE << "                        or use ':memory:' (sqlite.org/inmemorydb.html)." << endl
+              << FN::uiT() << RWHITE << "-v, --version         - show current build version and quit." << endl;
+              exit(0);
+              break;
+            case 'v': exit(0);
+            default: abort();
+          }
+        }
+
+        /* Print any remaining command line arguments (not options). */
+        if (optind < argc) {
+          printf("non-option ARGV-elements: ");
+          while (optind < argc) printf("%s ", argv[optind++]);
+          putchar ('\n');
+        }
+
+        if (!K_COLORS) {
+          RBLACK[0]  = 0; RRED[0]    = 0; RGREEN[0]  = 0; RYELLOW[0] = 0;
+          RBLUE[0]   = 0; RPURPLE[0] = 0; RCYAN[0]   = 0; RWHITE[0]  = 0;
+          BBLACK[0]  = 0; BRED[0]    = 0; BGREEN[0]  = 0; BYELLOW[0] = 0;
+          BBLUE[0]   = 0; BPURPLE[0] = 0; BCYAN[0]   = 0; BWHITE[0]  = 0;
+        }
+      };
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
       static double roundNearest(double value, double minTick) { return round(value / minTick) * minTick; };

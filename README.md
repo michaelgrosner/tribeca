@@ -93,11 +93,11 @@ Troubleshooting:
 
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
- * Run `rm -rf node_modules && make install` if the application stops working after `make latest` (sometimes outdated dependencies are not deleted).
-
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
 
  Optional:
+
+ * See `./K.sh --help`.
 
  * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
@@ -180,6 +180,8 @@ You can copy any `.db` file to another machine when migrating or as a backup.
 If a database file do not exists, the application will create it on boot; otherwise, it will load it and reuse it.
 
 To see the data of each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or similars.
+
+To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database` argument (see `--help`).
 
 ### Charts
 

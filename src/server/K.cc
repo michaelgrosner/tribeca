@@ -8,6 +8,7 @@
 #include <locale>
 #include <time.h>
 #include <math.h>
+#include <getopt.h>
 #include <signal.h>
 #include <execinfo.h>
 #include <algorithm>
@@ -55,10 +56,11 @@ using namespace dec;
 #include "gw.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;int main(int z, char** k) {;;;;;;;;;
-;;;;K::EV::main(k);;;;;;;;;;;;;;;;;;;;
+;;int main(int argc, char** argv) {;;;
+;;;;K::FN::main(argc, argv);;;;;;;;;;;
+;;;;K::EV::main();;;;;;;;;;;;;;;;;;;;;
 ;;;;K::UI::main();;;;    ;;;;    ;;;;;
-;;;;K::DB::main(k);;;    ;;    ;;;;;;;
+;;;;K::DB::main();;;;    ;;    ;;;;;;;
 ;;;;K::QP::main();;;;        ;;;;;;;;;
 ;;;;K::OG::main();;;;        ;;;;;;;;;
 ;;;;K::MG::main();;;;    ;;    ;;;;;;;

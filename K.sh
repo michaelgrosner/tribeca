@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-./app/server/K
+./app/server/K --colors "$@"

@@ -1,21 +1,13 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-#ifndef K_BUILD
-#define K_BUILD "0"
-#endif
-
-#ifndef K_STAMP
-#define K_STAMP "0"
-#endif
-
 namespace K {
   typedef void (*evCb)(json);
   static map<unsigned int, vector<evCb>> ev;
   static void (*evExit)(int code);
   class EV {
     public:
-      static void main(char** args) {
+      static void main() {
         evExit = happyEnding;
         signal(SIGINT, quit);
         signal(SIGSEGV, wtf);
@@ -38,11 +30,10 @@ namespace K {
       };
     private:
       static void gitReversedVersion() {
-        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << endl;
         FN::output("git fetch");
         string k = changelog();
         unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << BGREEN << "K" << RGREEN " version " << (!commits ? "0day.\n"
+        cout << BGREEN << "K" << RGREEN << " version " << (!commits ? "0day.\n"
           : string("-").append(to_string(commits)).append("commit")
             .append(commits > 1?"s..\n":"..\n").append(BYELLOW).append(k)
         );
