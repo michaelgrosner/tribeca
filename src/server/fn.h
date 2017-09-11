@@ -50,11 +50,11 @@ namespace K {
               K_DATABASE = string(optarg);
               break;
             case 'h': cout
-              << BGREEN << "K" << RGREEN << " is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
-              << BGREEN << "K" << RGREEN << " is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
-              << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "https://21.co/analpaper/" << endl
+              << RGREEN << "This is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
+              << RGREEN << "This is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
+              << BGREEN << " " << RGREEN << " questions: " << RYELLOW << "https://21.co/analpaper/" << endl
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl
-              << BGREEN << "K" << RGREEN << " downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
+              << BGREEN << " " << RGREEN << " downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
             case '?': cout
               << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
               << FN::uiT() << "[arguments]:" << endl
@@ -65,9 +65,9 @@ namespace K {
               << FN::uiT() << RWHITE << "                        any path with a filename is valid," << endl
               << FN::uiT() << RWHITE << "                        or use ':memory:' (sqlite.org/inmemorydb.html)." << endl
               << FN::uiT() << RWHITE << "-v, --version         - show current build version and quit." << endl
-              << BGREEN << "K" << RGREEN << " more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
+              << BGREEN << " " << RGREEN << " more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << endl
-              << BGREEN << "K" << RGREEN << " home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
+              << BGREEN << " " << RGREEN << " home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
               exit(EXIT_SUCCESS);
               break;
             case 'v': exit(EXIT_SUCCESS);
