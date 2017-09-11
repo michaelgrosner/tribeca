@@ -181,7 +181,7 @@ If a database file do not exists, the application will create it on boot; otherw
 
 To see the data of each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or similars.
 
-To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database` argument (see `--help`).
+To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=:memory:` argument (see `--help`).
 
 ### Charts
 
