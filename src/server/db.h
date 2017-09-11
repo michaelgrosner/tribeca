@@ -7,9 +7,16 @@ namespace K {
   int sqlite3_exec(sqlite3* db, string q, int (*cb)(void*,int,char**,char**), void *hand, char **err);
   class DB {
     public:
-      static void main(char** args) {
-        if (sqlite3_open(path(), &db)) { cout << FN::uiT() << sqlite3_errmsg(db) << endl; exit(1); }
-        cout << FN::uiT() << "DB " << RYELLOW << path() << RWHITE << " loaded OK." << endl;
+      static void main() {
+        if (K_DATABASE=="") K_DATABASE = string("/data/db/K.")
+          .append(to_string((int)CF::cfExchange()))
+          .append(".").append(to_string(CF::cfBase()))
+          .append(".").append(to_string(CF::cfQuote())).append(".db");
+        if (sqlite3_open(K_DATABASE, &db)) {
+          cout << FN::uiT() << "DB" << RRED << " Errrror: " << BRED << sqlite3_errmsg(db) << endl;
+          exit(1);
+        }
+        cout << FN::uiT() << "DB " << RYELLOW << K_DATABASE << RWHITE << " loaded OK." << endl;
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;
@@ -44,16 +51,10 @@ namespace K {
         if (zErrMsg) printf("sqlite error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
       };
-      static string path() {
-        return string("/data/db/K.")
-          .append(to_string((int)CF::cfExchange()))
-          .append(".").append(to_string(CF::cfBase()))
-          .append(".").append(to_string(CF::cfQuote()))
-          .append(".db");
-      };
       static int size() {
+        if (K_DATABASE==":memory:") return 0;
         struct stat st;
-        return stat(DB::path().data(), &st) != 0 ? 0 : st.st_size;
+        return stat(K_DATABASE.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {

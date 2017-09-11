@@ -23,7 +23,7 @@ namespace K {
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
       };
       static void allOrdersDelete(string oI, string oE) {
-      map<string, json>::iterator it = allOrders.find(oI);
+        map<string, json>::iterator it = allOrders.find(oI);
         if (it != allOrders.end()) allOrders.erase(it);
         if (oE != "") {
           map<string, string>::iterator it_ = allOrdersIds.find(oE);

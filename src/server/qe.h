@@ -480,9 +480,8 @@ namespace K {
         return orderSide;
       };
       static void modify(mSide side, json q) {
-        if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::AK47) {
+        if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::AK47)
           stopWorstQuote(side);
-        }
         else stopAllQuotes(side);
         start(side, q);
       };
