@@ -82,6 +82,9 @@ class DisplayOrder {
                     <div class="row" [hidden]="!showConfigs">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
+                              <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
+                                <small>MARKET<br/>MAKING</small>
+                              </td><td>
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
@@ -173,6 +176,10 @@ class DisplayOrder {
                                         </tr>
                                     </tbody>
                                 </table>
+                              </td></tr></table>
+                              <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
+                                <small>TECHNICAL<br/>ANALYSIS</small>
+                              </td><td>
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
@@ -287,6 +294,10 @@ class DisplayOrder {
                                             </td>
                                     </tbody>
                                 </table>
+                              </td></tr></table>
+                              <table border="0" width="100%"><tr><td style="width:69px;text-align:center;">
+                                <small>PROTECTION</small>
+                              </td><td>
                                 <table class="table table-responsive table-bordered">
                                     <thead>
                                         <tr class="active">
@@ -421,6 +432,7 @@ class DisplayOrder {
                                         </tr>
                                     </tbody>
                                 </table>
+                              </td></tr></table>
                             </div>
                         </div>
                     </div>
