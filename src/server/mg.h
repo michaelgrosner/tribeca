@@ -89,19 +89,22 @@ namespace K {
           calcStdev();
         }
         cout << FN::uiT() << "DB" << RWHITE << " loaded " << mgStatFV.size() << " STDEV Periods." << endl;
+        if (argEwmaLong) mgEwmaL = argEwmaLong;
+        if (argEwmaMedium) mgEwmaM = argEwmaMedium;
+        if (argEwmaShort) mgEwmaS = argEwmaShort;
         k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
-          if (k.value("time", (unsigned long)0)+QP::getInt("longEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaL and k.value("time", (unsigned long)0)+QP::getInt("longEwmaPeriods")*6e+4>FN::T())
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (k.value("time", (unsigned long)0)+QP::getInt("mediumEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaM and k.value("time", (unsigned long)0)+QP::getInt("mediumEwmaPeriods")*6e+4>FN::T())
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (k.value("time", (unsigned long)0)+QP::getInt("shortEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaS and k.value("time", (unsigned long)0)+QP::getInt("shortEwmaPeriods")*6e+4>FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        cout << FN::uiT() << "DB" << RWHITE << " loaded EWMA Long = " << mgEwmaL << "." << endl;
-        cout << FN::uiT() << "DB" << RWHITE << " loaded EWMA Medium = " << mgEwmaM << "." << endl;
-        cout << FN::uiT() << "DB" << RWHITE << " loaded EWMA Short = " << mgEwmaS << "." << endl;
+        cout << FN::uiT() << (argEwmaLong ? "ARG" : "DB") << RWHITE << " loaded EWMA Long = " << mgEwmaL << "." << endl;
+        cout << FN::uiT() << (argEwmaMedium ? "ARG" : "DB") << RWHITE << " loaded EWMA Medium = " << mgEwmaM << "." << endl;
+        cout << FN::uiT() << (argEwmaShort ? "ARG" : "DB") << RWHITE << " loaded EWMA Short = " << mgEwmaS << "." << endl;
       };
       static json onSnapTrade(json z) {
         json k;

@@ -8,15 +8,15 @@ namespace K {
   class DB {
     public:
       static void main() {
-        if (K_DATABASE=="") K_DATABASE = string("/data/db/K.")
+        if (argDatabase=="") argDatabase = string("/data/db/K.")
           .append(to_string((int)CF::cfExchange()))
           .append(".").append(to_string(CF::cfBase()))
           .append(".").append(to_string(CF::cfQuote())).append(".db");
-        if (sqlite3_open(K_DATABASE, &db)) {
+        if (sqlite3_open(argDatabase, &db)) {
           cout << FN::uiT() << "DB" << RRED << " Errrror: " << BRED << sqlite3_errmsg(db) << endl;
           exit(1);
         }
-        cout << FN::uiT() << "DB " << RYELLOW << K_DATABASE << RWHITE << " loaded OK." << endl;
+        cout << FN::uiT() << "DB " << RYELLOW << argDatabase << RWHITE << " loaded OK." << endl;
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;
@@ -52,9 +52,9 @@ namespace K {
         sqlite3_free(zErrMsg);
       };
       static int size() {
-        if (K_DATABASE==":memory:") return 0;
+        if (argDatabase==":memory:") return 0;
         struct stat st;
-        return stat(K_DATABASE.data(), &st) != 0 ? 0 : st.st_size;
+        return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {

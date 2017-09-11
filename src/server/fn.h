@@ -26,29 +26,36 @@ namespace K {
   static char BPURPLE[] = "\033[1;35m";
   static char BCYAN[]   = "\033[1;36m";
   static char BWHITE[]  = "\033[1;37m";
-  static int K_COLORS = 0;
-  static string K_DATABASE = "";
+  static int argColors = 0;
+  static double argEwmaShort = 0;
+  static double argEwmaMedium = 0;
+  static double argEwmaLong = 0;
+  static string argDatabase = "";
   class FN {
     public:
       static void main(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << endl;
         int k;
         while (true) {
-          int option_index = 0;
-          static struct option long_options[] = {
-            {"help",     no_argument,       0,         'h'},
-            {"version",  no_argument,       0,         'v'},
-            {"colors",   no_argument,       &K_COLORS,   1},
-            {"database", required_argument, 0,         'd'},
+          int i = 0;
+          static struct option args[] = {
+            {"help",        no_argument,       0,          'h'},
+            {"colors",      no_argument,       &argColors,   1},
+            {"database",    required_argument, 0,          'd'},
+            {"ewma-short",  required_argument, 0,          's'},
+            {"ewma-medium", required_argument, 0,          'm'},
+            {"ewma-long",   required_argument, 0,          'l'},
+            {"version",     no_argument,       0,          'v'},
             {0, 0, 0, 0}
           };
-          k = getopt_long(argc, argv, "hvd:", long_options, &option_index);
+          k = getopt_long(argc, argv, "hvd:l:m:s:", args, &i);
           if (k == -1) break;
           switch (k) {
             case 0: break;
-            case 'd':
-              K_DATABASE = string(optarg);
-              break;
+            case 'd': argDatabase = string(optarg); break;
+            case 's': argEwmaShort = stod(optarg); break;
+            case 'm': argEwmaMedium = stod(optarg); break;
+            case 'l': argEwmaLong = stod(optarg); break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
               << RGREEN << "This is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
@@ -58,13 +65,16 @@ namespace K {
             case '?': cout
               << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
               << FN::uiT() << "[arguments]:" << endl
-              << FN::uiT() << RWHITE << "-h, --help            - show this help and quit." << endl
-              << FN::uiT() << RWHITE << "    --colors          - print highlighted output." << endl
-              << FN::uiT() << RWHITE << "-d, --database=PATH   - set user defined database filename," << endl
-              << FN::uiT() << RWHITE << "                        default PATH is /data/db/K.*.*.*.db," << endl
-              << FN::uiT() << RWHITE << "                        any path with a filename is valid," << endl
-              << FN::uiT() << RWHITE << "                        or use ':memory:' (sqlite.org/inmemorydb.html)." << endl
-              << FN::uiT() << RWHITE << "-v, --version         - show current build version and quit." << endl
+              << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << endl
+              << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
+              << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative database filename," << endl
+              << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << endl
+              << FN::uiT() << RWHITE << "                           any path with a filename is valid," << endl
+              << FN::uiT() << RWHITE << "                           or use ':memory:' (sqlite.org/inmemorydb.html)." << endl
+              << FN::uiT() << RWHITE << "-s, --ewma-short=PRICE   - set initial ewma short value." << endl
+              << FN::uiT() << RWHITE << "-m, --ewma-medium=PRICE  - set initial ewma medium value." << endl
+              << FN::uiT() << RWHITE << "-l, --ewma-long=PRICE    - set initial ewma long value." << endl
+              << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << endl
               << BGREEN << " " << RGREEN << " more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << endl
               << BGREEN << " " << RGREEN << " home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
@@ -75,11 +85,12 @@ namespace K {
           }
         }
         if (optind < argc) {
-          printf("non-option ARGV-elements: ");
-          while (optind < argc) printf("%s ", argv[optind++]);
-          putchar ('\n');
+          cout << FN::uiT() << "ARG" << RRED << " Warrrrning:" << BRED << " non-option ARGV-elements: ";
+          while(optind < argc) cout << argv[optind++];
+          cout << endl;
         }
-        if (!K_COLORS) {
+        cout << RWHITE;
+        if (!argColors) {
           RBLACK[0]  = 0; RRED[0]    = 0; RGREEN[0]  = 0; RYELLOW[0] = 0;
           RBLUE[0]   = 0; RPURPLE[0] = 0; RCYAN[0]   = 0; RWHITE[0]  = 0;
           BBLACK[0]  = 0; BRED[0]    = 0; BGREEN[0]  = 0; BYELLOW[0] = 0;
