@@ -12,14 +12,14 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.3
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include  \
-  src/server/K.cc -pthread -ldl -Wl,-rpath,'$$ORIGIN'  \
-  -DK_STAMP='"$(shell date --rfc-3339=ns)"'            \
-  -DK_BUILD='"$(CROSS)"'   $(KLOCAL)/include/uWS/*.cpp \
-  dist/lib/K-$(CROSS).a    $(KLOCAL)/lib/libquickfix.a \
-  $(KLOCAL)/lib/libpng16.a $(KLOCAL)/lib/libsqlite3.a  \
-  $(KLOCAL)/lib/libz.a     $(KLOCAL)/lib/libcurl.a     \
-  $(KLOCAL)/lib/libssl.a   $(KLOCAL)/lib/libcrypto.a
+KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include   \
+  src/server/K.cc -pthread -Wl,-rpath,'$$ORIGIN'        \
+  -DK_STAMP='"$(shell date --rfc-3339=ns)"'             \
+  -DK_BUILD='"$(CROSS)"'   $(KLOCAL)/include/uWS/*.cpp  \
+  dist/lib/K-$(CROSS).a    $(KLOCAL)/lib/libquickfix.a  \
+  $(KLOCAL)/lib/libpng16.a $(KLOCAL)/lib/libsqlite3.a   \
+  $(KLOCAL)/lib/libz.a     $(KLOCAL)/lib/libcurl.a      \
+  $(KLOCAL)/lib/libssl.a   $(KLOCAL)/lib/libcrypto.a -ldl
 
 all: K
 
@@ -175,7 +175,7 @@ config: etc/K.json.dist
 	@test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json && echo DONE
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev openssl stunnel python curl gzip imagemagick\
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick\
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip ImageMagick) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :)) \
  	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick)
