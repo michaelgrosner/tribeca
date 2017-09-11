@@ -9,7 +9,7 @@ V_PNG   := 1.6.31
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
 V_JSON  := v2.1.1
-V_UWS   := 0.14.3
+V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include   \
