@@ -217,11 +217,11 @@ Passing a config filename is possible with environment var `KCONFIG` like for ex
 
 ### Unreleased Changelog:
 
+Updated quoting engine and gateways without nodejs.
+
 Added Makefile to replace npm scripts.
 
 Added PNG files as configuration files.
-
-Updated quoting engine and gateways without nodejs.
 
 Added built-in C++ WWW Server to replace expressjs and socketio.
 
