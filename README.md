@@ -85,7 +85,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
 
-`make start` will run `K.sh` in the background using [forever](https://www.npmjs.com/package/forever). But also it will auto run `make install` to install all local dependencies in `build` folder and compile the application in `app` folder if it was not already done before.
+`make start` will run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html). But also it will auto run `make install` to compile the application in `app` folder if it was not already done before.
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 

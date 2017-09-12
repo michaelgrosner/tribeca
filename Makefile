@@ -156,7 +156,7 @@ quickfix: build-$(CROSS)
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
 	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch  \
 	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                           \
-	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL)  --enable-shared=no --enable-static=yes    \
+	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
 	&& make && make install                                                                        )
 
 clean:
@@ -175,13 +175,14 @@ config: etc/K.json.dist
 	@test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json && echo DONE
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick\
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip ImageMagick) \
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick screen \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip ImageMagick screen) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :)) \
- 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick)
+ 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
+	test -f K.sh || cp dist/K.sh.dist K.sh && echo DONE
 
 install:
 	@$(MAKE) packages
@@ -206,33 +207,40 @@ reinstall: .git src
 	@$(MAKE) install
 	@$(MAKE) test -s
 	@git checkout .
-	./node_modules/.bin/forever restartall
+	$(MAKE) restartall
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
 list:
-	./node_modules/.bin/forever list
+	@screen -list || :
 
 restartall:
-	./node_modules/.bin/forever restartall
+	$(MAKE) stopall -s
+	$(MAKE) startall -s
+	$(MAKE) list -s
 
 stopall:
-	./node_modules/.bin/forever stopall
+	@ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% stop -s
 
 startall:
-	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
-	$(MAKE) list -s
+	@ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
+	@$(MAKE) list -s
 
 restart:
-	$(MAKE) stop -s
-	$(MAKE) start -s
-	$(MAKE) list -s
+	@$(MAKE) stop -s
+	@$(MAKE) start -s
+	@$(MAKE) list -s
 
 stop:
-	./node_modules/.bin/forever stop -a -l /dev/null "$(KCONFIG)" || :
+	@screen -XS $(KCONFIG) quit || :
 
 start:
 	@test -d app || $(MAKE) install
-	./node_modules/.bin/forever start --minUptime 1 --spinSleepTime 21000 --uid "$(KCONFIG)" -a -l /dev/null -c /bin/sh K.sh
+	@screen -dmS $(KCONFIG) ./K.sh
+
+screen:
+	@test -n "`screen -list | grep $(KCONFIG)`" && (       \
+	echo Detach screen hotkeys: CTRL+A and CTRL+D          \
+	&& sleep 4 && screen -R $(KCONFIG)) || screen -list || :
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \
@@ -296,4 +304,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich

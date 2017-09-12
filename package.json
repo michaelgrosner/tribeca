@@ -25,7 +25,6 @@
     "browserify": "^14.4.0",
     "core-js": "^2.5.0",
     "es6-shim": "^0.35.3",
-    "forever": "^0.15.3",
     "hacktimer": "^1.1.3",
     "jquery": "^3.2.1",
     "moment": "^2.18.1",
@@ -45,20 +44,6 @@
     "istanbul-coveralls": "^1.0.3",
     "mocha": "^3.5.0",
     "ts-node": "^3.3.0"
-  },
-  "main": "./K.js",
-  "scripts": {
-    "diff": "# npm run diff is DEPRECATED, use instead: make diff",
-    "latest": "# npm run latest is DEPRECATED, use instead: make latest",
-    "reinstall": "# npm run reinstall is DEPRECATED, use instead: make reinstall",
-    "test-stunnel": "# npm run test-stunnel is DEPRECATED, use instead: make stunnel",
-    "list": "# npm run list is DEPRECATED, use instead: make list",
-    "restartall": "# npm run restartall is DEPRECATED, use instead: make restartall",
-    "stopall": "# npm run stopall is DEPRECATED, use instead: make stopall",
-    "startall": "# npm run startall is DEPRECATED, use instead: make startall",
-    "restart": "# npm restart is DEPRECATED, use instead: make restart",
-    "stop": "# npm stop is DEPRECATED, use instead: make stop",
-    "start": "# npm start is DEPRECATED, use instead: make start"
   },
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
   "bugs": "https://github.com/ctubio/Krypto-trading-bot/issues",

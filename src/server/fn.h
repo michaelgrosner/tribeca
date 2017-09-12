@@ -46,7 +46,7 @@ namespace K {
             {"ewma-medium", required_argument, 0,          'm'},
             {"ewma-long",   required_argument, 0,          'l'},
             {"version",     no_argument,       0,          'v'},
-            {0, 0, 0, 0}
+            {0,             0,                 0,            0}
           };
           k = getopt_long(argc, argv, "hvd:l:m:s:", args, &i);
           if (k == -1) break;
