@@ -3,6 +3,6 @@
 ARGUMENTS="--colors"
 
 until ./app/server/K $ARGUMENTS "$@"; do
-    echo "K crashed with exit code $?.  Respawning.." >&2
+    echo "K crashed with exit code $?.. Respawning.." >&2
     sleep 3
 done
