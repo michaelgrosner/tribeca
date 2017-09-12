@@ -182,7 +182,7 @@ packages:
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
-	test -f K.sh || cp dist/K.sh.dist K.sh && echo DONE
+	test -f K.sh || cp dist/K.sh.dist K.sh
 
 install:
 	@$(MAKE) packages
@@ -240,7 +240,7 @@ start:
 screen:
 	@test -n "`screen -list | grep $(KCONFIG)`" && (       \
 	echo Detach screen hotkeys: CTRL+A and CTRL+D          \
-	&& sleep 4 && screen -R $(KCONFIG)) || screen -list || :
+	&& sleep 3 && screen -R $(KCONFIG)) || screen -list || :
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \
