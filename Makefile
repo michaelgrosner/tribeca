@@ -240,7 +240,7 @@ start:
 screen:
 	@test -n "`screen -list | grep $(KCONFIG)`" && (       \
 	echo Detach screen hotkey: holding CTRL hit A and D    \
-	&& sleep 2 && screen -R $(KCONFIG)) || screen -list || :
+	&& sleep 2 && screen -r $(KCONFIG)) || screen -list || :
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \
