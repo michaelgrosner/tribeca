@@ -87,7 +87,11 @@ See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc
 
 `make start` will run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html). But also it will auto run `make install` to compile the application in `app` folder if it was not already done before.
 
+To see the output, attach the screen with `make screen`.
+
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
+
+Alternatively, is possible to simply run `./K.sh` (without make), but only once the application is installed.
 
 Troubleshooting:
 
