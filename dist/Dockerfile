@@ -74,4 +74,4 @@ ENV HitBtcOrderDestination HitBtc
 ## Quoting Parameters
 ENV delayUI 3
 
-CMD ["node_modules/.bin/forever", "-c", "/bin/sh", "K.sh"]
+CMD ["K.sh"]

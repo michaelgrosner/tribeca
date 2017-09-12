@@ -72,7 +72,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
-1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/) v8 (see `node -v` or `nodejs -v`).
+1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/).
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
@@ -91,7 +91,7 @@ To see the output, attach the screen with `make screen`.
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
-Alternatively, is possible to simply run `./K.sh` (without make), but first the application need to be installed.
+Alternatively, is possible to simply run `./K.sh` (without make), but first the application needs to be installed.
 
 Troubleshooting:
 
