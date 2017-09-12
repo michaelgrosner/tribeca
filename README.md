@@ -91,7 +91,7 @@ To see the output, attach the screen with `make screen`.
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
-Alternatively, is possible to simply run `./K.sh` (without make), but only once the application is installed.
+Alternatively, is possible to simply run `./K.sh` (without make), but first the application need to be installed.
 
 Troubleshooting:
 
