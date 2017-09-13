@@ -231,13 +231,13 @@ restart:
 	@$(MAKE) list -s
 
 stop:
-	screen -XS $(KCONFIG) quit || :
+	@screen -XS $(KCONFIG) quit && echo STOP $(KCONFIG) DONE || :
 
 start:
 	@test -d app || $(MAKE) install
-	@test -n "`screen -list | grep $(KCONFIG)`"               \
-	&& (echo $(KCONFIG) is already running.. && screen -list)\
-	|| screen -dmS $(KCONFIG) ./K.sh
+	@test -n "`screen -list | grep $(KCONFIG)`"                    \
+	&& (echo $(KCONFIG) is already running.. && screen -list)      \
+	|| (screen -dmS $(KCONFIG) ./K.sh && echo START $(KCONFIG) DONE)
 
 screen:
 	test -n "`screen -list | grep $(KCONFIG)`" && (        \
