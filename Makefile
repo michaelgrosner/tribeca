@@ -235,12 +235,12 @@ stop:
 
 start:
 	@test -d app || $(MAKE) install
-	@test -n "`screen -list | grep $(KCONFIG)`"                    \
+	@test -n "`screen -list | grep ".$(KCONFIG)	("`"               \
 	&& (echo $(KCONFIG) is already running.. && screen -list)      \
 	|| (screen -dmS $(KCONFIG) ./K.sh && echo START $(KCONFIG) DONE)
 
 screen:
-	test -n "`screen -list | grep $(KCONFIG)`" && (        \
+	@test -n "`screen -list | grep ".$(KCONFIG)	("`" && (  \
 	echo Detach screen hotkey: holding CTRL hit A and D    \
 	&& sleep 2 && screen -r $(KCONFIG)) || screen -list || :
 
