@@ -214,15 +214,15 @@ list:
 	@screen -list || :
 
 restartall:
-	$(MAKE) stopall -s
-	$(MAKE) startall -s
-	$(MAKE) list -s
+	@$(MAKE) stopall -s
+	@$(MAKE) startall -s
+	@$(MAKE) list -s
 
 stopall:
-	@ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% stop -s
+	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% stop -s
 
 startall:
-	@ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
+	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
 	@$(MAKE) list -s
 
 restart:
@@ -231,14 +231,16 @@ restart:
 	@$(MAKE) list -s
 
 stop:
-	@screen -XS $(KCONFIG) quit || :
+	screen -XS $(KCONFIG) quit || :
 
 start:
 	@test -d app || $(MAKE) install
-	@screen -dmS $(KCONFIG) ./K.sh
+	@test -n "`screen -list | grep $(KCONFIG)`"               \
+	&& (echo $(KCONFIG) is already running.. && screen -list)\
+	|| screen -dmS $(KCONFIG) ./K.sh
 
 screen:
-	@test -n "`screen -list | grep $(KCONFIG)`" && (       \
+	test -n "`screen -list | grep $(KCONFIG)`" && (        \
 	echo Detach screen hotkey: holding CTRL hit A and D    \
 	&& sleep 2 && screen -r $(KCONFIG)) || screen -list || :
 
