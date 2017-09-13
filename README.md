@@ -133,7 +133,7 @@ To run multiple instances using a collection of config files:
 
     2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
 
-2. Run the new instance with `KCONFIG=X make start`, also the commands `make stop` and `make restart` allow the environment variable `KCONFIG`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `forever`.
+2. Run the new instance with `KCONFIG=X make start`, also the commands `make stop` and `make restart` allow the environment variable `KCONFIG`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `screen`.
 
 3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
@@ -215,7 +215,7 @@ To rebuild the application with your modifications, see `make help` and choose a
 
 To pipe the output to stdout, execute the application in the foreground with `./K.sh`.
 
-To ignore the output, execute the application in the background with `forever start -c /bin/sh K.sh` or with the alias `make start`.
+To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start`.
 
 Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X ./K.sh`.
 
