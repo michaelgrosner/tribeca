@@ -102,7 +102,7 @@ namespace K {
           {"minTick", gw->minTick},
           {"environment", k.substr(k.length()>4?(k.substr(0,4) == "auto"?4:0):0)},
           {"matryoshka", CF::cfString("MatryoshkaUrl")},
-          {"homepage", CF::cfPKString("homepage")}
+          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
       static json onSnapStatus(json z) {

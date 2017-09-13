@@ -4,16 +4,11 @@
 namespace K {
   static Gw* gw;
   static Gw* gW;
-  static json pkRepo;
   extern json cf;
   extern string cFname;
   class CF {
     public:
       static void internal() {
-        if (access("package.json", F_OK) != -1) {
-          ifstream file_("package.json");
-          pkRepo = json::parse(string((istreambuf_iterator<char>(file_)), istreambuf_iterator<char>()));
-        } else { cout << FN::uiT() << "Errrror: CF package.json not found." << endl; exit(1); }
         string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K");
         cFname = string("etc/").append(k).append(".json");
         string cfname = string("etc/").append(k).append(".png");
@@ -75,13 +70,6 @@ namespace K {
         return cf[k].is_string()
           ? cf.value(k, "")
           : (cf[k].is_number() ? to_string(cf.value(k, 0.0)) : "");
-      };
-      static string cfPKString(string k) {
-        if (pkRepo.find(k) == pkRepo.end()) {
-          cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" package configuration." << endl;
-          exit(1);
-        }
-        return pkRepo.value(k, "");
       };
       static int cfBase() {
         string k_ = cfString("TradedPair");
