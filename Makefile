@@ -149,7 +149,7 @@ png16: build-$(CROSS)
 	test -d build-$(CROSS)/libpng-$(V_PNG) || (                                                   \
 	curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build-$(CROSS) \
 	&& cd build-$(CROSS)/libpng-$(V_PNG) && ./autogen.sh && CC=$(CC) ./configure                  \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                                             )
+	--prefix=$(PWD)/$(KLOCAL) --libdir=$(PWD)/$(KLOCAL)/lib && make && make install               )
 
 quickfix: build-$(CROSS)
 	test -d build-$(CROSS)/quickfix-$(V_QF) || (                                                   \
@@ -235,13 +235,13 @@ stop:
 
 start:
 	@test -d app || $(MAKE) install
-	@test -n "`screen -list | grep ".$(KCONFIG)	("`"               \
+	@test -n "`screen -list | grep "\.$(KCONFIG)	("`"             \
 	&& (echo $(KCONFIG) is already running.. && screen -list)      \
 	|| (screen -dmS $(KCONFIG) ./K.sh && echo START $(KCONFIG) DONE)
 
 screen:
-	@test -n "`screen -list | grep ".$(KCONFIG)	("`" && (  \
-	echo Detach screen hotkey: holding CTRL hit A and D    \
+	@test -n "`screen -list | grep "\.$(KCONFIG)	("`" && ( \
+	echo Detach screen hotkey: holding CTRL hit A then D    \
 	&& sleep 2 && screen -r $(KCONFIG)) || screen -list || :
 
 gdax:
