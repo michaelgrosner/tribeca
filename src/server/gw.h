@@ -75,22 +75,14 @@ namespace K {
       static void gwOrderUp(mConnectivity k) {
         EV::up(mEv::GatewayOrderConnect, {(int)k});
       };
-      static void gwOrderUp(mGWos k) {
+      static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
         json o;
-        if (k.oI.length()) o["orderId"] = k.oI;
-        if (k.oE.length()) o["exchangeId"] = k.oE;
-        o["orderStatus"] = (int)k.oS;
-        if (k.oS == mORS::Cancelled) o["lastQuantity"] = 0;
-        EV::up(mEv::OrderUpdateGateway, o);
-      };
-      static void gwOrderUp(mGWoa k) {
-        json o;
-        if (k.oI.length()) o["orderId"] = k.oI;
-        if (k.oE.length()) o["exchangeId"] = k.oE;
-        o["orderStatus"] = (int)k.oS;
-        if (k.oP) o["price"] = k.oP;
-        o["quantity"] = k.oQ;
-        o["lastQuantity"] = k.oLQ;
+        if (oI.length()) o["orderId"] = oI;
+        if (oE.length()) o["exchangeId"] = oE;
+        o["orderStatus"] = (int)oS;
+        if (oP) o["price"] = oP;
+        if (oQ) o["quantity"] = oQ;
+        if (oLQ) o["lastQuantity"] = oLQ;
         EV::up(mEv::OrderUpdateGateway, o);
       };
     private:

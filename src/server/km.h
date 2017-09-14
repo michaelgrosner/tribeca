@@ -97,21 +97,6 @@ namespace K {
     vector<mGWbl> asks;
     mGWbls(vector<mGWbl> bids, vector<mGWbl> asks);
   };
-  struct mGWos {
-    string oI;
-    string oE;
-    mORS oS;
-    mGWos(string oI, string oE, mORS oS);
-  };
-  struct mGWoa {
-    string oI;
-    string oE;
-    mORS oS;
-    double oP;
-    double oQ;
-    double oLQ;
-    mGWoa(string oI, string oE, mORS oS, double oP, double oQ, double oLQ);
-  };
   struct mGWmt {
     mExchange exchange;
     int base;
