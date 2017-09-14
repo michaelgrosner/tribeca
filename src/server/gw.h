@@ -88,8 +88,8 @@ namespace K {
         if (k.oI.length()) o["orderId"] = k.oI;
         if (k.oE.length()) o["exchangeId"] = k.oE;
         o["orderStatus"] = (int)k.oS;
-        if (k.oP) o["lastPrice"] = k.oP;
-        o["leavesQuantity"] = k.oQ;
+        if (k.oP) o["price"] = k.oP;
+        o["quantity"] = k.oQ;
         o["lastQuantity"] = k.oLQ;
         EV::up(mEv::OrderUpdateGateway, o);
       };

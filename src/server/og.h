@@ -40,7 +40,6 @@ namespace K {
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"side", (int)oS},
           {"quantity", oQ},
-          {"leavesQuantity", oQ},
           {"type", (int)oLM},
           {"isPong", oIP},
           {"price", FN::roundSide(oP, gw->minTick, oS)},
@@ -128,6 +127,9 @@ namespace K {
         );
         return {};
       };
+      static json updateOrderState(string k, mORS os) {
+        return updateOrderState({{"orderId", k}, {"orderStatus", (int)os}});
+      };
       static json updateOrderState(json k) {
         json o;
         if ((mORS)k.value("orderStatus", 0) == mORS::New) o = k;
@@ -195,19 +197,15 @@ namespace K {
           }
         }
       };
-      static json updateOrderState(string k, mORS os) {
-        if (os == mORS::Cancelled) return updateOrderState({{"orderId", k}, {"orderStatus", (int)os}, {"leavesQuantity", 0}});
-        else return updateOrderState({{"orderId", k}, {"orderStatus", (int)os}});
-      };
       static void toHistory(json o) {
         double fee = 0;
-        double val = abs(o.value("lastPrice", 0.0) * o.value("lastQuantity", 0.0));
+        double val = abs(o.value("price", 0.0) * o.value("lastQuantity", 0.0));
         json trade = {
           {"tradeId", to_string(FN::T())},
           {"time", o.value("time", (unsigned long)0)},
           {"exchange", o.value("exchange", 0)},
           {"pair", o["pair"]},
-          {"price", o.value("lastPrice", 0.0)},
+          {"price", o.value("price", 0.0)},
           {"quantity", o.value("lastQuantity", 0.0)},
           {"side", o.value("side", 0)},
           {"value", val},
@@ -219,7 +217,7 @@ namespace K {
           {"feeCharged", fee},
           {"loadedFromDB", false},
         };
-        cout << FN::uiT() << "GW " << ((mSide)o.value("side", 0) == mSide::Bid ? RCYAN : RPURPLE) << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? BCYAN : BPURPLE) << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("lastPrice", 0.0) << " " << mCurrency[gw->quote] << " (value " << val << " " << mCurrency[gw->quote] << ")" << endl;
+        cout << FN::uiT() << "GW " << ((mSide)o.value("side", 0) == mSide::Bid ? RCYAN : RPURPLE) << CF::cfString("EXCHANGE") << " TRADE " << ((mSide)o.value("side", 0) == mSide::Bid ? BCYAN : BPURPLE) << ((mSide)o.value("side", 0) == mSide::Bid ? "BUY " : "SELL ") << o.value("lastQuantity", 0.0) << " " << mCurrency[gw->base] << " at price " << o.value("price", 0.0) << " " << mCurrency[gw->quote] << " (value " << val << " " << mCurrency[gw->quote] << ")" << endl;
         EV::up(mEv::OrderTradeBroker, trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")
@@ -238,7 +236,7 @@ namespace K {
           tradesMemory.push_back(trade);
         }
         json t = {
-          {"price", o.value("lastPrice", 0.0)},
+          {"price", o.value("price", 0.0)},
           {"side", o.value("side", 0)},
           {"quantity", o.value("lastQuantity", 0.0)},
           {"value", val},
