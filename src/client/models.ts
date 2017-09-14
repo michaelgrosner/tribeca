@@ -97,8 +97,6 @@ export interface OrderStatusReport {
     orderStatus : OrderStatus;
     time : number;
     lastQuantity : number;
-    lastPrice : number;
-    leavesQuantity : number;
     exchange : Exchange;
     computationalLatency : number;
     isPong : boolean;

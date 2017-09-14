@@ -1,5 +1,5 @@
 {
-  "name": "K.js",
+  "name": "K.sh UI",
   "version": "3.0.0",
   "description": "Self-hosted crypto trading bot (automated high frequency market making) in node.js, angular, typescript and c++",
   "dependencies": {

@@ -72,7 +72,7 @@ export class OrdersComponent implements OnInit {
       sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 60, field: 'lvQty', headerName: 'qty', cellClass: (params) => {
+      { width: 60, field: 'qty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
@@ -116,7 +116,7 @@ export class OrdersComponent implements OnInit {
             value: Math.round(o.price * o.quantity * 100) / 100,
             tif: Models.TimeInForce[o.timeInForce],
             lat: o.computationalLatency+'ms',
-            lvQty: o.leavesQuantity
+            qty: o.quantity
           }));
         }
       }
@@ -132,7 +132,7 @@ export class OrdersComponent implements OnInit {
         type: Models.OrderType[o.type],
         tif: Models.TimeInForce[o.timeInForce],
         lat: o.computationalLatency+'ms',
-        lvQty: o.leavesQuantity,
+        qty: o.quantity,
         pong: o.isPong,
         time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
         quoteSymbol: Models.Currency[this.product.advert.pair.quote],
