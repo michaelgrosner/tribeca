@@ -10,9 +10,9 @@ namespace K {
     public:
       static void main() {
         load();
-        EV::on(mEv::OrderUpdateGateway, [](json k) {
+        evOrderUpdateGateway = [](json k) {
           updateOrderState(k);
-        });
+        };
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
         UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
         UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);

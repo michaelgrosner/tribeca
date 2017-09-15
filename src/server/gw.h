@@ -68,7 +68,7 @@ namespace K {
         if (oP) o["price"] = oP;
         if (oQ) o["quantity"] = oQ;
         if (oLQ) o["lastQuantity"] = oLQ;
-        EV::up(mEv::OrderUpdateGateway, o);
+        evOrderUpdateGateway(o);
       };
       static void gwTradeUp(vector<mGWbt> k) {
         for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
