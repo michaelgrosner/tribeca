@@ -10,8 +10,9 @@ namespace K {
       static void main() {
         evExit = happyEnding;
         signal(SIGINT, quit);
-        signal(SIGSEGV, wtf);
+        signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
         gitReversedVersion();
       };
       static void on(mEv k, evCb cb) {
