@@ -3,7 +3,7 @@
 
 namespace K {
   typedef void (*evCb)(json);
-  static map<unsigned int, vector<evCb>> ev;
+  static map<unsigned int, evCb> ev;
   static void (*evExit)(int code);
   class EV {
     public:
@@ -15,14 +15,11 @@ namespace K {
         gitReversedVersion();
       };
       static void on(mEv k, evCb cb) {
-        ev[(unsigned int)k].push_back(cb);
+        ev[(unsigned int)k] = cb;
       };
       static void up(mEv k, json o = {}) {
-        unsigned int kEv = (unsigned int)k;
-        if (ev.find(kEv) == ev.end()) return;
-        vector<evCb>::iterator cb = ev[kEv].begin();
-        for (;cb != ev[kEv].end(); ++cb)
-          (*cb)(o);
+        if (ev.find((unsigned int)k) != ev.end())
+          (*ev[(unsigned int)k])(o);
       };
       static void end(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << endl;
