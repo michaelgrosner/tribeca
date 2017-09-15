@@ -2,9 +2,10 @@
 #define K_EV_H_
 
 namespace K {
-  typedef void (*evCb)(json);
-  static map<unsigned int, evCb> ev;
   static void (*evExit)(int code);
+  typedef void (*evJson)(json);
+  static map<unsigned int, evJson> ev;
+  extern evJson evOrderUpdateGateway;
   typedef void (*evConnectivity)(mConnectivity);
   extern evConnectivity evGatewayOrderConnect;
   extern evConnectivity evGatewayMarketConnect;
@@ -18,7 +19,7 @@ namespace K {
         signal(SIGSEGV, wtf);
         gitReversedVersion();
       };
-      static void on(mEv k, evCb cb) {
+      static void on(mEv k, evJson cb) {
         ev[(unsigned int)k] = cb;
       };
       static void up(mEv k, json o = {}) {
