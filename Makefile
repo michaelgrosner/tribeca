@@ -13,7 +13,7 @@ V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include   \
-  src/server/K.cc -pthread -Wl,-rpath,'$$ORIGIN'        \
+  src/server/K.cc -pthread -rdynamic                    \
   -DK_STAMP='"$(shell date --rfc-3339=ns)"'             \
   -DK_BUILD='"$(CROSS)"'   $(KLOCAL)/include/uWS/*.cpp  \
   dist/lib/K-$(CROSS).a    $(KLOCAL)/lib/libquickfix.a  \
@@ -207,7 +207,7 @@ reinstall: .git src
 	@$(MAKE) install
 	@$(MAKE) test -s
 	@git checkout .
-	$(MAKE) restartall
+	@$(MAKE) restartall
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
 list:

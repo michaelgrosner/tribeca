@@ -44,7 +44,7 @@ export class TradeSafetyComponent implements OnInit {
       .registerSubscriber(this.updateValues);
   }
 
-  private updateValues = (value : Models.TradeSafety) => {
+  private updateValues = (value: Models.TradeSafety) => {
     if (value == null) return;
     this.tradeSafetyValue = value.combined;
     this.buySafety = value.buy;
