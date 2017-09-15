@@ -5,6 +5,9 @@ namespace K {
   typedef void (*evCb)(json);
   static map<unsigned int, evCb> ev;
   static void (*evExit)(int code);
+  typedef void (*evConnectivity)(mConnectivity);
+  extern evConnectivity evGatewayOrderConnect;
+  extern evConnectivity evGatewayMarketConnect;
   class EV {
     public:
       static void main() {
