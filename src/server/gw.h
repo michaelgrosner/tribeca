@@ -23,17 +23,14 @@ namespace K {
             this_thread::sleep_for(chrono::seconds(15));
           }
         }).detach();
-        EV::on(mEv::GatewayMarketConnect, [](json k) {
-          if (k.is_null() or !k.size()) return;
-          mConnectivity conn = (mConnectivity)(int)k.at(0);
-          _gwCon_(mGatewayType::MarketData, conn);
-          if (conn == mConnectivity::Disconnected)
+        evGatewayOrderConnect = [](mConnectivity k) {
+          _gwCon_(mGatewayType::OrderEntry, k);
+        };
+        evGatewayMarketConnect = [](mConnectivity k) {
+          _gwCon_(mGatewayType::MarketData, k);
+          if (k == mConnectivity::Disconnected)
             EV::up(mEv::MarketDataGateway);
-        });
-        EV::on(mEv::GatewayOrderConnect, [](json k) {
-          if (k.is_null() or !k.size()) return;
-          _gwCon_(mGatewayType::OrderEntry, (mConnectivity)(int)k.at(0));
-        });
+        };
         thread([&]() {
           gw->book();
         }).detach();
@@ -43,6 +40,12 @@ namespace K {
         UI::uiHand(uiTXT::ActiveState, &onHandState);
         hub.run();
       };
+      static void gwBookUp(mConnectivity k) {
+        evGatewayMarketConnect(k);
+      };
+      static void gwOrderUp(mConnectivity k) {
+        evGatewayOrderConnect(k);
+      };
       static void gwPosUp(mGWp k) {
         EV::up(mEv::PositionGateway, {
           {"amount", k.amount},
@@ -50,30 +53,12 @@ namespace K {
           {"currency", k.currency}
         });
       };
-      static void gwBookUp(mConnectivity k) {
-        EV::up(mEv::GatewayMarketConnect, {(int)k});
-      };
-      static void gwLevelUp(mGWbls k) {
-        json b, a;
-        for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
-          b.push_back({{"price", it->price}, {"size", it->size}});
-        for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
-          a.push_back({{"price", it->price}, {"size", it->size}});
-        EV::up(mEv::MarketDataGateway, {{"bids", b}, {"asks", a}});
-      };
-      static void gwTradeUp(vector<mGWbt> k) {
-        for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
-          gwTradeUp(*it);
-      }
       static void gwTradeUp(mGWbt k) {
         EV::up(mEv::MarketTradeGateway, {
           {"price", k.price},
           {"size", k.size},
           {"make_side", (int)k.make_side}
         });
-      };
-      static void gwOrderUp(mConnectivity k) {
-        EV::up(mEv::GatewayOrderConnect, {(int)k});
       };
       static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
         json o;
@@ -84,6 +69,18 @@ namespace K {
         if (oQ) o["quantity"] = oQ;
         if (oLQ) o["lastQuantity"] = oLQ;
         EV::up(mEv::OrderUpdateGateway, o);
+      };
+      static void gwTradeUp(vector<mGWbt> k) {
+        for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
+          gwTradeUp(*it);
+      };
+      static void gwLevelUp(mGWbls k) {
+        json b, a;
+        for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
+          b.push_back({{"price", it->price}, {"size", it->size}});
+        for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
+          a.push_back({{"price", it->price}, {"size", it->size}});
+        EV::up(mEv::MarketDataGateway, {{"bids", b}, {"asks", a}});
       };
     private:
       static json onSnapProduct(json z) {
