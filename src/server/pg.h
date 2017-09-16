@@ -6,7 +6,7 @@ namespace K {
   json pgSafety;
   map<double, json> pgBuys;
   map<double, json> pgSells;
-  map<int, json> pgWallet;
+  map<int, mPosition> pgWallet;
   vector<json> pgProfit;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
@@ -15,15 +15,15 @@ namespace K {
     public:
       static void main() {
         load();
-        EV::on(mEv::PositionGateway, [](json k) {
+        ev_gwDataPosition = [](mPosition k) {
           posUp(k);
-        });
+        };
         EV::on(mEv::OrderUpdateBroker, [](json k) {
           orderUp(k);
         });
-        EV::on(mEv::PositionBroker, [](json k) {
+        ev_mgTargetPosition = []() {
           calcTargetBasePos();
-        });
+        };
         UI::uiSnap(uiTXT::Position, &onSnapPos);
         UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
         UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
@@ -50,7 +50,7 @@ namespace K {
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
-        EV::up(mEv::TargetPosition);
+        ev_pgTargetBasePosition();
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
@@ -202,13 +202,13 @@ namespace K {
           sum += it->second.value("quantity", 0.0);
         return sum;
       };
-      static void posUp(json k) {
-        if (!k.is_null()) pgWallet[k.value("currency", 0)] = k;
-        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end() or pgWallet[gw->base].is_null() or pgWallet[gw->quote].is_null()) return;
-        double baseAmount = pgWallet[gw->base].value("amount", 0.0);
-        double quoteAmount = pgWallet[gw->quote].value("amount", 0.0);
-        double baseValue = baseAmount + quoteAmount / mgFairValue + pgWallet[gw->base].value("heldAmount", 0.0) + pgWallet[gw->quote].value("heldAmount", 0.0) / mgFairValue;
-        double quoteValue = baseAmount * mgFairValue + quoteAmount + pgWallet[gw->base].value("heldAmount", 0.0) * mgFairValue + pgWallet[gw->quote].value("heldAmount", 0.0);
+      static void posUp(mPosition k) {
+        if (k.currency>-1)  pgWallet[k.currency] = k;
+        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) return;
+        double baseAmount = pgWallet[gw->base].amount;
+        double quoteAmount = pgWallet[gw->quote].amount;
+        double baseValue = baseAmount + quoteAmount / mgFairValue + pgWallet[gw->base].held + pgWallet[gw->quote].held / mgFairValue;
+        double quoteValue = baseAmount * mgFairValue + quoteAmount + pgWallet[gw->base].held * mgFairValue + pgWallet[gw->quote].held;
         unsigned long now = FN::T();
         pgProfit.push_back({
           {"baseValue", baseValue},
@@ -221,12 +221,12 @@ namespace K {
         json pos = {
           {"baseAmount", baseAmount},
           {"quoteAmount", quoteAmount},
-          {"baseHeldAmount", pgWallet[gw->base].value("heldAmount", 0.0)},
-          {"quoteHeldAmount", pgWallet[gw->quote].value("heldAmount", 0.0)},
+          {"baseHeldAmount", pgWallet[gw->base].held},
+          {"quoteHeldAmount", pgWallet[gw->quote].held},
           {"value", baseValue},
           {"quoteValue", quoteValue},
-          {"profitBase", ((baseValue - pgProfit.begin()->value("baseValue", 0.0)) / baseValue) * 1e+2},
-          {"profitQuote", ((quoteValue - pgProfit.begin()->value("quoteValue", 0.0)) / quoteValue) * 1e+2},
+          {"profitBase", ((baseValue - (*pgProfit.begin())["baseValue"].get<double>()) / baseValue) * 1e+2},
+          {"profitQuote", ((quoteValue - (*pgProfit.begin())["quoteValue"].get<double>()) / quoteValue) * 1e+2},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"exchange", (int)gw->exchange}
         };
@@ -261,13 +261,10 @@ namespace K {
             heldAmount += held;
           }
         }
-        posUp({
-          {"amount", amount},
-          {"heldAmount", heldAmount},
-          {"currency", (mSide)k.value("side", 0) == mSide::Ask
-            ? k.value("/pair/base"_json_pointer, 0)
-            : k.value("/pair/quote"_json_pointer, 0)}
-        });
+        posUp(mPosition(amount, heldAmount, (mSide)k["side"].get<int>() == mSide::Ask
+            ? k["/pair/base"_json_pointer].get<int>()
+            : k["/pair/quote"_json_pointer].get<int>()
+        ));
       };
   };
 }

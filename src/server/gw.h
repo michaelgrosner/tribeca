@@ -23,10 +23,10 @@ namespace K {
             this_thread::sleep_for(chrono::seconds(15));
           }
         }).detach();
-        evGatewayOrderConnect = [](mConnectivity k) {
+        ev_gwConnectOrder = [](mConnectivity k) {
           _gwCon_(mGatewayType::OrderEntry, k);
         };
-        evGatewayMarketConnect = [](mConnectivity k) {
+        ev_gwConnectMarket = [](mConnectivity k) {
           _gwCon_(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
             EV::up(mEv::MarketDataGateway);
@@ -41,17 +41,13 @@ namespace K {
         hub.run();
       };
       static void gwBookUp(mConnectivity k) {
-        evGatewayMarketConnect(k);
+        ev_gwConnectMarket(k);
       };
       static void gwOrderUp(mConnectivity k) {
-        evGatewayOrderConnect(k);
+        ev_gwConnectOrder(k);
       };
-      static void gwPosUp(mGWp k) {
-        EV::up(mEv::PositionGateway, {
-          {"amount", k.amount},
-          {"heldAmount", k.held},
-          {"currency", k.currency}
-        });
+      static void gwPosUp(mPosition k) {
+        ev_gwDataPosition(k);
       };
       static void gwTradeUp(mGWbt k) {
         EV::up(mEv::MarketTradeGateway, {
@@ -68,7 +64,7 @@ namespace K {
         if (oP) o["price"] = oP;
         if (oQ) o["quantity"] = oQ;
         if (oLQ) o["lastQuantity"] = oLQ;
-        evOrderUpdateGateway(o);
+        ev_gwDataOrder(o);
       };
       static void gwTradeUp(vector<mGWbt> k) {
         for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)

@@ -10,7 +10,7 @@ namespace K {
     public:
       static void main() {
         load();
-        evOrderUpdateGateway = [](json k) {
+        ev_gwDataOrder = [](json k) {
           updateOrderState(k);
         };
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);

@@ -71,7 +71,7 @@ namespace K {
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        EV::up(mEv::PositionGateway);
+        ev_gwDataPosition(mPosition());
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
@@ -187,7 +187,7 @@ namespace K {
         calcEwma(&mgEwmaM, QP::getInt("mediumEwmaPeriods"));
         calcEwma(&mgEwmaS, QP::getInt("shortEwmaPeriods"));
         calcTargetPos();
-        EV::up(mEv::PositionBroker);
+        ev_mgTargetPosition();
         UI::uiSend(uiTXT::EWMAChart, {
           {"stdevWidth", {
             {"fv", mgStdevFV},
@@ -225,7 +225,7 @@ namespace K {
             filter(mSide::Bid == (mSide)it->second.value("side", 0) ? "bids" : "asks", it->second);
         if (!empty()) {
           calcFairValue();
-          EV::up(mEv::FilteredMarket);
+          ev_mgLevels();
         }
       };
       static void filter(string k, json o) {

@@ -30,9 +30,8 @@ namespace K {
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class mEv: unsigned int {
-    ExchangeConnect, MarketDataGateway, PositionGateway, MarketTradeGateway, TargetPosition,
-    OrderUpdateBroker, PositionBroker, OrderTradeBroker, QuotingParameters,
-    MarketTrade, EWMAProtectionCalculator, FilteredMarket
+    ExchangeConnect, MarketDataGateway, MarketTradeGateway, OrderUpdateBroker,
+    OrderTradeBroker, QuotingParameters, MarketTrade, EWMAProtectionCalculator
   };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
@@ -74,11 +73,12 @@ namespace K {
       bool cancelByClientId = 0;
       bool supportCancelAll = 0;
   };
-  struct mGWp {
+  struct mPosition {
     double amount;
     double held;
     int currency;
-    mGWp(double amount, double held, int currency);
+    mPosition();
+    mPosition(double amount, double held, int currency);
   };
   struct mGWbt {
     double price;

@@ -5,10 +5,16 @@ namespace K {
   static void (*evExit)(int code);
   typedef void (*evJson)(json);
   static map<unsigned int, evJson> ev;
-  extern evJson evOrderUpdateGateway;
+  extern evJson ev_gwDataOrder;
   typedef void (*evConnectivity)(mConnectivity);
-  extern evConnectivity evGatewayOrderConnect;
-  extern evConnectivity evGatewayMarketConnect;
+  extern evConnectivity ev_gwConnectOrder;
+  extern evConnectivity ev_gwConnectMarket;
+  typedef void (*evPosition)(mPosition);
+  extern evPosition ev_gwDataPosition;
+  typedef void (*evEmpty)();
+  extern evEmpty ev_mgTargetPosition;
+  extern evEmpty ev_pgTargetBasePosition;
+  extern evEmpty ev_mgLevels;
   class EV {
     public:
       static void main() {
