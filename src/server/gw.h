@@ -29,7 +29,7 @@ namespace K {
         ev_gwConnectMarket = [](mConnectivity k) {
           _gwCon_(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
-            EV::up(mEv::MarketDataGateway);
+            ev_gwDataLevels(mLevels());
         };
         thread([&]() {
           gw->book();
@@ -66,13 +66,8 @@ namespace K {
         if (oLQ) o["lastQuantity"] = oLQ;
         ev_gwDataOrder(o);
       };
-      static void gwLevelUp(mGWbls k) {
-        json b, a;
-        for (vector<mGWbl>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
-          b.push_back({{"price", it->price}, {"size", it->size}});
-        for (vector<mGWbl>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
-          a.push_back({{"price", it->price}, {"size", it->size}});
-        EV::up(mEv::MarketDataGateway, {{"bids", b}, {"asks", a}});
+      static void gwLevelUp(mLevels k) {
+        ev_gwDataLevels(k);
       };
     private:
       static json onSnapProduct(json z) {

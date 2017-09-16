@@ -13,6 +13,8 @@ namespace K {
                         ev_gwConnectExchange;
   typedef void (*evWallet)(mWallet);
   extern evWallet ev_gwDataWallet;
+  typedef void (*evLevels)(mLevels);
+  extern evLevels ev_gwDataLevels;
   typedef void (*evTrade)(mTrade);
   extern evTrade ev_gwDataTrade;
   typedef void (*evTradeHydrated)(mTradeHydrated);
