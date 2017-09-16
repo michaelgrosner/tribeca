@@ -6,7 +6,7 @@ namespace K {
   json pgSafety;
   map<double, json> pgBuys;
   map<double, json> pgSells;
-  map<int, mPosition> pgWallet;
+  map<int, mWallet> pgWallet;
   vector<json> pgProfit;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
@@ -15,11 +15,11 @@ namespace K {
     public:
       static void main() {
         load();
-        ev_gwDataPosition = [](mPosition k) {
-          posUp(k);
+        ev_gwDataWallet = [](mWallet k) {
+          calcWallet(k);
         };
         EV::on(mEv::OrderUpdateBroker, [](json k) {
-          orderUp(k);
+          calcWalletAfterOrder(k);
         });
         ev_mgTargetPosition = []() {
           calcTargetBasePos();
@@ -202,7 +202,7 @@ namespace K {
           sum += it->second.value("quantity", 0.0);
         return sum;
       };
-      static void posUp(mPosition k) {
+      static void calcWallet(mWallet k) {
         if (k.currency>-1)  pgWallet[k.currency] = k;
         if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) return;
         double baseAmount = pgWallet[gw->base].amount;
@@ -247,7 +247,7 @@ namespace K {
         if (!eq) calcTargetBasePos();
         UI::uiSend(uiTXT::Position, pos, true);
       };
-      static void orderUp(json k) {
+      static void calcWalletAfterOrder(json k) {
         if (pgPos.is_null()) return;
         double heldAmount = 0;
         double amount = (mSide)k.value("side", 0) == mSide::Ask
@@ -261,7 +261,7 @@ namespace K {
             heldAmount += held;
           }
         }
-        posUp(mPosition(amount, heldAmount, (mSide)k["side"].get<int>() == mSide::Ask
+        calcWallet(mWallet(amount, heldAmount, (mSide)k["side"].get<int>() == mSide::Ask
             ? k["/pair/base"_json_pointer].get<int>()
             : k["/pair/quote"_json_pointer].get<int>()
         ));

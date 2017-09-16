@@ -71,7 +71,7 @@ namespace K {
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        ev_gwDataPosition(mPosition());
+        ev_gwDataWallet(mWallet());
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:

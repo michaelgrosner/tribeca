@@ -73,12 +73,12 @@ namespace K {
       bool cancelByClientId = 0;
       bool supportCancelAll = 0;
   };
-  struct mPosition {
+  struct mWallet {
     double amount;
     double held;
     int currency;
-    mPosition();
-    mPosition(double amount, double held, int currency);
+    mWallet();
+    mWallet(double amount, double held, int currency);
   };
   struct mGWbt {
     double price;
