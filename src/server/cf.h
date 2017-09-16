@@ -101,8 +101,9 @@ namespace K {
         cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" currency." << endl;
         exit(1);
       };
-      static bool autoStart() {
-        return "auto" == cfString("BotIdentifier").substr(0,4);
+      static mConnectivity autoStart() {
+        return "auto" == cfString("BotIdentifier").substr(0,4)
+          ? mConnectivity::Connected : mConnectivity::Disconnected;
       };
     private:
       static void cfExchange(mExchange e) {
@@ -156,7 +157,7 @@ namespace K {
         if (!gw->minTick) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
         else { cout << FN::uiT() << "GW " << RWHITE << cfString("EXCHANGE") << " allows client IP." << endl; }
         cout << FN::uiT() << "GW " << RWHITE << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
-          << "- autoBot: " << (autoStart() ? "yes" : "no") << endl
+          << "- autoBot: " << (autoStart() == mConnectivity::Connected ? "yes" : "no") << endl
           << "- pair: " << gw->symbol << endl
           << "- minTick: " << gw->minTick << endl
           << "- minSize: " << gw->minSize << endl

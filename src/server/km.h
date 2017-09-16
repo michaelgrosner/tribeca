@@ -16,7 +16,7 @@ namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
-  enum class mConnectivity: unsigned int { Connected, Disconnected };
+  enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mSide: unsigned int { Bid, Ask, Unknown };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
@@ -30,8 +30,7 @@ namespace K {
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class mEv: unsigned int {
-    ExchangeConnect, MarketDataGateway, MarketTradeGateway, OrderUpdateBroker,
-    OrderTradeBroker, QuotingParameters, MarketTrade, EWMAProtectionCalculator
+    MarketDataGateway, MarketTradeGateway, OrderUpdateBroker, OrderTradeBroker, QuotingParameters
   };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {

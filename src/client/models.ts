@@ -72,7 +72,7 @@ export enum Currency {
     EOS, SAN, OMG, PAY, BCC, BCH
 }
 
-export enum Connectivity { Connected, Disconnected }
+export enum Connectivity { Disconnected, Connected }
 export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }

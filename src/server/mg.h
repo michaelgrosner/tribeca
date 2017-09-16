@@ -164,7 +164,6 @@ namespace K {
         );
         mGWmt_.push_back(t);
         if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
-        EV::up(mEv::MarketTrade);
         UI::uiSend(uiTXT::MarketTrade, tradeUp(t));
       };
       static void levelUp(json k) {
@@ -214,7 +213,7 @@ namespace K {
       };
       static void ewmaPUp() {
         calcEwma(&mgEwmaP, QP::getInt("quotingEwmaProtectionPeriods"));
-        EV::up(mEv::EWMAProtectionCalculator);
+        ev_mgEwmaQuoteProtection();
       };
       static void filter(json k) {
         mGWmktFilter = (k.is_null() or k["bids"].is_null() or k["asks"].is_null())
