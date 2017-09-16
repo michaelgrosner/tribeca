@@ -4,7 +4,7 @@
 namespace K {
   static void (*evExit)(int code);
   typedef void (*evJson)(json);
-  static map<unsigned int, evJson> ev;
+  extern map<unsigned int, evJson> ev;
   extern evJson ev_gwDataOrder;
   typedef void (*evConnectivity)(mConnectivity);
   extern evConnectivity ev_gwConnectButton,
@@ -13,6 +13,10 @@ namespace K {
                         ev_gwConnectExchange;
   typedef void (*evWallet)(mWallet);
   extern evWallet ev_gwDataWallet;
+  typedef void (*evTrade)(mTrade);
+  extern evTrade ev_gwDataTrade;
+  typedef void (*evTradeHydrated)(mTradeHydrated);
+  extern evTradeHydrated ev_ogTrade;
   typedef void (*evEmpty)();
   extern evEmpty ev_mgLevels,
                  ev_mgEwmaQuoteProtection,

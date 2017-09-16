@@ -4,9 +4,9 @@
 namespace K {
   json pgPos;
   json pgSafety;
-  map<double, json> pgBuys;
-  map<double, json> pgSells;
   map<int, mWallet> pgWallet;
+  map<double, mTradeDehydrated> pgBuys;
+  map<double, mTradeDehydrated> pgSells;
   vector<json> pgProfit;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
@@ -56,15 +56,10 @@ namespace K {
         DB::insert(uiTXT::TargetBasePosition, k);
         cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value("value", 0.0) * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
       };
-      static void addTrade(json k) {
-        json k_ = {
-          {"price", k.value("price", 0.0)},
-          {"quantity", k.value("quantity", 0.0)},
-          {"time", k.value("time", (unsigned long)0)}
-        };
-        if ((mSide)k.value("side", 0) == mSide::Bid)
-          pgBuys[k.value("price", 0.0)] = k_;
-        else pgSells[k.value("price", 0.0)] = k_;
+      static void addTrade(mTradeHydrated k) {
+        mTradeDehydrated k_(k.price, k.quantity, k.time);
+        if (k.side == mSide::Bid) pgBuys[k.price] = k_;
+        else pgSells[k.price] = k_;
       };
     private:
       static void load() {
@@ -103,12 +98,12 @@ namespace K {
         double widthPong = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPongPercentage") * mgFairValue / 100
           : QP::getDouble("widthPong");
-        map<double, json> tradesBuy;
-        map<double, json> tradesSell;
-        for (json::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
-          if ((mSide)it->value("side", 0) == mSide::Bid)
-            tradesBuy[it->value("price", 0.0)] = *it;
-          else tradesSell[it->value("price", 0.0)] = *it;
+        map<double, mTradeHydrated> tradesBuy;
+        map<double, mTradeHydrated> tradesSell;
+        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+          if (it->side == mSide::Bid)
+            tradesBuy[it->price] = *it;
+          else tradesSell[it->price] = *it;
         double buyPing = 0;
         double sellPong = 0;
         double buyQty = 0;
@@ -139,22 +134,22 @@ namespace K {
           {"sellPong", sellPong}
         };
       };
-      static void matchFirstPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchFirstPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchBestPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchBestPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchLastPing(map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchLastPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchPing(bool matchPings, bool near, bool far, map<double, json>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchPing(bool matchPings, bool near, bool far, map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
-        if (reverse) for (map<double, json>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.value("price", 0.0), it->second.value("quantity", 0.0), it->second.value("price", 0.0), it->second.value("Kqty", 0.0), reverse))
+        if (reverse) for (map<double, mTradeHydrated>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
-        } else for (map<double, json>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.value("price", 0.0), it->second.value("quantity", 0.0), it->second.value("price", 0.0), it->second.value("Kqty", 0.0), reverse))
+        } else for (map<double, mTradeHydrated>::iterator it = trades->begin(); it != trades->end(); ++it)
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       static bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
@@ -176,30 +171,30 @@ namespace K {
         if (pgSells.size()) expire(&pgSells);
         skip();
       };
-      static void expire(map<double, json>* k) {
+      static void expire(map<double, mTradeDehydrated>* k) {
         unsigned long now = FN::T();
-        for (map<double, json>::iterator it = k->begin(); it != k->end();)
-          if (it->second.value("time", (unsigned long)0) + QP::getDouble("tradeRateSeconds") * 1e+3 > now) ++it;
+        for (map<double, mTradeDehydrated>::iterator it = k->begin(); it != k->end();)
+          if (it->second.time + QP::getDouble("tradeRateSeconds") * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
       static void skip() {
         while (pgBuys.size() and pgSells.size()) {
-          json buy = pgBuys.rbegin()->second;
-          json sell = pgSells.begin()->second;
-          if (sell.value("price", 0.0) < buy.value("price", 0.0)) break;
-          double buyQty = buy.value("quantity", 0.0);
-          buy["quantity"] = buyQty - sell.value("quantity", 0.0);
-          sell["quantity"] = sell.value("quantity", 0.0) - buyQty;
-          if (buy.value("quantity", 0.0) < gw->minSize)
+          mTradeDehydrated buy = pgBuys.rbegin()->second;
+          mTradeDehydrated sell = pgSells.begin()->second;
+          if (sell.price < buy.price) break;
+          double buyQty = buy.quantity;
+          buy.quantity = buyQty - sell.quantity;
+          sell.quantity = sell.quantity - buyQty;
+          if (buy.quantity < gw->minSize)
             pgBuys.erase(--pgBuys.rbegin().base());
-          if (sell.value("quantity", 0.0) < gw->minSize)
+          if (sell.quantity < gw->minSize)
             pgSells.erase(pgSells.begin());
         }
       };
-      static double sum(map<double, json>* k) {
+      static double sum(map<double, mTradeDehydrated>* k) {
         double sum = 0;
-        for (map<double, json>::iterator it = k->begin(); it != k->end(); ++it)
-          sum += it->second.value("quantity", 0.0);
+        for (map<double, mTradeDehydrated>::iterator it = k->begin(); it != k->end(); ++it)
+          sum += it->second.quantity;
         return sum;
       };
       static void calcWallet(mWallet k) {
