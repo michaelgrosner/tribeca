@@ -46,8 +46,8 @@ namespace K {
       static void gwOrderUp(mConnectivity k) {
         ev_gwConnectOrder(k);
       };
-      static void gwPosUp(mPosition k) {
-        ev_gwDataPosition(k);
+      static void gwPosUp(mWallet k) {
+        ev_gwDataWallet(k);
       };
       static void gwTradeUp(mGWbt k) {
         EV::up(mEv::MarketTradeGateway, {

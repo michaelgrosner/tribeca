@@ -7,14 +7,14 @@ namespace K {
   static map<unsigned int, evJson> ev;
   extern evJson ev_gwDataOrder;
   typedef void (*evConnectivity)(mConnectivity);
-  extern evConnectivity ev_gwConnectOrder;
-  extern evConnectivity ev_gwConnectMarket;
-  typedef void (*evPosition)(mPosition);
-  extern evPosition ev_gwDataPosition;
+  extern evConnectivity ev_gwConnectOrder,
+                        ev_gwConnectMarket;
+  typedef void (*evWallet)(mWallet);
+  extern evWallet ev_gwDataWallet;
   typedef void (*evEmpty)();
-  extern evEmpty ev_mgTargetPosition;
-  extern evEmpty ev_pgTargetBasePosition;
-  extern evEmpty ev_mgLevels;
+  extern evEmpty ev_mgLevels,
+                 ev_mgTargetPosition,
+                 ev_pgTargetBasePosition;
   class EV {
     public:
       static void main() {
