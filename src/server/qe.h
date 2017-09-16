@@ -187,20 +187,20 @@ namespace K {
         return newQuote;
       };
       static json nextQuote() {
-        if (MG::empty() or pgPos.is_null()) return {};
+        if (MG::empty() or pgPos.value == -1) return {};
         double widthPing = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPingPercentage") * mgFairValue / 100
           : QP::getDouble("widthPing");
         double widthPong = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPongPercentage") * mgFairValue / 100
           : QP::getDouble("widthPong");
-        double totalBasePosition = pgPos.value("baseAmount", 0.0) + pgPos.value("baseHeldAmount", 0.0);
-        double totalQuotePosition = (pgPos.value("quoteAmount", 0.0) + pgPos.value("quoteHeldAmount", 0.0)) / mgFairValue;
+        double totalBasePosition = pgPos.baseAmount + pgPos.baseHeldAmount;
+        double totalQuotePosition = (pgPos.quoteAmount + pgPos.quoteHeldAmount) / mgFairValue;
         double buySize = QP::getBool("percentageValues")
-          ? QP::getDouble("buySizePercentage") * pgPos.value("value", 0.0) / 100
+          ? QP::getDouble("buySizePercentage") * pgPos.value / 100
           : QP::getDouble("buySize");
         double sellSize = QP::getBool("percentageValues")
-          ? QP::getDouble("sellSizePercentage") * pgPos.value("value", 0.0) / 100
+          ? QP::getDouble("sellSizePercentage") * pgPos.value / 100
           : QP::getDouble("sellSize");
         if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("buySizeMax"))
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
@@ -210,7 +210,7 @@ namespace K {
         if (rawQuote.is_null()) return {};
         double _rawBidSz = rawQuote.value("bidSz", 0.0);
         double _rawAskSz = rawQuote.value("askSz", 0.0);
-        if (pgSafety.is_null()) return {};
+        if (pgSafety.buyPing == -1) return {};
         qeBidStatus = mQuoteStatus::UnknownHeld;
         qeAskStatus = mQuoteStatus::UnknownHeld;
         vector<int> superTradesMultipliers = {1, 1};
@@ -225,11 +225,11 @@ namespace K {
               ? 3 : 1);
         }
         double pDiv = QP::getBool("percentageValues")
-          ? QP::getDouble("positionDivergencePercentage") * pgPos.value("value", 0.0) / 100
+          ? QP::getDouble("positionDivergencePercentage") * pgPos.value / 100
           : QP::getDouble("positionDivergence");
         if (superTradesMultipliers[1] > 1) {
-          if (!QP::getBool("buySizeMax")) rawQuote["bidSz"] = fmin(superTradesMultipliers[1]*buySize, (pgPos.value("quoteAmount", 0.0) / mgFairValue) / 2);
-          if (!QP::getBool("sellSizeMax")) rawQuote["askSz"] = fmin(superTradesMultipliers[1]*sellSize, pgPos.value("baseAmount", 0.0) / 2);
+          if (!QP::getBool("buySizeMax")) rawQuote["bidSz"] = fmin(superTradesMultipliers[1]*buySize, (pgPos.quoteAmount / mgFairValue) / 2);
+          if (!QP::getBool("sellSizeMax")) rawQuote["askSz"] = fmin(superTradesMultipliers[1]*sellSize, pgPos.baseAmount / 2);
         }
         if (QP::getBool("quotingEwmaProtection") and mgEwmaP) {
           rawQuote["askPx"] = fmax(mgEwmaP, rawQuote.value("askPx", 0.0));
@@ -241,7 +241,7 @@ namespace K {
           rawQuote["askSz"] = 0;
           if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off) {
             pgSideAPR = "Bid";
-            if (!QP::getBool("buySizeMax")) rawQuote["bidSz"] = fmin(QP::getInt("aprMultiplier")*buySize, fmin(pgTargetBasePos - totalBasePosition, (pgPos.value("quoteAmount", 0.0) / mgFairValue) / 2));
+            if (!QP::getBool("buySizeMax")) rawQuote["bidSz"] = fmin(QP::getInt("aprMultiplier")*buySize, fmin(pgTargetBasePos - totalBasePosition, (pgPos.quoteAmount / mgFairValue) / 2));
           }
         }
         else if (totalBasePosition > pgTargetBasePos + pDiv) {
@@ -250,7 +250,7 @@ namespace K {
           rawQuote["bidSz"] = 0;
           if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off) {
             pgSideAPR = "Sell";
-            if (!QP::getBool("sellSizeMax")) rawQuote["askSz"] = fmin(QP::getInt("aprMultiplier")*sellSize, fmin(totalBasePosition - pgTargetBasePos, pgPos.value("baseAmount", 0.0) / 2));
+            if (!QP::getBool("sellSizeMax")) rawQuote["askSz"] = fmin(QP::getInt("aprMultiplier")*sellSize, fmin(totalBasePosition - pgTargetBasePos, pgPos.baseAmount / 2));
           }
         }
         if ((mSTDEV)QP::getInt("quotingStdevProtection") != mSTDEV::Off and mgStdevFV) {
@@ -279,18 +279,18 @@ namespace K {
           }
         }
         if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings()) {
-          if (rawQuote.value("askSz", 0.0) and pgSafety.value("buyPing", 0.0) and (
+          if (rawQuote.value("askSz", 0.0) and pgSafety.buyPing and (
             ((mAPR)QP::getInt("aggressivePositionRebalancing") == mAPR::SizeWidth and pgSideAPR == "Sell")
             or (mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingAggressive
             or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive
-            or rawQuote.value("askPx", 0.0) < pgSafety.value("buyPing", 0.0) + widthPong
-          )) rawQuote["askPx"] = pgSafety.value("buyPing", 0.0) + widthPong;
-          if (rawQuote.value("bidSz", 0.0) and pgSafety.value("sellPong", 0.0) and (
+            or rawQuote.value("askPx", 0.0) < pgSafety.buyPing + widthPong
+          )) rawQuote["askPx"] = pgSafety.buyPing + widthPong;
+          if (rawQuote.value("bidSz", 0.0) and pgSafety.sellPong and (
             ((mAPR)QP::getInt("aggressivePositionRebalancing") == mAPR::SizeWidth and pgSideAPR == "Buy")
             or (mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingAggressive
             or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive
-            or rawQuote.value("bidPx", 0.0) > pgSafety.value("sellPong", 0.0) - widthPong
-          )) rawQuote["bidPx"] = pgSafety.value("sellPong", 0.0) - widthPong;
+            or rawQuote.value("bidPx", 0.0) > pgSafety.sellPong - widthPong
+          )) rawQuote["bidPx"] = pgSafety.sellPong - widthPong;
         }
         if (QP::getBool("bestWidth")) {
           if (rawQuote.value("askPx", 0.0))
@@ -312,31 +312,31 @@ namespace K {
                 }
               }
         }
-        if (pgSafety.value("sell", 0.0) > (QP::getDouble("tradesPerMinute") * superTradesMultipliers[0])) {
+        if (pgSafety.sell > (QP::getDouble("tradesPerMinute") * superTradesMultipliers[0])) {
           qeAskStatus = mQuoteStatus::MaxTradesSeconds;
           rawQuote["askPx"] = 0;
           rawQuote["askSz"] = 0;
         }
         if (((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings())
-          and !pgSafety.value("buyPing", 0.0) and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::BidSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedAskSide
+          and !pgSafety.buyPing and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::BidSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and ((mPingAt)QP::getInt("pingAt") == mPingAt::DepletedSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedBidSide))
         )) {
-          qeAskStatus = !pgSafety.value("buyPing", 0.0)
+          qeAskStatus = !pgSafety.buyPing
             ? mQuoteStatus::WaitingPing
             : mQuoteStatus::DepletedFunds;
           rawQuote["askPx"] = 0;
           rawQuote["askSz"] = 0;
         }
-        if (pgSafety.value("buy", 0.0) > (QP::getDouble("tradesPerMinute") * superTradesMultipliers[0])) {
+        if (pgSafety.buy > (QP::getDouble("tradesPerMinute") * superTradesMultipliers[0])) {
           qeBidStatus = mQuoteStatus::MaxTradesSeconds;
           rawQuote["bidPx"] = 0;
           rawQuote["bidSz"] = 0;
         }
         if (((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings())
-          and !pgSafety.value("sellPong", 0.0) and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::AskSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedBidSide
+          and !pgSafety.sellPong and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::AskSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and ((mPingAt)QP::getInt("pingAt") == mPingAt::DepletedSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedAskSide))
         )) {
-          qeBidStatus = !pgSafety.value("sellPong", 0.0)
+          qeBidStatus = !pgSafety.sellPong
             ? mQuoteStatus::WaitingPing
             : mQuoteStatus::DepletedFunds;
           rawQuote["bidPx"] = 0;
@@ -355,14 +355,14 @@ namespace K {
             rawQuote["askSz"] = (!_rawBidSz or _rawBidSz > totalBasePosition)
               ? totalBasePosition : _rawBidSz;
           rawQuote["askSz"] = FN::roundDown(fmax(gw->minSize, rawQuote.value("askSz", 0.0)), 1e-8);
-          rawQuote["isAskPong"] = (pgSafety.value("buyPing", 0.0) and rawQuote.value("askPx", 0.0) and rawQuote.value("askPx", 0.0) >= pgSafety.value("buyPing", 0.0) + widthPong);
+          rawQuote["isAskPong"] = (pgSafety.buyPing and rawQuote.value("askPx", 0.0) and rawQuote.value("askPx", 0.0) >= pgSafety.buyPing + widthPong);
         } else rawQuote["isAskPong"] = false;
         if (rawQuote.value("bidSz", 0.0)) {
           if (rawQuote.value("bidSz", 0.0) > totalQuotePosition)
             rawQuote["bidSz"] = (!_rawAskSz or _rawAskSz > totalQuotePosition)
               ? totalQuotePosition : _rawAskSz;
           rawQuote["bidSz"] = FN::roundDown(fmax(gw->minSize, rawQuote.value("bidSz", 0.0)), 1e-8);
-          rawQuote["isBidPong"] = (pgSafety.value("sellPong", 0.0) and rawQuote.value("bidPx", 0.0) and rawQuote.value("bidPx", 0.0) <= pgSafety.value("sellPong", 0.0) - widthPong);
+          rawQuote["isBidPong"] = (pgSafety.sellPong and rawQuote.value("bidPx", 0.0) and rawQuote.value("bidPx", 0.0) <= pgSafety.sellPong - widthPong);
         } else rawQuote["isBidPong"] = false;
         return rawQuote;
       };

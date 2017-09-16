@@ -2,12 +2,12 @@
 #define K_PG_H_
 
 namespace K {
-  json pgPos;
-  json pgSafety;
+  mPosition pgPos;
+  mSafety pgSafety;
   map<int, mWallet> pgWallet;
   map<double, mTradeDehydrated> pgBuys;
   map<double, mTradeDehydrated> pgSells;
-  vector<json> pgProfit;
+  vector<mProfit> pgProfit;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
   string pgSideAPR_ = "!=";
@@ -29,24 +29,24 @@ namespace K {
         UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
       };
       static void calcSafety() {
-        if (pgPos.is_null() or !mgFairValue) return;
-        json safety = nextSafety();
-        if (pgSafety.is_null()
-          or abs(safety.value("combined", 0.0) - pgSafety.value("combined", 0.0)) > 1e-3
-          or abs(safety.value("buyPing", 0.0) - pgSafety.value("buyPing", 0.0)) >= 1e-2
-          or abs(safety.value("sellPong", 0.0) - pgSafety.value("sellPong", 0.0)) >= 1e-2
+        if (pgPos.value == -1 or !mgFairValue) return;
+        mSafety safety = nextSafety();
+        if (pgSafety.buyPing == -1
+          or abs(safety.combined - pgSafety.combined) > 1e-3
+          or abs(safety.buyPing - pgSafety.buyPing) >= 1e-2
+          or abs(safety.sellPong - pgSafety.sellPong) >= 1e-2
         ) {
           pgSafety = safety;
-          UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
+          UI::uiSend(uiTXT::TradeSafetyValue, toJsonSafety(pgSafety), true);
         }
       };
       static void calcTargetBasePos() {
-        if (pgPos.is_null()) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
+        if (pgPos.value == -1) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
-            ? QP::getDouble("targetBasePositionPercentage") * pgPos.value("value", 0.0) / 1e+2
+            ? QP::getDouble("targetBasePositionPercentage") * pgPos.value / 1e+2
             : QP::getDouble("targetBasePosition"))
-          : ((1 + mgTargetPos) / 2) * pgPos.value("value", 0.0);
+          : ((1 + mgTargetPos) / 2) * pgPos.value;
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
@@ -54,7 +54,7 @@ namespace K {
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
-        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value("value", 0.0) * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
+        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
       };
       static void addTrade(mTradeHydrated k) {
         mTradeDehydrated k_(k.price, k.quantity, k.time);
@@ -72,10 +72,10 @@ namespace K {
         cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };
       static json onSnapPos(json z) {
-        return { pgPos };
+        return { toJsonPosition(pgPos) };
       };
       static json onSnapSafety(json z) {
-        return { pgSafety };
+        return { toJsonSafety(pgSafety) };
       };
       static json onSnapTargetBasePos(json z) {
         return {{
@@ -83,14 +83,14 @@ namespace K {
           {"sideAPR", pgSideAPR}
         }};
       };
-      static json nextSafety() {
+      static mSafety nextSafety() {
         double buySize = QP::getBool("percentageValues")
-          ? QP::getDouble("buySizePercentage") * pgPos.value("value", 0.0) / 100
+          ? QP::getDouble("buySizePercentage") * pgPos.value / 100
           : QP::getDouble("buySize");
         double sellSize = QP::getBool("percentageValues")
-          ? QP::getDouble("sellSizePercentage") * pgPos.value("value", 0.0) / 100
+          ? QP::getDouble("sellSizePercentage") * pgPos.value / 100
           : QP::getDouble("sellSize");
-        double totalBasePosition = pgPos.value("baseAmount", 0.0) + pgPos.value("baseHeldAmount", 0.0);
+        double totalBasePosition = pgPos.baseAmount + pgPos.baseHeldAmount;
         if (QP::getBool("buySizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
         if (QP::getBool("sellSizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
@@ -126,12 +126,35 @@ namespace K {
         clean();
         double sumBuys = sum(&pgBuys);
         double sumSells = sum(&pgSells);
+        return mSafety(
+          sumBuys / buySize,
+          sumSells / sellSize,
+          (sumBuys + sumSells) / (buySize + sellSize),
+          buyPing,
+          sellPong
+        );
+      };
+      static json toJsonSafety(mSafety k) {
         return {
-          {"buy", sumBuys / buySize},
-          {"sell", sumSells / sellSize},
-          {"combined", (sumBuys + sumSells) / (buySize + sellSize)},
-          {"buyPing", buyPing},
-          {"sellPong", sellPong}
+          {"buy", k.buy},
+          {"sell", k.sell},
+          {"combined", k.combined},
+          {"buyPing", k.buyPing},
+          {"sellPong", k.sellPong}
+        };
+      };
+      static json toJsonPosition(mPosition k) {
+        return {
+          {"baseAmount", k.baseAmount},
+          {"quoteAmount", k.quoteAmount},
+          {"baseHeldAmount", k.baseHeldAmount},
+          {"quoteHeldAmount", k.quoteHeldAmount},
+          {"value", k.value},
+          {"quoteValue", k.quoteValue},
+          {"profitBase", k.profitBase},
+          {"profitQuote", k.profitQuote},
+          {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+          {"exchange", (int)k.exchange}
         };
       };
       static void matchFirstPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
@@ -205,49 +228,45 @@ namespace K {
         double baseValue = baseAmount + quoteAmount / mgFairValue + pgWallet[gw->base].held + pgWallet[gw->quote].held / mgFairValue;
         double quoteValue = baseAmount * mgFairValue + quoteAmount + pgWallet[gw->base].held * mgFairValue + pgWallet[gw->quote].held;
         unsigned long now = FN::T();
-        pgProfit.push_back({
-          {"baseValue", baseValue},
-          {"quoteValue", quoteValue},
-          {"time", now }
-        });
-        for (vector<json>::iterator it = pgProfit.begin(); it != pgProfit.end();)
-          if (it->value("time", (unsigned long)0) + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
+        pgProfit.push_back(mProfit(baseValue, quoteValue, now));
+        for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
+          if (it->time + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
           else it = pgProfit.erase(it);
-        json pos = {
-          {"baseAmount", baseAmount},
-          {"quoteAmount", quoteAmount},
-          {"baseHeldAmount", pgWallet[gw->base].held},
-          {"quoteHeldAmount", pgWallet[gw->quote].held},
-          {"value", baseValue},
-          {"quoteValue", quoteValue},
-          {"profitBase", ((baseValue - (*pgProfit.begin())["baseValue"].get<double>()) / baseValue) * 1e+2},
-          {"profitQuote", ((quoteValue - (*pgProfit.begin())["quoteValue"].get<double>()) / quoteValue) * 1e+2},
-          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
-          {"exchange", (int)gw->exchange}
-        };
+        mPosition pos(
+          baseAmount,
+          quoteAmount,
+          pgWallet[gw->base].held,
+          pgWallet[gw->quote].held,
+          baseValue,
+          quoteValue,
+          ((baseValue - pgProfit.begin()->baseValue) / baseValue) * 1e+2,
+          ((quoteValue - pgProfit.begin()->quoteValue) / quoteValue) * 1e+2,
+          mPair(gw->base, gw->quote),
+          gw->exchange
+        );
         bool eq = true;
-        if (!pgPos.is_null()) {
-          eq = abs(pos.value("value", 0.0) - pgPos.value("value", 0.0)) < 2e-6;
+        if (pgPos.value != -1) {
+          eq = abs(pos.value - pgPos.value) < 2e-6;
           if(eq
-            and abs(pos.value("quoteValue", 0.0) - pgPos.value("quoteValue", 0.0)) < 2e-2
-            and abs(pos.value("baseAmount", 0.0) - pgPos.value("baseAmount", 0.0)) < 2e-6
-            and abs(pos.value("quoteAmount", 0.0) - pgPos.value("quoteAmount", 0.0)) < 2e-2
-            and abs(pos.value("baseHeldAmount", 0.0) - pgPos.value("baseHeldAmount", 0.0)) < 2e-6
-            and abs(pos.value("quoteHeldAmount", 0.0) - pgPos.value("quoteHeldAmount", 0.0)) < 2e-2
-            and abs(pos.value("profitBase", 0.0) - pgPos.value("profitBase", 0.0)) < 2e-2
-            and abs(pos.value("profitQuote", 0.0) - pgPos.value("profitQuote", 0.0)) < 2e-2
+            and abs(pos.quoteValue - pgPos.quoteValue) < 2e-2
+            and abs(pos.baseAmount - pgPos.baseAmount) < 2e-6
+            and abs(pos.quoteAmount - pgPos.quoteAmount) < 2e-2
+            and abs(pos.baseHeldAmount - pgPos.baseHeldAmount) < 2e-6
+            and abs(pos.quoteHeldAmount - pgPos.quoteHeldAmount) < 2e-2
+            and abs(pos.profitBase - pgPos.profitBase) < 2e-2
+            and abs(pos.profitQuote - pgPos.profitQuote) < 2e-2
           ) return;
         }
         pgPos = pos;
         if (!eq) calcTargetBasePos();
-        UI::uiSend(uiTXT::Position, pos, true);
+        UI::uiSend(uiTXT::Position, toJsonPosition(pgPos), true);
       };
       static void calcWalletAfterOrder(json k) {
-        if (pgPos.is_null()) return;
+        if (pgPos.value == -1) return;
         double heldAmount = 0;
         double amount = (mSide)k.value("side", 0) == mSide::Ask
-          ? pgPos.value("baseAmount", 0.0) + pgPos.value("baseHeldAmount", 0.0)
-          : pgPos.value("quoteAmount", 0.0) + pgPos.value("quoteHeldAmount", 0.0);
+          ? pgPos.baseAmount + pgPos.baseHeldAmount
+          : pgPos.quoteAmount + pgPos.quoteHeldAmount;
         for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (it->second.value("side", 0) != k.value("side", 0)) return;
           double held = it->second.value("quantity", 0.0) * ((mSide)it->second.value("side", 0) == mSide::Bid ? it->second.value("price", 0.0) : 1);
