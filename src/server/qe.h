@@ -3,17 +3,17 @@
 
 namespace K {
   unsigned int qeT = 0;
-  unsigned long qeNextT = 0;
-  unsigned long qeThread = 0;
-  json qeQuote;
-  json qeStatus;
-  mQuoteStatus qeBidStatus = mQuoteStatus::MissingData;
-  mQuoteStatus qeAskStatus = mQuoteStatus::MissingData;
+  unsigned long qeNextT = 0,
+                qeThread = 0;
+  json qeQuote,
+       qeStatus;
+  mQuoteStatus qeBidStatus = mQuoteStatus::MissingData,
+               qeAskStatus = mQuoteStatus::MissingData;
   typedef json (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
   map<mSide, json> qeNextQuote;
-  bool gwState_ = false;
-  mConnectivity gwConn_ = mConnectivity::Disconnected;
+  mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
+                gwConnectExchange_ = mConnectivity::Disconnected;
   class QE {
     public:
       static void main() {
@@ -28,11 +28,13 @@ namespace K {
             this_thread::sleep_for(chrono::seconds(1));
           }
         }).detach();
-        EV::on(mEv::ExchangeConnect, [](json k) {
-          gwState_ = k.value("state", false);
-          gwConn_ = (mConnectivity)k.value("status", 0);
+        ev_gwConnectButton = [](mConnectivity k) {
+          gwQuotingState_ = k;
+        };
+        ev_gwConnectExchange = [](mConnectivity k) {
+          gwConnectExchange_ = k;
           send();
-        });
+        };
         EV::on(mEv::QuotingParameters, [](json k) {
           MG::calcFairValue();
           PG::calcTargetBasePos();
@@ -44,9 +46,9 @@ namespace K {
           PG::calcSafety();
           calcQuote();
         });
-        EV::on(mEv::EWMAProtectionCalculator, [](json k) {
+        ev_mgEwmaQuoteProtection = []() {
           calcQuote();
-        });
+        };
         ev_mgLevels = []() {
           calcQuote();
         };
@@ -102,16 +104,16 @@ namespace K {
         sendQuoteToUI();
       };
       static void sendQuoteToAPI() {
-        if (gwConn_ == mConnectivity::Disconnected or qeQuote.is_null()) {
+        if (gwConnectExchange_ == mConnectivity::Disconnected or qeQuote.is_null()) {
           qeAskStatus = mQuoteStatus::Disconnected;
           qeBidStatus = mQuoteStatus::Disconnected;
         } else {
-          if (gwState_) {
-            qeBidStatus = checkCrossedQuotes(mSide::Bid);
-            qeAskStatus = checkCrossedQuotes(mSide::Ask);
-          } else {
+          if (gwQuotingState_ == mConnectivity::Disconnected) {
             qeAskStatus = mQuoteStatus::DisabledQuotes;
             qeBidStatus = mQuoteStatus::DisabledQuotes;
+          } else {
+            qeBidStatus = checkCrossedQuotes(mSide::Bid);
+            qeAskStatus = checkCrossedQuotes(mSide::Ask);
           }
           if (qeAskStatus == mQuoteStatus::Live)
             updateQuote(qeQuote["ask"], mSide::Ask);

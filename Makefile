@@ -215,6 +215,7 @@ list:
 
 restartall:
 	@$(MAKE) stopall -s
+	@sleep 3
 	@$(MAKE) startall -s
 	@$(MAKE) list -s
 
@@ -227,6 +228,7 @@ startall:
 
 restart:
 	@$(MAKE) stop -s
+	@sleep 3
 	@$(MAKE) start -s
 	@$(MAKE) list -s
 

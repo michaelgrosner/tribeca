@@ -2,11 +2,11 @@
 #define K_GW_H_
 
 namespace K {
-  static bool gwState = false;
-  static bool gwAutoStart = false;
-  static mConnectivity gwConn = mConnectivity::Disconnected;
-  static mConnectivity gwMDConn = mConnectivity::Disconnected;
-  static mConnectivity gwEOConn = mConnectivity::Disconnected;
+  static mConnectivity gwAutoStart = mConnectivity::Disconnected,
+                       gwQuotingState = mConnectivity::Disconnected,
+                       gwConnectOrder = mConnectivity::Disconnected,
+                       gwConnectMarket = mConnectivity::Disconnected,
+                       gwConnectExchange = mConnectivity::Disconnected;
   class GW {
     public:
       static void main() {
@@ -91,42 +91,46 @@ namespace K {
         }};
       };
       static json onSnapStatus(json z) {
-        return {{{"status", (int)gwConn}}};
+        return {{{"status", (int)gwConnectExchange}}};
       };
       static json onSnapState(json z) {
-        return {{{"state", gwState}}};
+        return {{{"state",  (int)gwQuotingState}}};
       };
       static json onHandState(json k) {
-        if (k.value("state", false) != gwAutoStart) {
-          gwAutoStart = k.value("state", false);
+        if (!k.is_object() or !k["state"].is_number()) {
+          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing state at onHandState ignored." << endl;
+          return {};
+        }
+        mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
+        if (autoStart != gwAutoStart) {
+          gwAutoStart = autoStart;
           gwUpState();
         }
         return {};
       };
       static void _gwCon_(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {
-          if (gwMDConn == gwS) return;
-          gwMDConn = gwS;
+          if (gwConnectMarket == gwS) return;
+          gwConnectMarket = gwS;
         } else if (gwT == mGatewayType::OrderEntry) {
-          if (gwEOConn == gwS) return;
-          gwEOConn = gwS;
+          if (gwConnectOrder == gwS) return;
+          gwConnectOrder = gwS;
         }
-        gwConn = gwMDConn == mConnectivity::Connected && gwEOConn == mConnectivity::Connected
+        gwConnectExchange = gwConnectMarket == mConnectivity::Connected && gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
         gwUpState();
-        UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConn}});
+        UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
       static void gwUpState() {
-        bool newMode = gwConn != mConnectivity::Connected ? false : gwAutoStart;
-        if (newMode != gwState) {
-          gwState = newMode;
-          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Changed quoting state to " << (gwState ? "Enabled" : "Disabled") << "." << endl;
-          UI::uiSend(uiTXT::ActiveState, {{"state", gwState}});
+        mConnectivity quotingState = gwConnectExchange;
+        if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
+        if (quotingState != gwQuotingState) {
+          gwQuotingState = quotingState;
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Quoting state changed to " << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << "." << endl;
+          UI::uiSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
-        EV::up(mEv::ExchangeConnect, {
-          {"state", gwState},
-          {"status", (int)gwConn}
-        });
+        ev_gwConnectButton(gwQuotingState);
+        ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
         cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;

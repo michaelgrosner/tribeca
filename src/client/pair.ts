@@ -46,7 +46,7 @@ class QuotingButtonViewModel extends FormViewModel<any> {
     sub: Subscribe.ISubscribe<any>,
     fire: Subscribe.IFire<any>
   ) {
-    super({state:false}, sub, fire, d => {return {state:!d.state};});
+    super({state:0}, sub, fire, d => {return {state:Math.abs(d.state-1)};});
   }
 
   public getClass = () => {
