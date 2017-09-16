@@ -72,6 +72,12 @@ namespace K {
       bool cancelByClientId = 0;
       bool supportCancelAll = 0;
   };
+  struct mPair {
+    int base;
+    int quote;
+    mPair();
+    mPair(int base, int quote);
+  };
   struct mWallet {
     double amount;
     double held;
@@ -79,17 +85,40 @@ namespace K {
     mWallet();
     mWallet(double amount, double held, int currency);
   };
+  struct mProfit {
+    double baseValue;
+    double quoteValue;
+    unsigned long time;
+    mProfit(double baseValue, double quoteValue, unsigned long time);
+  };
+  struct mSafety {
+    double buy;
+    double sell;
+    double combined;
+    double buyPing;
+    double sellPong;
+    mSafety();
+    mSafety(double buy, double sell, double combined, double buyPing, double sellPong);
+  };
+  struct mPosition {
+    double baseAmount;
+    double quoteAmount;
+    double baseHeldAmount;
+    double quoteHeldAmount;
+    double value;
+    double quoteValue;
+    double profitBase;
+    double profitQuote;
+    mPair pair;
+    mExchange exchange;
+    mPosition();
+    mPosition(double baseAmount, double quoteAmount, double baseHeldAmount, double quoteHeldAmount, double value, double quoteValue, double profitBase, double profitQuote, mPair pair, mExchange exchange);
+  };
   struct mTrade {
     double price;
     double size;
     mSide make_side;
     mTrade(double price, double size, mSide make_side);
-  };
-  struct mPair {
-    int base;
-    int quote;
-    mPair();
-    mPair(int base, int quote);
   };
   struct mTradeHydrated {
     string tradeId;

@@ -171,7 +171,7 @@ namespace K {
         UI::uiSend(uiTXT::MarketData, k, true);
       };
       static json toJson(mGWmt t) {
-        json o = {
+        return {
           {"exchange", (int)t.exchange},
           {"pair", {{"base", t.base}, {"quote", t.quote}}},
           {"price", t.price},
@@ -179,7 +179,6 @@ namespace K {
           {"time", t.time},
           {"make_size", (int)t.make_side}
         };
-        return o;
       };
       static void ewmaUp() {
         calcEwma(&mgEwmaL, QP::getInt("longEwmaPeriods"));

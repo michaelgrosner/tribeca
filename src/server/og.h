@@ -230,7 +230,7 @@ namespace K {
           {"tradeId", k.tradeId},
           {"time", k.time},
           {"exchange", (int)k.exchange},
-          {"pair", {{"base", (int)k.pair.base}, {"quote", (int)k.pair.quote}}},
+          {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
           {"price", k.price},
           {"quantity", k.quantity},
           {"side", (int)k.side},
