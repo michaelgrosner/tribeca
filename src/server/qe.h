@@ -41,11 +41,11 @@ namespace K {
           PG::calcSafety();
           calcQuote();
         });
-        EV::on(mEv::OrderTradeBroker, [](json k) {
+        ev_ogTrade = [](mTradeHydrated k) {
           PG::addTrade(k);
           PG::calcSafety();
           calcQuote();
-        });
+        };
         ev_mgEwmaQuoteProtection = []() {
           calcQuote();
         };

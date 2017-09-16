@@ -49,12 +49,12 @@ namespace K {
       static void gwPosUp(mWallet k) {
         ev_gwDataWallet(k);
       };
-      static void gwTradeUp(mGWbt k) {
-        EV::up(mEv::MarketTradeGateway, {
-          {"price", k.price},
-          {"size", k.size},
-          {"make_side", (int)k.make_side}
-        });
+      static void gwTradeUp(mTrade k) {
+        ev_gwDataTrade(k);
+      };
+      static void gwTradeUp(vector<mTrade> k) {
+        for (vector<mTrade>::iterator it = k.begin(); it != k.end(); ++it)
+          gwTradeUp(*it);
       };
       static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
         json o;
@@ -65,10 +65,6 @@ namespace K {
         if (oQ) o["quantity"] = oQ;
         if (oLQ) o["lastQuantity"] = oLQ;
         ev_gwDataOrder(o);
-      };
-      static void gwTradeUp(vector<mGWbt> k) {
-        for (vector<mGWbt>::iterator it = k.begin(); it != k.end(); ++it)
-          gwTradeUp(*it);
       };
       static void gwLevelUp(mGWbls k) {
         json b, a;
@@ -98,7 +94,7 @@ namespace K {
       };
       static json onHandState(json k) {
         if (!k.is_object() or !k["state"].is_number()) {
-          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing state at onHandState ignored." << endl;
+          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing state at onHandState, ignored." << endl;
           return {};
         }
         mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
@@ -126,16 +122,16 @@ namespace K {
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
-          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Quoting state changed to " << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << "." << endl;
+          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " Quoting state changed to " << RYELLOW << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << RWHITE << "." << endl;
           UI::uiSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ev_gwConnectButton(gwQuotingState);
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " Attempting to cancel all open orders, please wait.." << endl;
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << " cancell all open orders OK." << endl;
+        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " cancell all open orders OK." << endl;
         EV::end(code);
       };
   };

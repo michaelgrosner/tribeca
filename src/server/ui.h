@@ -31,12 +31,12 @@ namespace K {
         uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           sess->u++;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << FN::uiT() << to_string(sess->u) << " UI currently connected, last connection was from " << address.address << endl;
+          cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last connection was from " << RYELLOW << address.address << RWHITE << "." << endl;
         });
         uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           sess->u--;
           typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << FN::uiT() << to_string(sess->u) << " UI currently connected, last disconnection was from " << address.address << endl;
+          cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last disconnection was from " << RYELLOW << address.address << RWHITE << "." << endl;
         });
         uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;

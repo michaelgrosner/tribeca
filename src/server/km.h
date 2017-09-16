@@ -30,7 +30,7 @@ namespace K {
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class mEv: unsigned int {
-    MarketDataGateway, MarketTradeGateway, OrderUpdateBroker, OrderTradeBroker, QuotingParameters
+    MarketDataGateway, OrderUpdateBroker, QuotingParameters
   };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
@@ -79,11 +79,43 @@ namespace K {
     mWallet();
     mWallet(double amount, double held, int currency);
   };
-  struct mGWbt {
+  struct mTrade {
     double price;
     double size;
     mSide make_side;
-    mGWbt(double price, double size, mSide make_side);
+    mTrade(double price, double size, mSide make_side);
+  };
+  struct mPair {
+    int base;
+    int quote;
+    mPair();
+    mPair(int base, int quote);
+  };
+  struct mTradeHydrated {
+    string tradeId;
+    unsigned long time;
+    mExchange exchange;
+    mPair pair;
+    double price;
+    double quantity;
+    mSide side;
+    double value;
+    unsigned long Ktime;
+    double Kqty;
+    double Kprice;
+    double Kvalue;
+    double Kdiff;
+    double feeCharged;
+    bool loadedFromDB;
+    mTradeHydrated();
+    mTradeHydrated(string tradeId, unsigned long time, mExchange exchange, mPair pair, double price, double quantity, mSide side, double value, unsigned long Ktime, double Kqty, double Kprice, double Kvalue, double Kdiff, double feeCharged, bool loadedFromDB);
+  };
+  struct mTradeDehydrated {
+    double price;
+    double quantity;
+    unsigned long time;
+    mTradeDehydrated();
+    mTradeDehydrated(double price, double quantity, unsigned long time);
   };
   struct mGWbl {
     double price;

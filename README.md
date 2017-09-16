@@ -326,9 +326,11 @@ What exchange you don't want to be deleted from the bot?
  - https://www.youtube.com/watch?v=g--fsK6aLf8
  - https://www.youtube.com/watch?v=Rom4qWtEkMA
  - https://www.youtube.com/watch?v=wXHm9Yl5tRM
+ - https://www.youtube.com/watch?v=xPg_e_3cK-E
  - https://www.youtube.com/watch?v=KKpcQIfIAi8
- - https://www.youtube.com/watch?v=pZAmer0EmMQ
  - https://www.youtube.com/watch?v=lwspxyzOfkY
+ - https://www.youtube.com/watch?v=pZAmer0EmMQ
+ - https://www.youtube.com/watch?v=50aXt1ctmUU
  - https://www.youtube.com/watch?v=vofff0Ei3kk
  - https://www.youtube.com/watch?v=4Ois3zB7SJ4
  - https://www.youtube.com/watch?v=1rNT0paAGTs

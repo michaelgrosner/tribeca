@@ -28,11 +28,11 @@ namespace K {
     public:
       static void main() {
         load();
-        EV::on(mEv::MarketTradeGateway, [](json k) {
+        ev_gwDataTrade = [](mTrade k) {
           tradeUp(k);
-        });
-        EV::on(mEv::MarketDataGateway, [](json o) {
-          levelUp(o);
+        };
+        EV::on(mEv::MarketDataGateway, [](json k) {
+          levelUp(k);
         });
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
         UI::uiSnap(uiTXT::FairValue, &onSnapFair);
@@ -109,7 +109,7 @@ namespace K {
       static json onSnapTrade(json z) {
         json k;
         for (unsigned i=0; i<mGWmt_.size(); ++i)
-          k.push_back(tradeUp(mGWmt_[i]));
+          k.push_back(toJson(mGWmt_[i]));
         return k;
       };
       static json onSnapFair(json z) {
@@ -152,25 +152,25 @@ namespace K {
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 1e+3 * QP::getInt("quotingStdevProtectionPeriods"));
       };
-      static void tradeUp(json k) {
+      static void tradeUp(mTrade k) {
         mGWmt t(
           gw->exchange,
           gw->base,
           gw->quote,
-          k.value("price", 0.0),
-          k.value("size", 0.0),
+          k.price,
+          k.size,
           FN::T(),
-          (mSide)k.value("make_side", 0)
+          k.make_side
         );
         mGWmt_.push_back(t);
         if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
-        UI::uiSend(uiTXT::MarketTrade, tradeUp(t));
+        UI::uiSend(uiTXT::MarketTrade, toJson(t));
       };
       static void levelUp(json k) {
         filter(k);
         UI::uiSend(uiTXT::MarketData, k, true);
       };
-      static json tradeUp(mGWmt t) {
+      static json toJson(mGWmt t) {
         json o = {
           {"exchange", (int)t.exchange},
           {"pair", {{"base", t.base}, {"quote", t.quote}}},
