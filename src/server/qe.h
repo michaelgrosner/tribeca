@@ -47,12 +47,12 @@ namespace K {
         EV::on(mEv::EWMAProtectionCalculator, [](json k) {
           calcQuote();
         });
-        EV::on(mEv::FilteredMarket, [](json k) {
+        ev_mgLevels = []() {
           calcQuote();
-        });
-        EV::on(mEv::TargetPosition, [](json k) {
+        };
+        ev_pgTargetBasePosition = []() {
           calcQuote();
-        });
+        };
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
       }
     private:
