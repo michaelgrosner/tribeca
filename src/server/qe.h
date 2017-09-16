@@ -215,7 +215,7 @@ namespace K {
         qeAskStatus = mQuoteStatus::UnknownHeld;
         vector<int> superTradesMultipliers = {1, 1};
         if ((mSOP)QP::getInt("superTrades") != mSOP::Off
-          and widthPing * QP::getInt("sopWidthMultiplier") < mGWmktFilter.value("/asks/0/price"_json_pointer, 0.0) - mGWmktFilter.value("/bids/0/price"_json_pointer, 0.0)
+          and widthPing * QP::getInt("sopWidthMultiplier") < mGWmktFilter.asks.begin()->price - mGWmktFilter.bids.begin()->price
         ) {
           superTradesMultipliers[0] = (mSOP)QP::getInt("superTrades") == mSOP::x2trades or (mSOP)QP::getInt("superTrades") == mSOP::x2tradesSize
             ? 2 : ((mSOP)QP::getInt("superTrades") == mSOP::x3trades or (mSOP)QP::getInt("superTrades") == mSOP::x3tradesSize
@@ -294,18 +294,18 @@ namespace K {
         }
         if (QP::getBool("bestWidth")) {
           if (rawQuote.value("askPx", 0.0))
-            for (json::iterator it = mGWmktFilter["asks"].begin(); it != mGWmktFilter["asks"].end(); ++it)
-              if (it->value("price", 0.0) > rawQuote.value("askPx", 0.0)) {
-                double bestAsk = it->value("price", 0.0) - gw->minTick;
+            for (vector<mLevel>::iterator it = mGWmktFilter.asks.begin(); it != mGWmktFilter.asks.end(); ++it)
+              if (it->price > rawQuote.value("askPx", 0.0)) {
+                double bestAsk = it->price - gw->minTick;
                 if (bestAsk > mgFairValue) {
                   rawQuote["askPx"] = bestAsk;
                   break;
                 }
               }
           if (rawQuote.value("bidPx", 0.0))
-            for (json::iterator it = mGWmktFilter["bids"].begin(); it != mGWmktFilter["bids"].end(); ++it)
-              if (it->value("price", 0.0) < rawQuote.value("bidPx", 0.0)) {
-                double bestBid = it->value("price", 0.0) + gw->minTick;
+            for (vector<mLevel>::iterator it = mGWmktFilter.bids.begin(); it != mGWmktFilter.bids.end(); ++it)
+              if (it->price < rawQuote.value("bidPx", 0.0)) {
+                double bestBid = it->price + gw->minTick;
                 if (bestBid < mgFairValue) {
                   rawQuote["bidPx"] = bestBid;
                   break;
@@ -372,15 +372,15 @@ namespace K {
         return (*qeQuotingMode[k])(widthPing, buySize, sellSize);
       };
       static json quoteAtTopOfMarket() {
-        json topBid = mGWmktFilter.value("/bids/0/size"_json_pointer, 0.0) > gw->minTick
-          ? mGWmktFilter["/bids/0"_json_pointer] : mGWmktFilter["/bids/1"_json_pointer];
-        json topAsk = mGWmktFilter.value("/asks/0/size"_json_pointer, 0.0) > gw->minTick
-          ? mGWmktFilter["/asks/0"_json_pointer] : mGWmktFilter["/asks/1"_json_pointer];
+        mLevel topBid = mGWmktFilter.bids.begin()->size > gw->minTick
+          ? mGWmktFilter.bids.at(0) : mGWmktFilter.bids.at(mGWmktFilter.bids.size()>1?1:0);
+        mLevel topAsk = mGWmktFilter.asks.begin()->size > gw->minTick
+          ? mGWmktFilter.asks.at(0) : mGWmktFilter.asks.at(mGWmktFilter.asks.size()>1?1:0);
         return {
-          {"bidPx", topBid.value("price", 0.0)},
-          {"bidSz", topBid.value("size", 0.0)},
-          {"askPx", topAsk.value("price", 0.0)},
-          {"askSz", topAsk.value("size", 0.0)}
+          {"bidPx", topBid.price},
+          {"bidSz", topBid.size},
+          {"askPx", topAsk.price},
+          {"askSz", topAsk.size}
         };
       };
       static json calcTopOfMarket(double widthPing, double buySize, double sellSize) {
@@ -423,19 +423,19 @@ namespace K {
         };
       };
       static json calcDepthOfMarket(double depth, double buySize, double sellSize) {
-        double bidPx = mGWmktFilter.value("/bids/0/price"_json_pointer, 0.0);
+        double bidPx = mGWmktFilter.bids.begin()->price;
         double bidDepth = 0;
-        for (json::iterator it = mGWmktFilter["bids"].begin(); it != mGWmktFilter["bids"].end(); ++it) {
-          bidDepth += it->value("size", 0.0);
+        for (vector<mLevel>::iterator it = mGWmktFilter.bids.begin(); it != mGWmktFilter.bids.end(); ++it) {
+          bidDepth += it->size;
           if (bidDepth >= depth) break;
-          else bidPx = it->value("price", 0.0);
+          else bidPx = it->price;
         }
-        double askPx = mGWmktFilter.value("/asks/0/price"_json_pointer, 0.0);
+        double askPx = mGWmktFilter.asks.begin()->price;
         double askDepth = 0;
-        for (json::iterator it = mGWmktFilter["asks"].begin(); it != mGWmktFilter["asks"].end(); ++it) {
-          askDepth += it->value("size", 0.0);
+        for (vector<mLevel>::iterator it = mGWmktFilter.asks.begin(); it != mGWmktFilter.asks.end(); ++it) {
+          askDepth += it->size;
           if (askDepth >= depth) break;
-          else askPx = it->value("price", 0.0);
+          else askPx = it->price;
         }
         return {
           {"bidPx", bidPx},

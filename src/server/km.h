@@ -30,7 +30,7 @@ namespace K {
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class mEv: unsigned int {
-    MarketDataGateway, OrderUpdateBroker, QuotingParameters
+    OrderUpdateBroker, QuotingParameters
   };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
@@ -146,15 +146,16 @@ namespace K {
     mTradeDehydrated();
     mTradeDehydrated(double price, double quantity, unsigned long time);
   };
-  struct mGWbl {
+  struct mLevel {
     double price;
     double size;
-    mGWbl(double price, double size);
+    mLevel(double price, double size);
   };
-  struct mGWbls {
-    vector<mGWbl> bids;
-    vector<mGWbl> asks;
-    mGWbls(vector<mGWbl> bids, vector<mGWbl> asks);
+  struct mLevels {
+    vector<mLevel> bids;
+    vector<mLevel> asks;
+    mLevels();
+    mLevels(vector<mLevel> bids, vector<mLevel> asks);
   };
   struct mGWmt {
     mExchange exchange;
