@@ -23,7 +23,7 @@ namespace K {
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth };
-  enum class mQuoteStatus: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed };
+  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
@@ -266,6 +266,24 @@ namespace K {
     for (vector<mLevel>::const_iterator it = k.asks.begin(); it != k.asks.end(); ++it)
       a.push_back({{"price", it->price}, {"size", it->size}});
     j = {{"bids", b}, {"asks", a}};
+  };
+  struct mQuoteStatus {
+    mQuoteState bidStatus;
+    mQuoteState askStatus;
+    unsigned int quotesInMemoryNew;
+    unsigned int quotesInMemoryWorking;
+    unsigned int quotesInMemoryDone;
+    mQuoteStatus();
+    mQuoteStatus(mQuoteState bidStatus, mQuoteState askStatus, unsigned int quotesInMemoryNew, unsigned int quotesInMemoryWorking, unsigned int quotesInMemoryDone);
+  };
+  static void to_json(json& j, const mQuoteStatus& k) {
+    j = {
+      {"bidStatus", (int)k.bidStatus},
+      {"askStatus", (int)k.askStatus},
+      {"quotesInMemoryNew", k.quotesInMemoryNew},
+      {"quotesInMemoryWorking", k.quotesInMemoryWorking},
+      {"quotesInMemoryDone", k.quotesInMemoryDone}
+    };
   };
 }
 

@@ -127,7 +127,7 @@ namespace K {
           qp = k;
           clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
-          EV::up(mEv::QuotingParameters, k);
+          ev_uiQuotingParameters();
           UI::delay(getDouble("delayUI"));
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);

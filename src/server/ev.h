@@ -3,29 +3,28 @@
 
 namespace K {
   static void (*evExit)(int code);
-  typedef void (*evJson)(json);
-  extern map<unsigned int, evJson> ev;
-  typedef void (*evConnectivity)(mConnectivity);
-  extern evConnectivity ev_gwConnectButton,
-                        ev_gwConnectOrder,
-                        ev_gwConnectMarket,
-                        ev_gwConnectExchange;
+  typedef void (*evConnect)(mConnectivity);
+  extern evConnect ev_gwConnectButton,
+                   ev_gwConnectOrder,
+                   ev_gwConnectMarket,
+                   ev_gwConnectExchange;
+  typedef void (*evOrder)(mOrder);
+  extern evOrder ev_gwDataOrder,
+                 ev_ogOrder;
+  typedef void (*evTrade)(mTrade);
+  extern evTrade ev_gwDataTrade;
+  typedef void (*evTradeHydrated)(mTradeHydrated);
+  extern evTradeHydrated ev_ogTrade;
   typedef void (*evWallet)(mWallet);
   extern evWallet ev_gwDataWallet;
   typedef void (*evLevels)(mLevels);
   extern evLevels ev_gwDataLevels;
-  typedef void (*evTrade)(mTrade);
-  extern evTrade ev_gwDataTrade;
-  typedef void (*evOrder)(mOrder);
-  extern evOrder ev_gwDataOrder,
-                 ev_ogOrder;
-  typedef void (*evTradeHydrated)(mTradeHydrated);
-  extern evTradeHydrated ev_ogTrade;
   typedef void (*evEmpty)();
   extern evEmpty ev_mgLevels,
                  ev_mgEwmaQuoteProtection,
                  ev_mgTargetPosition,
-                 ev_pgTargetBasePosition;
+                 ev_pgTargetBasePosition,
+                 ev_uiQuotingParameters;
   class EV {
     public:
       static void main() {
@@ -35,13 +34,6 @@ namespace K {
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         gitReversedVersion();
-      };
-      static void on(mEv k, evJson cb) {
-        ev[(unsigned int)k] = cb;
-      };
-      static void up(mEv k, json o = {}) {
-        if (ev.find((unsigned int)k) != ev.end())
-          (*ev[(unsigned int)k])(o);
       };
       static void end(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << endl;
