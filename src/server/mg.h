@@ -201,8 +201,7 @@ namespace K {
         mgLevelsFilter = k;
         if (empty()) return;
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-// if (it->second["side"].is_number() and it->second["price"].is_number() and it->second["quantity"].is_number())
-            filter(mSide::Bid == it->second.side ? &mgLevelsFilter.bids : &mgLevelsFilter.asks, it->second);
+          filter(mSide::Bid == it->second.side ? &mgLevelsFilter.bids : &mgLevelsFilter.asks, it->second);
         if (!empty()) {
           calcFairValue();
           ev_mgLevels();

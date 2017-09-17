@@ -187,7 +187,7 @@ namespace K {
         return newQuote;
       };
       static json nextQuote() {
-        if (MG::empty() or pgPos.value == -1) return {};
+        if (MG::empty() or !pgPos.value) return {};
         double widthPing = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPingPercentage") * mgFairValue / 100
           : QP::getDouble("widthPing");

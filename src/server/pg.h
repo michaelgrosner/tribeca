@@ -29,7 +29,7 @@ namespace K {
         UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
       };
       static void calcSafety() {
-        if (pgPos.value == -1 or !mgFairValue) return;
+        if (!pgPos.value or !mgFairValue) return;
         mSafety safety = nextSafety();
         if (pgSafety.buyPing == -1
           or abs(safety.combined - pgSafety.combined) > 1e-3
@@ -41,7 +41,7 @@ namespace K {
         }
       };
       static void calcTargetBasePos() {
-        if (pgPos.value == -1) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
+        if (!pgPos.value) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
             ? QP::getDouble("targetBasePositionPercentage") * pgPos.value / 1e+2
@@ -219,7 +219,7 @@ namespace K {
           gw->exchange
         );
         bool eq = true;
-        if (pgPos.value != -1) {
+        if (pgPos.value) {
           eq = abs(pos.value - pgPos.value) < 2e-6;
           if(eq
             and abs(pos.quoteValue - pgPos.quoteValue) < 2e-2
@@ -236,7 +236,7 @@ namespace K {
         UI::uiSend(uiTXT::Position, pgPos, true);
       };
       static void calcWalletAfterOrder(mOrder k) {
-        if (pgPos.value == -1) return;
+        if (!pgPos.value) return;
         double heldAmount = 0;
         double amount = k.side == mSide::Ask
           ? pgPos.baseAmount + pgPos.baseHeldAmount
