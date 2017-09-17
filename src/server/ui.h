@@ -19,96 +19,98 @@ namespace K {
     public:
       static void main() {
         CF::internal();
-        int port = stoi(CF::cfString("WebClientListenPort"));
-        string name = CF::cfString("WebClientUsername");
-        string key = CF::cfString("WebClientPassword");
-        uiGroup->setUserData(new uiSess);
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
-          B64::Encode(name.append(":").append(key), &uiNK64);
-          uiNK64 = string("Basic ").append(uiNK64);
-        }
-        uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          sess->u++;
-          typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last connection was from " << RYELLOW << address.address << RWHITE << "." << endl;
-        });
-        uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          sess->u--;
-          typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-          cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last disconnection was from " << RYELLOW << address.address << RWHITE << "." << endl;
-        });
-        uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-          string document;
-          string auth = req.getHeader("authorization").toString();
-          typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
-          if (uiNK64 != "" && auth == "") {
-            cout << FN::uiT() << "UI authorization attempt from " << address.address << endl;
-            document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-            res->write(document.data(), document.length());
-          } else if (uiNK64 != "" && auth != uiNK64) {
-            cout << FN::uiT() << "UI authorization failed from " << address.address << endl;
-            document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-            res->write(document.data(), document.length());
-          } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
-            string url = "";
-            document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
-            string path = req.getUrl().toString();
-            string::size_type n = 0;
-            while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
-            const string leaf = path.substr(path.find_last_of('.')+1);
-            if (leaf == "/") {
-              cout << FN::uiT() << "UI authorization success from " << address.address << endl;
-              document.append("Content-Type: text/html; charset=UTF-8\r\n");
-              url = "/index.html";
-            } else if (leaf == "js") {
-              document.append("Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n");
-              url = path;
-            } else if (leaf == "css") {
-              document.append("Content-Type: text/css; charset=UTF-8\r\n");
-              url = path;
-            } else if (leaf == "png") {
-              document.append("Content-Type: image/png\r\n");
-              url = path;
-            } else if (leaf == "mp3") {
-              document.append("Content-Type: audio/mpeg\r\n");
-              url = path;
+        if (!argHeadless) {
+          int port = stoi(CF::cfString("WebClientListenPort"));
+          string name = CF::cfString("WebClientUsername");
+          string key = CF::cfString("WebClientPassword");
+          uiGroup->setUserData(new uiSess);
+          uiSess *sess = (uiSess *) uiGroup->getUserData();
+          if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
+            B64::Encode(name.append(":").append(key), &uiNK64);
+            uiNK64 = string("Basic ").append(uiNK64);
+          }
+          uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+            sess->u++;
+            typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
+            cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last connection was from " << RYELLOW << address.address << RWHITE << "." << endl;
+          });
+          uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+            sess->u--;
+            typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
+            cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last disconnection was from " << RYELLOW << address.address << RWHITE << "." << endl;
+          });
+          uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+            string document;
+            string auth = req.getHeader("authorization").toString();
+            typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
+            if (uiNK64 != "" && auth == "") {
+              cout << FN::uiT() << "UI authorization attempt from " << address.address << endl;
+              document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
+              res->write(document.data(), document.length());
+            } else if (uiNK64 != "" && auth != uiNK64) {
+              cout << FN::uiT() << "UI authorization failed from " << address.address << endl;
+              document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
+              res->write(document.data(), document.length());
+            } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
+              string url = "";
+              document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
+              string path = req.getUrl().toString();
+              string::size_type n = 0;
+              while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
+              const string leaf = path.substr(path.find_last_of('.')+1);
+              if (leaf == "/") {
+                cout << FN::uiT() << "UI authorization success from " << address.address << endl;
+                document.append("Content-Type: text/html; charset=UTF-8\r\n");
+                url = "/index.html";
+              } else if (leaf == "js") {
+                document.append("Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n");
+                url = path;
+              } else if (leaf == "css") {
+                document.append("Content-Type: text/css; charset=UTF-8\r\n");
+                url = path;
+              } else if (leaf == "png") {
+                document.append("Content-Type: image/png\r\n");
+                url = path;
+              } else if (leaf == "mp3") {
+                document.append("Content-Type: audio/mpeg\r\n");
+                url = path;
+              }
+              stringstream content;
+              if (url.length() > 0) {
+                content << ifstream (string("app/pub").append(url)).rdbuf();
+              } else {
+                srand(time(0));
+                if (rand() % 21) {
+                  document = "HTTP/1.1 404 Not Found\r\n";
+                  content << "Today, is a beautiful day.";
+                } else { // Humans! go to any random url to check your luck
+                  document = "HTTP/1.1 418 I'm a teapot\r\n";
+                  content << "Today, is your lucky day!";
+                }
+              }
+              document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
+              res->write(document.data(), document.length());
             }
-            stringstream content;
-            if (url.length() > 0) {
-              content << ifstream (string("app/pub").append(url)).rdbuf();
-            } else {
-              srand(time(0));
-              if (rand() % 21) {
-                document = "HTTP/1.1 404 Not Found\r\n";
-                content << "Today, is a beautiful day.";
-              } else { // Humans! go to any random url to check your luck
-                document = "HTTP/1.1 418 I'm a teapot\r\n";
-                content << "Today, is your lucky day!";
+          });
+          uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+            if (length > 1) {
+              string m = string(message, length).substr(2, length-2);
+              json v;
+              if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
+              if (sess->cb.find(string(message, 2)) != sess->cb.end()) {
+                json reply = (*sess->cb[string(message, 2)])(v);
+                if (!reply.is_null() && uiBIT::SNAP == (uiBIT)message[0])
+                  webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
               }
             }
-            document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
-            res->write(document.data(), document.length());
-          }
-        });
-        uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          if (length > 1) {
-            string m = string(message, length).substr(2, length-2);
-            json v;
-            if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
-            if (sess->cb.find(string(message, 2)) != sess->cb.end()) {
-              json reply = (*sess->cb[string(message, 2)])(v);
-              if (!reply.is_null() && uiBIT::SNAP == (uiBIT)message[0])
-                webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-            }
-          }
-        });
-        uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
-        if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
-          cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
-        else if (hub.listen(port, nullptr, 0, uiGroup))
-          cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
-        else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(port) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ").append(to_string(port))) << endl; exit(1); }
+          });
+          uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
+          if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
+            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
+          else if (hub.listen(port, nullptr, 0, uiGroup))
+            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
+          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(port) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ").append(to_string(port))) << endl; exit(1); }
+        }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
@@ -117,12 +119,15 @@ namespace K {
         CF::external();
       };
       static void uiSnap(uiTXT k, uiCb cb) {
+        if (argHeadless) return;
         uiOn(uiBIT::SNAP, k, cb);
       };
       static void uiHand(uiTXT k, uiCb cb) {
+        if (argHeadless) return;
         uiOn(uiBIT::MSG, k, cb);
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
+        if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
         if (k == uiTXT::MarketData) {
@@ -133,6 +138,7 @@ namespace K {
         else uiUp(k, o);
       };
       static void delay(double delayUI) {
+        if (argHeadless) return;
         ui_delayUI = delayUI;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();

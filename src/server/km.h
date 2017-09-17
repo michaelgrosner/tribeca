@@ -29,9 +29,6 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  enum class mEv: unsigned int {
-    QuotingParameters
-  };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
@@ -64,7 +61,7 @@ namespace K {
       int base = 0;
       virtual mExchange config() = 0;
       virtual void pos() = 0;
-      virtual void book() = 0;
+      virtual thread book() = 0;
       virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0;
       virtual void cancel(string oI, string oE, mSide oS, unsigned long oT) = 0;
       virtual void cancelAll() = 0;

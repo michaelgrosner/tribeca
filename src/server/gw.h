@@ -31,14 +31,15 @@ namespace K {
           if (k == mConnectivity::Disconnected)
             ev_gwDataLevels(mLevels());
         };
-        thread([&]() {
-          gw->book();
-        }).detach();
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
-        hub.run();
+        if (argHeadless) gw->book().join();
+        else {
+          gw->book().detach();
+          hub.run();
+        }
       };
       static void gwBookUp(mConnectivity k) {
         ev_gwConnectMarket(k);
@@ -46,11 +47,11 @@ namespace K {
       static void gwOrderUp(mConnectivity k) {
         ev_gwConnectOrder(k);
       };
-      static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
-        ev_gwDataOrder(mOrder(oI, oE, oS, oP, oQ, oLQ));
-      };
       static void gwPosUp(mWallet k) {
         ev_gwDataWallet(k);
+      };
+      static void gwOrderUp(mOrder k) {
+        ev_gwDataOrder(k);
       };
       static void gwTradeUp(mTrade k) {
         ev_gwDataTrade(k);
