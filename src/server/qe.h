@@ -174,7 +174,7 @@ namespace K {
         return newQuote;
       };
       static mQuote nextQuote() {
-        if (MG::empty() or !pgPos.value) return {};
+        if (MG::empty() or !pgPos.value) return mQuote();
         double widthPing = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPingPercentage") * mgFairValue / 100
           : QP::getDouble("widthPing");
@@ -194,10 +194,10 @@ namespace K {
         if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("sellSizeMax"))
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
-        if (!rawQuote.bid.price or !rawQuote.ask.price) return {};
+        if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
         double _rawBidSz = rawQuote.bid.size;
         double _rawAskSz = rawQuote.ask.size;
-        if (pgSafety.buyPing == -1) return {};
+        if (pgSafety.buyPing == -1) return mQuote();
         qeBidStatus = mQuoteState::UnknownHeld;
         qeAskStatus = mQuoteState::UnknownHeld;
         vector<int> superTradesMultipliers = {1, 1};

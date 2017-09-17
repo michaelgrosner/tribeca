@@ -27,6 +27,7 @@ namespace K {
   static char BCYAN[]   = "\033[1;36m";
   static char BWHITE[]  = "\033[1;37m";
   static int argColors = 0;
+  static int argDebug = 0;
   static double argEwmaShort = 0;
   static double argEwmaMedium = 0;
   static double argEwmaLong = 0;
@@ -41,6 +42,7 @@ namespace K {
           static struct option args[] = {
             {"help",        no_argument,       0,          'h'},
             {"colors",      no_argument,       &argColors,   1},
+            {"debug",       no_argument,       &argDebug,    1},
             {"database",    required_argument, 0,          'd'},
             {"ewma-short",  required_argument, 0,          's'},
             {"ewma-medium", required_argument, 0,          'm'},
@@ -67,6 +69,7 @@ namespace K {
               << FN::uiT() << "[arguments]:" << endl
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << endl
               << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
+              << FN::uiT() << RWHITE << "    --debug              - print detailed output." << endl
               << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative database filename," << endl
               << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << endl
               << FN::uiT() << RWHITE << "                           any path with a filename is valid," << endl
