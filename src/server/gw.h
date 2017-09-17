@@ -46,6 +46,10 @@ namespace K {
       static void gwOrderUp(mConnectivity k) {
         ev_gwConnectOrder(k);
       };
+      static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
+        if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW response [" << (int)oS << "] " << oI << "::" << oE << ": " << oQ << "/" << oLQ << " at price " << oP << "." << endl;
+        ev_gwDataOrder(mOrder(oI, oE, oS, oP, oQ, oLQ));
+      };
       static void gwPosUp(mWallet k) {
         ev_gwDataWallet(k);
       };
@@ -55,9 +59,6 @@ namespace K {
       static void gwTradeUp(vector<mTrade> k) {
         for (vector<mTrade>::iterator it = k.begin(); it != k.end(); ++it)
           gwTradeUp(*it);
-      };
-      static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
-        ev_gwDataOrder(mOrder(oI, oE, oS, oP, oQ, oLQ));
       };
       static void gwLevelUp(mLevels k) {
         ev_gwDataLevels(k);

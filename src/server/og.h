@@ -35,18 +35,22 @@ namespace K {
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
+        if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << mCurrency[o.pair.base] << " at price " << o.price << " " << mCurrency[o.pair.quote] << "." << endl;
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
       static void cancelOrder(string k) {
         if (allOrders.find(k) == allOrders.end()) {
           updateOrderState(mOrder(k, mORS::Cancelled));
+          if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel unknown id " << k << "." << endl;
           return;
         }
         if (!gW->cancelByClientId and allOrders[k].exchangeId == "") {
           toCancel[k] = nullptr;
+          if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel pending id " << k << "." << endl;
           return;
         }
         mOrder o = updateOrderState(mOrder(k, mORS::Working));
+        if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
         gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
     private:
