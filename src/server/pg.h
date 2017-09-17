@@ -18,9 +18,9 @@ namespace K {
         ev_gwDataWallet = [](mWallet k) {
           calcWallet(k);
         };
-        EV::on(mEv::OrderUpdateBroker, [](json k) {
+        ev_ogOrder = [](mOrder k) {
           calcWalletAfterOrder(k);
-        });
+        };
         ev_mgTargetPosition = []() {
           calcTargetBasePos();
         };
@@ -37,7 +37,7 @@ namespace K {
           or abs(safety.sellPong - pgSafety.sellPong) >= 1e-2
         ) {
           pgSafety = safety;
-          UI::uiSend(uiTXT::TradeSafetyValue, toJsonSafety(pgSafety), true);
+          UI::uiSend(uiTXT::TradeSafetyValue, pgSafety, true);
         }
       };
       static void calcTargetBasePos() {
@@ -72,16 +72,13 @@ namespace K {
         cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };
       static json onSnapPos(json z) {
-        return { toJsonPosition(pgPos) };
+        return { pgPos };
       };
       static json onSnapSafety(json z) {
-        return { toJsonSafety(pgSafety) };
+        return { pgSafety };
       };
       static json onSnapTargetBasePos(json z) {
-        return {{
-          {"tbp", pgTargetBasePos},
-          {"sideAPR", pgSideAPR}
-        }};
+        return {{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       static mSafety nextSafety() {
         double buySize = QP::getBool("percentageValues")
@@ -133,29 +130,6 @@ namespace K {
           buyPing,
           sellPong
         );
-      };
-      static json toJsonSafety(mSafety k) {
-        return {
-          {"buy", k.buy},
-          {"sell", k.sell},
-          {"combined", k.combined},
-          {"buyPing", k.buyPing},
-          {"sellPong", k.sellPong}
-        };
-      };
-      static json toJsonPosition(mPosition k) {
-        return {
-          {"baseAmount", k.baseAmount},
-          {"quoteAmount", k.quoteAmount},
-          {"baseHeldAmount", k.baseHeldAmount},
-          {"quoteHeldAmount", k.quoteHeldAmount},
-          {"value", k.value},
-          {"quoteValue", k.quoteValue},
-          {"profitBase", k.profitBase},
-          {"profitQuote", k.profitQuote},
-          {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
-          {"exchange", (int)k.exchange}
-        };
       };
       static void matchFirstPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
@@ -259,25 +233,24 @@ namespace K {
         }
         pgPos = pos;
         if (!eq) calcTargetBasePos();
-        UI::uiSend(uiTXT::Position, toJsonPosition(pgPos), true);
+        UI::uiSend(uiTXT::Position, pgPos, true);
       };
-      static void calcWalletAfterOrder(json k) {
+      static void calcWalletAfterOrder(mOrder k) {
         if (pgPos.value == -1) return;
         double heldAmount = 0;
-        double amount = (mSide)k.value("side", 0) == mSide::Ask
+        double amount = k.side == mSide::Ask
           ? pgPos.baseAmount + pgPos.baseHeldAmount
           : pgPos.quoteAmount + pgPos.quoteHeldAmount;
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (it->second.value("side", 0) != k.value("side", 0)) return;
-          double held = it->second.value("quantity", 0.0) * ((mSide)it->second.value("side", 0) == mSide::Bid ? it->second.value("price", 0.0) : 1);
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+          if (it->second.side != k.side) return;
+          double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
           if (amount >= held) {
             amount -= held;
             heldAmount += held;
           }
         }
-        calcWallet(mWallet(amount, heldAmount, (mSide)k["side"].get<int>() == mSide::Ask
-            ? k["/pair/base"_json_pointer].get<int>()
-            : k["/pair/quote"_json_pointer].get<int>()
+        calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask
+            ? k.pair.base : k.pair.quote
         ));
       };
   };

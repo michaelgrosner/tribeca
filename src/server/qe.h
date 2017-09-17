@@ -141,10 +141,10 @@ namespace K {
       static bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         vector<string> toDelete;
         unsigned long T = FN::T();
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          mORS k = (mORS)it->second.value("orderStatus", 0);
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+          mORS k = (mORS)it->second.orderStatus;
           if (k == mORS::New) {
-            if (it->second["exchangeId"].is_null() and T-1e+4>it->second.value("time", (unsigned long)0))
+            if (it->second.exchangeId == "" and T-1e+4>it->second.time)
               toDelete.push_back(it->first);
             ++(*qNew);
           } else if (k == mORS::Working) ++(*qWorking);
@@ -215,7 +215,7 @@ namespace K {
         qeAskStatus = mQuoteStatus::UnknownHeld;
         vector<int> superTradesMultipliers = {1, 1};
         if ((mSOP)QP::getInt("superTrades") != mSOP::Off
-          and widthPing * QP::getInt("sopWidthMultiplier") < mGWmktFilter.asks.begin()->price - mGWmktFilter.bids.begin()->price
+          and widthPing * QP::getInt("sopWidthMultiplier") < mgLevelsFilter.asks.begin()->price - mgLevelsFilter.bids.begin()->price
         ) {
           superTradesMultipliers[0] = (mSOP)QP::getInt("superTrades") == mSOP::x2trades or (mSOP)QP::getInt("superTrades") == mSOP::x2tradesSize
             ? 2 : ((mSOP)QP::getInt("superTrades") == mSOP::x3trades or (mSOP)QP::getInt("superTrades") == mSOP::x3tradesSize
@@ -294,7 +294,7 @@ namespace K {
         }
         if (QP::getBool("bestWidth")) {
           if (rawQuote.value("askPx", 0.0))
-            for (vector<mLevel>::iterator it = mGWmktFilter.asks.begin(); it != mGWmktFilter.asks.end(); ++it)
+            for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it)
               if (it->price > rawQuote.value("askPx", 0.0)) {
                 double bestAsk = it->price - gw->minTick;
                 if (bestAsk > mgFairValue) {
@@ -303,7 +303,7 @@ namespace K {
                 }
               }
           if (rawQuote.value("bidPx", 0.0))
-            for (vector<mLevel>::iterator it = mGWmktFilter.bids.begin(); it != mGWmktFilter.bids.end(); ++it)
+            for (vector<mLevel>::iterator it = mgLevelsFilter.bids.begin(); it != mgLevelsFilter.bids.end(); ++it)
               if (it->price < rawQuote.value("bidPx", 0.0)) {
                 double bestBid = it->price + gw->minTick;
                 if (bestBid < mgFairValue) {
@@ -372,10 +372,10 @@ namespace K {
         return (*qeQuotingMode[k])(widthPing, buySize, sellSize);
       };
       static json quoteAtTopOfMarket() {
-        mLevel topBid = mGWmktFilter.bids.begin()->size > gw->minTick
-          ? mGWmktFilter.bids.at(0) : mGWmktFilter.bids.at(mGWmktFilter.bids.size()>1?1:0);
-        mLevel topAsk = mGWmktFilter.asks.begin()->size > gw->minTick
-          ? mGWmktFilter.asks.at(0) : mGWmktFilter.asks.at(mGWmktFilter.asks.size()>1?1:0);
+        mLevel topBid = mgLevelsFilter.bids.begin()->size > gw->minTick
+          ? mgLevelsFilter.bids.at(0) : mgLevelsFilter.bids.at(mgLevelsFilter.bids.size()>1?1:0);
+        mLevel topAsk = mgLevelsFilter.asks.begin()->size > gw->minTick
+          ? mgLevelsFilter.asks.at(0) : mgLevelsFilter.asks.at(mgLevelsFilter.asks.size()>1?1:0);
         return {
           {"bidPx", topBid.price},
           {"bidSz", topBid.size},
@@ -423,16 +423,16 @@ namespace K {
         };
       };
       static json calcDepthOfMarket(double depth, double buySize, double sellSize) {
-        double bidPx = mGWmktFilter.bids.begin()->price;
+        double bidPx = mgLevelsFilter.bids.begin()->price;
         double bidDepth = 0;
-        for (vector<mLevel>::iterator it = mGWmktFilter.bids.begin(); it != mGWmktFilter.bids.end(); ++it) {
+        for (vector<mLevel>::iterator it = mgLevelsFilter.bids.begin(); it != mgLevelsFilter.bids.end(); ++it) {
           bidDepth += it->size;
           if (bidDepth >= depth) break;
           else bidPx = it->price;
         }
-        double askPx = mGWmktFilter.asks.begin()->price;
+        double askPx = mgLevelsFilter.asks.begin()->price;
         double askDepth = 0;
-        for (vector<mLevel>::iterator it = mGWmktFilter.asks.begin(); it != mGWmktFilter.asks.end(); ++it) {
+        for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it) {
           askDepth += it->size;
           if (askDepth >= depth) break;
           else askPx = it->price;
@@ -460,9 +460,9 @@ namespace K {
         return mQuoteStatus::Live;
      };
       static void updateQuote(json q, mSide side) {
-        multimap<double, json> orderSide = orderCacheSide(side);
+        multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
-        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (it->first == q.value("price", 0.0)) { eq = true; break; }
         if ((mQuotingMode)QP::getInt("mode") != mQuotingMode::AK47) {
           if (orderSide.size()) {
@@ -474,11 +474,11 @@ namespace K {
           modify(side, q);
         else start(side, q);
       };
-      static multimap<double, json> orderCacheSide(mSide side) {
-        multimap<double, json> orderSide;
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          if ((mSide)it->second.value("side", 0) == side)
-            orderSide.insert(pair<double, json>(it->second.value("price", 0.0), it->second));
+      static multimap<double, mOrder> orderCacheSide(mSide side) {
+        multimap<double, mOrder> orderSide;
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mSide)it->second.side == side)
+            orderSide.insert(pair<double, mOrder>(it->second.price, it->second));
         return orderSide;
       };
       static void modify(mSide side, json q) {
@@ -510,9 +510,9 @@ namespace K {
           qeNextT = FN::T();
         }
         double price = q.value("price", 0.0);
-        multimap<double, json> orderSide = orderCacheSide(side);
+        multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
-        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (price == it->first
             or ((mQuotingMode)QP::getInt("mode") == mQuotingMode::AK47
               and (price + (QP::getDouble("range") - 1e-2)) >= it->first
@@ -527,10 +527,10 @@ namespace K {
               calcAK47Increment(orderSide.begin(), orderSide.end(), &price, side, &oldPrice, incPrice, &len);
             else calcAK47Increment(orderSide.rbegin(), orderSide.rend(), &price, side, &oldPrice, incPrice, &len);
             if (len==orderSide.size()) price = incPrice + (side == mSide::Bid
-              ? orderSide.rbegin()->second.value("price", 0.0)
-              : orderSide.begin()->second.value("price", 0.0));
+              ? orderSide.rbegin()->second.price
+              : orderSide.begin()->second.price);
             eq = false;
-            for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+            for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
               if (price == it->first
                 or ((price + (QP::getDouble("range") - 1e-2)) >= it->first
                   and (price - (QP::getDouble("range") - 1e-2)) <= it->first)
@@ -553,25 +553,25 @@ namespace K {
         }
       };
       static void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, json> orderSide = orderCacheSide(side);
-        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        multimap<double, mOrder> orderSide = orderCacheSide(side);
+        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (side == mSide::Bid
-            ? price < it->second.value("price", 0.0)
-            : price > it->second.value("price", 0.0)
-          ) OG::cancelOrder(it->second.value("orderId", ""));
+            ? price < it->second.price
+            : price > it->second.price
+          ) OG::cancelOrder(it->second.orderId);
       };
       static void stopWorstQuote(mSide side) {
-        multimap<double, json> orderSide = orderCacheSide(side);
+        multimap<double, mOrder> orderSide = orderCacheSide(side);
         if (orderSide.size())
           OG::cancelOrder(side == mSide::Bid
-            ? orderSide.begin()->second.value("orderId", "")
-            : orderSide.rbegin()->second.value("orderId", "")
+            ? orderSide.begin()->second.orderId
+            : orderSide.rbegin()->second.orderId
           );
       };
       static void stopAllQuotes(mSide side) {
-        multimap<double, json> orderSide = orderCacheSide(side);
-        for (multimap<double, json>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          OG::cancelOrder(it->second.value("orderId", ""));
+        multimap<double, mOrder> orderSide = orderCacheSide(side);
+        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+          OG::cancelOrder(it->second.orderId);
       };
   };
 }
