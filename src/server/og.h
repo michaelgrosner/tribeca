@@ -11,6 +11,7 @@ namespace K {
       static void main() {
         load();
         ev_gwDataOrder = [](mOrder k) {
+          if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW reply  " << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << "/" << k.lastQuantity << " at price " << k.price << "." << endl;
           updateOrderState(k);
         };
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
