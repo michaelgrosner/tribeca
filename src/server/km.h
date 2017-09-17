@@ -251,6 +251,7 @@ namespace K {
   struct mLevel {
     double price;
     double size;
+    mLevel();
     mLevel(double price, double size);
   };
   struct mLevels {
@@ -266,6 +267,15 @@ namespace K {
     for (vector<mLevel>::const_iterator it = k.asks.begin(); it != k.asks.end(); ++it)
       a.push_back({{"price", it->price}, {"size", it->size}});
     j = {{"bids", b}, {"asks", a}};
+  };
+  struct mQuote {
+    mLevel bid;
+    mLevel ask;
+    bool isBidPong;
+    bool isAskPong;
+    mQuote();
+    mQuote(mLevel bid, mLevel ask);
+    mQuote(mLevel bid, mLevel ask, bool isBidPong, bool isAskPong);
   };
   struct mQuoteStatus {
     mQuoteState bidStatus;
