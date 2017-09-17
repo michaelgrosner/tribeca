@@ -32,6 +32,7 @@ namespace K {
           for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
+        if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW remove " << oI << "::" << oE << "." << endl;
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
@@ -314,7 +315,9 @@ namespace K {
           if (k.exchangeId != "")
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
+          if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << mCurrency[k.pair.base] << " at price " << k.price << " " << mCurrency[k.pair.quote] << "." << endl;
         } else allOrdersDelete(k.orderId, k.exchangeId);
+        if (argDebug) cout << FN::uiT() << "DEBUG " << RWHITE << "GW memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;
       };
   };
 }
