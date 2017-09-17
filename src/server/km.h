@@ -30,7 +30,7 @@ namespace K {
   enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class mEv: unsigned int {
-    OrderUpdateBroker, QuotingParameters
+    QuotingParameters
   };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
@@ -100,6 +100,15 @@ namespace K {
     mSafety();
     mSafety(double buy, double sell, double combined, double buyPing, double sellPong);
   };
+  static void to_json(json& j, const mSafety& k) {
+    j = {
+      {"buy", k.buy},
+      {"sell", k.sell},
+      {"combined", k.combined},
+      {"buyPing", k.buyPing},
+      {"sellPong", k.sellPong}
+    };
+  };
   struct mPosition {
     double baseAmount;
     double quoteAmount;
@@ -113,6 +122,20 @@ namespace K {
     mExchange exchange;
     mPosition();
     mPosition(double baseAmount, double quoteAmount, double baseHeldAmount, double quoteHeldAmount, double value, double quoteValue, double profitBase, double profitQuote, mPair pair, mExchange exchange);
+  };
+  static void to_json(json& j, const mPosition& k) {
+    j = {
+      {"baseAmount", k.baseAmount},
+      {"quoteAmount", k.quoteAmount},
+      {"baseHeldAmount", k.baseHeldAmount},
+      {"quoteHeldAmount", k.quoteHeldAmount},
+      {"value", k.value},
+      {"quoteValue", k.quoteValue},
+      {"profitBase", k.profitBase},
+      {"profitQuote", k.profitQuote},
+      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+      {"exchange", (int)k.exchange}
+    };
   };
   struct mTrade {
     double price;
@@ -139,12 +162,91 @@ namespace K {
     mTradeHydrated();
     mTradeHydrated(string tradeId, unsigned long time, mExchange exchange, mPair pair, double price, double quantity, mSide side, double value, unsigned long Ktime, double Kqty, double Kprice, double Kvalue, double Kdiff, double feeCharged, bool loadedFromDB);
   };
+  static void to_json(json& j, const mTradeHydrated& k) {
+    j = {
+      {"tradeId", k.tradeId},
+      {"time", k.time},
+      {"exchange", (int)k.exchange},
+      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+      {"price", k.price},
+      {"quantity", k.quantity},
+      {"side", (int)k.side},
+      {"value", k.value},
+      {"Ktime", k.Ktime},
+      {"Kqty", k.Kqty},
+      {"Kprice", k.Kprice},
+      {"Kvalue", k.Kvalue},
+      {"Kdiff", k.Kdiff},
+      {"feeCharged", k.feeCharged},
+      {"loadedFromDB", k.loadedFromDB},
+    };
+  };
   struct mTradeDehydrated {
     double price;
     double quantity;
     unsigned long time;
     mTradeDehydrated();
     mTradeDehydrated(double price, double quantity, unsigned long time);
+  };
+  struct mTradeDry {
+    mExchange exchange;
+    int base;
+    int quote;
+    double price;
+    double size;
+    unsigned long time;
+    mSide make_side;
+    mTradeDry(mExchange exchange, int base, int quote, double price, double size, double time, mSide make_side);
+  };
+  static void to_json(json& j, const mTradeDry& k) {
+    j = {
+      {"exchange", (int)k.exchange},
+      {"pair", {{"base", k.base}, {"quote", k.quote}}},
+      {"price", k.price},
+      {"size", k.size},
+      {"time", k.time},
+      {"make_size", (int)k.make_side}
+    };
+  };
+  struct mOrder {
+    string orderId;
+    string exchangeId;
+    mExchange exchange;
+    mPair pair;
+    mSide side;
+    double quantity;
+    mOrderType type;
+    bool isPong;
+    double price;
+    mTimeInForce timeInForce;
+    mORS orderStatus;
+    bool preferPostOnly;
+    double lastQuantity;
+    unsigned long time;
+    unsigned long computationalLatency;
+    mOrder();
+    mOrder(string orderId, mORS orderStatus);
+    mOrder(string orderId, string exchangeId, mORS orderStatus, double price, double quantity, double lastQuantity);
+    mOrder(string orderId, mExchange exchange, mPair pair, mSide side, double quantity, mOrderType type, bool isPong, double price, mTimeInForce timeInForce, mORS orderStatus, bool preferPostOnly);
+  };
+  static void to_json(json& j, const mOrder& k) {
+    j = {
+      {"orderId", k.orderId},
+      {"exchangeId", k.exchangeId},
+      {"exchange", (int)k.exchange},
+      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+      {"side", (int)k.side},
+      {"quantity", k.quantity},
+      {"type", (int)k.type},
+      {"isPong", k.isPong},
+      {"price", k.price},
+      {"timeInForce", (int)k.timeInForce},
+      {"orderStatus", (int)k.orderStatus},
+      {"preferPostOnly", k.preferPostOnly},
+      {"lastQuantity", k.lastQuantity},
+      {"time", k.time},
+      {"computationalLatency", k.computationalLatency}
+    };
   };
   struct mLevel {
     double price;
@@ -157,15 +259,13 @@ namespace K {
     mLevels();
     mLevels(vector<mLevel> bids, vector<mLevel> asks);
   };
-  struct mGWmt {
-    mExchange exchange;
-    int base;
-    int quote;
-    double price;
-    double size;
-    unsigned long time;
-    mSide make_side;
-    mGWmt(mExchange exchange, int base, int quote, double price, double size, double time, mSide make_side);
+  static void to_json(json& j, const mLevels& k) {
+    json b, a;
+    for (vector<mLevel>::const_iterator it = k.bids.begin(); it != k.bids.end(); ++it)
+      b.push_back({{"price", it->price}, {"size", it->size}});
+    for (vector<mLevel>::const_iterator it = k.asks.begin(); it != k.asks.end(); ++it)
+      a.push_back({{"price", it->price}, {"size", it->size}});
+    j = {{"bids", b}, {"asks", a}};
   };
 }
 

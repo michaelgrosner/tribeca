@@ -57,14 +57,7 @@ namespace K {
           gwTradeUp(*it);
       };
       static void gwOrderUp(string oI, string oE, mORS oS, double oP = 0, double oQ = 0, double oLQ = 0) {
-        json o;
-        if (oI.length()) o["orderId"] = oI;
-        if (oE.length()) o["exchangeId"] = oE;
-        o["orderStatus"] = (int)oS;
-        if (oP) o["price"] = oP;
-        if (oQ) o["quantity"] = oQ;
-        if (oLQ) o["lastQuantity"] = oLQ;
-        ev_gwDataOrder(o);
+        ev_gwDataOrder(mOrder(oI, oE, oS, oP, oQ, oLQ));
       };
       static void gwLevelUp(mLevels k) {
         ev_gwDataLevels(k);

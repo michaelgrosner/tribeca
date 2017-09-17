@@ -3,8 +3,8 @@
 
 namespace K {
   int mgT = 0;
-  vector<mGWmt> mGWmt_;
-  mLevels mGWmktFilter;
+  mLevels mgLevelsFilter;
+  vector<mTradeDry> mgTrades;
   double mgFairValue = 0;
   double mgEwmaL = 0;
   double mgEwmaM = 0;
@@ -39,7 +39,7 @@ namespace K {
         UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
       };
       static bool empty() {
-        return (!mGWmktFilter.bids.size() or !mGWmktFilter.asks.size());
+        return (!mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size());
       };
       static void calcStats() {
         if (++mgT == 60) {
@@ -52,10 +52,10 @@ namespace K {
       static void calcFairValue() {
         if (empty()) return;
         double mgFairValue_ = mgFairValue;
-        double topAskPrice = mGWmktFilter.asks.begin()->price;
-        double topBidPrice = mGWmktFilter.bids.begin()->price;
-        double topAskSize = mGWmktFilter.asks.begin()->size;
-        double topBidSize = mGWmktFilter.bids.begin()->size;
+        double topAskPrice = mgLevelsFilter.asks.begin()->price;
+        double topBidPrice = mgLevelsFilter.bids.begin()->price;
+        double topAskSize = mgLevelsFilter.asks.begin()->size;
+        double topBidSize = mgLevelsFilter.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         mgFairValue = FN::roundNearest(
           mFairValueModel::BBO == (mFairValueModel)QP::getInt("fvModel")
@@ -101,8 +101,8 @@ namespace K {
       };
       static json onSnapTrade(json z) {
         json k;
-        for (unsigned i=0; i<mGWmt_.size(); ++i)
-          k.push_back(toJsonTrade(mGWmt_[i]));
+        for (unsigned i=0; i<mgTrades.size(); ++i)
+          k.push_back(mgTrades[i]);
         return k;
       };
       static json onSnapFair(json z) {
@@ -129,8 +129,8 @@ namespace K {
       };
       static void stdevPUp() {
         if (empty()) return;
-        double topBid = mGWmktFilter.bids.begin()->price;
-        double topAsk = mGWmktFilter.bids.begin()->price;
+        double topBid = mgLevelsFilter.bids.begin()->price;
+        double topAsk = mgLevelsFilter.bids.begin()->price;
         if (!topBid or !topAsk) return;
         mgStatFV.push_back(mgFairValue);
         mgStatBid.push_back(topBid);
@@ -146,7 +146,7 @@ namespace K {
         }, false, "NULL", FN::T() - 1e+3 * QP::getInt("quotingStdevProtectionPeriods"));
       };
       static void tradeUp(mTrade k) {
-        mGWmt t(
+        mTradeDry t(
           gw->exchange,
           gw->base,
           gw->quote,
@@ -155,31 +155,13 @@ namespace K {
           FN::T(),
           k.make_side
         );
-        mGWmt_.push_back(t);
-        if (mGWmt_.size()>69) mGWmt_.erase(mGWmt_.begin());
-        UI::uiSend(uiTXT::MarketTrade, toJsonTrade(t));
+        mgTrades.push_back(t);
+        if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
+        UI::uiSend(uiTXT::MarketTrade, t);
       };
       static void levelUp(mLevels k) {
         filter(k);
-        UI::uiSend(uiTXT::MarketData, toJsonLevels(k), true);
-      };
-      static json toJsonLevels(mLevels k) {
-        json b, a;
-        for (vector<mLevel>::iterator it = k.bids.begin(); it != k.bids.end(); ++it)
-          b.push_back({{"price", it->price}, {"size", it->size}});
-        for (vector<mLevel>::iterator it = k.asks.begin(); it != k.asks.end(); ++it)
-          a.push_back({{"price", it->price}, {"size", it->size}});
-        return {{"bids", b}, {"asks", a}};
-      };
-      static json toJsonTrade(mGWmt k) {
-        return {
-          {"exchange", (int)k.exchange},
-          {"pair", {{"base", k.base}, {"quote", k.quote}}},
-          {"price", k.price},
-          {"size", k.size},
-          {"time", k.time},
-          {"make_size", (int)k.make_side}
-        };
+        UI::uiSend(uiTXT::MarketData, k, true);
       };
       static void ewmaUp() {
         calcEwma(&mgEwmaL, QP::getInt("longEwmaPeriods"));
@@ -216,20 +198,20 @@ namespace K {
         ev_mgEwmaQuoteProtection();
       };
       static void filter(mLevels k) {
-        mGWmktFilter = k;
+        mgLevelsFilter = k;
         if (empty()) return;
-        for (map<string, json>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          if (it->second["side"].is_number() and it->second["price"].is_number() and it->second["quantity"].is_number())
-            filter(mSide::Bid == (mSide)it->second.value("side", 0) ? &mGWmktFilter.bids : &mGWmktFilter.asks, it->second);
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+// if (it->second["side"].is_number() and it->second["price"].is_number() and it->second["quantity"].is_number())
+            filter(mSide::Bid == it->second.side ? &mgLevelsFilter.bids : &mgLevelsFilter.asks, it->second);
         if (!empty()) {
           calcFairValue();
           ev_mgLevels();
         }
       };
-      static void filter(vector<mLevel>* k, json o) {
+      static void filter(vector<mLevel>* k, mOrder o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();)
-          if (abs(it->price - o.value("price", 0.0)) < gw->minTick) {
-            it->size = it->size - o.value("quantity", 0.0);
+          if (abs(it->price - o.price) < gw->minTick) {
+            it->size = it->size - o.quantity;
             if (it->size < gw->minTick) k->erase(it);
             break;
           } else ++it;
