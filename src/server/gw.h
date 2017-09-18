@@ -35,9 +35,10 @@ namespace K {
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
-        if (argHeadless) gw->book().join();
+        if (argHeadless)
+          thread([&]() { gw->book(); }).join();
         else {
-          gw->book().detach();
+          thread([&]() { gw->book(); }).detach();
           hub.run();
         }
       };
