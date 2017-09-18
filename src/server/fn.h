@@ -27,7 +27,8 @@ namespace K {
   static char BCYAN[]   = "\033[1;36m";
   static char BWHITE[]  = "\033[1;37m";
   static int argColors = 0;
-  static int argDebug = 0;
+  static int argDebugOrders = 0;
+  static int argDebugQuotes = 0;
   static int argHeadless = 0;
   static double argEwmaShort = 0;
   static double argEwmaMedium = 0;
@@ -41,16 +42,17 @@ namespace K {
         while (true) {
           int i = 0;
           static struct option args[] = {
-            {"help",        no_argument,       0,            'h'},
-            {"colors",      no_argument,       &argColors,     1},
-            {"debug",       no_argument,       &argDebug,      1},
-            {"headless",    no_argument,       &argHeadless,   1},
-            {"database",    required_argument, 0,            'd'},
-            {"ewma-short",  required_argument, 0,            's'},
-            {"ewma-medium", required_argument, 0,            'm'},
-            {"ewma-long",   required_argument, 0,            'l'},
-            {"version",     no_argument,       0,            'v'},
-            {0,             0,                 0,              0}
+            {"help",         no_argument,       0,               'h'},
+            {"colors",       no_argument,       &argColors,        1},
+            {"debug-orders", no_argument,       &argDebugOrders,   1},
+            {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+            {"headless",     no_argument,       &argHeadless,      1},
+            {"database",     required_argument, 0,               'd'},
+            {"ewma-short",   required_argument, 0,               's'},
+            {"ewma-medium",  required_argument, 0,               'm'},
+            {"ewma-long",    required_argument, 0,               'l'},
+            {"version",      no_argument,       0,               'v'},
+            {0,              0,                 0,                 0}
           };
           k = getopt_long(argc, argv, "hvd:l:m:s:", args, &i);
           if (k == -1) break;
@@ -71,7 +73,8 @@ namespace K {
               << FN::uiT() << "[arguments]:" << endl
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << endl
               << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
-              << FN::uiT() << RWHITE << "    --debug              - print detailed output." << endl
+              << FN::uiT() << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << endl
+              << FN::uiT() << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << endl
               << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections." << endl
               << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative database filename," << endl
               << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << endl

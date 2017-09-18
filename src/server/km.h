@@ -61,7 +61,7 @@ namespace K {
       int base = 0;
       virtual mExchange config() = 0;
       virtual void pos() = 0;
-      virtual thread book() = 0;
+      virtual void book() = 0;
       virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0;
       virtual void cancel(string oI, string oE, mSide oS, unsigned long oT) = 0;
       virtual void cancelAll() = 0;
@@ -273,6 +273,18 @@ namespace K {
     mQuote();
     mQuote(mLevel bid, mLevel ask);
     mQuote(mLevel bid, mLevel ask, bool isBidPong, bool isAskPong);
+  };
+  static void to_json(json& j, const mQuote& k) {
+    j = {
+      {"bid", {
+        {"price", k.bid.price},
+        {"size", k.bid.size}
+      }},
+      {"ask", {
+        {"price", k.ask.price},
+        {"size", k.ask.size}
+      }}
+    };
   };
   struct mQuoteStatus {
     mQuoteState bidStatus;
