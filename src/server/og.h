@@ -246,13 +246,13 @@ namespace K {
           DB::insert(uiTXT::Trades, trade, false, trade.tradeId);
           tradesMemory.push_back(trade);
         }
-        UI::uiSend(uiTXT::TradesChart, {{
+        UI::uiSend(uiTXT::TradesChart, {
           {"price", trade.price},
           {"side", (int)trade.side},
           {"quantity", trade.quantity},
           {"value", trade.value},
           {"pong", o.isPong}
-        }});
+        });
         cleanAuto(trade.time, QP::getDouble("cleanPongsAuto"));
       };
       static void matchPong(map<double, string> matches, bool reverse, mTradeHydrated pong) {
