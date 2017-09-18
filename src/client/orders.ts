@@ -14,7 +14,7 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Subscribe.IFire<Models.OrderStatusUpdate>;
+  private fireCxl: Subscribe.IFire<any>;
 
   @Input() product: Models.ProductState;
 
@@ -99,7 +99,7 @@ export class OrdersComponent implements OnInit {
   private addRowData = (o) => {
     if (!this.gridOptions.api) return;
     if (typeof o[0] == 'object') {
-      this.gridOptions.api.setRowData([]);
+      // this.gridOptions.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;
