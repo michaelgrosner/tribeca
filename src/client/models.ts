@@ -85,26 +85,6 @@ export interface ProductState {
     fixed: number
 }
 
-export interface OrderStatusReport {
-    pair : CurrencyPair;
-    side : Side;
-    quantity : number;
-    type : OrderType;
-    price : number;
-    timeInForce : TimeInForce;
-    orderId : any;
-    exchangeId : any;
-    orderStatus : OrderStatus;
-    time : number;
-    lastQuantity : number;
-    exchange : Exchange;
-    computationalLatency : number;
-    isPong : boolean;
-    preferPostOnly: boolean;
-}
-
-export interface OrderStatusUpdate extends Partial<OrderStatusReport> { }
-
 export interface IStdev {
     fv: number;
     fvMean: number;
