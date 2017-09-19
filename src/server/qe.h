@@ -70,7 +70,7 @@ namespace K {
         qeQuotingMode[mQuotingMode::HamelinRat] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
-      static json onSnap(json z) {
+      static json onSnap() {
         return { qeStatus };
       };
       static void calcQuote() {

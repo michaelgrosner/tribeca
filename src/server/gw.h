@@ -57,15 +57,11 @@ namespace K {
       static void gwTradeUp(mTrade k) {
         ev_gwDataTrade(k);
       };
-      static void gwTradeUp(vector<mTrade> k) {
-        for (vector<mTrade>::iterator it = k.begin(); it != k.end(); ++it)
-          gwTradeUp(*it);
-      };
       static void gwLevelUp(mLevels k) {
         ev_gwDataLevels(k);
       };
     private:
-      static json onSnapProduct(json z) {
+      static json onSnapProduct() {
         return {{
           {"exchange", (double)gw->exchange},
           {"pair", {{"base", (double)gw->base}, {"quote", (double)gw->quote}}},
@@ -75,23 +71,22 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
-      static json onSnapStatus(json z) {
+      static json onSnapStatus() {
         return {{{"status", (int)gwConnectExchange}}};
       };
-      static json onSnapState(json z) {
+      static json onSnapState() {
         return {{{"state",  (int)gwQuotingState}}};
       };
-      static json onHandState(json k) {
+      static void onHandState(json k) {
         if (!k.is_object() or !k["state"].is_number()) {
           cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing state at onHandState, ignored." << endl;
-          return {};
+          return;
         }
         mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
         if (autoStart != gwAutoStart) {
           gwAutoStart = autoStart;
           gwUpState();
         }
-        return {};
       };
       static void _gwCon_(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {

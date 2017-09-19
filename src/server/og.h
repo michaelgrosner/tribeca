@@ -79,7 +79,7 @@ namespace K {
             ));
         cout << FN::uiT() << "DB" << RWHITE << " loaded " << tradesMemory.size() << " historical Trades." << endl;
       };
-      static json onSnapTrades(json z) {
+      static json onSnapTrades() {
         json k;
         for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           it->loadedFromDB = true;
@@ -87,7 +87,7 @@ namespace K {
         }
         return k;
       };
-      static json onSnapOrders(json z) {
+      static json onSnapOrders() {
         json k;
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
@@ -95,35 +95,26 @@ namespace K {
         }
         return k;
       };
-      static json onHandCancelAllOrders(json k) {
+      static void onHandCancelAllOrders(json k) {
         cancelOpenOrders();
-        return {};
       };
-      static json onHandCleanAllClosedOrders(json k) {
+      static void onHandCleanAllClosedOrders(json k) {
         cleanClosedOrders();
-        return {};
       };
-      static json onHandCleanAllOrders(json k) {
+      static void onHandCleanAllOrders(json k) {
         cleanOrders();
-        return {};
       };
-      static json onHandCancelOrder(json k) {
-        if (!k.is_object() or !k["orderId"].is_string()) {
-          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing orderId at onHandCancelOrder, ignored." << endl;
-          return {};
-        }
-        cancelOrder(k["orderId"].get<string>());
-        return {};
+      static void onHandCancelOrder(json k) {
+        if (k.is_object() and k["orderId"].is_string())
+          cancelOrder(k["orderId"].get<string>());
+        else cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing orderId at onHandCancelOrder, ignored." << endl;
       };
-      static json onHandCleanTrade(json k) {
-        if (!k.is_object() or !k["tradeId"].is_string()) {
-          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing tradeId at onHandCleanTrade, ignored." << endl;
-          return {};
-        }
-        cleanTrade(k["tradeId"].get<string>());
-        return {};
+      static void onHandCleanTrade(json k) {
+        if (k.is_object() and k["tradeId"].is_string())
+          cleanTrade(k["tradeId"].get<string>());
+        else cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing tradeId at onHandCleanTrade, ignored." << endl;
       };
-      static json onHandSubmitNewOrder(json k) {
+      static void onHandSubmitNewOrder(json k) {
         sendOrder(
           k.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           k.value("price", 0.0),
@@ -133,7 +124,6 @@ namespace K {
           false,
           false
         );
-        return {};
       };
       static mOrder updateOrderState(mOrder k) {
         mOrder o;

@@ -99,16 +99,16 @@ namespace K {
         cout << FN::uiT() << (argEwmaMedium ? "ARG" : "DB") << RWHITE << " loaded EWMA Medium = " << mgEwmaM << "." << endl;
         cout << FN::uiT() << (argEwmaShort ? "ARG" : "DB") << RWHITE << " loaded EWMA Short = " << mgEwmaS << "." << endl;
       };
-      static json onSnapTrade(json z) {
+      static json onSnapTrade() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
         return k;
       };
-      static json onSnapFair(json z) {
+      static json onSnapFair() {
         return {{{"price", mgFairValue}}};
       };
-      static json onSnapEwma(json z) {
+      static json onSnapEwma() {
         return {{
           {"stdevWidth", {
             {"fv", mgStdevFV},
