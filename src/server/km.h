@@ -51,12 +51,11 @@ namespace K {
       int    base    = 0,  quote   = 0;
       double makeFee = 0,  minTick = 0,
              takeFee = 0,  minSize = 0;
-      string name    = "",
-             symbol  = "",  target = "",
-             apikey  = "",  secret = "",
-             user    = "",  pass   = "",
-             http    = "",
-             ws      = "",  wS     = "";
+      string name    = "", symbol  = "",
+             apikey  = "", secret  = "",
+             user    = "", pass    = "",
+             ws      = "", wS      = "",
+             http    = "";
       virtual mExchange config() = 0;
       virtual void pos() = 0,
                    book() = 0,
