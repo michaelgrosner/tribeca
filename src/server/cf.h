@@ -16,8 +16,8 @@ namespace K {
              argDebugQuotes = 0,
              argHeadless = 0,
              argAutobot = 0;
-  extern string argExchange;
-  static string argTitle = "K.sh",
+  static string argExchange = "NULL",
+                argTitle = "K.sh",
                 argUser = "NULL",
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
@@ -174,6 +174,7 @@ namespace K {
       };
       static void api() {
         gw = Gw::E(cfExchange());
+        gw->name = argExchange;
         gw->base = cfBase();
         gw->quote = cfQuote();
         gw->target = argTarget;
@@ -186,44 +187,6 @@ namespace K {
         gw->wS = argWs;
         cfExchange(gw->config());
         gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
-      };
-      static void deprecated() {
-        // string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K");
-        // string cfname = string("etc/").append(k).append(".png");
-        // if (access(cfname.data(), F_OK) != -1) {
-          // png_structp png_ptr;
-          // png_infop info_ptr;
-          // unsigned char sig[8];
-          // FILE *fp;
-          // if (!(fp = fopen(cfname.data(), "rb"))) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not find and open file " << k << "." << endl; }
-          // else {
-            // fread(sig, 1, 8, fp);
-            // if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Not a PNG file." << endl; }
-            // else {
-              // png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-              // info_ptr = png_create_info_struct(png_ptr);
-              // if (!png_ptr) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not allocate memory." << endl; }
-              // else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << RRED << " Errrror:" << BRED << " PNG error." << endl; }
-              // else {
-                // png_init_io(png_ptr, fp);
-                // png_set_sig_bytes(png_ptr, 8);
-                // png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-                // png_textp text_ptr;
-                // int num_text;
-                // png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
-                // string conf = "";
-                // for (int i = 0; i < num_text; i++)
-                  // if (strcmp("K.conf", text_ptr[i].key) == 0)
-                    // conf = text_ptr[i].text;
-                // if (conf.length()) {
-                  // cf = json::parse(conf);
-                  // cout << FN::uiT() << "CF" << RWHITE << " Settings loaded from PNG file " << k << " OK." << endl;
-                // } else cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " No data found inside PNG file " << k << "." << endl;
-              // }
-            // }
-          // }
-        // }
-        // if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not found, reading ENVIRONMENT vars instead." << endl;
       };
       static int cfBase() {
         string k_ = argCurrency;
