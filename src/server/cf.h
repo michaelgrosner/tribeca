@@ -16,8 +16,8 @@ namespace K {
              argDebugQuotes = 0,
              argHeadless = 0,
              argAutobot = 0;
-  static string argExchange = "NULL",
-                argTitle = "K.sh",
+  static string argTitle = "K.sh",
+                argExchange = "NULL",
                 argUser = "NULL",
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
@@ -177,7 +177,6 @@ namespace K {
         gw->name = argExchange;
         gw->base = cfBase();
         gw->quote = cfQuote();
-        gw->target = argTarget;
         gw->apikey = argApikey;
         gw->secret = argSecret;
         gw->user = argUsername;
@@ -186,7 +185,7 @@ namespace K {
         gw->ws = argWss;
         gw->wS = argWs;
         cfExchange(gw->config());
-        gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
+        gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
       static int cfBase() {
         string k_ = argCurrency;
