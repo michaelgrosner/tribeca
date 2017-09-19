@@ -17,7 +17,7 @@ namespace K {
              argHeadless = 0,
              argAutobot = 0;
   extern string argExchange;
-  static string argTitle = "K.bot",
+  static string argTitle = "K.sh",
                 argUser = "NULL",
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
