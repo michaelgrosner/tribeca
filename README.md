@@ -81,7 +81,7 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
  $ vim K.sh
 ```
 
-See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `K.sh`.
+See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
 
 Once the config file is ready, execute `./K.sh` (or `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html); to see the output, attach the screen with `make screen`).
 
@@ -101,7 +101,7 @@ Troubleshooting:
 
 ### Configuration
 
-See [dist/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/dist/K.sh.dist) file or your own `./K.sh`.
+See [dist/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/dist/K.sh.dist) file or your own `./K.sh` file.
 
 It just contains a few variables with examples ready to be reused (the suggested urls will work), and at the very end of the file is the execution of the bot.
 

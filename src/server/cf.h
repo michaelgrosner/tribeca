@@ -142,7 +142,6 @@ namespace K {
             default: abort();
           }
         }
-        if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
         if (optind < argc) {
           cout << FN::uiT() << "ARG" << RRED << " Warrrrning:" << BRED << " non-option ARGV-elements: ";
           while(optind < argc) cout << argv[optind++];
@@ -155,6 +154,7 @@ namespace K {
           BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
           BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
         }
+        if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
       };
       static void api() {
         gw = Gw::E(cfExchange());
