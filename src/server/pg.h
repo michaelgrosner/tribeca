@@ -71,13 +71,13 @@ namespace K {
         }
         cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
       };
-      static json onSnapPos(json z) {
+      static json onSnapPos() {
         return { pgPos };
       };
-      static json onSnapSafety(json z) {
+      static json onSnapSafety() {
         return { pgSafety };
       };
-      static json onSnapTargetBasePos(json z) {
+      static json onSnapTargetBasePos() {
         return {{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       static mSafety nextSafety() {

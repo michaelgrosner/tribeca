@@ -4,8 +4,9 @@
 namespace K {
   string A();
   static uWS::Hub hub(0, false);
-  typedef json (*uiCb)(json);
-  struct uiSess { map<string, uiCb> cb; map<uiTXT, vector<json>> D; int u = 0; };
+  typedef void (*uiMsg_)(json);
+  typedef json (*uiSnap_)();
+  struct uiSess { map<string, uiSnap_> cbSnap; map<string, uiMsg_> cbMsg; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static bool uiVisibleOpt = true;
   static unsigned int uiOSR_1m = 0;
@@ -93,11 +94,11 @@ namespace K {
               string m = string(message, length).substr(2, length-2);
               json v;
               if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
-              if (sess->cb.find(string(message, 2)) != sess->cb.end()) {
-                json reply = (*sess->cb[string(message, 2)])(v);
-                if (!reply.is_null() && uiBIT::SNAP == (uiBIT)message[0])
-                  webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-              }
+              if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(string(message, 2)) != sess->cbSnap.end()) {
+                json reply = (*sess->cbSnap[string(message, 2)])();
+                if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
+              } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(string(message, 2)) != sess->cbMsg.end())
+                (*sess->cbMsg[string(message, 2)])(v);
             }
           });
           uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
@@ -114,13 +115,13 @@ namespace K {
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         CF::api();
       };
-      static void uiSnap(uiTXT k, uiCb cb) {
+      static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
-        uiOn(uiBIT::SNAP, k, cb);
+        uiOn(uiBIT::SNAP, k, cb, nullptr);
       };
-      static void uiHand(uiTXT k, uiCb cb) {
+      static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
-        uiOn(uiBIT::MSG, k, cb);
+        uiOn(uiBIT::MSG, k, nullptr, cb);
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
         if (argHeadless) return;
@@ -150,34 +151,37 @@ namespace K {
         }).detach();
       };
     private:
-      static json onSnapApp(json z) {
+      static json onSnapApp() {
         return { serverState() };
       };
-      static json onSnapNote(json z) {
+      static json onSnapNote() {
         return { uiNOTE };
       };
-      static json onHandNote(json k) {
+      static void onHandNote(json k) {
         if (!k.is_null() and k.size())
           uiNOTE = k.at(0);
-        return {};
       };
-      static json onSnapOpt(json z) {
+      static json onSnapOpt() {
         return { uiVisibleOpt };
       };
-      static json onHandOpt(json k) {
+      static void onHandOpt(json k) {
         if (!k.is_null() and k.size())
           uiVisibleOpt = k.at(0);
-        return {};
       };
       static void uiUp(uiTXT k, json o) {
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      static void uiOn(uiBIT k_, uiTXT _k, uiCb cb) {
+      static void uiOn(uiBIT k_, uiTXT _k, uiSnap_ cbSnap, uiMsg_ cbMsg) {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         string k = string(1, (char)k_).append(string(1, (char)_k));
-        if (sess->cb.find(k) != sess->cb.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-        sess->cb[k] = cb;
+        if (uiBIT::SNAP == k_) {
+          if (sess->cbSnap.find(k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+          else sess->cbSnap[k] = cbSnap;
+        } else if (uiBIT::MSG == k_) {
+          if (sess->cbMsg.find(k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+          else sess->cbMsg[k] = cbMsg;
+        }
       };
       static void uiHold(uiTXT k, json o) {
         bool isOSR = k == uiTXT::OrderStatusReports;

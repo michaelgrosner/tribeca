@@ -102,10 +102,10 @@ namespace K {
         UI::delay(getDouble("delayUI"));
         cout << FN::uiT() << "DB" << RWHITE << " loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
       };
-      static json onSnap(json z) {
+      static json onSnap() {
         return { qp };
       };
-      static json onHand(json k) {
+      static void onHand(json k) {
         if (k.value("buySize", 0.0) > 0
           and k.value("sellSize", 0.0) > 0
           and k.value("buySizePercentage", 0.0) > 0
@@ -124,7 +124,6 @@ namespace K {
           UI::delay(getDouble("delayUI"));
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
-        return {};
       };
       static void clean() {
         for (vector<string>::const_iterator it = boolQP.begin(); it != boolQP.end(); ++it)
