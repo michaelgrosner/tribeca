@@ -119,8 +119,7 @@ API_WS_ENDPOINT=NULL
 
 
 # IV
-until ./app/server/K "$@"            \
-    $OPTIONAL_ARGUMENTS              \
+until ./app/server/K                 \
     --title ${0##*/}                 \
     --port $UI_OPENPORT              \
     --user $UI_USERNAME              \
@@ -135,7 +134,8 @@ until ./app/server/K "$@"            \
     --username $API_USERNAME         \
     --http $API_HTTP_ENDPOINT        \
     --wss $API_WSS_ENDPOINT          \
-    --ws $API_WS_ENDPOINT            ;
+    --ws $API_WS_ENDPOINT            \
+    $OPTIONAL_ARGUMENTS "$@"         ;
   do
     echo K crashed with exit code $?.. Respawning.. >&2;
     sleep 3;
