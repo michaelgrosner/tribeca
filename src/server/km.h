@@ -48,30 +48,24 @@ namespace K {
     public:
       static Gw *E(mExchange e);
       mExchange exchange = mExchange::Null;
-      double makeFee = 0;
-      double takeFee = 0;
-      double minTick = 0;
-      double minSize = 0;
-      string symbol = "";
-      string target = "";
-      string apikey = "";
-      string secret = "";
-      string user = "";
-      string pass = "";
-      string http = "";
-      string ws = "";
-      string wS = "";
-      int quote = 0;
-      int base = 0;
+      int    base    = 0,  quote   = 0;
+      double makeFee = 0,  minTick = 0,
+             takeFee = 0,  minSize = 0;
+      string name    = "",
+             symbol  = "",  target = "",
+             apikey  = "",  secret = "",
+             user    = "",  pass   = "",
+             http    = "",
+             ws      = "",  wS     = "";
       virtual mExchange config() = 0;
-      virtual void pos() = 0;
-      virtual void book() = 0;
-      virtual void send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0;
-      virtual void cancel(string oI, string oE, mSide oS, unsigned long oT) = 0;
-      virtual void cancelAll() = 0;
+      virtual void pos() = 0,
+                   book() = 0,
+                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                   cancelAll() = 0;
       virtual string clientId() = 0;
-      bool cancelByClientId = 0;
-      bool supportCancelAll = 0;
+      bool cancelByClientId = 0,
+           supportCancelAll = 0;
   };
   struct mPair {
     int base;

@@ -16,7 +16,6 @@
 #include <vector>
 #include <map>
 
-#include "png.h"
 #include "sqlite3.h"
 #include "uWS/uWS.h"
 #include "curl/curl.h"
