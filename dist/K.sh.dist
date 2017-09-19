@@ -38,11 +38,6 @@ UI_PASSWORD=NULL
 #UI_OPENPORT=6969
 UI_OPENPORT=3000
 
-## UI_NEXTSITE
-### - Allows any url, to link the next matryoshka UI.
-#UI_NEXTSITE=https://127.0.0.1:6970/
-UI_NEXTSITE=https://www.example.com/
-
 
 # III
 ## API_EXCHANGE
@@ -124,7 +119,6 @@ until ./app/server/K                 \
     --port $UI_OPENPORT              \
     --user $UI_USERNAME              \
     --pass $UI_PASSWORD              \
-    --matryoshka $UI_NEXTSITE        \
     --exchange $API_EXCHANGE         \
     --currency $API_CURRENCY         \
     --target $API_ORDERS_DESTINATION \
