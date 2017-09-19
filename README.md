@@ -101,7 +101,9 @@ Troubleshooting:
 
 ### Configuration
 
-See [etc](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc) folder.
+See [dist/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/dist/K.sh.dist) file or your own `./K.sh`.
+
+It just contains a few variables with examples ready to be reused (the suggested urls will work), and at the very end of the file is the execution of the bot.
 
 ### Upgrade to the latest commit
 
