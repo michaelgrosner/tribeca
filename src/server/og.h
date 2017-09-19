@@ -228,7 +228,7 @@ namespace K {
           o.side,
           val, 0, 0, 0, 0, 0, fee, false
         );
-        cout << FN::uiT() << "GW " << (o.side == mSide::Bid ? RCYAN : RPURPLE) << CF::cfString("EXCHANGE") << " TRADE " << (trade.side == mSide::Bid ? BCYAN : BPURPLE) << (trade.side == mSide::Bid ? "BUY " : "SELL ") << trade.quantity << " " << mCurrency[trade.pair.base] << " at price " << trade.price << " " << mCurrency[trade.pair.quote] << " (value " << trade.value << " " << mCurrency[trade.pair.quote] << ")" << endl;
+        cout << FN::uiT() << "GW " << (o.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (trade.side == mSide::Bid ? BCYAN : BPURPLE) << (trade.side == mSide::Bid ? "BUY " : "SELL ") << trade.quantity << " " << mCurrency[trade.pair.base] << " at price " << trade.price << " " << mCurrency[trade.pair.quote] << " (value " << trade.value << " " << mCurrency[trade.pair.quote] << ")" << endl;
         ev_ogTrade(trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")

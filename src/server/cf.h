@@ -1,90 +1,228 @@
 #ifndef K_CF_H_
 #define K_CF_H_
 
+#ifndef K_BUILD
+#define K_BUILD "0"
+#endif
+
+#ifndef K_STAMP
+#define K_STAMP "0"
+#endif
+
 namespace K {
+  static int argPort = 3000,
+             argColors = 0,
+             argDebugOrders = 0,
+             argDebugQuotes = 0,
+             argHeadless = 0,
+             argAutobot = 0;
+  extern string argExchange;
+  static string argTitle = "K.bot",
+                argUser = "NULL",
+                argPass = "NULL",
+                argMatryoshka = "https://www.example.com/",
+                argDatabase = "",
+                argCurrency = "NULL",
+                argTarget = "NULL",
+                argApikey = "NULL",
+                argSecret = "NULL",
+                argUsername = "NULL",
+                argPassphrase = "NULL",
+                argHttp = "NULL",
+                argWs = "NULL",
+                argWss = "NULL";
+  static double argEwmaShort = 0,
+                argEwmaMedium = 0,
+                argEwmaLong = 0;
   static Gw* gw;
   static Gw* gW;
-  extern json cf;
-  extern string cFname;
   class CF {
     public:
-      static void internal() {
-        string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K");
-        cFname = string("etc/").append(k).append(".json");
-        string cfname = string("etc/").append(k).append(".png");
-        if (access(cFname.data(), F_OK) != -1) {
-          ifstream file(cFname);
-          cf = json::parse(string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>()));
-          cout << FN::uiT() << "CF" << RWHITE <<" settings loaded from JSON file " << RYELLOW << k << RWHITE << " OK." << endl;
-        } else if (access(cfname.data(), F_OK) != -1) {
-          cFname = cfname;
-          png_structp png_ptr;
-          png_infop info_ptr;
-          unsigned char sig[8];
-          FILE *fp;
-          if (!(fp = fopen(cFname.data(), "rb"))) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not find and open file " << k << "." << endl; }
-          else {
-            fread(sig, 1, 8, fp);
-            if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Not a PNG file." << endl; }
-            else {
-              png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-              info_ptr = png_create_info_struct(png_ptr);
-              if (!png_ptr) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not allocate memory." << endl; }
-              else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << RRED << " Errrror:" << BRED << " PNG error." << endl; }
-              else {
-                png_init_io(png_ptr, fp);
-                png_set_sig_bytes(png_ptr, 8);
-                png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-                png_textp text_ptr;
-                int num_text;
-                png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
-                string conf = "";
-                for (int i = 0; i < num_text; i++)
-                  if (strcmp("K.conf", text_ptr[i].key) == 0)
-                    conf = text_ptr[i].text;
-                if (conf.length()) {
-                  cf = json::parse(conf);
-                  cout << FN::uiT() << "CF" << RWHITE << " Settings loaded from PNG file " << k << " OK." << endl;
-                } else cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " No data found inside PNG file " << k << "." << endl;
-              }
-            }
+      static void main(int argc, char** argv) {
+        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << endl;
+        int k;
+        while (true) {
+          int i = 0;
+          static struct option args[] = {
+            {"help",         no_argument,       0,               'h'},
+            {"colors",       no_argument,       &argColors,        1},
+            {"debug-orders", no_argument,       &argDebugOrders,   1},
+            {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+            {"headless",     no_argument,       &argHeadless,      1},
+            {"autobot",      no_argument,       &argAutobot,       1},
+            {"matryoshka",   required_argument, 0,               'k'},
+            {"exchange",     required_argument, 0,               'e'},
+            {"currency",     required_argument, 0,               'c'},
+            {"target",       required_argument, 0,               'T'},
+            {"apikey",       required_argument, 0,               'A'},
+            {"secret",       required_argument, 0,               'S'},
+            {"passphrase",   required_argument, 0,               'X'},
+            {"username",     required_argument, 0,               'U'},
+            {"http",         required_argument, 0,               'H'},
+            {"wss",          required_argument, 0,               'W'},
+            {"ws",           required_argument, 0,               'w'},
+            {"title",        required_argument, 0,               'K'},
+            {"port",         required_argument, 0,               'P'},
+            {"user",         required_argument, 0,               'u'},
+            {"pass",         required_argument, 0,               'p'},
+            {"database",     required_argument, 0,               'd'},
+            {"ewma-short",   required_argument, 0,               's'},
+            {"ewma-medium",  required_argument, 0,               'm'},
+            {"ewma-long",    required_argument, 0,               'l'},
+            {"version",      no_argument,       0,               'v'},
+            {0,              0,                 0,                 0}
+          };
+          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:w:W:H:U:X:S:A:T:", args, &i);
+          if (k == -1) break;
+          switch (k) {
+            case 0: break;
+            case 'P': argPort = stoi(optarg); break;
+            case 'T': argTarget = string(optarg); break;
+            case 'A': argApikey = string(optarg); break;
+            case 'S': argSecret = string(optarg); break;
+            case 'U': argUsername = string(optarg); break;
+            case 'X': argPassphrase = string(optarg); break;
+            case 'H': argHttp = string(optarg); break;
+            case 'W': argWss = string(optarg); break;
+            case 'w': argWs = string(optarg); break;
+            case 'e': argExchange = string(optarg); break;
+            case 'c': argCurrency = string(optarg); break;
+            case 'd': argDatabase = string(optarg); break;
+            case 'k': argMatryoshka = string(optarg); break;
+            case 'K': argTitle = string(optarg); break;
+            case 'u': argUser = string(optarg); break;
+            case 'p': argPass = string(optarg); break;
+            case 's': argEwmaShort = stod(optarg); break;
+            case 'm': argEwmaMedium = stod(optarg); break;
+            case 'l': argEwmaLong = stod(optarg); break;
+            case 'h': cout
+              << RGREEN << "This is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
+              << RGREEN << "This is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
+              << BGREEN << " " << RGREEN << " questions: " << RYELLOW << "https://21.co/analpaper/" << endl
+              << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl
+              << BGREEN << " " << RGREEN << " downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
+            case '?': cout
+              << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
+              << FN::uiT() << "[arguments]:" << endl
+              << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << endl
+              << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
+              << FN::uiT() << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << endl
+              << FN::uiT() << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << endl
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (overwrites '-P')." << endl
+              << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << endl
+              << FN::uiT() << RWHITE << "-k, --matryoshka         - set url of the next matryoska UI." << endl
+              << FN::uiT() << RWHITE << "-P, --port               - set port number to listen for UI connections." << endl
+              << FN::uiT() << RWHITE << "-u, --user               - set allowed username for UI connections." << endl
+              << FN::uiT() << RWHITE << "-p, --pass               - set allowed password for UI connections." << endl
+              << FN::uiT() << RWHITE << "-e, --exchange           - set exchange name for trading (like 'NULL')." << endl
+              << FN::uiT() << RWHITE << "-c, --currency           - set currency pairs for trading (like 'BTC/EUR')." << endl
+              << FN::uiT() << RWHITE << "-T, --target             - set orders destination (like 'NULL')." << endl
+              << FN::uiT() << RWHITE << "-A, --apikey             - set API KEY for trading (mandatory)." << endl
+              << FN::uiT() << RWHITE << "-S, --secret             - set API SECRET for trading (mandatory)." << endl
+              << FN::uiT() << RWHITE << "-X, --passphrase         - set API PASSPHRASE for trading (may be 'NULL')." << endl
+              << FN::uiT() << RWHITE << "-U, --username           - set API USERNAME for trading (may be 'NULL')." << endl
+              << FN::uiT() << RWHITE << "-H, --http               - set API HTTP/S URL for trading (mandatory)." << endl
+              << FN::uiT() << RWHITE << "-W, --wss                - set API SECURE WS URL for trading (mandatory)." << endl
+              << FN::uiT() << RWHITE << "-w, --ws                 - set API PUBLIC WS URL for trading (may be 'NULL')." << endl
+              << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative database filename," << endl
+              << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << endl
+              << FN::uiT() << RWHITE << "                           any path with a filename is valid," << endl
+              << FN::uiT() << RWHITE << "                           or use ':memory:' (sqlite.org/inmemorydb.html)." << endl
+              << FN::uiT() << RWHITE << "-s, --ewma-short=PRICE   - set initial ewma short value." << endl
+              << FN::uiT() << RWHITE << "-m, --ewma-medium=PRICE  - set initial ewma medium value." << endl
+              << FN::uiT() << RWHITE << "-l, --ewma-long=PRICE    - set initial ewma long value." << endl
+              << FN::uiT() << RWHITE << "-K, --title              - set custom title to identify different bots." << endl
+              << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << endl
+              << BGREEN << " " << RGREEN << " more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
+              << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << endl
+              << BGREEN << " " << RGREEN << " home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
+              exit(EXIT_SUCCESS);
+              break;
+            case 'v': exit(EXIT_SUCCESS);
+            default: abort();
           }
         }
-        if (cfString("EXCHANGE", false) == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
+        if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
+        if (optind < argc) {
+          cout << FN::uiT() << "ARG" << RRED << " Warrrrning:" << BRED << " non-option ARGV-elements: ";
+          while(optind < argc) cout << argv[optind++];
+          cout << endl;
+        }
+        cout << RWHITE;
+        if (!argColors) {
+          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
+          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
+          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
+          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
+        }
       };
-      static void external() {
+      static void api() {
         gw = Gw::E(cfExchange());
         gw->base = cfBase();
         gw->quote = cfQuote();
+        gw->target = argTarget;
+        gw->apikey = argApikey;
+        gw->secret = argSecret;
+        gw->user = argUsername;
+        gw->pass = argPassphrase;
+        gw->http = argHttp;
+        gw->ws = argWss;
+        gw->wS = argWs;
         cfExchange(gw->config());
         gW = (gw->target == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
-      static string cfString(string k, bool r = true) {
-        if (getenv(k.data()) != NULL) return string(getenv(k.data()));
-        if (cf.find(k) == cf.end()) {
-          if (r) {
-            cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" configuration."<< endl << endl << FN::uiT() << "Hint! Make sure " << cFname << " exists or see https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.json.dist" << endl;
-            exit(1);
-          } else return "";
-        }
-        return cf[k].is_string()
-          ? cf.value(k, "")
-          : (cf[k].is_number() ? to_string(cf.value(k, 0.0)) : "");
+      static void deprecated() {
+        // string k = string(getenv("KCONFIG") != NULL ? getenv("KCONFIG") : "K");
+        // string cfname = string("etc/").append(k).append(".png");
+        // if (access(cfname.data(), F_OK) != -1) {
+          // png_structp png_ptr;
+          // png_infop info_ptr;
+          // unsigned char sig[8];
+          // FILE *fp;
+          // if (!(fp = fopen(cfname.data(), "rb"))) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not find and open file " << k << "." << endl; }
+          // else {
+            // fread(sig, 1, 8, fp);
+            // if (!png_check_sig(sig, 8)) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Not a PNG file." << endl; }
+            // else {
+              // png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+              // info_ptr = png_create_info_struct(png_ptr);
+              // if (!png_ptr) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Could not allocate memory." << endl; }
+              // else if (setjmp(png_jmpbuf(png_ptr))) { cout << FN::uiT() << RRED << " Errrror:" << BRED << " PNG error." << endl; }
+              // else {
+                // png_init_io(png_ptr, fp);
+                // png_set_sig_bytes(png_ptr, 8);
+                // png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+                // png_textp text_ptr;
+                // int num_text;
+                // png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
+                // string conf = "";
+                // for (int i = 0; i < num_text; i++)
+                  // if (strcmp("K.conf", text_ptr[i].key) == 0)
+                    // conf = text_ptr[i].text;
+                // if (conf.length()) {
+                  // cf = json::parse(conf);
+                  // cout << FN::uiT() << "CF" << RWHITE << " Settings loaded from PNG file " << k << " OK." << endl;
+                // } else cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " No data found inside PNG file " << k << "." << endl;
+              // }
+            // }
+          // }
+        // }
+        // if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not found, reading ENVIRONMENT vars instead." << endl;
       };
       static int cfBase() {
-        string k_ = cfString("TradedPair");
+        string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         return S2mC(k);
       };
       static int cfQuote() {
-        string k_ = cfString("TradedPair");
+        string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
         return S2mC(k);
       };
       static mExchange cfExchange() {
-        string k = FN::S2l(cfString("EXCHANGE"));
+        string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;
         else if (k == "bitfinex") return mExchange::Bitfinex;
@@ -102,8 +240,7 @@ namespace K {
         exit(1);
       };
       static mConnectivity autoStart() {
-        return "auto" == cfString("BotIdentifier").substr(0,4)
-          ? mConnectivity::Connected : mConnectivity::Disconnected;
+        return argAutobot ? mConnectivity::Connected : mConnectivity::Disconnected;
       };
     private:
       static void cfExchange(mExchange e) {
@@ -154,9 +291,9 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (!gw->minTick) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Unable to fetch data from " << cfString("EXCHANGE") << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
-        else { cout << FN::uiT() << "GW " << RWHITE << cfString("EXCHANGE") << " allows client IP." << endl; }
-        cout << FN::uiT() << "GW " << RWHITE << setprecision(8) << fixed << cfString("EXCHANGE") << ":" << endl
+        if (!gw->minTick) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Unable to fetch data from " << argExchange << " symbol \"" << gw->symbol << "\"." << endl; exit(1); }
+        else { cout << FN::uiT() << "GW " << RWHITE << argExchange << " allows client IP." << endl; }
+        cout << FN::uiT() << "GW " << RWHITE << setprecision(8) << fixed << argExchange << ":" << endl
           << "- autoBot: " << (autoStart() == mConnectivity::Connected ? "yes" : "no") << endl
           << "- pair: " << gw->symbol << endl
           << "- minTick: " << gw->minTick << endl

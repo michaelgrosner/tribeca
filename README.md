@@ -45,7 +45,6 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Manual Installation](#manual-installation)
   - [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
   - [Multiple instances party time](#multiple-instances-party-time)
-  - [Steganographic configuration files](#steganographic-configuration-files)
 - Information
   - [Compatible Exchanges](#compatible-exchanges)
   - [Configuration](#configuration)
@@ -78,20 +77,15 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 ```
  $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
  $ cd K
- $ cp etc/K.json.dist etc/K.json
- $ vim etc/K.json
- $ make start
+ $ make install
+ $ vim K.sh
 ```
 
-See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `etc/K.json`.
+See [configuration](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options) section while setting up the configuration options in your new config file `K.sh`.
 
-`make start` will run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html). But also it will auto run `make install` to compile the application in `app` folder if it was not already done before.
-
-To see the output, attach the screen with `make screen`.
+Once the config file is ready, execute `./K.sh` (or `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html); to see the output, attach the screen with `make screen`).
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
-
-Alternatively, is possible to simply run `./K.sh` (without make), but first the application needs to be installed.
 
 Troubleshooting:
 
@@ -101,7 +95,7 @@ Troubleshooting:
 
  Optional:
 
- * See `./K.sh --help`.
+ * See `./K.sh --help` and `make help`.
 
  * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
@@ -119,43 +113,23 @@ After install the latest version, all running instances will be restarted.
 
 ### Multiple instances party time
 
-Please note, an "instance" is in fact a config file under `etc` folder; using a single machine and the same source folder, you can run as many instances as config files you have in `etc` folder (limited by the available free RAM).
+Please note, an "instance" is in fact a `*.sh` config file located in the top level path; using a single machine and the same source folder, you can run as many instances as `*.sh` files you have in the top level path (limited by the available free RAM).
 
-You can list the current instances running anytime with `make list`.
+Anytime you can list the current instances running with `make list`.
 
-Simple commands like `make start`, `make stop` or `make restart` (without any config file defined) will use the default config file `etc/K.json` or `etc/K.png`.
+Simple commands like `make start`, `make screen`, `make stop` or `make restart` (without any config file defined) will use the default config file `K.sh`.
 
 To run multiple instances using a collection of config files:
 
-1. Create a new config file with `cp etc/K.json etc/X.json` (with any name but `.json` extension).
+1. Create a new config file with `cp dist/K.sh.dist X.sh && chmod +x X.sh` (use `X.sh` or any name but keep `.sh` extension).
 
-    1. Edit the value of `WebClientListenPort` in the new config file to set a new port, so all applications have a unique port to display the UI.
+2. Edit the new config file as you alternatively desire.
 
-    2. Edit the values of `BotIdentifier`, `EXCHANGE` and `TradedPair` in the new config file as you alternatively desire.
+3. Run the new instance with `./X.sh` or `K=X.sh make start`, also the commands `make screen`, `make stop` and `make restart` allow the environment variable `K`, the value is simply the filename of the config file that you want to run; this value will also be used as the `uid` of the process executed by `screen`.
 
-2. Run the new instance with `KCONFIG=X make start`, also the commands `make stop` and `make restart` allow the environment variable `KCONFIG`, the value is simply the filename of the config file under `etc` folder that you want to run (without extension because [could be a PNG](#steganographic-configuration-files) also); this value will also be used as the `uid` of the process executed by `screen`.
+4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
 
-3. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
-
-After multiple config files are setup under `etc` folder, to control them all together instead of one by one, the commands `make startall`, `make stopall` and `make restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
-
-### Steganographic configuration files
-
-If you dont like to have your `etc/*.json` files in plain text, you can encrypt them behind any PNG image:
-
-1. Download any PNG file that you like and place it at `etc/` folder.
-
-2. Rename the `*.png` filename to match the `*.json` filename (for example if you have a `etc/K.json` file you can rename your png file to `etc/K.png`).
-
-3. Once you have your json file all configured and your png file renamed equal than the json file (lets say the files are named `K`):
-```
- $ PNG=K make png
-```
-Feel free to change the suggested filename `K`. Also you can run `make png` as many times as you update your original json file, always with `PNG` environment variable matching the filename of both json and png files.
-
-4. Delete the now useless `.json` file and restart the application.
-
-5. Keep your `.png` file in a secure location always, never share it. Even if your api keys and api secrets are now binary encrypted, they can still be easily readable with tools like `identify -verbose etc/K.png`.
+After multiple config files are setup, to control them all together instead of one by one, the commands `make startall`, `make stopall` and `make restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
 ### Application Usage
 
@@ -217,9 +191,9 @@ To pipe the output to stdout, execute the application in the foreground with `./
 
 To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start`.
 
-Passing a config filename is possible with environment var `KCONFIG` like for example `KCONFIG=X ./K.sh`.
-
 ### Unreleased Changelog:
+
+Added command-line arguments.
 
 Updated quoting engine and gateways without nodejs.
 
