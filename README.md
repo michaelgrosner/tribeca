@@ -83,7 +83,9 @@ See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/d
 
 See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
 
-Once the config file is ready, execute `./K.sh` (or `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html); to see the output, attach the screen with `make screen`).
+Once the config file is ready, execute `./K.sh`.
+
+Or `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html); to see the output, attach the screen with `make screen`.
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
@@ -129,13 +131,13 @@ To run multiple instances using a collection of config files:
 
 3. Run the new instance with `./X.sh` or `K=X.sh make start`, also the commands `make screen`, `make stop` and `make restart` allow the environment variable `K`, the value is simply the filename of the config file that you want to run; this value will also be used as the `uid` of the process executed by `screen`.
 
-4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the config option `MatryoshkaUrl`.
+4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the optional argument `--matryoshka=URL`.
 
 After multiple config files are setup, to control them all together instead of one by one, the commands `make startall`, `make stopall` and `make restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
 ### Application Usage
 
-1. Open your web browser to connect to HTTPS port `3000` (or value of `WebClientListenPort`) of the machine running K. If you're running K locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
+1. Open your web browser to connect to HTTPS port `3000` (or your configured port number) of the machine running K. If you're running K locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
 2. Read up on how to use K and market making in the [manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
@@ -143,7 +145,7 @@ After multiple config files are setup, to control them all together instead of o
 
 ### Web UI
 
-Once `K` is up and running, visit HTTPS port `3000` (or value of `WebClientListenPort`) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
+Once `K` is up and running, visit HTTPS port `3000` (or your configured port number) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
