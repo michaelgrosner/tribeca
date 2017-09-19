@@ -12,14 +12,14 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include   \
-  src/server/K.cc -pthread -rdynamic                    \
-  -DK_STAMP='"$(shell date --rfc-3339=ns)"'             \
-  -DK_BUILD='"$(CROSS)"'   $(KLOCAL)/include/uWS/*.cpp  \
-  dist/lib/K-$(CROSS).a    $(KLOCAL)/lib/libquickfix.a  \
-  $(KLOCAL)/lib/libpng16.a $(KLOCAL)/lib/libsqlite3.a   \
-  $(KLOCAL)/lib/libz.a     $(KLOCAL)/lib/libcurl.a      \
-  $(KLOCAL)/lib/libssl.a   $(KLOCAL)/lib/libcrypto.a -ldl
+KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
+  src/server/K.cc -pthread -rdynamic                     \
+  -DK_STAMP='"$(shell date --rfc-3339=ns)"'              \
+  -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp \
+  dist/lib/K-$(CROSS).a      $(KLOCAL)/lib/libquickfix.a \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
+  $(KLOCAL)/lib/libcrypto.a  -ldl
 
 all: K
 
@@ -70,7 +70,6 @@ help:
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
 	#  make json         - download json src files     #
-	#  make png16        - download png16 src files    #
 	#  make uws          - download uws src files      #
 	#  make quickfix     - download quickfix src files #
 	#  make clean        - remove external src files   #
@@ -95,7 +94,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib png16 openssl curl json sqlite uws quickfix
+	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -145,12 +144,6 @@ json: build-$(CROSS)
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o $(KLOCAL)/include/json.h                                                      )
 
-png16: build-$(CROSS)
-	test -d build-$(CROSS)/libpng-$(V_PNG) || (                                                   \
-	curl -L https://github.com/glennrp/libpng/archive/v$(V_PNG).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/libpng-$(V_PNG) && ./autogen.sh && CC=$(CC) ./configure                  \
-	--prefix=$(PWD)/$(KLOCAL) --libdir=$(PWD)/$(KLOCAL)/lib && make && make install               )
-
 quickfix: build-$(CROSS)
 	test -d build-$(CROSS)/quickfix-$(V_QF) || (                                                   \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
@@ -197,6 +190,7 @@ docker:
 	@npm install --unsafe-perm
 	@$(MAKE) client pub bundle
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
+	sed -i "/Feel/,+106d" K.sh
 
 reinstall: .git src
 	rm -rf app
@@ -308,4 +302,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin zlib png16 openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich

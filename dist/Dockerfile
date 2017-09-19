@@ -9,69 +9,30 @@ RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git K
 WORKDIR K
 
 # Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
-#RUN rm -rf dist/sslcert
+#RUN rm -rf dist/sslcert/server.*
 
 RUN make docker
 
 EXPOSE 3000 5000
 
-# General config properties. Replace with your own exchange account information:
-ENV BotIdentifier dev
-ENV EXCHANGE NULL
-ENV TradedPair BTC/USD
-ENV WebClientUsername NULL
-ENV WebClientPassword NULL
-ENV WebClientListenPort 3000
-ENV MatryoshkaUrl https://
+# See examples and descriptions of the
+# following variables at dist/K.sh.dist.
 
-# Set options only for your desired EXCHANGE:
+ENV OPTIONAL_ARGUMENTS="--colors"
 
-## Coinbase GDAX
-ENV CoinbaseRestUrl https://api.gdax.com
-ENV CoinbaseWebsocketUrl wss://ws-feed.gdax.com
-ENV CoinbasePassphrase NULL
-ENV CoinbaseApiKey NULL
-ENV CoinbaseSecret NULL
-ENV CoinbaseOrderDestination Coinbase
+ENV UI_USERNAME=NULL
+ENV UI_PASSWORD=NULL
+ENV UI_OPENPORT=3000
 
-## OkCoin
-ENV OkCoinWsUrl wss://real.okcoin.com:10440/websocket/okcoinapi
-ENV OkCoinHttpUrl https://www.okcoin.com/api/v1/
-ENV OkCoinApiKey NULL
-ENV OkCoinSecretKey NULL
-ENV OkCoinOrderDestination OkCoin
-
-## Bitfinex
-ENV BitfinexHttpUrl https://api.bitfinex.com/v1
-ENV BitfinexWebsocketUrl wss://api.bitfinex.com/ws/2
-ENV BitfinexKey NULL
-ENV BitfinexSecret NULL
-ENV BitfinexOrderDestination Bitfinex
-
-## Poloniex
-ENV PoloniexHttpUrl https://poloniex.com
-ENV PoloniexWebsocketUrl wss://api.poloniex.com
-ENV PoloniexApiKey NULL
-ENV PoloniexSecretKey NULL
-ENV PoloniexOrderDestination Poloniex
-
-## Korbit
-ENV KorbitHttpUrl https://api.korbit.co.kr/v1
-ENV KorbitApiKey NULL
-ENV KorbitSecretKey NULL
-ENV KorbitUsername NULL
-ENV KorbitPassword NULL
-ENV KorbitOrderDestination Korbit
-
-## HitBtc
-ENV HitBtcPullUrl http://api.hitbtc.com
-ENV HitBtcOrderEntryUrl wss://api.hitbtc.com:8080
-ENV HitBtcMarketDataUrl ws://api.hitbtc.com:80
-ENV HitBtcApiKey NULL
-ENV HitBtcSecret NULL
-ENV HitBtcOrderDestination HitBtc
-
-## Quoting Parameters
-ENV delayUI 3
+ENV API_EXCHANGE NULL
+ENV API_CURRENCY BTC/USD
+ENV API_ORDERS_DESTINATION NULL
+ENV API_KEY NULL
+ENV API_SECRET NULL
+ENV API_PASSPHRASE NULL
+ENV API_USERNAME NULL
+ENV API_HTTP_ENDPOINT NULL
+ENV API_WSS_ENDPOINT NULL
+ENV API_WS_ENDPOINT NULL
 
 CMD ["K.sh"]
