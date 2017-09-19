@@ -115,13 +115,19 @@ namespace K {
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         CF::api();
       };
-      static void uiSnap(uiTXT k, uiSnap_ cb) {
+      static void uiSnap(uiTXT _k, uiSnap_ cb) {
         if (argHeadless) return;
-        uiOn(uiBIT::SNAP, k, cb, nullptr);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        string k = string(1, (char)uiBIT::SNAP).append(string(1, (char)_k));
+        if (sess->cbSnap.find(k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+        else sess->cbSnap[k] = cb;
       };
-      static void uiHand(uiTXT k, uiMsg_ cb) {
+      static void uiHand(uiTXT _k, uiMsg_ cb) {
         if (argHeadless) return;
-        uiOn(uiBIT::MSG, k, nullptr, cb);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        string k = string(1, (char)uiBIT::MSG).append(string(1, (char)_k));
+        if (sess->cbMsg.find(k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
+        else sess->cbMsg[k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
         if (argHeadless) return;
@@ -171,17 +177,6 @@ namespace K {
       static void uiUp(uiTXT k, json o) {
         string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
-      };
-      static void uiOn(uiBIT k_, uiTXT _k, uiSnap_ cbSnap, uiMsg_ cbMsg) {
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        string k = string(1, (char)k_).append(string(1, (char)_k));
-        if (uiBIT::SNAP == k_) {
-          if (sess->cbSnap.find(k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-          else sess->cbSnap[k] = cbSnap;
-        } else if (uiBIT::MSG == k_) {
-          if (sess->cbMsg.find(k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-          else sess->cbMsg[k] = cbMsg;
-        }
       };
       static void uiHold(uiTXT k, json o) {
         bool isOSR = k == uiTXT::OrderStatusReports;
