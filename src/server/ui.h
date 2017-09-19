@@ -18,15 +18,11 @@ namespace K {
   class UI {
     public:
       static void main() {
-        CF::internal();
         if (!argHeadless) {
-          int port = stoi(CF::cfString("WebClientListenPort"));
-          string name = CF::cfString("WebClientUsername");
-          string key = CF::cfString("WebClientPassword");
           uiGroup->setUserData(new uiSess);
           uiSess *sess = (uiSess *) uiGroup->getUserData();
-          if (name != "NULL" && key != "NULL" && name.length() > 0 && key.length() > 0) {
-            B64::Encode(name.append(":").append(key), &uiNK64);
+          if (argUser != "NULL" && argPass != "NULL" && argUser.length() > 0 && argPass.length() > 0) {
+            B64::Encode(string(argUser).append(":").append(argPass), &uiNK64);
             uiNK64 = string("Basic ").append(uiNK64);
           }
           uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
@@ -105,18 +101,18 @@ namespace K {
             }
           });
           uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
-          if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(port, c, 0, uiGroup))
-            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
-          else if (hub.listen(port, nullptr, 0, uiGroup))
-            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << "." << endl;
-          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(port) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ").append(to_string(port))) << endl; exit(1); }
+          if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
+            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
+          else if (hub.listen(argPort, nullptr, 0, uiGroup))
+            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
+          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(argPort) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ").append(to_string(argPort))) << endl; exit(1); }
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
         UI::uiHand(uiTXT::Notepad, &onHandNote);
         UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
-        CF::external();
+        CF::api();
       };
       static void uiSnap(uiTXT k, uiCb cb) {
         if (argHeadless) return;

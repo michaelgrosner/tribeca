@@ -91,13 +91,6 @@ namespace K {
       };
     private:
       static void load() {
-        for (json::iterator it = defQP.begin(); it != defQP.end(); ++it) {
-          string k = CF::cfString(it.key(), false);
-          if (k == "") continue;
-          if (it.value().is_number()) defQP[it.key()] = stod(k);
-          else if (it.value().is_boolean()) defQP[it.key()] = (FN::S2u(k) == "TRUE" or k == "1");
-          else defQP[it.key()] = k;
-        }
         qp = defQP;
         json qp_ = DB::load(uiTXT::QuotingParametersChange);
         if (qp_.size()) {

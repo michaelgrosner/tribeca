@@ -1,6 +1,4 @@
-K.sh
-etc/*.png
-etc/*.json
+*.sh
 app
 build*
 test/coverage

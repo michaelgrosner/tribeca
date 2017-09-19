@@ -1,4 +1,4 @@
-KCONFIG ?= K
+K       ?= K.sh
 CROSS   ?= $(shell g++ -dumpmachine)
 CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
@@ -182,7 +182,7 @@ packages:
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
-	test -f K.sh || cp dist/K.sh.dist K.sh
+	test -f *.sh || (cp dist/K.sh.dist K.sh && chmod +x K.sh)
 
 install:
 	@$(MAKE) packages
@@ -220,10 +220,10 @@ restartall:
 	@$(MAKE) list -s
 
 stopall:
-	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% stop -s
+	ls -1 *.sh | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% stop -s
 
 startall:
-	ls -1 etc/*.json etc/*.png | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) KCONFIG=% start -s
+	ls -1 *.sh | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% start -s
 	@$(MAKE) list -s
 
 restart:
@@ -233,18 +233,18 @@ restart:
 	@$(MAKE) list -s
 
 stop:
-	@screen -XS $(KCONFIG) quit && echo STOP $(KCONFIG) DONE || :
+	@screen -XS $(K) quit && echo STOP $(K) DONE || :
 
 start:
 	@test -d app || $(MAKE) install
-	@test -n "`screen -list | grep "\.$(KCONFIG)	("`"             \
-	&& (echo $(KCONFIG) is already running.. && screen -list)      \
-	|| (screen -dmS $(KCONFIG) ./K.sh && echo START $(KCONFIG) DONE)
+	@test -n "`screen -list | grep "\.$(K)	("`"                \
+	&& (echo $(K) is already running.. && screen -list)         \
+	|| (screen -dmS $(K) ./$(K) && echo START $(K) DONE)
 
 screen:
-	@test -n "`screen -list | grep "\.$(KCONFIG)	("`" && ( \
-	echo Detach screen hotkey: holding CTRL hit A then D    \
-	&& sleep 2 && screen -r $(KCONFIG)) || screen -list || :
+	@test -n "`screen -list | grep "\.$(K)	("`" && (    \
+	echo Detach screen hotkey: holding CTRL hit A then D \
+	&& sleep 2 && screen -r $(K)) || screen -list || :
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \

@@ -44,8 +44,8 @@ using namespace dec;
 
 #include "km.h"
 #include "fn.h"
-#include "ev.h"
 #include "cf.h"
+#include "ev.h"
 #include "db.h"
 #include "ui.h"
 #include "qp.h"
@@ -57,7 +57,7 @@ using namespace dec;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;int main(int argc, char** argv) {;;;
-;;;;K::FN::main(argc, argv);;;;;;;;;;;
+;;;;K::CF::main(argc, argv);;;;;;;;;;;
 ;;;;K::EV::main();;;;;;;;;;;;;;;;;;;;;
 ;;;;K::UI::main();;;;    ;;;;    ;;;;;
 ;;;;K::DB::main();;;;    ;;    ;;;;;;;

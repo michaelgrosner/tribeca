@@ -66,13 +66,12 @@ namespace K {
       };
     private:
       static json onSnapProduct(json z) {
-        string k = CF::cfString("BotIdentifier");
         return {{
           {"exchange", (double)gw->exchange},
           {"pair", {{"base", (double)gw->base}, {"quote", (double)gw->quote}}},
           {"minTick", gw->minTick},
-          {"environment", k.substr(k.length()>4?(k.substr(0,4) == "auto"?4:0):0)},
-          {"matryoshka", CF::cfString("MatryoshkaUrl")},
+          {"environment", argTitle},
+          {"matryoshka", argMatryoshka},
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
@@ -112,16 +111,16 @@ namespace K {
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
-          cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " Quoting state changed to " << RYELLOW << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << RWHITE << "." << endl;
+          cout << FN::uiT() << "GW " << argExchange << RWHITE << " Quoting state changed to " << RYELLOW << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << RWHITE << "." << endl;
           UI::uiSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ev_gwConnectButton(gwQuotingState);
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
+        cout << FN::uiT() << "GW " << argExchange << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
-        cout << FN::uiT() << "GW " << CF::cfString("EXCHANGE") << RWHITE << " cancell all open orders OK." << endl;
+        cout << FN::uiT() << "GW " << argExchange << RWHITE << " cancell all open orders OK." << endl;
         EV::end(code);
       };
   };
