@@ -190,7 +190,7 @@ docker:
 	@npm install --unsafe-perm
 	@$(MAKE) client pub bundle
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
-	sed -i "/Feel/,+106d" K.sh
+	sed -i "/Usage/,+117d" K.sh
 
 reinstall: .git src
 	rm -rf app
