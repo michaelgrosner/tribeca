@@ -224,7 +224,7 @@ namespace K {
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
           system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
-          system("stunnel dist/K-stunnel.conf");
+          system("stunnel etc/K-stunnel.conf");
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
           gw->minTick = stod(k.value("quote_increment", "0"));
           gw->minSize = stod(k.value("base_min_size", "0"));

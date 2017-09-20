@@ -101,8 +101,8 @@ namespace K {
                 (*sess->cbMsg[message[1]])(v);
             }
           });
-          uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
-          if ((access("dist/sslcert/server.crt", F_OK) != -1) && (access("dist/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
+          uS::TLS::Context c = uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", "");
+          if ((access("etc/sslcert/server.crt", F_OK) != -1) && (access("etc/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
             cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
             cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
