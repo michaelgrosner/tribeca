@@ -1,0 +1,21 @@
+#!/bin/sh
+
+SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+
+printf "$(cat <<\CARLESGITTIP
+
+Free Software Free Society
+
+To support commits by ctubio,
+you can buy-me-a-drink with a small git tip at:
+  1GitTipgxvKB3zjCLXRcSgDhC9pivkpc7u
+
+I promise to drink chocolate milk in the development of the next commit.
+
+To request new features or in case this commit breaks something for you,
+please create a new github issue with all possible details,
+but never share your API Keys!
+
+%s
+CARLESGITTIP
+)" "$SOB" >> "$1";

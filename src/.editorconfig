@@ -1,0 +1,15 @@
+# This file is for unifying the coding style for different editors and IDEs
+# editorconfig.org
+
+root = true
+
+[*.ts]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Note: The EditorConfig Notepad++ plugin supports the following EditorConfig properties:
+# https://github.com/editorconfig/editorconfig-notepad-plus-plus#supported-properties

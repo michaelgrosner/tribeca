@@ -1,0 +1,36 @@
+sudo: required
+
+dist: trusty
+
+osx_image: xcode7.3
+
+os:
+  - linux
+  - osx
+
+language: node_js
+
+node_js:
+  - 7
+  - node
+
+branches:
+  only: master
+
+before_install:
+  - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed || :;
+  - sed -i "s/^    \"hacktimer.*$//" package.json;
+  - sed -i "/\"hacktimer/,+4d" package-lock.json;
+  - test $TRAVIS_OS_NAME == "linux" && make travis || :;
+
+install:
+  - make config
+  - make install
+
+script: make test-cov
+
+after_success: make send-cov
+
+notifications:
+  email:
+    on_success: never
