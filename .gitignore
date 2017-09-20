@@ -3,5 +3,5 @@ app
 build*
 test/coverage
 node_modules
-dist/sslcert/fix.gdax.com.pem
+etc/sslcert/fix.gdax.com.pem
 .DS_Store

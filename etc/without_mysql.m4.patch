@@ -1,0 +1,20 @@
+--- build/quickfix-v.1.14.4/m4/ax_lib_mysql.m4	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/m4/without_mysql.m4	2017-09-04 23:45:48.525282580 +0000
+@@ -6,8 +6,6 @@
+
+ AC_DEFUN([_MYSQL_CHECK],[
+     AC_REQUIRE([_MYSQL_CONFIG])
+-    MYSQL_CFLAGS=`$mysql_config --cflags`
+-    MYSQL_LIBS=`$mysql_config --libs`
+     AC_SUBST(MYSQL_CFLAGS)
+     AC_SUBST(MYSQL_LIBS)
+ ])
+@@ -30,6 +28,8 @@
+     then
+         AC_REQUIRE([_MYSQL_CHECK])
+         AC_DEFINE(HAVE_MYSQL, 1, Define if you have sql library (-lmysqlclient))
++        MYSQL_CFLAGS=`$mysql_config --cflags`
++        MYSQL_LIBS=`$mysql_config --libs`
+     fi
+     AM_CONDITIONAL(HAVE_MYSQL, $has_mysql)
+ ])

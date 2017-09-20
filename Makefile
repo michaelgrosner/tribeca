@@ -51,11 +51,6 @@ help:
 	#  make changelog    - show commits                #
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#  make config       - copy basic config file      #
-	#  PNG=% make png    - inject config file into PNG #
-	#  make gdax         - download gdax ssl cert      #
-	#  make cleandb      - remove databases            #
-	#                                                  #
 	#  make client       - compile K client src        #
 	#  make pub          - compile K client src        #
 	#  make bundle       - compile K client bundle     #
@@ -72,8 +67,10 @@ help:
 	#  make json         - download json src files     #
 	#  make uws          - download uws src files      #
 	#  make quickfix     - download quickfix src files #
+	#  make gdax         - download gdax ssl cert      #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
+	#  make cleandb      - remove databases            #
 	#                                                  #
 
 K: src/server/K.cc
@@ -147,7 +144,7 @@ json: build-$(CROSS)
 quickfix: build-$(CROSS)
 	test -d build-$(CROSS)/quickfix-$(V_QF) || (                                                   \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
-	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < dist/lib/without_mysql.m4.patch  \
+	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
 	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                           \
 	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
 	&& make && make install                                                                        )
@@ -163,9 +160,6 @@ endif
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
-
-config: etc/K.json.dist
-	@test -f etc/K.json && echo etc/K.json already exists || cp etc/K.json.dist etc/K.json && echo DONE
 
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick screen \
@@ -302,4 +296,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax config packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich

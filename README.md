@@ -23,7 +23,7 @@
 
 Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/) (or [Raspbian](https://www.raspberrypi.org/downloads/raspbian/)) or [CentOS](https://wiki.centos.org/Download) instance is recommended.
 
-![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/dist/img/web_ui_preview.png)
+![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/img/web_ui_preview.png)
 
 The web UI is compatible with most web browsers/devices/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
@@ -68,7 +68,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
 
 ### Docker Installation
 
-See [dist/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/dist#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
+See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
 1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/).
@@ -99,11 +99,11 @@ Troubleshooting:
 
  * See `./K.sh --help` and `make help`.
 
- * Replace the certificate at `dist/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
+ * Replace the certificate at `etc/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
 
 ### Configuration
 
-See [dist/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/dist/K.sh.dist) file or your own `./K.sh` file.
+See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or your own `./K.sh` file.
 
 It just contains a few variables with examples ready to be reused (the suggested urls will work), and at the very end of the file is the execution of the bot.
 
@@ -125,7 +125,7 @@ Simple commands like `make start`, `make screen`, `make stop` or `make restart` 
 
 To run multiple instances using a collection of config files:
 
-1. Create a new config file with `cp dist/K.sh.dist X.sh && chmod +x X.sh` (use `X.sh` or any name but keep `.sh` extension).
+1. Create a new config file with `cp etc/K.sh.dist X.sh && chmod +x X.sh` (use `X.sh` or any name but keep `.sh` extension).
 
 2. Edit the new config file as you alternatively desire.
 
@@ -149,7 +149,7 @@ Once `K` is up and running, visit HTTPS port `3000` (or your configured port num
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
-In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `dist/sslcert` folder.
+In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
 
 ### Databases
 
