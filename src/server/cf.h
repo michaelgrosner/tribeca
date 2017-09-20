@@ -98,9 +98,9 @@ namespace K {
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
               << RGREEN << "This is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
-              << BGREEN << " " << RGREEN << " questions: " << RYELLOW << "https://21.co/analpaper/" << endl
+              << BGREEN << "  questions: " << RYELLOW << "https://21.co/analpaper/" << endl
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl
-              << BGREEN << " " << RGREEN << " downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
+              << BGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
             case '?': cout
               << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
               << FN::uiT() << "[arguments]:" << endl
@@ -149,9 +149,9 @@ namespace K {
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoska link URL of the next UI." << endl
               << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << endl
               << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << endl
-              << BGREEN << " " << RGREEN << " more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
+              << BGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << endl
-              << BGREEN << " " << RGREEN << " home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
+              << BGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
               exit(EXIT_SUCCESS);
               break;
             case 'v': exit(EXIT_SUCCESS);

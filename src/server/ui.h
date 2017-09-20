@@ -6,7 +6,7 @@ namespace K {
   static uWS::Hub hub(0, false);
   typedef void (*uiMsg_)(json);
   typedef json (*uiSnap_)();
-  struct uiSess { map<string, uiSnap_> cbSnap; map<string, uiMsg_> cbMsg; map<uiTXT, vector<json>> D; int u = 0; };
+  struct uiSess { map<char, uiSnap_> cbSnap; map<char, uiMsg_> cbMsg; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static bool uiVisibleOpt = true;
   static unsigned int uiOSR_1m = 0;
@@ -23,8 +23,8 @@ namespace K {
           uiGroup->setUserData(new uiSess);
           uiSess *sess = (uiSess *) uiGroup->getUserData();
           if (argUser != "NULL" && argPass != "NULL" && argUser.length() > 0 && argPass.length() > 0) {
-            B64::Encode(string(argUser).append(":").append(argPass), &uiNK64);
-            uiNK64 = string("Basic ").append(uiNK64);
+            B64::Encode(argUser + ':' + argPass, &uiNK64);
+            uiNK64 = string("Basic ") + uiNK64;
           }
           uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
             sess->u++;
@@ -57,24 +57,24 @@ namespace K {
               const string leaf = path.substr(path.find_last_of('.')+1);
               if (leaf == "/") {
                 cout << FN::uiT() << "UI authorization success from " << address.address << endl;
-                document.append("Content-Type: text/html; charset=UTF-8\r\n");
+                document += "Content-Type: text/html; charset=UTF-8\r\n";
                 url = "/index.html";
               } else if (leaf == "js") {
-                document.append("Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n");
+                document += "Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n";
                 url = path;
               } else if (leaf == "css") {
-                document.append("Content-Type: text/css; charset=UTF-8\r\n");
+                document += "Content-Type: text/css; charset=UTF-8\r\n";
                 url = path;
               } else if (leaf == "png") {
-                document.append("Content-Type: image/png\r\n");
+                document += "Content-Type: image/png\r\n";
                 url = path;
               } else if (leaf == "mp3") {
-                document.append("Content-Type: audio/mpeg\r\n");
+                document += "Content-Type: audio/mpeg\r\n";
                 url = path;
               }
               stringstream content;
               if (url.length() > 0) {
-                content << ifstream (string("app/pub").append(url)).rdbuf();
+                content << ifstream (string("app/pub") + url).rdbuf();
               } else {
                 srand(time(0));
                 if (rand() % 21) {
@@ -85,20 +85,20 @@ namespace K {
                   content << "Today, is your lucky day!";
                 }
               }
-              document.append("Content-Length: ").append(to_string(content.str().length())).append("\r\n\r\n").append(content.str());
+              document += "Content-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
               res->write(document.data(), document.length());
             }
           });
           uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
             if (length > 1) {
-              string m = string(message, length).substr(2, length-2);
               json v;
-              if (length > 2 && (m[0] == '[' || m[0] == '{')) v = json::parse(m.data());
-              if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(string(message, 2)) != sess->cbSnap.end()) {
-                json reply = (*sess->cbSnap[string(message, 2)])();
+              if (length > 2 and (message[0] == '[' or message[0] == '{'))
+                v = json::parse(string(message, length).substr(2, length-2).data());
+              if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
+                json reply = (*sess->cbSnap[message[1]])();
                 if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-              } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(string(message, 2)) != sess->cbMsg.end())
-                (*sess->cbMsg[string(message, 2)])(v);
+              } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
+                (*sess->cbMsg[message[1]])(v);
             }
           });
           uS::TLS::Context c = uS::TLS::createContext("dist/sslcert/server.crt", "dist/sslcert/server.key", "");
@@ -106,7 +106,7 @@ namespace K {
             cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
             cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
-          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(argPort) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ").append(to_string(argPort))) << endl; exit(1); }
+          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(argPort) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) << endl; exit(1); }
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
@@ -115,19 +115,17 @@ namespace K {
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
         CF::api();
       };
-      static void uiSnap(uiTXT _k, uiSnap_ cb) {
+      static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        string k = string(1, (char)uiBIT::SNAP).append(string(1, (char)_k));
-        if (sess->cbSnap.find(k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-        else sess->cbSnap[k] = cb;
+        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event" << endl; exit(1); }
+        else sess->cbSnap[(char)k] = cb;
       };
-      static void uiHand(uiTXT _k, uiMsg_ cb) {
+      static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        string k = string(1, (char)uiBIT::MSG).append(string(1, (char)_k));
-        if (sess->cbMsg.find(k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << k << "\" event" << endl; exit(1); }
-        else sess->cbMsg[k] = cb;
+        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event" << endl; exit(1); }
+        else sess->cbMsg[(char)k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
         if (argHeadless) return;
@@ -137,8 +135,8 @@ namespace K {
           if (uiT_MKT+369 > FN::T()) return;
           uiT_MKT = FN::T();
         }
-        if (h) uiHold(k, o);
-        else uiUp(k, o);
+        if (h) uiHold(&k, &o);
+        else uiUp(&k, &o);
       };
       static void delay(double delayUI) {
         if (argHeadless) return;
@@ -174,23 +172,26 @@ namespace K {
         if (!k.is_null() and k.size())
           uiVisibleOpt = k.at(0);
       };
-      static void uiUp(uiTXT k, json o) {
-        string m = string(1, (char)uiBIT::MSG).append(string(1, (char)k)).append(o.is_null() ? "" : o.dump());
+      static void uiUp(uiTXT* k, json* o) {
+        string m(1, (char)uiBIT::MSG);
+        m += string(1, (char)*k);
+        m += o->is_null() ? "" : o->dump();
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      static void uiHold(uiTXT k, json o) {
+      static void uiHold(uiTXT* k_, json* o) {
+        uiTXT k = *k_;
         bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
-        if (!ui_delayUI) return uiUp(k, o);
+        if (isOSR && mORS::New == (mORS)o->value("orderStatus", 0)) return (void)++uiOSR_1m;
+        if (!ui_delayUI) return uiUp(k_, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
           else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
-            if (it->value("orderId", "") == o.value("orderId", ""))
+            if (it->value("orderId", "") == o->value("orderId", ""))
               it = sess->D[k].erase(it);
             else ++it;
         }
-        sess->D[k].push_back(o);
+        sess->D[k].push_back(*o);
       };
       static json serverState() {
         time_t rawtime;
@@ -212,7 +213,7 @@ namespace K {
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp(it_->first, *it);
+              uiUp((uiTXT*)it_->first, &*it);
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
@@ -226,7 +227,7 @@ namespace K {
             else ++it;
           }
           if (!k.is_null())
-            uiUp(uiTXT::OrderStatusReports, k);
+            uiUp((uiTXT*)uiTXT::OrderStatusReports, &k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
         if (uiT_1m+60000 > FN::T()) return;

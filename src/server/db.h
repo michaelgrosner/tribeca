@@ -6,10 +6,10 @@ namespace K {
   class DB {
     public:
       static void main() {
-        if (argDatabase=="") argDatabase = string("/data/db/K.")
-          .append(to_string((int)CF::cfExchange()))
-          .append(".").append(to_string(CF::cfBase()))
-          .append(".").append(to_string(CF::cfQuote())).append(".db");
+        if (argDatabase == "") argDatabase = string("/data/db/K.")
+          + to_string((int)CF::cfExchange())
+          + '.' + to_string(CF::cfBase())
+          + '.' + to_string(CF::cfQuote()) + ".db";
         if (sqlite3_open(argDatabase.data(), &db)) {
           cout << FN::uiT() << "DB" << RRED << " Errrror: " << BRED << sqlite3_errmsg(db) << endl;
           exit(1);
