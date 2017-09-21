@@ -64,4 +64,3 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
             this._pub.publish(this.latest);
         }
     };
-}
