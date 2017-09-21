@@ -18,11 +18,11 @@ $ docker run -p 3000:3000 -v /path/to/data:/data --name Ksh -d ksh
 
 If you run `docker ps`, you should see K container running.
 
-### K-stunnel.conf
-To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
-
 ### K.sh.dist
 Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
 
-### K libs
-Precompiled libs for linux.
+### K-stunnel.conf
+To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
+
+### without_mysql.m4.patch
+Used against libquickfix sources by `make dist`; no need to edit.
