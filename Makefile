@@ -169,7 +169,7 @@ packages:
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
-	test -f *.sh || (cp dist/K.sh.dist K.sh && chmod +x K.sh)
+	test -f *.sh || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 install:
 	@$(MAKE) packages
@@ -236,7 +236,7 @@ screen:
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 < /dev/null \
-	| openssl x509 -outform PEM > dist/sslcert/fix.gdax.com.pem
+	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
 
 client: node_modules/.bin/tsc src/client
 	mkdir -p app
