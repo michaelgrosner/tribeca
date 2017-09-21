@@ -1,9 +1,12 @@
 K       ?= K.sh
+KLIB     = af0a64549b3e9199404b594dcb15a3defec4a1f5
 CROSS   ?= $(shell g++ -dumpmachine)
 CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
 AR       = $(CROSS)-ar-6
 KLOCAL   = build-$(CROSS)/local
+KGIT     = 3.0
+KHUB     = 6704776
 V_ZLIB  := 1.2.11
 V_PNG   := 1.6.31
 V_SSL   := 1.1.0f
@@ -16,7 +19,7 @@ KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
   src/server/K.cc -pthread -rdynamic                     \
   -DK_STAMP='"$(shell date --rfc-3339=ns)"'              \
   -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp \
-  dist/lib/K-$(CROSS).a      $(KLOCAL)/lib/libquickfix.a \
+  $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/lib/libquickfix.a \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
   $(KLOCAL)/lib/libcrypto.a  -ldl
@@ -60,6 +63,7 @@ help:
 	#  make send-cov     - send coverage               #
 	#  make travis       - provide travis dev box      #
 	#                                                  #
+	#  make klib         - download klib file          #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
 	#  make sqlite       - download sqlite src files   #
@@ -80,8 +84,9 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	@$(CXX) --version
+	mkdir -p $(KLOCAL)/bin
 	CROSS=$(CROSS) $(MAKE) $(shell uname -s)
-	chmod +x dist/lib/K-$(CROSS)
+	chmod +x $(KLOCAL)/bin/K-$(CROSS)
 endif
 
 dist:
@@ -91,15 +96,15 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix
+	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix klib
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
 Linux: build-$(CROSS)
-	$(CXX) -o dist/lib/K-$(CROSS) -static-libstdc++ -static-libgcc -g $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CROSS) -static-libstdc++ -static-libgcc -g $(KARGS)
 
 Darwin: build-$(CROSS)
-	$(CXX) -o dist/lib/K-$(CROSS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(KARGSG)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CROSS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(KARGSG)
 
 uws: build-$(CROSS)
 	test -d build-$(CROSS)/uWebSockets-$(V_UWS)                                    \
@@ -136,6 +141,11 @@ curl: build-$(CROSS)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
+klib: build-$(CROSS)
+	test -f $(KLOCAL)/lib/K-$(CROSS).a || (mkdir -p $(KLOCAL)/lib                                             \
+	&& curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
+	| tar xz -C $(KLOCAL)/lib && chmod +x $(KLOCAL)/lib/K-$(CROSS).a                                          )
+
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
@@ -169,20 +179,20 @@ packages:
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
-	test -f *.sh || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install
-	@$(MAKE) client pub bundle
-	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
+	@$(MAKE) dist K bundle
+	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CROSS) K
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install --unsafe-perm
-	@$(MAKE) client pub bundle
+	@$(MAKE) dist K bundle
 	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
 	sed -i "/Usage/,+117d" K.sh
 
@@ -250,7 +260,7 @@ pub: src/pub app/pub
 	mkdir -p app/pub/js/client
 	@echo DONE
 
-bundle: node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
+bundle: client pub node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
 	@echo Building client bundle file..
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 	rm app/pub/js/*.js
@@ -290,10 +300,16 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
+release:
+	cd build && tar -cvzf $(shell git rev-parse @)-$(CROSS).tar.gz K-$(CROSS).a &&              \
+	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}" \
+  --data-binary "@$(PWD)/build/$(shell git rev-parse @)-$(CROSS).tar.gz"                             \
+  "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(shell git rev-parse @)-$(CROSS).tar.gz"
+
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5
 
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist Linux Darwin klib zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
