@@ -306,9 +306,9 @@ ifndef KHASH
 else
 	cd $(KLOCAL)/lib && tar -cvzf $(KHASH)-$(CROSS).tar.gz K-$(CROSS).a &&                                             \
 	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                        \
-	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KHASH)-$(CROSS).tar.gz"                                                             \
+	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KHASH)-$(CROSS).tar.gz"                                                     \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KHASH)-$(CROSS).tar.gz" \
-  && rm $(KHASH)-$(CROSS).tar.gz
+	&& rm $(KHASH)-$(CROSS).tar.gz
 endif
 
 md5: src
