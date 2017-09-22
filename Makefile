@@ -8,7 +8,6 @@ AR       = $(CROSS)-ar-6
 KGIT     = 3.0
 KHUB     = 6704776
 V_ZLIB  := 1.2.11
-V_PNG   := 1.6.31
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
 V_JSON  := v2.1.1
@@ -304,8 +303,8 @@ release:
 ifndef KHASH
 	KHASH=$(shell shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1) $(MAKE) $@
 else
-	cd $(KLOCAL)/lib && tar -cvzf $(KHASH)-$(CROSS).tar.gz K-$(CROSS).a &&                                             \
-	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                        \
+	cd $(KLOCAL)/lib && tar -cvzf $(KHASH)-$(CROSS).tar.gz K-$(CROSS).a                                                \
+	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                     \
 	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KHASH)-$(CROSS).tar.gz"                                                     \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KHASH)-$(CROSS).tar.gz" \
 	&& rm $(KHASH)-$(CROSS).tar.gz

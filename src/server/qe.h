@@ -164,7 +164,7 @@ namespace K {
         mLevel prevQuote = mSide::Bid == side ? qeQuote.bid : qeQuote.ask;
         if (!prevQuote.price) return newQuote;
         if (abs(size - prevQuote.size) > 5e-3) return newQuote;
-        if (abs(price - prevQuote.size) < gw->minTick) return prevQuote;
+        if (abs(price - prevQuote.price) < gw->minTick) return prevQuote;
         bool quoteWasWidened = true;
         if ((mSide::Bid == side and prevQuote.price < price)
           or (mSide::Ask == side and prevQuote.price > price)
