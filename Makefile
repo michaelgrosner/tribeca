@@ -1,10 +1,10 @@
 K       ?= K.sh
-KLIB     = af0a64549b3e9199404b594dcb15a3defec4a1f5
+KLIB     = 44c6a9e3e73abfe7dd3c9446921311c1951efe0b
 CROSS   ?= $(shell g++ -dumpmachine)
+KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
 AR       = $(CROSS)-ar-6
-KLOCAL   = build-$(CROSS)/local
 KGIT     = 3.0
 KHUB     = 6704776
 V_ZLIB  := 1.2.11
@@ -15,7 +15,7 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KARGS   := -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
+KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
   src/server/K.cc -pthread -rdynamic                     \
   -DK_STAMP='"$(shell date --rfc-3339=ns)"'              \
   -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp \
@@ -142,9 +142,9 @@ curl: build-$(CROSS)
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
 klib: build-$(CROSS)
-	test -f $(KLOCAL)/lib/K-$(CROSS).a || (mkdir -p $(KLOCAL)/lib                                             \
-	&& curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
-	| tar xz -C $(KLOCAL)/lib && chmod +x $(KLOCAL)/lib/K-$(CROSS).a                                          )
+	mkdir -p $(KLOCAL)/lib
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
+	| tar xz -C $(KLOCAL)/lib && chmod +x $(KLOCAL)/lib/K-$(CROSS).a
 
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
@@ -301,10 +301,15 @@ png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 release:
-	cd build && tar -cvzf $(shell git rev-parse @)-$(CROSS).tar.gz K-$(CROSS).a &&              \
-	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}" \
-	--data-binary "@$(PWD)/build/$(shell git rev-parse @)-$(CROSS).tar.gz"                      \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(shell git rev-parse @)-$(CROSS).tar.gz"
+ifndef KHASH
+	KHASH=$(shell shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1) $(MAKE) $@
+else
+	cd $(KLOCAL)/lib && tar -cvzf $(KHASH)-$(CROSS).tar.gz K-$(CROSS).a &&                                             \
+	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                        \
+	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KHASH)-$(CROSS).tar.gz"                                                             \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KHASH)-$(CROSS).tar.gz" \
+  && rm $(KHASH)-$(CROSS).tar.gz
+endif
 
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5
