@@ -303,8 +303,8 @@ png-check: etc/${PNG}.png
 release:
 	cd build && tar -cvzf $(shell git rev-parse @)-$(CROSS).tar.gz K-$(CROSS).a &&              \
 	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}" \
-  --data-binary "@$(PWD)/build/$(shell git rev-parse @)-$(CROSS).tar.gz"                             \
-  "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(shell git rev-parse @)-$(CROSS).tar.gz"
+	--data-binary "@$(PWD)/build/$(shell git rev-parse @)-$(CROSS).tar.gz"                      \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(shell git rev-parse @)-$(CROSS).tar.gz"
 
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5
