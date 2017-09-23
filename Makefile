@@ -217,10 +217,10 @@ restartall:
 	@$(MAKE) list -s
 
 stopall:
-	ls -1 *.sh | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% stop -s
+	ls -1 *.sh | cut -d / -f2 | cut -d \* -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% stop -s
 
 startall:
-	ls -1 *.sh | cut -d / -f2 | cut -d . -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% start -s
+	ls -1 *.sh | cut -d / -f2 | cut -d \* -f1 | grep -v ^_ | xargs -I % $(MAKE) K=% start -s
 	@$(MAKE) list -s
 
 restart:
@@ -234,8 +234,8 @@ stop:
 
 start:
 	@test -d app || $(MAKE) install
-	@test -n "`screen -list | grep "\.$(K)	("`"                \
-	&& (echo $(K) is already running.. && screen -list)         \
+	@test -n "`screen -list | grep "\.$(K)	("`"         \
+	&& (echo $(K) is already running.. && screen -list)  \
 	|| (screen -dmS $(K) ./$(K) && echo START $(K) DONE)
 
 screen:
