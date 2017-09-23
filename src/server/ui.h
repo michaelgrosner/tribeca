@@ -118,13 +118,13 @@ namespace K {
       static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event" << endl; exit(1); }
+        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event." << endl; exit(1); }
         else sess->cbSnap[(char)k] = cb;
       };
       static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event" << endl; exit(1); }
+        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event." << endl; exit(1); }
         else sess->cbMsg[(char)k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
@@ -135,8 +135,8 @@ namespace K {
           if (uiT_MKT+369 > FN::T()) return;
           uiT_MKT = FN::T();
         }
-        if (h) uiHold(&k, &o);
-        else uiUp(&k, &o);
+        if (h) uiHold(k, o);
+        else uiUp(k, o);
       };
       static void delay(double delayUI) {
         if (argHeadless) return;
@@ -172,26 +172,29 @@ namespace K {
         if (!k.is_null() and k.size())
           uiVisibleOpt = k.at(0);
       };
-      static void uiUp(uiTXT* k, json* o) {
+      static void uiUp(uiTXT k, json o) {
         string m(1, (char)uiBIT::MSG);
-        m += string(1, (char)*k);
-        m += o->is_null() ? "" : o->dump();
+        m += string(1, (char)k);
+        m += o.is_null() ? "" : o.dump();
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      static void uiHold(uiTXT* k_, json* o) {
-        uiTXT k = *k_;
+      static void uiHold(uiTXT k, json o) {
+        if (o.is_null()) {
+          cout << FN::uiT() << "UI" << RRED << " Warrrrning:" << BRED << " uiHold sending " << (char)k << " but is null, ignored." << endl;
+          return;
+        }
         bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o->value("orderStatus", 0)) return (void)++uiOSR_1m;
-        if (!ui_delayUI) return uiUp(k_, o);
+        if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
+        if (!ui_delayUI) return uiUp(k, o);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
           else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
-            if (it->value("orderId", "") == o->value("orderId", ""))
+            if (it->value("orderId", "") == o.value("orderId", ""))
               it = sess->D[k].erase(it);
             else ++it;
         }
-        sess->D[k].push_back(*o);
+        sess->D[k].push_back(o);
       };
       static json serverState() {
         time_t rawtime;
@@ -213,7 +216,7 @@ namespace K {
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp((uiTXT*)&it_->first, &*it);
+              uiUp(it_->first, *it);
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
@@ -226,10 +229,8 @@ namespace K {
               it = sess->D[uiTXT::OrderStatusReports].erase(it);
             else ++it;
           }
-          if (!k.is_null()) {
-            uiTXT k_(uiTXT::OrderStatusReports);
-            uiUp(&k_, &k);
-          }
+          if (!k.is_null())
+            uiUp(uiTXT::OrderStatusReports, k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
         if (uiT_1m+60000 > FN::T()) return;

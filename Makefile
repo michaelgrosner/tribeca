@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 448beb9b48aa8d2663e88f7ba680fed597790a57
+KLIB     = f5d078c0792a284d6577003d834396c3300246a5
 CROSS   ?= $(shell g++ -dumpmachine)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -308,11 +308,11 @@ checkOK:
 	@$(MAKE) check -s
 
 release:
-	cd $(KLOCAL)/lib && tar -cvzf $(KLIB)-$(CROSS).tar.gz K-$(CROSS).a                                                \
+	@cd $(KLOCAL)/lib && tar -cvzf $(KLIB)-$(CROSS).tar.gz K-$(CROSS).a                                               \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
 	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KLIB)-$(CROSS).tar.gz"                                                     \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
-	&& rm $(KLIB)-$(CROSS).tar.gz
+	&& rm $(KLIB)-$(CROSS).tar.gz && echo DONE $(KLIB)-$(CROSS).tar.gz
 
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5

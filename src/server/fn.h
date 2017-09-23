@@ -96,9 +96,9 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_TIMEOUT  , 5L);
+          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -121,7 +121,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -143,7 +143,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -165,7 +165,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -188,7 +188,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -213,7 +213,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -238,7 +238,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -262,7 +262,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -287,7 +287,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -313,7 +313,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << "CURL wGed failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGed failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";

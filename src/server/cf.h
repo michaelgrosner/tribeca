@@ -34,8 +34,8 @@ namespace K {
   static double argEwmaShort = 0,
                 argEwmaMedium = 0,
                 argEwmaLong = 0;
-  static Gw* gw;
-  static Gw* gW;
+  static Gw *gw,
+            *gW;
   class CF {
     public:
       static void main(int argc, char** argv) {

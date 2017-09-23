@@ -101,7 +101,7 @@ API_HTTP_ENDPOINT=NULL
 #  ▌____________________________________________________.
 #  █ API_WSS_ENDPOINT                                   .
 #  ██ - Allows one of the following urls (see the website of the exchange).
-#  ██ - Almost all exchange must have API_WSS_ENDPOINT, only KORBIT exchange can be NULL.
+#  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KORBIT exchange can be NULL.
 #API_WSS_ENDPOINT=wss://ws-feed.gdax.com
 #API_WSS_ENDPOINT=wss://api.bitfinex.com/ws/2
 #API_WSS_ENDPOINT=wss://api.hitbtc.com:8080
