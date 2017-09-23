@@ -91,6 +91,8 @@ Feel free to run `make stop` or `make restart` anytime, and don't forget to [rea
 
 Troubleshooting:
 
+ * Installation may fail if `g++` v6 was not selected on install. To fix it install manually `g++-6`.
+
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
@@ -111,9 +113,11 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 Feel free anytime to check if there are new modifications with `make diff`.
 
-Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the display of the new commit messages).
+Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
 
-After install the latest version, all running instances will be restarted.
+After upgrade to latest version, all running instances will be restarted.
+
+`git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to run `make reinstall`).
 
 ### Multiple instances party time
 
