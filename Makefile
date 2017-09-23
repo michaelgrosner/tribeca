@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 44c6a9e3e73abfe7dd3c9446921311c1951efe0b
+KLIB     = 448beb9b48aa8d2663e88f7ba680fed597790a57
 CROSS   ?= $(shell g++ -dumpmachine)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -303,16 +303,16 @@ check:
 	@echo $(KLIB)
 	@shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1
 
+checkOK:
+	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1`/" Makefile
+	@$(MAKE) check -s
+
 release:
-ifndef KHASH
-	KHASH=$(shell shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1) $(MAKE) $@
-else
-	cd $(KLOCAL)/lib && tar -cvzf $(KHASH)-$(CROSS).tar.gz K-$(CROSS).a                                                \
-	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                     \
-	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KHASH)-$(CROSS).tar.gz"                                                     \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KHASH)-$(CROSS).tar.gz" \
-	&& rm $(KHASH)-$(CROSS).tar.gz
-endif
+	cd $(KLOCAL)/lib && tar -cvzf $(KLIB)-$(CROSS).tar.gz K-$(CROSS).a                                                \
+	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
+	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KLIB)-$(CROSS).tar.gz"                                                     \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
+	&& rm $(KLIB)-$(CROSS).tar.gz
 
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5

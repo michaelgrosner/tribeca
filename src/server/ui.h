@@ -213,7 +213,7 @@ namespace K {
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp((uiTXT*)it_->first, &*it);
+              uiUp((uiTXT*)&it_->first, &*it);
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
@@ -226,8 +226,10 @@ namespace K {
               it = sess->D[uiTXT::OrderStatusReports].erase(it);
             else ++it;
           }
-          if (!k.is_null())
-            uiUp((uiTXT*)uiTXT::OrderStatusReports, &k);
+          if (!k.is_null()) {
+            uiTXT k_(uiTXT::OrderStatusReports);
+            uiUp(&k_, &k);
+          }
           sess->D.erase(uiTXT::OrderStatusReports);
         }
         if (uiT_1m+60000 > FN::T()) return;
