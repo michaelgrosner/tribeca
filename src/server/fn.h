@@ -96,6 +96,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          curl_easy_setopt(curl, CURLOPT_TIMEOUT  , 5L);
           CURLcode r = curl_easy_perform(curl);
           if(r != CURLE_OK) cout << "CURL wGet failed " << curl_easy_strerror(r) << endl;
           curl_easy_cleanup(curl);
