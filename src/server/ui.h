@@ -92,7 +92,7 @@ namespace K {
           uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
             if (length > 1) {
               json v;
-              if (length > 2 and (message[0] == '[' or message[0] == '{'))
+              if (length > 2 and (message[2] == '[' or message[2] == '{'))
                 v = json::parse(string(message, length).substr(2, length-2).data());
               if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
                 json reply = (*sess->cbSnap[message[1]])();

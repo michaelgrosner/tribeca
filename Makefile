@@ -299,6 +299,10 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
+check:
+	@echo $(KLIB)
+	@shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1
+
 release:
 ifndef KHASH
 	KHASH=$(shell shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1) $(MAKE) $@
