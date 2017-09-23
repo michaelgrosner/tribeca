@@ -29,30 +29,37 @@ namespace K {
           }
         }).detach();
         ev_gwConnectButton = [](mConnectivity k) {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE v_gwConnectButton." << endl;
           gwQuotingState_ = k;
         };
         ev_gwConnectExchange = [](mConnectivity k) {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_gwConnectExchange." << endl;
           gwConnectExchange_ = k;
           send();
         };
         ev_uiQuotingParameters = []() {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_uiQuotingParameters." << endl;
           MG::calcFairValue();
           PG::calcTargetBasePos();
           PG::calcSafety();
           calcQuote();
         };
         ev_ogTrade = [](mTradeHydrated k) {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_ogTrade." << endl;
           PG::addTrade(k);
           PG::calcSafety();
           calcQuote();
         };
         ev_mgEwmaQuoteProtection = []() {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_mgEwmaQuoteProtection." << endl;
           calcQuote();
         };
         ev_mgLevels = []() {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_mgLevels." << endl;
           calcQuote();
         };
         ev_pgTargetBasePosition = []() {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE ev_pgTargetBasePosition." << endl;
           calcQuote();
         };
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
@@ -95,7 +102,7 @@ namespace K {
           and abs(qeQuote.ask.size - quote.ask.size) < gw->minSize
         )) return;
         qeQuote = quote;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote! " << (json)qeQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote! " << (json)qeQuote << "." << endl;
         send();
       };
       static void send() {
@@ -195,7 +202,7 @@ namespace K {
         if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("sellSizeMax"))
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote? " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote? " << (json)rawQuote << "." << endl;
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
         double _rawBidSz = rawQuote.bid.size;
         double _rawAskSz = rawQuote.ask.size;
@@ -224,7 +231,7 @@ namespace K {
           rawQuote.ask.price = fmax(mgEwmaP, rawQuote.ask.price);
           rawQuote.bid.price = fmin(mgEwmaP, rawQuote.bid.price);
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if (totalBasePosition < pgTargetBasePos - pDiv) {
           qeAskStatus = mQuoteState::TBPHeld;
           rawQuote.ask.price = 0;
@@ -243,7 +250,7 @@ namespace K {
             if (!QP::getBool("sellSizeMax")) rawQuote.ask.size = fmin(QP::getInt("aprMultiplier")*sellSize, fmin(totalBasePosition - pgTargetBasePos, pgPos.baseAmount / 2));
           }
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if ((mSTDEV)QP::getInt("quotingStdevProtection") != mSTDEV::Off and mgStdevFV) {
           if (rawQuote.ask.price and ((mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFV or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTops or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTop or pgSideAPR != "Sell"))
             rawQuote.ask.price = fmax(
@@ -269,7 +276,7 @@ namespace K {
             );
           }
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings()) {
           if (rawQuote.ask.size and pgSafety.buyPing and (
             ((mAPR)QP::getInt("aggressivePositionRebalancing") == mAPR::SizeWidth and pgSideAPR == "Sell")
@@ -284,7 +291,7 @@ namespace K {
             or rawQuote.bid.price > pgSafety.sellPong - widthPong
           )) rawQuote.bid.price = pgSafety.sellPong - widthPong;
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if (QP::getBool("bestWidth")) {
           if (rawQuote.ask.price)
             for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it)
@@ -310,7 +317,7 @@ namespace K {
           rawQuote.ask.price = 0;
           rawQuote.ask.size = 0;
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if (((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings())
           and !pgSafety.buyPing and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::BidSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and ((mPingAt)QP::getInt("pingAt") == mPingAt::DepletedSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedBidSide))
@@ -326,7 +333,7 @@ namespace K {
           rawQuote.bid.price = 0;
           rawQuote.bid.size = 0;
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         if (((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings())
           and !pgSafety.sellPong and ((mPingAt)QP::getInt("pingAt") == mPingAt::StopPings or (mPingAt)QP::getInt("pingAt") == mPingAt::AskSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and ((mPingAt)QP::getInt("pingAt") == mPingAt::DepletedSide or (mPingAt)QP::getInt("pingAt") == mPingAt::DepletedAskSide))
@@ -345,8 +352,8 @@ namespace K {
           rawQuote.ask.price = FN::roundSide(rawQuote.ask.price, gw->minTick, mSide::Ask);
           rawQuote.ask.price = fmax(rawQuote.bid.price + gw->minTick, rawQuote.ask.price);
         }
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW totals " << "toAsk:" << totalBasePosition << " toBid:" << totalQuotePosition << " min:" << gw->minSize << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE totals " << "toAsk:" << totalBasePosition << " toBid:" << totalQuotePosition << " min:" << gw->minSize << "." << endl;
         if (rawQuote.ask.size) {
           if (rawQuote.ask.size > totalBasePosition)
             rawQuote.ask.size = (!_rawBidSz or _rawBidSz > totalBasePosition)
@@ -361,7 +368,7 @@ namespace K {
           rawQuote.bid.size = FN::roundDown(fmax(gw->minSize, rawQuote.bid.size), 1e-8);
           rawQuote.isBidPong = (pgSafety.sellPong and rawQuote.bid.price and rawQuote.bid.price <= pgSafety.sellPong - widthPong);
         } else rawQuote.isBidPong = false;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "GW quote¿ " << (json)rawQuote << "." << endl;
+        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
         return rawQuote;
       };
       static mQuote quote(double widthPing, double buySize, double sellSize) {

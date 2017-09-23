@@ -29,9 +29,11 @@ namespace K {
       static void main() {
         load();
         ev_gwDataTrade = [](mTrade k) {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV MG ev_gwDataTrade." << endl;
           tradeUp(k);
         };
         ev_gwDataLevels = [](mLevels k) {
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV MG ev_gwDataLevels." << endl;
           levelUp(k);
         };
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);

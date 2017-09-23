@@ -11,7 +11,8 @@ namespace K {
       static void main() {
         load();
         ev_gwDataOrder = [](mOrder k) {
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW reply  " << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << "/" << k.lastQuantity << " at price " << k.price << "." << endl;
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV OG ev_gwDataOrder." << endl;
+          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG reply  " << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << "/" << k.lastQuantity << " at price " << k.price << "." << endl;
           updateOrderState(k);
         };
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
@@ -33,26 +34,26 @@ namespace K {
           for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW remove " << oI << "::" << oE << "." << endl;
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG remove " << oI << "::" << oE << "." << endl;
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << mCurrency[o.pair.base] << " at price " << o.price << " " << mCurrency[o.pair.quote] << "." << endl;
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << mCurrency[o.pair.base] << " at price " << o.price << " " << mCurrency[o.pair.quote] << "." << endl;
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
       static void cancelOrder(string k) {
         if (allOrders.find(k) == allOrders.end()) {
           updateOrderState(mOrder(k, mORS::Cancelled));
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel unknown id " << k << "." << endl;
+          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel unknown id " << k << "." << endl;
           return;
         }
         if (!gW->cancelByClientId and allOrders[k].exchangeId == "") {
           toCancel[k] = nullptr;
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel pending id " << k << "." << endl;
+          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel pending id " << k << "." << endl;
           return;
         }
         mOrder o = updateOrderState(mOrder(k, mORS::Working));
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
         gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
     private:
@@ -306,9 +307,9 @@ namespace K {
           if (k.exchangeId != "")
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << mCurrency[k.pair.base] << " at price " << k.price << " " << mCurrency[k.pair.quote] << "." << endl;
+          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << mCurrency[k.pair.base] << " at price " << k.price << " " << mCurrency[k.pair.quote] << "." << endl;
         } else allOrdersDelete(k.orderId, k.exchangeId);
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "GW memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;
       };
   };
 }

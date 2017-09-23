@@ -12,6 +12,8 @@
 namespace K {
   static int argPort = 3000,
              argColors = 0,
+             argDebug = 0,
+             argDebugEvents = 0,
              argDebugOrders = 0,
              argDebugQuotes = 0,
              argHeadless = 0,
@@ -46,6 +48,8 @@ namespace K {
           static struct option args[] = {
             {"help",         no_argument,       0,               'h'},
             {"colors",       no_argument,       &argColors,        1},
+            {"debug",        no_argument,       &argDebug,         1},
+            {"debug-events", no_argument,       &argDebugEvents,   1},
             {"debug-orders", no_argument,       &argDebugOrders,   1},
             {"debug-quotes", no_argument,       &argDebugQuotes,   1},
             {"headless",     no_argument,       &argHeadless,      1},
@@ -143,8 +147,10 @@ namespace K {
               << FN::uiT() << RWHITE << "                           overwrites the value from the database." << endl
               << FN::uiT() << RWHITE << "-l, --ewma-long=PRICE    - set initial ewma long value," << endl
               << FN::uiT() << RWHITE << "                           overwrites the value from the database." << endl
+              << FN::uiT() << RWHITE << "    --debug-events       - print detailed output about event handlers." << endl
               << FN::uiT() << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << endl
               << FN::uiT() << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << endl
+              << FN::uiT() << RWHITE << "    --debug              - print detailed output about all the (previous) things!" << endl
               << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << endl
               << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << endl
@@ -169,6 +175,11 @@ namespace K {
           RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
           BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
           BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
+        }
+        if (argDebug) {
+          argDebugEvents = 1;
+          argDebugOrders = 1;
+          argDebugQuotes = 1;
         }
         if (argExchange == "") cout << FN::uiT() << "CF" << RRED << " Warrrrning:" << BRED << " Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead." << endl;
       };
