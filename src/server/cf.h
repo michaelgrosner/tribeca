@@ -146,7 +146,7 @@ namespace K {
               << FN::uiT() << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << endl
               << FN::uiT() << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << endl
               << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << endl
-              << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoska link URL of the next UI." << endl
+              << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << endl
               << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << endl
               << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << endl
               << BGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
