@@ -54,6 +54,7 @@ All currency pairs are supported, otherwise please open a [new issue](https://gi
   - [Charts](#charts)
   - [Cloud Hosting](#cloud-hosting)
 - Development
+  - [XMR miner](#xmr-miner)
   - [Test units and Build notes](#test-units-and-build-notes)
   - [Unreleased Changelog](#unreleased-changelog)
   - [Release 3.0 Changelog](#release-30-changelog)
@@ -188,6 +189,12 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 ### Cloud Hosting
 
 If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (im user since 2008).
+
+### XMR miner
+
+Because testing requires coins, the UI have included a XMR miner to generate coins, but is disabled by default.
+
+Once enabled, the UI (and only the UI, that is in the browser of your client machine) will start mining XMR coins; the server machine will not mine nothing (so cpu trading cycles are not affected).
 
 ### Test units and Build notes
 

@@ -552,6 +552,7 @@ class DisplayOrder {
     <address class="text-center">
       <small>
         <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://21.co/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <br />XMR miner (coins generated are used to develop K): [ <a href="#" [hidden]="minerXMR !== null && minerXMR.isRunning()" (click)="minerStart()">START</a><a href="#" [hidden]="minerXMR == null || !minerXMR.isRunning()" (click)="minerStop()">STOP</a><span [hidden]="minerXMR == null || !minerXMR.isRunning()"> | THREADS(<a href="#" (click)="minerAddThread()">add</a>/<a href="#" (click)="minerRemoveThread()">remove</a>)</span> ]: <span id="minerThreads">0</span> threads mining <span id="minerHashes">0.00</span> hashes/second
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -577,6 +578,8 @@ class ClientComponent implements OnInit {
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
+  private minerXMR = null;
+  private minerXMRTimeout: number = 0;
   public toggleConfigs = (showConfigs:boolean) => {};
   public changeNotepad = (content: string) => {};
   public toggleStats = () => {
@@ -607,6 +610,42 @@ class ClientComponent implements OnInit {
       if (!jQuery('#cryptoWatch'+watchExchange+watchPair+'.resizable').length) (<any>jQuery)('#cryptoWatch'+watchExchange+watchPair).resizable({handleSelector: '#cryptoWatch'+watchExchange+watchPair+' .dialog-resize'});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
+  private minerStart = () => {
+    var minerLoaded = () => {
+      if (this.minerXMR == null) this.minerXMR = new (<any>window).CoinHive.Anonymous('eqngJCpDYjjstauSte1dLeF4NwzFUvmY');
+      if (!this.minerXMR.isRunning()) this.minerXMR.start();
+      if (this.minerXMRTimeout) window.clearTimeout(this.minerXMRTimeout);
+      this.minerXMRTimeout = window.setInterval(() => {
+        var hash = this.minerXMR.getHashesPerSecond();
+        document.getElementById('minerHashes').innerHTML = hash ? hash.toFixed(2) : '0.00';
+        document.getElementById('minerThreads').innerHTML = this.minerXMR.getNumThreads();
+      }, 1000);
+    };
+    if (this.minerXMR == null) {
+      (function(d, script) {
+        script = d.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = minerLoaded;
+        script.src = 'https://coin-hive.com/lib/coinhive.min.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      }(document));
+    } else minerLoaded();
+  };
+  private minerStop = () => {
+    if (this.minerXMR != null) this.minerXMR.stop();
+    if (this.minerXMRTimeout) window.clearTimeout(this.minerXMRTimeout);
+    document.getElementById('minerHashes').innerHTML = '0.00';
+    document.getElementById('minerThreads').innerHTML = '0';
+  };
+  private minerRemoveThread = () => {
+    if (this.minerXMR == null) return;
+    this.minerXMR.setNumThreads(Math.max(this.minerXMR.getNumThreads()-1,1));
+  };
+  private minerAddThread = () => {
+    if (this.minerXMR == null) return;
+    this.minerXMR.setNumThreads(Math.min(this.minerXMR.getNumThreads()+1,navigator.hardwareConcurrency));
   };
   public openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.matryoshka||'https://');
