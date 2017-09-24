@@ -16,6 +16,7 @@ namespace K {
   static double ui_delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
+  extern mutex uiMutex;
   class UI {
     public:
       static void main() {
@@ -176,6 +177,7 @@ namespace K {
         string m(1, (char)uiBIT::MSG);
         m += string(1, (char)k);
         m += o.is_null() ? "" : o.dump();
+        lock_guard<mutex> lock(uiMutex);
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       static void uiHold(uiTXT k, json o) {
