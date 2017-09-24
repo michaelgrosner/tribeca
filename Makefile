@@ -184,16 +184,17 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install
-	@$(MAKE) dist K bundle
-	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CROSS) K
+	@$(MAKE) dist K bundle link
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install --unsafe-perm
-	@$(MAKE) dist K bundle
-	cd app/server && ln -f -s ../../dist/lib/K-$(CROSS) K
+	@$(MAKE) dist K bundle link
 	sed -i "/Usage/,+117d" K.sh
+
+link:
+	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CROSS) K
 
 reinstall: .git src
 	rm -rf app
