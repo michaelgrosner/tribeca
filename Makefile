@@ -287,10 +287,10 @@ send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 travis:
 	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	sudo apt-get update
-	sudo apt-get install gcc-4.9
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50
-	sudo apt-get install g++-4.9
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50
+	sudo apt-get install gcc-6
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
+	sudo apt-get install g++-6
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
