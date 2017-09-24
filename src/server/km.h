@@ -48,51 +48,65 @@ namespace K {
     public:
       static Gw *E(mExchange e);
       mExchange exchange = mExchange::Null;
-      int    base    = 0,  quote   = 0;
-      double makeFee = 0,  minTick = 0,
-             takeFee = 0,  minSize = 0;
-      string name    = "", symbol  = "",
-             apikey  = "", secret  = "",
-             user    = "", pass    = "",
-             ws      = "", wS      = "",
-             http    = "";
+          int base    = 0,  quote   = 0;
+       double makeFee = 0,  minTick = 0,
+              takeFee = 0,  minSize = 0;
+       string name    = "", symbol  = "",
+              apikey  = "", secret  = "",
+              user    = "", pass    = "",
+              ws      = "", wS      = "",
+              http    = "";
+         bool cancelByClientId = 0,
+              supportCancelAll = 0;
       virtual mExchange config() = 0;
-      virtual void pos() = 0,
-                   book() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0;
-      virtual string clientId() = 0;
-      bool cancelByClientId = 0,
-           supportCancelAll = 0;
+      virtual      void pos() = 0,
+                        book() = 0,
+                        send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                        cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                        cancelAll() = 0;
+      virtual    string clientId() = 0;
   };
   struct mPair {
-    int base;
-    int quote;
-    mPair();
-    mPair(int base, int quote);
+    int base,
+        quote;
+    mPair():
+      base(0), quote(0)
+    {};
+    mPair(int b, int q):
+      base(b), quote(q)
+    {};
   };
   struct mWallet {
-    double amount;
-    double held;
-    int currency;
-    mWallet();
-    mWallet(double amount, double held, int currency);
+    double amount,
+           held;
+       int currency;
+    mWallet():
+      amount(0), held(0), currency(-1)
+    {};
+    mWallet(double a, double h, int c):
+      amount(a), held(h), currency(c)
+    {};
   };
   struct mProfit {
-    double baseValue;
-    double quoteValue;
+           double baseValue,
+                  quoteValue;
     unsigned long time;
-    mProfit(double baseValue, double quoteValue, unsigned long time);
+    mProfit(double b, double q, unsigned long t):
+      baseValue(b), quoteValue(q), time(t)
+    {};
   };
   struct mSafety {
-    double buy;
-    double sell;
-    double combined;
-    double buyPing;
-    double sellPong;
-    mSafety();
-    mSafety(double buy, double sell, double combined, double buyPing, double sellPong);
+    double buy,
+           sell,
+           combined,
+           buyPing,
+           sellPong;
+    mSafety():
+      buy(0), sell(0), combined(0), buyPing(-1), sellPong(-1)
+    {};
+    mSafety(double b, double s, double c, double bP, double sP):
+      buy(b), sell(s), combined(c), buyPing(bP), sellPong(sP)
+    {};
   };
   static void to_json(json& j, const mSafety& k) {
     j = {
@@ -104,18 +118,22 @@ namespace K {
     };
   };
   struct mPosition {
-    double baseAmount;
-    double quoteAmount;
-    double baseHeldAmount;
-    double quoteHeldAmount;
-    double value;
-    double quoteValue;
-    double profitBase;
-    double profitQuote;
-    mPair pair;
+       double baseAmount,
+              quoteAmount,
+              baseHeldAmount,
+              quoteHeldAmount,
+              value,
+              quoteValue,
+              profitBase,
+              profitQuote;
+        mPair pair;
     mExchange exchange;
-    mPosition();
-    mPosition(double baseAmount, double quoteAmount, double baseHeldAmount, double quoteHeldAmount, double value, double quoteValue, double profitBase, double profitQuote, mPair pair, mExchange exchange);
+    mPosition():
+      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), value(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
+    {};
+    mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p, mExchange e):
+      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), value(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
+    {};
   };
   static void to_json(json& j, const mPosition& k) {
     j = {
@@ -132,29 +150,35 @@ namespace K {
     };
   };
   struct mTrade {
-    double price;
-    double size;
-    mSide make_side;
-    mTrade(double price, double size, mSide make_side);
+    double price,
+           size;
+     mSide make_side;
+    mTrade(double p, double s, mSide S):
+      price(p), size(s), make_side(S)
+    {};
   };
   struct mTradeHydrated {
-    string tradeId;
-    unsigned long time;
-    mExchange exchange;
-    mPair pair;
-    double price;
-    double quantity;
-    mSide side;
-    double value;
-    unsigned long Ktime;
-    double Kqty;
-    double Kprice;
-    double Kvalue;
-    double Kdiff;
-    double feeCharged;
-    bool loadedFromDB;
-    mTradeHydrated();
-    mTradeHydrated(string tradeId, unsigned long time, mExchange exchange, mPair pair, double price, double quantity, mSide side, double value, unsigned long Ktime, double Kqty, double Kprice, double Kvalue, double Kdiff, double feeCharged, bool loadedFromDB);
+           string tradeId;
+        mExchange exchange;
+            mPair pair;
+            mSide side;
+           double price,
+                  quantity,
+                  value,
+                  Kqty,
+                  Kprice,
+                  Kvalue,
+                  Kdiff,
+                  feeCharged;
+    unsigned long time,
+                  Ktime;
+             bool loadedFromDB;
+    mTradeHydrated():
+      tradeId(""), time(0), exchange((mExchange)0), pair(mPair()), price(0), quantity(0), side((mSide)0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+    {};
+    mTradeHydrated(string i, unsigned long t, mExchange e, mPair P, double p, double q, mSide S, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+      tradeId(i), time(t), exchange(e), pair(P), price(p), quantity(q), side(S), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
+    {};
   };
   static void to_json(json& j, const mTradeHydrated& k) {
     j = {
@@ -176,21 +200,27 @@ namespace K {
     };
   };
   struct mTradeDehydrated {
-    double price;
-    double quantity;
+           double price,
+                  quantity;
     unsigned long time;
-    mTradeDehydrated();
-    mTradeDehydrated(double price, double quantity, unsigned long time);
+    mTradeDehydrated():
+      price(0), quantity(0), time(0)
+    {};
+    mTradeDehydrated(double p, double q, unsigned long t):
+      price(p), quantity(q), time(t)
+    {};
   };
   struct mTradeDry {
-    mExchange exchange;
-    int base;
-    int quote;
-    double price;
-    double size;
+        mExchange exchange;
+              int base,
+                  quote;
+           double price,
+                  size;
     unsigned long time;
-    mSide make_side;
-    mTradeDry(mExchange exchange, int base, int quote, double price, double size, double time, mSide make_side);
+            mSide make_side;
+    mTradeDry(mExchange e, int b, int q, double p, double s, double t, mSide S):
+      exchange(e), base(b), quote(q), price(p), size(s), time(t), make_side(S)
+    {};
   };
   static void to_json(json& j, const mTradeDry& k) {
     j = {
@@ -203,25 +233,33 @@ namespace K {
     };
   };
   struct mOrder {
-    string orderId;
-    string exchangeId;
-    mExchange exchange;
-    mPair pair;
-    mSide side;
-    double quantity;
-    mOrderType type;
-    bool isPong;
-    double price;
-    mTimeInForce timeInForce;
-    mORS orderStatus;
-    bool preferPostOnly;
-    double lastQuantity;
-    unsigned long time;
-    unsigned long computationalLatency;
-    mOrder();
-    mOrder(string orderId, mORS orderStatus);
-    mOrder(string orderId, string exchangeId, mORS orderStatus, double price, double quantity, double lastQuantity);
-    mOrder(string orderId, mExchange exchange, mPair pair, mSide side, double quantity, mOrderType type, bool isPong, double price, mTimeInForce timeInForce, mORS orderStatus, bool preferPostOnly);
+           string orderId,
+                  exchangeId;
+        mExchange exchange;
+            mPair pair;
+            mSide side;
+           double price,
+                  quantity,
+                  lastQuantity;
+       mOrderType type;
+     mTimeInForce timeInForce;
+             mORS orderStatus;
+             bool isPong,
+                  preferPostOnly;
+    unsigned long time,
+                  computationalLatency;
+    mOrder():
+      orderId(""), exchangeId(""), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mORS)0), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+    {};
+    mOrder(string o, mORS s):
+      orderId(o), exchangeId(""), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+    {};
+    mOrder(string o, string e, mORS s, double p, double q, double Q):
+      orderId(o), exchangeId(e), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(Q), time(0), computationalLatency(0)
+    {};
+    mOrder(string o, mExchange e, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mORS s, bool O):
+      orderId(o), exchangeId(""), exchange(e), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), lastQuantity(0), time(0), computationalLatency(0)
+    {};
   };
   static void to_json(json& j, const mOrder& k) {
     j = {
@@ -243,16 +281,24 @@ namespace K {
     };
   };
   struct mLevel {
-    double price;
-    double size;
-    mLevel();
-    mLevel(double price, double size);
+    double price,
+           size;
+    mLevel():
+      price(0), size(0)
+    {};
+    mLevel(double p, double s):
+      price(p), size(s)
+    {};
   };
   struct mLevels {
-    vector<mLevel> bids;
-    vector<mLevel> asks;
-    mLevels();
-    mLevels(vector<mLevel> bids, vector<mLevel> asks);
+    vector<mLevel> bids,
+                   asks;
+    mLevels():
+      bids({}), asks({})
+    {};
+    mLevels(vector<mLevel> b, vector<mLevel> a):
+      bids(b), asks(a)
+    {};
   };
   static void to_json(json& j, const mLevels& k) {
     json b, a;
@@ -263,13 +309,19 @@ namespace K {
     j = {{"bids", b}, {"asks", a}};
   };
   struct mQuote {
-    mLevel bid;
-    mLevel ask;
-    bool isBidPong;
-    bool isAskPong;
-    mQuote();
-    mQuote(mLevel bid, mLevel ask);
-    mQuote(mLevel bid, mLevel ask, bool isBidPong, bool isAskPong);
+    mLevel bid,
+           ask;
+      bool isBidPong,
+           isAskPong;
+    mQuote():
+      bid(mLevel()), ask(mLevel()), isBidPong(false), isAskPong(false)
+    {};
+    mQuote(mLevel b, mLevel a):
+      bid(b), ask(a), isBidPong(false), isAskPong(false)
+    {};
+    mQuote(mLevel b, mLevel a, bool bP, bool aP):
+      bid(b), ask(a), isBidPong(bP), isAskPong(aP)
+    {};
   };
   static void to_json(json& j, const mQuote& k) {
     j = {
@@ -284,13 +336,17 @@ namespace K {
     };
   };
   struct mQuoteStatus {
-    mQuoteState bidStatus;
-    mQuoteState askStatus;
-    unsigned int quotesInMemoryNew;
-    unsigned int quotesInMemoryWorking;
-    unsigned int quotesInMemoryDone;
-    mQuoteStatus();
-    mQuoteStatus(mQuoteState bidStatus, mQuoteState askStatus, unsigned int quotesInMemoryNew, unsigned int quotesInMemoryWorking, unsigned int quotesInMemoryDone);
+     mQuoteState bidStatus,
+                 askStatus;
+    unsigned int quotesInMemoryNew,
+                 quotesInMemoryWorking,
+                 quotesInMemoryDone;
+    mQuoteStatus():
+      bidStatus((mQuoteState)0), askStatus((mQuoteState)0), quotesInMemoryNew(0), quotesInMemoryWorking(0), quotesInMemoryDone(0)
+    {};
+    mQuoteStatus(mQuoteState b, mQuoteState a, unsigned int n, unsigned int w, unsigned int d):
+      bidStatus(b), askStatus(a), quotesInMemoryNew(n), quotesInMemoryWorking(w), quotesInMemoryDone(d)
+    {};
   };
   static void to_json(json& j, const mQuoteStatus& k) {
     j = {
