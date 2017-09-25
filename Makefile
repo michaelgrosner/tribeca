@@ -321,4 +321,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist Linux Darwin klib zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin klib zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich

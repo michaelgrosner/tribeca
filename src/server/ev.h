@@ -60,7 +60,9 @@ namespace K {
         cout << endl;
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         cout << FN::uiT() << "Excellent decision! "
-          << k.value("/value/joke"_json_pointer, "let's plant a tree instead..") << endl;
+          << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
+            ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
+          ) << endl;
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
