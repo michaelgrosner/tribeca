@@ -87,6 +87,13 @@ namespace K {
       amount(a), held(h), currency(c)
     {};
   };
+  static void to_json(json& j, const mWallet& k) {
+    j = {
+      {"amount", k.amount},
+      {"held", k.held},
+      {"currency", k.currency}
+    };
+  };
   struct mProfit {
            double baseValue,
                   quoteValue;

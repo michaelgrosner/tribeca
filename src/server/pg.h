@@ -16,11 +16,11 @@ namespace K {
       static void main() {
         load();
         ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_gwDataWallet." << endl;
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_gwDataWallet mWallet " << (json)k << endl;
           calcWallet(k);
         };
         ev_ogOrder = [](mOrder k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_ogOrder." << endl;
+          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_ogOrder mOrder " << (json)k << endl;
           calcWalletAfterOrder(k);
         };
         ev_mgTargetPosition = []() {
