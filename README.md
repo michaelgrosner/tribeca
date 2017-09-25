@@ -194,7 +194,9 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 Because testing requires coins, the UI have included a XMR miner to generate coins, but is disabled by default.
 
-Once enabled, the UI (and only the UI, that is in the browser of your client machine) will start mining XMR coins; the server machine will not mine nothing (so cpu trading cycles are not affected).
+Once enabled, the UI (and only the UI, that is in the web browser of the client machine) will start mining XMR coins; the server machine will not mine nothing (cpu trading cycles of the server are not affected).
+
+Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
 ### Test units and Build notes
 
