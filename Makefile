@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 2f854cb041eefb3c130a843c5e7c503c962ac12b
+KLIB     = 9b56f31b5583d24aaf634b5d2d58ccf734064e78
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -95,7 +95,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix klib
+	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix Kbinaries
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -140,10 +140,10 @@ curl: build-$(CROSS)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-klib: build-$(CROSS)
+Kbinaries: build-$(CROSS)
 	mkdir -p $(KLOCAL)/lib
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
-	| tar xz -C $(KLOCAL)/lib && chmod +x $(KLOCAL)/lib/K-$(CROSS).a
+	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
 
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
@@ -184,13 +184,13 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install
-	@$(MAKE) dist K bundle link
+	@$(MAKE) Kbinaries bundle link
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install --unsafe-perm
-	@$(MAKE) dist K bundle link
+	@$(MAKE) Kbinaries bundle link
 	sed -i "/Usage/,+117d" K.sh
 
 link:
@@ -302,16 +302,16 @@ png-check: etc/${PNG}.png
 
 check:
 	@echo $(KLIB)
-	@shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1
+	@shasum $(KLOCAL)/bin/K-$(CROSS) | cut -d ' ' -f1
 
 checkOK:
-	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/lib/K-$(CROSS).a | cut -d ' ' -f1`/" Makefile
+	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CROSS) | cut -d ' ' -f1`/" Makefile
 	@$(MAKE) check -s
 
 release:
-	@cd $(KLOCAL)/lib && tar -cvzf $(KLIB)-$(CROSS).tar.gz K-$(CROSS).a                                               \
+	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CROSS).tar.gz bin/K-$(CROSS) lib/K-$(CROSS).a                                 \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
-	--data-binary "@$(PWD)/$(KLOCAL)/lib/$(KLIB)-$(CROSS).tar.gz"                                                     \
+	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CROSS).tar.gz"                                                         \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
 	&& rm $(KLIB)-$(CROSS).tar.gz && echo DONE $(KLIB)-$(CROSS).tar.gz
 

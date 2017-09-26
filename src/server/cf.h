@@ -102,15 +102,15 @@ namespace K {
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source," << endl << "feel free to hack both as you need." << endl
               << RGREEN << "This is non-free software: the exchange integrations are licensed" << endl << "by and under the law of my grandma, feel free to crack all." << endl
-              << BGREEN << "  questions: " << RYELLOW << "https://21.co/analpaper/" << endl
+              << RGREEN << "  questions: " << RYELLOW << "https://21.co/analpaper/" << endl
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << endl
-              << BGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
+              << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << endl;
             case '?': cout
               << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << endl
               << FN::uiT() << "[arguments]:" << endl
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << endl
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << endl
-              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (overwrites '-P')." << endl
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << endl
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << endl
               << FN::uiT() << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << endl
               << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << endl
@@ -121,7 +121,7 @@ namespace K {
               << FN::uiT() << RWHITE << "                           'KORBIT', 'POLONIEX' or 'NULL'." << endl
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS     - set currency pairs for trading (use format" << endl
               << FN::uiT() << RWHITE << "                           with '/' separator, like 'BTC/EUR')." << endl
-              << FN::uiT() << RWHITE << "-T, --target=NAME        - set orders destination (like '--exchange')," << endl
+              << FN::uiT() << RWHITE << "-T, --target=NAME        - set orders destination (see '--exchange')," << endl
               << FN::uiT() << RWHITE << "                           a value of NULL generates fake orders only." << endl
               << FN::uiT() << RWHITE << "-A, --apikey=WORD        - set (never share!) WORD as api key for trading," << endl
               << FN::uiT() << RWHITE << "                           mandatory." << endl
@@ -155,9 +155,9 @@ namespace K {
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << endl
               << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << endl
               << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << endl
-              << BGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
+              << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << endl
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << endl
-              << BGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
+              << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << endl;
               exit(EXIT_SUCCESS);
               break;
             case 'v': exit(EXIT_SUCCESS);
