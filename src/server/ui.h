@@ -149,6 +149,7 @@ namespace K {
           double k = ui_delayUI;
           int timeout = k ? (int)(k*1e+3) : 6e+4;
           while (uiThread_ == uiThread) {
+            if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV UI thread." << endl;
             if (k) appPush();
             else appState();
             this_thread::sleep_for(chrono::milliseconds(timeout));
@@ -188,6 +189,7 @@ namespace K {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
         if (!ui_delayUI) return uiUp(k, o);
+        lock_guard<mutex> lock(uiMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();

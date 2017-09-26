@@ -20,6 +20,7 @@ namespace K {
         load();
         thread([&]() {
           while (true) {
+            if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE calc thread." << endl;
             if (mgFairValue) {
               MG::calcStats();
               PG::calcSafety();
@@ -492,6 +493,7 @@ namespace K {
               unsigned long nextStart_ = nextStart;
               bool isPong_ = isPong;
               while (qeThread_ == qeThread) {
+                if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE quote thread." << endl;
                 if ((double)nextStart_ - (double)FN::T() > 0)
                   this_thread::sleep_for(chrono::milliseconds(100));
                 else {

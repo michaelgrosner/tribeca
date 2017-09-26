@@ -15,6 +15,7 @@ namespace K {
         thread([&]() {
           unsigned int T_5m = 0;
           while (true) {
+            if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV GW cancel thread." << endl;
             if (QP::getBool("cancelOrdersAuto") and ++T_5m == 20) {
               T_5m = 0;
               gW->cancelAll();
