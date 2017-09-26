@@ -55,7 +55,7 @@ API_EXCHANGE=NULL
 #  ▌____________________________________________________.
 #  █ API_CURRENCY                                       .
 #  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/BBB".
-#  ██ - Allowed values (choose 2): BTC, LTC, EUR, GBP, CNY, CAD, ETH, ETC, BFX, RRT, ZEC, BCN, DASH, DOGE, DSH, EMC, FCN, LSK, NXT, QCN, SDB, SCB, STEEM, XDN, XEM, XMR, ARDR, WAVES, BTU, MAID, AMP, XRP, KRW, IOT, BCY, BELA, BLK, BTCD, BTM, BTS, BURST, CLAM, DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT, NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD, SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT, EOS, SAN, OMG, PAY, BCC, BCH.
+#  ██ - Allowed values (choose 2): BTC, LTC, EUR, GBP, CNY, CAD, ETH, ETC, BFX, RRT, ZEC, BCN, DASH, DOGE, DSH, EMC, FCN, LSK, NXT, QCN, SDB, SCB, STEEM, XDN, XEM, XMR, ARDR, WAVES, BTU, MAID, AMP, XRP, KRW, IOT, BCY, BELA, BLK, BTCD, BTM, BTS, BURST, CLAM, DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT, NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD, SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT, EOS, SAN, OMG, PAY, BCC, BCH, NEO, ETP.
 #API_CURRENCY=BTC/EUR
 API_CURRENCY=BTC/USD
 #  ▌____________________________________________________.
