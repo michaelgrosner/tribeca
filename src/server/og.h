@@ -6,6 +6,7 @@ namespace K {
   map<string, void*> toCancel;
   map<string, mOrder> allOrders;
   map<string, string> allOrdersIds;
+  mutex ogMutex;
   class OG {
     public:
       static void main() {
@@ -43,7 +44,7 @@ namespace K {
       };
       static void cancelOrder(string k) {
         if (allOrders.find(k) == allOrders.end()) {
-          updateOrderState(mOrder(k, mORS::Cancelled));
+          // updateOrderState(mOrder(k, mORS::Cancelled));
           if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel unknown id " << k << "." << endl;
           return;
         }
@@ -52,9 +53,8 @@ namespace K {
           if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel pending id " << k << "." << endl;
           return;
         }
-        mOrder o = updateOrderState(mOrder(k, mORS::Working));
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
-        gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (allOrders[k].side == mSide::Bid ? "BID id " : "ASK id ") << allOrders[k].orderId << "::" << allOrders[k].exchangeId << "." << endl;
+        gW->cancel(allOrders[k].orderId, allOrders[k].exchangeId, allOrders[k].side, allOrders[k].time);
       };
     private:
       static void load() {
@@ -128,6 +128,7 @@ namespace K {
       };
       static mOrder updateOrderState(mOrder k) {
         mOrder o;
+        lock_guard<mutex> lock(ogMutex);
         if (k.orderStatus == mORS::New) o = k;
         else if (k.orderId != "" and allOrders.find(k.orderId) != allOrders.end())
           o = allOrders[k.orderId];
