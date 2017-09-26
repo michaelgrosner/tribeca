@@ -62,7 +62,7 @@ help:
 	#  make send-cov     - send coverage               #
 	#  make travis       - provide travis dev box      #
 	#                                                  #
-	#  make klib         - download klib file          #
+	#  make Kbinaries    - download K binaries         #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
 	#  make sqlite       - download sqlite src files   #
@@ -140,7 +140,7 @@ curl: build-$(CROSS)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-Kbinaries: build-$(CROSS)
+Kbinaries:
 	mkdir -p $(KLOCAL)/lib
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
 	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
@@ -321,4 +321,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin klib zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin Kbinaries zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
