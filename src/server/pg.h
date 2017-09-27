@@ -4,7 +4,7 @@
 namespace K {
   mPosition pgPos;
   mSafety pgSafety;
-  map<int, mWallet> pgWallet;
+  map<string, mWallet> pgWallet;
   map<double, mTradeDehydrated> pgBuys;
   map<double, mTradeDehydrated> pgSells;
   vector<mProfit> pgProfit;
@@ -58,7 +58,7 @@ namespace K {
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
-        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << endl;
+        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << gw->base << endl;
       };
       static void addTrade(mTradeHydrated k) {
         mTradeDehydrated k_(k.price, k.quantity, k.time);
@@ -73,7 +73,7 @@ namespace K {
           pgTargetBasePos = k.value("tbp", 0.0);
           pgSideAPR = k.value("sideAPR", "");
         }
-        cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << mCurrency[gw->base] << "." << endl;
+        cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << gw->base << "." << endl;
       };
       static json onSnapPos() {
         return { pgPos };
@@ -200,7 +200,7 @@ namespace K {
       };
       static void calcWallet(mWallet k) {
         pgMutex.lock();
-        if (k.currency>-1) pgWallet[k.currency] = k;
+        if (k.currency!="") pgWallet[k.currency] = k;
         if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
           pgMutex.unlock();
           return;
@@ -208,18 +208,16 @@ namespace K {
         mWallet baseWallet = pgWallet[gw->base];
         mWallet quoteWallet = pgWallet[gw->quote];
         pgMutex.unlock();
-        double baseAmount = baseWallet.amount;
-        double quoteAmount = quoteWallet.amount;
-        double baseValue = baseAmount + quoteAmount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
-        double quoteValue = baseAmount * mgFairValue + quoteAmount + baseWallet.held * mgFairValue + quoteWallet.held;
+        double baseValue = baseWallet.amount + quoteWallet.amount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
+        double quoteValue = baseWallet.amount * mgFairValue + quoteWallet.amount + baseWallet.held * mgFairValue + quoteWallet.held;
         unsigned long now = FN::T();
         pgProfit.push_back(mProfit(baseValue, quoteValue, now));
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
           if (it->time + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
           else it = pgProfit.erase(it);
         mPosition pos(
-          baseAmount,
-          quoteAmount,
+          baseWallet.amount,
+          quoteWallet.amount,
           baseWallet.held,
           quoteWallet.held,
           baseValue,

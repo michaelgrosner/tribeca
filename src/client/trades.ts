@@ -161,7 +161,7 @@ export class TradesComponent implements OnInit {
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
-          quoteSymbol: Models.Currency[t.pair.quote],
+          quoteSymbol: t.pair.quote,
           productFixed: this.product.fixed
         }]});
         if (t.loadedFromDB === false && this.audio) {

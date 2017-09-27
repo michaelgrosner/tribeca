@@ -198,17 +198,17 @@ namespace K {
         cfExchange(gw->config());
         gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
-      static int cfBase() {
+      static string cfBase() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        return S2mC(k);
+        return FN::S2u(k);
       };
-      static int cfQuote() {
+      static string cfQuote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) { cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR." << endl; exit(1); }
-        return S2mC(k);
+        return FN::S2u(k);
       };
       static mExchange cfExchange() {
         string k = FN::S2l(argExchange);
@@ -220,12 +220,6 @@ namespace K {
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
         cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Invalid configuration value \"" << k << "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information." << endl;
-        exit(1);
-      };
-      static int S2mC(string k) {
-        k = FN::S2u(k);
-        for (unsigned i=0; i<mCurrency.size(); ++i) if (mCurrency[i] == k) return i;
-        cout << FN::uiT() << "CF" << RRED << " Errrror:" << BRED << " Use of missing \"" << k << "\" currency." << endl;
         exit(1);
       };
       static mConnectivity autoStart() {

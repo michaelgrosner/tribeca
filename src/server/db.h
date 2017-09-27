@@ -7,9 +7,7 @@ namespace K {
     public:
       static void main() {
         if (argDatabase == "") argDatabase = string("/data/db/K.")
-          + to_string((int)CF::cfExchange())
-          + '.' + to_string(CF::cfBase())
-          + '.' + to_string(CF::cfQuote()) + ".db";
+          + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
         if (sqlite3_open(argDatabase.data(), &db)) {
           cout << FN::uiT() << "DB" << RRED << " Errrror: " << BRED << sqlite3_errmsg(db) << endl;
           exit(1);

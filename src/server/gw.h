@@ -64,8 +64,8 @@ namespace K {
     private:
       static json onSnapProduct() {
         return {{
-          {"exchange", (double)gw->exchange},
-          {"pair", {{"base", (double)gw->base}, {"quote", (double)gw->quote}}},
+          {"exchange", (int)gw->exchange},
+          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"minTick", gw->minTick},
           {"environment", argTitle},
           {"matryoshka", argMatryoshka},

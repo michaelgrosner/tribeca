@@ -41,7 +41,7 @@ namespace K {
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << mCurrency[o.pair.base] << " at price " << o.price << " " << mCurrency[o.pair.quote] << "." << endl;
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << o.pair.base << " at price " << o.price << " " << o.pair.quote << "." << endl;
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
       static void cancelOrder(string k) {
@@ -72,7 +72,7 @@ namespace K {
               (*it)["tradeId"].get<string>(),
               (*it)["time"].get<unsigned long>(),
               (mExchange)(*it)["exchange"].get<int>(),
-              mPair((*it)["/pair/base"_json_pointer].get<int>(), (*it)["/pair/quote"_json_pointer].get<int>()),
+              mPair((*it)["/pair/base"_json_pointer].get<string>(), (*it)["/pair/quote"_json_pointer].get<string>()),
               (*it)["price"].get<double>(),
               (*it)["quantity"].get<double>(),
               (mSide)(*it)["side"].get<int>(),
@@ -152,8 +152,8 @@ namespace K {
         if (k.orderId!="") o.orderId = k.orderId;
         if (k.exchangeId!="") o.exchangeId = k.exchangeId;
         if ((int)k.exchange!=0) o.exchange = k.exchange;
-        if ((int)k.pair.base!=0) o.pair.base = k.pair.base;
-        if ((int)k.pair.quote!=0) o.pair.quote = k.pair.quote;
+        if (k.pair.base!="") o.pair.base = k.pair.base;
+        if (k.pair.quote!="") o.pair.quote = k.pair.quote;
         if ((int)k.side!=0) o.side = k.side;
         if (k.quantity!=0) o.quantity = k.quantity;
         if ((int)k.type!=0) o.type = k.type;
@@ -238,7 +238,7 @@ namespace K {
           o.side,
           val, 0, 0, 0, 0, 0, fee, false
         );
-        cout << FN::uiT() << "GW " << (o.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (trade.side == mSide::Bid ? BCYAN : BPURPLE) << (trade.side == mSide::Bid ? "BUY " : "SELL ") << trade.quantity << " " << mCurrency[trade.pair.base] << " at price " << trade.price << " " << mCurrency[trade.pair.quote] << " (value " << trade.value << " " << mCurrency[trade.pair.quote] << ")" << endl;
+        cout << FN::uiT() << "GW " << (o.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (trade.side == mSide::Bid ? BCYAN : BPURPLE) << (trade.side == mSide::Bid ? "BUY " : "SELL ") << trade.quantity << " " << trade.pair.base << " at price " << trade.price << " " << trade.pair.quote << " (value " << trade.value << " " << trade.pair.quote << ")" << endl;
         ev_ogTrade(trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")
@@ -328,7 +328,7 @@ namespace K {
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
           ogMutex.unlock();
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << mCurrency[k.pair.base] << " at price " << k.price << " " << mCurrency[k.pair.quote] << "." << endl;
+          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << "." << endl;
         } else allOrdersDelete(k.orderId, k.exchangeId);
         if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;
       };

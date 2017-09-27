@@ -5,14 +5,6 @@ namespace K {
   static const char alphanum[] = "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz";
-  static const vector<string> mCurrency = {
-    "BTC", "LTC", "EUR", "GBP", "CNY", "CAD", "ETH", "ETC", "BFX", "RRT", "ZEC", "BCN", "DASH", "DOGE",
-    "DSH", "EMC", "FCN", "LSK", "NXT", "QCN", "SDB", "SCB", "STEEM", "XDN", "XEM", "XMR", "ARDR", "WAVES",
-    "BTU", "MAID", "AMP", "XRP", "KRW", "IOT", "BCY", "BELA", "BLK", "BTCD", "BTM", "BTS", "BURST", "CLAM",
-    "DCR", "DGB", "EMC2", "EXP", "FCT", "FLDC", "FLO", "GAME", "GNO", "GNT", "GRC", "HUC", "LBC", "NAUT",
-    "NAV", "NEOS", "NMC", "NOTE", "NXC", "OMNI", "PASC", "PINK", "POT", "PPC", "RADS", "REP", "RIC", "SBD",
-    "SC", "SJCX", "STR", "STRAT", "SYS", "VIA", "VRC", "VTC", "XBC", "XCP", "XPM", "XVC", "USD", "USDT",
-    "EOS", "SAN", "OMG", "PAY", "BCC", "BCH", "NEO", "ETP" };
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
@@ -48,10 +40,10 @@ namespace K {
     public:
       static Gw *E(mExchange e);
       mExchange exchange = mExchange::Null;
-          int base    = 0,  quote   = 0;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
-       string name    = "", symbol  = "",
+       string base    = "", quote   = "",
+              name    = "", symbol  = "",
               apikey  = "", secret  = "",
               user    = "", pass    = "",
               ws      = "", wS      = "",
@@ -67,23 +59,23 @@ namespace K {
       virtual    string clientId() = 0;
   };
   struct mPair {
-    int base,
-        quote;
+    string base,
+           quote;
     mPair():
-      base(0), quote(0)
+      base(""), quote("")
     {};
-    mPair(int b, int q):
+    mPair(string b, string q):
       base(b), quote(q)
     {};
   };
   struct mWallet {
     double amount,
            held;
-       int currency;
+    string currency;
     mWallet():
-      amount(0), held(0), currency(-1)
+      amount(0), held(0), currency("")
     {};
-    mWallet(double a, double h, int c):
+    mWallet(double a, double h, string c):
       amount(a), held(h), currency(c)
     {};
   };
@@ -219,13 +211,13 @@ namespace K {
   };
   struct mTradeDry {
         mExchange exchange;
-              int base,
+           string base,
                   quote;
            double price,
                   size;
     unsigned long time;
             mSide make_side;
-    mTradeDry(mExchange e, int b, int q, double p, double s, double t, mSide S):
+    mTradeDry(mExchange e, string b, string q, double p, double s, double t, mSide S):
       exchange(e), base(b), quote(q), price(p), size(s), time(t), make_side(S)
     {};
   };

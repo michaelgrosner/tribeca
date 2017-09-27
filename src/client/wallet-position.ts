@@ -61,7 +61,7 @@ export class WalletPositionComponent implements OnInit {
     this.quoteValue = o.quoteValue;
     this.profitBase = o.profitBase;
     this.profitQuote = o.profitQuote;
-    this.baseCurrency = Models.Currency[o.pair.base];
-    this.quoteCurrency = Models.Currency[o.pair.quote];
+    this.baseCurrency = o.pair.base;
+    this.quoteCurrency = o.pair.quote;
   }
 }

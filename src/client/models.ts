@@ -62,16 +62,6 @@ export class MarketTrade {
                 public make_side: Side) {}
 }
 
-export enum Currency {
-    BTC, LTC, EUR, GBP, CNY, CAD, ETH, ETC, BFX, RRT, ZEC, BCN, DASH, DOGE,
-    DSH, EMC, FCN, LSK, NXT, QCN, SDB, SCB, STEEM, XDN, XEM, XMR, ARDR, WAVES,
-    BTU, MAID, AMP, XRP, KRW, IOT, BCY, BELA, BLK, BTCD, BTM, BTS, BURST, CLAM,
-    DCR, DGB, EMC2, EXP, FCT, FLDC, FLO, GAME, GNO, GNT, GRC, HUC, LBC, NAUT,
-    NAV, NEOS, NMC, NOTE, NXC, OMNI, PASC, PINK, POT, PPC, RADS, REP, RIC, SBD,
-    SC, SJCX, STR, STRAT, SYS, VIA, VRC, VTC, XBC, XCP, XPM, XVC, USD, USDT,
-    EOS, SAN, OMG, PAY, BCC, BCH, NEO, ETP
-}
-
 export enum Connectivity { Disconnected, Connected }
 export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
@@ -134,7 +124,7 @@ export class Trade {
 export class CurrencyPosition {
     constructor(public amount: number,
                 public heldAmount: number,
-                public currency: Currency) {}
+                public currency: string) {}
 }
 
 export class PositionReport {
@@ -179,7 +169,7 @@ export class TwoSidedQuoteStatus {
 }
 
 export class CurrencyPair {
-    constructor(public base: Currency, public quote: Currency) {}
+    constructor(public base: string, public quote: string) {}
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth }

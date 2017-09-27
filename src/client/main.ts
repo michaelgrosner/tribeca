@@ -792,10 +792,10 @@ class ClientComponent implements OnInit {
     this.matryoshka = pa.matryoshka;
     this.system_theme = this.getTheme(moment.utc().hours());
     this.setTheme();
-    this.pair_name = [Models.Currency[pa.pair.base], Models.Currency[pa.pair.quote]];
+    this.pair_name = [pa.pair.base, pa.pair.quote];
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
-      ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/market.html'
+      ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='Coinbase'
         ? 'https://gdax.com/trade/'+this.pair_name.join('-')
         : (this.exchange_name=='Bitfinex'
@@ -807,7 +807,7 @@ class ClientComponent implements OnInit {
           )
       );
     this.exchange_orders = this.exchange_name=='OkCoin'
-      ? 'https://www.okcoin.'+(Models.Currency[pa.pair.quote]=='CNY'?'cn':'com')+'/trade/entrust.do'
+      ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
       : (this.exchange_name=='Coinbase'
         ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
         : (this.exchange_name=='Bitfinex'

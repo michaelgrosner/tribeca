@@ -135,7 +135,7 @@ export class OrdersComponent implements OnInit {
         qty: o.quantity,
         pong: o.isPong,
         time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
-        quoteSymbol: Models.Currency[this.product.advert.pair.quote],
+        quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});
   }

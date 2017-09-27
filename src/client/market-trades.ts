@@ -70,7 +70,7 @@ export class MarketTradesComponent implements OnInit {
         time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
         recent: true,
         make_side: Models.Side[trade.make_side],
-        quoteSymbol: Models.Currency[trade.pair.quote],
+        quoteSymbol: trade.pair.quote,
         productFixed: this.product.fixed
       }]});
 
