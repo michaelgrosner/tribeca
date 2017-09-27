@@ -11,6 +11,7 @@ namespace K {
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
   string pgSideAPR_ = "!=";
+  mutex pgMutex;
   class PG {
     public:
       static void main() {
@@ -198,12 +199,19 @@ namespace K {
         return sum;
       };
       static void calcWallet(mWallet k) {
-        if (k.currency>-1)  pgWallet[k.currency] = k;
-        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) return;
-        double baseAmount = pgWallet[gw->base].amount;
-        double quoteAmount = pgWallet[gw->quote].amount;
-        double baseValue = baseAmount + quoteAmount / mgFairValue + pgWallet[gw->base].held + pgWallet[gw->quote].held / mgFairValue;
-        double quoteValue = baseAmount * mgFairValue + quoteAmount + pgWallet[gw->base].held * mgFairValue + pgWallet[gw->quote].held;
+        pgMutex.lock();
+        if (k.currency>-1) pgWallet[k.currency] = k;
+        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
+          pgMutex.unlock();
+          return;
+        }
+        mWallet baseWallet = pgWallet[gw->base];
+        mWallet quoteWallet = pgWallet[gw->quote];
+        pgMutex.unlock();
+        double baseAmount = baseWallet.amount;
+        double quoteAmount = quoteWallet.amount;
+        double baseValue = baseAmount + quoteAmount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
+        double quoteValue = baseAmount * mgFairValue + quoteAmount + baseWallet.held * mgFairValue + quoteWallet.held;
         unsigned long now = FN::T();
         pgProfit.push_back(mProfit(baseValue, quoteValue, now));
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
@@ -212,8 +220,8 @@ namespace K {
         mPosition pos(
           baseAmount,
           quoteAmount,
-          pgWallet[gw->base].held,
-          pgWallet[gw->quote].held,
+          baseWallet.held,
+          quoteWallet.held,
           baseValue,
           quoteValue,
           ((baseValue - pgProfit.begin()->baseValue) / baseValue) * 1e+2,
