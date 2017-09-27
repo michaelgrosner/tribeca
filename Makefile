@@ -54,7 +54,7 @@ help:
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
 	#  make client       - compile K client src        #
-	#  make pub          - compile K client src        #
+	#  make www          - compile K client src        #
 	#  make bundle       - compile K client bundle     #
 	#                                                  #
 	#  make test         - run tests                   #
@@ -254,13 +254,13 @@ client: node_modules/.bin/tsc src/client
 	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts
 	@echo DONE
 
-pub: src/pub app/pub
+www: src/www app/pub
 	@echo Building client static files..
-	cp -R src/pub/* app/pub/
+	cp -R src/www/* app/pub/
 	mkdir -p app/pub/js/client
 	@echo DONE
 
-bundle: client pub node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
+bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
 	@echo Building client bundle file..
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/main.js app/pub/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
 	rm app/pub/js/*.js
@@ -321,4 +321,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin Kbinaries zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client pub bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin Kbinaries zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
