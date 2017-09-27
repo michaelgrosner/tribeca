@@ -20,13 +20,13 @@ namespace K {
         load();
         thread([&]() {
           while (true) {
+            this_thread::sleep_for(chrono::seconds(1));
             if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV QE calc thread." << endl;
             if (mgFairValue) {
               MG::calcStats();
               PG::calcSafety();
               calcQuote();
             } else cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate quote, missing fair value." << endl;
-            this_thread::sleep_for(chrono::seconds(1));
           }
         }).detach();
         ev_gwConnectButton = [](mConnectivity k) {
@@ -142,6 +142,7 @@ namespace K {
       static bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         vector<string> toDelete;
         unsigned long T = FN::T();
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           mORS k = (mORS)it->second.orderStatus;
           if (k == mORS::New) {
@@ -151,6 +152,7 @@ namespace K {
           } else if (k == mORS::Working) ++(*qWorking);
           else ++(*qDone);
         }
+        ogMutex.unlock();
         for (vector<string>::iterator it = toDelete.begin(); it != toDelete.end(); ++it)
           OG::allOrdersDelete(*it, "");
         return diffCounts(*qNew, *qWorking, *qDone);
@@ -471,9 +473,11 @@ namespace K {
       };
       static multimap<double, mOrder> orderCacheSide(mSide side) {
         multimap<double, mOrder> orderSide;
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           if ((mSide)it->second.side == side)
             orderSide.insert(pair<double, mOrder>(it->second.price, it->second));
+        ogMutex.unlock();
         return orderSide;
       };
       static void modify(mSide side, mLevel q, bool isPong) {

@@ -202,8 +202,10 @@ namespace K {
       static void filter(mLevels k) {
         mgLevelsFilter = k;
         if (empty()) return;
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           filter(mSide::Bid == it->second.side ? &mgLevelsFilter.bids : &mgLevelsFilter.asks, it->second);
+        ogMutex.unlock();
         if (!empty()) {
           calcFairValue();
           ev_mgLevels();

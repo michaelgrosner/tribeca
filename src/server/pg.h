@@ -244,14 +244,16 @@ namespace K {
         double amount = k.side == mSide::Ask
           ? pgPos.baseAmount + pgPos.baseHeldAmount
           : pgPos.quoteAmount + pgPos.quoteHeldAmount;
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (it->second.side != k.side) return;
+          if (it->second.side != k.side) continue;
           double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
           if (amount >= held) {
             amount -= held;
             heldAmount += held;
           }
         }
+        ogMutex.unlock();
         calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask
             ? k.pair.base : k.pair.quote
         ));

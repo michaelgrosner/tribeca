@@ -26,6 +26,7 @@ namespace K {
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
       };
       static void allOrdersDelete(string oI, string oE) {
+        ogMutex.lock();
         map<string, mOrder>::iterator it = allOrders.find(oI);
         if (it != allOrders.end()) allOrders.erase(it);
         if (oE != "") {
@@ -35,6 +36,7 @@ namespace K {
           for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
+        ogMutex.unlock();
         if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG remove " << oI << "::" << oE << "." << endl;
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
@@ -43,18 +45,23 @@ namespace K {
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
       static void cancelOrder(string k) {
+        ogMutex.lock();
         if (allOrders.find(k) == allOrders.end()) {
           // updateOrderState(mOrder(k, mORS::Cancelled));
           if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel unknown id " << k << "." << endl;
+          ogMutex.unlock();
           return;
         }
         if (!gW->cancelByClientId and allOrders[k].exchangeId == "") {
           toCancel[k] = nullptr;
           if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel pending id " << k << "." << endl;
+          ogMutex.unlock();
           return;
         }
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (allOrders[k].side == mSide::Bid ? "BID id " : "ASK id ") << allOrders[k].orderId << "::" << allOrders[k].exchangeId << "." << endl;
-        gW->cancel(allOrders[k].orderId, allOrders[k].exchangeId, allOrders[k].side, allOrders[k].time);
+        mOrder o = allOrders[k];
+        ogMutex.unlock();
+        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
+        gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
     private:
       static void load() {
@@ -90,10 +97,12 @@ namespace K {
       };
       static json onSnapOrders() {
         json k;
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
           k.push_back(it->second);
         }
+        ogMutex.unlock();
         return k;
       };
       static void onHandCancelAllOrders(json k) {
@@ -128,14 +137,18 @@ namespace K {
       };
       static mOrder updateOrderState(mOrder k) {
         mOrder o;
-        lock_guard<mutex> lock(ogMutex);
+        ogMutex.lock();
         if (k.orderStatus == mORS::New) o = k;
         else if (k.orderId != "" and allOrders.find(k.orderId) != allOrders.end())
           o = allOrders[k.orderId];
         else if (k.exchangeId != "" and allOrdersIds.find(k.exchangeId) != allOrdersIds.end()) {
           o = allOrders[allOrdersIds[k.exchangeId]];
           k.orderId = o.orderId;
-        } else return o;
+        } else {
+          ogMutex.unlock();
+          return o;
+        }
+        ogMutex.unlock();
         if (k.orderId!="") o.orderId = k.orderId;
         if (k.exchangeId!="") o.exchangeId = k.exchangeId;
         if ((int)k.exchange!=0) o.exchange = k.exchange;
@@ -173,9 +186,14 @@ namespace K {
       };
       static void cancelOpenOrders() {
         if (gW->supportCancelAll) return gW->cancelAll();
+        vector<string> k;
+        ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           if (mORS::New == (mORS)it->second.orderStatus or mORS::Working == (mORS)it->second.orderStatus)
-            cancelOrder(it->first);
+            k.push_back(it->first);
+        ogMutex.unlock();
+        for (vector<string>::iterator it = k.begin(); it != k.end(); ++it)
+          cancelOrder(*it);
       };
       static void cleanClosedOrders() {
         for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
@@ -305,9 +323,11 @@ namespace K {
       };
       static void toMemory(mOrder k) {
         if (k.orderStatus != mORS::Cancelled and k.orderStatus != mORS::Complete) {
+          ogMutex.lock();
           if (k.exchangeId != "")
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
+          ogMutex.unlock();
           if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << mCurrency[k.pair.base] << " at price " << k.price << " " << mCurrency[k.pair.quote] << "." << endl;
         } else allOrdersDelete(k.orderId, k.exchangeId);
         if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;

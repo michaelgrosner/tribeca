@@ -16,7 +16,7 @@ namespace K {
   static double ui_delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
-  extern mutex uiMutex;
+  static mutex uiMutex;
   class UI {
     public:
       static void main() {

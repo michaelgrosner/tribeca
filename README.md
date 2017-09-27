@@ -92,8 +92,6 @@ Feel free to run `make stop` or `make restart` anytime, and don't forget to [rea
 
 Troubleshooting:
 
- * Installation may fail if `g++` v6 was not selected on install. To fix it install manually `g++-6` (or with `make travis` on Ubuntu).
-
  * Create a temporary [swap file](https://stackoverflow.com/questions/17173972/how-do-you-add-swap-to-an-ec2-instance) (after install you can swapoff) if the installation fails with error: `virtual memory exhausted: Cannot allocate memory`.
 
  * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
