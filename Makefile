@@ -202,7 +202,7 @@ reinstall: .git src
 	git merge FETCH_HEAD
 	@rm -rf node_modules/hacktimer
 	@$(MAKE) install
-	@$(MAKE) test -s
+	#@$(MAKE) test -s
 	@git checkout .
 	@$(MAKE) restartall
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
