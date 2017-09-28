@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 6298b29e27dfa4a2899ab3c66ef2da4abf2b55d6
+KLIB     = 13eb713145ab7e2bbbdc60bc160f1ab7e8dccc72
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -95,7 +95,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix Kbinaries
+	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -194,6 +194,7 @@ docker:
 	sed -i "/Usage/,+117d" K.sh
 
 link:
+	cd app && ln -f -s ../$(KLOCAL)/var/www client
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CROSS) K
 
 reinstall: .git src
@@ -264,7 +265,6 @@ bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLO
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
 	rm $(KLOCAL)/var/www/js/*.js
-	cd app && ln -f -s ../../$(KLOCAL)/var/www client
 	@echo DONE
 
 diff: .git
