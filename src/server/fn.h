@@ -367,6 +367,15 @@ namespace K {
         }
         return data;
       };
+      static string readlink(const char* pathname) {
+        string buffer(64, '\0');
+        ssize_t len;
+        while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
+          buffer.resize(buffer.size() * 2);
+        if (len == -1) cout << FN::uiT() << "FN" << RRED << " Warrrrning:" << BRED << " readlink failed." << endl;
+        buffer.resize(len);
+        return buffer;
+      };
   };
 }
 

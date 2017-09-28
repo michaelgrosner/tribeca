@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 86e0165de87d2604fb4c2c074a32594427d0b73a
+KLIB     = 6298b29e27dfa4a2899ab3c66ef2da4abf2b55d6
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -249,21 +249,22 @@ gdax:
 	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
 
 client: node_modules/.bin/tsc src/client
-	mkdir -p app
+	mkdir -p build-$(CROSS)/var/www
 	@echo Building client dynamic files..
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir app/pub/js src/client/*.ts
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
 	@echo DONE
 
-www: src/www app/pub
+www: src/www $(KLOCAL)/var/www
 	@echo Building client static files..
-	cp -R src/www/* app/pub/
-	mkdir -p app/pub/js/client
+	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
 
-bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs app/pub/js/main.js
+bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
 	@echo Building client bundle file..
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] app/pub/js/main.js app/pub/js/*.js | ./node_modules/.bin/uglifyjs | gzip > app/pub/js/client/bundle.min.js
-	rm app/pub/js/*.js
+	mkdir -p $(KLOCAL)/var/www/js/client
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
+	rm $(KLOCAL)/var/www/js/*.js
+	cd app && ln -f -s ../../$(KLOCAL)/var/www client
 	@echo DONE
 
 diff: .git

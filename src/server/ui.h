@@ -74,9 +74,8 @@ namespace K {
                 url = path;
               }
               stringstream content;
-              if (url.length() > 0) {
-                content << ifstream (string("app/pub") + url).rdbuf();
-              } else {
+              if (url.length() > 0) content << ifstream(FN::readlink("app/client").substr(6) + url).rdbuf();
+              else {
                 srand(time(0));
                 if (rand() % 21) {
                   document = "HTTP/1.1 404 Not Found\r\n";
