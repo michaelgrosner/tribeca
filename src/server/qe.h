@@ -235,9 +235,6 @@ namespace K {
           rawQuote.bid.price = fmin(mgEwmaP, rawQuote.bid.price);
         }
         if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE quote¿ " << (json)rawQuote << "." << endl;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE pDiv " << pDiv << "." << endl;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE pgTargetBasePos " << pgTargetBasePos << "." << endl;
-        if (argDebugQuotes) cout << FN::uiT() << "DEBUG " << RWHITE << "QE totalBasePosition " << totalBasePosition << "." << endl;
         if (totalBasePosition < pgTargetBasePos - pDiv) {
           qeAskStatus = mQuoteState::TBPHeld;
           rawQuote.ask.price = 0;

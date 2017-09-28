@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 13eb713145ab7e2bbbdc60bc160f1ab7e8dccc72
+KLIB     = 2247aceb7a3fa099f1cab3a160bad36366009152
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -62,7 +62,7 @@ help:
 	#  make send-cov     - send coverage               #
 	#  make travis       - provide travis dev box      #
 	#                                                  #
-	#  make Kbinaries    - download K binaries         #
+	#  make build        - download K src precompiled  #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
 	#  make sqlite       - download sqlite src files   #
@@ -140,7 +140,7 @@ curl: build-$(CROSS)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-Kbinaries:
+build:
 	mkdir -p $(KLOCAL)/lib
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
 	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
@@ -184,14 +184,14 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install
-	@$(MAKE) Kbinaries bundle link
+	@$(MAKE) build link
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@npm install --unsafe-perm
-	@$(MAKE) Kbinaries bundle link
-	sed -i "/Usage/,+117d" K.sh
+	@$(MAKE) build link
+	sed -i "/Usage/,+116d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
@@ -310,7 +310,7 @@ checkOK:
 	@$(MAKE) check -s
 
 release:
-	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CROSS).tar.gz bin/K-$(CROSS) lib/K-$(CROSS).a                                 \
+	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CROSS).tar.gz bin/K-$(CROSS) var lib/K-$(CROSS).a                            \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
 	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CROSS).tar.gz"                                                         \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
@@ -322,4 +322,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin Kbinaries zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich

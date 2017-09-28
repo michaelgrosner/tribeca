@@ -72,7 +72,7 @@ All currency pairs are supported.
 See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
-1. Ensure your target machine has installed `git`, `vim`, `make` and [node](https://nodejs.org/en/download/package-manager/).
+1. Ensure your target machine has installed `git`, `make` and `vim`.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
@@ -198,7 +198,9 @@ Is there because i use it, but you can run it too if you decide to collaborate w
 
 ### Test units and Build notes
 
-Feel free to run `make test` anytime.
+Make sure your build machine has installed [node](https://nodejs.org/en/download/package-manager/), and provide all the dependencies with "make dist".
+
+Then, feel free to run `make test` anytime.
 
 To rebuild the application with your modifications, see `make help` and choose a target.
 
