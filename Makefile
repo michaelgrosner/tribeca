@@ -183,13 +183,11 @@ packages:
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@npm install
 	@$(MAKE) build link
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@npm install --unsafe-perm
 	@$(MAKE) build link
 	sed -i "/Usage/,+116d" K.sh
 
@@ -252,6 +250,7 @@ gdax:
 client: node_modules/.bin/tsc src/client
 	mkdir -p $(KLOCAL)/var/www
 	@echo Building client dynamic files..
+	@npm install
 	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
 	@echo DONE
 
