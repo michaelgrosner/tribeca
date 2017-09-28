@@ -198,7 +198,7 @@ Is there because i use it, but you can run it too if you decide to collaborate w
 
 ### Test units and Build notes
 
-Make sure your build machine has installed [node](https://nodejs.org/en/download/package-manager/), and also ensure all dependencies are provided without errors with `make dist`.
+Make sure your build machine has installed [node](https://nodejs.org/en/download/package-manager/), and also ensure `make dist` provides all dependencies without errors.
 
 Then, feel free to run `make test` anytime.
 
