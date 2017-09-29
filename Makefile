@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = e83d9fb7402ce65d50c891320327a15e218de804
+KLIB     = 498f05694d0f51ee505ee51c39e01c5f783b2a92
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -140,7 +140,7 @@ curl: build-$(CROSS)
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
 build:
-	mkdir -p $(KLOCAL)/lib
+	mkdir -p $(KLOCAL)
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
 	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
 
