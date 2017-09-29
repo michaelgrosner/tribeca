@@ -1,10 +1,9 @@
 K       ?= K.sh
-KLIB     = 2247aceb7a3fa099f1cab3a160bad36366009152
+KLIB     = e83d9fb7402ce65d50c891320327a15e218de804
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
 CC       = $(CROSS)-gcc-6
-AR       = $(CROSS)-ar-6
 KGIT     = 3.0
 KHUB     = 6704776
 V_ZLIB  := 1.2.11
@@ -112,22 +111,22 @@ uws: build-$(CROSS)
 	&& cp build-$(CROSS)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
 
 sqlite: build-$(CROSS)
-	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                       \
-	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(PWD)/$(KLOCAL)     \
-	--host=$(CROSS) --enable-static --disable-shared && make && make install )
+	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                            \
+	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS)      \
+	&& cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
+	--host=$(CROSS) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
 zlib: build-$(CROSS)
-	test -d build-$(CROSS)/zlib-$(V_ZLIB) || (                                \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/zlib-$(V_ZLIB) && CC=$(CC) ./configure               \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                         )
+	test -d build-$(CROSS)/zlib-$(V_ZLIB) || (                                 \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CROSS)  \
+	&& cd build-$(CROSS)/zlib-$(V_ZLIB) && CC=$(CC) CHOST=$(CROSS) ./configure \
+	--prefix=$(PWD)/$(KLOCAL) && make && make install                          )
 
 openssl: build-$(CROSS)
-	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                              \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS) \
-	&& cd build-$(CROSS)/openssl-$(V_SSL) && CC=$(CC) ./config                                \
-	-fPIC --prefix=$(PWD)/$(KLOCAL) --openssldir=$(PWD)/$(KLOCAL) && make && make install     )
+	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                                            \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS)               \
+	&& cd build-$(CROSS)/openssl-$(V_SSL) && CC=$(CC) ./Configure dist                                      \
+	-fPIC --prefix=$(PWD)/$(KLOCAL) --openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs)
 
 curl: build-$(CROSS)
 	test -d build-$(CROSS)/curl-$(V_CURL) || (                                                  \
@@ -155,8 +154,11 @@ quickfix: build-$(CROSS)
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
 	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
 	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                           \
+	&& sed -i "s/bin spec test examples doc//" Makefile.am                                         \
+	&& sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile                                       \
 	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
-	&& make && make install                                                                        )
+	--host=$(CROSS) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
+	&& cd ../src && CXX=$(CXX) make && make install                                                )
 
 clean:
 ifdef KALL
@@ -315,11 +317,17 @@ checkOK:
 	@$(MAKE) check -s
 
 release:
+ifdef KALL
+	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+else
 	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CROSS).tar.gz bin/K-$(CROSS) var lib/K-$(CROSS).a                            \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
 	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CROSS).tar.gz"                                                         \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
-	&& rm $(KLIB)-$(CROSS).tar.gz && echo DONE $(KLIB)-$(CROSS).tar.gz
+	&& rm $(KLIB)-$(CROSS).tar.gz && echo && echo DONE $(KLIB)-$(CROSS).tar.gz
+endif
 
 md5: src
 	find src -type f -exec md5sum "{}" + > src.md5
