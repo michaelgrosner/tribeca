@@ -9,6 +9,7 @@ KHUB     = 6704776
 V_ZLIB  := 1.2.11
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
+V_NCUR  := 6.0
 V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
@@ -64,6 +65,7 @@ help:
 	#  make build        - download K src precompiled  #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
+	#  make ncurses      - download ncurses src files  #
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
 	#  make json         - download json src files     #
@@ -94,7 +96,7 @@ ifdef KALL
 	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
 else
 	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib openssl curl json sqlite uws quickfix
+	CROSS=$(CROSS) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -139,10 +141,11 @@ curl: build-$(CROSS)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-build:
-	mkdir -p $(KLOCAL)
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
-	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
+ncurses:
+	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                  \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS) \
+	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure          \
+	--host=$(CROSS) --prefix=$(PWD)/$(KLOCAL) && make && make install                              )
 
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
@@ -159,6 +162,11 @@ quickfix: build-$(CROSS)
 	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
 	--host=$(CROSS) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
+
+build:
+	mkdir -p $(KLOCAL)
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
+	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
 
 clean:
 ifdef KALL
@@ -335,4 +343,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
