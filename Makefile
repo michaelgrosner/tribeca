@@ -14,13 +14,13 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
-  src/server/K.cc -pthread -rdynamic                     \
-  -DK_STAMP='"$(shell date --rfc-3339=ns)"'              \
-  -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp \
-  $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/lib/libquickfix.a \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
+KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
+  src/server/K.cc -pthread -rdynamic                           \
+  -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
+  -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp       \
+  $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/lib/libquickfix.a       \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
 
 all: K
