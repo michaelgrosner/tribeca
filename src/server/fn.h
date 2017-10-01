@@ -537,7 +537,6 @@ namespace K {
       };
       static void screen() {
         initscr();
-        signal(SIGWINCH, screen_resize);
         start_color();
         use_default_colors();
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
@@ -549,11 +548,44 @@ namespace K {
         init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
         cbreak();
         noecho();
-        screen_border(true);
-        wInit = true;
+        screen_border();
+        signal(SIGWINCH, screen_resize);
+      };
+      static void screen_border() {
+        static bool k = false;
+        if (!k) {
+          k = true;
+          wLog = newwin(LINES-4, COLS-4, 2, 2);
+          keypad(wLog, true);
+          scrollok(wLog, true);
+          thread([&]() {
+            int ch;
+            while ((ch = wgetch(wLog)) != 'q') {
+              switch (ch) {
+                case ERR: continue;
+                case KEY_PPAGE: wscrl(wLog, -3); break;
+                case KEY_NPAGE: wscrl(wLog, 3); break;
+                case KEY_UP: wscrl(wLog, -1); break;
+                case KEY_DOWN: wscrl(wLog, 1); break;
+              }
+            }
+            bool wInit_ = wInit;
+            wInit = false;
+            if (wInit_) endwin();
+            cout << FN::uiT(true) << "Excellent decision!" << '\n';
+            evExit(EXIT_SUCCESS);
+          }).detach();
+          wInit = true;
+          wBorder = newwin(LINES, COLS, 0, 0);
+        }
+        wborder(wBorder, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
+        mvwaddstr(wBorder, 0, 13, string("K ").append(K_BUILD).append(" ").append(K_STAMP).data());
+        wrefresh(wBorder);
+        wmove(wLog, getmaxy(wLog)-1, 0);
+        wrefresh(wLog);
       };
       static void screen_resize(int sig) {
-        if (!wInit or wBorder == nullptr) return;
+        if (!wInit) return;
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == LINES and ws.ws_col == COLS)) return;
         if (ws.ws_col < 20) ws.ws_col = 20;
@@ -563,16 +595,6 @@ namespace K {
         resizeterm(ws.ws_row, ws.ws_col);
         screen_border();
         redrawwin(wLog);
-        wrefresh(wLog);
-      };
-      static void screen_border(bool k = false) {
-        if (k) wBorder = newwin(LINES, COLS, 0, 0);
-        wborder(wBorder, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
-        mvwaddstr(wBorder, 0, 13, string("K ").append(K_BUILD).append(" ").append(K_STAMP).data());
-        wrefresh(wBorder);
-        if (!k) return;
-        wLog = newwin(LINES-4, COLS-4, 2, 2);
-        scrollok(wLog, true);
         wrefresh(wLog);
       };
   };

@@ -2,7 +2,6 @@
 #define K_EV_H_
 
 namespace K {
-  static void (*evExit)(int code);
   typedef void (*evConnect)      (mConnectivity);
   typedef void (*evOrder)        (mOrder);
   typedef void (*evTrade)        (mTrade);

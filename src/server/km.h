@@ -39,6 +39,7 @@ namespace K {
   extern bool wInit;
   extern WINDOW *wBorder,
                 *wLog;
+  static void (*evExit)(int code);
   class Gw {
     public:
       static Gw *E(mExchange e);
