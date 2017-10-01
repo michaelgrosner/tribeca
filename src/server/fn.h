@@ -535,9 +535,9 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      static void screen() {
+      static void screen(int k) {
         initscr();
-        start_color();
+        if (k) start_color();
         use_default_colors();
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
@@ -555,7 +555,7 @@ namespace K {
         static bool k = false;
         if (!k) {
           k = true;
-          wLog = newwin(LINES-4, COLS-4, 2, 2);
+          wLog = newwin(LINES-6, COLS-4, 2, 2);
           keypad(wLog, true);
           scrollok(wLog, true);
           thread([&]() {
@@ -575,11 +575,17 @@ namespace K {
             cout << FN::uiT(true) << "Excellent decision!" << '\n';
             evExit(EXIT_SUCCESS);
           }).detach();
-          wInit = true;
           wBorder = newwin(LINES, COLS, 0, 0);
+          wInit = true;
         }
         wborder(wBorder, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
-        mvwaddstr(wBorder, 0, 13, string("K ").append(K_BUILD).append(" ").append(K_STAMP).data());
+        mvwaddch(wBorder, 0, 12, ACS_RTEE);
+        mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
+        mvwaddstr(wBorder, 0, 13, string(" K ").append(K_BUILD).append(" ").append(K_STAMP).append(" ").data());
+        mvwaddch(wBorder, getmaxy(wBorder)-4, 0, ACS_LTEE);
+        wmove(wBorder, getmaxy(wBorder)-4, 1);
+        whline(wBorder, ACS_HLINE, getmaxx(wBorder)-1);
+        mvwaddch(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-1, ACS_RTEE);
         wrefresh(wBorder);
         wmove(wLog, getmaxy(wLog)-1, 0);
         wrefresh(wLog);
@@ -588,9 +594,10 @@ namespace K {
         if (!wInit) return;
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == LINES and ws.ws_col == COLS)) return;
+        if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
         wborder(wBorder, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-        wresize(wLog, ws.ws_row-4, ws.ws_col-4);
+        wresize(wLog, ws.ws_row-6, ws.ws_col-6);
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
         screen_border();

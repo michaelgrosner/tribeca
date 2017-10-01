@@ -167,8 +167,7 @@ namespace K {
           argDebugOrders = 1;
           argDebugQuotes = 1;
         }
-        if (argColors) argColors = has_colors();
-        FN::screen();
+        FN::screen(argColors);
         if (argExchange == "") FN::logWar("CF", "Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead");
       };
       static void api() {
