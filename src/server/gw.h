@@ -15,7 +15,7 @@ namespace K {
         thread([&]() {
           unsigned int T_5m = 0;
           while (true) {
-            if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV GW cancel thread." << endl;
+            if (argDebugEvents) FN::log("DEBUG", "EV GW cancel thread.");
             if (QP::getBool("cancelOrdersAuto") and ++T_5m == 20) {
               T_5m = 0;
               gW->cancelAll();
@@ -80,7 +80,7 @@ namespace K {
       };
       static void onHandState(json k) {
         if (!k.is_object() or !k["state"].is_number()) {
-          cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing state at onHandState, ignored." << endl;
+          FN::logWar("JSON", "Missing state at onHandState, ignored");
           return;
         }
         mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
@@ -107,16 +107,16 @@ namespace K {
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
-          cout << FN::uiT() << "GW " << argExchange << RWHITE << " Quoting state changed to " << RYELLOW << (gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED") << RWHITE << "." << endl;
+          FN::log(string("GW ") + argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
           UI::uiSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ev_gwConnectButton(gwQuotingState);
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        cout << FN::uiT() << "GW " << argExchange << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
+        cout << FN::uiT(true) << "GW " << argExchange << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
         gW->cancelAll();
-        cout << FN::uiT() << "GW " << argExchange << RWHITE << " cancell all open orders OK." << endl;
+        cout << FN::uiT(true) << "GW " << argExchange << RWHITE << " cancell all open orders OK." << endl;
         EV::end(code);
       };
   };

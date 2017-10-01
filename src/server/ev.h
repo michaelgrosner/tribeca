@@ -36,43 +36,45 @@ namespace K {
         gitReversedVersion();
       };
       static void end(int code) {
-        cout << FN::uiT() << "K exit code " << to_string(code) << "." << endl;
+        cout << FN::uiT(true) << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
     private:
       static void gitReversedVersion() {
         FN::output("git fetch");
         string k = changelog();
-        unsigned int commits = count(k.begin(), k.end(), '\n');
-        cout << BGREEN << "K" << RGREEN << " version " << (!commits ? "0day.\n"
-          : string("-").append(to_string(commits)).append("commit")
-            .append(commits > 1?"s..\n":"..\n").append(BYELLOW).append(k)
-        );
+        FN::logVer(k, count(k.begin(), k.end(), '\n'));
       };
       static void happyEnding(int code) {
-        cout << FN::uiT();
+        cout << FN::uiT(true);
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
-        cout << "THE END" << endl;
+        cout << "THE END" << '\n';
         end(EXIT_FAILURE);
       };
       static void quit(int sig) {
-        cout << endl;
+        bool wInit_ = wInit;
+        wInit = false;
+        if (wInit_) endwin();
+        cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
-        cout << FN::uiT() << "Excellent decision! "
+        cout << FN::uiT(true) << "Excellent decision! "
           << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
-          ) << endl;
+          ) << '\n';
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
-        cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
+        bool wInit_ = wInit;
+        wInit = false;
+        if (wInit_) endwin();
+        cout << FN::uiT(true) << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
         if (latest()) {
-          cout << " (Three-Headed Monkey found)." << endl;
+          cout << " (Three-Headed Monkey found)." << '\n';
           report();
           this_thread::sleep_for(chrono::seconds(3));
         } else {
-          cout << " (deprecated K version found)." << endl;
+          cout << " (deprecated K version found)." << '\n';
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
@@ -85,19 +87,19 @@ namespace K {
         return FN::output("git --no-pager log --graph --oneline @..@{u}");
       }
       static void upgrade() {
-        cout << endl << BYELLOW << "Hint!" << RYELLOW
-          << endl << "please upgrade to the latest commit; the encountered error may be already fixed at:"
-          << endl << changelog()
-          << endl << "If you agree, consider to run \"make latest\" prior further executions."
-          << endl << endl;
+        cout << '\n' << BYELLOW << "Hint!" << RYELLOW
+          << '\n' << "please upgrade to the latest commit; the encountered error may be already fixed at:"
+          << '\n' << changelog()
+          << '\n' << "If you agree, consider to run \"make latest\" prior further executions."
+          << '\n' << '\n';
       };
       static void report() {
         void *k[69];
         backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
-        cout << endl << BRED << "Yikes!" << RRED
-          << endl << "please copy and paste the error above into a new github issue (noworry for duplicates)."
-          << endl << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-          << endl << endl;
+        cout << '\n' << BRED << "Yikes!" << RRED
+          << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
+          << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+          << '\n' << '\n';
       };
   };
 }

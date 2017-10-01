@@ -1,6 +1,14 @@
 #ifndef K_FN_H_
 #define K_FN_H_
 
+#ifndef K_BUILD
+#define K_BUILD "0"
+#endif
+
+#ifndef K_STAMP
+#define K_STAMP "0"
+#endif
+
 namespace K {
   class FN {
     public:
@@ -15,7 +23,7 @@ namespace K {
         else return roundNearest(oP, minTick);
       };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
-      static string uiT() {
+      static string uiT(bool k = false) {
         typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
@@ -30,14 +38,19 @@ namespace K {
         auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
         t -= milliseconds;
         auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
-        stringstream T;
-        T << BGREEN << setfill('0')
-          << setw(2) << hours.count() << ":"
-          << setw(2) << minutes.count() << ":"
-          << setw(2) << seconds.count() << RGREEN << "."
-          << setw(3) << milliseconds.count()
-          << setw(3) << microseconds.count() << BWHITE << " ";
-        return T.str();
+        stringstream T, T_;
+        T << setfill('0') << setw(2) << hours.count() << ":" << setw(2) << minutes.count() << ":" << setw(2) << seconds.count();
+        T_ << "." << setfill('0') << setw(3) << milliseconds.count() << setw(3) << microseconds.count();
+        if (k) return string(BGREEN) + T.str() + RGREEN + T_.str() + RWHITE + " ";
+        if (!wInit) return "";
+        wattron(wLog, COLOR_PAIR(COLOR_GREEN));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, T.str().data());
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, T_.str().data());
+        wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
+        wprintw(wLog, " ");
+        return "";
       };
       static string oHex(string k) {
        int len = k.length();
@@ -98,7 +111,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -121,7 +134,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -143,7 +156,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -165,7 +178,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -188,7 +201,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -213,7 +226,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -238,7 +251,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -262,7 +275,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wPost failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -287,7 +300,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGet failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -313,7 +326,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGed failed " << curl_easy_strerror(r) << endl;
+          if(r != CURLE_OK) cout << uiT() << "JSON" << RRED << " Warrrrning:" << BRED << "  wGed failed " << curl_easy_strerror(r) << '\n';
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -372,9 +385,195 @@ namespace K {
         ssize_t len;
         while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
           buffer.resize(buffer.size() * 2);
-        if (len == -1) cout << FN::uiT() << "FN" << RRED << " Warrrrning:" << BRED << " readlink failed." << endl;
+        if (len == -1) cout << uiT() << "FN" << RRED << " Warrrrning:" << BRED << " readlink failed." << '\n';
         buffer.resize(len);
         return buffer;
+      };
+      static void logWar(string k, string s) {
+        logErr(k, s, " Warrrrning: ");
+      };
+      static void logErr(string k, string s, string m = " Errrror: ") {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_RED));
+        wprintw(wLog, m.data());
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, s.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_RED));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void logDB(string k) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, "DB ");
+        wattroff(wLog, A_BOLD);
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, " loaded OK.\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void logUI(string k, int p) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, "UI");
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, " ready over ");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, " on external port ");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, to_string(p).data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void logUIsess(int k, string s) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, "UI ");
+        wattroff(wLog, A_BOLD);
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, to_string(k).data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, " currently connected, last connection was from ");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, s.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void logVer(string k, int c) {
+        if (!wInit) return;
+        wattron(wLog, COLOR_PAIR(COLOR_GREEN));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, "K");
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, string(" version ").append(!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n")).data());
+        wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        if (c) wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wrefresh(wLog);
+      };
+      static void log(mTradeHydrated k, string e) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, A_BOLD);
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, "GW ");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        wprintw(wLog, string(e).append(" TRADE ").data());
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, string(k.side == mSide::Bid ? "BUY " : "SELL ").append(to_string(k.quantity)).append(" ").append(k.pair.base).append(" at price ").append(to_string(k.price)).append(" ").append(k.pair.quote).append(" (value ").append(to_string(k.value)).append(" ").append(k.pair.quote).append(")").data());
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        wrefresh(wLog);
+      };
+      static void log(string k, string s, string v) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, k.data());
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, string(" ").append(s).append(" ").data());
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, v.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void log(string k, string s) {
+        if (!wInit) return;
+        uiT();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, k.data());
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, string(" ").append(s).append(".\n").data());
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      static void log(string k, int c = COLOR_WHITE, bool b = false) {
+        if (!wInit) return;
+        if (b) wattron(wLog, A_BOLD);
+        wattron(wLog, COLOR_PAIR(c));
+        wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(c));
+        if (b) wattroff(wLog, A_BOLD);
+        wrefresh(wLog);
+      };
+      static void screen() {
+        initscr();
+        signal(SIGWINCH, screen_resize);
+        start_color();
+        use_default_colors();
+        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+        cbreak();
+        noecho();
+        screen_border(true);
+        wInit = true;
+      };
+      static void screen_resize(int sig) {
+        if (!wInit or wBorder == nullptr) return;
+        struct winsize ws;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == LINES and ws.ws_col == COLS)) return;
+        if (ws.ws_col < 20) ws.ws_col = 20;
+        wborder(wBorder, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+        wresize(wLog, ws.ws_row-4, ws.ws_col-4);
+        wresize(wBorder, ws.ws_row, ws.ws_col);
+        resizeterm(ws.ws_row, ws.ws_col);
+        screen_border();
+        redrawwin(wLog);
+        wrefresh(wLog);
+      };
+      static void screen_border(bool k = false) {
+        if (k) wBorder = newwin(LINES, COLS, 0, 0);
+        wborder(wBorder, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
+        mvwaddstr(wBorder, 0, 13, string("K ").append(K_BUILD).append(" ").append(K_STAMP).data());
+        wrefresh(wBorder);
+        if (!k) return;
+        wLog = newwin(LINES-4, COLS-4, 2, 2);
+        scrollok(wLog, true);
+        wrefresh(wLog);
       };
   };
 }

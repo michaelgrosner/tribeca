@@ -12,8 +12,8 @@ namespace K {
       static void main() {
         load();
         ev_gwDataOrder = [](mOrder k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV OG ev_gwDataOrder." << endl;
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG reply  " << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << "/" << k.lastQuantity << " at price " << k.price << "." << endl;
+          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
+          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
           updateOrderState(k);
         };
         UI::uiSnap(uiTXT::Trades, &onSnapTrades);
@@ -37,30 +37,30 @@ namespace K {
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
         ogMutex.unlock();
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG remove " << oI << "::" << oE << "." << endl;
+        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  send  " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << ": " << o.quantity << " " << o.pair.base << " at price " << o.price << " " << o.pair.quote << "." << endl;
+        if (argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
       static void cancelOrder(string k) {
         ogMutex.lock();
         if (allOrders.find(k) == allOrders.end()) {
           // updateOrderState(mOrder(k, mORS::Cancelled));
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel unknown id " << k << "." << endl;
+          if (argDebugOrders) FN::log("DEBUG", string("OG cancel unknown id ") + k);
           ogMutex.unlock();
           return;
         }
         if (!gW->cancelByClientId and allOrders[k].exchangeId == "") {
           toCancel[k] = nullptr;
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel pending id " << k << "." << endl;
+          if (argDebugOrders) FN::log("DEBUG", string("OG cancel pending id ") + k);
           ogMutex.unlock();
           return;
         }
         mOrder o = allOrders[k];
         ogMutex.unlock();
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG cancel " << (o.side == mSide::Bid ? "BID id " : "ASK id ") << o.orderId << "::" << o.exchangeId << "." << endl;
+        if (argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
     private:
@@ -85,7 +85,7 @@ namespace K {
               (*it)["feeCharged"].get<double>(),
               (*it)["loadedFromDB"].get<bool>()
             ));
-        cout << FN::uiT() << "DB" << RWHITE << " loaded " << tradesMemory.size() << " historical Trades." << endl;
+        FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
       };
       static json onSnapTrades() {
         json k;
@@ -117,12 +117,12 @@ namespace K {
       static void onHandCancelOrder(json k) {
         if (k.is_object() and k["orderId"].is_string())
           cancelOrder(k["orderId"].get<string>());
-        else cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing orderId at onHandCancelOrder, ignored." << endl;
+        else FN::logWar("JSON", "Missing orderId at onHandCancelOrder, ignored");
       };
       static void onHandCleanTrade(json k) {
         if (k.is_object() and k["tradeId"].is_string())
           cleanTrade(k["tradeId"].get<string>());
-        else cout << FN::uiT() << "JSON" << RRED << " Warrrrning:" << BRED << " Missing tradeId at onHandCleanTrade, ignored." << endl;
+        else FN::logWar("JSON", "Missing tradeId at onHandCleanTrade, ignored");
       };
       static void onHandSubmitNewOrder(json k) {
         sendOrder(
@@ -238,7 +238,7 @@ namespace K {
           o.side,
           val, 0, 0, 0, 0, 0, fee, false
         );
-        cout << FN::uiT() << "GW " << (o.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (trade.side == mSide::Bid ? BCYAN : BPURPLE) << (trade.side == mSide::Bid ? "BUY " : "SELL ") << trade.quantity << " " << trade.pair.base << " at price " << trade.price << " " << trade.pair.quote << " (value " << trade.value << " " << trade.pair.quote << ")" << endl;
+        FN::log(trade, argExchange);
         ev_ogTrade(trade);
         if (QP::matchPings()) {
           double widthPong = QP::getBool("widthPercentage")
@@ -328,9 +328,9 @@ namespace K {
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
           ogMutex.unlock();
-          if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG  save  " << (k.side == mSide::Bid ? "BID id " : "ASK id ") << k.orderId << "::" << k.exchangeId << " [" << (int)k.orderStatus << "]: " << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << "." << endl;
+          if (argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
         } else allOrdersDelete(k.orderId, k.exchangeId);
-        if (argDebugOrders) cout << FN::uiT() << "DEBUG " << RWHITE << "OG memory " << allOrders.size() << "/" << allOrdersIds.size() << "." << endl;
+        if (argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
       };
   };
 }

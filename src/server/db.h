@@ -9,10 +9,10 @@ namespace K {
         if (argDatabase == "") argDatabase = string("/data/db/K.")
           + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
         if (sqlite3_open(argDatabase.data(), &db)) {
-          cout << FN::uiT() << "DB" << RRED << " Errrror: " << BRED << sqlite3_errmsg(db) << endl;
+          FN::logErr("DB", sqlite3_errmsg(db));
           exit(1);
         }
-        cout << FN::uiT() << "DB " << RYELLOW << argDatabase << RWHITE << " loaded OK." << endl;
+        FN::logDB(argDatabase);
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;
@@ -28,7 +28,7 @@ namespace K {
           string("SELECT json FROM ").append(string(1, (char)k)).append(" ORDER BY time DESC;").data(),
           cb, (void*)&j, &zErrMsg
         );
-        if (zErrMsg) cout << FN::uiT() << "DB" << RRED << " Warrrrning:" << BRED << " Sqlite error: " << zErrMsg << endl;
+        if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
         if (j[strlen(j.data()) - 1] == ',') j.pop_back();
         return json::parse(j.append("]"));
@@ -44,7 +44,7 @@ namespace K {
             .append(o.dump()).append("');")).data(),
           NULL, NULL, &zErrMsg
         );
-        if (zErrMsg) cout << FN::uiT() << "DB" << RRED << " Warrrrning:" << BRED << " Sqlite error: " << zErrMsg << endl;
+        if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
       };
       static int size() {

@@ -29,11 +29,11 @@ namespace K {
       static void main() {
         load();
         ev_gwDataTrade = [](mTrade k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV MG ev_gwDataTrade." << endl;
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
           tradeUp(k);
         };
         ev_gwDataLevels = [](mLevels k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV MG ev_gwDataLevels." << endl;
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
           levelUp(k);
         };
         UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
@@ -83,7 +83,7 @@ namespace K {
           }
           calcStdev();
         }
-        cout << FN::uiT() << "DB" << RWHITE << " loaded " << mgStatFV.size() << " STDEV Periods." << endl;
+        FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (argEwmaLong) mgEwmaL = argEwmaLong;
         if (argEwmaMedium) mgEwmaM = argEwmaMedium;
         if (argEwmaShort) mgEwmaS = argEwmaShort;
@@ -97,9 +97,9 @@ namespace K {
           if (!mgEwmaS and k.value("time", (unsigned long)0)+QP::getInt("shortEwmaPeriods")*6e+4>FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        cout << FN::uiT() << (argEwmaLong ? "ARG" : "DB") << RWHITE << " loaded EWMA Long = " << mgEwmaL << "." << endl;
-        cout << FN::uiT() << (argEwmaMedium ? "ARG" : "DB") << RWHITE << " loaded EWMA Medium = " << mgEwmaM << "." << endl;
-        cout << FN::uiT() << (argEwmaShort ? "ARG" : "DB") << RWHITE << " loaded EWMA Short = " << mgEwmaS << "." << endl;
+        FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       static json onSnapTrade() {
         json k;

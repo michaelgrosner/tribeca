@@ -70,21 +70,21 @@ namespace K {
       };
       static bool getBool(string k) {
         if (!qp[k].is_boolean()) {
-          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not boolean, get a false instead." << endl;
+          FN::log("QP", k + " is not boolean, get a false instead");
           return false;
         }
         return qp[k].get<bool>();
       };
       static int getInt(string k) {
         if (!qp[k].is_number()) {
-          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not numeric, get a 0 instead." << endl;
+          FN::log("QP", k + " is not numeric, get a 0 instead");
           return 0;
         }
         return qp[k].get<int>();
       };
       static double getDouble(string k) {
         if (!qp[k].is_number()) {
-          cout << FN::uiT() << "QP" << RRED << " Warrrrning:" << BRED << " Warrrrning: " << k << " is not numeric, get a 0 instead." << endl;
+          FN::log("QP", k + " is not numeric, get a 0 instead");
           return 0;
         }
         return qp[k].get<double>();
@@ -100,7 +100,7 @@ namespace K {
         }
         clean();
         UI::delay(getDouble("delayUI"));
-        cout << FN::uiT() << "DB" << RWHITE << " loaded Quoting Parameters " << (qp_.size() ? "OK" : "OR reading defaults instead") << "." << endl;
+        FN::log("DB", string("loaded Quoting Parameters ") + (qp_.size() ? "OK" : "OR reading defaults instead"));
       };
       static json onSnap() {
         return { qp };

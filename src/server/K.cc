@@ -23,6 +23,7 @@
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 #include "openssl/md5.h"
+#include "ncurses/ncurses.h"
 #include "quickfix/Application.h"
 #include "quickfix/SocketInitiator.h"
 #include "quickfix/FileStore.h"

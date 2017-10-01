@@ -17,15 +17,15 @@ namespace K {
       static void main() {
         load();
         ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_gwDataWallet mWallet " << (json)k << endl;
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
         ev_ogOrder = [](mOrder k) {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_ogOrder mOrder " << (json)k << endl;
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
         };
         ev_mgTargetPosition = []() {
-          if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV PG ev_mgTargetPosition." << endl;
+          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
           calcTargetBasePos();
         };
         UI::uiSnap(uiTXT::Position, &onSnapPos);
@@ -45,7 +45,7 @@ namespace K {
         }
       };
       static void calcTargetBasePos() {
-        if (!pgPos.value) { cout << FN::uiT() << "QE" << RRED << " Warrrrning:" << BRED << " Unable to calculate TBP, missing market data." << endl; return; }
+        if (!pgPos.value) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
             ? QP::getDouble("targetBasePositionPercentage") * pgPos.value / 1e+2
@@ -58,7 +58,9 @@ namespace K {
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
-        cout << FN::uiT() << "TBP " << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos << " " << gw->base << endl;
+        stringstream ss;
+        ss << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
+        FN::log("TBP", ss.str() + " " + gw->base);
       };
       static void addTrade(mTradeHydrated k) {
         mTradeDehydrated k_(k.price, k.quantity, k.time);
@@ -73,7 +75,9 @@ namespace K {
           pgTargetBasePos = k.value("tbp", 0.0);
           pgSideAPR = k.value("sideAPR", "");
         }
-        cout << FN::uiT() << "DB" << RWHITE << " loaded TBP = " << setprecision(8) << fixed << pgTargetBasePos << " " << gw->base << "." << endl;
+        stringstream ss;
+        ss << setprecision(8) << fixed << pgTargetBasePos;
+        FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       static json onSnapPos() {
         return { pgPos };

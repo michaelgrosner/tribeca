@@ -30,23 +30,23 @@ namespace K {
           uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
             sess->u++;
             typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-            cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last connection was from " << RYELLOW << address.address << RWHITE << "." << endl;
+            FN::logUIsess(sess->u, address.address);
           });
           uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
             sess->u--;
             typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-            cout << FN::uiT() << "UI " << RYELLOW << to_string(sess->u) << RWHITE << " currently connected, last disconnection was from " << RYELLOW << address.address << RWHITE << "." << endl;
+            FN::logUIsess(sess->u, address.address);
           });
           uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             string document;
             string auth = req.getHeader("authorization").toString();
             typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
             if (uiNK64 != "" && auth == "") {
-              cout << FN::uiT() << "UI authorization attempt from " << address.address << endl;
+              FN::log("UI", "authorization attempt from", address.address);
               document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
               res->write(document.data(), document.length());
             } else if (uiNK64 != "" && auth != uiNK64) {
-              cout << FN::uiT() << "UI authorization failed from " << address.address << endl;
+              FN::log("UI", "authorization failed from", address.address);
               document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
               res->write(document.data(), document.length());
             } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
@@ -57,7 +57,7 @@ namespace K {
               while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
               const string leaf = path.substr(path.find_last_of('.')+1);
               if (leaf == "/") {
-                cout << FN::uiT() << "UI authorization success from " << address.address << endl;
+                FN::log("UI", "authorization success from", address.address);
                 document += "Content-Type: text/html; charset=UTF-8\r\n";
                 url = "/index.html";
               } else if (leaf == "js") {
@@ -103,10 +103,10 @@ namespace K {
           });
           uS::TLS::Context c = uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", "");
           if ((access("etc/sslcert/server.crt", F_OK) != -1) && (access("etc/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
-            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTPS" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
+            FN::logUI("HTTPS", argPort);
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
-            cout << FN::uiT() << "UI" << RWHITE << " ready over " << RYELLOW << "HTTP" << RWHITE << " on external port " << RYELLOW << to_string(argPort) << RWHITE << "." << endl;
-          else { cout << FN::uiT() << "IU" << RRED << " Errrror: " << BRED << "Use another UI port number, " << RRED << to_string(argPort) << BRED << " seems already in use by:" << endl << BPURPLE << FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) << endl; exit(1); }
+            FN::logUI("HTTP", argPort);
+          else { FN::logErr("IU", string("Use another UI port number, ") + to_string(argPort) + " seems already in use by:\n" + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) + "\n"); exit(1); }
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
@@ -118,13 +118,13 @@ namespace K {
       static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event." << endl; exit(1); }
+        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(1); }
         else sess->cbSnap[(char)k] = cb;
       };
       static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { cout << FN::uiT() << "Use only a single unique message handler for each \"" << (char)k << "\" event." << endl; exit(1); }
+        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(1); }
         else sess->cbMsg[(char)k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
@@ -148,7 +148,7 @@ namespace K {
           double k = ui_delayUI;
           int timeout = k ? (int)(k*1e+3) : 6e+4;
           while (uiThread_ == uiThread) {
-            if (argDebugEvents) cout << FN::uiT() << "DEBUG " << RWHITE << "EV UI thread." << endl;
+            if (argDebugEvents) FN::log("DEBUG", "EV UI thread");
             if (k) appPush();
             else appState();
             this_thread::sleep_for(chrono::milliseconds(timeout));
@@ -182,7 +182,7 @@ namespace K {
       };
       static void uiHold(uiTXT k, json o) {
         if (o.is_null()) {
-          cout << FN::uiT() << "UI" << RRED << " Warrrrning:" << BRED << " uiHold sending " << (char)k << " but is null, ignored." << endl;
+          FN::logWar("UI", string(" uiHold sending ") + (char)k + " but is null, ignored");
           return;
         }
         bool isOSR = k == uiTXT::OrderStatusReports;

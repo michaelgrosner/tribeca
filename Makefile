@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 498f05694d0f51ee505ee51c39e01c5f783b2a92
+KLIB     = 918523cc7392f32dc715000d8725dca484ae455d
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -21,7 +21,7 @@ KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include    \
   $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/lib/libquickfix.a \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
-  $(KLOCAL)/lib/libcrypto.a  -ldl
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
 
 all: K
 
