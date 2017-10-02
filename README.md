@@ -72,6 +72,9 @@ All currency pairs are supported.
 See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
 ### Manual Installation
+
+0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
+
 1. Ensure your target machine has installed `git`, `make` and `vim`.
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
