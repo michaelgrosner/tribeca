@@ -268,11 +268,11 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-The bot has all features unlocked, but to support further development by ctubio, the plan soOn is to lock some features.
+The bot has all features unlocked for collaborators and contributors (feel free to let me know the BTC Payment Address displayed in the bot that you would like to unlock, and i will credit it for you to enjoy).
 
-To unlock all features currently nothing has to be done, but maybe, soOn, a payment of 0.12100000 BTC will be required.
+Anonymous users can also unlock all features but is required a payment of 0.12100000 BTC to the address displayed in the IU of the bot.
 
- In case you are looking to extend the trial period, please generate a new API Key in your exchange (each API key have its own trial period). Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
+In case you are looking to extend the trial period, please generate a new API Key in your exchange (each API key have its own trial period). Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
 
 The current payment is to support further development by ctubio to fix all bugs on the market you are paying against (an alternative [Votes](#votes) system).
 
