@@ -394,7 +394,7 @@ namespace K {
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -412,7 +412,7 @@ namespace K {
       };
       static void logDB(string k) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -429,7 +429,7 @@ namespace K {
       };
       static void logUI(string k, int p) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -453,7 +453,7 @@ namespace K {
       };
       static void logUIsess(int k, string s) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -476,7 +476,7 @@ namespace K {
       };
       static void logVer(string k, int c) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "K");
@@ -490,7 +490,7 @@ namespace K {
       };
       static void log(mTradeHydrated k, string e) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -506,7 +506,7 @@ namespace K {
       };
       static void log(string k, string s, string v) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -524,7 +524,7 @@ namespace K {
       };
       static void log(string k, string s) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -536,7 +536,7 @@ namespace K {
       };
       static void log(string k, int c = COLOR_WHITE, bool b = false) {
         if (!wInit) return;
-        wmove(wLog, getmaxy(wLog)-1, 0);
+        lock_guard<mutex> lock(wMutex);
         if (b) wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(c));
         wprintw(wLog, k.data());
@@ -549,10 +549,13 @@ namespace K {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
           exit(EXIT_FAILURE);
         }
-        keypad(wBorder, true);
-        notimeout(wBorder, true);
         if (argColors) start_color();
         use_default_colors();
+        cbreak();
+        noecho();
+        keypad(wBorder, true);
+        nodelay(wBorder, true);
+        notimeout(wBorder, true);
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
         init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
@@ -560,25 +563,24 @@ namespace K {
         init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
         init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
         init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
-        cbreak();
-        noecho();
-        wLog = subwin(wBorder, LINES-3, COLS-2, 2, 2);
+        wLog = subwin(wBorder, getmaxy(wBorder)-3, getmaxx(wBorder)-2, 2, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
         screen_refresh();
         signal(SIGWINCH, screen_resize);
         thread([&]() {
           int ch;
+          static unsigned long x = T();
           while ((ch = wgetch(wBorder)) != 'q') {
             switch (ch) {
-              case ERR: continue;
-              case KEY_PPAGE: wscrl(wLog, -3); break;
-              case KEY_NPAGE: wscrl(wLog, 3); break;
-              case KEY_UP: wscrl(wLog, -1); break;
-              case KEY_DOWN: wscrl(wLog, 1); break;
+              case ERR: if (x+221<T()) { screen_refresh(); x=T(); } continue;
+              case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
+              case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
+              case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
+              case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
-            wrefresh(wLog);
           }
+          lock_guard<mutex> lock(wMutex);
           beep();
           bool wInit_ = wInit;
           wInit = false;
@@ -589,24 +591,35 @@ namespace K {
         wInit = true;
       };
       static void screen_refresh() {
-        static int p = 0;
-        vector<string> orderLines;
+        static int p = 0, spin = 0;
+        multimap<double, mOrder> orderLines;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
-          orderLines.push_back(string(it->second.side == mSide::Bid ? "BID" : "ASK").append("> ").append(it->second.orderId).append(" [").append(to_string((int)it->second.orderStatus)).append("]: ").append(to_string(it->second.quantity)).append(" ").append(it->second.pair.base).append(" at price ").append(to_string(it->second.price)).append(" ").append(it->second.pair.quote));
+          orderLines.insert(pair<double, mOrder>(it->second.price, it->second));
         }
         ogMutex.unlock();
+        lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - orderLines.size() - 1;
+            k = y - orderLines.size() - 1,
+            P = k;
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
-        if (k!=p) wresize(wLog, (p = k)-2, COLS-2);
+        if (k!=p) {
+          if (k<p) wscrl(wLog, p-k);
+          wresize(wLog, k-2, x-2);
+          if (k>p) wscrl(wLog, p-k);
+          wrefresh(wLog);
+          p = k;
+        }
         mvwvline(wBorder, 1, 1, ' ', y-1);
-        for (vector<string>::iterator it = orderLines.begin(); it != orderLines.end(); ++it)
-          mvwaddstr(wBorder, ++k, 2, it->data());
-        k = p;
+        mvwvline(wBorder, k-1, 1, ' ', y-1);
+        for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
+          wattron(wLog, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          mvwaddstr(wBorder, ++P, 1, string(it->second.side == mSide::Bid ? "BID" : "ASK").append(" > ").append(it->second.orderId).append(": ").append(to_string(it->second.quantity)).append(" ").append(it->second.pair.base).append(" at price ").append(to_string(it->second.price)).append(" ").append(it->second.pair.quote).data());
+          wattroff(wLog, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
         mvwvline(wBorder, 1, 0, ACS_VLINE, k);
@@ -620,15 +633,18 @@ namespace K {
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
-        mvwaddch(wBorder, k, 5, ACS_LARROW);
-        mvwaddstr(wBorder, k, 7, string(argExchange).append(" (").append(to_string(orderLines.size())).append(") Open Orders..").data());
+        mvwaddstr(wBorder, k, 5, string("< ").append(argExchange).append(" (").append(to_string(orderLines.size())).append(") Open Orders..").data());
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
+        mvwaddstr(wBorder, y-1, x-1, string("|/-\\").substr(++spin, 1).data());
+        if (spin==3) { spin = -1; }
+        move(k-1, 2);
         wrefresh(wBorder);
+        wrefresh(wLog);
       };
       static void screen_resize(int sig) {
         if (!wInit) return;
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == LINES and ws.ws_col == COLS)) return;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
         wresize(wBorder, ws.ws_row, ws.ws_col);

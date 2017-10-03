@@ -387,6 +387,7 @@ namespace K {
     };
   };
   static mutex ogMutex;
+  static mutex wMutex;
   static map<string, mOrder> allOrders;
 }
 
