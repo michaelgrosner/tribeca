@@ -26,6 +26,7 @@ namespace K {
               MG::calcStats();
               PG::calcSafety();
               calcQuote();
+              FN::screen_refresh();
             } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
           }
         }).detach();

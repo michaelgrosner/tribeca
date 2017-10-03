@@ -394,6 +394,7 @@ namespace K {
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -411,6 +412,7 @@ namespace K {
       };
       static void logDB(string k) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -427,6 +429,7 @@ namespace K {
       };
       static void logUI(string k, int p) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -450,6 +453,7 @@ namespace K {
       };
       static void logUIsess(int k, string s) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -472,6 +476,7 @@ namespace K {
       };
       static void logVer(string k, int c) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "K");
@@ -485,6 +490,7 @@ namespace K {
       };
       static void log(mTradeHydrated k, string e) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -500,6 +506,7 @@ namespace K {
       };
       static void log(string k, string s, string v) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -517,6 +524,7 @@ namespace K {
       };
       static void log(string k, string s) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -528,6 +536,7 @@ namespace K {
       };
       static void log(string k, int c = COLOR_WHITE, bool b = false) {
         if (!wInit) return;
+        wmove(wLog, getmaxy(wLog)-1, 0);
         if (b) wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(c));
         wprintw(wLog, k.data());
@@ -535,9 +544,14 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      static void screen(int k) {
-        initscr();
-        if (k) start_color();
+      static void screen() {
+        if ((wBorder = initscr()) == NULL) {
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+          exit(EXIT_FAILURE);
+        }
+        keypad(wBorder, true);
+        notimeout(wBorder, true);
+        if (argColors) start_color();
         use_default_colors();
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
@@ -548,47 +562,68 @@ namespace K {
         init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
         cbreak();
         noecho();
-        screen_border();
+        wLog = subwin(wBorder, LINES-3, COLS-2, 2, 2);
+        scrollok(wLog, true);
+        idlok(wLog, true);
+        screen_refresh();
         signal(SIGWINCH, screen_resize);
-      };
-      static void screen_border() {
-        static bool k = false;
-        if (!k) {
-          k = true;
-          wLog = newwin(LINES-6, COLS-4, 2, 2);
-          keypad(wLog, true);
-          scrollok(wLog, true);
-          thread([&]() {
-            int ch;
-            while ((ch = wgetch(wLog)) != 'q') {
-              switch (ch) {
-                case ERR: continue;
-                case KEY_PPAGE: wscrl(wLog, -3); break;
-                case KEY_NPAGE: wscrl(wLog, 3); break;
-                case KEY_UP: wscrl(wLog, -1); break;
-                case KEY_DOWN: wscrl(wLog, 1); break;
-              }
+        thread([&]() {
+          int ch;
+          while ((ch = wgetch(wBorder)) != 'q') {
+            switch (ch) {
+              case ERR: continue;
+              case KEY_PPAGE: wscrl(wLog, -3); break;
+              case KEY_NPAGE: wscrl(wLog, 3); break;
+              case KEY_UP: wscrl(wLog, -1); break;
+              case KEY_DOWN: wscrl(wLog, 1); break;
             }
-            bool wInit_ = wInit;
-            wInit = false;
-            if (wInit_) endwin();
-            cout << FN::uiT(true) << "Excellent decision!" << '\n';
-            evExit(EXIT_SUCCESS);
-          }).detach();
-          wBorder = newwin(LINES, COLS, 0, 0);
-          wInit = true;
+            wrefresh(wLog);
+          }
+          beep();
+          bool wInit_ = wInit;
+          wInit = false;
+          if (wInit_) endwin();
+          cout << FN::uiT(true) << "Excellent decision!" << '\n';
+          evExit(EXIT_SUCCESS);
+        }).detach();
+        wInit = true;
+      };
+      static void screen_refresh() {
+        static int p = 0;
+        vector<string> orderLines;
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+          if (mORS::Working != it->second.orderStatus) continue;
+          orderLines.push_back(string(it->second.side == mSide::Bid ? "BID" : "ASK").append("> ").append(it->second.orderId).append(" [").append(to_string((int)it->second.orderStatus)).append("]: ").append(to_string(it->second.quantity)).append(" ").append(it->second.pair.base).append(" at price ").append(to_string(it->second.price)).append(" ").append(it->second.pair.quote));
         }
-        wborder(wBorder, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
+        ogMutex.unlock();
+        int l = p,
+            y = getmaxy(wBorder),
+            x = getmaxx(wBorder),
+            k = y - orderLines.size() - 1;
+        while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
+        if (k!=p) wresize(wLog, (p = k)-2, COLS-2);
+        mvwvline(wBorder, 1, 1, ' ', y-1);
+        for (vector<string>::iterator it = orderLines.begin(); it != orderLines.end(); ++it)
+          mvwaddstr(wBorder, ++k, 2, it->data());
+        k = p;
+        mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
+        mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
+        mvwvline(wBorder, 1, 0, ACS_VLINE, k);
+        mvwvline(wBorder, k, 0, ACS_LTEE, y);
+        mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
-        mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
         mvwaddstr(wBorder, 0, 13, string(" K ").append(K_BUILD).append(" ").append(K_STAMP).append(" ").data());
-        mvwaddch(wBorder, getmaxy(wBorder)-4, 0, ACS_LTEE);
-        wmove(wBorder, getmaxy(wBorder)-4, 1);
-        whline(wBorder, ACS_HLINE, getmaxx(wBorder)-1);
-        mvwaddch(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-1, ACS_RTEE);
+        mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
+        mvwaddch(wBorder, 0, x-12, ACS_RTEE);
+        mvwaddstr(wBorder, 0, x-11, " [q]: Quit!");
+        mvwaddch(wBorder, k, 0, ACS_LTEE);
+        mvwhline(wBorder, k, 1, ACS_HLINE, 3);
+        mvwaddch(wBorder, k, 4, ACS_RTEE);
+        mvwaddch(wBorder, k, 5, ACS_LARROW);
+        mvwaddstr(wBorder, k, 7, string(argExchange).append(" (").append(to_string(orderLines.size())).append(") Open Orders..").data());
+        mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         wrefresh(wBorder);
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        wrefresh(wLog);
       };
       static void screen_resize(int sig) {
         if (!wInit) return;
@@ -596,11 +631,9 @@ namespace K {
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == LINES and ws.ws_col == COLS)) return;
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
-        wborder(wBorder, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-        wresize(wLog, ws.ws_row-6, ws.ws_col-6);
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
-        screen_border();
+        screen_refresh();
         redrawwin(wLog);
         wrefresh(wLog);
       };

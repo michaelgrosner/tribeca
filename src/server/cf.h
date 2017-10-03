@@ -2,32 +2,6 @@
 #define K_CF_H_
 
 namespace K {
-  static int argPort = 3000,
-             argColors = 0,
-             argDebug = 0,
-             argDebugEvents = 0,
-             argDebugOrders = 0,
-             argDebugQuotes = 0,
-             argHeadless = 0,
-             argAutobot = 0;
-  static string argTitle = "K.sh",
-                argExchange = "NULL",
-                argUser = "NULL",
-                argPass = "NULL",
-                argMatryoshka = "https://www.example.com/",
-                argDatabase = "",
-                argCurrency = "NULL",
-                argTarget = "NULL",
-                argApikey = "NULL",
-                argSecret = "NULL",
-                argUsername = "NULL",
-                argPassphrase = "NULL",
-                argHttp = "NULL",
-                argWs = "NULL",
-                argWss = "NULL";
-  static double argEwmaShort = 0,
-                argEwmaMedium = 0,
-                argEwmaLong = 0;
   static Gw *gw,
             *gW;
   class CF {
@@ -157,7 +131,7 @@ namespace K {
           }
         }
         if (optind < argc) {
-          cout << "ARG" << RRED <<" Warrrrning:" << BRED << " non-option ARGV-elements: ";
+          cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";
           while(optind < argc) cout << argv[optind++];
           cout << '\n';
           exit(1);
@@ -167,8 +141,8 @@ namespace K {
           argDebugOrders = 1;
           argDebugQuotes = 1;
         }
-        FN::screen(argColors);
-        if (argExchange == "") FN::logWar("CF", "Settings not loaded because the config file was not found, reading ENVIRONMENT vars instead");
+        FN::screen();
+        if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };
       static void api() {
         gw = Gw::E(cfExchange());

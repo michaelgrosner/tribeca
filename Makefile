@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 2e2cf00c46fdd695f23b4eab5d8b1aa87a6471c5
+KLIB     = 3d9f191af4aa2c776885b265bf581e197c9a0eb3
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6
@@ -142,11 +142,11 @@ curl: build-$(CROSS)
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
 ncurses:
-	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                                   \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS)                  \
-	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure                           \
-	--host=$(CROSS) --prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,screen.linux,vt100,xterm,xterm-256color \
-	&& make && make install                                                                                         )
+	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                      \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS)     \
+	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure              \
+	--host=$(CROSS) --prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color \
+	&& make && make install                                                                            )
 
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \

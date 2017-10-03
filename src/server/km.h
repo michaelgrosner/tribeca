@@ -5,6 +5,32 @@ namespace K {
   static const char alphanum[] = "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz";
+  static int argPort = 3000,
+             argColors = 0,
+             argDebug = 0,
+             argDebugEvents = 0,
+             argDebugOrders = 0,
+             argDebugQuotes = 0,
+             argHeadless = 0,
+             argAutobot = 0;
+  static string argTitle = "K.sh",
+                argExchange = "NULL",
+                argUser = "NULL",
+                argPass = "NULL",
+                argMatryoshka = "https://www.example.com/",
+                argDatabase = "",
+                argCurrency = "NULL",
+                argTarget = "NULL",
+                argApikey = "NULL",
+                argSecret = "NULL",
+                argUsername = "NULL",
+                argPassphrase = "NULL",
+                argHttp = "NULL",
+                argWs = "NULL",
+                argWss = "NULL";
+  static double argEwmaShort = 0,
+                argEwmaMedium = 0,
+                argEwmaLong = 0;
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
@@ -360,6 +386,8 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
+  static mutex ogMutex;
+  static map<string, mOrder> allOrders;
 }
 
 #endif

@@ -4,9 +4,7 @@
 namespace K {
   vector<mTradeHydrated> tradesMemory;
   map<string, void*> toCancel;
-  map<string, mOrder> allOrders;
   map<string, string> allOrdersIds;
-  mutex ogMutex;
   class OG {
     public:
       static void main() {
