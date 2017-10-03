@@ -395,6 +395,7 @@ namespace K {
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -413,6 +414,7 @@ namespace K {
       static void logDB(string k) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -430,6 +432,7 @@ namespace K {
       static void logUI(string k, int p) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -454,6 +457,7 @@ namespace K {
       static void logUIsess(int k, string s) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -477,6 +481,7 @@ namespace K {
       static void logVer(string k, int c) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "K");
@@ -491,6 +496,7 @@ namespace K {
       static void log(mTradeHydrated k, string e) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -507,6 +513,7 @@ namespace K {
       static void log(string k, string s, string v) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -525,6 +532,7 @@ namespace K {
       static void log(string k, string s) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
@@ -537,6 +545,7 @@ namespace K {
       static void log(string k, int c = COLOR_WHITE, bool b = false) {
         if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
+        wmove(wLog, getmaxy(wLog)-1, 0);
         if (b) wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(c));
         wprintw(wLog, k.data());
@@ -616,9 +625,9 @@ namespace K {
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
         for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
-          wattron(wLog, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++P, 1, string(it->second.side == mSide::Bid ? "BID" : "ASK").append(" > ").append(it->second.orderId).append(": ").append(to_string(it->second.quantity)).append(" ").append(it->second.pair.base).append(" at price ").append(to_string(it->second.price)).append(" ").append(it->second.pair.quote).data());
-          wattroff(wLog, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattroff(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
