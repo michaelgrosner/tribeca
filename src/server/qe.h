@@ -244,7 +244,7 @@ namespace K {
             if (!QP::getBool("buySizeMax")) rawQuote.bid.size = fmin(QP::getInt("aprMultiplier")*buySize, fmin(pgTargetBasePos - totalBasePosition, (pgPos.quoteAmount / mgFairValue) / 2));
           }
         }
-        else if (totalBasePosition > pgTargetBasePos + pDiv) {
+        else if (totalBasePosition >= pgTargetBasePos + pDiv) {
           qeBidStatus = mQuoteState::TBPHeld;
           rawQuote.bid.price = 0;
           rawQuote.bid.size = 0;
