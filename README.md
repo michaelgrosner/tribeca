@@ -135,7 +135,7 @@ To run multiple instances using a collection of config files:
 
 3. Run the new instance with `./X.sh` or `K=X.sh make start`, also the commands `make screen`, `make stop` and `make restart` allow the environment variable `K`, the value is simply the filename of the config file that you want to run; this value will also be used as the `uid` of the process executed by `screen`.
 
-4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer and the optional argument `--matryoshka=URL`.
+4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer (that can be predefined using the optional argument `--matryoshka=URL`).
 
 After multiple config files are setup, to control them all together instead of one by one, the commands `make startall`, `make stopall` and `make restartall` are also available, just remember that config files with a filename starting with underscore symbol "_" will be skipped.
 
