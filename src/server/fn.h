@@ -643,11 +643,11 @@ namespace K {
         mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
-        mvwaddstr(wBorder, 1, 14, argHeadless ? "headless" : string("UI on ").append(uiPrtcl).append(" port ").append(to_string(argPort)).data());
+        mvwaddstr(wBorder, 1, 14, string(argExchange + " " + argCurrency + (argHeadless ? " headless" : string(" UI on ") + uiPrtcl + " port " + to_string(argPort))).data());
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
-        mvwaddstr(wBorder, k, 5, string("< ").append(argExchange).append(" (").append(to_string(orderLines.size())).append(") Open Orders..").data());
+        mvwaddstr(wBorder, k, 5, string("< (").append(to_string(orderLines.size())).append(") Open Orders..").data());
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, y-1, x-1, string("|/-\\").substr(++spin, 1).data());
         if (spin==3) { spin = -1; }
