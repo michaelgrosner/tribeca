@@ -389,6 +389,7 @@ namespace K {
   static mutex ogMutex;
   static mutex wMutex;
   static map<string, mOrder> allOrders;
+  static string uiPrtcl = "?";
 }
 
 #endif

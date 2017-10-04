@@ -269,7 +269,7 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-The bot has all features unlocked for collaborators and contributors (feel free to make acceptable Pull Requests, and to let me know the BTC Payment Address displayed in the bot that you would like to unlock, and i will credit it for you to enjoy).
+All features are unlocked for collaborators and contributors (feel free to make acceptable Pull Requests, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
 
 Anonymous users can also unlock all features but is required a payment of 0.12100000 BTC to the address displayed in the IU of the bot.
 
@@ -278,6 +278,8 @@ In case you are looking to extend the trial period, please generate a new API Ke
 The current payment is to support further development by ctubio to fix all bugs on the market you are paying against (an alternative [Votes](#votes) system).
 
 To provide exclusivity to proefficient traders and to keep teenagers away, once the bot is bug-free, the payment required may be increased by a minimum of x3.
+
+While locked, the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
 
 ### Donations
 

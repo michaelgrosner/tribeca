@@ -1,5 +1,5 @@
 K       ?= K.sh
-KLIB     = 768cf2c575cd33fd811bf1dc19ecef3ab34644da
+KLIB     = 11a2dcecda353c4b90eb7c3eee60066937d43c96
 CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
 KLOCAL   = build-$(CROSS)/local
 CXX      = $(CROSS)-g++-6

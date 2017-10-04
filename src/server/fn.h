@@ -572,7 +572,7 @@ namespace K {
         init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
         init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
         init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
-        wLog = subwin(wBorder, getmaxy(wBorder)-3, getmaxx(wBorder)-2, 2, 2);
+        wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
         screen_refresh();
@@ -617,7 +617,7 @@ namespace K {
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
         if (k!=p) {
           if (k<p) wscrl(wLog, p-k);
-          wresize(wLog, k-2, x-2);
+          wresize(wLog, k-3, x-2);
           if (k>p) wscrl(wLog, p-k);
           wrefresh(wLog);
           p = k;
@@ -639,6 +639,11 @@ namespace K {
         mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
         mvwaddch(wBorder, 0, x-12, ACS_RTEE);
         mvwaddstr(wBorder, 0, x-11, " [q]: Quit!");
+        mvwaddch(wBorder, 0, 7, ACS_TTEE);
+        mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
+        mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
+        mvwaddch(wBorder, 1, 12, ACS_RTEE);
+        mvwaddstr(wBorder, 1, 14, argHeadless ? "headless" : string("UI on ").append(uiPrtcl).append(" port ").append(to_string(argPort)).data());
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);

@@ -103,10 +103,11 @@ namespace K {
           });
           uS::TLS::Context c = uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", "");
           if ((access("etc/sslcert/server.crt", F_OK) != -1) && (access("etc/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
-            FN::logUI("HTTPS", argPort);
+            uiPrtcl = "HTTPS";
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
-            FN::logUI("HTTP", argPort);
+            uiPrtcl = "HTTP";
           else { FN::logErr("IU", string("Use another UI port number, ") + to_string(argPort) + " seems already in use by:\n" + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) + "\n"); exit(1); }
+          FN::logUI(uiPrtcl, argPort);
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
