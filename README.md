@@ -117,7 +117,7 @@ Once you decide that is time to upgrade, execute `make latest` to download and i
 
 After upgrade to latest version, all running instances will be restarted.
 
-`git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to run `make reinstall`).
+`git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to recompile the source or run `make reinstall`).
 
 ### Multiple instances party time
 
