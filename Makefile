@@ -142,11 +142,11 @@ curl: build-$(CROSS)
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
 ncurses:
-	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                      \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS)     \
-	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure              \
-	--host=$(CROSS) --prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color \
-	&& make && make install                                                                            )
+	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                         \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS)        \
+	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure --host=$(CROSS) \
+	--prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color     \
+	&& make && make install                                                                               )
 
 json: build-$(CROSS)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
