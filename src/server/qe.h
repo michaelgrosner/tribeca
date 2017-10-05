@@ -253,6 +253,7 @@ namespace K {
             if (!QP::getBool("sellSizeMax")) rawQuote.ask.size = fmin(QP::getInt("aprMultiplier")*sellSize, fmin(totalBasePosition - pgTargetBasePos, pgPos.baseAmount / 2));
           }
         }
+        else pgSideAPR = "Off";
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if ((mSTDEV)QP::getInt("quotingStdevProtection") != mSTDEV::Off and mgStdevFV) {
           if (rawQuote.ask.price and ((mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFV or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTops or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTop or pgSideAPR != "Sell"))
@@ -288,7 +289,7 @@ namespace K {
             or rawQuote.ask.price < pgSafety.buyPing + widthPong
           )) rawQuote.ask.price = pgSafety.buyPing + widthPong;
           if (rawQuote.bid.size and pgSafety.sellPong and (
-            ((mAPR)QP::getInt("aggressivePositionRebalancing") == mAPR::SizeWidth and pgSideAPR == "Buy")
+            ((mAPR)QP::getInt("aggressivePositionRebalancing") == mAPR::SizeWidth and pgSideAPR == "Bid")
             or (mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingAggressive
             or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive
             or rawQuote.bid.price > pgSafety.sellPong - widthPong
