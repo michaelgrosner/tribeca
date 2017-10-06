@@ -23,6 +23,7 @@ namespace K {
         ev_ogOrder = [](mOrder k) {
           if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
+          FN::screen_refresh();
         };
         ev_mgTargetPosition = []() {
           if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");

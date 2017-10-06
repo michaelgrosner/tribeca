@@ -589,8 +589,6 @@ namespace K {
         cbreak();
         noecho();
         keypad(wBorder, true);
-        nodelay(wBorder, true);
-        notimeout(wBorder, true);
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
         init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
@@ -601,18 +599,16 @@ namespace K {
         wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
-        screen_refresh();
         signal(SIGWINCH, screen_resize);
         thread([&]() {
           int ch;
-          static unsigned long x = T();
           while ((ch = wgetch(wBorder)) != 'q') {
             switch (ch) {
-              case ERR: if (x+221<T()) { screen_refresh(); x=T(); } continue;
-              case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
-              case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
-              case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
-              case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
+              case ERR: continue;
+              // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
+              // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
+              // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
+              // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
           }
           lock_guard<mutex> lock(wMutex);
@@ -624,8 +620,10 @@ namespace K {
           evExit(EXIT_SUCCESS);
         }).detach();
         wInit = true;
+        screen_refresh();
       };
       static void screen_refresh() {
+        if (!wInit) return;
         static int p = 0, spin = 0;
         multimap<double, mOrder> orderLines;
         ogMutex.lock();

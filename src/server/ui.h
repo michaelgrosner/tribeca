@@ -10,9 +10,6 @@ namespace K {
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static bool uiVisibleOpt = true;
   static unsigned int uiOSR_1m = 0;
-  static unsigned long uiT_MKT = 0;
-  static unsigned long uiT_1m = 0;
-  static unsigned int uiThread = 0;
   static double ui_delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
@@ -129,6 +126,7 @@ namespace K {
         else sess->cbMsg[(char)k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {
+        static unsigned long uiT_MKT = 0;
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
@@ -140,6 +138,7 @@ namespace K {
         else uiUp(k, o);
       };
       static void delay(double delayUI) {
+        static unsigned int uiThread = 0;
         if (argHeadless) return;
         ui_delayUI = delayUI;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -216,6 +215,7 @@ namespace K {
         uiOSR_1m = 0;
       };
       static void appPush() {
+        static unsigned long uiT_1m = 0;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
