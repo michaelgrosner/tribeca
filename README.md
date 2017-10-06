@@ -205,9 +205,9 @@ Then, feel free to run `make test` anytime.
 
 To rebuild the application with your modifications, see `make help` and choose a target.
 
-To pipe the output to stdout, execute the application in the foreground with `./K.sh`.
+To pipe the output to stdout, execute the application in the foreground with `./K.sh --naked`.
 
-To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start`.
+To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
 
 ### Unreleased Changelog:
 
