@@ -114,9 +114,9 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        cout << FN::uiT(true) << "GW " << argExchange << RWHITE << " Attempting to cancel all open orders, please wait.." << endl;
+        FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
-        cout << FN::uiT(true) << "GW " << argExchange << RWHITE << " cancell all open orders OK." << endl;
+        FN::log(string("GW ") + argExchange, "cancell all open orders OK");
         EV::end(code);
       };
   };

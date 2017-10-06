@@ -35,7 +35,7 @@ namespace K {
         gitReversedVersion();
       };
       static void end(int code) {
-        cout << FN::uiT(true) << "K exit code " << to_string(code) << "." << '\n';
+        cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
     private:
@@ -45,7 +45,7 @@ namespace K {
         FN::logVer(k, count(k.begin(), k.end(), '\n'));
       };
       static void happyEnding(int code) {
-        cout << FN::uiT(true);
+        cout << FN::uiT();
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << '\n';
@@ -57,7 +57,7 @@ namespace K {
         if (wInit_) endwin();
         cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
-        cout << FN::uiT(true) << "Excellent decision! "
+        cout << FN::uiT() << "Excellent decision! "
           << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
@@ -67,7 +67,7 @@ namespace K {
         bool wInit_ = wInit;
         wInit = false;
         if (wInit_) endwin();
-        cout << FN::uiT(true) << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
+        cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
         if (latest()) {
           cout << " (Three-Headed Monkey found)." << '\n';
           report();

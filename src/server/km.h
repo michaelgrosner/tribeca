@@ -12,6 +12,7 @@ namespace K {
              argDebugOrders = 0,
              argDebugQuotes = 0,
              argHeadless = 0,
+             argNaked = 0,
              argAutobot = 0;
   static string argTitle = "K.sh",
                 argExchange = "NULL",

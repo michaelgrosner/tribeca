@@ -19,6 +19,7 @@ namespace K {
             {"debug-orders", no_argument,       &argDebugOrders,   1},
             {"debug-quotes", no_argument,       &argDebugQuotes,   1},
             {"headless",     no_argument,       &argHeadless,      1},
+            {"naked",        no_argument,       &argNaked,         1},
             {"autobot",      no_argument,       &argAutobot,       1},
             {"matryoshka",   required_argument, 0,               'k'},
             {"exchange",     required_argument, 0,               'e'},
@@ -72,55 +73,56 @@ namespace K {
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
               << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n';
             case '?': cout
-              << FN::uiT(true) << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
-              << FN::uiT(true) << "[arguments]:" << '\n'
-              << FN::uiT(true) << RWHITE << "-h, --help               - show this help and quit." << '\n'
-              << FN::uiT(true) << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
-              << FN::uiT(true) << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << '\n'
-              << FN::uiT(true) << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
-              << FN::uiT(true) << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-p, --pass=WORD          - set allowed WORD as password for UI connections," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-e, --exchange=NAME      - set exchange NAME for trading, mandatory one of:" << '\n'
-              << FN::uiT(true) << RWHITE << "                           'COINBASE', 'BITFINEX', 'HITBTC', 'OKCOIN'," << '\n'
-              << FN::uiT(true) << RWHITE << "                           'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-c, --currency=PAIRS     - set currency pairs for trading (use format" << '\n'
-              << FN::uiT(true) << RWHITE << "                           with '/' separator, like 'BTC/EUR')." << '\n'
-              << FN::uiT(true) << RWHITE << "-T, --target=NAME        - set orders destination (see '--exchange')," << '\n'
-              << FN::uiT(true) << RWHITE << "                           a value of NULL generates fake orders only." << '\n'
-              << FN::uiT(true) << RWHITE << "-A, --apikey=WORD        - set (never share!) WORD as api key for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT(true) << RWHITE << "-S, --secret=WORD        - set (never share!) WORD as api secret for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT(true) << RWHITE << "-X, --passphrase=WORD    - set (never share!) WORD as api passphrase for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-U, --username=WORD      - set (never share!) WORD as api username for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-H, --http=URL           - set URL of api HTTP/S endpoint for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT(true) << RWHITE << "-W, --wss=URL            - set URL of api SECURE WS endpoint for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT(true) << RWHITE << "-w, --ws=URL             - set URL of api PUBLIC WS endpoint for trading," << '\n'
-              << FN::uiT(true) << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
-              << FN::uiT(true) << RWHITE << "-d, --database=PATH      - set alternative PATH to database filename," << '\n'
-              << FN::uiT(true) << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << '\n'
-              << FN::uiT(true) << RWHITE << "                           any route to a filename is valid," << '\n'
-              << FN::uiT(true) << RWHITE << "                           or use ':memory:' (sqlite.org/inmemorydb.html)." << '\n'
-              << FN::uiT(true) << RWHITE << "-s, --ewma-short=PRICE   - set initial ewma short value," << '\n'
-              << FN::uiT(true) << RWHITE << "                           overwrites the value from the database." << '\n'
-              << FN::uiT(true) << RWHITE << "-m, --ewma-medium=PRICE  - set initial ewma medium value," << '\n'
-              << FN::uiT(true) << RWHITE << "                           overwrites the value from the database." << '\n'
-              << FN::uiT(true) << RWHITE << "-l, --ewma-long=PRICE    - set initial ewma long value," << '\n'
-              << FN::uiT(true) << RWHITE << "                           overwrites the value from the database." << '\n'
-              << FN::uiT(true) << RWHITE << "    --debug-events       - print detailed output about event handlers." << '\n'
-              << FN::uiT(true) << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << '\n'
-              << FN::uiT(true) << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << '\n'
-              << FN::uiT(true) << RWHITE << "    --debug              - print detailed output about all the (previous) things!" << '\n'
-              << FN::uiT(true) << RWHITE << "    --colors             - print highlighted output." << '\n'
-              << FN::uiT(true) << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << '\n'
-              << FN::uiT(true) << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << '\n'
-              << FN::uiT(true) << RWHITE << "-v, --version            - show current build version and quit." << '\n'
+              << FN::uiT() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
+              << FN::uiT() << "[arguments]:" << '\n'
+              << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << '\n'
+              << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << '\n'
+              << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
+              << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
+              << FN::uiT() << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-p, --pass=WORD          - set allowed WORD as password for UI connections," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-e, --exchange=NAME      - set exchange NAME for trading, mandatory one of:" << '\n'
+              << FN::uiT() << RWHITE << "                           'COINBASE', 'BITFINEX', 'HITBTC', 'OKCOIN'," << '\n'
+              << FN::uiT() << RWHITE << "                           'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-c, --currency=PAIRS     - set currency pairs for trading (use format" << '\n'
+              << FN::uiT() << RWHITE << "                           with '/' separator, like 'BTC/EUR')." << '\n'
+              << FN::uiT() << RWHITE << "-T, --target=NAME        - set orders destination (see '--exchange')," << '\n'
+              << FN::uiT() << RWHITE << "                           a value of NULL generates fake orders only." << '\n'
+              << FN::uiT() << RWHITE << "-A, --apikey=WORD        - set (never share!) WORD as api key for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory." << '\n'
+              << FN::uiT() << RWHITE << "-S, --secret=WORD        - set (never share!) WORD as api secret for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory." << '\n'
+              << FN::uiT() << RWHITE << "-X, --passphrase=WORD    - set (never share!) WORD as api passphrase for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-U, --username=WORD      - set (never share!) WORD as api username for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-H, --http=URL           - set URL of api HTTP/S endpoint for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory." << '\n'
+              << FN::uiT() << RWHITE << "-W, --wss=URL            - set URL of api SECURE WS endpoint for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory." << '\n'
+              << FN::uiT() << RWHITE << "-w, --ws=URL             - set URL of api PUBLIC WS endpoint for trading," << '\n'
+              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative PATH to database filename," << '\n'
+              << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << '\n'
+              << FN::uiT() << RWHITE << "                           any route to a filename is valid," << '\n'
+              << FN::uiT() << RWHITE << "                           or use ':memory:' (sqlite.org/inmemorydb.html)." << '\n'
+              << FN::uiT() << RWHITE << "-s, --ewma-short=PRICE   - set initial ewma short value," << '\n'
+              << FN::uiT() << RWHITE << "                           overwrites the value from the database." << '\n'
+              << FN::uiT() << RWHITE << "-m, --ewma-medium=PRICE  - set initial ewma medium value," << '\n'
+              << FN::uiT() << RWHITE << "                           overwrites the value from the database." << '\n'
+              << FN::uiT() << RWHITE << "-l, --ewma-long=PRICE    - set initial ewma long value," << '\n'
+              << FN::uiT() << RWHITE << "                           overwrites the value from the database." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-events       - print detailed output about event handlers." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-orders       - print detailed output about exchange messages." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-quotes       - print detailed output about quoting engine." << '\n'
+              << FN::uiT() << RWHITE << "    --debug              - print detailed output about all the (previous) things!" << '\n'
+              << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << '\n'
+              << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << '\n'
+              << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << '\n'
+              << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << '\n'
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n';
@@ -141,7 +143,13 @@ namespace K {
           argDebugOrders = 1;
           argDebugQuotes = 1;
         }
-        FN::screen();
+        if (!argColors) {
+          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
+          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
+          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
+          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
+        }
+        if (!argNaked) FN::screen();
         if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };
       static void api() {

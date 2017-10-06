@@ -269,7 +269,7 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-All features are unlocked for collaborators and contributors (feel free to make acceptable Pull Requests, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
+All features are unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
 
 Anonymous users can also unlock all features but is required a payment of 0.12100000 BTC to the address displayed in the IU of the bot.
 
