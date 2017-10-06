@@ -277,9 +277,9 @@ bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLO
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
 	rm $(KLOCAL)/var/www/js/*.js
 	rm -rf build-arm-linux-gnueabihf/local/var
-	cp -R $(KLOCAL)/var/* build-arm-linux-gnueabihf/local/var
+	cp -R $(KLOCAL)/var build-arm-linux-gnueabihf/local/var
 	rm -rf build-aarch64-linux-gnu/local/var
-	cp -R $(KLOCAL)/var/* build-aarch64-linux-gnu/local/var
+	cp -R $(KLOCAL)/var build-aarch64-linux-gnu/local/var
 	@echo DONE
 
 diff: .git
