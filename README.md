@@ -279,7 +279,7 @@ The current payment is to support further development by ctubio to fix all bugs 
 
 To provide exclusivity to proefficient traders and to keep teenagers away, once the bot is bug-free, the payment required may be increased by a minimum of x3.
 
-While locked, the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
+Once the trial period expires, the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
 
 ### Donations
 

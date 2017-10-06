@@ -20,7 +20,7 @@
 #  █ OPTIONAL_ARGUMENTS                                 .
 #  ██ - Allows a list of arguments, to avoid write it always in the command-line.
 #OPTIONAL_ARGUMENTS="--colors --autobot"
-OPTIONAL_ARGUMENTS="--colors"
+OPTIONAL_ARGUMENTS="--colors --naked"
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ II ▐_______________________________________________.
