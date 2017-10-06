@@ -1,9 +1,9 @@
 K       ?= K.sh
 KLIB     = a5f630aa7f4408adfab5b41a045b512b067f6ada
-CROSS   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
-KLOCAL   = build-$(CROSS)/local
-CXX      = $(CROSS)-g++-6
-CC       = $(CROSS)-gcc-6
+CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
+KLOCAL   = build-$(CHOST)/local
+CXX      = $(CHOST)-g++-6
+CC       = $(CHOST)-gcc-6
 KGIT     = 3.0
 KHUB     = 6704776
 V_ZLIB  := 1.2.11
@@ -17,8 +17,8 @@ V_QF    := v.1.14.4
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic                           \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
-  -DK_BUILD='"$(CROSS)"'     $(KLOCAL)/include/uWS/*.cpp       \
-  $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/lib/libquickfix.a       \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
@@ -79,62 +79,62 @@ help:
 
 K: src/server/K.cc
 ifdef KALL
-	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
 else
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
-	CROSS=$(CROSS) $(MAKE) $(shell uname -s)
-	chmod +x $(KLOCAL)/bin/K-$(CROSS)
+	CHOST=$(CHOST) $(MAKE) $(shell uname -s)
+	chmod +x $(KLOCAL)/bin/K-$(CHOST)
 endif
 
 dist:
 ifdef KALL
-	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
 else
-	mkdir -p build-$(CROSS)
-	CROSS=$(CROSS) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
+	mkdir -p build-$(CHOST)
+	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
-Linux: build-$(CROSS)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CROSS) -static-libstdc++ -static-libgcc -g $(KARGS)
+Linux: build-$(CHOST)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -static-libstdc++ -static-libgcc -g $(KARGS)
 
-Darwin: build-$(CROSS)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CROSS) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(KARGSG)
+Darwin: build-$(CHOST)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(KARGSG)
 
-uws: build-$(CROSS)
-	test -d build-$(CROSS)/uWebSockets-$(V_UWS)                                    \
+uws: build-$(CHOST)
+	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
 	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
-	| tar xz -C build-$(CROSS) && mkdir -p $(KLOCAL)/include/uWS                   \
-	&& cp build-$(CROSS)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
+	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
+	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
 
-sqlite: build-$(CROSS)
-	test -d build-$(CROSS)/sqlite-autoconf-$(V_SQL) || (                                            \
-	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CROSS)      \
-	&& cd build-$(CROSS)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
-	--host=$(CROSS) --enable-static --disable-shared --enable-threadsafe && make && make install    )
+sqlite: build-$(CHOST)
+	test -d build-$(CHOST)/sqlite-autoconf-$(V_SQL) || (                                            \
+	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CHOST)      \
+	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
+	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
-zlib: build-$(CROSS)
-	test -d build-$(CROSS)/zlib-$(V_ZLIB) || (                                 \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CROSS)  \
-	&& cd build-$(CROSS)/zlib-$(V_ZLIB) && CC=$(CC) CHOST=$(CROSS) ./configure \
+zlib: build-$(CHOST)
+	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)  \
+	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && CC=$(CC) CHOST=$(CHOST) ./configure \
 	--prefix=$(PWD)/$(KLOCAL) && make && make install                          )
 
-openssl: build-$(CROSS)
-	test -d build-$(CROSS)/openssl-$(V_SSL) || (                                                            \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CROSS)               \
-	&& cd build-$(CROSS)/openssl-$(V_SSL) && CC=$(CC) ./Configure dist                                      \
+openssl: build-$(CHOST)
+	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                                            \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)               \
+	&& cd build-$(CHOST)/openssl-$(V_SSL) && CC=$(CC) ./Configure dist                                      \
 	-fPIC --prefix=$(PWD)/$(KLOCAL) --openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs)
 
-curl: build-$(CROSS)
-	test -d build-$(CROSS)/curl-$(V_CURL) || (                                                  \
-	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CROSS)      \
-	&& cd build-$(CROSS)/curl-$(V_CURL) && CC=$(CC) ./configure                                 \
-	--host=$(CROSS) --target=$(CROSS) --build=$(shell g++ -dumpmachine) --disable-manual        \
+curl: build-$(CHOST)
+	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
+	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CHOST)      \
+	&& cd build-$(CHOST)/curl-$(V_CURL) && CC=$(CC) ./configure                                 \
+	--host=$(CHOST) --target=$(CHOST) --build=$(shell g++ -dumpmachine) --disable-manual        \
 	--disable-shared --enable-static --prefix=$(PWD)/$(KLOCAL) --disable-ldap --without-libpsl  \
 	--without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp          \
 	--disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 \
@@ -142,40 +142,40 @@ curl: build-$(CROSS)
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
 ncurses:
-	test -d build-$(CROSS)/ncurses-$(V_NCUR) || (                                                         \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CROSS)        \
-	&& cd build-$(CROSS)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure --host=$(CROSS) \
+	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                         \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)        \
+	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure --host=$(CHOST) \
 	--prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color     \
 	&& make && make install                                                                               )
 
-json: build-$(CROSS)
+json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o $(KLOCAL)/include/json.h                                                      )
 
-quickfix: build-$(CROSS)
-	test -d build-$(CROSS)/quickfix-$(V_QF) || (                                                   \
-	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CROSS) \
-	&& patch build-$(CROSS)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
-	&& cd build-$(CROSS)/quickfix-$(V_QF) && ./bootstrap                                           \
+quickfix: build-$(CHOST)
+	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
+	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
+	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
+	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                           \
 	&& sed -i "s/bin spec test examples doc//" Makefile.am                                         \
 	&& sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile                                       \
 	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
-	--host=$(CROSS) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
+	--host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
 
 build:
 	mkdir -p $(KLOCAL)
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CROSS).tar.gz \
-	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CROSS).a $(KLOCAL)/bin/K-$(CROSS)
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CHOST).tar.gz \
+	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/bin/K-$(CHOST)
 
 clean:
 ifdef KALL
-	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
 else
-	rm -rf build-$(CROSS)
+	rm -rf build-$(CHOST)
 endif
 
 cleandb: /data/db/K*
@@ -204,7 +204,7 @@ docker:
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
-	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CROSS) K
+	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
 
 reinstall: .git src
 	rm -rf app
@@ -319,23 +319,23 @@ png-check: etc/${PNG}.png
 
 check:
 	@echo $(KLIB)
-	@shasum $(KLOCAL)/bin/K-$(CROSS) | cut -d ' ' -f1
+	@shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1
 
 checkOK:
-	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CROSS) | cut -d ' ' -f1`/" Makefile
+	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1`/" Makefile
 	@$(MAKE) check -s
 
 release:
 ifdef KALL
-	unset KALL && CROSS=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CROSS=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CROSS=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
+	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
+	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
 else
-	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CROSS).tar.gz bin/K-$(CROSS) var lib/K-$(CROSS).a                            \
+	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CHOST).tar.gz bin/K-$(CHOST) var lib/K-$(CHOST).a                            \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
-	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CROSS).tar.gz"                                                         \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CROSS).tar.gz" \
-	&& rm $(KLIB)-$(CROSS).tar.gz && echo && echo DONE $(KLIB)-$(CROSS).tar.gz
+	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CHOST).tar.gz"                                                         \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CHOST).tar.gz" \
+	&& rm $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
 endif
 
 md5: src
