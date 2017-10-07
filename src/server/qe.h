@@ -240,7 +240,7 @@ namespace K {
           rawQuote.ask.price = 0;
           rawQuote.ask.size = 0;
           if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off) {
-            pgSideAPR = "Bid";
+            pgSideAPR = "Buy";
             if (!QP::getBool("buySizeMax")) rawQuote.bid.size = fmin(QP::getInt("aprMultiplier")*buySize, fmin(pgTargetBasePos - totalBasePosition, (pgPos.quoteAmount / mgFairValue) / 2));
           }
         }
@@ -279,6 +279,7 @@ namespace K {
             );
           }
         }
+        else pgSideAPR = "Off";
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if ((mQuotingMode)QP::getInt("mode") == mQuotingMode::PingPong or QP::matchPings()) {
           if (rawQuote.ask.size and pgSafety.buyPing and (
