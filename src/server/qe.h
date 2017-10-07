@@ -266,7 +266,7 @@ namespace K {
                     ? mgStdevTop : mgStdevAsk )),
               rawQuote.ask.price
             );
-          if (rawQuote.bid.price and ((mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFV or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTops or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTop or pgSideAPR != "Bid")) {
+          if (rawQuote.bid.price and ((mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFV or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTops or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnTop or pgSideAPR != "Buy")) {
             rawQuote.bid.price = fmin(
               (QP::getBool("quotingStdevBollingerBands")
                 ? ((mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFV or (mSTDEV)QP::getInt("quotingStdevProtection") == mSTDEV::OnFVAPROff)
