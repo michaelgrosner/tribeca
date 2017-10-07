@@ -1,7 +1,5 @@
 K       ?= K.sh
-KLIB     = 9d3d206b002f4d4aa954169bb2004250bef0e68f
 CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
-CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
 CC       = $(CHOST)-gcc-6
@@ -15,6 +13,8 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
+KLIB     = 9d3d206b002f4d4aa954169bb2004250bef0e68f
+CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic                           \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
