@@ -77,8 +77,8 @@ namespace K {
               << FN::uiT() << "[arguments]:" << '\n'
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << '\n'
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
-              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << '\n'
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
               << FN::uiT() << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
@@ -149,6 +149,7 @@ namespace K {
           BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
           BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
         }
+        setlocale(LC_ALL, "");
         if (!argNaked) FN::screen();
         if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };

@@ -41,7 +41,7 @@ namespace K {
         stringstream T, T_;
         T << setfill('0') << setw(2) << hours.count() << ":" << setw(2) << minutes.count() << ":" << setw(2) << seconds.count();
         T_ << "." << setfill('0') << setw(3) << milliseconds.count() << setw(3) << microseconds.count();
-        if (!wInit) return string(BGREEN) + T.str() + RGREEN + T_.str() + RWHITE + " ";
+        if (!wInit) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, T.str().data());

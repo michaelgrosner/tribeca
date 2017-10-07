@@ -1,6 +1,7 @@
 K       ?= K.sh
-KLIB     = 14ab4004b064f252b07e90f43bcb5ceded35366e
+KLIB     = 9d3d206b002f4d4aa954169bb2004250bef0e68f
 CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
+CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
 CC       = $(CHOST)-gcc-6
@@ -79,9 +80,7 @@ help:
 
 K: src/server/K.cc
 ifdef KALL
-	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
@@ -91,9 +90,7 @@ endif
 
 dist:
 ifdef KALL
-	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	mkdir -p build-$(CHOST)
 	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
@@ -171,9 +168,7 @@ build:
 
 clean:
 ifdef KALL
-	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	rm -rf build-$(CHOST)
 endif
@@ -194,7 +189,10 @@ packages:
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@$(MAKE) build link
+	@echo ================================================================================ && echo && echo "Choose your architecture (uname -m says \"`uname -m`\"):"
+	@echo -n "$(CARCH)" | xargs -I % -d ' ' echo % | cat -n
+	@echo && read -p "[1/2/3] " chost; \
+	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
 docker:
 	@$(MAKE) packages
@@ -327,9 +325,7 @@ checkOK:
 
 release:
 ifdef KALL
-	unset KALL && CHOST=x86_64-linux-gnu $(MAKE) $@
-	unset KALL && CHOST=arm-linux-gnueabihf $(MAKE) $@
-	unset KALL && CHOST=aarch64-linux-gnu $(MAKE) $@
+	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CHOST).tar.gz bin/K-$(CHOST) var lib/K-$(CHOST).a                            \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
