@@ -75,7 +75,7 @@ namespace K {
         qeQuotingMode[mQuotingMode::PingPong] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Boomerang] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::HamelinRat] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       static json onSnap() {
@@ -422,6 +422,31 @@ namespace K {
         return mQuote(
           mLevel(fmax(mgFairValue - widthPing, 0), buySize),
           mLevel(mgFairValue + widthPing, sellSize)
+        );
+      };
+      static mQuote calcColossusOfMarket(double widthPing, double buySize, double sellSize) {
+        double bidSz = 0,
+               bidPx = 0,
+               askSz = 0,
+               askPx = 0;
+        unsigned int maxLvl = 0;
+        for (vector<mLevel>::iterator it = mgLevelsFilter.bids.begin(); it != mgLevelsFilter.bids.end(); ++it) {
+          if (bidSz < it->size) {
+            bidSz = it->size;
+            bidPx = it->price;
+          }
+          if (++maxLvl==13) break;
+        }
+        for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it) {
+          if (askSz < it->size) {
+            askSz = it->size;
+            askPx = it->price;
+          }
+          if (!--maxLvl) break;
+        }
+        return mQuote(
+          mLevel(bidPx + gw->minTick, buySize),
+          mLevel(askPx - gw->minTick, sellSize)
         );
       };
       static mQuote calcDepthOfMarket(double depth, double buySize, double sellSize) {
