@@ -149,7 +149,6 @@ namespace K {
           BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
           BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
         }
-        setlocale(LC_ALL, "");
         if (!argNaked) FN::screen();
         if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };

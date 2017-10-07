@@ -189,7 +189,7 @@ packages:
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@echo ================================================================================ && echo && echo "Choose your architecture (uname -m says \"`uname -m`\"):"
+	@echo ================================================================================ && echo && echo "Select your architecture (uname -m says \"`uname -m`\"):"
 	@echo -n "$(CARCH)" | xargs -I % -d ' ' echo % | cat -n
 	@echo && read -p "[1/2/3] " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
