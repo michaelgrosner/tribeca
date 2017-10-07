@@ -393,7 +393,7 @@ namespace K {
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) {
-          cout << uiT() << k << RRED << m << BRED << s << '\n';
+          cout << uiT() << k << RRED << m << BRED << s << ".\n";
           return;
         }
         lock_guard<mutex> lock(wMutex);
@@ -552,7 +552,7 @@ namespace K {
       };
       static void log(string k, string s) {
         if (!wInit) {
-          cout << uiT() << k << RWHITE << " " << s << '\n';
+          cout << uiT() << k << RWHITE << " " << s << ".\n";
           return;
         }
         lock_guard<mutex> lock(wMutex);
