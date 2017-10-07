@@ -13,7 +13,7 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = 9d3d206b002f4d4aa954169bb2004250bef0e68f
+KLIB     = 4dd3a173ef612ebb94fe772f1abd54288668e630
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic                           \
@@ -138,7 +138,7 @@ curl: build-$(CHOST)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-ncurses:
+ncurses: build-$(CHOST)
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                         \
 	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)        \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure --host=$(CHOST) \

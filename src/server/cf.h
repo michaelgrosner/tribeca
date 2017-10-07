@@ -108,7 +108,7 @@ namespace K {
               << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative PATH to database filename," << '\n'
               << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << '\n'
               << FN::uiT() << RWHITE << "                           any route to a filename is valid," << '\n'
-              << FN::uiT() << RWHITE << "                           or use ':memory:' (sqlite.org/inmemorydb.html)." << '\n'
+              << FN::uiT() << RWHITE << "                           or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
               << FN::uiT() << RWHITE << "-s, --ewma-short=PRICE   - set initial ewma short value," << '\n'
               << FN::uiT() << RWHITE << "                           overwrites the value from the database." << '\n'
               << FN::uiT() << RWHITE << "-m, --ewma-medium=PRICE  - set initial ewma medium value," << '\n'
@@ -136,7 +136,7 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";
           while(optind < argc) cout << argv[optind++];
           cout << '\n';
-          exit(1);
+          exit(EXIT_FAILURE);
         }
         if (argDebug) {
           argDebugEvents = 1;
@@ -170,13 +170,13 @@ namespace K {
       static string cfBase() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR."); exit(1); }
+        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR."); exit(EXIT_FAILURE); }
         return FN::S2u(k);
       };
       static string cfQuote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR"); exit(1); }
+        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR"); exit(EXIT_FAILURE); }
         return FN::S2u(k);
       };
       static mExchange cfExchange() {
@@ -189,7 +189,7 @@ namespace K {
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
         FN::logErr("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information");
-        exit(1);
+        exit(EXIT_FAILURE);
       };
       static mConnectivity autoStart() {
         return argAutobot ? mConnectivity::Connected : mConnectivity::Disconnected;
@@ -243,7 +243,7 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (!gw->minTick) { FN::logErr("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\""); exit(1); }
+        if (!gw->minTick) { FN::logErr("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\""); exit(EXIT_FAILURE); }
         else FN::log(string("GW ") + argExchange, "allows client IP");
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'

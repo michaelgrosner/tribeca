@@ -103,7 +103,7 @@ namespace K {
             uiPrtcl = "HTTPS";
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
             uiPrtcl = "HTTP";
-          else { FN::logErr("IU", string("Use another UI port number, ") + to_string(argPort) + " seems already in use by:\n" + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) + "\n"); exit(1); }
+          else { FN::logErr("IU", string("Use another UI port number, ") + to_string(argPort) + " seems already in use by:\n" + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) + "\n"); exit(EXIT_FAILURE); }
           FN::logUI(uiPrtcl, argPort);
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
@@ -116,13 +116,13 @@ namespace K {
       static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(1); }
+        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(EXIT_FAILURE); }
         else sess->cbSnap[(char)k] = cb;
       };
       static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(1); }
+        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(EXIT_FAILURE); }
         else sess->cbMsg[(char)k] = cb;
       };
       static void uiSend(uiTXT k, json o, bool h = false) {

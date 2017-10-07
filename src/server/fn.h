@@ -439,7 +439,7 @@ namespace K {
           cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
+        wMutex.lock();
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -460,7 +460,8 @@ namespace K {
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
+        wMutex.unlock();
+        FN::screen_refresh();
       };
       static void logUIsess(int k, string s) {
         if (!wInit) {

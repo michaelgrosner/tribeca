@@ -4,14 +4,10 @@
 namespace K {
   mPosition pgPos;
   mSafety pgSafety;
-  map<string, mWallet> pgWallet;
   map<double, mTradeDehydrated> pgBuys;
   map<double, mTradeDehydrated> pgSells;
-  vector<mProfit> pgProfit;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
-  string pgSideAPR_ = "!=";
-  mutex pgMutex;
   class PG {
     public:
       static void main() {
@@ -46,6 +42,7 @@ namespace K {
         }
       };
       static void calcTargetBasePos() {
+        static string pgSideAPR_ = "!=";
         if (!pgPos.value) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
@@ -204,18 +201,23 @@ namespace K {
         return sum;
       };
       static void calcWallet(mWallet k) {
-        pgMutex.lock();
+        static mutex walletMutex,
+                     profitMutex;
+        static map<string, mWallet> pgWallet;
+        static vector<mProfit> pgProfit;
+        walletMutex.lock();
         if (k.currency!="") pgWallet[k.currency] = k;
         if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
-          pgMutex.unlock();
+          walletMutex.unlock();
           return;
         }
         mWallet baseWallet = pgWallet[gw->base];
         mWallet quoteWallet = pgWallet[gw->quote];
-        pgMutex.unlock();
+        walletMutex.unlock();
         double baseValue = baseWallet.amount + quoteWallet.amount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
         double quoteValue = baseWallet.amount * mgFairValue + quoteWallet.amount + baseWallet.held * mgFairValue + quoteWallet.held;
         unsigned long now = FN::T();
+        profitMutex.lock();
         pgProfit.push_back(mProfit(baseValue, quoteValue, now));
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
           if (it->time + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
@@ -232,6 +234,7 @@ namespace K {
           mPair(gw->base, gw->quote),
           gw->exchange
         );
+        profitMutex.unlock();
         bool eq = true;
         if (pgPos.value) {
           eq = abs(pos.value - pgPos.value) < 2e-6;
