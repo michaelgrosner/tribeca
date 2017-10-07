@@ -23,7 +23,7 @@ before_install:
   - test $TRAVIS_OS_NAME == "linux" && make travis || :;
 
 install:
-  - make install
+  - yes 1 | make install
 
 script: make test-cov
 
