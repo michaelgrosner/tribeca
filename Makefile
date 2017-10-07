@@ -327,11 +327,12 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
-	@cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CHOST).tar.gz bin/K-$(CHOST) var lib/K-$(CHOST).a                            \
+	@cp LICENSE COPYING $(KLOCAL) && cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CHOST).tar.gz                                \
+	LICENSE COPYING bin/K-$(CHOST) var lib/K-$(CHOST).a                                                               \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
 	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CHOST).tar.gz"                                                         \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CHOST).tar.gz" \
-	&& rm $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
+	&& rm LICENSE COPYING $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
 endif
 
 md5: src
