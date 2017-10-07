@@ -274,7 +274,7 @@ bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLO
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
 	rm $(KLOCAL)/var/www/js/*.js
-	echo $(CARCH) | cut -d ' ' -f2- | xargs echo -n | xargs -I % -d ' ' sh -c 'rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local;'
+	echo $(CARCH) | xargs -d ' ' -I % echo % | grep -v $(CHOST) | xargs -I % sh -c 'rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local;'
 	@echo DONE
 
 diff: .git
