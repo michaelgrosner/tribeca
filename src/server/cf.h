@@ -191,9 +191,6 @@ namespace K {
         FN::logErr("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information");
         exit(EXIT_FAILURE);
       };
-      static mConnectivity autoStart() {
-        return argAutobot ? mConnectivity::Connected : mConnectivity::Disconnected;
-      };
     private:
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
@@ -247,7 +244,7 @@ namespace K {
         else FN::log(string("GW ") + argExchange, "allows client IP");
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'
-          << "- autoBot: " << (autoStart() == mConnectivity::Connected ? "yes" : "no") << '\n'
+          << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
           << "- pair: " << gw->symbol << '\n'
           << "- minTick: " << gw->minTick << '\n'
           << "- minSize: " << gw->minSize << '\n'

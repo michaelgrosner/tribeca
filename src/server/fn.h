@@ -492,7 +492,7 @@ namespace K {
       };
       static void logVer(string k, int c) {
         if (!wInit) {
-          cout << BGREEN << "K " << RGREEN << string(" version ").append(!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n")) << RYELLOW << (c ? k : "") << RWHITE;
+          cout << BGREEN << "K" << RGREEN << string(" version ").append(!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n")) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
         lock_guard<mutex> lock(wMutex);

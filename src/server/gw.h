@@ -11,7 +11,7 @@ namespace K {
     public:
       static void main() {
         evExit = happyEnding;
-        gwAutoStart = CF::autoStart();
+        gwAutoStart = argAutobot ? mConnectivity::Connected : mConnectivity::Disconnected;
         thread([&]() {
           unsigned int T_5m = 0;
           while (true) {
