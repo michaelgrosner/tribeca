@@ -6,6 +6,7 @@ WebClientUsername=NULL
 WebClientPassword=NULL
 WebClientListenPort=3000
 MongoDbUrl=mongodb://tribeca-mongo:27017/tribeca
+ShowAllOrders=true
 
 NullGatewayTick=100
 

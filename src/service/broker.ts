@@ -319,6 +319,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
 
     private shouldPublish = (o: Models.OrderStatusReport) : boolean => {
         if (o.source === null) throw Error(JSON.stringify(o));
+        if (this._publishAllOrders) return true;
 
         switch (o.source) {
             case Models.OrderSource.Quote:
@@ -346,7 +347,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
                 private _messages : Messages.MessagesPubisher,
                 private _orderCache : OrderStateCache,
                 initOrders : Models.OrderStatusReport[],
-                initTrades : Models.Trade[]) {
+                initTrades : Models.Trade[],
+                private readonly _publishAllOrders: boolean) {
         _.each(initOrders, this.addOrderStatusInMemory);
         _.each(initTrades, t => this._trades.push(t));
                 
