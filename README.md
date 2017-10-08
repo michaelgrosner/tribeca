@@ -67,6 +67,8 @@ Runs on the latest node.js (v7.8 or greater). Persistence is acheived using mong
     2. `dev`
     
   * MongoDbUrl - If you are on OS X, change "tribeca-mongo" in the URL to the output of `boot2docker ip` on your host machine. If you are running an existing mongoDB instance, replace the URL with the existing instance's URL. If you are running from a Linux machine and set up mongo in step 1, you should not have to modify anything.
+
+  * ShowAllOrders - Show all orders sent from the application in the Orders List in the UI. This is useful for debugging/testing, but can really negatively impact performance during real trading.
   
   * TradedPair - Any combination of the following currencies are supported, if the target EXCHANGE supports trading the currency pair:
   
