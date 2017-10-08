@@ -200,13 +200,17 @@ namespace K {
         double sellSize = QP::getBool("percentageValues")
           ? QP::getDouble("sellSizePercentage") * pgPos.value / 100
           : QP::getDouble("sellSize");
-        if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("buySizeMax"))
+        if (buySize and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("buySizeMax"))
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
-        if ((mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("sellSizeMax"))
+        if (sellSize and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off and QP::getBool("sellSizeMax"))
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote? ") +((json)rawQuote).dump());
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
+        if (rawQuote.bid.price < 0 or rawQuote.ask.price < 0) {
+          FN::logWar("QP", "Negative price detected! (widthPing or/and widthPong must be smaller)");
+          return mQuote();
+        }
         double _rawBidSz = rawQuote.bid.size;
         double _rawAskSz = rawQuote.ask.size;
         if (pgSafety.buyPing == -1) return mQuote();
