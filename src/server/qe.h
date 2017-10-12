@@ -102,6 +102,14 @@ namespace K {
           and abs(qeQuote.bid.size - quote.bid.size) < gw->minSize
           and abs(qeQuote.ask.size - quote.ask.size) < gw->minSize
         )) return;
+       if ( quote.bid.size and quote.bid.size > ((pgPos.quoteAmount + pgPos.quoteHeldAmount) / mgFairValue )) {
+	        if (argDebugQuotes) FN::log("DEBUG", string("QE ERROR depleted funds to BUY"));
+	        qeBidStatus = mQuoteState::DepletedFunds;
+	        }
+	    if ( quote.ask.size and quote.ask.size > (pgPos.baseAmount + pgPos.baseHeldAmount) ) {
+	        if (argDebugQuotes) FN::log("DEBUG", string("QE ERROR depleted funds to SELL"));
+	        qeAskStatus = mQuoteState::DepletedFunds;
+	        } 
         qeQuote = quote;
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote! ") + ((json)qeQuote).dump());
         send();
