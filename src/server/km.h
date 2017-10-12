@@ -14,6 +14,7 @@ namespace K {
              argHeadless = 0,
              argNaked = 0,
              argAutobot = 0;
+  extern int argFree;
   static string argTitle = "K.sh",
                 argExchange = "NULL",
                 argUser = "NULL",

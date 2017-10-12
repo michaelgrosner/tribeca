@@ -197,6 +197,8 @@ Once enabled, the UI (and only the UI, that is in the web browser of the client 
 
 Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
+In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` at [Unlock](#unlock) section).
+
 ### Test units and Build notes
 
 Make sure your build machine has installed [node](https://nodejs.org/en/download/package-manager/), and also ensure `make dist` provides all dependencies without errors.
@@ -209,9 +211,11 @@ To pipe the output to stdout, execute the application in the foreground with `./
 
 To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
 
-sandbox: [wandbox.org](https://wandbox.org)
-sandbox: [jsfiddle.net](https://jsfiddle.net)
-sandbox: [websocket.org](https://www.websocket.org/echo.html)
+c sandbox: [wandbox.org](https://wandbox.org)
+
+js sandbox: [jsfiddle.net](https://jsfiddle.net)
+
+ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
@@ -284,6 +288,8 @@ The current payment is to support further development by ctubio to fix all bugs 
 To provide exclusivity to proefficient traders and to keep teenagers away, once the bot is bug-free, the payment required may be increased by a minimum of x3.
 
 Once the trial period expires, the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
+
+Alternatively, use `--free-version` argument to anonymously avoid the payment and to extend without limit the trial period; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculcation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
 ### Donations
 
