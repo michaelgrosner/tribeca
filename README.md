@@ -291,7 +291,7 @@ To provide exclusivity to proefficient traders and to keep teenagers away, once 
 
 Once the trial period expires, the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
 
-Alternatively, use `--free-version` argument to anonymously avoid the payment and to extend without limit the trial period; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculcation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
+Alternatively, use `--free-version` argument to anonymously avoid the payment and to extend without limit the trial period; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
 ### Donations
 
