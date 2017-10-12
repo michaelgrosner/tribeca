@@ -1,0 +1,122 @@
+: hurry! to get you started, a collection of redundant information to follow: :
+:                                                                             :
+:                                       k                                     :
+:                                      .K.                                    :
+:                          HUMAN      .KKK.       FAMILY                      :
+:                              WORK  .KKKKK.   WORK                           :
+:                                   .KKKKKKK.                                 :
+:                       ²KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK² ...                 :
+:                .        "²KKKKKKKKKKKKKKKKKKKKKKKKK²"   : :   .             :
+:                :    ...   "²KKKKKKKKKKKKKKKKKKK²"       : :   :             :
+:                :    : :   ... "²KKFEELKFREEKK²" ......... :   :             :
+. . .... ........+..... :   :    .KKKKKKKKKKKKK.            :...+...... ... . .
+:                :      .....   .KKKKKKKKKKKKKKK.               :             :
+:                :             .KKKKKKK3²3KKKKKKK.              :             :
+:                .            .KKKKKK²"   "²KKKKKK.                           :
+:                            .KKKK²"  SLEEP  "²KKKK.                          :
+:                .          .KK²" REPEAT REPEAT "²KK.                         :
+:                           ²"    _\\___|___//_    "²                         :                                                                            :
+:                                  //   :   \\                                :
+:                                       :                                     :
+:                                                                             :
+:    Makefile:                                                                :
+:      boooriiing docs at https://www.gnu.org/software/make/manual/make.html  :
+:                                                                             :
+:      TODO (or not), cos thats all important: $ make dist                    :
+:                                                                             :
+:      TODO (or not), cos thats all important: $ make                         :
+:                                                                             :
+:      TODO (or not), cos thats all important: $ make bundle                  :
+:                                                                             :
+:                                                                             :
+:    src/server:                                                              :
+:      boooriiing docs at http://www.cplusplus.com                            :
+:                                                                             :
+:       ____     Login    ____    Admin     ____                              :
+:      |gw.h# <<-------- |cf.h| -------->> |ui.h# K client                    :
+:       ¯¯¯¯#             ¯¯¯¯              ¯¯¯¯|                             :
+:           #   Wallet    ____                  | P                           :
+:           # -------->> |pg.h#        ____     V a                           :
+:         A #             ¯¯¯¯#       |km.h|____V r                           :
+:         P #   Trades        # <<->> |fn.h|qp.h| a                           :
+:         I #     &           # a D    ¯¯¯¯ ¯¯¯¯| m                           :
+:           #   Levels    ____# t               | e                           :
+:         E # -------->> |mg.h# a               | t                           :
+:         x #             ¯¯¯¯#                 V e                           :
+:         c #   Orders    ____#   Quotes    ____V r                           :
+:         h # <<------>> |og.h# <<------>> |qe.h| s                           :
+:         ange            ¯¯¯¯# K server    ¯¯¯¯                              :
+:                         ____#____                                           :
+:                        |db.h|ev.h|                                          :
+:                         ¯¯¯¯ ¯¯¯¯                                           :
+:                                                                             :
+:    src/server/km.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/fn.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/cf.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/ev.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/db.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/ui.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/qp.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/og.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/mg.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/pg.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/qe.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/server/gw.h:                                                         :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:    src/client:                                                              :
+:      boooriiing docs at https://angular.io/api                              :
+:      boooriiing docs at https://www.typescriptlang.org/docs/home.html       :
+:                                                                             :
+:    src/www:                                                                 :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:              ^^                  KKKKKKKKKK                                 :
+:         ^^       ^^            KKKKKKKKKKKKKK                               :
+:            |DD               KKKKKKKKKKKKKKKKKK              ^^             :
+:          __|DD              KKKKKKKKKKKKKKKKKKKK                            :
+:~~~ ~~~~ ~\___/~~ ~~~~~~~ ~~ kkkkkkkkkkkkkkkkkkkk ~~ ~~~~~~~ ~~~~~ ~~ ~~~~ ~~~
+    ~         ~~   ~  ~       ~~~~~~~~~~~~~~~~~~~~ ~       ~~     ~~ ~
+      ~      ~~      ~~ ~~ ~~  ~~~~~~~~~~~~~ ~~~~  ~     ~~~    ~|DD ~~~  ~ ~~
+      ~  ~~     ~         ~      ~~~~~~  ~~ ~~~       ~~ ~ ~~ ___|DD_
+    ~  ~       ~ ~      ~           ~~ ~~~~~~  ~      ~~  ~   \_____/    ~~
+          ~             ~        ~      ~      ~~   ~             ~
