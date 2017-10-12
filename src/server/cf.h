@@ -123,7 +123,7 @@ namespace K {
               << FN::uiT() << RWHITE << "    --colors             - print highlighted output." << '\n'
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL     - set Matryoshka link URL of the next UI." << '\n'
               << FN::uiT() << RWHITE << "-K, --title=WORD         - set WORD as UI title to identify different bots." << '\n'
-              << FN::uiT() << RWHITE << "    --free-version       - work with all market levels but delay orders 1 second." << '\n'
+              << FN::uiT() << RWHITE << "    --free-version       - work with all market levels but slowdown with 1 XMR hash." << '\n'
               << FN::uiT() << RWHITE << "-v, --version            - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << '\n'

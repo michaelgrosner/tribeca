@@ -219,6 +219,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Added XMR network ecosystem optional support.
+
 Added command-line arguments.
 
 Updated quoting engine and gateways without nodejs.
