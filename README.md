@@ -209,6 +209,10 @@ To pipe the output to stdout, execute the application in the foreground with `./
 
 To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
 
+sandbox: [wandbox.org](https://wandbox.org)
+sandbox: [jsfiddle.net](https://jsfiddle.net)
+sandbox: [websocket.org](https://www.websocket.org/echo.html)
+
 ### Unreleased Changelog:
 
 Added command-line arguments.
