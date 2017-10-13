@@ -581,10 +581,9 @@ namespace K {
         wrefresh(wLog);
       };
       static void screen_quit() {
+        if (!wInit) return;
         lock_guard<mutex> lock(wMutex);
-        bool wInit_ = wInit;
         wInit = false;
-        if (!wInit_) return;
         beep();
         endwin();
       };
