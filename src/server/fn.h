@@ -580,6 +580,14 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
+      static void screen_quit() {
+        lock_guard<mutex> lock(wMutex);
+        bool wInit_ = wInit;
+        wInit = false;
+        if (!wInit_) return;
+        beep();
+        endwin();
+      };
       static void screen() {
         if ((wBorder = initscr()) == NULL) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
@@ -612,11 +620,7 @@ namespace K {
               // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
           }
-          lock_guard<mutex> lock(wMutex);
-          beep();
-          bool wInit_ = wInit;
-          wInit = false;
-          if (wInit_) endwin();
+          screen_quit();
           cout << FN::uiT() << "Excellent decision!" << '\n';
           evExit(EXIT_SUCCESS);
         }).detach();
@@ -695,13 +699,19 @@ namespace K {
       };
       static void screen_resize(int sig) {
         if (!wInit) return;
+        wMutex.lock();
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) {
+          wMutex.unlock();
+          return;
+        }
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
+        wMutex.unlock();
         screen_refresh();
+        lock_guard<mutex> lock(wMutex);
         redrawwin(wLog);
         wrefresh(wLog);
       };

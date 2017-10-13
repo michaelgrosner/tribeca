@@ -52,9 +52,7 @@ namespace K {
         end(EXIT_FAILURE);
       };
       static void quit(int sig) {
-        bool wInit_ = wInit;
-        wInit = false;
-        if (wInit_) endwin();
+        FN::screen_quit();
         cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         cout << FN::uiT() << "Excellent decision! "
@@ -64,9 +62,7 @@ namespace K {
         evExit(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
-        bool wInit_ = wInit;
-        wInit = false;
-        if (wInit_) endwin();
+        FN::screen_quit();
         cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
         if (latest()) {
           cout << " (Three-Headed Monkey found)." << '\n';
