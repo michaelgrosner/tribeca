@@ -636,11 +636,9 @@ class ClientComponent implements OnInit {
   };
 
   private minerMax = (): number => {
-    let cores = navigator.hardwareConcurrency;
-    if (cores < 1) 
-      return 8
-    else
-    return navigator.hardwareConcurrency;
+    var cores = navigator.hardwareConcurrency;
+    if (isNaN(cores)) cores = 8;
+    return cores;
   };
 
   private minerStop = () => {
