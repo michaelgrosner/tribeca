@@ -186,19 +186,35 @@ namespace K {
     };
   };
   struct mTrade {
+        mExchange exchange;
+           string base,
+                  quote;
            double price,
                   quantity;
             mSide make_side;
     unsigned long time;
     mTrade():
-      price(0), quantity(0), make_side((mSide)0), time(0)
+      exchange((mExchange)0), base(""), quote(""), price(0), quantity(0), make_side((mSide)0), time(0)
     {};
     mTrade(double p, double q, unsigned long t):
-      price(p), quantity(q), make_side((mSide)0), time(t)
+      exchange((mExchange)0), base(""), quote(""), price(p), quantity(q), make_side((mSide)0), time(t)
     {};
     mTrade(double p, double q, mSide s):
-      price(p), quantity(q), make_side(s), time(0)
+      exchange((mExchange)0), base(""), quote(""), price(p), quantity(q), make_side(s), time(0)
     {};
+    mTrade(mExchange e, string B, string Q, double p, double q, mSide s, double t):
+      exchange(e), base(B), quote(Q), price(p), quantity(q), make_side(s), time(t)
+    {};
+  };
+  static void to_json(json& j, const mTrade& k) {
+    j = {
+      {"exchange", (int)k.exchange},
+      {"pair", {{"base", k.base}, {"quote", k.quote}}},
+      {"price", k.price},
+      {"quantity", k.quantity},
+      {"time", k.time},
+      {"make_size", (int)k.make_side}
+    };
   };
   struct mTradeHydrated {
            string tradeId;
@@ -240,28 +256,6 @@ namespace K {
       {"Kdiff", k.Kdiff},
       {"feeCharged", k.feeCharged},
       {"loadedFromDB", k.loadedFromDB},
-    };
-  };
-  struct mTradeDry {
-        mExchange exchange;
-           string base,
-                  quote;
-           double price,
-                  size;
-    unsigned long time;
-            mSide make_side;
-    mTradeDry(mExchange e, string b, string q, double p, double s, double t, mSide S):
-      exchange(e), base(b), quote(q), price(p), size(s), time(t), make_side(S)
-    {};
-  };
-  static void to_json(json& j, const mTradeDry& k) {
-    j = {
-      {"exchange", (int)k.exchange},
-      {"pair", {{"base", k.base}, {"quote", k.quote}}},
-      {"price", k.price},
-      {"size", k.size},
-      {"time", k.time},
-      {"make_size", (int)k.make_side}
     };
   };
   struct mOrder {

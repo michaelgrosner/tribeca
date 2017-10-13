@@ -48,13 +48,13 @@ export class MarketTradesComponent implements OnInit {
         sort: 'desc', cellClass: (params) => {
           return 'fs11px '+(!params.data.recent ? "text-muted" : "");
       } },
-      { width: 75, field: 'price', headerName: 'px', cellClass: (params) => {
+      { width: 75, field: 'price', headerName: 'price', cellClass: (params) => {
           return (params.data.make_side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 50, field: 'size', headerName: 'sz', cellClass: (params) => {
+      { width: 50, field: 'quantity', headerName: 'qty', cellClass: (params) => {
           return (params.data.make_side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      { width: 40, field: 'make_side', headerName: 'ms' , cellClass: (params) => {
+      { width: 40, field: 'make_side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }}
@@ -66,7 +66,7 @@ export class MarketTradesComponent implements OnInit {
     if (trade != null)
       this.gridOptions.api.updateRowData({add:[{
         price: trade.price,
-        size: trade.size,
+        quantity: trade.quantity,
         time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
         recent: true,
         make_side: Models.Side[trade.make_side],

@@ -57,7 +57,7 @@ export class MarketTrade {
     constructor(public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
-                public size: number,
+                public quantity: number,
                 public time: number,
                 public make_side: Side) {}
 }

@@ -4,7 +4,7 @@
 namespace K {
   int mgT = 0;
   mLevels mgLevelsFilter;
-  vector<mTradeDry> mgTrades;
+  vector<mTrade> mgTrades;
   double mgFairValue = 0;
   double mgEwmaL = 0;
   double mgEwmaM = 0;
@@ -148,18 +148,13 @@ namespace K {
         }, false, "NULL", FN::T() - 1e+3 * QP::getInt("quotingStdevProtectionPeriods"));
       };
       static void tradeUp(mTrade k) {
-        mTradeDry t(
-          gw->exchange,
-          gw->base,
-          gw->quote,
-          k.price,
-          k.quantity,
-          FN::T(),
-          k.make_side
-        );
-        mgTrades.push_back(t);
+        k.exchange = gw->exchange;
+        k.base = gw->base;
+        k.quote = gw->quote;
+        k.time = FN::T();
+        mgTrades.push_back(k);
         if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
-        UI::uiSend(uiTXT::MarketTrade, t);
+        UI::uiSend(uiTXT::MarketTrade, k);
       };
       static void levelUp(mLevels k) {
         filter(k);
