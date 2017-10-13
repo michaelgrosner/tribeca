@@ -30,25 +30,30 @@ namespace K {
         UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
       };
       static void calcSafety() {
-        if (!pgPos.value or !mgFairValue) return;
+        if (empty() or !mgFairValue) return;
         mSafety safety = nextSafety();
+        pgMutex.lock();
         if (pgSafety.buyPing == -1
           or abs(safety.combined - pgSafety.combined) > 1e-3
           or abs(safety.buyPing - pgSafety.buyPing) >= 1e-2
           or abs(safety.sellPong - pgSafety.sellPong) >= 1e-2
         ) {
           pgSafety = safety;
-          UI::uiSend(uiTXT::TradeSafetyValue, pgSafety, true);
-        }
+          pgMutex.unlock();
+          UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
+        } else pgMutex.unlock();
       };
       static void calcTargetBasePos() {
         static string pgSideAPR_ = "!=";
-        if (!pgPos.value) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
+        if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
+        pgMutex.lock();
+        double value = pgPos.value;
+        pgMutex.unlock();
         double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
           ? (QP::getBool("percentageValues")
-            ? QP::getDouble("targetBasePositionPercentage") * pgPos.value / 1e+2
+            ? QP::getDouble("targetBasePositionPercentage") * value / 1e+2
             : QP::getDouble("targetBasePosition"))
-          : ((1 + mgTargetPos) / 2) * pgPos.value;
+          : ((1 + mgTargetPos) / 2) * value;
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
@@ -57,13 +62,17 @@ namespace K {
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
         DB::insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
-        ss << (int)(pgTargetBasePos / pgPos.value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
+        ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("TBP", ss.str() + " " + gw->base);
       };
       static void addTrade(mTradeHydrated k) {
         mTradeDehydrated k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) pgBuys[k.price] = k_;
         else pgSells[k.price] = k_;
+      };
+      static bool empty() {
+        lock_guard<mutex> lock(pgMutex);
+        return !pgPos.value;
       };
     private:
       static void load() {
@@ -78,22 +87,29 @@ namespace K {
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       static json onSnapPos() {
+        lock_guard<mutex> lock(pgMutex);
         return { pgPos };
       };
       static json onSnapSafety() {
+        lock_guard<mutex> lock(pgMutex);
         return { pgSafety };
       };
       static json onSnapTargetBasePos() {
         return {{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       static mSafety nextSafety() {
+        pgMutex.lock();
+        double value          = pgPos.value,
+               baseAmount     = pgPos.baseAmount,
+               baseHeldAmount = pgPos.baseHeldAmount;
+        pgMutex.unlock();
         double buySize = QP::getBool("percentageValues")
-          ? QP::getDouble("buySizePercentage") * pgPos.value / 100
+          ? QP::getDouble("buySizePercentage") * value / 100
           : QP::getDouble("buySize");
         double sellSize = QP::getBool("percentageValues")
-          ? QP::getDouble("sellSizePercentage") * pgPos.value / 100
+          ? QP::getDouble("sellSizePercentage") * value / 100
           : QP::getDouble("sellSize");
-        double totalBasePosition = pgPos.baseAmount + pgPos.baseHeldAmount;
+        double totalBasePosition = baseAmount + baseHeldAmount;
         if (QP::getBool("buySizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
         if (QP::getBool("sellSizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
@@ -236,7 +252,8 @@ namespace K {
         );
         profitMutex.unlock();
         bool eq = true;
-        if (pgPos.value) {
+        if (!empty()) {
+          pgMutex.lock();
           eq = abs(pos.value - pgPos.value) < 2e-6;
           if(eq
             and abs(pos.quoteValue - pgPos.quoteValue) < 2e-2
@@ -246,18 +263,21 @@ namespace K {
             and abs(pos.quoteHeldAmount - pgPos.quoteHeldAmount) < 2e-2
             and abs(pos.profitBase - pgPos.profitBase) < 2e-2
             and abs(pos.profitQuote - pgPos.profitQuote) < 2e-2
-          ) return;
-        }
+          ) { pgMutex.unlock(); return; }
+        } else pgMutex.lock();
         pgPos = pos;
+        pgMutex.unlock();
         if (!eq) calcTargetBasePos();
-        UI::uiSend(uiTXT::Position, pgPos, true);
+        UI::uiSend(uiTXT::Position, pos, true);
       };
       static void calcWalletAfterOrder(mOrder k) {
-        if (!pgPos.value) return;
+        if (empty()) return;
         double heldAmount = 0;
+        pgMutex.lock();
         double amount = k.side == mSide::Ask
           ? pgPos.baseAmount + pgPos.baseHeldAmount
           : pgPos.quoteAmount + pgPos.quoteHeldAmount;
+        pgMutex.unlock();
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
           if (it->second.side != k.side) continue;

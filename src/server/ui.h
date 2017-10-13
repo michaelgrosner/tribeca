@@ -13,7 +13,6 @@ namespace K {
   static double ui_delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
-  static mutex uiMutex;
   class UI {
     public:
       static void main() {
@@ -177,7 +176,7 @@ namespace K {
         string m(1, (char)uiBIT::MSG);
         m += string(1, (char)k);
         m += o.is_null() ? "" : o.dump();
-        lock_guard<mutex> lock(uiMutex);
+        lock_guard<mutex> lock(wsMutex);
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       static void uiHold(uiTXT k, json o) {
@@ -188,7 +187,6 @@ namespace K {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
         if (!ui_delayUI) return uiUp(k, o);
-        lock_guard<mutex> lock(uiMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();
