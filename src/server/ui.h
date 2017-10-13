@@ -72,7 +72,9 @@ namespace K {
               stringstream content;
               if (url.length() > 0) content << ifstream(FN::readlink("app/client").substr(3) + url).rdbuf();
               else {
-                srand(time(0));
+                struct timespec txxs;
+                clock_gettime(CLOCK_MONOTONIC, &txxs);
+                srand((time_t)txxs.tv_nsec);
                 if (rand() % 21) {
                   document = "HTTP/1.1 404 Not Found\r\n";
                   content << "Today, is a beautiful day.";
@@ -187,6 +189,7 @@ namespace K {
         bool isOSR = k == uiTXT::OrderStatusReports;
         if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
         if (!ui_delayUI) return uiUp(k, o);
+        lock_guard<mutex> lock(wsMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
           if (!isOSR) sess->D[k].clear();

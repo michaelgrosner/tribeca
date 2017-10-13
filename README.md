@@ -211,6 +211,8 @@ To pipe the output to stdout, execute the application in the foreground with `./
 
 To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
 
+For more information consider to follow the *white rabbit*, but its dangerous to go alone, take this:
+
 c sandbox: [wandbox.org](https://wandbox.org)
 
 js sandbox: [jsfiddle.net](https://jsfiddle.net)
