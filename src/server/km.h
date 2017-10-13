@@ -186,11 +186,18 @@ namespace K {
     };
   };
   struct mTrade {
-    double price,
-           size;
-     mSide make_side;
-    mTrade(double p, double s, mSide S):
-      price(p), size(s), make_side(S)
+           double price,
+                  quantity;
+            mSide make_side;
+    unsigned long time;
+    mTrade():
+      price(0), quantity(0), make_side((mSide)0), time(0)
+    {};
+    mTrade(double p, double q, unsigned long t):
+      price(p), quantity(q), make_side((mSide)0), time(t)
+    {};
+    mTrade(double p, double q, mSide s):
+      price(p), quantity(q), make_side(s), time(0)
     {};
   };
   struct mTradeHydrated {
@@ -234,17 +241,6 @@ namespace K {
       {"feeCharged", k.feeCharged},
       {"loadedFromDB", k.loadedFromDB},
     };
-  };
-  struct mTradeDehydrated {
-           double price,
-                  quantity;
-    unsigned long time;
-    mTradeDehydrated():
-      price(0), quantity(0), time(0)
-    {};
-    mTradeDehydrated(double p, double q, unsigned long t):
-      price(p), quantity(q), time(t)
-    {};
   };
   struct mTradeDry {
         mExchange exchange;

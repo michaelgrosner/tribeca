@@ -153,7 +153,7 @@ namespace K {
           gw->base,
           gw->quote,
           k.price,
-          k.size,
+          k.quantity,
           FN::T(),
           k.make_side
         );

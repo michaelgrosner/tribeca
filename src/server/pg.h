@@ -4,8 +4,8 @@
 namespace K {
   mPosition pgPos;
   mSafety pgSafety;
-  map<double, mTradeDehydrated> pgBuys;
-  map<double, mTradeDehydrated> pgSells;
+  map<double, mTrade> pgBuys;
+  map<double, mTrade> pgSells;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
   class PG {
@@ -66,7 +66,7 @@ namespace K {
         FN::log("TBP", ss.str() + " " + gw->base);
       };
       static void addTrade(mTradeHydrated k) {
-        mTradeDehydrated k_(k.price, k.quantity, k.time);
+        mTrade k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) pgBuys[k.price] = k_;
         else pgSells[k.price] = k_;
       };
@@ -190,16 +190,16 @@ namespace K {
         if (pgSells.size()) expire(&pgSells);
         skip();
       };
-      static void expire(map<double, mTradeDehydrated>* k) {
+      static void expire(map<double, mTrade>* k) {
         unsigned long now = FN::T();
-        for (map<double, mTradeDehydrated>::iterator it = k->begin(); it != k->end();)
+        for (map<double, mTrade>::iterator it = k->begin(); it != k->end();)
           if (it->second.time + QP::getDouble("tradeRateSeconds") * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
       static void skip() {
         while (pgBuys.size() and pgSells.size()) {
-          mTradeDehydrated buy = pgBuys.rbegin()->second;
-          mTradeDehydrated sell = pgSells.begin()->second;
+          mTrade buy = pgBuys.rbegin()->second;
+          mTrade sell = pgSells.begin()->second;
           if (sell.price < buy.price) break;
           double buyQty = buy.quantity;
           buy.quantity = buyQty - sell.quantity;
@@ -210,9 +210,9 @@ namespace K {
             pgSells.erase(pgSells.begin());
         }
       };
-      static double sum(map<double, mTradeDehydrated>* k) {
+      static double sum(map<double, mTrade>* k) {
         double sum = 0;
-        for (map<double, mTradeDehydrated>::iterator it = k->begin(); it != k->end(); ++it)
+        for (map<double, mTrade>::iterator it = k->begin(); it != k->end(); ++it)
           sum += it->second.quantity;
         return sum;
       };
