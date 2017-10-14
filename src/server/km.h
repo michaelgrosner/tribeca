@@ -85,15 +85,16 @@ namespace K {
               user    = "", pass    = "",
               ws      = "", wS      = "",
               http    = "";
-         bool cancelByClientId = 0,
+         bool cancelByLocalIds = 0,
               supportCancelAll = 0;
+      virtual    string randId() = 0;
       virtual mExchange config() = 0;
-      virtual      void pos() = 0,
-                        book() = 0,
+      virtual      void wallet() = 0,
+                        levels() = 0,
                         send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
                         cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                        cancelAll() = 0;
-      virtual    string clientId() = 0;
+                        cancelAll() = 0,
+                        freeSockets() = 0;
   };
   struct mPair {
     string base,

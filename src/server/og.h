@@ -38,7 +38,7 @@ namespace K {
         if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
-        mOrder o = updateOrderState(mOrder(gW->clientId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
+        mOrder o = updateOrderState(mOrder(gW->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
         if (argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
         gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
       };
@@ -50,7 +50,7 @@ namespace K {
           ogMutex.unlock();
           return;
         }
-        if (!gW->cancelByClientId and allOrders[k].exchangeId == "") {
+        if (!gW->cancelByLocalIds and allOrders[k].exchangeId == "") {
           toCancel[k] = nullptr;
           if (argDebugOrders) FN::log("DEBUG", string("OG cancel pending id ") + k);
           ogMutex.unlock();
@@ -168,7 +168,7 @@ namespace K {
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
-        if (!gW->cancelByClientId and o.exchangeId != "") {
+        if (!gW->cancelByLocalIds and o.exchangeId != "") {
           map<string, void*>::iterator it = toCancel.find(o.orderId);
           if (it != toCancel.end()) {
             toCancel.erase(it);

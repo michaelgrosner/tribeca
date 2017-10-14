@@ -20,7 +20,7 @@ namespace K {
               T_5m = 0;
               gW->cancelAll();
             }
-            gw->pos();
+            gw->wallet();
             this_thread::sleep_for(chrono::seconds(15));
           }
         }).detach();
@@ -37,9 +37,9 @@ namespace K {
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
         if (argHeadless)
-          thread([&]() { gw->book(); }).join();
+          thread([&]() { gw->levels(); }).join();
         else {
-          thread([&]() { gw->book(); }).detach();
+          thread([&]() { gw->levels(); }).detach();
           hub.run();
         }
       };
@@ -114,8 +114,8 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        ev_gwConnectOrder(mConnectivity::Disconnected);
-        ev_gwConnectMarket(mConnectivity::Disconnected);
+        gW->freeSockets();
+        if (gW != gw) gw->freeSockets();
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
