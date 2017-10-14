@@ -115,7 +115,7 @@ namespace K {
       };
       static void happyEnding(int code) {
         gW->freeSockets();
-        if (gW != gw) gw->freeSockets();
+        if (gW->exchange != gw->exchange) gw->freeSockets();
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
