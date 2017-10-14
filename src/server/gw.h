@@ -114,6 +114,8 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
+        ev_gwConnectOrder(mConnectivity::Disconnected);
+        ev_gwConnectMarket(mConnectivity::Disconnected);
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
