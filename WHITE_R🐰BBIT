@@ -26,7 +26,7 @@
 :  :  # set CARCH env var to your arch if it differs (on redhats, ubuntus..). :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     On-time targets:                                                        :
+:     One-time targets:                                                       :
 :      $ make packages                                                        :
 :       TODO                                                                  :
 :                                                                             :
@@ -92,7 +92,7 @@
 :  +-- Whaaat??                                                               :
 :     external sources and namespaces are defined here, our home from now on. :
 :     internal sources are just collections of static classes and global vars :
-:      defined also at K.cc, there is no functional programming in our home.. :
+:      without any includes. There is no functional programming in our home.. :
 :      K server is proudly non-stop changing states and mutating global data. :
 :                                                                             :
 :  .. src/server/km.h:  ----------------------------- aka. K Models --------- :
