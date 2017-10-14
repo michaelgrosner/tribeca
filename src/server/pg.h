@@ -65,7 +65,7 @@ namespace K {
         ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("TBP", ss.str() + " " + gw->base);
       };
-      static void addTrade(mTradeHydrated k) {
+      static void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) pgBuys[k.price] = k_;
         else pgSells[k.price] = k_;
@@ -117,9 +117,9 @@ namespace K {
         double widthPong = QP::getBool("widthPercentage")
           ? QP::getDouble("widthPongPercentage") * mgFairValue / 100
           : QP::getDouble("widthPong");
-        map<double, mTradeHydrated> tradesBuy;
-        map<double, mTradeHydrated> tradesSell;
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+        map<double, mTrade> tradesBuy;
+        map<double, mTrade> tradesSell;
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
           if (it->side == mSide::Bid)
             tradesBuy[it->price] = *it;
           else tradesSell[it->price] = *it;
@@ -153,21 +153,21 @@ namespace K {
           sellPong
         );
       };
-      static void matchFirstPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchFirstPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchBestPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchBestPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchLastPing(map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchLastPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         matchPing(QP::matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchPing(bool matchPings, bool near, bool far, map<double, mTradeHydrated>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      static void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
-        if (reverse) for (map<double, mTradeHydrated>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
+        if (reverse) for (map<double, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
           if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
-        } else for (map<double, mTradeHydrated>::iterator it = trades->begin(); it != trades->end(); ++it)
+        } else for (map<double, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
           if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
@@ -289,7 +289,7 @@ namespace K {
         }
         ogMutex.unlock();
         calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask
-            ? k.pair.base : k.pair.quote
+          ? k.pair.base : k.pair.quote
         ));
       };
   };

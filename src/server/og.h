@@ -2,7 +2,7 @@
 #define K_OG_H_
 
 namespace K {
-  vector<mTradeHydrated> tradesMemory;
+  vector<mTrade> tradesMemory;
   map<string, void*> toCancel;
   map<string, string> allOrdersIds;
   class OG {
@@ -66,14 +66,14 @@ namespace K {
         json k = DB::load(uiTXT::Trades);
         if (k.size())
           for (json::iterator it = k.begin(); it != k.end(); ++it)
-            tradesMemory.push_back(mTradeHydrated(
+            tradesMemory.push_back(mTrade(
               (*it)["tradeId"].get<string>(),
-              (*it)["time"].get<unsigned long>(),
               (mExchange)(*it)["exchange"].get<int>(),
               mPair((*it)["/pair/base"_json_pointer].get<string>(), (*it)["/pair/quote"_json_pointer].get<string>()),
               (*it)["price"].get<double>(),
               (*it)["quantity"].get<double>(),
               (mSide)(*it)["side"].get<int>(),
+              (*it)["time"].get<unsigned long>(),
               (*it)["value"].get<double>(),
               (*it)["Ktime"].get<unsigned long>(),
               (*it)["Kqty"].get<double>(),
@@ -87,7 +87,7 @@ namespace K {
       };
       static json onSnapTrades() {
         json k;
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           it->loadedFromDB = true;
           k.push_back(*it);
         }
@@ -194,7 +194,7 @@ namespace K {
           cancelOrder(*it);
       };
       static void cleanClosedOrders() {
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->Kqty+0.0001 < it->quantity) ++it;
           else {
             it->Kqty = -1;
@@ -205,7 +205,7 @@ namespace K {
         }
       };
       static void cleanOrders() {
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           it->Kqty = -1;
           UI::uiSend(uiTXT::Trades, *it);
           DB::insert(uiTXT::Trades, {}, false, it->tradeId);
@@ -213,7 +213,7 @@ namespace K {
         }
       };
       static void cleanTrade(string k) {
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
@@ -226,14 +226,14 @@ namespace K {
       static void toHistory(mOrder o) {
         double fee = 0;
         double val = abs(o.price * o.lastQuantity);
-        mTradeHydrated trade(
+        mTrade trade(
           to_string(FN::T()),
-          o.time,
           o.exchange,
           o.pair,
           o.price,
           o.lastQuantity,
           o.side,
+          o.time,
           val, 0, 0, 0, 0, 0, fee, false
         );
         FN::log(trade, argExchange);
@@ -243,7 +243,7 @@ namespace K {
             ? QP::getDouble("widthPongPercentage") * trade.price / 100
             : QP::getDouble("widthPong");
           map<double, string> matches;
-          for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+          for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
             if (it->quantity - it->Kqty > 0
               and it->side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
               and (trade.side == mSide::Bid ? (it->price > trade.price + widthPong) : (it->price < trade.price - widthPong))
@@ -263,14 +263,14 @@ namespace K {
         });
         cleanAuto(trade.time, QP::getDouble("cleanPongsAuto"));
       };
-      static void matchPong(map<double, string> matches, bool reverse, mTradeHydrated pong) {
+      static void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
         } else for (map<double, string>::iterator it = matches.begin(); it != matches.end(); ++it)
           if (!matchPong(it->second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
-          for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
+          for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
             if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
             eq = true;
             it->time = pong.time;
@@ -288,8 +288,8 @@ namespace K {
           }
         }
       };
-      static bool matchPong(string match, mTradeHydrated* pong) {
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
+      static bool matchPong(string match, mTrade* pong) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           if (it->tradeId != match) continue;
           double Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
           it->Ktime = pong->time;
@@ -310,7 +310,7 @@ namespace K {
       static void cleanAuto(unsigned long k, double pT) {
         if (pT == 0) return;
         unsigned long pT_ = k - (abs(pT) * 864e5);
-        for (vector<mTradeHydrated>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
+        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             UI::uiSend(uiTXT::Trades, *it);

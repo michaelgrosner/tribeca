@@ -5,7 +5,6 @@ namespace K {
   typedef void (*evConnect)      (mConnectivity);
   typedef void (*evOrder)        (mOrder);
   typedef void (*evTrade)        (mTrade);
-  typedef void (*evTradeHydrated)(mTradeHydrated);
   typedef void (*evWallet)       (mWallet);
   typedef void (*evLevels)       (mLevels);
   typedef void (*evEmpty)        ();
@@ -15,8 +14,8 @@ namespace K {
                          ev_gwConnectExchange;
   extern evOrder         ev_gwDataOrder,
                          ev_ogOrder;
-  extern evTrade         ev_gwDataTrade;
-  extern evTradeHydrated ev_ogTrade;
+  extern evTrade         ev_gwDataTrade,
+                         ev_ogTrade;
   extern evWallet        ev_gwDataWallet;
   extern evLevels        ev_gwDataLevels;
   extern evEmpty         ev_mgLevels,

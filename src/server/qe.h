@@ -45,7 +45,7 @@ namespace K {
           PG::calcSafety();
           calcQuote();
         };
-        ev_ogTrade = [](mTradeHydrated k) {
+        ev_ogTrade = [](mTrade k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_ogTrade");
           PG::addTrade(k);
           PG::calcSafety();

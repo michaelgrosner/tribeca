@@ -186,60 +186,36 @@ namespace K {
     };
   };
   struct mTrade {
-        mExchange exchange;
-           string base,
-                  quote;
-           double price,
-                  quantity;
-            mSide make_side;
-    unsigned long time;
-    mTrade():
-      exchange((mExchange)0), base(""), quote(""), price(0), quantity(0), make_side((mSide)0), time(0)
-    {};
-    mTrade(double p, double q, unsigned long t):
-      exchange((mExchange)0), base(""), quote(""), price(p), quantity(q), make_side((mSide)0), time(t)
-    {};
-    mTrade(double p, double q, mSide s):
-      exchange((mExchange)0), base(""), quote(""), price(p), quantity(q), make_side(s), time(0)
-    {};
-    mTrade(mExchange e, string B, string Q, double p, double q, mSide s, double t):
-      exchange(e), base(B), quote(Q), price(p), quantity(q), make_side(s), time(t)
-    {};
-  };
-  static void to_json(json& j, const mTrade& k) {
-    j = {
-      {"exchange", (int)k.exchange},
-      {"pair", {{"base", k.base}, {"quote", k.quote}}},
-      {"price", k.price},
-      {"quantity", k.quantity},
-      {"time", k.time},
-      {"make_size", (int)k.make_side}
-    };
-  };
-  struct mTradeHydrated {
            string tradeId;
         mExchange exchange;
-            mPair pair;
             mSide side;
+            mPair pair;
            double price,
                   quantity,
                   value,
                   Kqty,
-                  Kprice,
                   Kvalue,
+                  Kprice,
                   Kdiff,
                   feeCharged;
     unsigned long time,
                   Ktime;
              bool loadedFromDB;
-    mTradeHydrated():
-      tradeId(""), time(0), exchange((mExchange)0), pair(mPair()), price(0), quantity(0), side((mSide)0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+
+    mTrade():
+      tradeId(""), exchange((mExchange)0), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTradeHydrated(string i, unsigned long t, mExchange e, mPair P, double p, double q, mSide S, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
-      tradeId(i), time(t), exchange(e), pair(P), price(p), quantity(q), side(S), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
+    mTrade(double p, double q, unsigned long t):
+      tradeId(""), exchange((mExchange)0), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+    {};
+    mTrade(double p, double q, mSide s):
+      tradeId(""), exchange((mExchange)0), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+    {};
+    mTrade(string i, mExchange e, mPair P, double p, double q, mSide S, unsigned long t, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+      tradeId(i), exchange(e), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
-  static void to_json(json& j, const mTradeHydrated& k) {
+  static void to_json(json& j, const mTrade& k) {
     j = {
       {"tradeId", k.tradeId},
       {"time", k.time},

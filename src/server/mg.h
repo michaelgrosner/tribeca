@@ -149,8 +149,7 @@ namespace K {
       };
       static void tradeUp(mTrade k) {
         k.exchange = gw->exchange;
-        k.base = gw->base;
-        k.quote = gw->quote;
+        k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         mgTrades.push_back(k);
         if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());

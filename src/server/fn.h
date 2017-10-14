@@ -508,7 +508,7 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         wrefresh(wLog);
       };
-      static void log(mTradeHydrated k, string e) {
+      static void log(mTrade k, string e) {
         if (!wInit) {
           cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;

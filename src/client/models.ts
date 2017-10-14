@@ -59,7 +59,7 @@ export class MarketTrade {
                 public price: number,
                 public quantity: number,
                 public time: number,
-                public make_side: Side) {}
+                public side: Side) {}
 }
 
 export enum Connectivity { Disconnected, Connected }

@@ -49,12 +49,12 @@ export class MarketTradesComponent implements OnInit {
           return 'fs11px '+(!params.data.recent ? "text-muted" : "");
       } },
       { width: 75, field: 'price', headerName: 'price', cellClass: (params) => {
-          return (params.data.make_side === 'Ask') ? "sell" : "buy";
+          return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       { width: 50, field: 'quantity', headerName: 'qty', cellClass: (params) => {
-          return (params.data.make_side === 'Ask') ? "sell" : "buy";
+          return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      { width: 40, field: 'make_side', headerName: 'side' , cellClass: (params) => {
+      { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }}
@@ -69,7 +69,7 @@ export class MarketTradesComponent implements OnInit {
         quantity: trade.quantity,
         time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
         recent: true,
-        make_side: Models.Side[trade.make_side],
+        side: Models.Side[trade.side],
         quoteSymbol: trade.pair.quote,
         productFixed: this.product.fixed
       }]});
