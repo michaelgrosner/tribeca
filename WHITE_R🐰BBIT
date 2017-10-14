@@ -23,8 +23,7 @@
 :  .. Makefile: ------------------------------------- aka. noautoconf ------- :
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
-:  :  # Is possible to set CARCH env var to your current one if yours differs :
-:  :  # like on redhats and ubuntus.                                          :
+:  :  # set CARCH env var to your arch if it differs (on redhats, ubuntus..). :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :     On-time targets:                                                        :
