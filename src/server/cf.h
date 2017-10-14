@@ -138,7 +138,7 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";
           while(optind < argc) cout << argv[optind++];
           cout << '\n';
-          exit(EXIT_FAILURE);
+          exit(EXIT_SUCCESS);
         }
         if (argDebug) {
           argDebugEvents = 1;
@@ -172,13 +172,13 @@ namespace K {
       static string cfBase() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR."); exit(EXIT_FAILURE); }
+        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR."); exit(EXIT_SUCCESS); }
         return FN::S2u(k);
       };
       static string cfQuote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR"); exit(EXIT_FAILURE); }
+        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR"); exit(EXIT_SUCCESS); }
         return FN::S2u(k);
       };
       static mExchange cfExchange() {
@@ -191,7 +191,7 @@ namespace K {
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
         FN::logErr("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information");
-        exit(EXIT_FAILURE);
+        exit(EXIT_SUCCESS);
       };
     private:
       static void cfExchange(mExchange e) {

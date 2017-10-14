@@ -590,7 +590,7 @@ namespace K {
       static void screen() {
         if ((wBorder = initscr()) == NULL) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
-          exit(EXIT_FAILURE);
+          exit(EXIT_SUCCESS);
         }
         if (argColors) start_color();
         use_default_colors();
@@ -684,11 +684,11 @@ namespace K {
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
-        mvwaddstr(wBorder, k, 5, string("< (").data());
+        mvwaddstr(wBorder, k, 5, "< (");
         wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, to_string(orderLines.size()).data());
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
-        waddstr(wBorder, string(") Open Orders..").data());
+        waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, y-1, x-1, string("|/-\\").substr(++spin, 1).data());
         if (spin==3) { spin = -1; }

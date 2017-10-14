@@ -197,7 +197,7 @@ Once enabled, the UI (and only the UI, that is in the web browser of the client 
 
 Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
-In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` at [Unlock](#unlock) section).
+In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Unlock](#unlock) section).
 
 ### Test units and Build notes
 
