@@ -142,8 +142,10 @@ namespace K {
         static unsigned int uiThread = 0;
         if (argHeadless) return;
         ui_delayUI = delayUI;
+        wsMutex.lock();
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
+        wsMutex.unlock();
         thread([&]() {
           unsigned int uiThread_ = ++uiThread;
           double k = ui_delayUI;
@@ -217,11 +219,13 @@ namespace K {
       };
       static void appPush() {
         static unsigned long uiT_1m = 0;
+        wsMutex.lock();
+        map<uiTXT, vector<json>> msgs;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp(it_->first, *it);
+              msgs[it_->first].push_back(*it);
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
@@ -235,9 +239,13 @@ namespace K {
             else ++it;
           }
           if (!k.is_null())
-            uiUp(uiTXT::OrderStatusReports, k);
+            msgs[uiTXT::OrderStatusReports].push_back(k);
           sess->D.erase(uiTXT::OrderStatusReports);
         }
+        wsMutex.unlock();
+        for (map<uiTXT, vector<json>>::iterator it_=msgs.begin(); it_!=msgs.end(); ++it_)
+          for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
+            uiUp(it_->first, *it);
         if (uiT_1m+60000 > FN::T()) return;
         uiT_1m = FN::T();
         appState();
