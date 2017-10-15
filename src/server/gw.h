@@ -114,8 +114,7 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        gW->freeSockets();
-        if (gW->exchange != gw->exchange) gw->freeSockets();
+        gw->freeSockets();
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
