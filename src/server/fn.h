@@ -523,7 +523,9 @@ namespace K {
         wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wprintw(wLog, string(e).append(" TRADE ").data());
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, string(k.side == mSide::Bid ? "BUY " : "SELL ").append(to_string(k.quantity)).append(" ").append(k.pair.base).append(" at price ").append(to_string(k.price)).append(" ").append(k.pair.quote).append(" (value ").append(to_string(k.value)).append(" ").append(k.pair.quote).append(")").data());
+        stringstream ss;
+        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ")";
+        wprintw(wLog, ss.str().data());
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wrefresh(wLog);
@@ -654,7 +656,9 @@ namespace K {
         mvwvline(wBorder, k-1, 1, ' ', y-1);
         for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
           wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-          mvwaddstr(wBorder, ++P, 1, string(it->second.side == mSide::Bid ? "BID" : "ASK").append(" > ").append(it->second.orderId).append(": ").append(to_string(it->second.quantity)).append(" ").append(it->second.pair.base).append(" at price ").append(to_string(it->second.price)).append(" ").append(it->second.pair.quote).data());
+          stringstream ss;
+          ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
+          mvwaddstr(wBorder, ++P, 1, ss.str().data());
           wattroff(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
