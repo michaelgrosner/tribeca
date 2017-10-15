@@ -134,8 +134,8 @@ namespace K {
         unsigned int quotesInMemoryNew = 0;
         unsigned int quotesInMemoryWorking = 0;
         unsigned int quotesInMemoryDone = 0;
-        if (!diffStatus() and !diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone))
-          return;
+        bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
+        if (!diffStatus() and !k) return;
         qeStatus = mQuoteStatus(qeBidStatus, qeAskStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
         UI::uiSend(uiTXT::QuoteStatus, qeStatus, true);
       };
