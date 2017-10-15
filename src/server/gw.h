@@ -11,7 +11,7 @@ namespace K {
     public:
       static void main() {
         evExit = happyEnding;
-        gwAutoStart = argAutobot ? mConnectivity::Connected : mConnectivity::Disconnected;
+        if (argAutobot) gwAutoStart = mConnectivity::Connected;
         thread([&]() {
           unsigned int T_5m = 0;
           while (true) {
@@ -97,7 +97,7 @@ namespace K {
           if (gwConnectOrder == gwS) return;
           gwConnectOrder = gwS;
         }
-        gwConnectExchange = gwConnectMarket == mConnectivity::Connected && gwConnectOrder == mConnectivity::Connected
+        gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
         gwUpState();
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});

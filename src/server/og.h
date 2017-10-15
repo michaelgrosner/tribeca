@@ -220,6 +220,7 @@ namespace K {
             UI::uiSend(uiTXT::Trades, *it);
             DB::insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
+            break;
           }
         }
       };
