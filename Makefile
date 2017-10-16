@@ -14,7 +14,7 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = b496cfcb8218d0fc47177aea8017fb0966ae209c
+KLIB     = cab172f6bf08f15ecfb28604ad721e98f54ff9fa
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic                           \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -130,7 +130,7 @@ openssl: build-$(CHOST)
 curl: build-$(CHOST)
 	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CHOST)      \
-	&& cd build-$(CHOST)/curl-$(V_CURL) && CC=$(CC) ./configure                                 \
+	&& cd build-$(CHOST)/curl-$(V_CURL) && CC=$(CC) ./configure --with-ca-path=/etc/ssl/certs   \
 	--host=$(CHOST) --target=$(CHOST) --build=$(shell g++ -dumpmachine) --disable-manual        \
 	--disable-shared --enable-static --prefix=$(PWD)/$(KLOCAL) --disable-ldap --without-libpsl  \
 	--without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp          \
