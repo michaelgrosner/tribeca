@@ -88,23 +88,29 @@ namespace K {
             }
           });
           uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-            if (length > 1) {
-              json v;
-              if (length > 2 and (message[2] == '[' or message[2] == '{'))
-                v = json::parse(string(message, length).substr(2, length-2).data());
-              if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
-                json reply = (*sess->cbSnap[message[1]])();
-                if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-              } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
-                (*sess->cbMsg[message[1]])(v);
+            if (length <= 1) return;
+            if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
+              json reply = (*sess->cbSnap[message[1]])();
+              if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
+            } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end()) {
+              if (length <= 2 or (message[2] != '[' and message[2] != '{')) return;
+              (*sess->cbMsg[message[1]])(json::parse(string(message, length).substr(2, length-2)));
             }
           });
-          uS::TLS::Context c = uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", "");
-          if ((access("etc/sslcert/server.crt", F_OK) != -1) && (access("etc/sslcert/server.key", F_OK) != -1) && hub.listen(argPort, c, 0, uiGroup))
-            uiPrtcl = "HTTPS";
+          if ((access("etc/sslcert/server.crt", F_OK) != -1)
+            and (access("etc/sslcert/server.key", F_OK) != -1)
+            and hub.listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+          ) uiPrtcl = "HTTPS";
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
             uiPrtcl = "HTTP";
-          else { FN::logErr("IU", string("Use another UI port number, ") + to_string(argPort) + " seems already in use by:\n" + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)) + "\n"); exit(EXIT_SUCCESS); }
+          else {
+            FN::logErr("IU", string("Use another UI port number, ")
+              + to_string(argPort) + " seems already in use by:\n"
+              + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort))
+              + "\n"
+            );
+            exit(EXIT_SUCCESS);
+          }
           FN::logUI(uiPrtcl, argPort);
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
@@ -117,14 +123,22 @@ namespace K {
       static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) != sess->cbSnap.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(EXIT_SUCCESS); }
-        else sess->cbSnap[(char)k] = cb;
+        if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
+          sess->cbSnap[(char)k] = cb;
+        else {
+          FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event");
+          exit(EXIT_SUCCESS);
+        }
       };
       static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(EXIT_SUCCESS); }
-        else sess->cbMsg[(char)k] = cb;
+        if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
+          sess->cbMsg[(char)k] = cb;
+        else {
+          FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event");
+          exit(EXIT_SUCCESS);
+        }
       };
       static void uiSend(uiTXT k, json o, bool hold = false) {
         if (argHeadless) return;
@@ -145,10 +159,9 @@ namespace K {
           unsigned int uiThread_ = ++uiThread;
           int timeout = delayUI ? (int)(delayUI*1e+3) : 6e+4;
           while (uiThread_ == uiThread) {
-            if (argDebugEvents) FN::log("DEBUG", "EV UI thread");
-            if (delayUI) appPush();
-            else appState();
             this_thread::sleep_for(chrono::milliseconds(timeout));
+            if (argDebugEvents) FN::log("DEBUG", "EV UI thread");
+            uiSend(delayUI > 0);
           }
         }).detach();
       };
@@ -180,7 +193,7 @@ namespace K {
       static void uiHold(uiTXT k, json o) {
         lock_guard<mutex> lock(wsMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
+        if (sess->D.find(k) != sess->D.end() and sess->D[k].size() > 0) {
           if (k != uiTXT::OrderStatusReports) sess->D[k].clear();
           else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
             if (it->value("orderId", "") == o.value("orderId", ""))
@@ -188,6 +201,33 @@ namespace K {
             else ++it;
         }
         sess->D[k].push_back(o);
+      };
+      static void uiSend() {
+        static unsigned long uiT_1m = 0;
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        for (map<uiTXT, vector<json>>::iterator it_ = sess->D.begin(); it_ != sess->D.end();) {
+          if (it_->first != uiTXT::OrderStatusReports) {
+            for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
+              uiUp(it_->first, *it);
+            it_ = sess->D.erase(it_);
+          } else ++it_;
+        }
+        if (sess->D.find(uiTXT::OrderStatusReports) != sess->D.end() and sess->D[uiTXT::OrderStatusReports].size() > 0) {
+          for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
+            uiUp(uiTXT::OrderStatusReports, *it);
+            if (mORS::Working != (mORS)it->value("orderStatus", 0))
+              it = sess->D[uiTXT::OrderStatusReports].erase(it);
+            else ++it;
+          }
+          sess->D.erase(uiTXT::OrderStatusReports);
+        }
+        if (uiT_1m+6e+4 > FN::T()) return;
+        uiT_1m = FN::T();
+      };
+      static void uiSend(bool delayed) {
+        if (delayed) uiSend();
+        uiSend(uiTXT::ApplicationState, serverState());
+        uiOSR_1m = 0;
       };
       static json serverState() {
         time_t rawtime;
@@ -199,43 +239,6 @@ namespace K {
           {"dbsize", DB::size()},
           {"a", A()}
         };
-      };
-      static void appState() {
-        uiSend(uiTXT::ApplicationState, serverState());
-        uiOSR_1m = 0;
-      };
-      static void appPush() {
-        static unsigned long uiT_1m = 0;
-        wsMutex.lock();
-        map<uiTXT, vector<json>> msgs;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        for (map<uiTXT, vector<json>>::iterator it_=sess->D.begin(); it_!=sess->D.end();) {
-          if (it_->first != uiTXT::OrderStatusReports) {
-            for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              msgs[it_->first].push_back(*it);
-            it_ = sess->D.erase(it_);
-          } else ++it_;
-        }
-        if (sess->D.find(uiTXT::OrderStatusReports) != sess->D.end() && sess->D[uiTXT::OrderStatusReports].size() > 0) {
-          int ki = 0;
-          json k;
-          for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
-            k.push_back(*it);
-            if (mORS::Working != (mORS)it->value("orderStatus", 0))
-              it = sess->D[uiTXT::OrderStatusReports].erase(it);
-            else ++it;
-          }
-          if (!k.is_null())
-            msgs[uiTXT::OrderStatusReports].push_back(k);
-          sess->D.erase(uiTXT::OrderStatusReports);
-        }
-        wsMutex.unlock();
-        for (map<uiTXT, vector<json>>::iterator it_=msgs.begin(); it_!=msgs.end(); ++it_)
-          for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-            uiUp(it_->first, *it);
-        if (uiT_1m+60000 > FN::T()) return;
-        uiT_1m = FN::T();
-        appState();
       };
   };
 }
