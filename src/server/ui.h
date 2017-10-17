@@ -10,7 +10,7 @@ namespace K {
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static bool uiVisibleOpt = true;
   static unsigned int uiOSR_1m = 0;
-  static double ui_delayUI = 0;
+  static double delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
   class UI {
@@ -126,33 +126,27 @@ namespace K {
         if (sess->cbMsg.find((char)k) != sess->cbMsg.end()) { FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event"); exit(EXIT_SUCCESS); }
         else sess->cbMsg[(char)k] = cb;
       };
-      static void uiSend(uiTXT k, json o, bool h = false) {
-        static unsigned long uiT_MKT = 0;
+      static void uiSend(uiTXT k, json o, bool hold = false) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
-        if (k == uiTXT::MarketData) {
-          if (uiT_MKT+369 > FN::T()) return;
-          uiT_MKT = FN::T();
-        }
-        if (h) uiHold(k, o);
+        if (delayUI and hold) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void delay(double delayUI) {
+      static void delay(double delayUI_) {
         static unsigned int uiThread = 0;
         if (argHeadless) return;
-        ui_delayUI = delayUI;
+        delayUI = delayUI_;
         wsMutex.lock();
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         wsMutex.unlock();
         thread([&]() {
           unsigned int uiThread_ = ++uiThread;
-          double k = ui_delayUI;
-          int timeout = k ? (int)(k*1e+3) : 6e+4;
+          int timeout = delayUI ? (int)(delayUI*1e+3) : 6e+4;
           while (uiThread_ == uiThread) {
             if (argDebugEvents) FN::log("DEBUG", "EV UI thread");
-            if (k) appPush();
+            if (delayUI) appPush();
             else appState();
             this_thread::sleep_for(chrono::milliseconds(timeout));
           }
@@ -184,17 +178,10 @@ namespace K {
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       static void uiHold(uiTXT k, json o) {
-        if (o.is_null()) {
-          FN::logWar("UI", string(" uiHold sending ") + (char)k + " but is null, ignored");
-          return;
-        }
-        bool isOSR = k == uiTXT::OrderStatusReports;
-        if (isOSR && mORS::New == (mORS)o.value("orderStatus", 0)) return (void)++uiOSR_1m;
-        if (!ui_delayUI) return uiUp(k, o);
         lock_guard<mutex> lock(wsMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() && sess->D[k].size() > 0) {
-          if (!isOSR) sess->D[k].clear();
+          if (k != uiTXT::OrderStatusReports) sess->D[k].clear();
           else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
             if (it->value("orderId", "") == o.value("orderId", ""))
               it = sess->D[k].erase(it);
@@ -208,7 +195,7 @@ namespace K {
         return {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
-          {"freq", uiOSR_1m / 2},
+          {"freq", uiOSR_1m},
           {"dbsize", DB::size()},
           {"a", A()}
         };

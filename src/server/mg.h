@@ -156,8 +156,11 @@ namespace K {
         UI::uiSend(uiTXT::MarketTrade, k);
       };
       static void levelUp(mLevels k) {
+        static unsigned long lastUp = 0;
         filter(k);
+        if (lastUp+369 > FN::T()) return;
         UI::uiSend(uiTXT::MarketData, k, true);
+        lastUp = FN::T();
       };
       static void ewmaUp() {
         calcEwma(&mgEwmaL, QP::getInt("longEwmaPeriods"));
