@@ -178,7 +178,8 @@ namespace K {
           }
         }
         ev_ogOrder(o);
-        UI::uiSend(uiTXT::OrderStatusReports, o, true);
+        if (o.orderStatus != mORS::New)
+          UI::uiSend(uiTXT::OrderStatusReports, o, true);
         if (k.lastQuantity > 0)
           toHistory(o);
         return o;

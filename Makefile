@@ -14,7 +14,7 @@ V_JSON  := v2.1.1
 V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = cab172f6bf08f15ecfb28604ad721e98f54ff9fa
+KLIB     = 6939513dddef939e1d58df4b6819a28530336c87
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic                           \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \

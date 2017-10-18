@@ -93,8 +93,9 @@ namespace K {
               json reply = (*sess->cbSnap[message[1]])();
               if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
             } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end()) {
-              if (length <= 2 or (message[2] != '[' and message[2] != '{')) return;
-              (*sess->cbMsg[message[1]])(json::parse(string(message, length).substr(2, length-2)));
+              (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
+                ? string(message, length).substr(2, length-2) : "{}"
+              ));
             }
           });
           if ((access("etc/sslcert/server.crt", F_OK) != -1)
@@ -204,23 +205,28 @@ namespace K {
       };
       static void uiSend() {
         static unsigned long uiT_1m = 0;
+        wsMutex.lock();
+        map<uiTXT, vector<json>> msgs;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_ = sess->D.begin(); it_ != sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
-            for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-              uiUp(it_->first, *it);
+              msgs[it_->first] = it_->second;
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
         if (sess->D.find(uiTXT::OrderStatusReports) != sess->D.end() and sess->D[uiTXT::OrderStatusReports].size() > 0) {
           for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
-            uiUp(uiTXT::OrderStatusReports, *it);
+            msgs[uiTXT::OrderStatusReports].push_back(*it);
             if (mORS::Working != (mORS)it->value("orderStatus", 0))
               it = sess->D[uiTXT::OrderStatusReports].erase(it);
             else ++it;
           }
           sess->D.erase(uiTXT::OrderStatusReports);
         }
+        wsMutex.unlock();
+        for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
+          for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
+            uiUp(it_->first, *it);
         if (uiT_1m+6e+4 > FN::T()) return;
         uiT_1m = FN::T();
       };
