@@ -92,11 +92,10 @@ namespace K {
             if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
               json reply = (*sess->cbSnap[message[1]])();
               if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-            } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end()) {
+            } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
               (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
                 ? string(message, length).substr(2, length-2) : "{}"
               ));
-            }
           });
           if ((access("etc/sslcert/server.crt", F_OK) != -1)
             and (access("etc/sslcert/server.key", F_OK) != -1)
@@ -210,19 +209,17 @@ namespace K {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         for (map<uiTXT, vector<json>>::iterator it_ = sess->D.begin(); it_ != sess->D.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
-              msgs[it_->first] = it_->second;
+            msgs[it_->first] = it_->second;
             it_ = sess->D.erase(it_);
           } else ++it_;
         }
-        if (sess->D.find(uiTXT::OrderStatusReports) != sess->D.end() and sess->D[uiTXT::OrderStatusReports].size() > 0) {
-          for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
-            msgs[uiTXT::OrderStatusReports].push_back(*it);
-            if (mORS::Working != (mORS)it->value("orderStatus", 0))
-              it = sess->D[uiTXT::OrderStatusReports].erase(it);
-            else ++it;
-          }
-          sess->D.erase(uiTXT::OrderStatusReports);
+        for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
+          msgs[uiTXT::OrderStatusReports].push_back(*it);
+          if (mORS::Working != (mORS)it->value("orderStatus", 0))
+            it = sess->D[uiTXT::OrderStatusReports].erase(it);
+          else ++it;
         }
+        sess->D.erase(uiTXT::OrderStatusReports);
         wsMutex.unlock();
         for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
           for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
