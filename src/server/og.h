@@ -3,7 +3,7 @@
 
 namespace K {
   vector<mTrade> tradesMemory;
-  map<string, void*> toCancel;
+  vector<string> toCancel;
   map<string, string> allOrdersIds;
   class OG {
     public:
@@ -52,7 +52,7 @@ namespace K {
           return;
         }
         if (!gW->cancelByLocalIds and allOrders[k].exchangeId == "") {
-          toCancel[k] = nullptr;
+          toCancel.push_back(k);
           if (argDebugOrders) FN::log("DEBUG", string("OG cancel pending id ") + k);
           ogMutex.unlock();
           return;
@@ -170,7 +170,7 @@ namespace K {
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
         if (!gW->cancelByLocalIds and o.exchangeId != "") {
-          map<string, void*>::iterator it = toCancel.find(o.orderId);
+          vector<string>::iterator it = find(toCancel.begin(), toCancel.end(), o.orderId);
           if (it != toCancel.end()) {
             toCancel.erase(it);
             cancelOrder(o.orderId);
