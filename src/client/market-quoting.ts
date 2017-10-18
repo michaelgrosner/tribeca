@@ -123,7 +123,7 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateMarket = (update: Models.Market) => {
-    if (update == null && typeof update.bids == "undefined" || typeof update.asks == "undefined") {
+    if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks) {
       this.clearMarket();
       return;
     }
