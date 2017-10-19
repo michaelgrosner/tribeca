@@ -12,17 +12,19 @@ V_CURL  := 7.55.1
 V_NCUR  := 6.0
 V_JSON  := v2.1.1
 V_UWS   := 0.14.4
+V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 KLIB     = 6939513dddef939e1d58df4b6819a28530336c87
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cc -pthread -rdynamic                           \
+  src/server/K.cc -pthread -rdynamic -DUSE_LIBUV               \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a        \
+  $(KLOCAL)/lib/libuv.a      -ldl
 
 all: K
 
@@ -66,6 +68,7 @@ help:
 	#  make build        - download K src precompiled  #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
+	#  make libuv        - download libuv src files    #
 	#  make ncurses      - download ncurses src files  #
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
@@ -93,7 +96,7 @@ ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	mkdir -p build-$(CHOST)
-	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
+	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses libuv json uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -144,6 +147,12 @@ ncurses: build-$(CHOST)
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) CXX=$(CXX) CPPFLAGS=-P ./configure --host=$(CHOST) \
 	--prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color     \
 	&& make && make install                                                                               )
+
+libuv: build-$(CHOST)
+	test -d build-$(CHOST)/libuv-$(V_UV) || (                                                   \
+	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)   \
+	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST) \
+	--prefix=$(PWD)/$(KLOCAL) && make && make install                                           )
 
 json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
@@ -338,4 +347,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses libuv quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check md5 asandwich
