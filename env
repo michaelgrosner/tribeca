@@ -13,7 +13,7 @@ NullGatewayTick=100
 # DEV
 ## HitBtc
 HitBtcPullUrl=http://demo-api.hitbtc.com
-HitBtcOrderEntryUrl=ws://demo-api.hitbtc.com:8080
+HitBtcOrderEntryUrl=wss://demo-api.hitbtc.com:8080
 HitBtcMarketDataUrl=ws://demo-api.hitbtc.com:80
 HitBtcSocketIoUrl=https://demo-api.hitbtc.com:8081
 HitBtcApiKey=NULL
