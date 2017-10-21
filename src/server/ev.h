@@ -28,8 +28,6 @@ namespace K {
                     tDelay,
                     tWallet,
                     tCancel;
-  extern uv_timer_t tReconnectOrders,
-                    tReconnectMarket;
   class EV {
     public:
       static void main() {

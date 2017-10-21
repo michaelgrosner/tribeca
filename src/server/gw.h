@@ -116,24 +116,14 @@ namespace K {
         uv_timer_stop(&tCalcs);
         uv_timer_stop(&tStart);
         uv_timer_stop(&tDelay);
-        uv_timer_stop(&tReconnectOrders);
-        uv_timer_stop(&tReconnectMarket);
         gw->close();
         gw->gwGroup->close();
         uiGroup->close();
-        close_loop(hub.getLoop());
+        FN::close_loop(hub.getLoop());
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
         EV::end(code);
-      };
-      static void close_loop(uv_loop_t* loop) {
-        uv_walk(loop, close_walk_cb, NULL);
-        uv_run(loop, UV_RUN_DEFAULT);
-      };
-      static void close_walk_cb(uv_handle_t* handle, void* arg) {
-        if (!uv_is_closing(handle))
-          uv_close(handle, NULL);
       };
   };
 }
