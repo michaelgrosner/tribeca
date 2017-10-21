@@ -23,6 +23,13 @@ namespace K {
                          ev_mgTargetPosition,
                          ev_pgTargetBasePosition,
                          ev_uiQuotingParameters;
+  static uv_timer_t tCalcs,
+                    tStart,
+                    tDelay,
+                    tWallet,
+                    tCancel;
+  extern uv_timer_t tReconnectOrders,
+                    tReconnectMarket;
   class EV {
     public:
       static void main() {

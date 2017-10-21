@@ -112,6 +112,11 @@ namespace K {
             exit(EXIT_SUCCESS);
           }
           FN::logUI(uiPrtcl, argPort);
+          uv_timer_init(hub.getLoop(), &tDelay);
+          uv_timer_start(&tDelay, [](uv_timer_t *handle) {
+            if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
+            uiSend(delayUI > 0);
+          }, 0, 0);
         }
         UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
         UI::uiSnap(uiTXT::Notepad, &onSnapNote);
@@ -148,22 +153,13 @@ namespace K {
         else uiUp(k, o);
       };
       static void delay(double delayUI_) {
-        static unsigned int uiThread = 0;
         if (argHeadless) return;
         delayUI = delayUI_;
         wsMutex.lock();
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         sess->D.clear();
         wsMutex.unlock();
-        thread([&]() {
-          unsigned int uiThread_ = ++uiThread;
-          int timeout = delayUI ? (int)(delayUI*1e+3) : 6e+4;
-          while (uiThread_ == uiThread) {
-            this_thread::sleep_for(chrono::milliseconds(timeout));
-            if (argDebugEvents) FN::log("DEBUG", "EV UI thread");
-            uiSend(delayUI > 0);
-          }
-        }).detach();
+        uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
     private:
       static json onSnapApp() {

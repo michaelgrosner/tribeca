@@ -94,7 +94,9 @@ namespace K {
                         send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
                         cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
                         cancelAll() = 0,
-                        freeSockets() = 0;
+                        close() = 0;
+      uWS::Hub                *hub = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
   };
   struct mPair {
     string base,

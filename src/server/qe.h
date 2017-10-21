@@ -12,23 +12,23 @@ namespace K {
   typedef mQuote (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
   map<mSide, mLevel> qeNextQuote;
+  bool qeNextIsPong;
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
                 gwConnectExchange_ = mConnectivity::Disconnected;
+  int tStart_ = 0;
   class QE {
     public:
       static void main() {
         load();
-        thread([&]() {
-          while (true) {
-            this_thread::sleep_for(chrono::seconds(1));
-            if (argDebugEvents) FN::log("DEBUG", "EV QE calc thread");
-            if (mgFairValue) {
-              MG::calcStats();
-              PG::calcSafety();
-              calcQuote();
-            } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
-          }
-        }).detach();
+        uv_timer_init(hub.getLoop(), &tCalcs);
+        uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
+          if (mgFairValue) {
+            MG::calcStats();
+            PG::calcSafety();
+            calcQuote();
+          } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
+        }, 1e+3, 1e+3);
         ev_gwConnectButton = [](mConnectivity k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE v_gwConnectButton");
           gwQuotingState_ = k;
@@ -64,6 +64,7 @@ namespace K {
           calcQuote();
         };
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
+        uv_timer_init(hub.getLoop(), &tStart);
       }
     private:
       static void load() {
@@ -541,26 +542,23 @@ namespace K {
       };
       static void start(mSide side, mLevel q, bool isPong) {
         if (QP::getDouble("delayAPI")) {
-          unsigned long nextStart = qeNextT + (6e+4/QP::getDouble("delayAPI"));
-          if ((double)nextStart - (double)FN::T() > 0) {
+          long nextDiff = (qeNextT + (6e+4 / QP::getDouble("delayAPI"))) - FN::T();
+          if (nextDiff > 0) {
             qeNextQuote.clear();
             qeNextQuote[side] = q;
-            thread([&]() {
-              unsigned int qeThread_ = ++qeThread;
-              unsigned long nextStart_ = nextStart;
-              bool isPong_ = isPong;
-              while (qeThread_ == qeThread) {
-                if (argDebugEvents) FN::log("DEBUG", "EV QE quote thread");
-                if ((double)nextStart_ - (double)FN::T() > 0)
-                  this_thread::sleep_for(chrono::milliseconds(100));
-                else {
-                  start(qeNextQuote.begin()->first, qeNextQuote.begin()->second, isPong_);
-                  break;
-                }
-              }
-            }).detach();
+            qeNextIsPong = isPong;
+            if (tStart_) {
+              uv_timer_stop(&tStart);
+              tStart_ = 0;
+            }
+            uv_timer_start(&tStart, [](uv_timer_t *handle) {
+              if (argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
+              start(qeNextQuote.begin()->first, qeNextQuote.begin()->second, qeNextIsPong);
+            }, (nextDiff * 1e+3) + 1e+2, 0);
+            tStart_ = 1;
             return;
           }
+          tStart_ = 0;
           qeNextT = FN::T();
         }
         double price = q.price;

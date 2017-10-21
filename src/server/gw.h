@@ -12,18 +12,17 @@ namespace K {
       static void main() {
         evExit = happyEnding;
         if (argAutobot) gwAutoStart = mConnectivity::Connected;
-        thread([&]() {
-          unsigned int T_5m = 0;
-          while (true) {
-            if (argDebugEvents) FN::log("DEBUG", "EV GW cancel thread.");
-            if (QP::getBool("cancelOrdersAuto") and ++T_5m == 20) {
-              T_5m = 0;
-              gW->cancelAll();
-            }
-            gw->wallet();
-            this_thread::sleep_for(chrono::seconds(15));
-          }
-        }).detach();
+        uv_timer_init(hub.getLoop(), &tWallet);
+        uv_timer_start(&tWallet, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
+          gw->wallet();
+        }, 0, 15e+3);
+        uv_timer_init(hub.getLoop(), &tCancel);
+        uv_timer_start(&tCancel, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
+          if (QP::getBool("cancelOrdersAuto"))
+            gW->cancelAll();
+        }, 0, 3e+5);
         ev_gwConnectOrder = [](mConnectivity k) {
           _gwCon_(mGatewayType::OrderEntry, k);
         };
@@ -32,16 +31,14 @@ namespace K {
           if (k == mConnectivity::Disconnected)
             ev_gwDataLevels(mLevels());
         };
+        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
+        gw->hub = &hub;
+        gw->levels();
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
-        if (argHeadless)
-          thread([&]() { gw->levels(); }).join();
-        else {
-          thread([&]() { gw->levels(); }).detach();
-          hub.run();
-        }
+        hub.run();
       };
       static void gwBookUp(mConnectivity k) {
         ev_gwConnectMarket(k);
@@ -114,11 +111,29 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
-        gw->freeSockets();
+        uv_timer_stop(&tCancel);
+        uv_timer_stop(&tWallet);
+        uv_timer_stop(&tCalcs);
+        uv_timer_stop(&tStart);
+        uv_timer_stop(&tDelay);
+        uv_timer_stop(&tReconnectOrders);
+        uv_timer_stop(&tReconnectMarket);
+        gw->close();
+        gw->gwGroup->close();
+        uiGroup->close();
+        close_loop(hub.getLoop());
         FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
         gW->cancelAll();
         FN::log(string("GW ") + argExchange, "cancell all open orders OK");
         EV::end(code);
+      };
+      static void close_loop(uv_loop_t* loop) {
+        uv_walk(loop, close_walk_cb, NULL);
+        uv_run(loop, UV_RUN_DEFAULT);
+      };
+      static void close_walk_cb(uv_handle_t* handle, void* arg) {
+        if (!uv_is_closing(handle))
+          uv_close(handle, NULL);
       };
   };
 }
