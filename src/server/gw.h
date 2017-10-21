@@ -7,6 +7,7 @@ namespace K {
                        gwConnectOrder = mConnectivity::Disconnected,
                        gwConnectMarket = mConnectivity::Disconnected,
                        gwConnectExchange = mConnectivity::Disconnected;
+  static int eCode = EXIT_FAILURE;
   class GW {
     public:
       static void main() {
@@ -39,6 +40,10 @@ namespace K {
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
         hub.run();
+        FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
+        gW->cancelAll();
+        FN::log(string("GW ") + argExchange, "cancell all open orders OK");
+        EV::end(eCode);
       };
       static void gwBookUp(mConnectivity k) {
         ev_gwConnectMarket(k);
@@ -111,6 +116,7 @@ namespace K {
         ev_gwConnectExchange(gwConnectExchange);
       };
       static void happyEnding(int code) {
+        eCode = code;
         uv_timer_stop(&tCancel);
         uv_timer_stop(&tWallet);
         uv_timer_stop(&tCalcs);
@@ -120,10 +126,6 @@ namespace K {
         gw->gwGroup->close();
         uiGroup->close();
         FN::close_loop(hub.getLoop());
-        FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-        gW->cancelAll();
-        FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-        EV::end(code);
       };
   };
 }
