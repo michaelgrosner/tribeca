@@ -188,7 +188,7 @@ namespace K {
           ev_uiQuotingParameters();
           UI::delay(qp.delayUI);
         }
-        UI::uiSend(uiTXT::QuotingParametersChange, k);
+        UI::uiSend(uiTXT::QuotingParametersChange, qp);
       };;
   };
 }
