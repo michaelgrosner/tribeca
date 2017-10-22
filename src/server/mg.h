@@ -2,7 +2,6 @@
 #define K_MG_H_
 
 namespace K {
-  int mgT = 0;
   mLevels mgLevelsFilter;
   vector<mTrade> mgTrades;
   double mgFairValue = 0;
@@ -44,6 +43,7 @@ namespace K {
         return (!mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size());
       };
       static void calcStats() {
+        static int mgT = 0;
         if (++mgT == 60) {
           mgT = 0;
           ewmaPUp();
