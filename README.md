@@ -63,6 +63,7 @@ All currency pairs are supported.
 - Humans and Milk Mammals
   - [Unlock](#unlock)
   - [Donations](#donations)
+  - [Very Special Thanks](#very-special-thanks-to)
   - [Help](#help)
   - [Issues](#issues)
   - [Votes](#votes)
@@ -302,6 +303,22 @@ nope, this project doesn't have maintenance costs. but you can donate to your fa
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
 or donate your time with programming or financial suggestions in the topical IRC channel [##tradingBot](https://kiwiirc.com/client/irc.domirc.net:6697/?theme=cli##tradingBot) at irc.domirc.net on port 6697 (SSL), or 6667 (plain) or feel free to make any question, but questions technically are not donations.
+
+### Very Special Thanks to:
+
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- https://curl.haxx.se (https://github.com/bagder)
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- https://github.com/uNetworking (https://github.com/alexhultman)
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- https://nlohmann.github.io/json (https://github.com/nlohmann)
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- http://invisible-island.net
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- https://www.sqlite.org
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- http://libuv.org
+- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 
 ### Help
 
