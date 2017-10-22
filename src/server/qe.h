@@ -20,6 +20,7 @@ namespace K {
     public:
       static void main() {
         load();
+        uv_timer_init(hub.getLoop(), &tStart);
         uv_timer_init(hub.getLoop(), &tCalcs);
         uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
@@ -64,7 +65,6 @@ namespace K {
           calcQuote();
         };
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
-        uv_timer_init(hub.getLoop(), &tStart);
       }
     private:
       static void load() {

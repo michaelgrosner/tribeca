@@ -28,6 +28,7 @@ namespace K {
                     tDelay,
                     tWallet,
                     tCancel;
+  static int eCode = EXIT_FAILURE;
   class EV {
     public:
       static void main() {
@@ -37,6 +38,10 @@ namespace K {
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         gitReversedVersion();
+      };
+      static void run(uWS::Hub *hub) {
+        hub->run();
+        end(eCode);
       };
       static void end(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';

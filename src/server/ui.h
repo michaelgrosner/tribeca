@@ -125,7 +125,7 @@ namespace K {
         UI::uiHand(uiTXT::Notepad, &onHandNote);
         UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
         UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
-        CF::api();
+        CF::api(&hub);
       };
       static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;

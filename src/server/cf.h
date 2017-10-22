@@ -154,7 +154,7 @@ namespace K {
         if (!argNaked) FN::screen();
         if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };
-      static void api() {
+      static void api(uWS::Hub *hub) {
         gw = Gw::E(cfExchange());
         gw->name = argExchange;
         gw->base = cfBase();
@@ -167,6 +167,8 @@ namespace K {
         gw->ws = argWss;
         gw->wS = argWs;
         cfExchange(gw->config());
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+        gw->hub = hub;
         gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
       static string cfBase() {

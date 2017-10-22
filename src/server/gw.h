@@ -7,7 +7,6 @@ namespace K {
                        gwConnectOrder = mConnectivity::Disconnected,
                        gwConnectMarket = mConnectivity::Disconnected,
                        gwConnectExchange = mConnectivity::Disconnected;
-  static int eCode = EXIT_FAILURE;
   class GW {
     public:
       static void main() {
@@ -32,15 +31,12 @@ namespace K {
           if (k == mConnectivity::Disconnected)
             ev_gwDataLevels(mLevels());
         };
+        gw->levels();
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
-        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
-        gw->hub = &hub;
-        gw->levels();
-        hub.run();
-        EV::end(eCode);
+        EV::run(&hub);
       };
       static void gwBookUp(mConnectivity k) {
         ev_gwConnectMarket(k);
