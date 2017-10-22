@@ -222,8 +222,11 @@ namespace K {
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
             stringstream os(string("1e").append(to_string(stod(_price_)-4)));
             os >> gw->minTick;
-            gw->minSize = 0.01;
           }
+          k = FN::wJet(string(gw->http).append("/symbols_details"));
+          for (json::iterator it=k.begin(); it!=k.end();++it)
+            if (it->value("pair", "") == gw->symbol)
+              gw->minSize = stod(it->value("minimum_order_size", "0"));
         } else if (e == mExchange::OkCoin) {
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
@@ -244,8 +247,12 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (!gw->minTick) { FN::logErr("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\""); exit(EXIT_FAILURE); }
-        else FN::log(string("GW ") + argExchange, "allows client IP");
+        if (gw->minTick and gw->minSize)
+          FN::log(string("GW ") + argExchange, "allows client IP");
+        else {
+          FN::logErr("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"");
+          exit(EXIT_FAILURE);
+        }
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'
           << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
