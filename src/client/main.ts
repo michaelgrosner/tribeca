@@ -541,8 +541,9 @@ class DisplayOrder {
                           </div>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:69px;width: 100%;max-width: 100%;"></textarea>
-                          <market-trades [product]="product"></market-trades>
+                          <textarea [hidden]="showTrolls === true" [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:69px;width: 100%;max-width: 100%;"></textarea>
+                          <market-trades [hidden]="showTrolls === true" [product]="product"></market-trades>
+                          <div [hidden]="showTrolls === false"><div id="converse-embedded-chat"></div></div>
                         </div>
                       </div>
                 </div>
@@ -551,7 +552,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://21.co/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a>
+        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://21.co/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.domirc.net:6667/##tradingBot" href="irc://irc.domirc.net:6667/##tradingBot">IRC</a><span [hidden]="!online"> - <a (click)="showTrolls = !showTrolls" title="K trollbox" href="#"><span [hidden]="showTrolls === false">IGNORE</span><span [hidden]="showTrolls === true">FEED</span> TROLLS</a></span>
         <span [hidden]="minerXMRTimeout===false"><br /><span title="coins generated are used to develop K"><a href="#" (click)="minerXMRTimeout=false" title="Hide XMR miner">X</a>MR miner</span>: [ <a href="#" [hidden]="minerXMR !== null && minerXMR.isRunning()" (click)="minerStart()">START</a><a href="#" [hidden]="minerXMR == null || !minerXMR.isRunning()" (click)="minerStop()">STOP</a><span [hidden]="minerXMR == null || !minerXMR.isRunning()"> | THREADS(<a href="#" [hidden]="minerXMR == null || minerXMR.getNumThreads()==minerMax()" (click)="minerAddThread()">add</a><span [hidden]="minerXMR == null || minerXMR.getNumThreads()==minerMax() || minerXMR.getNumThreads()==1">/</span><a href="#" [hidden]="minerXMR == null || minerXMR.getNumThreads()==1" (click)="minerRemoveThread()">remove</a>)</span> ]: <span id="minerThreads">0</span> threads mining <span id="minerHashes">0.00</span> hashes/second</span>
       </small>
     </address>
@@ -568,6 +569,7 @@ class ClientComponent implements OnInit {
   public notepad: string;
   public online: boolean;
   public showConfigs: boolean = false;
+  public showTrolls: boolean = false;
   public showStats: number = 0;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
@@ -829,25 +831,32 @@ class ClientComponent implements OnInit {
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"\n%c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
     var xmppLoaded = () => {
       (<any>window).converse.initialize({
-        allow_logout: true,
+        allow_logout: false,
         allow_muc_invitations: false,
         allow_contact_requests: false,
+        auto_reconnect: true,
         authentication: 'login',
         jid: '-k@xmpp.zone',
         password: 'ister/7e5cf08a9',
         auto_login: true,
-        auto_join_rooms: ['K@conference.xmpp.zone',],
-        notify_all_room_messages: ['K@conference.xmpp.zone',],
+        auto_join_rooms: ['K@conference.xmpp.zone'],
+        notify_all_room_messages: ['K@conference.xmpp.zone'],
         bosh_service_url: 'https://xmpp.zone/http-bind/',
-        allow_muc: false,
-        show_controlbox_by_default: false,
-        allow_list_rooms: true,
-        auto_away: 180,
-        auto_xa: 600,
-        auto_reconnect: true,
-        allow_otr: true,
-        cache_otr_key: true,
-        use_otr_by_default: true
+        whitelisted_plugins: ['converse-muc-embedded'],
+        blacklisted_plugins: [
+            "converse-bookmarks",
+            "converse-controlbox",
+            "converse-dragresize",
+            "converse-headline",
+            "converse-minimize",
+            "converse-otr",
+            "converse-register",
+            "converse-vcard"
+        ],
+        keepalive: true,
+        hide_muc_server: true,
+        play_sounds: true,
+        strict_plugin_dependencies: false
       });
     };
     if (this.XMPP == null) {
@@ -860,12 +869,20 @@ class ClientComponent implements OnInit {
         link.href = 'https://cdn.conversejs.org/css/converse.min.css';
         d.getElementsByTagName('head')[0].appendChild(link);
       }(document));
+      (function(d, link) {
+        link = d.createElement('link');
+        link.type = 'text/css';
+        link.media = 'screen';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.conversejs.org/css/converse-muc-embedded.min.css';
+        d.getElementsByTagName('head')[0].appendChild(link);
+      }(document));
       (function(d, script) {
         script = d.createElement('script');
         script.type = 'text/javascript';
         script.async = true;
         script.onload = xmppLoaded;
-        script.src = 'https://cdn.conversejs.org/dist/converse.min.js';
+        script.src = 'https://cdn.conversejs.org/dist/converse-muc-embedded.min.js';
         d.getElementsByTagName('head')[0].appendChild(script);
       }(document));
     }
