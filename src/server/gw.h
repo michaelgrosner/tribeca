@@ -21,7 +21,7 @@ namespace K {
         uv_timer_init(hub.getLoop(), &tCancel);
         uv_timer_start(&tCancel, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
-          if (QP::getBool("cancelOrdersAuto"))
+          if (qp.cancelOrdersAuto)
             gW->cancelAll();
         }, 0, 3e+5);
         ev_gwConnectOrder = [](mConnectivity k) {
@@ -40,9 +40,6 @@ namespace K {
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
         hub.run();
-        FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-        gW->cancelAll();
-        FN::log(string("GW ") + argExchange, "cancell all open orders OK");
         EV::end(eCode);
       };
       static void gwBookUp(mConnectivity k) {
@@ -117,15 +114,22 @@ namespace K {
       };
       static void happyEnding(int code) {
         eCode = code;
-        uv_timer_stop(&tCancel);
-        uv_timer_stop(&tWallet);
-        uv_timer_stop(&tCalcs);
-        uv_timer_stop(&tStart);
-        uv_timer_stop(&tDelay);
-        gw->close();
-        gw->gwGroup->close();
-        uiGroup->close();
-        FN::close_loop(hub.getLoop());
+        if (uv_loop_alive(hub.getLoop())) {
+          uv_timer_stop(&tCancel);
+          uv_timer_stop(&tWallet);
+          uv_timer_stop(&tCalcs);
+          uv_timer_stop(&tStart);
+          uv_timer_stop(&tDelay);
+          gw->close();
+          gw->gwGroup->close();
+          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
+          gW->cancelAll();
+          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
+          uiGroup->close();
+          FN::close_loop(hub.getLoop());
+          hub.getLoop()->destroy();
+        }
+        EV::end(code);
       };
   };
 }

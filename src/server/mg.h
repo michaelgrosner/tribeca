@@ -60,7 +60,7 @@ namespace K {
         double topBidSize = mgLevelsFilter.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         mgFairValue = FN::roundNearest(
-          mFairValueModel::BBO == (mFairValueModel)QP::getInt("fvModel")
+          qp.fvModel == mFairValueModel::BBO
             ? (topAskPrice + topBidPrice) / 2
             : (topAskPrice * topAskSize + topBidPrice * topBidSize) / (topAskSize + topBidSize),
           gw->minTick
@@ -74,7 +74,7 @@ namespace K {
         json k = DB::load(uiTXT::MarketData);
         if (k.size()) {
           for (json::iterator it = k.begin(); it != k.end(); ++it) {
-            if (it->value("time", (unsigned long)0)+QP::getInt("quotingStdevProtectionPeriods")*1e+3<FN::T()) continue;
+            if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
             mgStatFV.push_back(it->value("fv", 0.0));
             mgStatBid.push_back(it->value("bid", 0.0));
             mgStatAsk.push_back(it->value("ask", 0.0));
@@ -90,11 +90,11 @@ namespace K {
         k = DB::load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
-          if (!mgEwmaL and k.value("time", (unsigned long)0)+QP::getInt("longEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaL and k.value("time", (unsigned long)0)+qp.longEwmaPeriods*6e+4>FN::T())
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (unsigned long)0)+QP::getInt("mediumEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaM and k.value("time", (unsigned long)0)+qp.mediumEwmaPeriods*6e+4>FN::T())
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (unsigned long)0)+QP::getInt("shortEwmaPeriods")*6e+4>FN::T())
+          if (!mgEwmaS and k.value("time", (unsigned long)0)+qp.shortEwmaPeriods*6e+4>FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
         FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
@@ -145,7 +145,7 @@ namespace K {
           {"bid", topBid},
           {"ask", topAsk},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 1e+3 * QP::getInt("quotingStdevProtectionPeriods"));
+        }, false, "NULL", FN::T() - 1e+3 * qp.quotingStdevProtectionPeriods);
       };
       static void tradeUp(mTrade k) {
         k.exchange = gw->exchange;
@@ -163,9 +163,9 @@ namespace K {
         lastUp = FN::T();
       };
       static void ewmaUp() {
-        calcEwma(&mgEwmaL, QP::getInt("longEwmaPeriods"));
-        calcEwma(&mgEwmaM, QP::getInt("mediumEwmaPeriods"));
-        calcEwma(&mgEwmaS, QP::getInt("shortEwmaPeriods"));
+        calcEwma(&mgEwmaL, qp.longEwmaPeriods);
+        calcEwma(&mgEwmaM, qp.mediumEwmaPeriods);
+        calcEwma(&mgEwmaS, qp.shortEwmaPeriods);
         calcTargetPos();
         ev_mgTargetPosition();
         UI::uiSend(uiTXT::EWMAChart, {
@@ -193,7 +193,7 @@ namespace K {
         });
       };
       static void ewmaPUp() {
-        calcEwma(&mgEwmaP, QP::getInt("quotingEwmaProtectionPeriods"));
+        calcEwma(&mgEwmaP, qp.quotingEwmaProtectionPeriods);
         ev_mgEwmaQuoteProtection();
       };
       static void filter(mLevels k) {
@@ -217,7 +217,7 @@ namespace K {
           } else ++it;
       };
       static void cleanStdev() {
-        size_t periods = (size_t)QP::getInt("quotingStdevProtectionPeriods");
+        size_t periods = (size_t)qp.quotingStdevProtectionPeriods;
         if (mgStatFV.size()>periods) mgStatFV.erase(mgStatFV.begin(), mgStatFV.end()-periods);
         if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
         if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
@@ -226,7 +226,7 @@ namespace K {
       static void calcStdev() {
         cleanStdev();
         if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
-        double k = QP::getDouble("quotingStdevProtectionFactor");
+        double k = qp.quotingStdevProtectionFactor;
         mgStdevFV = calcStdev(mgStatFV, k, &mgStdevFVMean);
         mgStdevBid = calcStdev(mgStatBid, k, &mgStdevBidMean);
         mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
@@ -260,12 +260,12 @@ namespace K {
           SMA3 += *it;
         SMA3 /= mgSMA3.size();
         double newTargetPosition = 0;
-        if ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::EWMA_LMS) {
+        if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
           double newTrend = ((SMA3 * 100 / mgEwmaL) - 100);
           double newEwmacrossing = ((mgEwmaS * 100 / mgEwmaM) - 100);
-          newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / QP::getDouble("ewmaSensiblityPercentage"));
-        } else if ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::EWMA_LS)
-          newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / QP::getDouble("ewmaSensiblityPercentage"));
+          newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp.ewmaSensiblityPercentage);
+        } else if (qp.autoPositionMode == mAutoPositionMode::EWMA_LS)
+          newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp.ewmaSensiblityPercentage);
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
         mgTargetPos = newTargetPosition;

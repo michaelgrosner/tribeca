@@ -68,8 +68,8 @@ namespace K {
   extern bool wInit;
   extern WINDOW *wBorder,
                 *wLog;
+  extern mutex wsMutex;
   static mutex wMutex,
-               wsMutex,
                ogMutex,
                pgMutex;
   static string uiPrtcl = "?";

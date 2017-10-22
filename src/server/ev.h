@@ -8,21 +8,21 @@ namespace K {
   typedef void (*evWallet)       (mWallet);
   typedef void (*evLevels)       (mLevels);
   typedef void (*evEmpty)        ();
-  extern evConnect       ev_gwConnectButton,
-                         ev_gwConnectOrder,
-                         ev_gwConnectMarket,
-                         ev_gwConnectExchange;
-  extern evOrder         ev_gwDataOrder,
-                         ev_ogOrder;
-  extern evTrade         ev_gwDataTrade,
-                         ev_ogTrade;
-  extern evWallet        ev_gwDataWallet;
-  extern evLevels        ev_gwDataLevels;
-  extern evEmpty         ev_mgLevels,
-                         ev_mgEwmaQuoteProtection,
-                         ev_mgTargetPosition,
-                         ev_pgTargetBasePosition,
-                         ev_uiQuotingParameters;
+  extern evConnect ev_gwConnectButton,
+                   ev_gwConnectOrder,
+                   ev_gwConnectMarket,
+                   ev_gwConnectExchange;
+  extern evOrder   ev_gwDataOrder,
+                   ev_ogOrder;
+  extern evTrade   ev_gwDataTrade,
+                   ev_ogTrade;
+  extern evWallet  ev_gwDataWallet;
+  extern evLevels  ev_gwDataLevels;
+  extern evEmpty   ev_mgLevels,
+                   ev_mgEwmaQuoteProtection,
+                   ev_mgTargetPosition,
+                   ev_pgTargetBasePosition,
+                   ev_uiQuotingParameters;
   static uv_timer_t tCalcs,
                     tStart,
                     tDelay,

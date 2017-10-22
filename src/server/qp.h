@@ -2,58 +2,151 @@
 #define K_QP_H_
 
 namespace K {
-  static json qp;
-  static json defQP {
-    {  "widthPing",                     2                                      },
-    {  "widthPingPercentage",           decimal_cast<2>("0.25").getAsDouble()  },
-    {  "widthPong",                     2                                      },
-    {  "widthPongPercentage",           decimal_cast<2>("0.25").getAsDouble()  },
-    {  "widthPercentage",               false                                  },
-    {  "bestWidth",                     true                                   },
-    {  "buySize",                       decimal_cast<2>("0.02").getAsDouble()  },
-    {  "buySizePercentage",             7                                      },
-    {  "buySizeMax",                    false                                  },
-    {  "sellSize",                      decimal_cast<2>("0.01").getAsDouble()  },
-    {  "sellSizePercentage",            7                                      },
-    {  "sellSizeMax",                   false                                  },
-    {  "pingAt",                        (int)mPingAt::BothSides                },
-    {  "pongAt",                        (int)mPongAt::ShortPingFair            },
-    {  "mode",                          (int)mQuotingMode::AK47                },
-    {  "bullets",                       2                                      },
-    {  "range",                         decimal_cast<1>("0.5").getAsDouble()   },
-    {  "fvModel",                       (int)mFairValueModel::BBO              },
-    {  "targetBasePosition",            1                                      },
-    {  "targetBasePositionPercentage",  50                                     },
-    {  "positionDivergence",            decimal_cast<1>("0.9").getAsDouble()   },
-    {  "positionDivergencePercentage",  21                                     },
-    {  "percentageValues",              false                                  },
-    {  "autoPositionMode",              (int)mAutoPositionMode::EWMA_LS        },
-    {  "aggressivePositionRebalancing", (int)mAPR::Off                         },
-    {  "superTrades",                   (int)mSOP::Off                         },
-    {  "tradesPerMinute",               decimal_cast<1>("0.9").getAsDouble()   },
-    {  "tradeRateSeconds",              69                                     },
-    {  "quotingEwmaProtection",         true                                   },
-    {  "quotingEwmaProtectionPeriods",  200                                    },
-    {  "quotingStdevProtection",        (int)mSTDEV::Off                       },
-    {  "quotingStdevBollingerBands",    false                                  },
-    {  "quotingStdevProtectionFactor",  decimal_cast<1>("1.0").getAsDouble()   },
-    {  "quotingStdevProtectionPeriods", 1200                                   },
-    {  "ewmaSensiblityPercentage",      decimal_cast<1>("0.5").getAsDouble()   },
-    {  "longEwmaPeriods",               200                                    },
-    {  "mediumEwmaPeriods",             100                                    },
-    {  "shortEwmaPeriods",              50                                     },
-    {  "aprMultiplier",                 2                                      },
-    {  "sopWidthMultiplier",            2                                      },
-    {  "delayAPI",                      0                                      },
-    {  "cancelOrdersAuto",              false                                  },
-    {  "cleanPongsAuto",                0                                      },
-    {  "profitHourInterval",            decimal_cast<1>("0.5").getAsDouble()   },
-    {  "audio",                         false                                  },
-    {  "delayUI",                       7                                      }
+  static struct Qp {
+    int               widthPing                     = 2;
+    double            widthPingPercentage           = decimal_cast<2>("0.25").getAsDouble();
+    int               widthPong                     = 2;
+    double            widthPongPercentage           = decimal_cast<2>("0.25").getAsDouble();
+    bool              widthPercentage               = false;
+    bool              bestWidth                     = true;
+    double            buySize                       = decimal_cast<2>("0.02").getAsDouble();
+    int               buySizePercentage             = 7;
+    bool              buySizeMax                    = false;
+    double            sellSize                      = decimal_cast<2>("0.01").getAsDouble();
+    int               sellSizePercentage            = 7;
+    bool              sellSizeMax                   = false;
+    mPingAt           pingAt                        = mPingAt::BothSides;
+    mPongAt           pongAt                        = mPongAt::ShortPingFair;
+    mQuotingMode      mode                          = mQuotingMode::AK47;
+    int               bullets                       = 2;
+    double            range                         = decimal_cast<1>("0.5").getAsDouble();
+    mFairValueModel   fvModel                       = mFairValueModel::BBO;
+    int               targetBasePosition            = 1;
+    int               targetBasePositionPercentage  = 50;
+    double            positionDivergence            = decimal_cast<1>("0.9").getAsDouble();
+    int               positionDivergencePercentage  = 21;
+    bool              percentageValues              = false;
+    mAutoPositionMode autoPositionMode              = mAutoPositionMode::EWMA_LS;
+    mAPR              aggressivePositionRebalancing = mAPR::Off;
+    mSOP              superTrades                   = mSOP::Off;
+    double            tradesPerMinute               = decimal_cast<1>("0.9").getAsDouble();
+    int               tradeRateSeconds              = 69;
+    bool              quotingEwmaProtection         = true;
+    int               quotingEwmaProtectionPeriods  = 200;
+    mSTDEV            quotingStdevProtection        = mSTDEV::Off;
+    bool              quotingStdevBollingerBands    = false;
+    double            quotingStdevProtectionFactor  = decimal_cast<1>("1.0").getAsDouble();
+    int               quotingStdevProtectionPeriods = 1200;
+    double            ewmaSensiblityPercentage      = decimal_cast<1>("0.5").getAsDouble();
+    int               longEwmaPeriods               = 200;
+    int               mediumEwmaPeriods             = 100;
+    int               shortEwmaPeriods              = 50;
+    int               aprMultiplier                 = 2;
+    int               sopWidthMultiplier            = 2;
+    int               delayAPI                      = 0;
+    bool              cancelOrdersAuto              = false;
+    int               cleanPongsAuto                = 0;
+    double            profitHourInterval            = decimal_cast<1>("0.5").getAsDouble();
+    bool              audio                         = false;
+    int               delayUI                       = 7;
+  } qp;
+  static void to_json(json& j, const Qp& k) {
+    j = {
+      {"widthPing", k.widthPing},
+      {"widthPingPercentage", k.widthPingPercentage},
+      {"widthPong", k.widthPong},
+      {"widthPongPercentage", k.widthPongPercentage},
+      {"widthPercentage", k.widthPercentage},
+      {"bestWidth", k.bestWidth},
+      {"buySize", k.buySize},
+      {"buySizePercentage", k.buySizePercentage},
+      {"buySizeMax", k.buySizeMax},
+      {"sellSize", k.sellSize},
+      {"sellSizePercentage", k.sellSizePercentage},
+      {"sellSizeMax", k.sellSizeMax},
+      {"pingAt", (int)k.pingAt},
+      {"pongAt", (int)k.pongAt},
+      {"mode", (int)k.mode},
+      {"bullets", k.bullets},
+      {"range", k.range},
+      {"fvModel", (int)k.fvModel},
+      {"targetBasePosition", k.targetBasePosition},
+      {"targetBasePositionPercentage", k.targetBasePositionPercentage},
+      {"positionDivergence", k.positionDivergence},
+      {"positionDivergencePercentage", k.positionDivergencePercentage},
+      {"percentageValues", k.percentageValues},
+      {"autoPositionMode", (int)k.autoPositionMode},
+      {"aggressivePositionRebalancing", (int)k.aggressivePositionRebalancing},
+      {"superTrades", (int)k.superTrades},
+      {"tradesPerMinute", k.tradesPerMinute},
+      {"tradeRateSeconds", k.tradeRateSeconds},
+      {"quotingEwmaProtection", k.quotingEwmaProtection},
+      {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
+      {"quotingStdevProtection", (int)k.quotingStdevProtection},
+      {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
+      {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
+      {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
+      {"ewmaSensiblityPercentage", k.ewmaSensiblityPercentage},
+      {"longEwmaPeriods", k.longEwmaPeriods},
+      {"mediumEwmaPeriods", k.mediumEwmaPeriods},
+      {"shortEwmaPeriods", k.shortEwmaPeriods},
+      {"aprMultiplier", k.aprMultiplier},
+      {"sopWidthMultiplier", k.sopWidthMultiplier},
+      {"delayAPI", k.delayAPI},
+      {"cancelOrdersAuto", k.cancelOrdersAuto},
+      {"cleanPongsAuto", k.cleanPongsAuto},
+      {"profitHourInterval", k.profitHourInterval},
+      {"audio", k.audio},
+      {"delayUI", k.delayUI}
+    };
   };
-  static const vector<string> boolQP = {
-    "widthPercentage", "bestWidth", "sellSizeMax", "buySizeMax", "percentageValues",
-    "quotingEwmaProtection", "quotingStdevBollingerBands", "cancelOrdersAuto", "audio"
+  static void from_json(const json& j, Qp& k) {
+    if (!j.at("widthPing").is_null()) k.widthPing = j.at("widthPing").get<int>();
+    if (!j.at("widthPingPercentage").is_null()) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
+    if (!j.at("widthPong").is_null()) k.widthPong = j.at("widthPong").get<int>();
+    if (!j.at("widthPongPercentage").is_null()) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
+    if (!j.at("widthPercentage").is_null()) k.widthPercentage = j.at("widthPercentage").get<bool>();
+    if (!j.at("bestWidth").is_null()) k.bestWidth = j.at("bestWidth").get<bool>();
+    if (!j.at("buySize").is_null()) k.buySize = j.at("buySize").get<double>();
+    if (!j.at("buySizePercentage").is_null()) k.buySizePercentage = j.at("buySizePercentage").get<int>();
+    if (!j.at("buySizeMax").is_null()) k.buySizeMax = j.at("buySizeMax").get<bool>();
+    if (!j.at("sellSize").is_null()) k.sellSize = j.at("sellSize").get<double>();
+    if (!j.at("sellSizePercentage").is_null()) k.sellSizePercentage = j.at("sellSizePercentage").get<int>();
+    if (!j.at("sellSizeMax").is_null()) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
+    if (!j.at("pingAt").is_null()) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
+    if (!j.at("pongAt").is_null()) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
+    if (!j.at("mode").is_null()) k.mode = (mQuotingMode)j.at("mode").get<int>();
+    if (!j.at("bullets").is_null()) k.bullets = j.at("bullets").get<int>();
+    if (!j.at("range").is_null()) k.range = j.at("range").get<double>();
+    if (!j.at("fvModel").is_null()) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
+    if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<int>();
+    if (!j.at("targetBasePositionPercentage").is_null()) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
+    if (!j.at("positionDivergence").is_null()) k.positionDivergence = j.at("positionDivergence").get<double>();
+    if (!j.at("positionDivergencePercentage").is_null()) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
+    if (!j.at("percentageValues").is_null()) k.percentageValues = j.at("percentageValues").get<bool>();
+    if (!j.at("autoPositionMode").is_null()) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
+    if (!j.at("aggressivePositionRebalancing").is_null()) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
+    if (!j.at("superTrades").is_null()) k.superTrades = (mSOP)j.at("superTrades").get<int>();
+    if (!j.at("tradesPerMinute").is_null()) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
+    if (!j.at("tradeRateSeconds").is_null()) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
+    if (!j.at("quotingEwmaProtection").is_null()) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
+    if (!j.at("quotingEwmaProtectionPeriods").is_null()) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
+    if (!j.at("quotingStdevProtection").is_null()) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
+    if (!j.at("quotingStdevBollingerBands").is_null()) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
+    if (!j.at("quotingStdevProtectionFactor").is_null()) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
+    if (!j.at("quotingStdevProtectionPeriods").is_null()) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
+    if (!j.at("ewmaSensiblityPercentage").is_null()) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
+    if (!j.at("longEwmaPeriods").is_null()) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
+    if (!j.at("mediumEwmaPeriods").is_null()) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
+    if (!j.at("shortEwmaPeriods").is_null()) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
+    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<int>();
+    if (!j.at("sopWidthMultiplier").is_null()) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
+    if (!j.at("delayAPI").is_null()) k.delayAPI = j.at("delayAPI").get<int>();
+    if (!j.at("cancelOrdersAuto").is_null()) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
+    if (!j.at("cleanPongsAuto").is_null()) k.cleanPongsAuto = j.at("cleanPongsAuto").get<int>();
+    if (!j.at("profitHourInterval").is_null()) k.profitHourInterval = j.at("profitHourInterval").get<double>();
+    if (!j.at("audio").is_null()) k.audio = j.at("audio").get<bool>();
+    if (!j.at("delayUI").is_null()) k.delayUI = j.at("delayUI").get<int>();
   };
   class QP {
     public:
@@ -63,44 +156,17 @@ namespace K {
         UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
       }
       static bool matchPings() {
-        mQuotingMode k = (mQuotingMode)getInt("mode");
-        return k == mQuotingMode::Boomerang
-            or k == mQuotingMode::HamelinRat
-            or k == mQuotingMode::AK47;
-      };
-      static bool getBool(string k) {
-        if (!qp[k].is_boolean()) {
-          FN::log("QP", k + " is not boolean, get a false instead");
-          return false;
-        }
-        return qp[k].get<bool>();
-      };
-      static int getInt(string k) {
-        if (!qp[k].is_number()) {
-          FN::log("QP", k + " is not numeric, get a 0 instead");
-          return 0;
-        }
-        return qp[k].get<int>();
-      };
-      static double getDouble(string k) {
-        if (!qp[k].is_number()) {
-          FN::log("QP", k + " is not numeric, get a 0 instead");
-          return 0;
-        }
-        return qp[k].get<double>();
+        return qp.mode == mQuotingMode::Boomerang
+            or qp.mode == mQuotingMode::HamelinRat
+            or qp.mode == mQuotingMode::AK47;
       };
     private:
       static void load() {
-        qp = defQP;
-        json qp_ = DB::load(uiTXT::QuotingParametersChange);
-        if (qp_.size()) {
-          qp_ = qp_.at(0);
-          for (json::iterator it = qp_.begin(); it != qp_.end(); ++it)
-            qp[it.key()] = it.value();
-        }
-        clean();
-        UI::delay(getDouble("delayUI"));
-        FN::log("DB", string("loaded Quoting Parameters ") + (qp_.size() ? "OK" : "OR reading defaults instead"));
+        json k = DB::load(uiTXT::QuotingParametersChange);
+        if (k.size())
+          qp = k.at(0);;
+        UI::delay(qp.delayUI);
+        FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
       };
       static json onSnap() {
         return { qp };
@@ -118,17 +184,12 @@ namespace K {
           if ((mQuotingMode)k.value("mode", 0) == mQuotingMode::Depth)
             k["widthPercentage"] = false;
           qp = k;
-          clean();
           DB::insert(uiTXT::QuotingParametersChange, k);
           ev_uiQuotingParameters();
-          UI::delay(getDouble("delayUI"));
+          UI::delay(qp.delayUI);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, k);
-      };
-      static void clean() {
-        for (vector<string>::const_iterator it = boolQP.begin(); it != boolQP.end(); ++it)
-          if (qp[*it].is_number()) qp[*it] = qp[*it].get<int>() != 0;
-      };
+      };;
   };
 }
 

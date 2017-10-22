@@ -3,7 +3,7 @@
 
 namespace K {
   string A();
-  static uWS::Hub hub(0, false);
+  static uWS::Hub hub(0, true);
   typedef void (*uiMsg_)(json);
   typedef json (*uiSnap_)();
   struct uiSess { map<char, uiSnap_> cbSnap; map<char, uiMsg_> cbMsg; map<uiTXT, vector<json>> D; int u = 0; };

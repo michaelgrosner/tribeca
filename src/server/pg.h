@@ -49,10 +49,10 @@ namespace K {
         pgMutex.lock();
         double value = pgPos.value;
         pgMutex.unlock();
-        double targetBasePosition = ((mAutoPositionMode)QP::getInt("autoPositionMode") == mAutoPositionMode::Manual)
-          ? (QP::getBool("percentageValues")
-            ? QP::getDouble("targetBasePositionPercentage") * value / 1e+2
-            : QP::getDouble("targetBasePosition"))
+        double targetBasePosition = qp.autoPositionMode == mAutoPositionMode::Manual
+          ? (qp.percentageValues
+            ? qp.targetBasePositionPercentage * value / 1e+2
+            : qp.targetBasePosition)
           : ((1 + mgTargetPos) / 2) * value;
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
@@ -103,20 +103,20 @@ namespace K {
                baseAmount     = pgPos.baseAmount,
                baseHeldAmount = pgPos.baseHeldAmount;
         pgMutex.unlock();
-        double buySize = QP::getBool("percentageValues")
-          ? QP::getDouble("buySizePercentage") * value / 100
-          : QP::getDouble("buySize");
-        double sellSize = QP::getBool("percentageValues")
-          ? QP::getDouble("sellSizePercentage") * value / 100
-          : QP::getDouble("sellSize");
+        double buySize = qp.percentageValues
+          ? qp.buySizePercentage * value / 100
+          : qp.buySize;
+        double sellSize = qp.percentageValues
+          ? qp.sellSizePercentage * value / 100
+          : qp.sellSize;
         double totalBasePosition = baseAmount + baseHeldAmount;
-        if (QP::getBool("buySizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
+        if (qp.buySizeMax and qp.aggressivePositionRebalancing != mAPR::Off)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
-        if (QP::getBool("sellSizeMax") and (mAPR)QP::getInt("aggressivePositionRebalancing") != mAPR::Off)
+        if (qp.sellSizeMax and qp.aggressivePositionRebalancing != mAPR::Off)
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
-        double widthPong = QP::getBool("widthPercentage")
-          ? QP::getDouble("widthPongPercentage") * mgFairValue / 100
-          : QP::getDouble("widthPong");
+        double widthPong = qp.widthPercentage
+          ? qp.widthPongPercentage * mgFairValue / 100
+          : qp.widthPong;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
@@ -127,15 +127,15 @@ namespace K {
         double sellPong = 0;
         double buyQty = 0;
         double sellQty = 0;
-        if ((mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingFair
-          or (mPongAt)QP::getInt("pongAt") == mPongAt::ShortPingAggressive
+        if (qp.pongAt == mPongAt::ShortPingFair
+          or qp.pongAt == mPongAt::ShortPingAggressive
         ) {
           matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
           matchBestPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong);
           if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
           if (!sellQty) matchFirstPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong*-1);
-        } else if ((mPongAt)QP::getInt("pongAt") == mPongAt::LongPingFair
-          or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive
+        } else if (qp.pongAt == mPongAt::LongPingFair
+          or qp.pongAt == mPongAt::LongPingAggressive
         ) {
           matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
           matchLastPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong, true);
@@ -193,7 +193,7 @@ namespace K {
       static void expire(map<double, mTrade>* k) {
         unsigned long now = FN::T();
         for (map<double, mTrade>::iterator it = k->begin(); it != k->end();)
-          if (it->second.time + QP::getDouble("tradeRateSeconds") * 1e+3 > now) ++it;
+          if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
       static void skip() {
@@ -236,7 +236,7 @@ namespace K {
         profitMutex.lock();
         pgProfit.push_back(mProfit(baseValue, quoteValue, now));
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
-          if (it->time + (QP::getDouble("profitHourInterval") * 36e+5) > now) ++it;
+          if (it->time + (qp.profitHourInterval * 36e+5) > now) ++it;
           else it = pgProfit.erase(it);
         mPosition pos(
           baseWallet.amount,

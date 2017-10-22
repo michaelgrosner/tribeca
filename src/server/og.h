@@ -242,16 +242,16 @@ namespace K {
         FN::log(trade, argExchange);
         ev_ogTrade(trade);
         if (QP::matchPings()) {
-          double widthPong = QP::getBool("widthPercentage")
-            ? QP::getDouble("widthPongPercentage") * trade.price / 100
-            : QP::getDouble("widthPong");
+          double widthPong = qp.widthPercentage
+            ? qp.widthPongPercentage * trade.price / 100
+            : qp.widthPong;
           map<double, string> matches;
           for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
             if (it->quantity - it->Kqty > 0
               and it->side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
               and (trade.side == mSide::Bid ? (it->price > trade.price + widthPong) : (it->price < trade.price - widthPong))
             ) matches[it->price] = it->tradeId;
-          matchPong(matches, ((mPongAt)QP::getInt("pongAt") == mPongAt::LongPingFair or (mPongAt)QP::getInt("pongAt") == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
+          matchPong(matches, (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
           UI::uiSend(uiTXT::Trades, trade);
           DB::insert(uiTXT::Trades, trade, false, trade.tradeId);
@@ -264,7 +264,7 @@ namespace K {
           {"value", trade.value},
           {"pong", o.isPong}
         });
-        cleanAuto(trade.time, QP::getDouble("cleanPongsAuto"));
+        cleanAuto(trade.time, qp.cleanPongsAuto);
       };
       static void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
