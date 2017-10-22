@@ -3,8 +3,8 @@
 
 namespace K {
   static const char alphanum[] = "0123456789"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz";
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz";
   static int argPort = 3000,
              argColors = 0,
              argDebug = 0,

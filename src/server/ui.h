@@ -84,6 +84,7 @@ namespace K {
                 }
               }
               document += "Content-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
+              lock_guard<mutex> lock(wsMutex);
               res->write(document.data(), document.length());
             }
           });
@@ -91,6 +92,7 @@ namespace K {
             if (length <= 1) return;
             if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
               json reply = (*sess->cbSnap[message[1]])();
+              lock_guard<mutex> lock(wsMutex);
               if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
             } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
               (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
