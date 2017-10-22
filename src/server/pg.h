@@ -34,13 +34,13 @@ namespace K {
         mSafety safety = nextSafety();
         pgMutex.lock();
         if (pgSafety.buyPing == -1
-          or abs(safety.combined - pgSafety.combined) > 1e-3
-          or abs(safety.buyPing - pgSafety.buyPing) >= 1e-2
-          or abs(safety.sellPong - pgSafety.sellPong) >= 1e-2
+          or safety.combined != pgSafety.combined
+          or safety.buyPing != pgSafety.buyPing
+          or safety.sellPong != pgSafety.sellPong
         ) {
           pgSafety = safety;
           pgMutex.unlock();
-          UI::uiSend(uiTXT::TradeSafetyValue, safety, true);
+          UI::uiSend(uiTXT::TradeSafetyValue, safety);
         } else pgMutex.unlock();
       };
       static void calcTargetBasePos() {
