@@ -147,6 +147,7 @@ namespace K {
     if (!j.at("profitHourInterval").is_null()) k.profitHourInterval = j.at("profitHourInterval").get<double>();
     if (!j.at("audio").is_null()) k.audio = j.at("audio").get<bool>();
     if (!j.at("delayUI").is_null()) k.delayUI = j.at("delayUI").get<int>();
+    if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
   };
   class QP {
     public:
@@ -164,7 +165,7 @@ namespace K {
       static void load() {
         json k = DB::load(uiTXT::QuotingParametersChange);
         if (k.size())
-          qp = k.at(0);;
+          qp = k.at(0);
         UI::delay(qp.delayUI);
         FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
       };
@@ -181,15 +182,13 @@ namespace K {
           and k.value("widthPingPercentage", 0.0) > 0
           and k.value("widthPongPercentage", 0.0) > 0
         ) {
-          if ((mQuotingMode)k.value("mode", 0) == mQuotingMode::Depth)
-            k["widthPercentage"] = false;
           qp = k;
-          DB::insert(uiTXT::QuotingParametersChange, k);
+          DB::insert(uiTXT::QuotingParametersChange, qp);
           ev_uiQuotingParameters();
           UI::delay(qp.delayUI);
         }
         UI::uiSend(uiTXT::QuotingParametersChange, qp);
-      };;
+      };
   };
 }
 
