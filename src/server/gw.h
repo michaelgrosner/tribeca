@@ -32,13 +32,13 @@ namespace K {
           if (k == mConnectivity::Disconnected)
             ev_gwDataLevels(mLevels());
         };
-        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
-        gw->hub = &hub;
-        gw->levels();
         UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
         UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
         UI::uiSnap(uiTXT::ActiveState, &onSnapState);
         UI::uiHand(uiTXT::ActiveState, &onHandState);
+        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
+        gw->hub = &hub;
+        gw->levels();
         hub.run();
         EV::end(eCode);
       };
