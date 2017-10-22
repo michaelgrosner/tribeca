@@ -107,3 +107,4 @@ table.marketQuoting {font-size:12px;}
 .COINWIDGETCOM_WINDOW {background:rgba(0,255,0,0.25)!important;}
 .COINWIDGETCOM_BUTTON_BITCOIN span {font-size:25px;}
 .COINWIDGETCOM_BUTTON_BITCOIN img {display:none!important;}
+div.chat-area{width:100%!important;}#controlbox, div.occupants, #toggle-minimized-chats, .configure-chatroom-button, .toggle-bookmark, #toggle-controlbox {display:none!important;}

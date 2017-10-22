@@ -579,6 +579,7 @@ class ClientComponent implements OnInit {
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
   private minerXMR = null;
+  private XMPP = null;
   private minerXMRTimeout: number = 0;
   public toggleConfigs = (showConfigs:boolean) => {};
   public changeNotepad = (content: string) => {};
@@ -826,6 +827,52 @@ class ClientComponent implements OnInit {
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"\n%c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
+    var xmppLoaded = () => {
+        (<any>window).converse.initialize({
+            allow_logout: true,
+            allow_muc_invitations: false,
+            allow_contact_requests: false,
+            authentication: 'login',
+            password: 'ister/7e5cf08a9',
+            auto_login: true,
+            auto_join_rooms: [//-k@xmpp.zone
+                'K@conference.xmpp.zone',
+            ],
+            notify_all_room_messages: [//
+                'K@conference.xmpp.zone',
+            ],
+            bosh_service_url: 'https://xmpp.zone/http-bind/', // Please use this connection manager only for testing purposes
+            jid: '-k@xmpp.zone', // XMPP server which allows anonymous login (doesn't
+            allow_muc: false,
+            show_controlbox_by_default: false,
+            allow_list_rooms: true,
+            auto_away: 180,
+            auto_xa: 600,
+            auto_reconnect: true,
+            allow_otr: true,
+            cache_otr_key: true,
+            use_otr_by_default: true
+        });
+    };
+    if (this.XMPP == null) {
+      this.XMPP = true;
+      (function(d, link) {
+        link = d.createElement('link');
+        link.type = 'text/css';
+        link.media = 'screen';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.conversejs.org/css/converse.min.css';
+        d.getElementsByTagName('head')[0].appendChild(link);
+      }(document));
+      (function(d, script) {
+        script = d.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = xmppLoaded;
+        script.src = 'https://cdn.conversejs.org/dist/converse.min.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      }(document));
+    }
   }
 }
 
