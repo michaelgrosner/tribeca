@@ -36,6 +36,7 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
+    this.gridOptions.enableColResize = true;
     setTimeout(this.loadSubscriber, 500);
   }
 
@@ -50,40 +51,44 @@ export class OrdersComponent implements OnInit {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
       .registerSubscriber(this.addRowData);
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
+      .registerSubscriber(this.sizeToFit);
   }
 
   private createColumnDefs = (): ColDef[] => {
     return [
-      { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+      { width: 30, suppressSizeToFit: true, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
-      { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
-          return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
-        },
+      { width: 82, suppressSizeToFit: true, field: 'time', headerName: 'time', cellRenderer:(params) => {
+        return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
+      },
         cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
       },
-      { width: 40, field: 'side', headerName: 'side' , cellRenderer:(params) => {
-          return (params.data.pong ? '¯' : '_') + params.value;
+      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side' , cellRenderer:(params) => {
+        return (params.data.pong ? '¯' : '_') + params.value;
       }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }},
       { width: 74, field: 'price', headerName: 'px',
-      sort: 'desc',  cellClass: (params) => {
+        sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 60, field: 'qty', headerName: 'qty', cellClass: (params) => {
+      { width: 60, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 45, field: 'type', headerName: 'type' },
+      { width: 45, suppressSizeToFit: true, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
       { width: 45, field: 'lat', headerName: 'lat'},
-      { width: 90, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
-          return (params.value) ? params.value.toString().split('-')[0] : '';
-        }}
+      { width: 90, suppressSizeToFit: true, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
+        return (params.value) ? params.value.toString().split('-')[0] : '';
+      }}
     ];
   }
 
@@ -95,7 +100,9 @@ export class OrdersComponent implements OnInit {
     });
     this.gridOptions.api.updateRowData({remove:[$event.data]});
   }
-
+  private sizeToFit = () => {
+    this.gridOptions.api.sizeColumnsToFit();
+  }
   private addRowData = (o) => {
     if (!this.gridOptions.api) return;
     if (typeof o[0] == 'object') {
