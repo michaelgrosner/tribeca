@@ -37,6 +37,7 @@ export class TradesComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
+    this.gridOptions.enableColResize = true;
     setTimeout(this.loadSubscriber, 3321);
   }
 
@@ -56,22 +57,26 @@ export class TradesComponent implements OnInit {
       .getSubscriber(this.zone, Models.Topics.Trades)
       .registerConnectHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.Trades)
+      .registerSubscriber(this.sizeToFit);
   }
 
   private createColumnDefs = (): ColDef[] => {
     return [
-      { width: 30, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
+      {width: 30, suppressSizeToFit: true, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
-      {width: 95, field:'time', headerName:'t', cellRenderer:(params) => {
-          return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
-        }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
-          return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
+      {width: 95, suppressSizeToFit: true, field:'time', headerName:'t', cellRenderer:(params) => {
+        return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
+      }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
+        return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
       }, sort: 'desc'},
-      {width: 95, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
-          return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss') : '';
-        }, cellClass: 'fs11px' },
-      {width: 40, field:'side', headerName:'side', cellClass: (params) => {
+      {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
+        return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss') : '';
+      }, cellClass: 'fs11px' },
+      {width: 40, suppressSizeToFit: true, field:'side', headerName:'side', cellClass: (params) => {
         if (params.value === 'Buy') return 'buy';
         else if (params.value === 'Sell') return "sell";
         else if (params.value === 'K') return "kira";
@@ -80,7 +85,7 @@ export class TradesComponent implements OnInit {
       {width: 80, field:'price', headerName:'px', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, field:'quantity', headerName:'qty', cellClass: (params) => {
+      {width: 65, suppressSizeToFit: true, field:'quantity', headerName:'qty', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerName:'val', cellClass: (params) => {
@@ -89,7 +94,7 @@ export class TradesComponent implements OnInit {
       {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
+      {width: 65, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 80, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
@@ -106,6 +111,10 @@ export class TradesComponent implements OnInit {
     this.fireCxl.fire({
       tradeId: $event.data.tradeId
     });
+  }
+
+  private sizeToFit = () => {
+    this.gridOptions.api.sizeColumnsToFit();
   }
 
   private addRowData = (t: Models.Trade) => {
