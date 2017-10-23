@@ -107,5 +107,4 @@ table.marketQuoting {font-size:12px;}
 .COINWIDGETCOM_WINDOW {background:rgba(0,255,0,0.25)!important;}
 .COINWIDGETCOM_BUTTON_BITCOIN span {font-size:25px;}
 .COINWIDGETCOM_BUTTON_BITCOIN img {display:none!important;}
-.chatroom-form-container input,.chat-area textarea {color:black!important;}
-.chat-content {font-size:10px!important;}.chat-head-chatroom{height:39px!important;}div.chat-area{width:100%!important;}li.toggle-occupants, div.occupants {display:none!important;}
+.sendXMPPMessage{height:70px!important;}.box-flyout .chat-content{height: calc(100% - 72px)!important;}.box-flyout{height:334px!important;}.chatroom-form-container input,.chat-area textarea {color:black!important;}.chat-area textarea {height:58px!important;}.chat-message span.chat-msg-content img{vertical-align: top!important;}.chat-content {font-size:10px!important;}.chat-head-chatroom{height:39px!important;}div.chat-area{width:100%!important;}li.toggle-occupants, div.occupants {display:none!important;}
