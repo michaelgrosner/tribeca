@@ -57,10 +57,6 @@ export class TradesComponent implements OnInit {
       .getSubscriber(this.zone, Models.Topics.Trades)
       .registerConnectHandler(() => this.gridOptions.rowData.length = 0)
       .registerSubscriber(this.addRowData);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Trades)
-      .registerSubscriber(this.sizeToFit);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -111,10 +107,6 @@ export class TradesComponent implements OnInit {
     this.fireCxl.fire({
       tradeId: $event.data.tradeId
     });
-  }
-
-  private sizeToFit = () => {
-    this.gridOptions.api.sizeColumnsToFit();
   }
 
   private addRowData = (t: Models.Trade) => {
@@ -181,6 +173,7 @@ export class TradesComponent implements OnInit {
       }
     }
 
+    this.gridOptions.api.sizeColumnsToFit();
     this.onTradesLength.emit(this.gridOptions.api.getModel().getRowCount());
   }
 

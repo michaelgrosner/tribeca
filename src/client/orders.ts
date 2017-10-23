@@ -51,10 +51,6 @@ export class OrdersComponent implements OnInit {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
       .registerSubscriber(this.addRowData);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
-      .registerSubscriber(this.sizeToFit);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -100,9 +96,7 @@ export class OrdersComponent implements OnInit {
     });
     this.gridOptions.api.updateRowData({remove:[$event.data]});
   }
-  private sizeToFit = () => {
-    this.gridOptions.api.sizeColumnsToFit();
-  }
+
   private addRowData = (o) => {
     if (!this.gridOptions.api) return;
     if (typeof o[0] == 'object') {
@@ -145,5 +139,6 @@ export class OrdersComponent implements OnInit {
         quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});
+    this.gridOptions.api.sizeColumnsToFit();
   }
 }
