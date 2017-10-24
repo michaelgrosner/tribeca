@@ -166,9 +166,9 @@ namespace K {
         gw->http = argHttp;
         gw->ws = argWss;
         gw->wS = argWs;
-        cfExchange(gw->config());
-        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
         gw->hub = hub;
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+        cfExchange(gw->config());
         gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
       static string cfBase() {

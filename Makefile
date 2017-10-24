@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = e43f5540558836ed723c019c986ad8477b013f39
+KLIB     = 605fa791e14238c604238c4ed2d0882c8315f546
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cc -pthread -rdynamic -DUSE_LIBUV               \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \

@@ -107,4 +107,4 @@ table.marketQuoting {font-size:12px;}
 .COINWIDGETCOM_WINDOW {background:rgba(0,255,0,0.25)!important;}
 .COINWIDGETCOM_BUTTON_BITCOIN span {font-size:25px;}
 .COINWIDGETCOM_BUTTON_BITCOIN img {display:none!important;}
-tr.chatbro_message td:nth-child(2) {display:none!important;}
+tr.chatbro_message td:nth-child(2),.chatbro_message_user_type {display:none!important;}
