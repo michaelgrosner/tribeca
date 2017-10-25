@@ -3,9 +3,9 @@
 
 namespace K {
   static struct Qp {
-    double            widthPing                     = decimal_cast<8>("2").getAsDouble();
+    double            widthPing                     = decimal_cast<1>("2.0").getAsDouble();
     double            widthPingPercentage           = decimal_cast<2>("0.25").getAsDouble();
-    double            widthPong                     = decimal_cast<8>("2").getAsDouble();
+    double            widthPong                     = decimal_cast<1>("2.0").getAsDouble();
     double            widthPongPercentage           = decimal_cast<2>("0.25").getAsDouble();
     bool              widthPercentage               = false;
     bool              bestWidth                     = true;
@@ -21,7 +21,7 @@ namespace K {
     int               bullets                       = 2;
     double            range                         = decimal_cast<1>("0.5").getAsDouble();
     mFairValueModel   fvModel                       = mFairValueModel::BBO;
-    int               targetBasePosition            = 1;
+    double            targetBasePosition            = decimal_cast<1>("1.0").getAsDouble();
     int               targetBasePositionPercentage  = 50;
     double            positionDivergence            = decimal_cast<1>("0.9").getAsDouble();
     int               positionDivergencePercentage  = 21;
@@ -45,7 +45,7 @@ namespace K {
     int               sopWidthMultiplier            = 2;
     int               delayAPI                      = 0;
     bool              cancelOrdersAuto              = false;
-    int               cleanPongsAuto                = 0;
+    double            cleanPongsAuto                = decimal_cast<1>("0.0").getAsDouble();
     double            profitHourInterval            = decimal_cast<1>("0.5").getAsDouble();
     bool              audio                         = false;
     int               delayUI                       = 7;
@@ -119,7 +119,7 @@ namespace K {
     if (!j.at("bullets").is_null()) k.bullets = j.at("bullets").get<int>();
     if (!j.at("range").is_null()) k.range = j.at("range").get<double>();
     if (!j.at("fvModel").is_null()) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
-    if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<int>();
+    if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<double>();
     if (!j.at("targetBasePositionPercentage").is_null()) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
     if (!j.at("positionDivergence").is_null()) k.positionDivergence = j.at("positionDivergence").get<double>();
     if (!j.at("positionDivergencePercentage").is_null()) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
@@ -143,7 +143,7 @@ namespace K {
     if (!j.at("sopWidthMultiplier").is_null()) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
     if (!j.at("delayAPI").is_null()) k.delayAPI = j.at("delayAPI").get<int>();
     if (!j.at("cancelOrdersAuto").is_null()) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
-    if (!j.at("cleanPongsAuto").is_null()) k.cleanPongsAuto = j.at("cleanPongsAuto").get<int>();
+    if (!j.at("cleanPongsAuto").is_null()) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
     if (!j.at("profitHourInterval").is_null()) k.profitHourInterval = j.at("profitHourInterval").get<double>();
     if (!j.at("audio").is_null()) k.audio = j.at("audio").get<bool>();
     if (!j.at("delayUI").is_null()) k.delayUI = j.at("delayUI").get<int>();

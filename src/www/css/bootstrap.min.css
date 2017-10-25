@@ -109,3 +109,4 @@ table.marketQuoting {font-size:12px;}
 .COINWIDGETCOM_BUTTON_BITCOIN img {display:none!important;}
 tr.chatbro_message td:nth-child(2),.chatbro_message_user_type {display:none!important;}
 tr.chatbro_message td:nth-child(3) {padding-top:0px!important;padding-bottom:0px!important;}
+tr.chatbro_message:last-child td:nth-child(3) {padding-bottom:7px!important;}
