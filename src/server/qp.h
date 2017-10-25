@@ -3,9 +3,9 @@
 
 namespace K {
   static struct Qp {
-    int               widthPing                     = 2;
+    double            widthPing                     = decimal_cast<8>("2").getAsDouble();
     double            widthPingPercentage           = decimal_cast<2>("0.25").getAsDouble();
-    int               widthPong                     = 2;
+    double            widthPong                     = decimal_cast<8>("2").getAsDouble();
     double            widthPongPercentage           = decimal_cast<2>("0.25").getAsDouble();
     bool              widthPercentage               = false;
     bool              bestWidth                     = true;
@@ -101,9 +101,9 @@ namespace K {
     };
   };
   static void from_json(const json& j, Qp& k) {
-    if (!j.at("widthPing").is_null()) k.widthPing = j.at("widthPing").get<int>();
+    if (!j.at("widthPing").is_null()) k.widthPing = j.at("widthPing").get<double>();
     if (!j.at("widthPingPercentage").is_null()) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
-    if (!j.at("widthPong").is_null()) k.widthPong = j.at("widthPong").get<int>();
+    if (!j.at("widthPong").is_null()) k.widthPong = j.at("widthPong").get<double>();
     if (!j.at("widthPongPercentage").is_null()) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
     if (!j.at("widthPercentage").is_null()) k.widthPercentage = j.at("widthPercentage").get<bool>();
     if (!j.at("bestWidth").is_null()) k.bestWidth = j.at("bestWidth").get<bool>();
