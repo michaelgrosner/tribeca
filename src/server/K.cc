@@ -17,7 +17,10 @@
 #include <vector>
 #include <map>
 
+using namespace std;
+
 #include "uv.h"
+#include "json.h"
 #include "sqlite3.h"
 #include "uWS/uWS.h"
 #include "curl/curl.h"
@@ -34,10 +37,6 @@
 #include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
 #include "quickfix/fix42/OrderCancelReject.h"
-
-using namespace std;
-
-#include "json.h"
 
 using namespace nlohmann;
 

@@ -20,7 +20,6 @@ namespace K {
                 argUser = "NULL",
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
-                argDatabase = "",
                 argCurrency = "NULL",
                 argTarget = "NULL",
                 argApikey = "NULL",
@@ -29,7 +28,9 @@ namespace K {
                 argPassphrase = "NULL",
                 argHttp = "NULL",
                 argWs = "NULL",
-                argWss = "NULL";
+                argWss = "NULL",
+                argDatabase = "",
+                argWhitelist = "";
   static double argEwmaShort = 0,
                 argEwmaMedium = 0,
                 argEwmaLong = 0;

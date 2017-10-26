@@ -25,24 +25,35 @@ namespace K {
           }
           uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
             sess->u++;
-            typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-            FN::logUIsess(sess->u, address.address);
+            string addr = webSocket->getAddress().address;
+            if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+            FN::logUIsess(sess->u, addr);
           });
           uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
             sess->u--;
-            typename uWS::WebSocket<uWS::SERVER>::Address address = webSocket->getAddress();
-            FN::logUIsess(sess->u, address.address);
+            string addr = webSocket->getAddress().address;
+            if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+            FN::logUIsess(sess->u, addr);
           });
           uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             string document;
+            stringstream content;
             string auth = req.getHeader("authorization").toString();
-            typename uWS::WebSocket<uWS::SERVER>::Address address = res->getHttpSocket()->getAddress();
-            if (uiNK64 != "" && auth == "") {
-              FN::log("UI", "authorization attempt from", address.address);
+            string addr = res->getHttpSocket()->getAddress().address;
+            if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+            lock_guard<mutex> lock(wsMutex);
+            if (argWhitelist != "" and argWhitelist.find(addr) == string::npos) {
+              FN::log("UI", "dropping gzip bomb on", addr);
+              content << ifstream("etc/bomb.gzip").rdbuf();
+              document = ("HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n");
+              document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
+              res->write(document.data(), document.length());
+            } else if (uiNK64 != "" && auth == "") {
+              FN::log("UI", "authorization attempt from", addr);
               document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
               res->write(document.data(), document.length());
             } else if (uiNK64 != "" && auth != uiNK64) {
-              FN::log("UI", "authorization failed from", address.address);
+              FN::log("UI", "authorization failed from", addr);
               document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
               res->write(document.data(), document.length());
             } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
@@ -53,7 +64,7 @@ namespace K {
               while ((n = path.find("..", n)) != string::npos) path.replace(n, 2, "");
               const string leaf = path.substr(path.find_last_of('.')+1);
               if (leaf == "/") {
-                FN::log("UI", "authorization success from", address.address);
+                FN::log("UI", "authorization success from", addr);
                 document += "Content-Type: text/html; charset=UTF-8\r\n";
                 url = "/index.html";
               } else if (leaf == "js") {
@@ -69,7 +80,6 @@ namespace K {
                 document += "Content-Type: audio/mpeg\r\n";
                 url = path;
               }
-              stringstream content;
               if (url.length() > 0) content << ifstream(FN::readlink("app/client").substr(3) + url).rdbuf();
               else {
                 struct timespec txxs;
@@ -84,12 +94,14 @@ namespace K {
                 }
               }
               document += "Content-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
-              lock_guard<mutex> lock(wsMutex);
               res->write(document.data(), document.length());
             }
           });
           uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-            if (length <= 1) return;
+            string addr = webSocket->getAddress().address;
+            if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+            if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length <= 1)
+              return;
             if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
               json reply = (*sess->cbSnap[message[1]])();
               lock_guard<mutex> lock(wsMutex);

@@ -21,6 +21,7 @@ namespace K {
             {"headless",     no_argument,       &argHeadless,      1},
             {"naked",        no_argument,       &argNaked,         1},
             {"autobot",      no_argument,       &argAutobot,       1},
+            {"whitelist",    required_argument, 0,               'L'},
             {"matryoshka",   required_argument, 0,               'k'},
             {"exchange",     required_argument, 0,               'e'},
             {"currency",     required_argument, 0,               'c'},
@@ -67,6 +68,7 @@ namespace K {
             case 's': argEwmaShort = stod(optarg); break;
             case 'm': argEwmaMedium = stod(optarg); break;
             case 'l': argEwmaLong = stod(optarg); break;
+            case 'L': argWhitelist = string(optarg); break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source," << '\n' << "feel free to hack both as you need." << '\n'
               << RGREEN << "This is non-free software: the exchange integrations are licensed" << '\n' << "by and under the law of my grandma, feel free to crack all." << '\n'
@@ -79,7 +81,9 @@ namespace K {
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << '\n'
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
-              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-P')." << '\n'
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-L' and '-P')." << '\n'
+              << FN::uiT() << RWHITE << "-L, --whitelist=IP       - IP or csv of IPs to allow UI connections," << '\n'
+              << FN::uiT() << RWHITE << "                           alien IPs will get a zip-bomb instead." << '\n'
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
               << FN::uiT() << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
