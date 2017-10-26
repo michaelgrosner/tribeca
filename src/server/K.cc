@@ -38,11 +38,9 @@
 using namespace std;
 
 #include "json.h"
-#include "_dec.h"
 #include "_b64.h"
 
 using namespace nlohmann;
-using namespace dec;
 
 #include "km.h"
 #include "fn.h"
