@@ -100,7 +100,7 @@ namespace K {
           uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-            if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length <= 1)
+            if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length < 2)
               return;
             if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
               json reply = (*sess->cbSnap[message[1]])();
