@@ -10,7 +10,7 @@ namespace K {
           + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
         if (sqlite3_open(argDatabase.data(), &db)) {
           FN::logErr("DB", sqlite3_errmsg(db));
-          exit(1);
+          exit(EXIT_SUCCESS);
         }
         FN::logDB(argDatabase);
       };
