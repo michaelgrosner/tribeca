@@ -269,6 +269,7 @@ namespace K {
             if (!qp.sellSizeMax) rawQuote.ask.size = fmin(qp.aprMultiplier*sellSize, fmin(totalBasePosition - pgTargetBasePos, baseAmount / 2));
           }
         }
+        else pgSideAPR = "Off";
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if (qp.quotingStdevProtection != mSTDEV::Off and mgStdevFV) {
           if (rawQuote.ask.price and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or pgSideAPR != "Sell"))
@@ -295,7 +296,6 @@ namespace K {
             );
           }
         }
-        else pgSideAPR = "Off";
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if (qp.mode == mQuotingMode::PingPong or QP::matchPings()) {
           if (rawQuote.ask.size and safetyBuyPing and (
