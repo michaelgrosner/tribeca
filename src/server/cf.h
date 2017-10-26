@@ -82,7 +82,7 @@ namespace K {
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
               << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-L' and '-P')." << '\n'
-              << FN::uiT() << RWHITE << "-L, --whitelist=IP       - IP or csv of IPs to allow UI connections," << '\n'
+              << FN::uiT() << RWHITE << "-L, --whitelist=IP       - set IP or csv of IPs to allow UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           alien IPs will get a zip-bomb instead." << '\n'
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
               << FN::uiT() << RWHITE << "-u, --user=WORD          - set allowed WORD as username for UI connections," << '\n'

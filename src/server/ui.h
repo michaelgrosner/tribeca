@@ -45,7 +45,7 @@ namespace K {
             if (argWhitelist != "" and argWhitelist.find(addr) == string::npos) {
               FN::log("UI", "dropping gzip bomb on", addr);
               content << ifstream("etc/bomb.gzip").rdbuf();
-              document = ("HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n");
+              document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
               document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
               res->write(document.data(), document.length());
             } else if (uiNK64 != "" && auth == "") {
