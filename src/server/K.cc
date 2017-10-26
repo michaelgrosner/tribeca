@@ -38,7 +38,6 @@
 using namespace std;
 
 #include "json.h"
-#include "_b64.h"
 
 using namespace nlohmann;
 
