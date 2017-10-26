@@ -24,5 +24,8 @@ Used on install to initialize `./K.sh` file, feel free to add your own hardcoded
 ### K-stunnel.conf
 To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
 
+### bomb.gzip
+Used by `--whitelist` argument to attempt to crash clients from alien IPs not whitelisted.
+
 ### without_mysql.m4.patch
 Used against libquickfix sources by `make dist`; no need to edit.
