@@ -722,7 +722,7 @@ namespace K {
         redrawwin(wLog);
         wrefresh(wLog);
       };
-      static void close_loop(uv_loop_t* loop) {
+      static void close(uv_loop_t* loop) {
         uv_walk(loop, close_walk_cb, NULL);
         uv_run(loop, UV_RUN_DEFAULT);
       };

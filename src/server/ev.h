@@ -49,9 +49,6 @@ namespace K {
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
-        gitReversedVersion();
-      };
-      static void gitReversedVersion() {
         FN::output("git fetch");
         string k = changelog();
         FN::logVer(k, count(k.begin(), k.end(), '\n'));

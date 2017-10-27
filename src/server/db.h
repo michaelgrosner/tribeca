@@ -6,14 +6,16 @@ namespace K {
   class DB {
     public:
       static void main() {
-        load();
+        if (sqlite3_open(argDatabase.data(), &db))
+          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
+        FN::logDB(argDatabase);
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
-          string("CREATE TABLE ").append(string(1, (char)k)).append("("                 \
-          "id    INTEGER  PRIMARY KEY  AUTOINCREMENT        NOT NULL," \
-          "json  BLOB                                       NOT NULL," \
+          string("CREATE TABLE ").append(string(1, (char)k)).append("("                                   \
+          "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL," \
+          "json  BLOB                                                                          NOT NULL," \
           "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);").data(),
           NULL, NULL, &zErrMsg
         );
@@ -47,13 +49,6 @@ namespace K {
         return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
-      static void load() {
-        if (argDatabase == "") argDatabase = string("/data/db/K.")
-          + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
-        if (sqlite3_open(argDatabase.data(), &db))
-          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
-        FN::logDB(argDatabase);
-      };
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) j->append(argv[i]).append(",");

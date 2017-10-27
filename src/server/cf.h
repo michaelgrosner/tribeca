@@ -144,7 +144,27 @@ namespace K {
           cout << '\n';
           exit(EXIT_SUCCESS);
         }
-        load();
+        if (argExchange == "") {
+          cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
+          exit(EXIT_SUCCESS);
+        }
+        if (argDebug) {
+          argDebugEvents = 1;
+          argDebugOrders = 1;
+          argDebugQuotes = 1;
+        }
+        if (!argColors) {
+          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
+          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
+          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
+          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
+        }
+        if (argDatabase == "")
+          argDatabase = string("/data/db/K.")
+            + to_string((int)cfExchange())
+            + '.' + cfBase()
+            + '.' + cfQuote() + ".db";
+        if (!argNaked) FN::screen();
       };
       static void api(uWS::Hub *hub) {
         gw = Gw::E(cfExchange());
@@ -163,6 +183,7 @@ namespace K {
         cfExchange(gw->config());
         gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
+    private:
       static string cfBase() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
@@ -185,22 +206,6 @@ namespace K {
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
         FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
-      };
-    private:
-      static void load() {
-        if (argDebug) {
-          argDebugEvents = 1;
-          argDebugOrders = 1;
-          argDebugQuotes = 1;
-        }
-        if (!argColors) {
-          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
-          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
-          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
-          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
-        }
-        if (!argNaked) FN::screen();
-        if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
       };
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {

@@ -128,13 +128,13 @@ namespace K {
           uv_timer_stop(&tCalcs);
           uv_timer_stop(&tStart);
           uv_timer_stop(&tDelay);
+          uiGroup->close();
           gw->close();
           gw->gwGroup->close();
           FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
           gW->cancelAll();
           FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-          uiGroup->close();
-          FN::close_loop(hub.getLoop());
+          FN::close(hub.getLoop());
           hub.getLoop()->destroy();
         }
         EV::end(code);
