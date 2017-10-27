@@ -20,6 +20,24 @@ namespace K {
     public:
       static void main() {
         load();
+        waitTime();
+        waitData();
+        waitUser();
+      }
+    private:
+      static void load() {
+        qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
+        qeQuotingMode[mQuotingMode::Join] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::InverseJoin] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::InverseTop] = &calcInverseTopOfMarket;
+        qeQuotingMode[mQuotingMode::PingPong] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::Boomerang] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
+        qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
+      };
+      static void waitTime() {
         uv_timer_init(hub.getLoop(), &tStart);
         uv_timer_init(hub.getLoop(), &tCalcs);
         uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
@@ -30,6 +48,8 @@ namespace K {
             calcQuote();
           } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
         }, 1e+3, 1e+3);
+      };
+      static void waitData() {
         ev_gwConnectButton = [](mConnectivity k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE v_gwConnectButton");
           gwQuotingState_ = k;
@@ -64,20 +84,9 @@ namespace K {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_pgTargetBasePosition");
           calcQuote();
         };
+      };
+      static void waitUser() {
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
-      }
-    private:
-      static void load() {
-        qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
-        qeQuotingMode[mQuotingMode::Join] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::InverseJoin] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::InverseTop] = &calcInverseTopOfMarket;
-        qeQuotingMode[mQuotingMode::PingPong] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::Boomerang] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
-        qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       static json onSnap() {
         return { qeStatus };

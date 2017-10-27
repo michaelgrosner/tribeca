@@ -6,11 +6,7 @@ namespace K {
   class DB {
     public:
       static void main() {
-        if (argDatabase == "") argDatabase = string("/data/db/K.")
-          + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
-        if (sqlite3_open(argDatabase.data(), &db))
-          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
-        FN::logDB(argDatabase);
+        load();
       };
       static json load(uiTXT k) {
         char* zErrMsg = 0;
@@ -51,6 +47,13 @@ namespace K {
         return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
+      static void load() {
+        if (argDatabase == "") argDatabase = string("/data/db/K.")
+          + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
+        if (sqlite3_open(argDatabase.data(), &db))
+          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
+        FN::logDB(argDatabase);
+      };
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) j->append(argv[i]).append(",");

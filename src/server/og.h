@@ -9,19 +9,8 @@ namespace K {
     public:
       static void main() {
         load();
-        ev_gwDataOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
-          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
-          updateOrderState(k);
-        };
-        UI::uiSnap(uiTXT::Trades, &onSnapTrades);
-        UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
-        UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
-        UI::uiHand(uiTXT::CancelOrder, &onHandCancelOrder);
-        UI::uiHand(uiTXT::CancelAllOrders, &onHandCancelAllOrders);
-        UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
-        UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
-        UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
+        waitData();
+        waitUser();
       };
       static void allOrdersDelete(string oI, string oE) {
         ogMutex.lock();
@@ -85,6 +74,23 @@ namespace K {
               (*it)["loadedFromDB"].get<bool>()
             ));
         FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
+      };
+      static void waitData() {
+        ev_gwDataOrder = [](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
+          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
+          updateOrderState(k);
+        };
+      };
+      static void waitUser() {
+        UI::uiSnap(uiTXT::Trades, &onSnapTrades);
+        UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
+        UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
+        UI::uiHand(uiTXT::CancelOrder, &onHandCancelOrder);
+        UI::uiHand(uiTXT::CancelAllOrders, &onHandCancelAllOrders);
+        UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
+        UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
+        UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
       };
       static json onSnapTrades() {
         json k;

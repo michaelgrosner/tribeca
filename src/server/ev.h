@@ -33,11 +33,7 @@ namespace K {
     public:
       static void main() {
         evExit = happyEnding;
-        signal(SIGINT, quit);
-        signal(SIGUSR1, wtf);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        gitReversedVersion();
+        load();
       };
       static void run(uWS::Hub *hub) {
         hub->run();
@@ -48,6 +44,13 @@ namespace K {
         exit(code);
       };
     private:
+      static void load() {
+        signal(SIGINT, quit);
+        signal(SIGUSR1, wtf);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
+        gitReversedVersion();
+      };
       static void gitReversedVersion() {
         FN::output("git fetch");
         string k = changelog();

@@ -594,8 +594,10 @@ namespace K {
         endwin();
       };
       static void screen() {
-        if ((wBorder = initscr()) == NULL)
-          logExit("NCURSES", "Unable to initialize ncurses", EXIT_SUCCESS);
+        if ((wBorder = initscr()) == NULL) {
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+          exit(EXIT_SUCCESS);
+        }
         if (argColors) start_color();
         use_default_colors();
         cbreak();

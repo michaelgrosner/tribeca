@@ -27,17 +27,8 @@ namespace K {
     public:
       static void main() {
         load();
-        ev_gwDataTrade = [](mTrade k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
-          tradeUp(k);
-        };
-        ev_gwDataLevels = [](mLevels k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
-          levelUp(k);
-        };
-        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
-        UI::uiSnap(uiTXT::FairValue, &onSnapFair);
-        UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
+        waitData();
+        waitUser();
       };
       static bool empty() {
         return (!mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size());
@@ -100,6 +91,21 @@ namespace K {
         FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
         FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
         FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+      };
+      static void waitData() {
+        ev_gwDataTrade = [](mTrade k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
+          tradeUp(k);
+        };
+        ev_gwDataLevels = [](mLevels k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
+          levelUp(k);
+        };
+      };
+      static void waitUser() {
+        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
+        UI::uiSnap(uiTXT::FairValue, &onSnapFair);
+        UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
       };
       static json onSnapTrade() {
         json k;

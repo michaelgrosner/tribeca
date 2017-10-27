@@ -12,22 +12,8 @@ namespace K {
     public:
       static void main() {
         load();
-        ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
-          calcWallet(k);
-        };
-        ev_ogOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
-          calcWalletAfterOrder(k);
-          FN::screen_refresh();
-        };
-        ev_mgTargetPosition = []() {
-          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
-          calcTargetBasePos();
-        };
-        UI::uiSnap(uiTXT::Position, &onSnapPos);
-        UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
-        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
+        waitData();
+        waitUser();
       };
       static void calcSafety() {
         if (empty() or !mgFairValue) return;
@@ -85,6 +71,26 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
+      };
+      static void waitData() {
+        ev_gwDataWallet = [](mWallet k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
+          calcWallet(k);
+        };
+        ev_ogOrder = [](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
+          calcWalletAfterOrder(k);
+          FN::screen_refresh();
+        };
+        ev_mgTargetPosition = []() {
+          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
+          calcTargetBasePos();
+        };
+      };
+      static void waitUser() {
+        UI::uiSnap(uiTXT::Position, &onSnapPos);
+        UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
+        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
       };
       static json onSnapPos() {
         lock_guard<mutex> lock(pgMutex);

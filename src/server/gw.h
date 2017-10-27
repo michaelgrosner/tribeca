@@ -11,31 +11,10 @@ namespace K {
     public:
       static void main() {
         evExit = happyEnding;
-        if (argAutobot) gwAutoStart = mConnectivity::Connected;
-        uv_timer_init(hub.getLoop(), &tWallet);
-        uv_timer_start(&tWallet, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
-          gw->wallet();
-        }, 0, 15e+3);
-        uv_timer_init(hub.getLoop(), &tCancel);
-        uv_timer_start(&tCancel, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
-          if (qp.cancelOrdersAuto)
-            gW->cancelAll();
-        }, 0, 3e+5);
-        ev_gwConnectOrder = [](mConnectivity k) {
-          _gwCon_(mGatewayType::OrderEntry, k);
-        };
-        ev_gwConnectMarket = [](mConnectivity k) {
-          _gwCon_(mGatewayType::MarketData, k);
-          if (k == mConnectivity::Disconnected)
-            ev_gwDataLevels(mLevels());
-        };
-        gw->levels();
-        UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
-        UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
-        UI::uiSnap(uiTXT::ActiveState, &onSnapState);
-        UI::uiHand(uiTXT::ActiveState, &onHandState);
+        load();
+        waitTime();
+        waitData();
+        waitUser();
         EV::run(&hub);
       };
       static void gwBookUp(mConnectivity k) {
@@ -57,6 +36,39 @@ namespace K {
         ev_gwDataLevels(k);
       };
     private:
+      static void load() {
+        if (argAutobot) gwAutoStart = mConnectivity::Connected;
+      };
+      static void waitTime() {
+        uv_timer_init(hub.getLoop(), &tWallet);
+        uv_timer_start(&tWallet, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
+          gw->wallet();
+        }, 0, 15e+3);
+        uv_timer_init(hub.getLoop(), &tCancel);
+        uv_timer_start(&tCancel, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
+          if (qp.cancelOrdersAuto)
+            gW->cancelAll();
+        }, 0, 3e+5);
+      };
+      static void waitData() {
+        ev_gwConnectOrder = [](mConnectivity k) {
+          _gwCon_(mGatewayType::OrderEntry, k);
+        };
+        ev_gwConnectMarket = [](mConnectivity k) {
+          _gwCon_(mGatewayType::MarketData, k);
+          if (k == mConnectivity::Disconnected)
+            ev_gwDataLevels(mLevels());
+        };
+        gw->levels();
+      };
+      static void waitUser() {
+        UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
+        UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
+        UI::uiSnap(uiTXT::ActiveState, &onSnapState);
+        UI::uiHand(uiTXT::ActiveState, &onHandState);
+      };
       static json onSnapProduct() {
         return {{
           {"exchange", (int)gw->exchange},

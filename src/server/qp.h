@@ -153,8 +153,7 @@ namespace K {
     public:
       static void main() {
         load();
-        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
-        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
+        waitUser();
       }
       static bool matchPings() {
         return qp.mode == mQuotingMode::Boomerang
@@ -168,6 +167,10 @@ namespace K {
           qp = k.at(0);
         UI::delay(qp.delayUI);
         FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
+      };
+      static void waitUser() {
+        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
+        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
       };
       static json onSnap() {
         return { qp };

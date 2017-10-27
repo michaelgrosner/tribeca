@@ -144,19 +144,7 @@ namespace K {
           cout << '\n';
           exit(EXIT_SUCCESS);
         }
-        if (argDebug) {
-          argDebugEvents = 1;
-          argDebugOrders = 1;
-          argDebugQuotes = 1;
-        }
-        if (!argColors) {
-          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
-          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
-          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
-          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
-        }
-        if (!argNaked) FN::screen();
-        if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
+        load();
       };
       static void api(uWS::Hub *hub) {
         gw = Gw::E(cfExchange());
@@ -199,6 +187,21 @@ namespace K {
         FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
       };
     private:
+      static void load() {
+        if (argDebug) {
+          argDebugEvents = 1;
+          argDebugOrders = 1;
+          argDebugQuotes = 1;
+        }
+        if (!argColors) {
+          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
+          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
+          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
+          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
+        }
+        if (!argNaked) FN::screen();
+        if (argExchange == "") FN::logWar("CF", "Unable to read mandatory configurations, reading ENVIRONMENT vars instead");
+      };
       static void cfExchange(mExchange e) {
         if (e == mExchange::Coinbase) {
           system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
