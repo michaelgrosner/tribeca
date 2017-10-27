@@ -391,6 +391,10 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
+      static void logExit(string k, string s, int code) {
+        logErr(k, s);
+        evExit(code);
+      };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";
@@ -590,10 +594,8 @@ namespace K {
         endwin();
       };
       static void screen() {
-        if ((wBorder = initscr()) == NULL) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
-          exit(EXIT_SUCCESS);
-        }
+        if ((wBorder = initscr()) == NULL)
+          logExit("NCURSES", "Unable to initialize ncurses", EXIT_SUCCESS);
         if (argColors) start_color();
         use_default_colors();
         cbreak();

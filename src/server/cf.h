@@ -178,13 +178,13 @@ namespace K {
       static string cfBase() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR."); exit(EXIT_SUCCESS); }
+        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
         return FN::S2u(k);
       };
       static string cfQuote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
-        if (k == k_) { FN::logErr("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR"); exit(EXIT_SUCCESS); }
+        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
         return FN::S2u(k);
       };
       static mExchange cfExchange() {
@@ -196,8 +196,7 @@ namespace K {
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
-        FN::logErr("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information");
-        exit(EXIT_SUCCESS);
+        FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
       };
     private:
       static void cfExchange(mExchange e) {
@@ -253,10 +252,7 @@ namespace K {
         }
         if (gw->minTick and gw->minSize)
           FN::log(string("GW ") + argExchange, "allows client IP");
-        else {
-          FN::logErr("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"");
-          exit(EXIT_FAILURE);
-        }
+        else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'
           << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'

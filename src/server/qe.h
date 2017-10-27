@@ -405,7 +405,7 @@ namespace K {
       };
       static mQuote quote(double widthPing, double buySize, double sellSize) {
         mQuotingMode k = qp.mode;
-        if (qeQuotingMode.find(k) == qeQuotingMode.end()) { FN::logErr("QE", "Invalid quoting mode"); exit(EXIT_FAILURE); }
+        if (qeQuotingMode.find(k) == qeQuotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
         return (*qeQuotingMode[k])(widthPing, buySize, sellSize);
       };
       static mQuote quoteAtTopOfMarket() {

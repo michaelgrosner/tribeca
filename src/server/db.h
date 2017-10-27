@@ -8,10 +8,8 @@ namespace K {
       static void main() {
         if (argDatabase == "") argDatabase = string("/data/db/K.")
           + to_string((int)CF::cfExchange()) + '.' + CF::cfBase() + '.' + CF::cfQuote() + ".db";
-        if (sqlite3_open(argDatabase.data(), &db)) {
-          FN::logErr("DB", sqlite3_errmsg(db));
-          exit(EXIT_SUCCESS);
-        }
+        if (sqlite3_open(argDatabase.data(), &db))
+          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
         FN::logDB(argDatabase);
       };
       static json load(uiTXT k) {

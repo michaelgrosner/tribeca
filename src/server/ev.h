@@ -58,7 +58,7 @@ namespace K {
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << '\n';
-        end(EXIT_FAILURE);
+        end(code);
       };
       static void quit(int sig) {
         FN::screen_quit();

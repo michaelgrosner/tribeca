@@ -117,14 +117,10 @@ namespace K {
           ) uiPrtcl = "HTTPS";
           else if (hub.listen(argPort, nullptr, 0, uiGroup))
             uiPrtcl = "HTTP";
-          else {
-            FN::logErr("IU", string("Use another UI port number, ")
-              + to_string(argPort) + " seems already in use by:\n"
-              + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort))
-              + "\n"
-            );
-            exit(EXIT_SUCCESS);
-          }
+          else FN::logExit("IU", string("Use another UI port number, ")
+            + to_string(argPort) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)),
+            EXIT_SUCCESS);
           FN::logUI(uiPrtcl, argPort);
           uv_timer_init(hub.getLoop(), &tDelay);
           uv_timer_start(&tDelay, [](uv_timer_t *handle) {
@@ -144,20 +140,14 @@ namespace K {
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
           sess->cbSnap[(char)k] = cb;
-        else {
-          FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event");
-          exit(EXIT_SUCCESS);
-        }
+        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       static void uiHand(uiTXT k, uiMsg_ cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
           sess->cbMsg[(char)k] = cb;
-        else {
-          FN::logWar("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event");
-          exit(EXIT_SUCCESS);
-        }
+        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       static void uiSend(uiTXT k, json o, bool hold = false) {
         if (argHeadless) return;
