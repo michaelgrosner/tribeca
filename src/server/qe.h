@@ -11,6 +11,7 @@ namespace K {
               qeAskStatus = mQuoteState::MissingData;
   typedef mQuote (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
+  
   map<mSide, mLevel> qeNextQuote;
   bool qeNextIsPong;
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
@@ -22,11 +23,8 @@ namespace K {
         qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
         qeQuotingMode[mQuotingMode::Join] = &calcJoinMarket;
-        qeQuotingMode[mQuotingMode::InverseJoin] = &calcTInverseJoinMarket;
-        qeQuotingMode[mQuotingMode::InverseTop] = &calcJoinInverseTopOfMarket;
-        qeQuotingMode[mQuotingMode::PingPong] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::Boomerang] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
+        qeQuotingMode[mQuotingMode::InverseJoin] = &calcInverseJoinMarket;
+        qeQuotingMode[mQuotingMode::InverseTop] = &calcInverseTopOfMarket;
         qeQuotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
@@ -300,7 +298,7 @@ namespace K {
           }
         }
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
-        if (qp.mode == mQuotingMode::PingPong or QP::matchPings()) {
+        if (qp.safety == mQuotingSafety::Boomerang::PingPong or QP::matchPings()) {
           if (rawQuote.ask.size and safetyBuyPing and (
             (qp.aggressivePositionRebalancing == mAPR::SizeWidth and pgSideAPR == "Sell")
             or qp.pongAt == mPongAt::ShortPingAggressive
@@ -353,7 +351,7 @@ namespace K {
           qeAskStatus = mQuoteState::DepletedFunds;
           FN::logWar("QE", string("SELL quote ignored: depleted ") + gw->base + " balance");
         }
-        if ((qp.mode == mQuotingMode::PingPong or QP::matchPings())
+        if ((qp.safety == mQuotingSafety::Boomerang::PingPong or QP::matchPings())
           and !safetyBuyPing and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::BidSide or qp.pingAt == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
         )) {
@@ -369,7 +367,7 @@ namespace K {
           rawQuote.bid.size = 0;
         }
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
-        if ((qp.mode == mQuotingMode::PingPong or QP::matchPings())
+        if ((qp.safety == mQuotingSafety::Boomerang::PingPong or QP::matchPings())
           and !safetySellPong and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::AskSide or qp.pingAt == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
         )) {
@@ -538,7 +536,7 @@ namespace K {
         bool eq = false;
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (it->first == q.price) { eq = true; break; }
-        if (qp.mode != mQuotingMode::AK47) {
+        if (qp.mode != mQuotingSafety::AK47) {
           if (orderSide.size()) {
             if (!eq) modify(side, q, isPong);
           } else start(side, q, isPong);
@@ -558,7 +556,7 @@ namespace K {
         return orderSide;
       };
       static void modify(mSide side, mLevel q, bool isPong) {
-        if (qp.mode == mQuotingMode::AK47)
+        if (qp.safety == mQuotingSafety::Boomerang::AK47)
           stopWorstQuote(side);
         else stopAllQuotes(side);
         start(side, q, isPong);
@@ -589,12 +587,12 @@ namespace K {
         bool eq = false;
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (price == it->first
-            or (qp.mode == mQuotingMode::AK47
+            or (qp.safety == mQuotingSafety::Boomerang::AK47
               and (price + (qp.range - 1e-2)) >= it->first
               and (price - (qp.range - 1e-2)) <= it->first)
           ) { eq = true; break; }
         if (eq) {
-          if (qp.mode == mQuotingMode::AK47 and orderSide.size()<(size_t)qp.bullets) {
+          if (qp.safety == mQuotingSafety::Boomerang::AK47 and orderSide.size()<(size_t)qp.bullets) {
             double incPrice = (qp.range * (side == mSide::Bid ? -1 : 1 ));
             double oldPrice = 0;
             unsigned int len = 0;
