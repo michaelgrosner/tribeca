@@ -21,9 +21,9 @@ namespace K {
       void load() {
         qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
-        qeQuotingMode[mQuotingMode::Join] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::InverseJoin] = &calcTopOfMarket;
-        qeQuotingMode[mQuotingMode::InverseTop] = &calcInverseTopOfMarket;
+        qeQuotingMode[mQuotingMode::Join] = &calcJoinMarket;
+        qeQuotingMode[mQuotingMode::InverseJoin] = &calcTInverseJoinMarket;
+        qeQuotingMode[mQuotingMode::InverseTop] = &calcJoinInverseTopOfMarket;
         qeQuotingMode[mQuotingMode::PingPong] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Boomerang] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::AK47] = &calcTopOfMarket;
@@ -418,14 +418,35 @@ namespace K {
           ? mgLevelsFilter.asks.at(0) : mgLevelsFilter.asks.at(mgLevelsFilter.asks.size()>1?1:0);
         return mQuote(topBid, topAsk);
       };
+      static mQuote calcJoinMarket(double widthPing, double buySize, double sellSize) {
+        mQuote k = quoteAtTopOfMarket();
+        k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
+        k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.bid.size = buySize;
+        k.ask.size = sellSize;
+        return k;
+      };
       static mQuote calcTopOfMarket(double widthPing, double buySize, double sellSize) {
         mQuote k = quoteAtTopOfMarket();
-        if (qp.mode != mQuotingMode::Join and k.bid.size > 0.2)
-          k.bid.price = k.bid.price + gw->minTick;
+        if (k.bid.size > 0.2) k.bid.price = k.bid.price + gw->minTick;
+        if (k.ask.size > 0.2) k.ask.price = k.ask.price - gw->minTick;
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
-        if (qp.mode != mQuotingMode::Join and k.ask.size > 0.2)
-          k.ask.price = k.ask.price - gw->minTick;
         k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.bid.size = buySize;
+        k.ask.size = sellSize;
+        return k;
+      };
+      static mQuote calcInverseJoinMarket(double widthPing, double buySize, double sellSize) {
+        mQuote k = quoteAtTopOfMarket();
+        double mktWidth = abs(k.ask.price - k.bid.price);
+        if (mktWidth > widthPing) {
+          k.ask.price = k.ask.price + widthPing;
+          k.bid.price = k.bid.price - widthPing;
+        }
+        if (mktWidth < (2.0 * widthPing / 3.0)) {
+          k.ask.price = k.ask.price + widthPing / 4.0;
+          k.bid.price = k.bid.price - widthPing / 4.0;
+        }
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;
@@ -437,10 +458,8 @@ namespace K {
           k.ask.price = k.ask.price + widthPing;
           k.bid.price = k.bid.price - widthPing;
         }
-        if (qp.mode == mQuotingMode::InverseTop) {
-          if (k.bid.size > .2) k.bid.price = k.bid.price + gw->minTick;
-          if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;
-        }
+        if (k.bid.size > .2) k.bid.price = k.bid.price + gw->minTick;
+        if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;  
         if (mktWidth < (2.0 * widthPing / 3.0)) {
           k.ask.price = k.ask.price + widthPing / 4.0;
           k.bid.price = k.bid.price - widthPing / 4.0;
@@ -449,6 +468,7 @@ namespace K {
         k.ask.size = sellSize;
         return k;
       };
+
       static mQuote calcMidOfMarket(double widthPing, double buySize, double sellSize) {
         return mQuote(
           mLevel(fmax(mgFairValue - widthPing, 0), buySize),
