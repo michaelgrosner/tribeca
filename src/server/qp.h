@@ -41,7 +41,7 @@ namespace K {
     int               longEwmaPeriods               = 200;
     int               mediumEwmaPeriods             = 100;
     int               shortEwmaPeriods              = 50;
-    int               aprMultiplier                 = 2;
+    double            aprMultiplier                 = 2;
     int               sopWidthMultiplier            = 2;
     int               delayAPI                      = 0;
     bool              cancelOrdersAuto              = false;
@@ -139,7 +139,7 @@ namespace K {
     if (!j.at("longEwmaPeriods").is_null()) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
     if (!j.at("mediumEwmaPeriods").is_null()) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
     if (!j.at("shortEwmaPeriods").is_null()) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
-    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<int>();
+    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<double>();
     if (!j.at("sopWidthMultiplier").is_null()) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
     if (!j.at("delayAPI").is_null()) k.delayAPI = j.at("delayAPI").get<int>();
     if (!j.at("cancelOrdersAuto").is_null()) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
