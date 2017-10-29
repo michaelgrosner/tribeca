@@ -5,13 +5,49 @@ namespace K {
   vector<mTrade> tradesMemory;
   vector<string> toCancel;
   map<string, string> allOrdersIds;
-  class OG {
-    public:
-      static void main() {
-        load();
-        waitData();
-        waitUser();
+  class OG: public Klass {
+    protected:
+      void load() {
+        json k = DB::load(uiTXT::Trades);
+        if (k.size())
+          for (json::iterator it = k.begin(); it != k.end(); ++it)
+            tradesMemory.push_back(mTrade(
+              (*it)["tradeId"].get<string>(),
+              (mExchange)(*it)["exchange"].get<int>(),
+              mPair((*it)["/pair/base"_json_pointer].get<string>(), (*it)["/pair/quote"_json_pointer].get<string>()),
+              (*it)["price"].get<double>(),
+              (*it)["quantity"].get<double>(),
+              (mSide)(*it)["side"].get<int>(),
+              (*it)["time"].get<unsigned long>(),
+              (*it)["value"].get<double>(),
+              (*it)["Ktime"].get<unsigned long>(),
+              (*it)["Kqty"].get<double>(),
+              (*it)["Kprice"].get<double>(),
+              (*it)["Kvalue"].get<double>(),
+              (*it)["Kdiff"].get<double>(),
+              (*it)["feeCharged"].get<double>(),
+              (*it)["loadedFromDB"].get<bool>()
+            ));
+        FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
       };
+      void waitData() {
+        ev_gwDataOrder = [](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
+          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
+          updateOrderState(k);
+        };
+      };
+      void waitUser() {
+        UI::uiSnap(uiTXT::Trades, &onSnapTrades);
+        UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
+        UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
+        UI::uiHand(uiTXT::CancelOrder, &onHandCancelOrder);
+        UI::uiHand(uiTXT::CancelAllOrders, &onHandCancelAllOrders);
+        UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
+        UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
+        UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
+      };
+    public:
       static void allOrdersDelete(string oI, string oE) {
         ogMutex.lock();
         map<string, mOrder>::iterator it = allOrders.find(oI);
@@ -52,46 +88,6 @@ namespace K {
         gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
     private:
-      static void load() {
-        json k = DB::load(uiTXT::Trades);
-        if (k.size())
-          for (json::iterator it = k.begin(); it != k.end(); ++it)
-            tradesMemory.push_back(mTrade(
-              (*it)["tradeId"].get<string>(),
-              (mExchange)(*it)["exchange"].get<int>(),
-              mPair((*it)["/pair/base"_json_pointer].get<string>(), (*it)["/pair/quote"_json_pointer].get<string>()),
-              (*it)["price"].get<double>(),
-              (*it)["quantity"].get<double>(),
-              (mSide)(*it)["side"].get<int>(),
-              (*it)["time"].get<unsigned long>(),
-              (*it)["value"].get<double>(),
-              (*it)["Ktime"].get<unsigned long>(),
-              (*it)["Kqty"].get<double>(),
-              (*it)["Kprice"].get<double>(),
-              (*it)["Kvalue"].get<double>(),
-              (*it)["Kdiff"].get<double>(),
-              (*it)["feeCharged"].get<double>(),
-              (*it)["loadedFromDB"].get<bool>()
-            ));
-        FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
-      };
-      static void waitData() {
-        ev_gwDataOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
-          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
-          updateOrderState(k);
-        };
-      };
-      static void waitUser() {
-        UI::uiSnap(uiTXT::Trades, &onSnapTrades);
-        UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
-        UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
-        UI::uiHand(uiTXT::CancelOrder, &onHandCancelOrder);
-        UI::uiHand(uiTXT::CancelAllOrders, &onHandCancelAllOrders);
-        UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
-        UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
-        UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
-      };
       static json onSnapTrades() {
         json k;
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {

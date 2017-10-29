@@ -149,29 +149,28 @@ namespace K {
     if (!j.at("delayUI").is_null()) k.delayUI = j.at("delayUI").get<int>();
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
   };
-  class QP {
+  class QP: public Klass {
+    protected:
+      void load() {
+        json k = DB::load(uiTXT::QuotingParametersChange);
+        if (k.size())
+          qp = k.at(0);
+        FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
+      };
+      void waitUser() {
+        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
+        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
+      };
+      void run() {
+        UI::delay(qp.delayUI);
+      };
     public:
-      static void main() {
-        load();
-        waitUser();
-      }
       static bool matchPings() {
         return qp.mode == mQuotingMode::Boomerang
             or qp.mode == mQuotingMode::HamelinRat
             or qp.mode == mQuotingMode::AK47;
       };
     private:
-      static void load() {
-        json k = DB::load(uiTXT::QuotingParametersChange);
-        if (k.size())
-          qp = k.at(0);
-        UI::delay(qp.delayUI);
-        FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
-      };
-      static void waitUser() {
-        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
-        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
-      };
       static json onSnap() {
         return { qp };
       };

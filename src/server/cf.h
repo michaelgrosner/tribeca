@@ -4,9 +4,9 @@
 namespace K {
   static Gw *gw,
             *gW;
-  class CF {
-    public:
-      static void main(int argc, char** argv) {
+  class CF: public Klass {
+    protected:
+      void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
         int k;
         while (true) {
@@ -164,9 +164,9 @@ namespace K {
             + to_string((int)cfExchange())
             + '.' + cfBase()
             + '.' + cfQuote() + ".db";
-        if (!argNaked) FN::screen();
       };
-      static void api(uWS::Hub *hub) {
+      void run() {
+        if (!argNaked) FN::screen();
         gw = Gw::E(cfExchange());
         gw->name = argExchange;
         gw->base = cfBase();
@@ -178,10 +178,6 @@ namespace K {
         gw->http = argHttp;
         gw->ws = argWss;
         gw->wS = argWs;
-        gw->hub = hub;
-        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
-        cfExchange(gw->config());
-        gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
     private:
       static string cfBase() {
@@ -206,70 +202,6 @@ namespace K {
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k == "null") return mExchange::Null;
         FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
-      };
-      static void cfExchange(mExchange e) {
-        if (e == mExchange::Coinbase) {
-          system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
-          system("stunnel etc/K-stunnel.conf");
-          json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
-          gw->minTick = stod(k.value("quote_increment", "0"));
-          gw->minSize = stod(k.value("base_min_size", "0"));
-        } else if (e == mExchange::HitBtc) {
-          json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
-          if (k.find("symbols") != k.end())
-            for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
-              if (it->value("symbol", "") == gw->symbol) {
-                gw->minTick = stod(it->value("step", "0"));
-                gw->minSize = stod(it->value("lot", "0"));
-                break;
-              }
-        } else if (e == mExchange::Bitfinex) {
-          json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
-          if (k.find("last_price") != k.end()) {
-            stringstream price_;
-            price_ << scientific << stod(k.value("last_price", "0"));
-            string _price_ = price_.str();
-            for (string::iterator it=_price_.begin(); it!=_price_.end();)
-              if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e").append(to_string(stod(_price_)-4)));
-            os >> gw->minTick;
-          }
-          k = FN::wJet(string(gw->http).append("/symbols_details"));
-          for (json::iterator it=k.begin(); it!=k.end();++it)
-            if (it->value("pair", "") == gw->symbol)
-              gw->minSize = stod(it->value("minimum_order_size", "0"));
-        } else if (e == mExchange::OkCoin) {
-          gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
-          gw->minSize = 0.01;
-        } else if (e == mExchange::Korbit) {
-          json k = FN::wJet(string(gw->http).append("/constants"));
-          if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
-            gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
-            gw->minSize = 0.015;
-          }
-        } else if (e == mExchange::Poloniex) {
-          json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
-          if (k.find(gw->symbol) != k.end()) {
-            istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
-            os >> gw->minTick;
-            gw->minSize = 0.01;
-          }
-        } else if (e == mExchange::Null) {
-          gw->minTick = 0.01;
-          gw->minSize = 0.01;
-        }
-        if (gw->minTick and gw->minSize)
-          FN::log(string("GW ") + argExchange, "allows client IP");
-        else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
-        stringstream ss;
-        ss << setprecision(8) << fixed << '\n'
-          << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
-          << "- pair: " << gw->symbol << '\n'
-          << "- minTick: " << gw->minTick << '\n'
-          << "- minSize: " << gw->minSize << '\n'
-          << "- makeFee: " << gw->makeFee << '\n'
-          << "- takeFee: " << gw->takeFee;
-        FN::log(string("GW ") + argExchange + ":", ss.str());
       };
   };
 }

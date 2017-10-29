@@ -15,9 +15,9 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = 98357295eb2929a2fa8341f871cb545845fb1e5d
+KLIB     = 1668d4fd5a16aa7522c5d12db479b9cb56d55544
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cc -pthread -rdynamic -DUSE_LIBUV               \
+  src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
@@ -81,7 +81,7 @@ help:
 	#  make cleandb      - remove databases            #
 	#                                                  #
 
-K: src/server/K.cc
+K: src/server/K.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else

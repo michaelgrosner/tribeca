@@ -74,6 +74,27 @@ namespace K {
                ogMutex,
                pgMutex;
   static string uiPrtcl = "?";
+  class Klass {
+    protected:
+      virtual void load(int argc, char** argv) {};
+      virtual void load() {};
+      virtual void waitTime() {};
+      virtual void waitData() {};
+      virtual void waitUser() {};
+      virtual void run() {};
+    public:
+      void main(int argc, char** argv) {
+        load(argc, argv);
+        run();
+      };
+      void wait() {
+        load();
+        waitTime();
+        waitData();
+        waitUser();
+        run();
+      };
+  };
   class Gw {
     public:
       static Gw *E(mExchange e);

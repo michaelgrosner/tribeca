@@ -8,13 +8,40 @@ namespace K {
   map<double, mTrade> pgSells;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
-  class PG {
-    public:
-      static void main() {
-        load();
-        waitData();
-        waitUser();
+  class PG: public Klass {
+    protected:
+      void load() {
+        json k = DB::load(uiTXT::TargetBasePosition);
+        if (k.size()) {
+          k = k.at(0);
+          pgTargetBasePos = k.value("tbp", 0.0);
+          pgSideAPR = k.value("sideAPR", "");
+        }
+        stringstream ss;
+        ss << setprecision(8) << fixed << pgTargetBasePos;
+        FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
+      void waitData() {
+        ev_gwDataWallet = [](mWallet k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
+          calcWallet(k);
+        };
+        ev_ogOrder = [](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
+          calcWalletAfterOrder(k);
+          FN::screen_refresh();
+        };
+        ev_mgTargetPosition = []() {
+          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
+          calcTargetBasePos();
+        };
+      };
+      void waitUser() {
+        UI::uiSnap(uiTXT::Position, &onSnapPos);
+        UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
+        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
+      };
+    public:
       static void calcSafety() {
         if (empty() or !mgFairValue) return;
         mSafety safety = nextSafety();
@@ -61,37 +88,6 @@ namespace K {
         return !pgPos.value;
       };
     private:
-      static void load() {
-        json k = DB::load(uiTXT::TargetBasePosition);
-        if (k.size()) {
-          k = k.at(0);
-          pgTargetBasePos = k.value("tbp", 0.0);
-          pgSideAPR = k.value("sideAPR", "");
-        }
-        stringstream ss;
-        ss << setprecision(8) << fixed << pgTargetBasePos;
-        FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
-      };
-      static void waitData() {
-        ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
-          calcWallet(k);
-        };
-        ev_ogOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
-          calcWalletAfterOrder(k);
-          FN::screen_refresh();
-        };
-        ev_mgTargetPosition = []() {
-          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
-          calcTargetBasePos();
-        };
-      };
-      static void waitUser() {
-        UI::uiSnap(uiTXT::Position, &onSnapPos);
-        UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
-        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
-      };
       static json onSnapPos() {
         lock_guard<mutex> lock(pgMutex);
         return { pgPos };

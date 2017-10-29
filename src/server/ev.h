@@ -29,37 +29,26 @@ namespace K {
                     tWallet,
                     tCancel;
   static int eCode = EXIT_FAILURE;
-  class EV {
-    public:
-      static void main() {
+  class EV: public Klass {
+    protected:
+      void load() {
         evExit = happyEnding;
-        load();
+        signal(SIGINT, quit);
+        signal(SIGUSR1, wtf);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
       };
-      static void run(uWS::Hub *hub) {
-        hub->run();
-        end(eCode);
+      void run() {
+        FN::output("git fetch");
+        string k = changelog();
+        FN::logVer(k, count(k.begin(), k.end(), '\n'));
       };
+    public:
       static void end(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
     private:
-      static void load() {
-        signal(SIGINT, quit);
-        signal(SIGUSR1, wtf);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        FN::output("git fetch");
-        string k = changelog();
-        FN::logVer(k, count(k.begin(), k.end(), '\n'));
-      };
-      static void happyEnding(int code) {
-        cout << FN::uiT();
-        for(unsigned int i = 0; i < 21; ++i)
-          cout << "THE END IS NEVER ";
-        cout << "THE END" << '\n';
-        end(code);
-      };
       static void quit(int sig) {
         FN::screen_quit();
         cout << '\n';
@@ -104,6 +93,13 @@ namespace K {
           << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
           << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << '\n' << '\n';
+      };
+      static void happyEnding(int code) {
+        cout << FN::uiT();
+        for(unsigned int i = 0; i < 21; ++i)
+          cout << "THE END IS NEVER ";
+        cout << "THE END" << '\n';
+        end(code);
       };
   };
 }

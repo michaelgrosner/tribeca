@@ -23,13 +23,55 @@ namespace K {
   double mgStdevTop = 0;
   double mgStdevTopMean = 0;
   double mgTargetPos = 0;
-  class MG {
-    public:
-      static void main() {
-        load();
-        waitData();
-        waitUser();
+  class MG: public Klass {
+    protected:
+      void load() {
+        json k = DB::load(uiTXT::MarketData);
+        if (k.size()) {
+          for (json::iterator it = k.begin(); it != k.end(); ++it) {
+            if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
+            mgStatFV.push_back(it->value("fv", 0.0));
+            mgStatBid.push_back(it->value("bid", 0.0));
+            mgStatAsk.push_back(it->value("ask", 0.0));
+            mgStatTop.push_back(it->value("bid", 0.0));
+            mgStatTop.push_back(it->value("ask", 0.0));
+          }
+          calcStdev();
+        }
+        FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
+        if (argEwmaLong) mgEwmaL = argEwmaLong;
+        if (argEwmaMedium) mgEwmaM = argEwmaMedium;
+        if (argEwmaShort) mgEwmaS = argEwmaShort;
+        k = DB::load(uiTXT::EWMAChart);
+        if (k.size()) {
+          k = k.at(0);
+          if (!mgEwmaL and k.value("time", (unsigned long)0)+qp.longEwmaPeriods*6e+4>FN::T())
+            mgEwmaL = k.value("ewmaLong", 0.0);
+          if (!mgEwmaM and k.value("time", (unsigned long)0)+qp.mediumEwmaPeriods*6e+4>FN::T())
+            mgEwmaM = k.value("ewmaMedium", 0.0);
+          if (!mgEwmaS and k.value("time", (unsigned long)0)+qp.shortEwmaPeriods*6e+4>FN::T())
+            mgEwmaS = k.value("ewmaShort", 0.0);
+        }
+        FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
+      void waitData() {
+        ev_gwDataTrade = [](mTrade k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
+          tradeUp(k);
+        };
+        ev_gwDataLevels = [](mLevels k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
+          levelUp(k);
+        };
+      };
+      void waitUser() {
+        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
+        UI::uiSnap(uiTXT::FairValue, &onSnapFair);
+        UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
+      };
+    public:
       static bool empty() {
         return (!mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size());
       };
@@ -61,52 +103,6 @@ namespace K {
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      static void load() {
-        json k = DB::load(uiTXT::MarketData);
-        if (k.size()) {
-          for (json::iterator it = k.begin(); it != k.end(); ++it) {
-            if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
-            mgStatFV.push_back(it->value("fv", 0.0));
-            mgStatBid.push_back(it->value("bid", 0.0));
-            mgStatAsk.push_back(it->value("ask", 0.0));
-            mgStatTop.push_back(it->value("bid", 0.0));
-            mgStatTop.push_back(it->value("ask", 0.0));
-          }
-          calcStdev();
-        }
-        FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
-        if (argEwmaLong) mgEwmaL = argEwmaLong;
-        if (argEwmaMedium) mgEwmaM = argEwmaMedium;
-        if (argEwmaShort) mgEwmaS = argEwmaShort;
-        k = DB::load(uiTXT::EWMAChart);
-        if (k.size()) {
-          k = k.at(0);
-          if (!mgEwmaL and k.value("time", (unsigned long)0)+qp.longEwmaPeriods*6e+4>FN::T())
-            mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (unsigned long)0)+qp.mediumEwmaPeriods*6e+4>FN::T())
-            mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (unsigned long)0)+qp.shortEwmaPeriods*6e+4>FN::T())
-            mgEwmaS = k.value("ewmaShort", 0.0);
-        }
-        FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
-      };
-      static void waitData() {
-        ev_gwDataTrade = [](mTrade k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
-          tradeUp(k);
-        };
-        ev_gwDataLevels = [](mLevels k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
-          levelUp(k);
-        };
-      };
-      static void waitUser() {
-        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
-        UI::uiSnap(uiTXT::FairValue, &onSnapFair);
-        UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
-      };
       static json onSnapTrade() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)

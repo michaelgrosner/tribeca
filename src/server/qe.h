@@ -16,16 +16,9 @@ namespace K {
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
                 gwConnectExchange_ = mConnectivity::Disconnected;
   int tStart_ = 0;
-  class QE {
-    public:
-      static void main() {
-        load();
-        waitTime();
-        waitData();
-        waitUser();
-      }
-    private:
-      static void load() {
+  class QE: public Klass {
+    protected:
+      void load() {
         qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
         qeQuotingMode[mQuotingMode::Join] = &calcTopOfMarket;
@@ -37,7 +30,7 @@ namespace K {
         qeQuotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
-      static void waitTime() {
+      void waitTime() {
         uv_timer_init(hub.getLoop(), &tStart);
         uv_timer_init(hub.getLoop(), &tCalcs);
         uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
@@ -49,7 +42,7 @@ namespace K {
           } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
         }, 1e+3, 1e+3);
       };
-      static void waitData() {
+      void waitData() {
         ev_gwConnectButton = [](mConnectivity k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE v_gwConnectButton");
           gwQuotingState_ = k;
@@ -85,9 +78,10 @@ namespace K {
           calcQuote();
         };
       };
-      static void waitUser() {
+      void waitUser() {
         UI::uiSnap(uiTXT::QuoteStatus, &onSnap);
       };
+    private:
       static json onSnap() {
         return { qeStatus };
       };

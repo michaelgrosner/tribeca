@@ -13,46 +13,9 @@ namespace K {
   static double delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
-  class UI {
-    public:
-      static void main() {
-        load();
-        waitTime();
-        waitUser();
-        CF::api(&hub);
-      };
-      static void uiSnap(uiTXT k, uiSnap_ cb) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
-          sess->cbSnap[(char)k] = cb;
-        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
-      };
-      static void uiHand(uiTXT k, uiMsg_ cb) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
-          sess->cbMsg[(char)k] = cb;
-        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
-      };
-      static void uiSend(uiTXT k, json o, bool hold = false) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->u == 0) return;
-        if (delayUI and hold) uiHold(k, o);
-        else uiUp(k, o);
-      };
-      static void delay(double delayUI_) {
-        if (argHeadless) return;
-        delayUI = delayUI_;
-        wsMutex.lock();
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        sess->D.clear();
-        wsMutex.unlock();
-        uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
-      };
-    private:
-      static void load() {
+  class UI: public Klass {
+    protected:
+      void load() {
         if (argHeadless) return;
         uiGroup->setUserData(new uiSess);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
@@ -81,7 +44,7 @@ namespace K {
           lock_guard<mutex> lock(wsMutex);
           if (argWhitelist != "" and argWhitelist.find(addr) == string::npos) {
             FN::log("UI", "dropping gzip bomb on", addr);
-            content << ifstream("etc/bomb.gzip").rdbuf();
+            content << ifstream("etc/K-bomb.gzip").rdbuf();
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
             res->write(document.data(), document.length());
@@ -148,6 +111,23 @@ namespace K {
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
+      };
+      void waitTime() {
+        if (argHeadless) return;
+        uv_timer_init(hub.getLoop(), &tDelay);
+        uv_timer_start(&tDelay, [](uv_timer_t *handle) {
+          if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
+          uiSend(delayUI > 0);
+        }, 0, 0);
+      };
+      void waitUser() {
+        UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
+        UI::uiSnap(uiTXT::Notepad, &onSnapNote);
+        UI::uiHand(uiTXT::Notepad, &onHandNote);
+        UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
+        UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
+      };
+      void run() {
         if ((access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub.listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
@@ -160,21 +140,38 @@ namespace K {
           EXIT_SUCCESS);
         FN::logUI(uiPrtcl, argPort);
       };
-      static void waitTime() {
+    public:
+      static void uiSnap(uiTXT k, uiSnap_ cb) {
         if (argHeadless) return;
-        uv_timer_init(hub.getLoop(), &tDelay);
-        uv_timer_start(&tDelay, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          uiSend(delayUI > 0);
-        }, 0, 0);
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
+          sess->cbSnap[(char)k] = cb;
+        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void waitUser() {
-        UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
-        UI::uiSnap(uiTXT::Notepad, &onSnapNote);
-        UI::uiHand(uiTXT::Notepad, &onHandNote);
-        UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
-        UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
+      static void uiHand(uiTXT k, uiMsg_ cb) {
+        if (argHeadless) return;
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
+          sess->cbMsg[(char)k] = cb;
+        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
+      static void uiSend(uiTXT k, json o, bool hold = false) {
+        if (argHeadless) return;
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        if (sess->u == 0) return;
+        if (delayUI and hold) uiHold(k, o);
+        else uiUp(k, o);
+      };
+      static void delay(double delayUI_) {
+        if (argHeadless) return;
+        delayUI = delayUI_;
+        wsMutex.lock();
+        uiSess *sess = (uiSess *) uiGroup->getUserData();
+        sess->D.clear();
+        wsMutex.unlock();
+        uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
+      };
+    private:
       static json onSnapApp() {
         return { serverState() };
       };

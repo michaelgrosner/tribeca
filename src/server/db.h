@@ -3,13 +3,14 @@
 
 namespace K {
   static sqlite3* db;
-  class DB {
-    public:
-      static void main() {
+  class DB: public Klass {
+    protected:
+      void load() {
         if (sqlite3_open(argDatabase.data(), &db))
           FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
         FN::logDB(argDatabase);
       };
+    public:
       static json load(uiTXT k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
