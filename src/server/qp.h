@@ -21,6 +21,7 @@ namespace K {
     mQuotingSafety    safety						= mQuotingSafety::AK47;
     int               bullets                       = 2;
     double            range                         = 0.5;
+    double			  rangePercentage				= 1.0;
     mFairValueModel   fvModel                       = mFairValueModel::BBO;
     double            targetBasePosition            = 1.0;
     int               targetBasePositionPercentage  = 50;
@@ -71,6 +72,7 @@ namespace K {
       {"safety", (int)k.safety},
       {"bullets", k.bullets},
       {"range", k.range},
+      {"rangePercentage", k.rangePercentage},
       {"fvModel", (int)k.fvModel},
       {"targetBasePosition", k.targetBasePosition},
       {"targetBasePositionPercentage", k.targetBasePositionPercentage},
@@ -121,6 +123,7 @@ namespace K {
     if (!j.at("safety").is_null()) k.safety = (mQuotingSafety)j.at("safety").get<int>();
     if (!j.at("bullets").is_null()) k.bullets = j.at("bullets").get<int>();
     if (!j.at("range").is_null()) k.range = j.at("range").get<double>();
+    if (!j.at("rangePercentage").is_null()) k.rangePercentage = j.at("rangePercentage").get<double>();
     if (!j.at("fvModel").is_null()) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
     if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<double>();
     if (!j.at("targetBasePositionPercentage").is_null()) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();

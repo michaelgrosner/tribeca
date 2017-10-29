@@ -216,6 +216,7 @@ export interface QuotingParameters {
     audio?: boolean;
     bullets?: number;
     range?: number;
+    rangePercentage?: number;
     ewmaSensiblityPercentage?: number;
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;

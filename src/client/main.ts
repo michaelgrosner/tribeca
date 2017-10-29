@@ -92,7 +92,8 @@ class DisplayOrder {
                                             <th>mode</th>
                                             <th>safety</th>
                                             <th *ngIf="pair.quotingParameters.display.safety==3">bullets</th>
-                                            <th *ngIf="pair.quotingParameters.display.safety==3">range</th>
+                                            <th *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
+                                            <th *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
                                             <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
                                             <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                             <th>sop</th>
@@ -124,11 +125,17 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.bullets">
                                             </td>
-                                            <td style="border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
                                                    type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
+                                            </td>
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
+                                                <input class="form-control input-sm" title="{{ pair_name[1] }}"
+                                                   type="number" step="0,1" min="1" max="100"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                             </td>
                                             <td style="min-width:142px;border-bottom: 3px solid #8BE296;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">
                                                 <select class="form-control input-sm"

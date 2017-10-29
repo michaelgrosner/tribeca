@@ -583,17 +583,20 @@ namespace K {
           qeNextT = FN::T();
         }
         double price = q.price;
+        double range = qp.percentageValues 
+          ? qp.rangePercentage * pgPos.value / 100
+          : qp.range;
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           if (price == it->first
             or ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47)
-              and (price + (qp.range - 1e-2)) >= it->first
-              and (price - (qp.range - 1e-2)) <= it->first)
+              and (price + (range - 1e-2)) >= it->first
+              and (price - (range - 1e-2)) <= it->first)
           ) { eq = true; break; }
         if (eq) {
           if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47) and orderSide.size()<(size_t)qp.bullets) {
-            double incPrice = (qp.range * (side == mSide::Bid ? -1 : 1 ));
+            double incPrice = (range * (side == mSide::Bid ? -1 : 1 ));
             double oldPrice = 0;
             unsigned int len = 0;
             if (side == mSide::Bid)
@@ -605,8 +608,8 @@ namespace K {
             eq = false;
             for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
               if (price == it->first
-                or ((price + (qp.range - 1e-2)) >= it->first
-                  and (price - (qp.range - 1e-2)) <= it->first)
+                or ((price + (range - 1e-2)) >= it->first
+                  and (price - (range - 1e-2)) <= it->first)
               ) { eq = true; break; }
             if (eq) return;
             stopWorstsQuotes(side, q.price);
