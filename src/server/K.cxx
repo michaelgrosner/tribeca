@@ -61,24 +61,25 @@ using namespace nlohmann;
     ;;;;K::UI ui;;;;;;;        ;;;;;;;;;;
     ;;;;K::QP qp;;;;;;;        ;;;;;;;;;;
     ;;;;K::OG og;;;;;;;    ;;    ;;;;;;;;
-;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;
+;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;   ;
 ;;  ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;  ;;
-;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;; ;;;;;;;
+;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;; ;;;;;;; // youtu.be/nwyDU3SGgQQ
     ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;  cf.main(argc, argv)                ;;;;;;
-;;  ;;  ev.wait(/* Wherever you go      */);;
-;   ;;  db.wait(/* Whatever you do      */);;
+;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;; // youtu.be/y0fTof1L-ag
+;;  ;;  ev.wait(/* Wherever you go..    */);;
+;   ;;  db.wait(/* Whatever you do..    */);;
     ;;  ui.wait(/* I will be right here */);;
-    ;;  qp.wait(/*  waiting for coins   */);;
-    ;;  og.wait(/* Whatever it takes    */);;
-    ;;  mg.wait(/* Or how my OS breaks  */);;
+    ;;  qp.wait(/*  waiting for coins.  */);;
+    ;;  og.wait(/* Whatever it takes..  */);;
+    ;;  mg.wait(/* Or how my OS breaks, */);;
     ;;  pg.wait(/* I will be right here */);;
-    ;;  qe.wait(/*  waiting for coins   */);;
-;   ;;  gw.wait(/* Day after day        */);;
+    ;;  qe.wait(/*  waiting for coins.  */);;
+;   ;;  gw.wait(/* Day after day.    :wq*/);;
 ;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;
-;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;;
+;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
 ;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
-;        /*    .        kKKKKK,       .          *
+;                        /*K\*/             ;
+         /*    .        kKKKKK,       .          *
                        kKKKK  KK,
      .         ,kFIREKKKKLET  `KK,_          *
           ,RUNNERV'      KKKK   `K,`\

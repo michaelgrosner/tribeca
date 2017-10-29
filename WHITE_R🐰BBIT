@@ -86,7 +86,7 @@
 :                        |db.h|ev.h|                                          :
 :                         ¯¯¯¯ ¯¯¯¯                                           :
 :                                                                             :
-:  .. src/server/K.cc: ------------------------------ aka. K Home ----------- :
+:  .. src/server/K.cxx: ----------------------------- aka. K Home ----------- :
 :  :   # Warning: my home is your home, if there are houses owned by someone. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
