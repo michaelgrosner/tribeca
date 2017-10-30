@@ -192,7 +192,6 @@ packages:
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 	$(MAKE) gdax -s
-	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 install:
 	@$(MAKE) packages
@@ -211,6 +210,7 @@ docker:
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
+	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 reinstall: .git src
 	rm -rf app
