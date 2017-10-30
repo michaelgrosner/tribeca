@@ -191,7 +191,6 @@ packages:
  	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
-	$(MAKE) gdax -s
 
 install:
 	@$(MAKE) packages
@@ -211,6 +210,7 @@ link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
 	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	$(MAKE) gdax -s
 
 reinstall: .git src
 	rm -rf app
