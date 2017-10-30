@@ -104,7 +104,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
  $ vim K.sh
 ```
 
-To upgrade anytime just repeat the ZIP Installation steps.
+To upgrade anytime just repeat the Manual ZIP Installation steps in the already created folder.
 
 ### After Manual Installation
 
