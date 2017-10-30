@@ -39,7 +39,7 @@ namespace K {
         signal(SIGSEGV, wtf);
       };
       void run() {
-        FN::output("git fetch");
+        FN::output("test -d .git && git fetch");
         string k = changelog();
         FN::logVer(k, count(k.begin(), k.end(), '\n'));
       };
@@ -74,10 +74,10 @@ namespace K {
         evExit(EXIT_FAILURE);
       };
       static bool latest() {
-        return FN::output("git rev-parse @") == FN::output("git rev-parse @{u}");
+        return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");
       }
       static string changelog() {
-        return FN::output("git --no-pager log --graph --oneline @..@{u}");
+        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       }
       static void upgrade() {
         cout << '\n' << BYELLOW << "Hint!" << RYELLOW

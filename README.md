@@ -41,7 +41,9 @@ All currency pairs are supported.
   - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md)
 - Installation
   - [Docker Installation](#docker-installation)
-  - [Manual Installation](#manual-installation)
+  - [Manual GIT Installation](#manual-git-installation)
+  - [Manual ZIP Installation](#manual-zip-installation)
+  - [After Manual Installation](#after-manual-installation)
   - [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
   - [Multiple instances party time](#multiple-instances-party-time)
 - Information
@@ -71,7 +73,9 @@ All currency pairs are supported.
 
 See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
 
-### Manual Installation
+### Manual GIT Installation
+
+Manual GIT Installation allows easy git upgrades.
 
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
@@ -84,6 +88,25 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
  $ make install
  $ vim K.sh
 ```
+
+To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-commit) section.
+
+### Manual ZIP Installation
+
+0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
+
+1. Ensure your target machine has installed `curl`, `make` and `vim`.
+
+2. Run in any location that you wish (feel free to customize the suggested folder name K):
+```
+ $ curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
+ $ make install
+ $ vim K.sh
+```
+
+To upgrade anytime just repeat the ZIP Installation steps.
+
+### After Manual Installation
 
 See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
 
@@ -110,6 +133,10 @@ See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc
 It just contains a few variables with examples ready to be reused (the suggested urls will work), and at the very end of the file is the execution of the bot.
 
 ### Upgrade to the latest commit
+
+To upgrade under Manual ZIP Installation, please repeat the Manual ZIP Installation.
+
+To upgrade under Manual GIT Installation:
 
 Feel free anytime to check if there are new modifications with `make diff`.
 

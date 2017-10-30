@@ -1,5 +1,5 @@
 K       ?= K.sh
-CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine || :)
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = b26b9b022dfbe143e7994c4f94f67d87057405df
+KLIB     = cb6890fa23c67fb2c9d748ed1595fde8a2f46370
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -171,9 +171,8 @@ quickfix: build-$(CHOST)
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
 
 build:
-	mkdir -p $(KLOCAL)
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CHOST).tar.gz \
-	| tar xz -C $(KLOCAL) && chmod +x $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/bin/K-$(CHOST)
+	| tar xz && chmod +x build*/lib/K-$(CHOST).a build-*/bin/K-$(CHOST)
 
 clean:
 ifdef KALL
@@ -215,13 +214,11 @@ link:
 
 reinstall: .git src
 	rm -rf app
-	git checkout .
-	git fetch
-	git merge FETCH_HEAD
+	test -d .git && git fetch
+	test -d .git && git merge FETCH_HEAD
 	@rm -rf node_modules/hacktimer
 	@$(MAKE) install
 	#@$(MAKE) test -s
-	@git checkout .
 	@$(MAKE) restartall
 	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
 
@@ -333,12 +330,12 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
-	@cp LICENSE COPYING $(KLOCAL) && cd $(KLOCAL) && tar -cvzf $(KLIB)-$(CHOST).tar.gz                                \
-	LICENSE COPYING bin/K-$(CHOST) var lib/K-$(CHOST).a                                                               \
-	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
-	--data-binary "@$(PWD)/$(KLOCAL)/$(KLIB)-$(CHOST).tar.gz"                                                         \
+	@tar -cvzf $(KLIB)-$(CHOST).tar.gz                                                                                \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a     \
+	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"           \
+	--data-binary "@$(PWD)/$(KLIB)-$(CHOST).tar.gz"                                                                   \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CHOST).tar.gz" \
-	&& rm LICENSE COPYING $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
+	&& rm $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
 endif
 
 md5: src
