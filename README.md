@@ -133,7 +133,7 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
-To upgrade under Manual ZIP Installation, please repeat the Manual ZIP Installation.
+To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
 To upgrade under Manual GIT Installation:
 
