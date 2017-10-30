@@ -214,8 +214,7 @@ link:
 
 reinstall: src
 	rm -rf app
-	test -d .git && git fetch || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
-	test -d .git && git merge FETCH_HEAD || :
+	test -d .git && (git fetch && git merge FETCH_HEAD) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	@$(MAKE) install
 	#@$(MAKE) test -s
 	@$(MAKE) restartall
