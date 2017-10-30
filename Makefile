@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = cb6890fa23c67fb2c9d748ed1595fde8a2f46370
+KLIB     = test-build
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -172,7 +172,7 @@ quickfix: build-$(CHOST)
 
 build:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CHOST).tar.gz \
-	| tar xz && chmod +x build*/lib/K-$(CHOST).a build-*/bin/K-$(CHOST)
+	| tar xz && chmod +x build-*/local/lib/K-$(CHOST).a build-*/local/bin/K-$(CHOST)
 
 clean:
 ifdef KALL
