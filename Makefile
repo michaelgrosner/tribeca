@@ -1,5 +1,5 @@
 K       ?= K.sh
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1)
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
