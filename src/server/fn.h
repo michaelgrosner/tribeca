@@ -392,6 +392,7 @@ namespace K {
         logErr(k, s, " Warrrrning: ");
       };
       static void logExit(string k, string s, int code) {
+        FN::screen_quit();
         logErr(k, s);
         evExit(code);
       };
