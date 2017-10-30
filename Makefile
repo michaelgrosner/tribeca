@@ -214,8 +214,8 @@ link:
 
 reinstall: src
 	rm -rf app
-	test -d .git && git fetch
-	test -d .git && git merge FETCH_HEAD
+	test -d .git && git fetch || :
+	test -d .git && git merge FETCH_HEAD || :
 	@$(MAKE) install
 	#@$(MAKE) test -s
 	@$(MAKE) restartall
