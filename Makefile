@@ -216,7 +216,6 @@ reinstall: src
 	rm -rf app
 	test -d .git && git fetch
 	test -d .git && git merge FETCH_HEAD
-	@rm -rf node_modules/hacktimer
 	@$(MAKE) install
 	#@$(MAKE) test -s
 	@$(MAKE) restartall
