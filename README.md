@@ -75,8 +75,6 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### Manual GIT Installation
 
-Manual GIT Installation allows easy git upgrades.
-
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
 1. Ensure your target machine has installed `git`, `make` and `vim`.
