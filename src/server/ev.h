@@ -39,9 +39,13 @@ namespace K {
         signal(SIGSEGV, wtf);
       };
       void run() {
-        FN::output("test -d .git && git fetch");
-        string k = changelog();
-        FN::logVer(k, count(k.begin(), k.end(), '\n'));
+        if (FN::output("test -d .git || echo zip") == "zip")
+          FN::logVer("", -1);
+        else {
+          FN::output("git fetch");
+          string k = changelog();
+          FN::logVer(k, count(k.begin(), k.end(), '\n'));
+        }
       };
     public:
       static void end(int code) {

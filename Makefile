@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = test-build
+KLIB     = fe29953784d75e840f2fa76923f2604c3a0f6e5c
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -212,7 +212,7 @@ link:
 	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	$(MAKE) gdax -s
 
-reinstall: .git src
+reinstall: src
 	rm -rf app
 	test -d .git && git fetch
 	test -d .git && git merge FETCH_HEAD
