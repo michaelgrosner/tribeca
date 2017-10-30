@@ -172,7 +172,8 @@ export class CurrencyPair {
     constructor(public base: string, public quote: string) {}
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Boomerang, AK47, HamelinRat, Depth }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
+export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
@@ -197,6 +198,7 @@ export interface QuotingParameters {
     pingAt?: PingAt;
     pongAt?: PongAt;
     mode?: QuotingMode;
+    safety?: QuotingSafety
     fvModel?: FairValueModel;
     targetBasePosition?: number;
     targetBasePositionPercentage?: number;
@@ -214,6 +216,7 @@ export interface QuotingParameters {
     audio?: boolean;
     bullets?: number;
     range?: number;
+    rangePercentage?: number;
     ewmaSensiblityPercentage?: number;
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;

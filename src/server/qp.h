@@ -17,9 +17,11 @@ namespace K {
     bool              sellSizeMax                   = false;
     mPingAt           pingAt                        = mPingAt::BothSides;
     mPongAt           pongAt                        = mPongAt::ShortPingFair;
-    mQuotingMode      mode                          = mQuotingMode::AK47;
+    mQuotingMode      mode                          = mQuotingMode::Top;
+    mQuotingSafety    safety						= mQuotingSafety::AK47;
     int               bullets                       = 2;
     double            range                         = 0.5;
+    double			  rangePercentage				= 1.0;
     mFairValueModel   fvModel                       = mFairValueModel::BBO;
     double            targetBasePosition            = 1.0;
     int               targetBasePositionPercentage  = 50;
@@ -41,7 +43,7 @@ namespace K {
     int               longEwmaPeriods               = 200;
     int               mediumEwmaPeriods             = 100;
     int               shortEwmaPeriods              = 50;
-    int               aprMultiplier                 = 2;
+    double            aprMultiplier                 = 2;
     int               sopWidthMultiplier            = 2;
     int               delayAPI                      = 0;
     bool              cancelOrdersAuto              = false;
@@ -67,8 +69,10 @@ namespace K {
       {"pingAt", (int)k.pingAt},
       {"pongAt", (int)k.pongAt},
       {"mode", (int)k.mode},
+      {"safety", (int)k.safety},
       {"bullets", k.bullets},
       {"range", k.range},
+      {"rangePercentage", k.rangePercentage},
       {"fvModel", (int)k.fvModel},
       {"targetBasePosition", k.targetBasePosition},
       {"targetBasePositionPercentage", k.targetBasePositionPercentage},
@@ -116,8 +120,10 @@ namespace K {
     if (!j.at("pingAt").is_null()) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
     if (!j.at("pongAt").is_null()) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
     if (!j.at("mode").is_null()) k.mode = (mQuotingMode)j.at("mode").get<int>();
+    if (!j.at("safety").is_null()) k.safety = (mQuotingSafety)j.at("safety").get<int>();
     if (!j.at("bullets").is_null()) k.bullets = j.at("bullets").get<int>();
     if (!j.at("range").is_null()) k.range = j.at("range").get<double>();
+    if (!j.at("rangePercentage").is_null()) k.rangePercentage = j.at("rangePercentage").get<double>();
     if (!j.at("fvModel").is_null()) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
     if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<double>();
     if (!j.at("targetBasePositionPercentage").is_null()) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
@@ -139,7 +145,7 @@ namespace K {
     if (!j.at("longEwmaPeriods").is_null()) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
     if (!j.at("mediumEwmaPeriods").is_null()) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
     if (!j.at("shortEwmaPeriods").is_null()) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
-    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<int>();
+    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<double>();
     if (!j.at("sopWidthMultiplier").is_null()) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
     if (!j.at("delayAPI").is_null()) k.delayAPI = j.at("delayAPI").get<int>();
     if (!j.at("cancelOrdersAuto").is_null()) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
@@ -166,9 +172,9 @@ namespace K {
       };
     public:
       static bool matchPings() {
-        return qp.mode == mQuotingMode::Boomerang
+        return qp.safety == mQuotingSafety::Boomerang
             or qp.mode == mQuotingMode::HamelinRat
-            or qp.mode == mQuotingMode::AK47;
+            or qp.safety == mQuotingSafety::AK47;
       };
     private:
       static json onSnap() {

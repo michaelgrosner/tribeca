@@ -58,6 +58,7 @@ class QuotingButtonViewModel extends FormViewModel<any> {
 
 class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   availableQuotingModes = [];
+  availableQuotingSafeties = [];
   availableFvModels = [];
   availableAutoPositionModes = [];
   availableAggressivePositionRebalancings = [];
@@ -71,6 +72,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     super(<Models.QuotingParameters>{}, sub, fire);
 
     this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
+    this.availableQuotingSafeties = DisplayQuotingParameters.getMapping(Models.QuotingSafety);
     this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
     this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
     this.availableAggressivePositionRebalancings = DisplayQuotingParameters.getMapping(Models.APR);
