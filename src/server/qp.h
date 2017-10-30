@@ -18,10 +18,10 @@ namespace K {
     mPingAt           pingAt                        = mPingAt::BothSides;
     mPongAt           pongAt                        = mPongAt::ShortPingFair;
     mQuotingMode      mode                          = mQuotingMode::Top;
-    mQuotingSafety    safety						= mQuotingSafety::AK47;
+    mQuotingSafety    safety                        = mQuotingSafety::Boomerang;
     int               bullets                       = 2;
     double            range                         = 0.5;
-    double			  rangePercentage				= 1.0;
+    double            rangePercentage               = 1.0;
     mFairValueModel   fvModel                       = mFairValueModel::BBO;
     double            targetBasePosition            = 1.0;
     int               targetBasePositionPercentage  = 50;
@@ -105,54 +105,55 @@ namespace K {
     };
   };
   static void from_json(const json& j, Qp& k) {
-    if (!j.at("widthPing").is_null()) k.widthPing = j.at("widthPing").get<double>();
-    if (!j.at("widthPingPercentage").is_null()) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
-    if (!j.at("widthPong").is_null()) k.widthPong = j.at("widthPong").get<double>();
-    if (!j.at("widthPongPercentage").is_null()) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
-    if (!j.at("widthPercentage").is_null()) k.widthPercentage = j.at("widthPercentage").get<bool>();
-    if (!j.at("bestWidth").is_null()) k.bestWidth = j.at("bestWidth").get<bool>();
-    if (!j.at("buySize").is_null()) k.buySize = j.at("buySize").get<double>();
-    if (!j.at("buySizePercentage").is_null()) k.buySizePercentage = j.at("buySizePercentage").get<int>();
-    if (!j.at("buySizeMax").is_null()) k.buySizeMax = j.at("buySizeMax").get<bool>();
-    if (!j.at("sellSize").is_null()) k.sellSize = j.at("sellSize").get<double>();
-    if (!j.at("sellSizePercentage").is_null()) k.sellSizePercentage = j.at("sellSizePercentage").get<int>();
-    if (!j.at("sellSizeMax").is_null()) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
-    if (!j.at("pingAt").is_null()) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
-    if (!j.at("pongAt").is_null()) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
-    if (!j.at("mode").is_null()) k.mode = (mQuotingMode)j.at("mode").get<int>();
-    if (!j.at("safety").is_null()) k.safety = (mQuotingSafety)j.at("safety").get<int>();
-    if (!j.at("bullets").is_null()) k.bullets = j.at("bullets").get<int>();
-    if (!j.at("range").is_null()) k.range = j.at("range").get<double>();
-    if (!j.at("rangePercentage").is_null()) k.rangePercentage = j.at("rangePercentage").get<double>();
-    if (!j.at("fvModel").is_null()) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
-    if (!j.at("targetBasePosition").is_null()) k.targetBasePosition = j.at("targetBasePosition").get<double>();
-    if (!j.at("targetBasePositionPercentage").is_null()) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
-    if (!j.at("positionDivergence").is_null()) k.positionDivergence = j.at("positionDivergence").get<double>();
-    if (!j.at("positionDivergencePercentage").is_null()) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
-    if (!j.at("percentageValues").is_null()) k.percentageValues = j.at("percentageValues").get<bool>();
-    if (!j.at("autoPositionMode").is_null()) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
-    if (!j.at("aggressivePositionRebalancing").is_null()) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
-    if (!j.at("superTrades").is_null()) k.superTrades = (mSOP)j.at("superTrades").get<int>();
-    if (!j.at("tradesPerMinute").is_null()) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
-    if (!j.at("tradeRateSeconds").is_null()) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
-    if (!j.at("quotingEwmaProtection").is_null()) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
-    if (!j.at("quotingEwmaProtectionPeriods").is_null()) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
-    if (!j.at("quotingStdevProtection").is_null()) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
-    if (!j.at("quotingStdevBollingerBands").is_null()) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
-    if (!j.at("quotingStdevProtectionFactor").is_null()) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
-    if (!j.at("quotingStdevProtectionPeriods").is_null()) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
-    if (!j.at("ewmaSensiblityPercentage").is_null()) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
-    if (!j.at("longEwmaPeriods").is_null()) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
-    if (!j.at("mediumEwmaPeriods").is_null()) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
-    if (!j.at("shortEwmaPeriods").is_null()) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
-    if (!j.at("aprMultiplier").is_null()) k.aprMultiplier = j.at("aprMultiplier").get<double>();
-    if (!j.at("sopWidthMultiplier").is_null()) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
-    if (!j.at("delayAPI").is_null()) k.delayAPI = j.at("delayAPI").get<int>();
-    if (!j.at("cancelOrdersAuto").is_null()) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
-    if (!j.at("cleanPongsAuto").is_null()) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
-    if (!j.at("profitHourInterval").is_null()) k.profitHourInterval = j.at("profitHourInterval").get<double>();
-    if (!j.at("audio").is_null()) k.audio = j.at("audio").get<bool>();
-    if (!j.at("delayUI").is_null()) k.delayUI = j.at("delayUI").get<int>();
+    if (j.end() != j.find("widthPing")) k.widthPing = j.at("widthPing").get<double>();
+    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
+    if (j.end() != j.find("widthPong")) k.widthPong = j.at("widthPong").get<double>();
+    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
+    if (j.end() != j.find("widthPercentage")) k.widthPercentage = j.at("widthPercentage").get<bool>();
+    if (j.end() != j.find("bestWidth")) k.bestWidth = j.at("bestWidth").get<bool>();
+    if (j.end() != j.find("buySize")) k.buySize = j.at("buySize").get<double>();
+    if (j.end() != j.find("buySizePercentage")) k.buySizePercentage = j.at("buySizePercentage").get<int>();
+    if (j.end() != j.find("buySizeMax")) k.buySizeMax = j.at("buySizeMax").get<bool>();
+    if (j.end() != j.find("sellSize")) k.sellSize = j.at("sellSize").get<double>();
+    if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = j.at("sellSizePercentage").get<int>();
+    if (j.end() != j.find("sellSizeMax")) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
+    if (j.end() != j.find("pingAt")) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
+    if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
+    if (j.end() != j.find("mode")) k.mode = (mQuotingMode)j.at("mode").get<int>();
+    if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
+    if (j.end() != j.find("bullets")) k.bullets = j.at("bullets").get<int>();
+    if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
+    if (j.end() != j.find("rangePercentage")) k.rangePercentage = j.at("rangePercentage").get<double>();
+    if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
+    if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
+    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
+    if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
+    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
+    if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
+    if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
+    if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
+    if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
+    if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
+    if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
+    if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
+    if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
+    if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
+    if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
+    if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
+    if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
+    if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
+    if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
+    if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
+    if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
+    if (j.end() != j.find("aprMultiplier")) k.aprMultiplier = j.at("aprMultiplier").get<double>();
+    if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
+    if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
+    if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
+    if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
+    if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
+    if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
+    if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
+    if ((int)k.mode > 6) k.mode = (mQuotingMode)0; // remove after everybody have the new mode/safety in their databases (2018)
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
   };
   class QP: public Klass {
@@ -172,8 +173,8 @@ namespace K {
       };
     public:
       static bool matchPings() {
-        return qp.safety == mQuotingSafety::Boomerang
-            or qp.mode == mQuotingMode::HamelinRat
+        return qp.mode == mQuotingMode::HamelinRat
+            or qp.safety == mQuotingSafety::Boomerang
             or qp.safety == mQuotingSafety::AK47;
       };
     private:

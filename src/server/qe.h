@@ -12,7 +12,6 @@ namespace K {
   typedef mQuote (*qeMode)(double widthPing, double buySize, double sellSize);
   map<mQuotingMode, qeMode> qeQuotingMode;
   map<mSide, mLevel> qeNextQuote;
-  
   bool qeNextIsPong;
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
                 gwConnectExchange_ = mConnectivity::Disconnected;
@@ -457,7 +456,7 @@ namespace K {
           k.bid.price = k.bid.price - widthPing;
         }
         if (k.bid.size > .2) k.bid.price = k.bid.price + gw->minTick;
-        if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;  
+        if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;
         if (mktWidth < (2.0 * widthPing / 3.0)) {
           k.ask.price = k.ask.price + widthPing / 4.0;
           k.bid.price = k.bid.price - widthPing / 4.0;
@@ -466,7 +465,6 @@ namespace K {
         k.ask.size = sellSize;
         return k;
       };
-
       static mQuote calcMidOfMarket(double widthPing, double buySize, double sellSize) {
         return mQuote(
           mLevel(fmax(mgFairValue - widthPing, 0), buySize),
@@ -583,7 +581,7 @@ namespace K {
           qeNextT = FN::T();
         }
         double price = q.price;
-        double range = qp.percentageValues 
+        double range = qp.percentageValues
           ? qp.rangePercentage * pgPos.value / 100
           : qp.range;
         multimap<double, mOrder> orderSide = orderCacheSide(side);
