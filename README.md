@@ -97,6 +97,8 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 2. Run in any location that you wish (feel free to customize the suggested folder name K):
 ```
+ $ mkdir K
+ $ cd K
  $ curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
  $ make install
  $ vim K.sh
