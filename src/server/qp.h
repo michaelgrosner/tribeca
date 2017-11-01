@@ -165,7 +165,7 @@ namespace K {
     if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
     if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
     if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
-    if ((int)k.mode > 6) k.mode = (mQuotingMode)0; // remove after everybody have the new mode/safety in their databases (2018)
+    if ((int)k.mode > 6) k.mode = mQuotingMode::Top; // remove after everybody have the new mode/safety in their databases (2018)
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
     if (k.mode == mQuotingMode::HamelinRat) k.safety = mQuotingSafety::Off;
   };
