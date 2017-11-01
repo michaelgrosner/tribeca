@@ -25,7 +25,6 @@
     "browserify": "^14.4.0",
     "core-js": "^2.5.0",
     "es6-shim": "^0.35.3",
-    "hacktimer": "^1.1.3",
     "jquery": "^3.2.1",
     "moment": "^2.18.1",
     "ng4-popover": "^1.0.21",
