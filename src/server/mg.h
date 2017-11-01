@@ -9,6 +9,11 @@ namespace K {
   double mgEwmaM = 0;
   double mgEwmaS = 0;
   double mgEwmaP = 0;
+  //
+  double mgEwmaSMUDiff = 0;
+  double mgEwmaSM = 0;
+  double mgEwmaSU = 0;
+  //
   vector<double> mgSMA3;
   vector<double> mgStatFV;
   vector<double> mgStatBid;
@@ -80,6 +85,7 @@ namespace K {
         if (++mgT == 60) {
           mgT = 0;
           ewmaPUp();
+          ewmaSMUUp();
           ewmaUp();
         }
         stdevPUp();
@@ -125,6 +131,7 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
+          {"ewmaSMUDiff", mgEwmaSMUDiff},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
@@ -182,6 +189,7 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
+          {"ewmaSMUDiff", mgEwmaSMUDiff},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
@@ -197,6 +205,13 @@ namespace K {
       static void ewmaPUp() {
         calcEwma(&mgEwmaP, qp.quotingEwmaProtectionPeriods);
         ev_mgEwmaQuoteProtection();
+      };
+      static void ewmaSMUUp() {
+        calcEwma(&mgEwmaSM, qp.quotingEwmaSMPeriods);
+        calcEwma(&mgEwmaSU, qp.quotingEwmaSUPeriods);
+        if(mgEwmaSM && mgEwmaSU)
+		      mgEwmaSMUDiff = - ( ( mgEwmaSM - mgEwmaSU ) / mgEwmaSM ) * 1000;
+        ev_mgEwmaSMUProtection();
       };
       static void filter(mLevels k) {
         mgLevelsFilter = k;

@@ -28,6 +28,7 @@ namespace K {
                     tDelay,
                     tWallet,
                     tCancel;
+  static evEmpty    ev_mgEwmaSMUProtection;
   static int eCode = EXIT_FAILURE;
   class EV: public Klass {
     protected:
