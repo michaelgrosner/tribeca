@@ -418,7 +418,7 @@ namespace K {
       static mQuote calcJoinMarket(double widthPing, double buySize, double sellSize) {
         mQuote k = quoteAtTopOfMarket();
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.ask.price = fmax(mgFairValue + widthPing / 2.0, k.ask.price);
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;
@@ -428,7 +428,7 @@ namespace K {
         if (k.bid.size > 0.2) k.bid.price = k.bid.price + gw->minTick;
         if (k.ask.size > 0.2) k.ask.price = k.ask.price - gw->minTick;
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.ask.price = fmax(mgFairValue + widthPing / 2.0, k.ask.price);
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;
