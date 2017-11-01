@@ -425,8 +425,8 @@ namespace K {
       };
       static mQuote calcTopOfMarket(double widthPing, double buySize, double sellSize) {
         mQuote k = quoteAtTopOfMarket();
-        if (k.bid.size > 0.2) k.bid.price = k.bid.price + gw->minTick;
-        if (k.ask.size > 0.2) k.ask.price = k.ask.price - gw->minTick;
+        k.bid.price = k.bid.price + gw->minTick;
+        k.ask.price = k.ask.price - gw->minTick;
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
         k.ask.price = fmax(mgFairValue + widthPing / 2.0, k.ask.price);
         k.bid.size = buySize;
@@ -455,8 +455,8 @@ namespace K {
           k.ask.price = k.ask.price + widthPing;
           k.bid.price = k.bid.price - widthPing;
         }
-        if (k.bid.size > .2) k.bid.price = k.bid.price + gw->minTick;
-        if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;
+        k.bid.price = k.bid.price + gw->minTick;
+        k.ask.price = k.ask.price - gw->minTick;
         if (mktWidth < (2.0 * widthPing / 3.0)) {
           k.ask.price = k.ask.price + widthPing / 4.0;
           k.bid.price = k.bid.price - widthPing / 4.0;
