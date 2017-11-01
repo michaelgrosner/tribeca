@@ -205,7 +205,6 @@ namespace K {
         ev_mgEwmaQuoteProtection();
       };
       static void ewmaSMUUp() {
-        double _diff = 0;
         calcEwma(&mgEwmaSM, qp.quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp.quotingEwmaSUPeriods);
         if(mgEwmaSM && mgEwmaSU)
