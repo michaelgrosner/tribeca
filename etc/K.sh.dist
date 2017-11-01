@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+#  █ configurable! executable! K.sh initialization file █
 #  ▓ ████ ███ Usage? use current filename of THIS file: █
 #  ▒ ████ ███    $ ./K.sh --help                        █
-#    ▓███▀█▄  Feel free to copy/rename/edit THIS file.  █
-#  ▒ ▒▓██ ███ Feel free to uncomment examples, but      █
-#  ▓ ░▒▓█ ███ do not define multiple times a variable.  █
-#  █ configurable! executable! K.sh initialization file █
+#    ▓███▀█▄  !Feel free to copy/rename/edit THIS file. █
+#  ▒ ▒▓██ ███ !Feel free to uncomment any examples, but █
+#  ▓ ░▒▓█ ███  do not define multiple times a variable. █
 #  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▄██▄▌ ▌▐ ▐▄██▄▄▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▀▀▀▀▀▌▄  ▄▐▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 #  █▌ Today, is a beautiful day.▐▌ btw, on THIS file.. ▐█
