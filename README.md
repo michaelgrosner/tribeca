@@ -248,6 +248,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Added ZIP installation steps for non-git-lovers.
+
 Added XMR network ecosystem optional support.
 
 Added command-line arguments.
@@ -256,7 +258,7 @@ Updated quoting engine and gateways without nodejs.
 
 Added Makefile to replace npm scripts.
 
-Added PNG files as configuration files.
+~~Added PNG files as configuration files.~~
 
 Added built-in C++ WWW Server to replace expressjs and socketio.
 
@@ -348,13 +350,15 @@ or donate your time with programming or financial suggestions in the topical IRC
 
 ### Help
 
-If you need installation or usage support contact me at [21.co/analpaper](https://21.co/analpaper/) (non-free high-priority service).
+If you need installation or usage support contact me at [earn.com/analpaper](https://earn.com/analpaper/) (non-free high-priority service).
 
 ### Issues
 
 To request new features open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Feature%20request) and explain your improvement as you consider.
 
 To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all possible relevant log messages.
+
+Prior make pull requests please understand that your biological and technological distinctiveness will be added to our own. Resistance is futile.
 
 ### Votes
 

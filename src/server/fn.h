@@ -497,7 +497,7 @@ namespace K {
       };
       static void logVer(string k, int c) {
         if (!wInit) {
-          cout << BGREEN << "K" << RGREEN << string(" version ").append(!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n")) << RYELLOW << (c ? k : "") << RWHITE;
+          cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
         lock_guard<mutex> lock(wMutex);
@@ -506,7 +506,7 @@ namespace K {
         wattron(wLog, A_BOLD);
         wprintw(wLog, "K");
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, string(" version ").append(c == -1 ? "unknown (zip install)\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))).data());
+        wprintw(wLog, string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))).data());
         wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
         if (c) wprintw(wLog, k.data());

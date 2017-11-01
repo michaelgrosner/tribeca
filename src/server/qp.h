@@ -33,15 +33,12 @@ namespace K {
     mSOP              superTrades                   = mSOP::Off;
     double            tradesPerMinute               = 0.9;
     int               tradeRateSeconds              = 69;
-
     bool              quotingEwmaProtection         = true;
     int               quotingEwmaProtectionPeriods  = 200;
-
     bool              quotingEwmaSMUProtection      = false;
     double            quotingEwmaSMUThreshold       = 2.0;
     int               quotingEwmaSMPeriods          = 12;
     int               quotingEwmaSUPeriods          = 3;
-
     mSTDEV            quotingStdevProtection        = mSTDEV::Off;
     bool              quotingStdevBollingerBands    = false;
     double            quotingStdevProtectionFactor  = 1.0;
@@ -93,12 +90,10 @@ namespace K {
       {"tradeRateSeconds", k.tradeRateSeconds},
       {"quotingEwmaProtection", k.quotingEwmaProtection},
       {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
-
       {"quotingEwmaSMUProtection", k.quotingEwmaSMUProtection},
       {"quotingEwmaSMUThreshold", k.quotingEwmaSMUThreshold},
       {"quotingEwmaSMPeriods", k.quotingEwmaSMPeriods},
       {"quotingEwmaSUPeriods", k.quotingEwmaSUPeriods},
-
       {"quotingStdevProtection", (int)k.quotingStdevProtection},
       {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
@@ -150,12 +145,10 @@ namespace K {
     if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
     if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
     if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
-
     if (j.end() != j.find("quotingEwmaSMUProtection")) k.quotingEwmaSMUProtection = j.at("quotingEwmaSMUProtection").get<bool>();
     if (j.end() != j.find("quotingEwmaSMUThreshold")) k.quotingEwmaSMUThreshold = j.at("quotingEwmaSMUThreshold").get<double>();
     if (j.end() != j.find("quotingEwmaSMPeriods")) k.quotingEwmaSMPeriods = j.at("quotingEwmaSMPeriods").get<int>();
     if (j.end() != j.find("quotingEwmaSUPeriods")) k.quotingEwmaSUPeriods = j.at("quotingEwmaSUPeriods").get<int>();
-
     if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
     if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();

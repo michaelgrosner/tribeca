@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = fe29953784d75e840f2fa76923f2604c3a0f6e5c
+KLIB     = eccdeb4f954249f122feed7b7eb9b83bc040ae4d
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -214,9 +214,7 @@ link:
 
 reinstall: src
 	rm -rf app
-	test -d .git && git fetch
-	test -d .git && git merge FETCH_HEAD
-	@rm -rf node_modules/hacktimer
+	test -d .git && (git fetch && git merge FETCH_HEAD) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	@$(MAKE) install
 	#@$(MAKE) test -s
 	@$(MAKE) restartall

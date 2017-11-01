@@ -40,7 +40,7 @@ namespace K {
         signal(SIGSEGV, wtf);
       };
       void run() {
-        if (FN::output("test -d .git || echo zip") == "zip")
+        if (FN::output("test -d .git || echo -n zip") == "zip")
           FN::logVer("", -1);
         else {
           FN::output("git fetch");

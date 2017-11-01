@@ -18,8 +18,6 @@ branches:
 
 before_install:
   - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed || :;
-  - sed -i "s/^    \"hacktimer.*$//" package.json;
-  - sed -i "/\"hacktimer/,+4d" package-lock.json;
   - test $TRAVIS_OS_NAME == "linux" && make travis || :;
 
 install:

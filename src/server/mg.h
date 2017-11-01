@@ -9,11 +9,9 @@ namespace K {
   double mgEwmaM = 0;
   double mgEwmaS = 0;
   double mgEwmaP = 0;
-  //
   double mgEwmaSMUDiff = 0;
   double mgEwmaSM = 0;
   double mgEwmaSU = 0;
-  //
   vector<double> mgSMA3;
   vector<double> mgStatFV;
   vector<double> mgStatBid;
