@@ -67,7 +67,7 @@ Navigate to the Web UI as described in the install process. You should see a scr
 
 In the web UI, there are three rows of panels with cryptic looking names and editable textboxes. Those are the quoting parameters, the knobs which we can turn to affect how K.js will trade.
 
-* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp` and `pDiv` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
+* `%` - If enabled, the values of `bidSize`, `askSize`, `tbp`, `pDiv` and `range` will be a percentage related to the total funds (available + held in both sides); useful when the very same funds are used in multiple markets, so the quantity of the funds is highly variable, then may be useful to work with percentages.
 
 * `mode` - Sets the quoting mode
 
@@ -81,15 +81,17 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `Inverse Top` - Same as `Inverse Join` but make our orders jump to the very top of the order book.
 
-  * `PingPong` - Same as `Top` but always respect the calculated `widthPong` from the last sold or bought `size`, if any.
+  * `HamelinRat` - Follow the Colossus of the market. Unlike other modes, it does not calculate the quote spread based on fair value, instead it looks for the biggest order in the market levels and places the quote right before it.
+
+  * `Depth` - Use `width` as `depth`. Unlike other modes, it does not calculate the quote spread based on fair value, instead it walks over all current open orders in the book and places the quote right after `depth` quantity, at both sides.
+
+* `safety`- Sets a quoting Safety
+
+  * `PingPong` - Always respect the calculated `widthPong` from the last sold or bought `size`, if any.
 
   * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching previous sold or bought `size`, if any.
 
   * `AK-47` - Same as `Boomerang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade K.js will cancel all previous trades if those are worst.
-
-  * `HamelinRat` - Follow the Colossus of the market. Unlike other modes, it does not calculate the quote spread based on fair value, instead it looks for the biggest order in the market levels and places the quote right before it.
-
-  * `Depth` - Use `width` as `depth`. Unlike other modes, it does not calculate the quote spread based on fair value, instead it walks over all current open orders in the book and places the quote right after `depth` quantity, at both sides.
 
 * `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
 
@@ -168,6 +170,8 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   * `Size` - K.js will aggressively make use of bigger `size` values (x3 `size` or half of the diverged target base position, whatever is smaller).
 
   * `SizeWidth` - Same as `Size` but also will aggressively make use of smaller `width` values (respecting always aggressive `pongAt` option and `widthPong`).
+
+* `aprFactor` - Defines the value with which the `size` is multiplicated when `apr` is in functional state.
 
 * `sop` - Super opportunities, if enabled and if the market width is x3 times bigger than the `width` set, it multiplies (x2 or x3) the `trades` and/or the `size`, in both sides at the same time.
 
