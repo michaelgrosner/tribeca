@@ -350,7 +350,7 @@ namespace K {
           qeAskStatus = mQuoteState::DepletedFunds;
           FN::logWar("QE", string("SELL quote ignored: depleted ") + gw->base + " balance");
         }
-        if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::PingPong or QP::matchPings())
+        if ((qp.safety == qp.safety == mQuotingSafety::PingPong or QP::matchPings())
           and !safetyBuyPing and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::BidSide or qp.pingAt == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
         )) {
@@ -366,7 +366,7 @@ namespace K {
           rawQuote.bid.size = 0;
         }
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
-        if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::PingPong or QP::matchPings())
+        if ((qp.safety == mQuotingSafety::PingPong or QP::matchPings())
           and !safetySellPong and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::AskSide or qp.pingAt == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
         )) {
