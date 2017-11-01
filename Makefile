@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KLIB     = 17daad3c162cf20605355a18d7353723b4287fba
+KZIP     = 15e004d5b7125494d0d294438237f4f45367b2db
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -171,7 +171,7 @@ quickfix: build-$(CHOST)
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
 
 build:
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KLIB)-$(CHOST).tar.gz \
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KZIP)-$(CHOST).tar.gz \
 	| tar xz && chmod +x build-*/local/lib/K-$(CHOST).a build-*/local/bin/K-$(CHOST)
 
 clean:
@@ -317,23 +317,23 @@ png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 check:
-	@echo $(KLIB)
+	@echo $(KZIP)
 	@shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1
 
 checkOK:
-	@sed -i "s/^\(KLIB     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1`/" Makefile
+	@sed -i "s/^\(KZIP     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1`/" Makefile
 	@$(MAKE) check -s
 
 release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KLIB)-$(CHOST).tar.gz                                                                                \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a     \
-	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"           \
-	--data-binary "@$(PWD)/$(KLIB)-$(CHOST).tar.gz"                                                                   \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KLIB)-$(CHOST).tar.gz" \
-	&& rm $(KLIB)-$(CHOST).tar.gz && echo && echo DONE $(KLIB)-$(CHOST).tar.gz
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                   \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a \
+	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"              \
+	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                      \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"    \
+	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz
 endif
 
 md5: src
