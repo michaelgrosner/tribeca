@@ -358,6 +358,8 @@ To request new features open a [new issue](https://github.com/ctubio/Krypto-trad
 
 To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all possible relevant log messages.
 
+Prior make pull requests please understand that your biological and technological distinctiveness will be added to our own. Resistance is futile.
+
 ### Votes
 
 What exchange you don't want to be deleted from the bot?
