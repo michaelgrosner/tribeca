@@ -66,6 +66,10 @@ namespace K {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_mgEwmaQuoteProtection");
           calcQuote();
         };
+        ev_mgEwmaSMUProtection = []() {
+          if (argDebugEvents) FN::log("DEBUG", "EV QE ev_mgEwmaSMUProtection");
+          calcQuote();
+        };
         ev_mgLevels = []() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_mgLevels");
           calcQuote();
@@ -250,9 +254,30 @@ namespace K {
           rawQuote.ask.price = fmax(mgEwmaP, rawQuote.ask.price);
           rawQuote.bid.price = fmin(mgEwmaP, rawQuote.bid.price);
         }
+		    // Ultra trend protection
+        if (qp.quotingEwmaSMUProtection and mgEwmaSMUDiff) {
+          // Uptrend, stop selling
+          if(mgEwmaSMUDiff > qp.quotingEwmaSMUThreshold){
+            qeAskStatus = mQuoteState::UpTrendHeld;
+            rawQuote.ask.price = 0;
+            rawQuote.ask.size = 0;
+            pDiv = 0;
+            if (argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
+          }
+          // Downtrend stop buying
+          else if(mgEwmaSMUDiff < -qp.quotingEwmaSMUThreshold){
+            qeBidStatus = mQuoteState::DownTrendHeld;
+            rawQuote.bid.price = 0;
+            rawQuote.bid.size = 0;
+            pDiv = 0;
+            if (argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
+          }
+        }
+		    //
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if (totalBasePosition < pgTargetBasePos - pDiv) {
-          qeAskStatus = mQuoteState::TBPHeld;
+          if(qeAskStatus != mQuoteState::UpTrendHeld or qeAskStatus != mQuoteState::DownTrendHeld)
+            qeAskStatus = mQuoteState::TBPHeld;
           rawQuote.ask.price = 0;
           rawQuote.ask.size = 0;
           if (qp.aggressivePositionRebalancing != mAPR::Off) {
@@ -261,7 +286,8 @@ namespace K {
           }
         }
         else if (totalBasePosition >= pgTargetBasePos + pDiv) {
-          qeBidStatus = mQuoteState::TBPHeld;
+          if(qeBidStatus != mQuoteState::UpTrendHeld or qeBidStatus != mQuoteState::DownTrendHeld)
+            qeBidStatus = mQuoteState::TBPHeld;
           rawQuote.bid.price = 0;
           rawQuote.bid.size = 0;
           if (qp.aggressivePositionRebalancing != mAPR::Off) {
@@ -270,6 +296,7 @@ namespace K {
           }
         }
         else pgSideAPR = "Off";
+
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         if (qp.quotingStdevProtection != mSTDEV::Off and mgStdevFV) {
           if (rawQuote.ask.price and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or pgSideAPR != "Sell"))
