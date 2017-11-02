@@ -173,9 +173,10 @@ namespace K {
     protected:
       void load() {
         json k = DB::load(uiTXT::QuotingParametersChange);
-        if (k.size())
+        if (k.size()) {
           qp = k.at(0);
-        FN::log("DB", string("loaded Quoting Parameters ") + (k.size() ? "OK" : "OR reading defaults instead"));
+          FN::log("DB", "loaded Quoting Parameters OK");
+        } else FN::logWar("QP", "using default values for Quoting Parameters");
       };
       void waitUser() {
         UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
