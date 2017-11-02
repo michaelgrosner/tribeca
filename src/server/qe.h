@@ -287,7 +287,7 @@ namespace K {
         } else rawQuote->isBidPong = false;
       };
       static void applyWaitingPing(mQuote *rawQuote, double buySize, double sellSize, double totalQuotePosition, double totalBasePosition, double safetyBuyPing, double safetySellPong) {
-        if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::PingPong or QP::matchPings())
+        if ((qp.safety == mQuotingSafety::PingPong or QP::matchPings())
           and !safetyBuyPing and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::BidSide or qp.pingAt == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
         )) {
@@ -297,7 +297,7 @@ namespace K {
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::PingPong or QP::matchPings())
+        if ((qp.safety == mQuotingSafety::PingPong or QP::matchPings())
           and !safetySellPong and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::AskSide or qp.pingAt == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
         )) {
@@ -470,17 +470,17 @@ namespace K {
       static mQuote calcJoinMarket(double widthPing, double buySize, double sellSize) {
         mQuote k = quoteAtTopOfMarket();
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.ask.price = fmax(mgFairValue + widthPing / 2.0, k.ask.price);
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;
       };
       static mQuote calcTopOfMarket(double widthPing, double buySize, double sellSize) {
         mQuote k = quoteAtTopOfMarket();
-        if (k.bid.size > 0.2) k.bid.price = k.bid.price + gw->minTick;
-        if (k.ask.size > 0.2) k.ask.price = k.ask.price - gw->minTick;
+        k.bid.price = k.bid.price + gw->minTick;
+        k.ask.price = k.ask.price - gw->minTick;
         k.bid.price = fmin(mgFairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmin(mgFairValue + widthPing / 2.0, k.ask.price);
+        k.ask.price = fmax(mgFairValue + widthPing / 2.0, k.ask.price);
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;
@@ -507,8 +507,8 @@ namespace K {
           k.ask.price = k.ask.price + widthPing;
           k.bid.price = k.bid.price - widthPing;
         }
-        if (k.bid.size > .2) k.bid.price = k.bid.price + gw->minTick;
-        if (k.ask.size > .2) k.ask.price = k.ask.price - gw->minTick;
+        k.bid.price = k.bid.price + gw->minTick;
+        k.ask.price = k.ask.price - gw->minTick;
         if (mktWidth < (2.0 * widthPing / 3.0)) {
           k.ask.price = k.ask.price + widthPing / 4.0;
           k.bid.price = k.bid.price - widthPing / 4.0;

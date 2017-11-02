@@ -10,7 +10,7 @@ namespace K {
       void load() {
         json k = DB::load(uiTXT::Trades);
         if (k.size())
-          for (json::iterator it = k.begin(); it != k.end(); ++it)
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             tradesMemory.push_back(mTrade(
               (*it)["tradeId"].get<string>(),
               (mExchange)(*it)["exchange"].get<int>(),

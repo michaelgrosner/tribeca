@@ -95,7 +95,7 @@ namespace K {
         mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
         if (autoStart != gwAutoStart) {
           gwAutoStart = autoStart;
-          gwUpState();
+          gwStateUp();
         }
       };
       static void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
@@ -108,10 +108,10 @@ namespace K {
         }
         gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
-        gwUpState();
+        gwStateUp();
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
-      static void gwUpState() {
+      static void gwStateUp() {
         mConnectivity quotingState = gwConnectExchange;
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {

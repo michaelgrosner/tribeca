@@ -15,10 +15,8 @@
 [![Last Commit](https://img.shields.io/github/last-commit/ctubio/Krypto-trading-bot.svg?maxAge=2592000)](https://github.com/ctubio/Krypto-trading-bot)
 [![Dependency Status](https://img.shields.io/david/ctubio/Krypto-trading-bot.svg)](https://david-dm.org/ctubio/Krypto-trading-bot)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/issues)
-[![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)<!--[![Total Downloads](https://img.shields.io/npm/dt/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
-[![Week Downloads](https://img.shields.io/npm/dw/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
-[![Month Downloads](https://img.shields.io/npm/dm/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)
-[![Day Downloads](https://img.shields.io/npm/dy/hacktimer.svg)](https://github.com/ctubio/Krypto-trading-bot)-->
+[![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
+[![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?maxAge=2592000&label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
 
 Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/) (or [Raspbian](https://www.raspberrypi.org/downloads/raspbian/)) or [CentOS](https://wiki.centos.org/Download) instance is recommended.
 
@@ -110,9 +108,12 @@ To upgrade anytime just run `make reinstall`.
 
 See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
 
-Once the config file is ready, execute `./K.sh`.
+Once the config file is ready, it can be executed simply like:
+```
+ $ ./K.sh
+```
 
-Or `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html); to see the output, attach the screen with `make screen`.
+Alternatively use `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html) (to see the output, attach the screen with `make screen` [or run all at once with `make start screen`]).
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
@@ -358,7 +359,8 @@ To request new features open a [new issue](https://github.com/ctubio/Krypto-trad
 
 To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all possible relevant log messages.
 
-Prior make pull requests please understand that your biological and technological distinctiveness will be added to our own. Resistance is futile.
+Pull Requests are welcome, but adhere to the Contributor License Agreement:
+- Your biological and technological distinctiveness will be added to our own. Resistance is futile.
 
 ### Votes
 
