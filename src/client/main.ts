@@ -391,7 +391,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
                                                 <input class="form-control input-sm"
-                                                   type="number" step="0.1" min="0.1"
+                                                   type="number" step="0.01" min="0.01"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUThreshold">
                                             </td>
