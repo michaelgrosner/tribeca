@@ -230,6 +230,7 @@ namespace K {
         return sum;
       };
       static void calcWallet(mWallet k) {
+        static unsigned long profitT_21s = 0;
         static mutex walletMutex,
                      profitMutex;
         static map<string, mWallet> pgWallet;
@@ -246,7 +247,10 @@ namespace K {
         double quoteValue = baseWallet.amount * mgFairValue + quoteWallet.amount + baseWallet.held * mgFairValue + quoteWallet.held;
         unsigned long now = FN::T();
         mProfit profit(baseValue, quoteValue, now);
-        DB::insert(uiTXT::Position, profit, false, "NULL", FN::T() - qp.profitHourInterval * 36e+5);
+        if (profitT_21s+21e+3 < FN::T()) {
+          profitT_21s = FN::T();
+          DB::insert(uiTXT::Position, profit, false, "NULL", now - qp.profitHourInterval * 36e+5);
+        }
         profitMutex.lock();
         pgProfit.push_back(profit);
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
