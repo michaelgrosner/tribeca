@@ -190,7 +190,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `ewma?` - Use a quote protection of `periods` smoothed line of the price to limit the price while sending new orders.
 
-* `periods????` - Maximum amount of values collected in the sequences used to calculate the `ewma?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
+* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewma?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
 
 * `ewmaTrend?` - Use a trend protection of double `periods` (Ultra+Micro) smoothed lines of the price to limit uptrend sells and downtrend buys.
 
@@ -216,7 +216,7 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
   * `OnTopAPROff` - Same as `OnTop` when `apr` is `Off` or when the system is not aggressively rebalancing positions; otherwise if one side is rebalancing, is same as `Off` for that side.
 
-* `periods?????` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. After collect sequentially every 1 second the values of the `fair value`, `last bid` and also of the `last ask` from the market order book, and before place new orders, a limit will be always applied to the new orders price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
+* `periodsˢᵗᵈᶜᵛ` - Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of `periods`. After collect sequentially every 1 second the values of the `fair value`, `last bid` and also of the `last ask` from the market order book, and before place new orders, a limit will be always applied to the new orders price using a calculation of the STDEV, taking into account only the last `periods` periods in each sequence.
 
 * `factor` - Multiplier used to increase or decrease the value of the selected `stdev` calculation, a `factor` of 1 does effectively nothing.
 
