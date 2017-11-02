@@ -180,7 +180,7 @@ export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
-export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }
+export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export interface QuotingParameters {
@@ -231,6 +231,8 @@ export interface QuotingParameters {
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
+    sopSizeMultiplier?: number;
+    sopTradesMultiplier?: number;
     delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
