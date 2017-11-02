@@ -31,7 +31,7 @@ namespace K {
       void load() {
         json k = DB::load(uiTXT::MarketData);
         if (k.size()) {
-          for (json::iterator it = k.begin(); it != k.end(); ++it) {
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
             if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
             mgStatFV.push_back(it->value("fv", 0.0));
             mgStatBid.push_back(it->value("bid", 0.0));

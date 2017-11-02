@@ -4,6 +4,7 @@
 namespace K {
   mPosition pgPos;
   mSafety pgSafety;
+  vector<mProfit> pgProfit;
   map<double, mTrade> pgBuys;
   map<double, mTrade> pgSells;
   double pgTargetBasePos = 0;
@@ -20,6 +21,16 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
+        k = DB::load(uiTXT::Position);
+        if (k.size()) {
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
+            pgProfit.push_back(mProfit(
+              (*it)["baseValue"].get<double>(),
+              (*it)["quoteValue"].get<double>(),
+              (*it)["time"].get<unsigned long>()
+            ));
+          FN::log("DB", string("loaded ") + to_string(pgProfit.size()) + " historical Profits");
+        }
       };
       void waitData() {
         ev_gwDataWallet = [](mWallet k) {
@@ -222,7 +233,6 @@ namespace K {
         static mutex walletMutex,
                      profitMutex;
         static map<string, mWallet> pgWallet;
-        static vector<mProfit> pgProfit;
         walletMutex.lock();
         if (k.currency!="") pgWallet[k.currency] = k;
         if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
@@ -235,8 +245,10 @@ namespace K {
         double baseValue = baseWallet.amount + quoteWallet.amount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
         double quoteValue = baseWallet.amount * mgFairValue + quoteWallet.amount + baseWallet.held * mgFairValue + quoteWallet.held;
         unsigned long now = FN::T();
+        mProfit profit(baseValue, quoteValue, now);
+        DB::insert(uiTXT::Position, profit, false, "NULL", FN::T() - qp.profitHourInterval * 36e+5);
         profitMutex.lock();
-        pgProfit.push_back(mProfit(baseValue, quoteValue, now));
+        pgProfit.push_back(profit);
         for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
           if (it->time + (qp.profitHourInterval * 36e+5) > now) ++it;
           else it = pgProfit.erase(it);

@@ -157,6 +157,13 @@ namespace K {
       baseValue(b), quoteValue(q), time(t)
     {};
   };
+  static void to_json(json& j, const mProfit& k) {
+    j = {
+      {"baseValue", k.baseValue},
+      {"quoteValue", k.quoteValue},
+      {"time", k.time}
+    };
+  };
   struct mSafety {
     double buy,
            sell,
