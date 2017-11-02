@@ -532,14 +532,14 @@ namespace K {
                askPx = 0;
         unsigned int maxLvl = 0;
         for (vector<mLevel>::iterator it = mgLevelsFilter.bids.begin(); it != mgLevelsFilter.bids.end(); ++it) {
-          if (bidSz < it->size) {
+          if (bidSz < it->size && it->price < (mgFairValue - widthPing / 2.0)) {
             bidSz = it->size;
             bidPx = it->price;
           }
           if (++maxLvl==13) break;
         }
         for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it) {
-          if (askSz < it->size) {
+          if (askSz < it->size && it->price > (mgFairValue + widthPing / 2.0)) {
             askSz = it->size;
             askPx = it->price;
           }
