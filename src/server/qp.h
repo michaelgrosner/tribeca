@@ -173,7 +173,6 @@ namespace K {
     if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
     if ((int)k.mode > 6) k.mode = mQuotingMode::Top; // remove after everybody have the new mode/safety in their databases (2018)
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
-    if (k.mode == mQuotingMode::HamelinRat) k.safety = mQuotingSafety::Off;
   };
   class QP: public Klass {
     protected:
@@ -193,8 +192,7 @@ namespace K {
       };
     public:
       static bool matchPings() {
-        return qp.mode == mQuotingMode::HamelinRat
-            or qp.safety == mQuotingSafety::Boomerang
+        return qp.safety == mQuotingSafety::Boomerang
             or qp.safety == mQuotingSafety::AK47;
       };
     private:

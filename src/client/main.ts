@@ -94,8 +94,8 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.safety==3">bullets</th>
                                             <th *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
                                             <th *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
+                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
+                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                             <th>sop</th>
                                             <ng-container *ngIf="pair.quotingParameters.display.superTrades">
                                             <th>sopWidth</th>
@@ -138,7 +138,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="0,1" min="1" max="100"
+                                                   type="number" step="0.1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                             </td>
