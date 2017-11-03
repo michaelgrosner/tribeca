@@ -9,6 +9,14 @@ int main()
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/32386807-b0bd1808-c0c2-11e7-9d98-9cb28e6fd51d.jpg" /></p>
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31733764-e79df244-b43c-11e7-9186-92b6744db290.png" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+<p align="center">I am from a country that is certainly old,<br />
+It has been a long time forgotten and oppressed.<br />
+<br />
+I am from a country where fear is called sanity,<br />
+that walks one step forward and two backwards.<br />
+<br />
+I am from a country that slowly breaks down,<br />
+and between illusions and frustrations goes forth.</p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
