@@ -232,7 +232,7 @@ namespace K {
         applySuperTrades(&rawQuote, &superTradesMultipliers, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         applyEwmaProtection(&rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
-        applyEwmaSMUProtection(&rawQuote, &pDiv);
+        applyEwmaSMUProtection(&rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
@@ -434,7 +434,7 @@ namespace K {
         rawQuote->ask.price = fmax(mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(mgEwmaP, rawQuote->bid.price);
       };
-      static void applyEwmaSMUProtection(mQuote *rawQuote, double *pDiv) {
+      static void applyEwmaSMUProtection(mQuote *rawQuote) {
         if (!qp.quotingEwmaSMUProtection or !mgEwmaSMUDiff) return;
         if(mgEwmaSMUDiff > qp.quotingEwmaSMUThreshold){
           qeAskStatus = mQuoteState::UpTrendHeld;
