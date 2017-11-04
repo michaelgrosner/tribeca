@@ -56,6 +56,10 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
   agInit(params:any):void {
     this.params = params;
   }
+
+  refresh(): boolean {
+      return false;
+  }
 }
 
 @Component({
@@ -73,6 +77,10 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
       this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
     if ('productFixed' in params.node.data)
       this.productFixed = params.node.data.productFixed;
+  }
+
+  refresh(): boolean {
+      return false;
   }
 }
 
