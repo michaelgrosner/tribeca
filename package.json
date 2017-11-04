@@ -25,6 +25,7 @@
     "browserify": "^14.5.0",
     "core-js": "^2.5.1",
     "es6-shim": "^0.35.3",
+    "jquery": "^3.2.1",
     "moment": "^2.19.1",
     "ng4-popover": "^1.0.21",
     "reflect-metadata": "^0.1.10",
