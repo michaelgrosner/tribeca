@@ -99,6 +99,7 @@ namespace K {
   class Gw {
     public:
       static Gw *E(mExchange e);
+      string (*randId)() = 0;
       mExchange exchange = mExchange::Null;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
@@ -110,7 +111,6 @@ namespace K {
               http    = "";
          bool cancelByLocalIds = 0,
               supportCancelAll = 0;
-      virtual    string randId() = 0;
       virtual mExchange config() = 0;
       virtual      void wallet() = 0,
                         levels() = 0,
