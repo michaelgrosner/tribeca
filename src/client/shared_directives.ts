@@ -60,7 +60,7 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
 
 @Component({
     selector: 'quote-currency-cell',
-    template: `{{ params.value | currency:quoteSymbol:true:'1.'+productFixed+'-'+productFixed }}`
+    template: `{{ params.value | currency:quoteSymbol:'symbol':'1.'+productFixed+'-'+productFixed }}`
 })
 export class QuoteCurrencyCellComponent implements AgRendererComponent {
   private params:any;
