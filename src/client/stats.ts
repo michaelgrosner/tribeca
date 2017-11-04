@@ -392,6 +392,27 @@ export class StatsComponent implements OnInit {
     this.showStats = showStats;
   }
 
+  private forEach = (array, callback) => {
+    for (var i = 0; i < array.length; i++)
+      callback.call(window, array[i]);
+  }
+
+  private extend = (out) => {
+    out = out || {};
+
+    for (var i = 1; i < arguments.length; i++) {
+      if (!arguments[i])
+        continue;
+
+      for (var key in arguments[i]) {
+        if (arguments[i].hasOwnProperty(key))
+          out[key] = arguments[i][key];
+      }
+    }
+
+    return out;
+  }
+
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
@@ -404,46 +425,51 @@ export class StatsComponent implements OnInit {
     (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
     Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
     setTimeout(() => {
-      jQuery('chart').bind('mousemove touchmove touchstart', function (e: any) {
-        var chart, point, i, event, containerLeft, thisLeft;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          containerLeft = jQuery(chart.container).offset().left;
-          thisLeft = jQuery(this).offset().left;
-          if (containerLeft == thisLeft && jQuery(chart.container).offset().top == jQuery(this).offset().top) continue;
-          chart.pointer.reset = function () { return undefined; };
-          let ev: any = jQuery.extend(jQuery.Event(e.originalEvent.type), {
-              which: 1,
-              chartX: e.originalEvent.chartX,
-              chartY: e.originalEvent.chartY,
-              clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
-              clientY: e.originalEvent.clientY,
-              pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
-              pageY: e.originalEvent.pageY,
-              screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
-              screenY: e.originalEvent.screenY
-          });
-          event = chart.pointer.normalize(ev);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOver();
-            point.series.chart.xAxis[0].drawCrosshair(event, point);
+      /*this.forEach(document.getElementsByTagName('chart'), function (el) {
+        el.addEventListener('mousemove', function (e) {
+          var chart, point, i, event, containerLeft, thisLeft;
+          for (i = 0; i < Highcharts.charts.length; ++i) {
+            chart = Highcharts.charts[i];
+            containerLeft = chart.container.getBoundingClientRect().left;
+            thisLeft = el.getBoundingClientRect().left;
+            if (containerLeft == thisLeft && chart.container.getBoundingClientRect().top == el.getBoundingClientRect().top) continue;
+            chart.pointer.reset = function () { return undefined; };
+            console.log(e);
+            let ev: any = this.extend(new MouseEvent('mousemove'), {
+                which: 1,
+                chartX: e.originalEvent.chartX,
+                chartY: e.originalEvent.chartY,
+                clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
+                clientY: e.originalEvent.clientY,
+                pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
+                pageY: e.originalEvent.pageY,
+                screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
+                screenY: e.originalEvent.screenY
+            });
+            event = chart.pointer.normalize(ev);
+            point = chart.series[0].searchPoint(event, true);
+            if (point) {
+              point.onMouseOver();
+              point.series.chart.xAxis[0].drawCrosshair(event, point);
+            }
           }
-        }
+        });
       });
-      jQuery('chart').bind('mouseleave', function (e) {
-        var chart, point, i, event;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          event = chart.pointer.normalize(e.originalEvent);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOut();
-            chart.tooltip.hide(point);
-            chart.xAxis[0].hideCrosshair();
+      this.forEach(document.getElementsByTagName('chart'), function (el) {
+        el.addEventListener('mouseleave', function (e) {
+          var chart, point, i, event;
+          for (i = 0; i < Highcharts.charts.length; ++i) {
+            chart = Highcharts.charts[i];
+            event = chart.pointer.normalize(e.originalEvent);
+            point = chart.series[0].searchPoint(event, true);
+            if (point) {
+              point.onMouseOut();
+              chart.tooltip.hide(point);
+              chart.xAxis[0].hideCrosshair();
+            }
           }
-        }
-      });
+        });
+      });*/
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.FairValue)

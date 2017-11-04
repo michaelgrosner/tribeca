@@ -442,14 +442,12 @@ namespace K {
           qeAskStatus = mQuoteState::UpTrendHeld;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
-          *pDiv = 0;
           if (argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
         }
         else if(mgEwmaSMUDiff < -qp.quotingEwmaSMUThreshold){
           qeBidStatus = mQuoteState::DownTrendHeld;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
-          *pDiv = 0;
           if (argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
         }
       };
