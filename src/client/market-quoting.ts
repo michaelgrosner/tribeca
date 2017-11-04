@@ -240,18 +240,37 @@ export class MarketQuotingComponent implements OnInit {
     this.quotesInMemoryDone = status.quotesInMemoryDone;
   }
 
+  private forEach = (array, callback) => {
+    for (var i = 0; i < array.length; i++)
+      callback.call(window, array[i]);
+  }
+
   private updateQuoteClass = (levels?: any[]) => {
     if (document.body.className != "visible") return;
     if (levels && levels.length > 0) {
       for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
-        if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').addClass('buy');
-        if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').addClass('sell');
-        (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 );
-        (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 );
+        if (levels[i].bidMod===1)
+          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+            if (el.className.indexOf('num')>-1 && el.className.indexOf('buy')==-1) el.className += ' buy';
+          });
+        if (levels[i].askMod===1)
+          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+            if (el.className.indexOf('num')>-1 && el.className.indexOf('sell')==-1) el.className += ' sell';
+          });
+        this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+          el.style.opacity = levels[i].bidMod===2?0.4:1.0;
+        });
+        this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+          el.style.opacity = levels[i].askMod===2?0.4:1.0;
+        });
         setTimeout(() => {
-          (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.0:1.0 );
-          (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.0:1.0 );
+          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+            el.style.opacity = levels[i].bidMod===2?0.0:1.0;
+          });
+          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+            el.style.opacity =  levels[i].askMod===2?0.0:1.0;
+          });
           setTimeout(() => {
             this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
             this.levels[i].bidClass = 'active';
@@ -264,7 +283,18 @@ export class MarketQuotingComponent implements OnInit {
               if (this.orderAsks[j].price === this.levels[i].askPrice)
                 this.levels[i].askClass = 'success sell';
             this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
-            setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').removeClass('sell').removeClass('buy'); }, 1);
+            setTimeout(() => {
+              this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+                el.style.opacity = 1.0;
+                if (el.className.indexOf('num')>-1)
+                  el.className = el.className.replace(' sell', '');
+              });
+              this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+                el.style.opacity = 1.0;
+                if (el.className.indexOf('num')>-1)
+                  el.className = el.className.replace(' buy', '');
+              });
+            }, 1);
           }, 0);
         }, 221);
       }
