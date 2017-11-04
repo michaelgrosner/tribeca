@@ -287,12 +287,12 @@ export class MarketQuotingComponent implements OnInit {
               this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
                 el.style.opacity = 1.0;
                 if (el.className.indexOf('num')>-1)
-                  el.className = el.className.replace(' sell', '').replace(' buy', '');
+                  el.className = el.className.replace(' sell', '');
               });
               this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
                 el.style.opacity = 1.0;
                 if (el.className.indexOf('num')>-1)
-                  el.className = el.className.replace(' sell', '').replace(' buy', '');
+                  el.className = el.className.replace(' buy', '');
               });
             }, 1);
           }, 0);
