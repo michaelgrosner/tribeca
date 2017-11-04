@@ -116,7 +116,7 @@ namespace K {
         sendQuoteToUI();
       };
       static void sendQuoteToAPI() {
-        if (gwConnectExchange_ == mConnectivity::Disconnected or (!qeQuote.bid.price and !qeQuote.ask.price)) {
+        if (gwConnectExchange_ == mConnectivity::Disconnected) {
           qeAskStatus = mQuoteState::Disconnected;
           qeBidStatus = mQuoteState::Disconnected;
         } else {
