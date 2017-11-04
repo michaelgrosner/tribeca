@@ -116,7 +116,7 @@ namespace K {
         sendQuoteToUI();
       };
       static void sendQuoteToAPI() {
-        if (gwConnectExchange_ == mConnectivity::Disconnected or (!qeQuote.bid.price and !qeQuote.ask.price)) {
+        if (gwConnectExchange_ == mConnectivity::Disconnected) {
           qeAskStatus = mQuoteState::Disconnected;
           qeBidStatus = mQuoteState::Disconnected;
         } else {
@@ -228,8 +228,8 @@ namespace K {
         const double rawAskSz = rawQuote.ask.size;
         qeBidStatus = mQuoteState::UnknownHeld;
         qeAskStatus = mQuoteState::UnknownHeld;
-        vector<int> superTradesMultipliers = {1, 1};
-        applySuperTrades(&rawQuote, &superTradesMultipliers, widthPing, buySize, sellSize, quoteAmount, baseAmount);
+        bool superTradesActive = false;
+        applySuperTrades(&rawQuote, superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         applyEwmaProtection(&rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyEwmaSMUProtection(&rawQuote);
@@ -241,15 +241,15 @@ namespace K {
         applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyBestWidth(&rawQuote);
-        applyTradesPerMinute(&rawQuote, superTradesMultipliers, safetyBuy, safetySell);
+        applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
-        applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyRoundSide(&rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
       };
@@ -359,13 +359,13 @@ namespace K {
         }
         else pgSideAPR = "Off";
       };
-      static void applyTradesPerMinute(mQuote *rawQuote, vector<int> superTradesMultipliers, double safetyBuy, double safetySell) {
-        if (safetySell > (qp.tradesPerMinute * superTradesMultipliers[0])) {
+      static void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive, double safetyBuy, double safetySell) {
+        if (safetySell > (qp.tradesPerMinute * superTradesActive ? qp.sopWidthMultiplier : 1)) {
           qeAskStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if (safetyBuy > (qp.tradesPerMinute * superTradesMultipliers[0])) {
+        if (safetyBuy > (qp.tradesPerMinute * superTradesActive ? qp.sopWidthMultiplier : 1)) {
           qeBidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
@@ -387,20 +387,15 @@ namespace K {
           )) rawQuote->bid.price = safetySellPong - widthPong;
         }
       };
-      static void applySuperTrades(mQuote *rawQuote, vector<int> *superTradesMultipliers, double widthPing, double buySize, double sellSize, double quoteAmount, double baseAmount) {
+      static void applySuperTrades(mQuote *rawQuote, bool superTradesActive, double widthPing, double buySize, double sellSize, double quoteAmount, double baseAmount) {
         if (qp.superTrades != mSOP::Off
           and widthPing * qp.sopWidthMultiplier < mgLevelsFilter.asks.begin()->price - mgLevelsFilter.bids.begin()->price
         ) {
-          (*superTradesMultipliers)[0] = qp.superTrades == mSOP::x2trades or qp.superTrades == mSOP::x2tradesSize
-            ? 2 : (qp.superTrades == mSOP::x3trades or qp.superTrades == mSOP::x3tradesSize
-              ? 3 : 1);
-          (*superTradesMultipliers)[1] = qp.superTrades == mSOP::x2Size or qp.superTrades == mSOP::x2tradesSize
-            ? 2 : (qp.superTrades == mSOP::x3Size or qp.superTrades == mSOP::x3tradesSize
-              ? 3 : 1);
-        }
-        if ((*superTradesMultipliers)[1] > 1) {
-          if (!qp.buySizeMax) rawQuote->bid.size = fmin((*superTradesMultipliers)[1] * buySize, (quoteAmount / mgFairValue) / 2);
-          if (!qp.sellSizeMax) rawQuote->ask.size = fmin((*superTradesMultipliers)[1] * sellSize, baseAmount / 2);
+	        if (qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize) superTradesActive = true; 
+			if (qp.superTrades == mSOP::Size or qp.superTrades == mSOP::TradesSize) {
+				if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
+				if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.sopSizeMultiplier * sellSize, baseAmount / 2);
+				}
         }
       };
       static void applyStdevProtection(mQuote *rawQuote) {
@@ -523,14 +518,14 @@ namespace K {
                askPx = 0;
         unsigned int maxLvl = 0;
         for (vector<mLevel>::iterator it = mgLevelsFilter.bids.begin(); it != mgLevelsFilter.bids.end(); ++it) {
-          if (bidSz < it->size) {
+          if (bidSz < it->size && it->price < (mgFairValue - widthPing / 2.0)) {
             bidSz = it->size;
             bidPx = it->price;
           }
           if (++maxLvl==13) break;
         }
         for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it) {
-          if (askSz < it->size) {
+          if (askSz < it->size && it->price > (mgFairValue + widthPing / 2.0)) {
             askSz = it->size;
             askPx = it->price;
           }

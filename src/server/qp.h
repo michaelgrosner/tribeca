@@ -48,7 +48,9 @@ namespace K {
     int               mediumEwmaPeriods             = 100;
     int               shortEwmaPeriods              = 50;
     double            aprMultiplier                 = 2;
-    int               sopWidthMultiplier            = 2;
+    double            sopWidthMultiplier            = 2;
+    double            sopSizeMultiplier             = 2;
+    double            sopTradesMultiplier           = 2;
     int               delayAPI                      = 0;
     bool              cancelOrdersAuto              = false;
     double            cleanPongsAuto                = 0.0;
@@ -104,6 +106,8 @@ namespace K {
       {"shortEwmaPeriods", k.shortEwmaPeriods},
       {"aprMultiplier", k.aprMultiplier},
       {"sopWidthMultiplier", k.sopWidthMultiplier},
+      {"sopSizeMultiplier", k.sopSizeMultiplier},
+      {"sopTradesMultiplier", k.sopTradesMultiplier},
       {"delayAPI", k.delayAPI},
       {"cancelOrdersAuto", k.cancelOrdersAuto},
       {"cleanPongsAuto", k.cleanPongsAuto},
@@ -158,7 +162,9 @@ namespace K {
     if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
     if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
     if (j.end() != j.find("aprMultiplier")) k.aprMultiplier = j.at("aprMultiplier").get<double>();
-    if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<int>();
+    if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
+    if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
+    if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
     if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
     if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
     if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
@@ -167,7 +173,6 @@ namespace K {
     if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
     if ((int)k.mode > 6) k.mode = mQuotingMode::Top; // remove after everybody have the new mode/safety in their databases (2018)
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
-    if (k.mode == mQuotingMode::HamelinRat) k.safety = mQuotingSafety::Off;
   };
   class QP: public Klass {
     protected:
@@ -187,8 +192,7 @@ namespace K {
       };
     public:
       static bool matchPings() {
-        return qp.mode == mQuotingMode::HamelinRat
-            or qp.safety == mQuotingSafety::Boomerang
+        return qp.safety == mQuotingSafety::Boomerang
             or qp.safety == mQuotingSafety::AK47;
       };
     private:
