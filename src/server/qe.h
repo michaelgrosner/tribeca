@@ -47,7 +47,6 @@ namespace K {
         ev_gwConnectExchange = [](mConnectivity k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_gwConnectExchange");
           gwConnectExchange_ = k;
-          send();
         };
         ev_uiQuotingParameters = []() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ev_uiQuotingParameters");
@@ -229,7 +228,7 @@ namespace K {
         qeBidStatus = mQuoteState::UnknownHeld;
         qeAskStatus = mQuoteState::UnknownHeld;
         bool superTradesActive = false;
-        applySuperTrades(&rawQuote, superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
+        applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         applyEwmaProtection(&rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
         applyEwmaSMUProtection(&rawQuote);
@@ -387,15 +386,15 @@ namespace K {
           )) rawQuote->bid.price = safetySellPong - widthPong;
         }
       };
-      static void applySuperTrades(mQuote *rawQuote, bool superTradesActive, double widthPing, double buySize, double sellSize, double quoteAmount, double baseAmount) {
+      static void applySuperTrades(mQuote *rawQuote, bool *superTradesActive, double widthPing, double buySize, double sellSize, double quoteAmount, double baseAmount) {
         if (qp.superTrades != mSOP::Off
           and widthPing * qp.sopWidthMultiplier < mgLevelsFilter.asks.begin()->price - mgLevelsFilter.bids.begin()->price
         ) {
-	        if (qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize) superTradesActive = true; 
-			if (qp.superTrades == mSOP::Size or qp.superTrades == mSOP::TradesSize) {
-				if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
-				if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.sopSizeMultiplier * sellSize, baseAmount / 2);
-				}
+          *superTradesActive = (qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize);
+          if (qp.superTrades == mSOP::Size or qp.superTrades == mSOP::TradesSize) {
+            if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
+            if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.sopSizeMultiplier * sellSize, baseAmount / 2);
+          }
         }
       };
       static void applyStdevProtection(mQuote *rawQuote) {
