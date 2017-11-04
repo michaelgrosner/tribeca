@@ -124,7 +124,7 @@ namespace K {
       };
       static void gwLoad(mExchange e) {
         if (e == mExchange::Coinbase) {
-          gw->randId = FN::randIdHex;
+          gw->randId = FN::uuidId;
           gw->symbol = string(gw->base).append("-").append(gw->quote);
           system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
           system("stunnel etc/K-stunnel.conf");
@@ -132,7 +132,7 @@ namespace K {
           gw->minTick = stod(k.value("quote_increment", "0"));
           gw->minSize = stod(k.value("base_min_size", "0"));
         } else if (e == mExchange::HitBtc) {
-          gw->randId = FN::randId16;
+          gw->randId = FN::charId;
           gw->symbol = string(gw->base).append(gw->quote);
           json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
           if (k.find("symbols") != k.end())
@@ -143,7 +143,7 @@ namespace K {
                 break;
               }
         } else if (e == mExchange::Bitfinex) {
-          gw->randId = FN::timeId;
+          gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base).append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
@@ -160,12 +160,12 @@ namespace K {
             if (it->value("pair", "") == gw->symbol)
               gw->minSize = stod(it->value("minimum_order_size", "0"));
         } else if (e == mExchange::OkCoin) {
-          gw->randId = FN::randId8;
+          gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
         } else if (e == mExchange::Korbit) {
-          gw->randId = FN::timeId;
+          gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/constants"));
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
@@ -173,7 +173,7 @@ namespace K {
             gw->minSize = 0.015;
           }
         } else if (e == mExchange::Poloniex) {
-          gw->randId = FN::timeId;
+          gw->randId = FN::int64Id;
           gw->symbol = string(gw->base).append("_").append(gw->quote);
           json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
           if (k.find(gw->symbol) != k.end()) {
@@ -182,7 +182,7 @@ namespace K {
             gw->minSize = 0.01;
           }
         } else if (e == mExchange::Null) {
-          gw->randId = FN::timeId;
+          gw->randId = FN::int64Id;
           gw->symbol = string(gw->base).append("_").append(gw->quote);
           gw->minTick = 0.01;
           gw->minSize = 0.01;

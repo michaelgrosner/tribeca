@@ -48,20 +48,6 @@ namespace K {
         UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
       };
     public:
-      static void allOrdersDelete(string oI, string oE) {
-        ogMutex.lock();
-        map<string, mOrder>::iterator it = allOrders.find(oI);
-        if (it != allOrders.end()) allOrders.erase(it);
-        if (oE != "") {
-          map<string, string>::iterator it_ = allOrdersIds.find(oE);
-          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
-        } else {
-          for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
-            if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
-        }
-        ogMutex.unlock();
-        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
-      };
       static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gW->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
         if (argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
@@ -71,9 +57,9 @@ namespace K {
       static void cancelOrder(string k) {
         ogMutex.lock();
         if (allOrders.find(k) == allOrders.end()) {
+          ogMutex.unlock();
           // updateOrderState(mOrder(k, mORS::Cancelled));
           if (argDebugOrders) FN::log("DEBUG", string("OG cancel unknown id ") + k);
-          ogMutex.unlock();
           return;
         }
         if (!gW->cancelByLocalIds and allOrders[k].exchangeId == "") {
@@ -334,6 +320,25 @@ namespace K {
           if (argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
         } else allOrdersDelete(k.orderId, k.exchangeId);
         if (argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
+      };
+      static void allOrdersDelete(string oI, string oE) {
+        ogMutex.lock();
+        map<string, mOrder>::iterator it = allOrders.find(oI);
+        if (it != allOrders.end()) allOrders.erase(it);
+        if (oE != "") {
+          map<string, string>::iterator it_ = allOrdersIds.find(oE);
+          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
+        } else {
+          for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
+            if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
+        }
+        unsigned long T = FN::T();
+        for (map<string, mOrder>::iterator _it = allOrders.begin(); _it != allOrders.end(); ++_it)
+          if ((mORS)_it->second.orderStatus == mORS::New and _it->second.exchangeId == "" and T-1e+4>_it->second.time)
+            for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
+              if (it_->second == _it->first) it_ = allOrdersIds.erase(it_); else ++it_;
+        ogMutex.unlock();
+        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
   };
 }
