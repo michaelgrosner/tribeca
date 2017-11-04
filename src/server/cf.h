@@ -167,7 +167,9 @@ namespace K {
       };
       void run() {
         if (!argNaked) FN::screen();
-        gw = Gw::E(cfExchange());
+        mExchange e = cfExchange();
+        gw = Gw::E(e);
+        gw->exchange = e;
         gw->name = argExchange;
         gw->base = cfBase();
         gw->quote = cfQuote();

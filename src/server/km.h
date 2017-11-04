@@ -111,7 +111,6 @@ namespace K {
               http    = "";
          bool cancelByLocalIds = 0,
               supportCancelAll = 0;
-      virtual mExchange config() = 0;
       virtual      void wallet() = 0,
                         levels() = 0,
                         send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
