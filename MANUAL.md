@@ -202,9 +202,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `threshold` - When trend stregth is above positive threshold value bot stops selling, when strength below negative threshold value bot stops buying.
 
-* `ultra` - Time in munites to define Ultra EMA
+* `ultra` - Time in minutes to define Ultra EMA
 
-* `micro` - Time in munites to define Micro EMA
+* `micro` - Time in minutes to define Micro EMA
 
 * `stdev`
 
