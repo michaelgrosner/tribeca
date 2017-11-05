@@ -538,9 +538,12 @@ namespace K {
           }
           if (!--maxLvl) break;
         }
+        if (bidSz) bidPx = bidPx + gw->minTick;
+        if (askSz) askPx = askPx - gw->minTick;
+        
         return mQuote(
-          mLevel(bidPx + gw->minTick, buySize),
-          mLevel(askPx - gw->minTick, sellSize)
+          mLevel(bidPx, buySize),
+          mLevel(askPx, sellSize)
         );
       };
       static mQuote calcDepthOfMarket(double depth, double buySize, double sellSize) {
