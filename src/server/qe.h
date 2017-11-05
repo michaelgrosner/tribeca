@@ -681,7 +681,7 @@ namespace K {
       static void stopAllQuotes(mSide side) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-            OG::cancelOrder(it->second.orderId);
+          OG::cancelOrder(it->second.orderId);
       };
   };
 }
