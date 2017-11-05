@@ -301,15 +301,19 @@ changelog: .git
 
 test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
+	$(MAKE) test-c
+
+test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
+	$(MAKE) test-c
+	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
+
+test-c:
 	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
 	@cat src/server/K.cxx >> src/server/K.test.cxx
 	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx.tmp --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
 	plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log
 	@cat report.tasks
 	@rm report.tasks PVS-Studio.log src/server/K.test.cxx
-
-test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
-	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
@@ -322,7 +326,7 @@ travis:
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
 	mkdir -p $(KLOCAL)
-	make pvs
+	$(MAKE) pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json
