@@ -167,7 +167,9 @@ namespace K {
       };
       void run() {
         if (!argNaked) FN::screen();
-        gw = Gw::E(cfExchange());
+        mExchange e = cfExchange();
+        gw = Gw::E(e);
+        gw->exchange = e;
         gw->name = argExchange;
         gw->base = cfBase();
         gw->quote = cfQuote();
@@ -200,8 +202,8 @@ namespace K {
         else if (k == "poloniex") return mExchange::Poloniex;
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
-        else if (k == "null") return mExchange::Null;
-        FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+        else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+        return mExchange::Null;
       };
   };
 }

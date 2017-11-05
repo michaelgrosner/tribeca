@@ -138,7 +138,7 @@ export class TradesComponent implements OnInit {
             if (this.sortTimeout) window.clearTimeout(this.sortTimeout);
             this.sortTimeout = window.setTimeout(() => {
               this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
-              setTimeout(()=>this.gridOptions.api.refreshView(),0);
+              setTimeout(()=>this.gridOptions.api.redrawRows(),0);
             }, 269);
             if (this.audio) {
               var audio = new Audio('/audio/'+(merged?'0':'1')+'.mp3');
@@ -180,7 +180,7 @@ export class TradesComponent implements OnInit {
   private updateQP = (qp: Models.QuotingParameters) => {
     this.audio = qp.audio;
     if (!this.gridOptions.api) return;
-    var isK = (qp.safety === Models.QuotingSafety.Boomerang || qp.mode === Models.QuotingMode.HamelinRat || qp.safety === Models.QuotingSafety.AK47);
+    var isK = (qp.safety === Models.QuotingSafety.Boomerang || qp.safety === Models.QuotingSafety.AK47);
     this.gridOptions.columnDefs.map((r: ColDef) => {
       ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
         if (t[0]==r.field) r.headerName = isK ? t[1] : t[1].replace('Ping','');

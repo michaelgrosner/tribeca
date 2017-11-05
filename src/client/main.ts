@@ -1,8 +1,6 @@
 import 'zone.js';
 import 'reflect-metadata';
 
-(<any>global).jQuery = require("jquery");
-
 import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angular/core';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
@@ -97,6 +95,11 @@ class DisplayOrder {
                                             <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
                                             <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                             <th>sop</th>
+                                            <ng-container *ngIf="pair.quotingParameters.display.superTrades">
+                                            <th>sopWidth</th>
+                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
+                                            <th *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
+                                            </ng-container>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
                                         </tr>
@@ -133,7 +136,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="0,1" min="1" max="100"
+                                                   type="number" step="0.1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                             </td>
@@ -155,6 +158,26 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
+                                            <ng-container *ngIf="pair.quotingParameters.display.superTrades">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;">
+                                                <input class="form-control input-sm" title="Width multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopWidthMultiplier">
+                                            </td>
+											<td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                                <input class="form-control input-sm" title="Trades multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopTradesMultiplier">
+                                            </td>
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                                <input class="form-control input-sm" title="Size multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopSizeMultiplier">
+                                            </td>
+                                            </ng-container>
                                             <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"
@@ -654,7 +677,6 @@ class ClientComponent implements OnInit {
   public _toggleWatch = (watchExchange: string, watchPair: string) => {
     if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
       (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
-      if (!jQuery('#cryptoWatch'+watchExchange+watchPair+'.resizable').length) (<any>jQuery)('#cryptoWatch'+watchExchange+watchPair).resizable({handleSelector: '#cryptoWatch'+watchExchange+watchPair+' .dialog-resize'});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
   };
@@ -704,11 +726,12 @@ class ClientComponent implements OnInit {
   };
   public openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.matryoshka||'https://');
-    jQuery('#matryoshka').attr('src', url||'about:blank').height((url&&url!='https://')?589:0);
+    (<any>document.getElementById('matryoshka').attributes).src.value = url||'about:blank';
+    document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
   };
   public resizeMatryoshka = () => {
     if (window.parent === window) return;
-    window.parent.postMessage('height='+jQuery('body').height(), '*');
+    window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
     advert: new Models.ProductAdvertisement(null, null, null, null, null, .01),
@@ -752,7 +775,7 @@ class ClientComponent implements OnInit {
 
     window.addEventListener("message", e => {
       if (e.data.indexOf('height=')===0) {
-        jQuery('#matryoshka').height(e.data.replace('height=',''));
+        document.getElementById('matryoshka').style.height = e.data.replace('height=','');
         this.resizeMatryoshka();
       }
       else if (e.data.indexOf('cryptoWatch=')===0) {
@@ -821,8 +844,8 @@ class ClientComponent implements OnInit {
   }
 
   private setTheme = () => {
-    if (jQuery('#daynight').attr('href')!='/css/bootstrap-theme'+this.system_theme+'.min.css')
-      jQuery('#daynight').attr('href', '/css/bootstrap-theme'+this.system_theme+'.min.css');
+    if ((<any>document.getElementById('daynight').attributes).href.value!='/css/bootstrap-theme'+this.system_theme+'.min.css')
+      (<any>document.getElementById('daynight').attributes).href.value = '/css/bootstrap-theme'+this.system_theme+'.min.css';
   }
 
   public changeTheme = () => {
@@ -873,7 +896,7 @@ class ClientComponent implements OnInit {
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"\n%c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
-    if (!jQuery('.chatbro_container').length && window.parent === window)
+    if (!document.getElementsByClassName('chatbro_container').length && window.parent === window)
       (function(chats,async) {async=!1!==async;var params={embedChatsParameters:chats instanceof Array?chats:[chats],lang:navigator.language||(<any>navigator).userLanguage,needLoadCode:'undefined'==typeof (<any>window).Chatbro,embedParamsVersion:localStorage.embedParamsVersion,chatbroScriptVersion:localStorage.chatbroScriptVersion},xhr=new XMLHttpRequest;xhr.withCredentials=!0,xhr.onload=function(){eval(xhr.responseText)},xhr.onerror=function(){console.error('Chatbro loading error')},xhr.open('GET','//www.chatbro.com/embed.js?'+btoa((<any>window).unescape(encodeURIComponent(JSON.stringify(params)))),async),xhr.send()})({encodedChatId: '9Wic'},false);
   }
 }

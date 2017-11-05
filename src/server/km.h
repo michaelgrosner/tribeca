@@ -49,7 +49,7 @@ namespace K {
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
-  enum class mSOP: unsigned int { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize };
+  enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
   enum class uiTXT: unsigned char {
@@ -99,6 +99,7 @@ namespace K {
   class Gw {
     public:
       static Gw *E(mExchange e);
+      string (*randId)() = 0;
       mExchange exchange = mExchange::Null;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
@@ -110,16 +111,14 @@ namespace K {
               http    = "";
          bool cancelByLocalIds = 0,
               supportCancelAll = 0;
-      virtual    string randId() = 0;
-      virtual mExchange config() = 0;
-      virtual      void wallet() = 0,
-                        levels() = 0,
-                        send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                        cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                        cancelAll() = 0,
-                        close() = 0;
       uWS::Hub                *hub = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      virtual void wallet() = 0,
+                   levels() = 0,
+                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                   cancelAll() = 0,
+                   close() = 0;
   };
   struct mPair {
     string base,

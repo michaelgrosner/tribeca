@@ -51,6 +51,37 @@ namespace K {
         wprintw(wLog, " ");
         return "";
       };
+      static string int64Id() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        uniform_int_distribution<unsigned long long> dis;
+        return to_string(dis(gen)).substr(0,8);
+      };
+      static string charId() {
+        char s[16];
+        for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
+        return S2l(string(s, 16));
+      };
+      static string uuidId() {
+        static const char alphanum[] = "0123456789"
+                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                          "abcdefghijklmnopqrstuvwxyz";
+        string uuid = string(36,' ');
+        unsigned long rnd = stol(int64Id());
+        unsigned long rnd_ = stol(int64Id());
+        uuid[8] = '-';
+        uuid[13] = '-';
+        uuid[18] = '-';
+        uuid[23] = '-';
+        uuid[14] = '4';
+        for(int i=0;i<36;i++)
+          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
+            if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
+            rnd >>= 4;
+            uuid[i] = alphanum[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+          }
+        return S2l(uuid);
+      };
       static string oHex(string k) {
        int len = k.length();
         string k_;

@@ -9,7 +9,7 @@
       var div = b.createElement('div');
         div.className = 'dialog-box';
         div.id = uniqueId;
-        div.innerHTML = '<div class="dialog-content">&nbsp;</div><h3 class="dialog-title"><a href="javascript:;" class="dialog-close" title="Close">&times;</a><a href="javascript:;" class="dialog-resize" title="Resize">&harr;</a></h3>';
+        div.innerHTML = '<div class="dialog-content">&nbsp;</div><h3 class="dialog-title"><a href="javascript:;" class="dialog-close" title="Close">&times;</a></h3>';
       b.body.appendChild(div);
     }
 
