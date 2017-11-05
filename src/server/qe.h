@@ -108,9 +108,6 @@ namespace K {
         )) return;
         qeQuote = quote;
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote! ") + ((json)qeQuote).dump());
-        send();
-      };
-      static void send() {
         sendQuoteToAPI();
         sendQuoteToUI();
       };
@@ -572,16 +569,17 @@ namespace K {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (it->first == q.price) { eq = true; break; }
-        if (qp.safety != mQuotingSafety::AK47) {
-          if (orderSide.size()) {
-            if (!eq) modify(side, q, isPong);
-          } else start(side, q, isPong);
+          if (it->second.orderStatus == mORS::New) return;
+          else if (it->first == q.price) { eq = true; break; }
+        if (qp.safety == mQuotingSafety::AK47) {
+          if (!eq and orderSide.size() >= (size_t)qp.bullets)
+            modify(side, q, isPong);
+          else start(side, q, isPong);
           return;
         }
-        if (!eq and orderSide.size() >= (size_t)qp.bullets)
-          modify(side, q, isPong);
-        else start(side, q, isPong);
+        if (orderSide.size()) {
+          if (!eq) modify(side, q, isPong);
+        } else start(side, q, isPong);
       };
       static multimap<double, mOrder> orderCacheSide(mSide side) {
         multimap<double, mOrder> orderSide;
@@ -593,7 +591,7 @@ namespace K {
         return orderSide;
       };
       static void modify(mSide side, mLevel q, bool isPong) {
-        if (qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47)
+        if (qp.safety == mQuotingSafety::AK47)
           stopWorstQuote(side);
         else stopAllQuotes(side);
         start(side, q, isPong);
@@ -626,13 +624,12 @@ namespace K {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (price == it->first
-            or ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47)
-              and (price + (range - 1e-2)) >= it->first
-              and (price - (range - 1e-2)) <= it->first)
+          if (price == it->first or (qp.safety == mQuotingSafety::AK47
+            and (price + (range - 1e-2)) >= it->first
+            and (price - (range - 1e-2)) <= it->first)
           ) { eq = true; break; }
         if (eq) {
-          if ((qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47) and orderSide.size()<(size_t)qp.bullets) {
+          if (qp.safety == mQuotingSafety::AK47 and orderSide.size()<(size_t)qp.bullets) {
             double incPrice = (range * (side == mSide::Bid ? -1 : 1 ));
             double oldPrice = 0;
             unsigned int len = 0;
@@ -684,7 +681,7 @@ namespace K {
       static void stopAllQuotes(mSide side) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          OG::cancelOrder(it->second.orderId);
+            OG::cancelOrder(it->second.orderId);
       };
   };
 }
