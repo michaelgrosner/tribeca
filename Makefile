@@ -16,7 +16,7 @@ V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.18.23098.1541
-KZIP     = 410a8b55a391ed21deeaa2e331f92622040a49dc
+KZIP     = 43aa2a314b2a989d5d07000ea13e506e2b722d01
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
