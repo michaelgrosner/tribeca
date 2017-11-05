@@ -332,11 +332,6 @@ namespace K {
           for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
-        unsigned long T = FN::T();
-        for (map<string, mOrder>::iterator _it = allOrders.begin(); _it != allOrders.end(); ++_it)
-          if ((mORS)_it->second.orderStatus == mORS::New and _it->second.exchangeId == "" and T-1e+4>_it->second.time)
-            for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
-              if (it_->second == _it->first) it_ = allOrdersIds.erase(it_); else ++it_;
         ogMutex.unlock();
         if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
