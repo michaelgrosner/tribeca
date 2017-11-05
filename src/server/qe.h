@@ -356,12 +356,12 @@ namespace K {
         else pgSideAPR = "Off";
       };
       static void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive, double safetyBuy, double safetySell) {
-        if (safetySell > (qp.tradesPerMinute * superTradesActive ? qp.sopWidthMultiplier : 1)) {
+        if (safetySell > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           qeAskStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if (safetyBuy > (qp.tradesPerMinute * superTradesActive ? qp.sopWidthMultiplier : 1)) {
+        if (safetyBuy > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           qeBidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
