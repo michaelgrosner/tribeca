@@ -326,7 +326,7 @@ travis:
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
 	mkdir -p $(KLOCAL)
-	$(MAKE) pvs
+	$(MAKE) dist pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json
