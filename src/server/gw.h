@@ -132,7 +132,7 @@ namespace K {
           gw->minSize = stod(k.value("base_min_size", "0"));
         }
         else if (e == mExchange::HitBtc) {
-          gw->randId = FN::charId;
+          gw->randId = FN::charID;
           gw->symbol = FN::S2u(string(gw->base).append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/public/symbol/").append(gw->symbol));
           gw->minTick = stod(k.value("tickSize", "0"));
