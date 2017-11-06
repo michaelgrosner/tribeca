@@ -631,7 +631,7 @@ namespace K {
       };
       static void screen() {
         if ((wBorder = initscr()) == NULL) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argColors) start_color();
