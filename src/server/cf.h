@@ -32,7 +32,6 @@ namespace K {
             {"username",     required_argument, 0,               'U'},
             {"http",         required_argument, 0,               'H'},
             {"wss",          required_argument, 0,               'W'},
-            {"ws",           required_argument, 0,               'w'},
             {"title",        required_argument, 0,               'K'},
             {"port",         required_argument, 0,               'P'},
             {"user",         required_argument, 0,               'u'},
@@ -57,7 +56,6 @@ namespace K {
             case 'X': argPassphrase = string(optarg); break;
             case 'H': argHttp = string(optarg); break;
             case 'W': argWss = string(optarg); break;
-            case 'w': argWs = string(optarg); break;
             case 'e': argExchange = string(optarg); break;
             case 'c': argCurrency = string(optarg); break;
             case 'd': argDatabase = string(optarg); break;
@@ -108,8 +106,6 @@ namespace K {
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
               << FN::uiT() << RWHITE << "-W, --wss=URL            - set URL of api SECURE WS endpoint for trading," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT() << RWHITE << "-w, --ws=URL             - set URL of api PUBLIC WS endpoint for trading," << '\n'
-              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative PATH to database filename," << '\n'
               << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << '\n'
               << FN::uiT() << RWHITE << "                           any route to a filename is valid," << '\n'
@@ -179,7 +175,6 @@ namespace K {
         gw->pass = argPassphrase;
         gw->http = argHttp;
         gw->ws = argWss;
-        gw->wS = argWs;
       };
     private:
       static string cfBase() {

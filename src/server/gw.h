@@ -124,25 +124,21 @@ namespace K {
       };
       static void gwLoad(mExchange e) {
         if (e == mExchange::Coinbase) {
+          FN::stunnel();
           gw->randId = FN::uuidId;
-          gw->symbol = string(gw->base).append("-").append(gw->quote);
-          system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
-          system("stunnel etc/K-stunnel.conf");
+          gw->symbol = FN::S2u(string(gw->base).append("-").append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
           gw->minTick = stod(k.value("quote_increment", "0"));
           gw->minSize = stod(k.value("base_min_size", "0"));
-        } else if (e == mExchange::HitBtc) {
+        }
+        else if (e == mExchange::HitBtc) {
           gw->randId = FN::charId;
-          gw->symbol = string(gw->base).append(gw->quote);
-          json k = FN::wJet(string(gw->http).append("/api/1/public/symbols"));
-          if (k.find("symbols") != k.end())
-            for (json::iterator it = k["symbols"].begin(); it != k["symbols"].end(); ++it)
-              if (it->value("symbol", "") == gw->symbol) {
-                gw->minTick = stod(it->value("step", "0"));
-                gw->minSize = stod(it->value("lot", "0"));
-                break;
-              }
-        } else if (e == mExchange::Bitfinex) {
+          gw->symbol = FN::S2u(string(gw->base).append(gw->quote));
+          json k = FN::wJet(string(gw->http).append("/public/symbol/").append(gw->symbol));
+          gw->minTick = stod(k.value("tickSize", "0"));
+          gw->minSize = stod(k.value("quantityIncrement", "0"));
+        }
+        else if (e == mExchange::Bitfinex) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base).append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
@@ -159,12 +155,14 @@ namespace K {
           for (json::iterator it=k.begin(); it!=k.end();++it)
             if (it->value("pair", "") == gw->symbol)
               gw->minSize = stod(it->value("minimum_order_size", "0"));
-        } else if (e == mExchange::OkCoin) {
+        }
+        else if (e == mExchange::OkCoin) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
-        } else if (e == mExchange::Korbit) {
+        }
+        else if (e == mExchange::Korbit) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/constants"));
@@ -172,18 +170,20 @@ namespace K {
             gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
             gw->minSize = 0.015;
           }
-        } else if (e == mExchange::Poloniex) {
+        }
+        else if (e == mExchange::Poloniex) {
           gw->randId = FN::int64Id;
-          gw->symbol = string(gw->base).append("_").append(gw->quote);
+          gw->symbol = FN::FN::S2u(string(gw->base).append("_").append(gw->quote));
           json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
           if (k.find(gw->symbol) != k.end()) {
             istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
             os >> gw->minTick;
             gw->minSize = 0.01;
           }
-        } else if (e == mExchange::Null) {
+        }
+        else if (e == mExchange::Null) {
           gw->randId = FN::int64Id;
-          gw->symbol = string(gw->base).append("_").append(gw->quote);
+          gw->symbol = FN::FN::S2u(string(gw->base).append("_").append(gw->quote));
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
@@ -193,7 +193,7 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'
           << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
-          << "- pair: " << gw->symbol << '\n'
+          << "- symbols: " << gw->symbol << '\n'
           << "- minTick: " << gw->minTick << '\n'
           << "- minSize: " << gw->minSize << '\n'
           << "- makeFee: " << gw->makeFee << '\n'
