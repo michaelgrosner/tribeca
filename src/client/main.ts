@@ -95,6 +95,11 @@ class DisplayOrder {
                                             <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
                                             <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                             <th>sop</th>
+                                            <ng-container *ngIf="pair.quotingParameters.display.superTrades">
+                                            <th>sopWidth</th>
+                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
+                                            <th *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
+                                            </ng-container>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
                                         </tr>
@@ -131,7 +136,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="0,1" min="1" max="100"
+                                                   type="number" step="0.1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                             </td>
@@ -153,6 +158,26 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableSuperTrades" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
+                                            <ng-container *ngIf="pair.quotingParameters.display.superTrades">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;">
+                                                <input class="form-control input-sm" title="Width multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopWidthMultiplier">
+                                            </td>
+											<td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                                <input class="form-control input-sm" title="Trades multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopTradesMultiplier">
+                                            </td>
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                                <input class="form-control input-sm" title="Size multiplier"
+                                                   type="number" step="0.1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.sopSizeMultiplier">
+                                            </td>
+                                            </ng-container>
                                             <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0.01"

@@ -1,4 +1,4 @@
-```c++
+<!--```c++
 #include <iostream>
 
 int main()
@@ -20,7 +20,7 @@ and between illusions and frustrations goes forth.</p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />-->
 
 [***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
 
@@ -272,6 +272,8 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
+
+Updated HitBTC API v2.
 
 Added ZIP installation steps for non-git-lovers.
 

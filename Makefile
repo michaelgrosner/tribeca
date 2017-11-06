@@ -15,7 +15,8 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KZIP     = 191338adea1e234992173940acca93434a29fd23
+V_PVS   := 6.18.23098.1541
+KZIP     = 1a981313d6cfc6eb93daeef39c6cf7cd288b5f83
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -66,6 +67,7 @@ help:
 	#  make travis       - provide travis dev box      #
 	#                                                  #
 	#  make build        - download K src precompiled  #
+	#  make pvs          - download pvs src files      #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
 	#  make libuv        - download libuv src files    #
@@ -170,6 +172,12 @@ quickfix: build-$(CHOST)
 	--host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
 
+pvs:
+	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
+	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz             \
+	| tar xz -C build-$(CHOST) && cd build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 \
+	&& chmod +x install.sh && sudo ./install.sh                                )
+
 build:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KZIP)-$(CHOST).tar.gz \
 	| tar xz && chmod +x build-*/local/lib/K-$(CHOST).a build-*/local/bin/K-$(CHOST)
@@ -204,7 +212,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+116d" K.sh
+	sed -i "/Usage/,+110d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
@@ -293,9 +301,19 @@ changelog: .git
 
 test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
+	$(MAKE) test-c
 
 test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
+	$(MAKE) test-c
 	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
+
+test-c:
+	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
+	@cat src/server/K.cxx >> src/server/K.test.cxx
+	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
+	plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log
+	@cat report.tasks
+	@rm report.tasks PVS-Studio.log src/server/K.test.cxx
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
@@ -307,6 +325,8 @@ travis:
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
+	mkdir -p $(KLOCAL)
+	$(MAKE) dist pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json
@@ -342,4 +362,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses libuv quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses libuv quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
