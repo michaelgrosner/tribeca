@@ -16,7 +16,7 @@ V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.18.23098.1541
-KZIP     = aa95f16c3b0177ef9c6ad689d8b0363dba218c50
+KZIP     = 1a981313d6cfc6eb93daeef39c6cf7cd288b5f83
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -212,7 +212,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+116d" K.sh
+	sed -i "/Usage/,+110d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
@@ -310,7 +310,7 @@ test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_module
 test-c:
 	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
 	@cat src/server/K.cxx >> src/server/K.test.cxx
-	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx.tmp --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
+	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
 	plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log
 	@cat report.tasks
 	@rm report.tasks PVS-Studio.log src/server/K.test.cxx

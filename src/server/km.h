@@ -27,7 +27,6 @@ namespace K {
                 argUsername = "NULL",
                 argPassphrase = "NULL",
                 argHttp = "NULL",
-                argWs = "NULL",
                 argWss = "NULL",
                 argDatabase = "",
                 argWhitelist = "";
@@ -107,8 +106,7 @@ namespace K {
               name    = "", symbol  = "",
               apikey  = "", secret  = "",
               user    = "", pass    = "",
-              ws      = "", wS      = "",
-              http    = "";
+              ws      = "", http    = "";
          bool cancelByLocalIds = 0,
               supportCancelAll = 0;
       uWS::Hub                *hub = nullptr;
