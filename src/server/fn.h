@@ -51,6 +51,37 @@ namespace K {
         wprintw(wLog, " ");
         return "";
       };
+      static string int64Id() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        uniform_int_distribution<unsigned long long> dis;
+        return to_string(dis(gen)).substr(0,8);
+      };
+      static string charId() {
+        char s[16];
+        for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
+        return S2l(string(s, 16));
+      };
+      static string uuidId() {
+        static const char alphanum[] = "0123456789"
+                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                          "abcdefghijklmnopqrstuvwxyz";
+        string uuid = string(36,' ');
+        unsigned long rnd = stol(int64Id());
+        unsigned long rnd_ = stol(int64Id());
+        uuid[8] = '-';
+        uuid[13] = '-';
+        uuid[18] = '-';
+        uuid[23] = '-';
+        uuid[14] = '4';
+        for(int i=0;i<36;i++)
+          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
+            if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
+            rnd >>= 4;
+            uuid[i] = alphanum[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+          }
+        return S2l(uuid);
+      };
       static string oHex(string k) {
        int len = k.length();
         string k_;
@@ -75,12 +106,12 @@ namespace K {
         for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string oHmac256(string p, string s) {
+      static string oHmac256(string p, string s, bool hex) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
         for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return oHex(k_);
+        return hex ? oHex(k_) : k_;
       };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
@@ -95,6 +126,10 @@ namespace K {
         char k_[SHA384_DIGEST_LENGTH*2+1];
         for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
+      };
+      static void stunnel() {
+        system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
+        system("stunnel etc/K-stunnel.conf");
       };
       static json wJet(string k) {
         return json::parse(wGet(k));
@@ -161,19 +196,18 @@ namespace K {
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string s) {
-        return json::parse(wGet(k, p, s));
+      static json wJet(string k, bool a, string p) {
+        return json::parse(wGet(k, a, p));
       };
-      static string wGet(string k, string p, string s) {
+      static string wGet(string k, bool a, string p) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
-          struct curl_slist *h_ = NULL;
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          if (a) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);

@@ -8,17 +8,18 @@ namespace K {
   typedef void (*evWallet)       (mWallet);
   typedef void (*evLevels)       (mLevels);
   typedef void (*evEmpty)        ();
-  extern evConnect ev_gwConnectButton,
-                   ev_gwConnectOrder,
-                   ev_gwConnectMarket,
-                   ev_gwConnectExchange;
-  extern evOrder   ev_gwDataOrder,
-                   ev_ogOrder;
-  extern evTrade   ev_gwDataTrade,
-                   ev_ogTrade;
+  extern evConnect ev_gwConnectOrder,
+                   ev_gwConnectMarket;
+  extern evOrder   ev_gwDataOrder;
+  extern evTrade   ev_gwDataTrade;
   extern evWallet  ev_gwDataWallet;
   extern evLevels  ev_gwDataLevels;
-  extern evEmpty   ev_mgLevels,
+  static evConnect ev_gwConnectButton,
+                   ev_gwConnectExchange;
+  static evOrder   ev_ogOrder;
+  static evTrade   ev_ogTrade;
+  static evEmpty   ev_mgLevels,
+                   ev_mgEwmaSMUProtection,
                    ev_mgEwmaQuoteProtection,
                    ev_mgTargetPosition,
                    ev_pgTargetBasePosition,
@@ -28,7 +29,6 @@ namespace K {
                     tDelay,
                     tWallet,
                     tCancel;
-  static evEmpty    ev_mgEwmaSMUProtection;
   static int eCode = EXIT_FAILURE;
   class EV: public Klass {
     protected:

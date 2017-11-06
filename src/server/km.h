@@ -27,7 +27,6 @@ namespace K {
                 argUsername = "NULL",
                 argPassphrase = "NULL",
                 argHttp = "NULL",
-                argWs = "NULL",
                 argWss = "NULL",
                 argDatabase = "",
                 argWhitelist = "";
@@ -99,6 +98,7 @@ namespace K {
   class Gw {
     public:
       static Gw *E(mExchange e);
+      string (*randId)() = 0;
       mExchange exchange = mExchange::Null;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
@@ -106,20 +106,17 @@ namespace K {
               name    = "", symbol  = "",
               apikey  = "", secret  = "",
               user    = "", pass    = "",
-              ws      = "", wS      = "",
-              http    = "";
+              ws      = "", http    = "";
          bool cancelByLocalIds = 0,
               supportCancelAll = 0;
-      virtual    string randId() = 0;
-      virtual mExchange config() = 0;
-      virtual      void wallet() = 0,
-                        levels() = 0,
-                        send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                        cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                        cancelAll() = 0,
-                        close() = 0;
       uWS::Hub                *hub = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      virtual void wallet() = 0,
+                   levels() = 0,
+                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                   cancelAll() = 0,
+                   close() = 0;
   };
   struct mPair {
     string base,

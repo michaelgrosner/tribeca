@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
+#include <random>
 #include <thread>
 #include <mutex>
 #include <chrono>
@@ -33,9 +34,7 @@ using namespace std;
 #include "quickfix/SocketInitiator.h"
 #include "quickfix/SessionSettings.h"
 #include "quickfix/fix42/NewOrderSingle.h"
-#include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
-#include "quickfix/fix42/OrderCancelReject.h"
 
 using namespace nlohmann;
 
