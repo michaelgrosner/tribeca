@@ -273,6 +273,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Updated HitBTC API v2.
+
 Added ZIP installation steps for non-git-lovers.
 
 Added XMR network ecosystem optional support.

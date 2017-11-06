@@ -212,7 +212,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+116d" K.sh
+	sed -i "/Usage/,+110d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
