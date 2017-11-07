@@ -573,9 +573,12 @@ namespace K {
       static void updateQuote(mLevel q, mSide side, bool isPong) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
+        unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (it->second.orderStatus == mORS::New) return;
-          else if (it->first == q.price) { eq = true; break; }
+          if (it->second.orderStatus == mORS::New and it->second.exchangeId == "" and T-10e+3>it->second.time) {
+              OG::allOrdersDelete(it->second.orderId, it->second.exchangeId);
+            return;
+          } else if (it->first == q.price) { eq = true; break; }
         if (qp.safety == mQuotingSafety::AK47) {
           if (!eq and orderSide.size() >= (size_t)qp.bullets)
             modify(side, q, isPong);

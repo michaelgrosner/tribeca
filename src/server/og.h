@@ -73,6 +73,20 @@ namespace K {
         if (argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
+      static void allOrdersDelete(string oI, string oE) {
+        ogMutex.lock();
+        map<string, mOrder>::iterator it = allOrders.find(oI);
+        if (it != allOrders.end()) allOrders.erase(it);
+        if (oE != "") {
+          map<string, string>::iterator it_ = allOrdersIds.find(oE);
+          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
+        } else {
+          for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
+            if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
+        }
+        ogMutex.unlock();
+        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
+      };
     private:
       static json onSnapTrades() {
         json k;
@@ -320,20 +334,6 @@ namespace K {
           if (argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
         } else allOrdersDelete(k.orderId, k.exchangeId);
         if (argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
-      };
-      static void allOrdersDelete(string oI, string oE) {
-        ogMutex.lock();
-        map<string, mOrder>::iterator it = allOrders.find(oI);
-        if (it != allOrders.end()) allOrders.erase(it);
-        if (oE != "") {
-          map<string, string>::iterator it_ = allOrdersIds.find(oE);
-          if (it_ != allOrdersIds.end()) allOrdersIds.erase(it_);
-        } else {
-          for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
-            if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
-        }
-        ogMutex.unlock();
-        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
   };
 }
