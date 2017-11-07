@@ -60,7 +60,7 @@ namespace K {
       static string charId() {
         char s[16];
         for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
-        return S2l(string(s, 16));
+        return string(s, 16);
       };
       static string uuidId() {
         static const char alphanum[] = "0123456789"
@@ -630,7 +630,7 @@ namespace K {
       };
       static void screen() {
         if ((wBorder = initscr()) == NULL) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argColors) start_color();

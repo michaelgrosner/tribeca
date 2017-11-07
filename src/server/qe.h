@@ -227,27 +227,30 @@ namespace K {
         bool superTradesActive = false;
         applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         applyEwmaProtection(&rawQuote);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("A", rawQuote);
         applyEwmaSMUProtection(&rawQuote);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("B", rawQuote);
         applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("C", rawQuote);
         applyStdevProtection(&rawQuote);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("D", rawQuote);
         applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("E", rawQuote);
         applyBestWidth(&rawQuote);
         applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("F", rawQuote);
         applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("G", rawQuote);
         applyRoundSide(&rawQuote);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("H", rawQuote);
         applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote¿ ") + ((json)rawQuote).dump());
+        dQ("I", rawQuote);
         applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
+      };
+      static void dQ(string k, mQuote rawQuote) {
+        if (argDebugQuotes) FN::log("DEBUG", string("QE quote") + k + " " + to_string((int)qeBidStatus) + " " + to_string((int)qeAskStatus) + " " + ((json)rawQuote).dump());
       };
       static void applyRoundSide(mQuote *rawQuote) {
         if (rawQuote->bid.price) {
@@ -529,7 +532,6 @@ namespace K {
         }
         if (bidSz) bidPx = bidPx + gw->minTick;
         if (askSz) askPx = askPx - gw->minTick;
-        
         return mQuote(
           mLevel(bidPx, buySize),
           mLevel(askPx, sellSize)
@@ -571,9 +573,12 @@ namespace K {
       static void updateQuote(mLevel q, mSide side, bool isPong) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         bool eq = false;
+        unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (it->second.orderStatus == mORS::New) return;
-          else if (it->first == q.price) { eq = true; break; }
+          if (it->second.orderStatus == mORS::New and it->second.exchangeId == "" and T-10e+3>it->second.time) {
+              OG::allOrdersDelete(it->second.orderId, it->second.exchangeId);
+            return;
+          } else if (it->first == q.price) { eq = true; break; }
         if (qp.safety == mQuotingSafety::AK47) {
           if (!eq and orderSide.size() >= (size_t)qp.bullets)
             modify(side, q, isPong);
