@@ -60,9 +60,8 @@ namespace K {
       static string charId() {
         char s[16];
         for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
-        return S2l(string(s, 16));
+        return string(s, 16);
       };
-      static string charID() { return charId().append(charId()); };
       static string uuidId() {
         static const char alphanum[] = "0123456789"
                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
