@@ -24,10 +24,9 @@ namespace K {
       };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
-        typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
-        fnT days = chrono::duration_cast<fnT>(t);
+        auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
         t -= days;
         auto hours = chrono::duration_cast<chrono::hours>(t);
         t -= hours;

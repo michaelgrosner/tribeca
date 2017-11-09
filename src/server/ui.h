@@ -4,15 +4,18 @@
 namespace K {
   string A();
   static uWS::Hub hub(0, true);
-  typedef void (*uiMsg_)(json);
-  typedef json (*uiSnap_)();
-  struct uiSess { map<char, uiSnap_> cbSnap; map<char, uiMsg_> cbMsg; map<uiTXT, vector<json>> D; int u = 0; };
   static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
   static bool uiVisibleOpt = true;
   static unsigned int uiOSR_1m = 0;
   static double delayUI = 0;
   static string uiNOTE = "";
   static string uiNK64 = "";
+  struct uiSess {
+    map<char, function<json()>> cbSnap;
+    map<char, function<void(json)>> cbMsg;
+    map<uiTXT, vector<json>> D;
+    int u = 0;
+  };
   class UI: public Klass {
     protected:
       void load() {
@@ -103,11 +106,11 @@ namespace K {
           if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length < 2)
             return;
           if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
-            json reply = (*sess->cbSnap[message[1]])();
+            json reply = sess->cbSnap[message[1]]();
             lock_guard<mutex> lock(wsMutex);
             if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
           } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
-            (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
+            sess->cbMsg[message[1]](json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
@@ -141,14 +144,14 @@ namespace K {
         FN::logUI(uiPrtcl, argPort);
       };
     public:
-      static void uiSnap(uiTXT k, uiSnap_ cb) {
+      static void uiSnap(uiTXT k, function<json()> cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
           sess->cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void uiHand(uiTXT k, uiMsg_ cb) {
+      static void uiHand(uiTXT k, function<void(json)> cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbMsg.find((char)k) == sess->cbMsg.end())

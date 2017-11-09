@@ -8,8 +8,7 @@ namespace K {
   mQuoteStatus qeStatus;
   mQuoteState qeBidStatus = mQuoteState::MissingData,
               qeAskStatus = mQuoteState::MissingData;
-  typedef mQuote (*qeMode)(double widthPing, double buySize, double sellSize);
-  map<mQuotingMode, qeMode> qeQuotingMode;
+  map<mQuotingMode, function<mQuote(double, double, double)>> qeQuotingMode;
   map<mSide, mLevel> qeNextQuote;
   bool qeNextIsPong;
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
@@ -397,7 +396,7 @@ namespace K {
       };
       static mQuote quote(double widthPing, double buySize, double sellSize) {
         if (qeQuotingMode.find(qp.mode) == qeQuotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
-        return (*qeQuotingMode[qp.mode])(widthPing, buySize, sellSize);
+        return qeQuotingMode[qp.mode](widthPing, buySize, sellSize);
       };
       static mQuote quoteAtTopOfMarket() {
         mLevel topBid = mgLevelsFilter.bids.begin()->size > gw->minTick
@@ -523,8 +522,7 @@ namespace K {
         if (cross) {
           FN::logWar("QE", "Cross quote detected");
           return mQuoteState::Crossed;
-        }
-        return mQuoteState::Live;
+        } else return mQuoteState::Live;
       };
       static void updateQuote(mLevel q, mSide side, bool isPong) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
