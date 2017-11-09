@@ -5,7 +5,6 @@ namespace K {
   unsigned int qeT = 0;
   unsigned long qeNextT = 0,
                 qeThread = 0;
-  mQuote qeQuote;
   mQuoteStatus qeStatus;
   mQuoteState qeBidStatus = mQuoteState::MissingData,
               qeAskStatus = mQuoteState::MissingData;
@@ -88,35 +87,34 @@ namespace K {
       static void calcQuote() {
         qeBidStatus = mQuoteState::MissingData;
         qeAskStatus = mQuoteState::MissingData;
-        if (!mgFairValue or MG::empty()) {
-          qeQuote = mQuote();
-          return;
-        }
-        qeQuote = nextQuote();
-        sendQuoteToAPI();
-        sendQuoteToUI();
-      };
-      static void sendQuoteToAPI() {
         if (gwConnectExchange_ == mConnectivity::Disconnected) {
           qeAskStatus = mQuoteState::Disconnected;
           qeBidStatus = mQuoteState::Disconnected;
-        } else {
+        } else if (mgFairValue and !MG::empty()) {
           if (gwQuotingState_ == mConnectivity::Disconnected) {
             qeAskStatus = mQuoteState::DisabledQuotes;
             qeBidStatus = mQuoteState::DisabledQuotes;
+            stopAllQuotes();
           } else {
-            qeBidStatus = checkCrossedQuotes(mSide::Bid);
-            qeAskStatus = checkCrossedQuotes(mSide::Ask);
+            qeBidStatus = mQuoteState::UnknownHeld;
+            qeAskStatus = mQuoteState::UnknownHeld;
+            sendQuoteToAPI();
           }
-          if (qeAskStatus == mQuoteState::Live)
-            updateQuote(qeQuote.ask, mSide::Ask, qeQuote.isAskPong);
-          else stopAllQuotes(mSide::Ask);
-          if (qeBidStatus == mQuoteState::Live)
-            updateQuote(qeQuote.bid, mSide::Bid, qeQuote.isBidPong);
-          else stopAllQuotes(mSide::Bid);
         }
+        sendStatusToUI();
       };
-      static void sendQuoteToUI() {
+      static void sendQuoteToAPI() {
+        mQuote quote = nextQuote();
+        qeBidStatus = checkCrossedQuotes(mSide::Bid, &quote);
+        qeAskStatus = checkCrossedQuotes(mSide::Ask, &quote);
+        if (qeAskStatus == mQuoteState::Live) {
+          updateQuote(quote.ask, mSide::Ask, quote.isAskPong);
+        } else stopAllQuotes(mSide::Ask);
+        if (qeBidStatus == mQuoteState::Live)
+          updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
+        else stopAllQuotes(mSide::Bid);
+      };
+      static void sendStatusToUI() {
         unsigned int quotesInMemoryNew = 0;
         unsigned int quotesInMemoryWorking = 0;
         unsigned int quotesInMemoryDone = 0;
@@ -159,23 +157,23 @@ namespace K {
                safetySell      = pgSafety.sell;
         pgMutex.unlock();
         if (safetyBuyPing == -1) return mQuote();
+        double totalBasePosition = baseAmount + baseHeldAmount;
+        double totalQuotePosition = (quoteAmount + quoteHeldAmount) / mgFairValue;
+        double pDiv = qp.percentageValues
+          ? qp.positionDivergencePercentage * value / 100
+          : qp.positionDivergence;
         double widthPing = qp.widthPercentage
           ? qp.widthPingPercentage * mgFairValue / 100
           : qp.widthPing;
         double widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * mgFairValue / 100
           : qp.widthPong;
-        double totalBasePosition = baseAmount + baseHeldAmount;
-        double totalQuotePosition = (quoteAmount + quoteHeldAmount) / mgFairValue;
         double buySize = qp.percentageValues
           ? qp.buySizePercentage * value / 100
           : qp.buySize;
         double sellSize = qp.percentageValues
           ? qp.sellSizePercentage * value / 100
           : qp.sellSize;
-        double pDiv = qp.percentageValues
-          ? qp.positionDivergencePercentage * value / 100
-          : qp.positionDivergence;
         if (buySize and qp.aggressivePositionRebalancing != mAPR::Off and qp.buySizeMax)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
         if (sellSize and qp.aggressivePositionRebalancing != mAPR::Off and qp.sellSizeMax)
@@ -186,33 +184,21 @@ namespace K {
           FN::logWar("QP", "Negative price detected, widthPing or/and widthPong must be smaller");
           return mQuote();
         }
-        dQ("?", rawQuote);
         const double rawBidSz = rawQuote.bid.size;
         const double rawAskSz = rawQuote.ask.size;
-        qeBidStatus = mQuoteState::UnknownHeld;
-        qeAskStatus = mQuoteState::UnknownHeld;
         bool superTradesActive = false;
-        applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
-        applyEwmaProtection(&rawQuote);
-        dQ("A", rawQuote);
-        applyEwmaSMUProtection(&rawQuote);
-        dQ("B", rawQuote);
-        applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
-        dQ("C", rawQuote);
-        applyStdevProtection(&rawQuote);
-        dQ("D", rawQuote);
-        applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        dQ("E", rawQuote);
-        applyBestWidth(&rawQuote);
-        applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        dQ("F", rawQuote);
-        applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
-        dQ("G", rawQuote);
-        applyRoundSide(&rawQuote);
-        dQ("H", rawQuote);
-        applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        dQ("I", rawQuote);
-        applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        dQ("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
+        dQ("A", rawQuote); applyEwmaProtection(&rawQuote);
+        dQ("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
+        dQ("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
+        dQ("D", rawQuote); applyStdevProtection(&rawQuote);
+        dQ("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
+        dQ("F", rawQuote); applyBestWidth(&rawQuote);
+        dQ("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
+        dQ("H", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        dQ("I", rawQuote); applyRoundSide(&rawQuote);
+        dQ("J", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        dQ("K", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         dQ("!", rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
@@ -523,15 +509,19 @@ namespace K {
           mLevel(askPx, sellSize)
         );
       };
-      static mQuoteState checkCrossedQuotes(mSide side) {
-        if (side == mSide::Bid and !qeQuote.bid.price) return qeBidStatus;
-        else if (side == mSide::Ask and !qeQuote.ask.price) return qeAskStatus;
-        if ((side == mSide::Bid and !qeQuote.ask.price)
-          or (side == mSide::Ask and !qeQuote.bid.price)) return mQuoteState::Live;
-        double price = side == mSide::Bid ? qeQuote.bid.price : qeQuote.ask.price;
-        double ecirp = side == mSide::Bid ? qeQuote.ask.price : qeQuote.bid.price;
-        if (side == mSide::Bid ? price >= ecirp : price <= ecirp) {
-          FN::log("QE", string("Crossing quote detected! new ") + (side == mSide::Bid ? "Bid" : "Ask") + "Side quote at " + to_string(price) + " crossed with " + (side == mSide::Bid ? "Ask" : "Bid") + "Side quote at " + to_string(ecirp));
+      static mQuoteState checkCrossedQuotes(mSide side, mQuote *quote) {
+        bool cross = false;
+        if (side == mSide::Bid) {
+          if (!quote->bid.price) return qeBidStatus;
+          if (!quote->ask.price) return mQuoteState::Live;
+          cross = quote->bid.price >= quote->ask.price;
+        } else if (side == mSide::Ask) {
+          if (!quote->ask.price) return qeAskStatus;
+          if (!quote->bid.price) return mQuoteState::Live;
+          cross = quote->ask.price <= quote->bid.price;
+        }
+        if (cross) {
+          FN::logWar("QE", "Cross quote detected");
           return mQuoteState::Crossed;
         }
         return mQuoteState::Live;
@@ -650,6 +640,10 @@ namespace K {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
           OG::cancelOrder(it->second.orderId);
+      };
+      static void stopAllQuotes() {
+        stopAllQuotes(mSide::Bid);
+        stopAllQuotes(mSide::Ask);
       };
   };
 }
