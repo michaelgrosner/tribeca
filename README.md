@@ -26,7 +26,7 @@ and between illusions and frustrations goes forth.</p>
 
 [![Release](https://img.shields.io/github/release/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/releases)
 [![Platform](https://img.shields.io/badge/platform-unix--like-lightgray.svg)](https://www.gnu.org/)
-[![goto Counter](https://img.shields.io/github/search/ctubio/Krypto-trading-bot/goto.svg?maxAge=2592000)](http://www.cplusplus.com/doc/tutorial/control/#goto)
+[![g0t0 Counter](https://tinyurl.com/g0t0search)](https://tinyurl.com/g0t0docs)
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
@@ -420,7 +420,7 @@ What exchange you don't want to be deleted from the bot?
  - https://www.youtube.com/watch?v=_wGDcWD1E1A
  - https://www.youtube.com/watch?v=DVg2EJvvlF8
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
-
+<br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" /></p>
 <br /><br /><br />
 <p align="center"><img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
