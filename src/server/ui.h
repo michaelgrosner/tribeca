@@ -208,7 +208,7 @@ namespace K {
         }
         sess->D[k].push_back(o);
       };
-      static void uiSend() {
+      static bool uiSend() {
         static unsigned long uiT_1m = 0;
         wsMutex.lock();
         map<uiTXT, vector<json>> msgs;
@@ -230,11 +230,14 @@ namespace K {
         for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
           for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
             uiUp(it_->first, *it);
-        if (uiT_1m+6e+4 > FN::T()) return;
+        if (uiT_1m+6e+4 > FN::T()) return false;
         uiT_1m = FN::T();
+        return true;
       };
       static void uiSend(bool delayed) {
-        if (delayed) uiSend();
+        bool sec60 = true;
+        if (delayed) sec60 = uiSend();
+        if (!sec60) return;
         uiSend(uiTXT::ApplicationState, serverState());
         uiOSR_1m = 0;
       };
