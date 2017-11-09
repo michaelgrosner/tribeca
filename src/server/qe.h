@@ -92,22 +92,7 @@ namespace K {
           qeQuote = mQuote();
           return;
         }
-        mQuote quote = nextQuote();
-        if (!quote.bid.price and !quote.ask.price) {
-          qeQuote = mQuote();
-          return;
-        }
-        quote.bid = quotesAreSame(quote.bid.price, quote.bid.size, mSide::Bid);
-        quote.ask = quotesAreSame(quote.ask.price, quote.ask.size, mSide::Ask);
-        if ((!qeQuote.bid.price and !qeQuote.ask.price and !quote.bid.price and !quote.ask.price) or (
-          qeQuote.bid.price and qeQuote.ask.price and quote.bid.price and quote.ask.price
-          and abs(qeQuote.bid.price - quote.bid.price) < gw->minTick
-          and abs(qeQuote.ask.price - quote.ask.price) < gw->minTick
-          and abs(qeQuote.bid.size - quote.bid.size) < gw->minSize
-          and abs(qeQuote.ask.size - quote.ask.size) < gw->minSize
-        )) return;
-        qeQuote = quote;
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote! ") + ((json)qeQuote).dump());
+        qeQuote = nextQuote();
         sendQuoteToAPI();
         sendQuoteToUI();
       };
@@ -160,24 +145,6 @@ namespace K {
         return qeBidStatus != qeStatus.bidStatus
           or qeAskStatus != qeStatus.askStatus;
       };
-      static mLevel quotesAreSame(double price, double size, mSide side) {
-        mLevel newQuote(price, size);
-        if (!price or !size) return mLevel();
-        if ((mSide::Bid == side and !qeQuote.bid.price)
-          or (mSide::Ask == side and !qeQuote.ask.price)) return newQuote;
-        mLevel prevQuote = mSide::Bid == side ? qeQuote.bid : qeQuote.ask;
-        if (!prevQuote.price) return newQuote;
-        if (abs(size - prevQuote.size) > 5e-3) return newQuote;
-        if (abs(price - prevQuote.price) < gw->minTick) return prevQuote;
-        bool quoteWasWidened = true;
-        if ((mSide::Bid == side and prevQuote.price < price)
-          or (mSide::Ask == side and prevQuote.price > price)
-        ) quoteWasWidened = false;
-        unsigned int now = FN::T();
-        if (!quoteWasWidened and now - qeT < 300) return prevQuote;
-        qeT = now;
-        return newQuote;
-      };
       static mQuote nextQuote() {
         if (MG::empty() or PG::empty()) return mQuote();
         pgMutex.lock();
@@ -214,12 +181,12 @@ namespace K {
         if (sellSize and qp.aggressivePositionRebalancing != mAPR::Off and qp.sellSizeMax)
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
-        if (argDebugQuotes) FN::log("DEBUG", string("QE quote? ") +((json)rawQuote).dump());
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
         if (rawQuote.bid.price < 0 or rawQuote.ask.price < 0) {
-          FN::logWar("QP", "Negative price detected! (widthPing or/and widthPong must be smaller)");
+          FN::logWar("QP", "Negative price detected, widthPing or/and widthPong must be smaller");
           return mQuote();
         }
+        dQ("?", rawQuote);
         const double rawBidSz = rawQuote.bid.size;
         const double rawAskSz = rawQuote.ask.size;
         qeBidStatus = mQuoteState::UnknownHeld;
@@ -246,6 +213,7 @@ namespace K {
         applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
         dQ("I", rawQuote);
         applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        dQ("!", rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
       };
@@ -305,13 +273,11 @@ namespace K {
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
           qeBidStatus = mQuoteState::DepletedFunds;
-          FN::logWar("QE", string("BUY quote ignored: depleted ") + gw->quote + " balance");
         }
         if (rawQuote->ask.size and rawQuote->ask.size > totalBasePosition) {
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
           qeAskStatus = mQuoteState::DepletedFunds;
-          FN::logWar("QE", string("SELL quote ignored: depleted ") + gw->base + " balance");
         }
       };
       static void applyBestWidth(mQuote *rawQuote) {
@@ -569,25 +535,19 @@ namespace K {
           return mQuoteState::Crossed;
         }
         return mQuoteState::Live;
-     };
+      };
       static void updateQuote(mLevel q, mSide side, bool isPong) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
+        if (!orderSide.size()) return start(side, q, isPong);
         bool eq = false;
         unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (it->second.orderStatus == mORS::New and it->second.exchangeId == "" and T-10e+3>it->second.time) {
-              OG::allOrdersDelete(it->second.orderId, it->second.exchangeId);
+          if (it->second.orderStatus == mORS::New) {
+            if (T-10e+3>it->second.time) OG::allOrdersDelete(it->second.orderId, it->second.exchangeId);
             return;
           } else if (it->first == q.price) { eq = true; break; }
-        if (qp.safety == mQuotingSafety::AK47) {
-          if (!eq and orderSide.size() >= (size_t)qp.bullets)
-            modify(side, q, isPong);
-          else start(side, q, isPong);
-          return;
-        }
-        if (orderSide.size()) {
-          if (!eq) modify(side, q, isPong);
-        } else start(side, q, isPong);
+        if (!eq and (qp.safety != mQuotingSafety::AK47 or orderSide.size() >= (size_t)qp.bullets))
+          modify(side, q, isPong);
       };
       static multimap<double, mOrder> orderCacheSide(mSide side) {
         multimap<double, mOrder> orderSide;
