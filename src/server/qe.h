@@ -192,19 +192,13 @@ namespace K {
         dQ("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         dQ("D", rawQuote); applyStdevProtection(&rawQuote);
         dQ("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        if (qp.safety == mQuotingSafety::AK47) {
-          double range = qp.percentageValues
-            ? qp.rangePercentage * value / 100
-            : qp.range;
-          rawQuote.bid.size -= orderCacheSide(mSide::Bid).size() * range;
-          rawQuote.ask.size += orderCacheSide(mSide::Ask).size() * range;
-        }
-        dQ("F", rawQuote); applyBestWidth(&rawQuote);
-        dQ("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        dQ("H", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
-        dQ("I", rawQuote); applyRoundSide(&rawQuote);
-        dQ("J", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        dQ("K", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        dQ("F", rawQuote); applyAK47Increment(&rawQuote, value);
+        dQ("G", rawQuote); applyBestWidth(&rawQuote);
+        dQ("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
+        dQ("I", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        dQ("J", rawQuote); applyRoundSide(&rawQuote);
+        dQ("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        dQ("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         dQ("!", rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
@@ -353,6 +347,17 @@ namespace K {
             if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
             if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.sopSizeMultiplier * sellSize, baseAmount / 2);
           }
+        }
+      };
+      static void applyAK47Increment(mQuote *rawQuote, double value) {
+        if (qp.safety == mQuotingSafety::AK47) {
+          static int inc = 1;
+          double range = qp.percentageValues
+            ? qp.rangePercentage * value / 100
+            : qp.range;
+          rawQuote->bid.size -= inc * range;
+          rawQuote->ask.size += inc * range;
+          if (++inc > qp.bullets) inc = 1;
         }
       };
       static void applyStdevProtection(mQuote *rawQuote) {

@@ -3,7 +3,6 @@
 
 namespace K {
   vector<mTrade> tradesMemory;
-  // vector<string> toCancel;
   map<string, string> allOrdersIds;
   class OG: public Klass {
     protected:
@@ -56,14 +55,7 @@ namespace K {
       };
       static void cancelOrder(string k) {
         ogMutex.lock();
-        if (allOrders.find(k) == allOrders.end()) {
-          ogMutex.unlock();
-          if (argDebugOrders) FN::log("DEBUG", string("OG cancel unknown id ") + k);
-          return;
-        }
-        if (!gW->cancelByLocalIds and allOrders[k].exchangeId == "") {
-          // toCancel.push_back(k);
-          if (argDebugOrders) FN::log("DEBUG", string("OG cancel pending id ") + k);
+        if (allOrders.find(k) == allOrders.end() or (allOrders[k].exchangeId == "")) {
           ogMutex.unlock();
           return;
         }
@@ -170,14 +162,6 @@ namespace K {
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
-        // if (!gW->cancelByLocalIds and o.exchangeId != "") {
-          // vector<string>::iterator it = find(toCancel.begin(), toCancel.end(), o.orderId);
-          // if (it != toCancel.end()) {
-            // toCancel.erase(it);
-            // cancelOrder(o.orderId);
-            // if (o.orderStatus == mORS::Working) return o;
-          // }
-        // }
         ev_ogOrder(o);
         if (o.orderStatus != mORS::New)
           UI::uiSend(uiTXT::OrderStatusReports, o, true);
@@ -186,7 +170,6 @@ namespace K {
         return o;
       };
       static void cancelOpenOrders() {
-        if (gW->supportCancelAll) return gW->cancelAll();
         vector<string> k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)

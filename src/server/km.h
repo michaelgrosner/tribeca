@@ -107,8 +107,6 @@ namespace K {
               apikey  = "", secret  = "",
               user    = "", pass    = "",
               ws      = "", http    = "";
-         bool cancelByLocalIds = 0,
-              supportCancelAll = 0;
       uWS::Hub                *hub = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       virtual void wallet() = 0,
