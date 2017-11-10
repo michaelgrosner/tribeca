@@ -424,10 +424,11 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code) {
+      static void logExit(string k, string s, int code, bool ev = true) {
         FN::screen_quit();
         logErr(k, s);
-        evExit(code);
+        if (ev) evExit(code);
+        else exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) {
