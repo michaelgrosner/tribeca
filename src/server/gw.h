@@ -198,7 +198,7 @@ namespace K {
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + argExchange + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
+        } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
       };
       static void happyEnding(int code) {
         eCode = code;
