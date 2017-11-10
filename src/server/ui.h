@@ -11,8 +11,8 @@ namespace K {
   static string uiNOTE = "";
   static string uiNK64 = "";
   struct uiSess {
-    map<char, function<json()>> cbSnap;
-    map<char, function<void(json)>> cbMsg;
+    map<char, json(*)()> cbSnap;
+    map<char, void(*)(json)> cbMsg;
     map<uiTXT, vector<json>> D;
     int u = 0;
   };
@@ -144,14 +144,14 @@ namespace K {
         FN::logUI(uiPrtcl, argPort);
       };
     public:
-      static void uiSnap(uiTXT k, function<json()> cb) {
+      static void uiSnap(uiTXT k, json(*cb)()) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
           sess->cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void uiHand(uiTXT k, function<void(json)> cb) {
+      static void uiHand(uiTXT k, void(*cb)(json)) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbMsg.find((char)k) == sess->cbMsg.end())

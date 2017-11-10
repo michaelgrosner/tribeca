@@ -13,7 +13,6 @@
 #include <getopt.h>
 #include <signal.h>
 #include <execinfo.h>
-#include <functional>
 #include <algorithm>
 #include <iomanip>
 #include <vector>

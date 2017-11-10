@@ -8,7 +8,7 @@ namespace K {
   mQuoteStatus qeStatus;
   mQuoteState qeBidStatus = mQuoteState::MissingData,
               qeAskStatus = mQuoteState::MissingData;
-  map<mQuotingMode, function<mQuote(double, double, double)>> qeQuotingMode;
+  map<mQuotingMode, mQuote(*)(double, double, double)> qeQuotingMode;
   map<mSide, mLevel> qeNextQuote;
   bool qeNextIsPong;
   mConnectivity gwQuotingState_ = mConnectivity::Disconnected,
@@ -192,6 +192,13 @@ namespace K {
         dQ("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         dQ("D", rawQuote); applyStdevProtection(&rawQuote);
         dQ("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
+        if (qp.safety == mQuotingSafety::AK47) {
+          double range = qp.percentageValues
+            ? qp.rangePercentage * value / 100
+            : qp.range;
+          rawQuote.bid.size -= orderCacheSide(mSide::Bid).size() * range;
+          rawQuote.ask.size += orderCacheSide(mSide::Ask).size() * range;
+        }
         dQ("F", rawQuote); applyBestWidth(&rawQuote);
         dQ("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
         dQ("H", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
@@ -526,16 +533,16 @@ namespace K {
       };
       static void updateQuote(mLevel q, mSide side, bool isPong) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
-        if (!orderSide.size()) return start(side, q, isPong);
-        bool eq = false;
+        int k = orderSide.size();
+        if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (it->second.orderStatus == mORS::New) {
+          if (it->first == q.price) { return; }
+          else if (it->second.orderStatus == mORS::New) {
             if (T-10e+3>it->second.time) OG::allOrdersDelete(it->second.orderId, it->second.exchangeId);
-            return;
-          } else if (it->first == q.price) { eq = true; break; }
-        if (!eq and (qp.safety != mQuotingSafety::AK47 or orderSide.size() >= (size_t)qp.bullets))
-          modify(side, q, isPong);
+            if (qp.safety != mQuotingSafety::AK47 or (int)k >= qp.bullets) return;
+          }
+        modify(side, q, isPong);
       };
       static multimap<double, mOrder> orderCacheSide(mSide side) {
         multimap<double, mOrder> orderSide;
@@ -573,50 +580,7 @@ namespace K {
           tStart_ = 0;
           qeNextT = FN::T();
         }
-        double price = q.price;
-        double range = qp.percentageValues
-          ? qp.rangePercentage * pgPos.value / 100
-          : qp.range;
-        multimap<double, mOrder> orderSide = orderCacheSide(side);
-        bool eq = false;
-        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-          if (price == it->first or (qp.safety == mQuotingSafety::AK47
-            and (price + (range - 1e-2)) >= it->first
-            and (price - (range - 1e-2)) <= it->first)
-          ) { eq = true; break; }
-        if (eq) {
-          if (qp.safety == mQuotingSafety::AK47 and orderSide.size()<(size_t)qp.bullets) {
-            double incPrice = (range * (side == mSide::Bid ? -1 : 1 ));
-            double oldPrice = 0;
-            unsigned int len = 0;
-            if (side == mSide::Bid)
-              calcAK47Increment(orderSide.begin(), orderSide.end(), &price, side, &oldPrice, incPrice, &len);
-            else calcAK47Increment(orderSide.rbegin(), orderSide.rend(), &price, side, &oldPrice, incPrice, &len);
-            if (len==orderSide.size()) price = incPrice + (side == mSide::Bid
-              ? orderSide.rbegin()->second.price
-              : orderSide.begin()->second.price);
-            eq = false;
-            for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
-              if (price == it->first
-                or ((price + (range - 1e-2)) >= it->first
-                  and (price - (range - 1e-2)) <= it->first)
-              ) { eq = true; break; }
-            if (eq) return;
-            stopWorstsQuotes(side, q.price);
-            price = FN::roundNearest(price, gw->minTick);
-          } else return;
-        }
-        OG::sendOrder(side, price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
-      };
-      template <typename Iterator> static void calcAK47Increment(Iterator iter, Iterator last, double* price, mSide side, double* oldPrice, double incPrice, unsigned int* len) {
-        for (;iter != last; ++iter) {
-          if (*oldPrice>0 and (side == mSide::Bid?iter->first<*price:iter->first>*price)) {
-            *price = *oldPrice + incPrice;
-            if (abs(iter->first - *oldPrice)>incPrice) break;
-          }
-          *oldPrice = iter->first;
-          ++(*len);
-        }
+        OG::sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       static void stopWorstsQuotes(mSide side, double price) {
         multimap<double, mOrder> orderSide = orderCacheSide(side);
