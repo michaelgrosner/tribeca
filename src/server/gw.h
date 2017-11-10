@@ -187,18 +187,18 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (gw->minTick and gw->minSize)
+        if (gw->minTick and gw->minSize) {
           FN::log(string("GW ") + argExchange, "allows client IP");
-        else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
-        stringstream ss;
-        ss << setprecision(8) << fixed << '\n'
-          << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
-          << "- symbols: " << gw->symbol << '\n'
-          << "- minTick: " << gw->minTick << '\n'
-          << "- minSize: " << gw->minSize << '\n'
-          << "- makeFee: " << gw->makeFee << '\n'
-          << "- takeFee: " << gw->takeFee;
-        FN::log(string("GW ") + argExchange + ":", ss.str());
+          stringstream ss;
+          ss << setprecision(8) << fixed << '\n'
+            << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
+            << "- symbols: " << gw->symbol << '\n'
+            << "- minTick: " << gw->minTick << '\n'
+            << "- minSize: " << gw->minSize << '\n'
+            << "- makeFee: " << gw->makeFee << '\n'
+            << "- takeFee: " << gw->takeFee;
+          FN::log(string("GW ") + argExchange + ":", ss.str());
+        } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
       };
       static void happyEnding(int code) {
         eCode = code;
