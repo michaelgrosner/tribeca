@@ -1,29 +1,23 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-namespace K {
-  typedef void (*evConnect)      (mConnectivity);
-  typedef void (*evOrder)        (mOrder);
-  typedef void (*evTrade)        (mTrade);
-  typedef void (*evWallet)       (mWallet);
-  typedef void (*evLevels)       (mLevels);
-  typedef void (*evEmpty)        ();
-  extern evConnect ev_gwConnectOrder,
-                   ev_gwConnectMarket;
-  extern evOrder   ev_gwDataOrder;
-  extern evTrade   ev_gwDataTrade;
-  extern evWallet  ev_gwDataWallet;
-  extern evLevels  ev_gwDataLevels;
-  static evConnect ev_gwConnectButton,
-                   ev_gwConnectExchange;
-  static evOrder   ev_ogOrder;
-  static evTrade   ev_ogTrade;
-  static evEmpty   ev_mgLevels,
-                   ev_mgEwmaSMUProtection,
-                   ev_mgEwmaQuoteProtection,
-                   ev_mgTargetPosition,
-                   ev_pgTargetBasePosition,
-                   ev_uiQuotingParameters;
+namespace K  {
+  extern void(*ev_gwDataOrder)          (mOrder);
+  extern void(*ev_gwDataTrade)          (mTrade);
+  extern void(*ev_gwDataWallet)         (mWallet);
+  extern void(*ev_gwDataLevels)         (mLevels);
+  extern void(*ev_gwConnectOrder)       (mConnectivity);
+  extern void(*ev_gwConnectMarket)      (mConnectivity);
+  static void(*ev_gwConnectButton)      (mConnectivity);
+  static void(*ev_gwConnectExchange)    (mConnectivity);
+  static void(*ev_ogOrder)              (mOrder);
+  static void(*ev_ogTrade)              (mTrade);
+  static void(*ev_mgLevels)             ();
+  static void(*ev_mgEwmaSMUProtection)  ();
+  static void(*ev_mgEwmaQuoteProtection)();
+  static void(*ev_mgTargetPosition)     ();
+  static void(*ev_pgTargetBasePosition) ();
+  static void(*ev_uiQuotingParameters)  ();
   static uv_timer_t tCalcs,
                     tStart,
                     tDelay,
