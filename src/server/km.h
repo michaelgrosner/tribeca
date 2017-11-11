@@ -95,27 +95,6 @@ namespace K {
         run();
       };
   };
-  class Gw {
-    public:
-      static Gw *E(mExchange e);
-      string (*randId)() = 0;
-      mExchange exchange = mExchange::Null;
-       double makeFee = 0,  minTick = 0,
-              takeFee = 0,  minSize = 0;
-       string base    = "", quote   = "",
-              name    = "", symbol  = "",
-              apikey  = "", secret  = "",
-              user    = "", pass    = "",
-              ws      = "", http    = "";
-      uWS::Hub                *hub = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      virtual void wallet() = 0,
-                   levels() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0,
-                   close() = 0;
-  };
   struct mPair {
     string base,
            quote;
@@ -388,6 +367,33 @@ namespace K {
     };
   };
   static map<string, mOrder> allOrders;
+  class Gw {
+    public:
+      static Gw *E(mExchange e);
+      string (*randId)() = 0;
+      function<void(mOrder)>        ev_gwDataOrder;
+      function<void(mTrade)>        ev_gwDataTrade;
+      function<void(mWallet)>       ev_gwDataWallet;
+      function<void(mLevels)>       ev_gwDataLevels;
+      function<void(mConnectivity)> ev_gwConnectOrder,
+                                    ev_gwConnectMarket;
+      uWS::Hub                *hub = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      mExchange exchange = mExchange::Null;
+       double makeFee = 0,  minTick = 0,
+              takeFee = 0,  minSize = 0;
+       string base    = "", quote   = "",
+              name    = "", symbol  = "",
+              apikey  = "", secret  = "",
+              user    = "", pass    = "",
+              ws      = "", http    = "";
+      virtual void wallet() = 0,
+                   levels() = 0,
+                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                   cancelAll() = 0,
+                   close() = 0;
+  };
 }
 
 #endif

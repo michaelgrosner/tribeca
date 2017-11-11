@@ -2,7 +2,7 @@
 #define K_QP_H_
 
 namespace K {
-  static struct Qp {
+  struct Qp {
     double            widthPing                     = 2.0;
     double            widthPingPercentage           = 0.25;
     double            widthPong                     = 2.0;
@@ -58,7 +58,7 @@ namespace K {
     bool              audio                         = false;
     int               delayUI                       = 7;
   } qp;
-  static void to_json(json& j, const Qp& k) {
+  void to_json(json& j, const Qp& k) {
     j = {
       {"widthPing", k.widthPing},
       {"widthPingPercentage", k.widthPingPercentage},
@@ -116,7 +116,7 @@ namespace K {
       {"delayUI", k.delayUI}
     };
   };
-  static void from_json(const json& j, Qp& k) {
+  void from_json(const json& j, Qp& k) {
     if (j.end() != j.find("widthPing")) k.widthPing = j.at("widthPing").get<double>();
     if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
     if (j.end() != j.find("widthPong")) k.widthPong = j.at("widthPong").get<double>();
@@ -196,10 +196,10 @@ namespace K {
             or qp.safety == mQuotingSafety::AK47;
       };
     private:
-      static json onSnap() {
-        return { qp };
+      function<json()> onSnap = []() {
+        return (json){ qp };
       };
-      static void onHand(json k) {
+      function<void(json)> onHand = [](json k) {
         if (k.value("buySize", 0.0) > 0
           and k.value("sellSize", 0.0) > 0
           and k.value("buySizePercentage", 0.0) > 0

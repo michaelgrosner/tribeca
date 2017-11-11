@@ -2,7 +2,7 @@
 #define K_DB_H_
 
 namespace K {
-  static sqlite3* db;
+  sqlite3* db;
   class DB: public Klass {
     protected:
       void load() {

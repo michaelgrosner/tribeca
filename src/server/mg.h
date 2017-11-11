@@ -60,11 +60,11 @@ namespace K {
         FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       void waitData() {
-        ev_gwDataTrade = [](mTrade k) {
+        gw->ev_gwDataTrade = [](mTrade k) {
           if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
           tradeUp(k);
         };
-        ev_gwDataLevels = [](mLevels k) {
+        gw->ev_gwDataLevels = [](mLevels k) {
           if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
           levelUp(k);
         };
@@ -103,21 +103,21 @@ namespace K {
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        ev_gwDataWallet(mWallet());
+        gw->ev_gwDataWallet(mWallet());
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      static json onSnapTrade() {
+      function<json()> onSnapTrade = []() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
         return k;
       };
-      static json onSnapFair() {
-        return {{{"price", mgFairValue}}};
+      function<json()> onSnapFair = []() {
+        return (json){{{"price", mgFairValue}}};
       };
-      static json onSnapEwma() {
-        return {{
+      function<json()> onSnapEwma = []() {
+        return (json){{
           {"stdevWidth", {
             {"fv", mgStdevFV},
             {"fvMean", mgStdevFVMean},

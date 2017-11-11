@@ -30,7 +30,7 @@ namespace K {
         FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
       };
       void waitData() {
-        ev_gwDataOrder = [](mOrder k) {
+        gw->ev_gwDataOrder = [](mOrder k) {
           if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
           if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
           updateOrderState(k);
@@ -79,7 +79,7 @@ namespace K {
         if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
     private:
-      static json onSnapTrades() {
+      function<json()> onSnapTrades = []() {
         json k;
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           it->loadedFromDB = true;
@@ -87,7 +87,7 @@ namespace K {
         }
         return k;
       };
-      static json onSnapOrders() {
+      function<json()> onSnapOrders = []() {
         json k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
@@ -97,26 +97,26 @@ namespace K {
         ogMutex.unlock();
         return k;
       };
-      static void onHandCancelAllOrders(json k) {
+      function<void(json)> onHandCancelAllOrders = [](json k) {
         cancelOpenOrders();
       };
-      static void onHandCleanAllClosedOrders(json k) {
+      function<void(json)> onHandCleanAllClosedOrders = [](json k) {
         cleanClosedOrders();
       };
-      static void onHandCleanAllOrders(json k) {
+      function<void(json)> onHandCleanAllOrders = [](json k) {
         cleanOrders();
       };
-      static void onHandCancelOrder(json k) {
+      function<void(json)> onHandCancelOrder = [](json k) {
         if (k.is_object() and k["orderId"].is_string())
           cancelOrder(k["orderId"].get<string>());
         else FN::logWar("JSON", "Missing orderId at onHandCancelOrder, ignored");
       };
-      static void onHandCleanTrade(json k) {
+      function<void(json)> onHandCleanTrade = [](json k) {
         if (k.is_object() and k["tradeId"].is_string())
           cleanTrade(k["tradeId"].get<string>());
         else FN::logWar("JSON", "Missing tradeId at onHandCleanTrade, ignored");
       };
-      static void onHandSubmitNewOrder(json k) {
+      function<void(json)> onHandSubmitNewOrder = [](json k) {
         sendOrder(
           k.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           k.value("price", 0.0),

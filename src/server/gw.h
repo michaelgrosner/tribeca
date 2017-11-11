@@ -31,13 +31,13 @@ namespace K {
         }, 0, 3e+5);
       };
       void waitData() {
-        ev_gwConnectOrder = [](mConnectivity k) {
+        gw->ev_gwConnectOrder = [](mConnectivity k) {
           gwConnUp(mGatewayType::OrderEntry, k);
         };
-        ev_gwConnectMarket = [](mConnectivity k) {
+        gw->ev_gwConnectMarket = [](mConnectivity k) {
           gwConnUp(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
-            ev_gwDataLevels(mLevels());
+            gw->ev_gwDataLevels(mLevels());
         };
         gw->levels();
       };
@@ -51,28 +51,9 @@ namespace K {
         hub.run();
         EV::end(eCode);
       };
-    public:
-      static void gwBookUp(mConnectivity k) {
-        ev_gwConnectMarket(k);
-      };
-      static void gwOrderUp(mConnectivity k) {
-        ev_gwConnectOrder(k);
-      };
-      static void gwPosUp(mWallet k) {
-        ev_gwDataWallet(k);
-      };
-      static void gwOrderUp(mOrder k) {
-        ev_gwDataOrder(k);
-      };
-      static void gwTradeUp(mTrade k) {
-        ev_gwDataTrade(k);
-      };
-      static void gwLevelUp(mLevels k) {
-        ev_gwDataLevels(k);
-      };
     private:
-      static json onSnapProduct() {
-        return {{
+      function<json()> onSnapProduct = []() {
+        return (json){{
           {"exchange", (int)gw->exchange},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"minTick", gw->minTick},
@@ -81,13 +62,13 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
-      static json onSnapStatus() {
-        return {{{"status", (int)gwConnectExchange}}};
+      function<json()> onSnapStatus = []() {
+        return (json){{{"status", (int)gwConnectExchange}}};
       };
-      static json onSnapState() {
-        return {{{"state",  (int)gwQuotingState}}};
+      function<json()> onSnapState = []() {
+        return (json){{{"state",  (int)gwQuotingState}}};
       };
-      static void onHandState(json k) {
+      function<void(json)> onHandState = [](json k) {
         if (!k.is_object() or !k["state"].is_number()) {
           FN::logWar("JSON", "Missing state at onHandState, ignored");
           return;
