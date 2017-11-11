@@ -65,36 +65,6 @@ namespace K {
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static function<void(int)> *evExit;
-  extern bool wInit;
-  extern WINDOW *wBorder,
-                *wLog;
-  extern mutex wsMutex;
-  static mutex wMutex,
-               ogMutex,
-               pgMutex;
-  static string uiPrtcl = "?";
-  class Klass {
-    protected:
-      virtual void load(int argc, char** argv) {};
-      virtual void load() {};
-      virtual void waitTime() {};
-      virtual void waitData() {};
-      virtual void waitUser() {};
-      virtual void run() {};
-    public:
-      void main(int argc, char** argv) {
-        load(argc, argv);
-        run();
-      };
-      void wait() {
-        load();
-        waitTime();
-        waitData();
-        waitUser();
-        run();
-      };
-  };
   struct mPair {
     string base,
            quote;
@@ -366,6 +336,15 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
+  static function<void(int)> *evExit;
+  extern bool wInit;
+  extern WINDOW *wBorder,
+                *wLog;
+  extern mutex wsMutex;
+  static mutex wMutex,
+               ogMutex,
+               pgMutex;
+  static string uiPrtcl = "?";
   static map<string, mOrder> allOrders;
   class Gw {
     public:
@@ -393,6 +372,27 @@ namespace K {
                    cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
                    cancelAll() = 0,
                    close() = 0;
+  };
+  class Klass {
+    protected:
+      virtual void load(int argc, char** argv) {};
+      virtual void load() {};
+      virtual void waitTime() {};
+      virtual void waitData() {};
+      virtual void waitUser() {};
+      virtual void run() {};
+    public:
+      void main(int argc, char** argv) {
+        load(argc, argv);
+        run();
+      };
+      void wait() {
+        load();
+        waitTime();
+        waitData();
+        waitUser();
+        run();
+      };
   };
 }
 

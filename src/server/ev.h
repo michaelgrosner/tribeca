@@ -42,6 +42,13 @@ namespace K  {
         exit(code);
       };
     private:
+      function<void(int)> happyEnding = [](int code) {
+        cout << FN::uiT();
+        for(unsigned int i = 0; i < 21; ++i)
+          cout << "THE END IS NEVER ";
+        cout << "THE END" << '\n';
+        end(code);
+      };
       static void quit(int sig) {
         FN::screen_quit();
         cout << '\n';
@@ -86,13 +93,6 @@ namespace K  {
           << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
           << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << '\n' << '\n';
-      };
-      function<void(int)> happyEnding = [](int code) {
-        cout << FN::uiT();
-        for(unsigned int i = 0; i < 21; ++i)
-          cout << "THE END IS NEVER ";
-        cout << "THE END" << '\n';
-        end(code);
       };
   };
 }

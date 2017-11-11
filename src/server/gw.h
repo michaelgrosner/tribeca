@@ -47,6 +47,25 @@ namespace K {
         EV::end(eCode);
       };
     private:
+      function<void(int)> happyEnding = [](int code) {
+        eCode = code;
+        if (uv_loop_alive(hub.getLoop())) {
+          uv_timer_stop(&tCancel);
+          uv_timer_stop(&tWallet);
+          uv_timer_stop(&tCalcs);
+          uv_timer_stop(&tStart);
+          uv_timer_stop(&tDelay);
+          gw->close();
+          gw->gwGroup->close();
+          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
+          gW->cancelAll();
+          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
+          uiGroup->close();
+          FN::close(hub.getLoop());
+          hub.getLoop()->destroy();
+        }
+        EV::end(code);
+      };
       mConnectivity gwAutoStart = mConnectivity::Disconnected,
                     gwQuotingState = mConnectivity::Disconnected,
                     gwConnectOrder = mConnectivity::Disconnected,
@@ -180,25 +199,6 @@ namespace K {
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + argExchange + ":", ss.str());
         } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
-      };
-      function<void(int)> happyEnding = [](int code) {
-        eCode = code;
-        if (uv_loop_alive(hub.getLoop())) {
-          uv_timer_stop(&tCancel);
-          uv_timer_stop(&tWallet);
-          uv_timer_stop(&tCalcs);
-          uv_timer_stop(&tStart);
-          uv_timer_stop(&tDelay);
-          gw->close();
-          gw->gwGroup->close();
-          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-          gW->cancelAll();
-          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-          uiGroup->close();
-          FN::close(hub.getLoop());
-          hub.getLoop()->destroy();
-        }
-        EV::end(code);
       };
   };
 }
